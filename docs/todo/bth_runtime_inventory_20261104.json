@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T02:21:56.344835+00:00",
+  "observed_at": "2026-11-05T04:53:40.303763+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed.",
     "complete": false,
@@ -9635,6 +9635,416 @@
           "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
         ],
         "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
+      }
+    },
+    {
+      "instance_id": "task9:content010-duel-baseline-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content010-duel-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json:pid:33752",
+        "started_at": "2026-11-05T04:41:16.463159+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Fresh isolated private/output identity; suspended job assignment before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T04:41:52.121477+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json:pid:33752",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Owned job drained to zero before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T04:41:52.121477+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T04:41:52.121477+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content010-duel-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T04:41:52.121477+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content010-duel-candidate-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content010-duel-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json:pid:22812",
+        "started_at": "2026-11-05T04:43:04.292084+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Fresh isolated private/output identity; suspended job assignment before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T04:43:37.708928+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json:pid:22812",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Owned job drained to zero before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T04:43:37.708928+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T04:43:37.708928+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content010-duel-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T04:43:37.708928+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content010-duel-canonical-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content010-duel-canonical-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json:pid:14272",
+        "started_at": "2026-11-05T04:44:28.491763+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Fresh isolated private/output identity; suspended job assignment before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T04:45:03.578332+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json:pid:14272",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Owned job drained to zero before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T04:45:03.578332+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T04:45:03.578332+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content010-duel-canonical-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T04:45:03.578332+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content010-duel-wrapper-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content010-duel-wrapper-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json:pid:39432",
+        "started_at": "2026-11-05T04:52:27.742267+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Fresh isolated private/output identity; suspended job assignment before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T04:53:03.228751+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json:pid:39432",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Owned job drained to zero before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T04:53:03.228751+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T04:53:03.228751+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content010-duel-wrapper-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T04:53:03.228751+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content010-duel-wrapper-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:catalog010-maintained-systems-r2",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog010-maintained-systems-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json:pid:33940",
+        "started_at": "2026-11-05T04:46:48.469606+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Fresh isolated private/output identity; suspended job assignment before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T04:51:54.419156+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json:pid:33940",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "Owned job drained to zero before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T04:51:54.419156+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T04:51:54.419156+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog010-maintained-systems-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T04:51:54.419156+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
       }
     }
   ],

@@ -1,0 +1,576 @@
+{
+  "schema": "bth.audit_continuation_010/v1",
+  "observed_at": "2026-11-05T04:53:40.303763+00:00",
+  "cleanup_stopped": true,
+  "preserved_prior_files": true,
+  "fix_commit": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+  "late_duel_scope": "Real production showdown event producer; explicit module-factory failure injection; direct and outer public event calls. Focused _process/_refresh/publication-counter seams, not full physical player UI or incident-save evidence.",
+  "jobs": [
+    {
+      "name": "content010-duel-baseline-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 35.658,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "failure_count": 13,
+      "cases": [
+        {
+          "case": "direct_surface_failure",
+          "passed": false,
+          "failed_checks": [
+            "actual_ui_restored",
+            "full_lifecycle_state_restored",
+            "installed_bytes_unchanged_after_natural_flush",
+            "no_autosave_requested_prepared_or_queued",
+            "no_save_worker_started",
+            "no_success_message",
+            "no_success_publication"
+          ],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 2,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 1,
+            "queues": 1,
+            "requests": 1,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        },
+        {
+          "case": "direct_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        },
+        {
+          "case": "outer_surface_failure",
+          "passed": false,
+          "failed_checks": [
+            "actual_ui_restored",
+            "full_lifecycle_state_restored",
+            "no_autosave_requested_prepared_or_queued",
+            "no_success_message",
+            "no_success_publication",
+            "one_terminal_error"
+          ],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 2,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": false,
+            "preparations": 1,
+            "queues": 1,
+            "requests": 1,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": false
+        },
+        {
+          "case": "outer_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        }
+      ],
+      "receipt": "evidence\\content010-duel-baseline-r1\\job.json"
+    },
+    {
+      "name": "content010-duel-candidate-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 33.417,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "failure_count": 0,
+      "cases": [
+        {
+          "case": "direct_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": false
+        },
+        {
+          "case": "direct_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        },
+        {
+          "case": "outer_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": false
+        },
+        {
+          "case": "outer_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        }
+      ],
+      "receipt": "evidence\\content010-duel-candidate-r1\\job.json"
+    },
+    {
+      "name": "content010-duel-canonical-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 35.087,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "failure_count": 0,
+      "cases": [
+        {
+          "case": "direct_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": false
+        },
+        {
+          "case": "direct_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        },
+        {
+          "case": "outer_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": false
+        },
+        {
+          "case": "outer_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 1,
+            "dirty_generation": 3,
+            "inflight_generation": 0,
+            "item_publications": 1,
+            "pending": true,
+            "preparations": 2,
+            "queues": 2,
+            "requests": 2,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": true
+        }
+      ],
+      "receipt": "evidence\\content010-duel-canonical-r1\\job.json"
+    },
+    {
+      "name": "content010-duel-wrapper-r1",
+      "task_id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 35.486,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "failure_count": 0,
+      "cases": [
+        {
+          "case": "enter_game_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 0,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": null
+        },
+        {
+          "case": "enter_game_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 2,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": true,
+            "preparations": 1,
+            "queues": 1,
+            "requests": 1,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": null
+        },
+        {
+          "case": "direct_wrapper_surface_failure",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 0,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 1,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": false,
+            "preparations": 0,
+            "queues": 0,
+            "requests": 0,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": null
+        },
+        {
+          "case": "direct_wrapper_success_control",
+          "passed": true,
+          "failed_checks": [],
+          "immediate_counters": {
+            "async_starts": 0,
+            "broad_refreshes": 1,
+            "completed_generation": 1,
+            "conclusion_publications": 0,
+            "dirty_generation": 2,
+            "inflight_generation": 0,
+            "item_publications": 0,
+            "pending": true,
+            "preparations": 1,
+            "queues": 1,
+            "requests": 1,
+            "synchronous_writes": 0,
+            "write_attempts": 0
+          },
+          "loaded_duel_active": null
+        }
+      ],
+      "receipt": "evidence\\content010-duel-wrapper-r1\\job.json"
+    },
+    {
+      "name": "catalog010-maintained-systems-r2",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 305.95,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "failure_count": null,
+      "cases": [],
+      "receipt": "evidence\\catalog010-maintained-systems-r2\\job.json",
+      "canonical_inner_stage_result": {
+        "name": "foundation_systems",
+        "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "arguments": [
+          "four deterministic systems shards"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "duration_msec": 300295,
+        "duration_sec": 300.295,
+        "suite_time_baseline_sec": 29.141,
+        "suite_time_budget_sec": 43.712,
+        "suite_time_budget_exceeded": true,
+        "stderr_issue_count": 1,
+        "stderr_issues": [
+          "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+        ],
+        "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\maintained\\foundation_systems.stdout.txt",
+        "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\maintained\\foundation_systems.stderr.txt",
+        "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+      }
+    }
+  ],
+  "previous_phase009_release": {
+    "task_id": "BTH061-AUDIT-001",
+    "cleanup_stopped": true,
+    "scope": "Exact retained phase009 NEXT artifact/source qualification only.",
+    "served_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+    "served_tree": "73464a344151940375b200646481395ec1fb9931",
+    "version": "0.6.0-dev+7ac1b6b2df89",
+    "HTTP_verified_UTC": "2026-11-05T04:38:11.0931221Z",
+    "source_verified_UTC": "2026-11-05T04:39:25.094044+00:00",
+    "metadata_redirect_BUILD_manifest_REF_VERSION": "PASS",
+    "archive_local_SHA256_verified": "9e8ce400b7110bcc8066a9814776d002007f61214c5108c0bed2835f5bd7e661",
+    "PCK_audit_passed": true,
+    "PCK_files": 1166,
+    "critical_gdc_present": [
+      "scripts/ui/foundation_main.gdc",
+      "scripts/ui/environment_interaction_controller.gdc",
+      "scripts/ui/scenario_semantic_view_model.gdc",
+      "scripts/ui/pixel_scene_canvas.gdc",
+      "scripts/core/scenario_sequence_runtime.gdc"
+    ],
+    "four_payload_HEADs": "PASS: 200, exact pinned sizes; WASM MIME application/wasm",
+    "phase009_ancestor_commits": [
+      {
+        "commit": "995fa97b4a623a2015dfbecd502fbcc42aaaa559",
+        "subject": "Record published audit commits and exact NEXT reserve blocker",
+        "ancestor_of_served": true
+      },
+      {
+        "commit": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+        "subject": "Merge remote-tracking branch 'origin/main' into codex/audit-publish-next",
+        "ancestor_of_served": true
+      },
+      {
+        "commit": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+        "subject": "Restore lifecycle presentation and replace obsolete sequence fixtures",
+        "ancestor_of_served": true
+      },
+      {
+        "commit": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+        "subject": "Remove superseded UI projection implementations and migrate their callers",
+        "ancestor_of_served": true
+      },
+      {
+        "commit": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+        "subject": "Align actor motion with physical route distances and current geometry owners",
+        "ancestor_of_served": true
+      },
+      {
+        "commit": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
+        "subject": "Avoid redundant full-state comparisons for accepted scenario commands",
+        "ancestor_of_served": true
+      }
+    ],
+    "five_critical_source_blob_equivalence": true,
+    "pending_commit": "9b8ef678b95a86ef8bac57d16b383dfb9521c546",
+    "pending_commit_is_deployed": false,
+    "watcher_phase": "failed",
+    "watcher_updated_at": "2026-11-05T04:37:10Z",
+    "exact_pending_blocker": "Asset/importer/settings inputs changed; cold-import qualification required",
+    "browser_native_gameplay": "Not run; root owns basic launch/behavior acceptance.",
+    "reviewer_source_ledger_guard_service_cleanup_mutations": false,
+    "evidence": [
+      "http-r1/receipt.json",
+      "source-lineage-r1.json"
+    ]
+  },
+  "browser_launch_receipt": "evidence/release-prev009-010/browser-launch-r1.json",
+  "whole_audit_complete": false,
+  "original_full180_diagnostic_passed": false,
+  "source_sha256": {
+    "scripts/ui/foundation_main.gd": "8c0fbb3cd7958900f36c54f35f1891057a604c128d3d3db66e3b2fcc2b47d1e4",
+    "scripts/tests/duel_surface_rollback_check.gd": "2d8218668a7ac3ad83365fd93ed077ba8d31d8a1cddaba2f13d2e1f88b01cdb1",
+    "scripts/tests/foundation/duel_surface_rollback_contract.gd": "b7d38d39fdb85fc770f8ef46e5974b558deb7413fffd12479c42945574f613f6",
+    "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d",
+    "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b"
+  },
+  "wrapper_observer_sha256": {
+    "duel-wrapper-fixture-r1.gd": "0a5e57346d4929a23676263735b3ae9f4040dd2359ae13b87bc392f4899ad242",
+    "duel-wrapper-focused-runner-r1.gd": "8338c4a4701c0007463f429bdbb5dc648b469f8d1cc7d9615a191ec6e8205ab5"
+  }
+}

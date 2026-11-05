@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T02:27:07.234911+00:00",
+  "updated_at": "2026-11-05T04:55:03.032640+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "WHOLE_CODEBASE_AUDIT_CONTINUES_009_SCOPED_REPAIRS_PUBLISHED",
+      "status": "CLEANUP_STOPPED_CATALOG_AND_DUEL_BUG_INVESTIGATION_ACTIVE",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13669,6 +13669,12 @@
           "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
         }
       ],
@@ -13736,24 +13742,34 @@
           "kind": "combined_main_integration009",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Concurrentmain0e93f761f864a3bb844fabda48efe05f63792a98 preservedbyidentitymerge;all11auditsourcesand2peerfilesexact. Peerordinaryownedpractice107checksPASS;initialprivate-rootguardreceiptretained;allownedJobs0. Publication/qualifiedNEXTstillpending."
+        },
+        {
+          "kind": "trusted_parent_cleanup_stop_and_bug_continuation",
+          "reference": "Parent delegation01a1a147-7f07-7583-baf0-771a839f1013",
+          "summary": "Continue catalog flow and late-duel investigation outside paused item/scenario scope. Erik says continue playtesting/fixingissues;cleanupisstopped.Preserveallfiles. Sourcecurrentmain9b8ef678,servedstatus7ac1b6b2; no new acceptance claimed from status alone."
+        },
+        {
+          "kind": "cleanup_stopped_bug_fix_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "No further obsolete-code removal. Scoped late-duel defect repaired and committed; catalog owner/limit mismatch investigated, exact maintained-stage measurement separate. Whole requested audit remains incomplete/Open."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue incomplete current codebase/consumer coverage and valid-producer late duel-boundary investigation. Three scoped source commits are published in main a7e8c71f97f24011124f8a3897bf7c1c840a2c47. Full original-order180catalog and exact NEXT delivery remain Open; existing watcher export is reserve-blocked.",
+      "next_action": "Preserve all files and perform no further deprecated-code cleanup/removal under the latest user direction. Continue playtesting/fixing catalog-flow and late-duel bugs outside the named paused feature scope. Full original audit objective remains Open; already committed removals remain historical evidence.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker to independent audit work. Complete current coverage and late duel reproduction remain; scoped NEXT delivery has its separate actual reserve blocker.",
+        "description": "No external blocker to this scoped active investigation/verification. Latest parent explicitly stops cleanup while playtesting and issue fixes continue; no new general module hold is inferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:34:02.257639+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:34:02.257639+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -19466,7 +19482,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "ORIGINAL_FORCED_TRAVEL_SUCCESS_PATH_STILL_OPEN",
       "owner": {
         "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19520,19 +19536,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Reproduce recovery_loss_pressure_foundation/_check_embedded_refresh_autosave_interrupt successful forced-reroute path with its original ownership assertions. Phase009 rejected-travel rollback coverage does not qualify this separate expected success, pending autosave, changed environment and result-screen boundary.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Insufficient shared disk reserve for export: 12936171520 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "description": "Original success-path qualification remains implementation/test work; the delivered phase009 reserve blocker does not apply to this separate unresolved expectation.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:23:21.424691+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
@@ -20497,7 +20513,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_CANONICAL_BASELINES_CLOSED_FULL180_FLOW_OPEN",
+      "status": "MAINTAINED_SYSTEMS_CORE_300S_TIMEOUT_REPRODUCED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20582,22 +20598,32 @@
           "kind": "substantive_fix_and_shifted_bound",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
           "summary": "Measuredredundantaccepted-commandstatecomparisonremoved, source113othermethodsrawexact. Originalfulltrace32steps/censoredDeliveryDay; fixedfulltrace38steps/censoredlatersemanticpresentation underthesame180s. Exactcanonical19errorsbefore/afterretained, notreportedgreen."
+        },
+        {
+          "kind": "trusted_parent_cleanup_stop_and_bug_continuation",
+          "reference": "Parent delegation01a1a147-7f07-7583-baf0-771a839f1013",
+          "summary": "Continue catalog flow and late-duel investigation outside paused item/scenario scope. Erik says continue playtesting/fixingissues;cleanupisstopped.Preserveallfiles. Sourcecurrentmain9b8ef678,servedstatus7ac1b6b2; no new acceptance claimed from status alone."
+        },
+        {
+          "kind": "exact_maintained_inner_stage_timeout",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Current exact4/55Systems plan timed out in firstsystems_core shard at300.295s; no completion or55checks-passclaim. Canonical43.712suitebudgetalsoexceeded. Outer330supervisor didnotexpire; allownedprocesses0. Limits/order/assertions unchanged;9bnativequalification separate."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Profile substantive remaining whole-flow cost without changing the original180second command limit, predecessors, hidden profiles, assertions or final fingerprints. Existing canonical partitioned acceptance passes; no whole original-ordercatalog/Scratchpass follows from it.",
+      "next_action": "Profile exact systems_core/full content validation before its first completion under the existing canonical guards, then repair measured repeated work while preserving every assertion/profile and predecessor. Original full180 diagnostic and current4/55stage remain unqualified; do not infer success from focused pieces or increase limits.",
       "blocker": {
-        "state": "active",
-        "kind": "full180_hidden_matrix_observation_limit",
-        "description": "Original-orderwholecommandcappedwithinfirsthiddenobserver; independentcomplete-semantic180runadvancedto pawn_shop_sals_mood butdidnotreturn. Someunpairedtracesareoriginalearlyreturns, notactivehangs. Existingcanonicalpartition3completeswith8then0aftertestsetuprepair. Wholecatalog/finalfingerprints/Scratchremainunobserved.",
+        "state": "none",
+        "kind": "none",
+        "description": "A current maintained300-second stage timeout is reproduced; the substantive performance repair remains active work, not an external approval/save hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:23:21.424691+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -21213,7 +21239,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "SCOPED_19_REPAIRED_AND_NEXT_VERIFIED_REQUIRED_DUEL_CHILD_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21235,12 +21261,13 @@
       ],
       "deployment": {
         "required": false,
-        "state": "not_applicable",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_008.md"
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Baseline triage only; no repair implemented."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
@@ -21257,22 +21284,32 @@
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
+        },
+        {
+          "kind": "manual_required_child_gate",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Manual reconciliation correctly rejects Complete with required late-duel child still Open. Reconciled as Open despite its nineteen-assertion acceptance being met; no guard or parent linkage changed."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Nineteen-assertion diagnosis and repair plus exact7ac delivery are verified; keep this parent Open while required late-duel child BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009 awaits its own NEXT delivery. Original full180/current Systems aggregate remain separately Open under CONTENT-TIMEOUT-006.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Insufficient shared disk reserve for export: 12936171520 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:23:21.424691+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T04:55:03.032640+00:00"
     },
     {
       "id": "BTH061-AUDIT-FIXTURE-AUTHORITY-009",
@@ -21314,8 +21351,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21331,12 +21368,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
@@ -21348,22 +21386,27 @@
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
@@ -21405,8 +21448,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21422,12 +21465,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
@@ -21439,22 +21483,27 @@
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
@@ -21495,8 +21544,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21512,34 +21561,40 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
@@ -21581,8 +21636,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21598,12 +21653,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
@@ -21615,22 +21671,27 @@
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
@@ -21643,7 +21704,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Investigate the separate reachable-code candidate where duel success feedback and an autosave request precede a potentially failing duel-surface helper. Distinguish prepared/queued autosave from an actual persisted write, reproduce with a valid producer state, and qualify direct and outer caller recovery before proposing a repair. This is source evidence only, not a proven player-state defect.",
+        "text": "Reproduce and repair the late duel table failure using a valid real showdown producer. Preserve direct/outer lifecycle and UI ownership, prevent success feedback and autosave preparation/queue/write for rejected entry, retain successful real table entry and installed-save behavior. Exact original personal incident save is unavailable; this is controlled valid-state failure-boundary evidence.",
         "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
         "scope_confirmed": true,
         "acceptance": [
@@ -21651,15 +21712,19 @@
             "id": "current-ownership-proof",
             "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_010.md"
+            ]
           },
           {
             "id": "native-regression",
             "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_010.md"
+            ]
           }
         ],
         "coverage": {
@@ -21669,33 +21734,53 @@
         }
       },
       "state": "open",
-      "status": "SOURCE_CANDIDATE_VALID_PRODUCER_REPRODUCTION_OPEN",
+      "status": "COMMITTED_FOCUSED_DUEL_REGRESSION_PASS_NEXT_DELIVERY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "No implementation, commit or delivery yet."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_010.md"
+        ],
+        "scope": "Tested late-duel commit546dfe48e3a4c04e118d1055ec7624ec91da2dbc requires publication and exact NEXT delivery; served7ac predates this fix."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "trusted_parent_cleanup_stop_and_bug_continuation",
+          "reference": "Parent delegation01a1a147-7f07-7583-baf0-771a839f1013",
+          "summary": "Continue catalog flow and late-duel investigation outside paused item/scenario scope. Erik says continue playtesting/fixingissues;cleanupisstopped.Preserveallfiles. Sourcecurrentmain9b8ef678,servedstatus7ac1b6b2; no new acceptance claimed from status alone."
+        },
+        {
+          "kind": "real_producer_baseline_and_canonical_regression",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Baseline13 failed checks with actual rejected direct transition installed after natural flush; unchanged external4cases and maintained4cases pass after repair. Baseline and all owned saves retained."
+        }
+      ],
       "implementation_batches": [],
-      "next_action": "Reproduce the separate late duel-surface helper failure with a valid current producer state. Distinguish queued autosave from an actual write and qualify direct/outer recovery; source evidence alone is not a proven persisted defect.",
+      "next_action": "Publish the qualified duel bug commit through authorized main and existing watcher, then verify exact deployed source/assets. Complete remaining wrapper-focused compatibility and maintained Systems-stage evidence without weakening guards.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker; proposal and focused native qualification in progress. Paused feature objectives remain unchanged.",
+        "description": "No external blocker to this scoped active investigation/verification. Latest parent explicitly stops cleanup while playtesting and issue fixes continue; no new general module hold is inferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T00:58:50.638981+00:00",
+        "observed_at": "2026-11-05T04:34:02.257639+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-009",
@@ -21724,8 +21809,10 @@
             "id": "exact-next",
             "description": "Verify exact deployed source/tree/provenance/assets and relevant launch/behavior evidence.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_010.md"
+            ]
           }
         ],
         "coverage": {
@@ -21734,8 +21821,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21769,12 +21856,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
@@ -21786,22 +21874,32 @@
           "kind": "combined_main_integration009",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Concurrentmain0e93f761f864a3bb844fabda48efe05f63792a98 preservedbyidentitymerge;all11auditsourcesand2peerfilesexact. Peerordinaryownedpractice107checksPASS;initialprivate-rootguardreceiptretained;allownedJobs0. Publication/qualifiedNEXTstillpending."
+        },
+        {
+          "kind": "trusted_parent_cleanup_stop_and_bug_continuation",
+          "reference": "Parent delegation01a1a147-7f07-7583-baf0-771a839f1013",
+          "summary": "Continue catalog flow and late-duel investigation outside paused item/scenario scope. Erik says continue playtesting/fixingissues;cleanupisstopped.Preserveallfiles. Sourcecurrentmain9b8ef678,servedstatus7ac1b6b2; no new acceptance claimed from status alone."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
@@ -21843,8 +21941,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21860,34 +21958,40 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
@@ -21928,8 +22032,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
+      "state": "complete",
+      "status": "SCOPED_ACCEPTANCE_AND_EXACT_NEXT_7AC_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21945,34 +22049,40 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md",
+          "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
+        "scope": "Associated qualified source is in exact served7ac1b6b2/tree73464a34. Metadata/redirect/BUILD/manifest/REF/VERSION, archive provenance/PCK and4payloadHEADs pass. Basic correct-version browser menu with0consoleerrors; changed-behavior evidence remains the scoped phase009 native checks. No full wrapper, full180diagnostic or Web gameplay claim."
       },
       "evidence": [
         {
           "kind": "final009_canonical_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        },
+        {
+          "kind": "exact_previous_source_release",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Independent artifact/source lineage and task-owned browser launch qualification; historical reserve blocker resolved for this delivered source."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
+      "next_action": "Scoped acceptance complete with associated commits and exact NEXT7ac proof. Preserve evidence; parent audit and separate catalog/late-duel work remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "disk_reserve",
-        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "observed_at": "2026-11-05T04:53:40.303763+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:18:46.828157+00:00"
+      "updated_at": "2026-11-05T04:53:40.303763+00:00"
     },
     {
       "id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
