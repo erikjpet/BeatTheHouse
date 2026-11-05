@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T04:53:40.303763+00:00",
+  "observed_at": "2026-11-05T05:21:46.067608+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus 5 nonce-bound task6 closing-fallback native qualification Jobs, actual owned-zero closures; all prior records unchanged and not re-observed, no files cleared.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -19,7 +19,8 @@
       "docs/testing/roulette_sealed_pending_r08.json",
       "docs/testing/blackjack_draft_risk_notice_20261105.json",
       "docs/testing/pulltabs_journal_currency_20261105.json",
-      "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+      "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+      "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
     ]
   },
   "instances": [
@@ -10045,6 +10046,421 @@
           "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
         "limit": "Own focused diagnostic or maintained inner-stage only; failures/timeouts remain failures. Prior files, logs, fixtures and saves retained. No peers stopped."
+      }
+    },
+    {
+      "instance_id": "task6:closing-fallback-baseline:1f838dc0794542f9b6777876c2d8db2d",
+      "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "1f838dc0794542f9b6777876c2d8db2d",
+        "key": "owned-native-job:1f838dc0794542f9b6777876c2d8db2d:pid:7428",
+        "started_at": "2026-11-05T05:06:02.535254+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T05:06:05.585437+00:00",
+        "key": "owned-native-job:1f838dc0794542f9b6777876c2d8db2d:pid:7428",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T05:06:05.585437+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T05:06:05.585437+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "1f838dc0794542f9b6777876c2d8db2d",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T05:06:05.585437+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:closing-fallback-repro:b4783539dd3245ee9746a073e5e21985",
+      "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "b4783539dd3245ee9746a073e5e21985",
+        "key": "owned-native-job:b4783539dd3245ee9746a073e5e21985:pid:30640",
+        "started_at": "2026-11-05T05:07:04.887071+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T05:07:35.671701+00:00",
+        "key": "owned-native-job:b4783539dd3245ee9746a073e5e21985:pid:30640",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T05:07:35.671701+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T05:07:35.671701+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "b4783539dd3245ee9746a073e5e21985",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T05:07:35.671701+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:closing-fallback-repro-generated:d802d540474c44a9bd28db5bec85bfb0",
+      "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d802d540474c44a9bd28db5bec85bfb0",
+        "key": "owned-native-job:d802d540474c44a9bd28db5bec85bfb0:pid:20984",
+        "started_at": "2026-11-05T05:10:13.289526+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T05:10:45.876401+00:00",
+        "key": "owned-native-job:d802d540474c44a9bd28db5bec85bfb0:pid:20984",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T05:10:45.876401+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T05:10:45.876401+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d802d540474c44a9bd28db5bec85bfb0",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T05:10:45.876401+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:closing-fallback-producer:9809c8d9df2b4df0b2c162b00b1ad09f",
+      "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "9809c8d9df2b4df0b2c162b00b1ad09f",
+        "key": "owned-native-job:9809c8d9df2b4df0b2c162b00b1ad09f:pid:34164",
+        "started_at": "2026-11-05T05:16:38.328358+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T05:17:14.640226+00:00",
+        "key": "owned-native-job:9809c8d9df2b4df0b2c162b00b1ad09f:pid:34164",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T05:17:14.640226+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T05:17:14.640226+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "9809c8d9df2b4df0b2c162b00b1ad09f",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T05:17:14.640226+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:closing-fallback-cold:73855bdfaa064fe59b3ecbec1672a4f6",
+      "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "73855bdfaa064fe59b3ecbec1672a4f6",
+        "key": "owned-native-job:73855bdfaa064fe59b3ecbec1672a4f6:pid:33428",
+        "started_at": "2026-11-05T05:18:11.606684+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T05:18:24.862857+00:00",
+        "key": "owned-native-job:73855bdfaa064fe59b3ecbec1672a4f6:pid:33428",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T05:18:24.862857+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T05:18:24.862857+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "73855bdfaa064fe59b3ecbec1672a4f6",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T05:18:24.862857+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
       }
     }
   ],
