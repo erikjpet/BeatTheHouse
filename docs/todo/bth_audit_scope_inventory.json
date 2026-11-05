@@ -1656,6 +1656,45 @@
       ],
       "full_objective_complete": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_008.md"
+    },
+    {
+      "phase": "009",
+      "parent_id": "BTH061-AUDIT-001",
+      "source_commit": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "scope": "Current-interface baseline diagnosis, obsolete fixture replacement and exact UI presentation rollback; no paused feature work.",
+      "source_paths": [
+        "scripts/ui/foundation_main.gd",
+        "scripts/ui/environment_interaction_controller.gd",
+        "scripts/ui/scenario_semantic_view_model.gd",
+        "scripts/ui/pixel_scene_canvas.gd",
+        "scripts/tests/foundation/scenario_sequence_contract.gd",
+        "scripts/tests/foundation/env06_8_environment_readability_contract.gd",
+        "scripts/tests/foundation/scenario_presentation_contract.gd",
+        "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+        "scripts/tests/fixtures/current_projection_fixture.gd",
+        "scripts/tests/actor_route_physical_distance_check.gd",
+        "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd"
+      ],
+      "canonical_sequence_failures_before": 19,
+      "canonical_sequence_failures_after": 0,
+      "original575_failure_lines_exact": true,
+      "hidden_part3_before": 8,
+      "hidden_part3_after": 0,
+      "all_four_partitions_pass": true,
+      "ui_legacy_candidate_unapplied": false,
+      "full_objective_complete": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_009.md",
+      "source_commits": [
+        "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+        "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+        "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e"
+      ],
+      "ui_methods_removed": 18,
+      "ui_method_lines_removed": 359,
+      "migrated_calls": 19,
+      "retained88_ui_method_blocks_exact": true,
+      "canonical_static_baseline_before": 5,
+      "canonical_static_final": 0
     }
   ]
 }

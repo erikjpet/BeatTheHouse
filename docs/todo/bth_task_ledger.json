@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T00:32:51.161088+00:00",
+  "updated_at": "2026-11-05T01:59:16.819058+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "RESUMED_SCOPE_AND_CHECK_REPAIRS_IN_PROGRESS",
+      "status": "WHOLE_CODEBASE_AUDIT_CONTINUES_009_SCOPED_REPAIRS_COMMITTED",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13651,6 +13651,24 @@
           "evidence": [
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
           ]
         }
       ],
@@ -13718,17 +13736,17 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue incomplete current source/consumer audit and separately tracked baseline findings outside paused feature work. Current008sourcefix isdelivered; CONTENT006latersemantic timeout and SEQUENCEBASELINE008nineteenassertions remainOpen; no new intentionalhold.",
+      "next_action": "Continue current consumer/semantic coverage and qualify the separate late duel-surface/autosave-request boundary. Phase009 obsolete projection removal and baseline repairs are committed; whole-codebase coverage, original-order180catalog and exactNEXT delivery remain Open. Preserve named paused feature work.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
+        "observed_at": "2026-11-05T00:42:08.576967+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:32:51.161088+00:00"
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -19441,13 +19459,20 @@
         }
       },
       "state": "open",
-      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -19460,20 +19485,47 @@
           "kind": "exact_original_base_reproduction",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. The original-base recovery_loss_pressure_foundation reports a post-action Health Inspector interruption failing to reroute into forced travel. Localize the old fixture versus current interruption contract using equivalent state; preserve paused scenario implementation and all existing assertions."
+        },
+        {
+          "kind": "current_canonical_forced_travel_fixture_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "The retained Health Inspector assertion now reaches the intended current venue-scoped forced-travel rejection and passes in the complete canonical sequence. Original old group evidence is preserved; no unrelated interruption acceptance is invented."
+        },
+        {
+          "kind": "current_canonical_forced_travel_fixture_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "The retained Health Inspector assertion now reaches the intended current venue-scoped forced-travel rejection and passes in the complete canonical sequence. Original old group evidence is preserved; no unrelated interruption acceptance is invented."
+        },
+        {
+          "kind": "current_canonical_forced_travel_fixture_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "The retained Health Inspector assertion now reaches the intended current venue-scoped forced-travel rejection and passes in the complete canonical sequence. Original old group evidence is preserved; no unrelated interruption acceptance is invented."
+        },
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Insufficient shared disk reserve for export: 12936171520 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:53:05.677951+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T01:23:21.424691+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:53:05.677951+00:00"
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
     },
     {
       "id": "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
@@ -20438,7 +20490,7 @@
         }
       },
       "state": "open",
-      "status": "SUBSTANTIVE_REPAIR_QUALIFIED_LATER_SEMANTIC_TIMEOUT_OPEN",
+      "status": "FOCUSED_CANONICAL_BASELINES_CLOSED_FULL180_FLOW_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20455,6 +20507,24 @@
           "sha": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        },
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
           ]
         }
       ],
@@ -20508,19 +20578,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified command-change detector child. Continue original-order180second attribution inside the later semantic-presentation group; keep semanticinventory/arrival/finalfingerprints/Scratch and19canonicalbaselineassertions Open. Do not claim the whole catalog passed.",
+      "next_action": "Profile substantive remaining whole-flow cost without changing the original180second command limit, predecessors, hidden profiles, assertions or final fingerprints. Existing canonical partitioned acceptance passes; no whole original-ordercatalog/Scratchpass follows from it.",
       "blocker": {
         "state": "active",
-        "kind": "later_semantic_presentation_censored_after38_sequence_steps",
-        "description": "The unchanged180second full command nowreturnsall38sequence steps andenterslatersemanticpresentation beforecapping. Completecatalog/finalfingerprints/Scratch remainunobserved. Canonicalsequence itself completeswith19failures exactlypresentonoriginalRuntime; separate baseline followup registered. No user hold.",
+        "kind": "full180_hidden_matrix_observation_limit",
+        "description": "Original-orderwholecommandcappedwithinfirsthiddenobserver; independentcomplete-semantic180runadvancedto pawn_shop_sals_mood butdidnotreturn. Someunpairedtracesareoriginalearlyreturns, notactivehangs. Existingcanonicalpartition3completeswith8then0aftertestsetuprepair. Wholecatalog/finalfingerprints/Scratchremainunobserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T00:16:40.251041+00:00",
+        "observed_at": "2026-11-05T01:23:21.424691+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_008.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:21:38.293030+00:00"
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -21115,15 +21185,18 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_008.md"
+              "docs/testing/deprecated_code_audit_continuation_008.md",
+              "docs/testing/deprecated_code_audit_continuation_009.md"
             ]
           },
           {
             "id": "diagnosis-qualified-repair",
             "description": "Classify each cluster against current owning interfaces and qualify scoped fixes with associated commits without weakening assertions.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
           }
         ],
         "coverage": {
@@ -21133,7 +21206,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_ORIGINAL_CANDIDATE_19_FAILURES_BASELINE_PROVEN_OPEN",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21144,6 +21217,12 @@
           "sha": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        },
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
           ]
         }
       ],
@@ -21161,22 +21240,721 @@
           "kind": "exact_original_canonical_failure_parity",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
           "summary": "OriginalRuntimeef6ccc15 andcandidate1f2c5516 withsamecanonicalrunner00a72c01 produceexact19orderedfailures. Selectedcheck73.036s/63.633s, no timeout/parseerror, bothJobs0. ExistingINTERRUPT004forcedtravel findingoverlapsoneassertion; thisnewrecordretainsthecompletebroader19."
+        },
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace current lifecycle snapshot/presentation-only hooks and EventModule fact delivery against the retained exact fixtures, then split genuine production versus stale-fixture repairs. Preserve original19receipt and existing HealthInspector followup; do not markfullsuite green.",
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker;19baselinefindings need current owning-interface diagnosis. Existing named pause boundaries remain separate; no new module-wide hold is inferred.",
+        "description": "Insufficient shared disk reserve for export: 12936171520 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T00:16:40.251041+00:00",
+        "observed_at": "2026-11-05T01:23:21.424691+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_008.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:21:38.293030+00:00"
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-FIXTURE-AUTHORITY-009",
+      "name": "Replace obsolete sequence test setup with current authority producers",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001",
+        "BTH061-AUDIT-SEQUENCE-BASELINE-008"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Remove obsolete hand-installed passive room geometry and incomplete synthetic fixture state from the inherited sequence checks. Use current room membership, finalization, publication and authored subscription owners while preserving every original assertion and causal/replay/rollback expectation.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "name": "Fix exact presentation rollback and terminal error delivery",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001",
+        "BTH061-AUDIT-SEQUENCE-BASELINE-008"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Fix the demonstrated duplicate layer failure notification and TalkDock typewriter restart during world-map rollback. Preserve complete lifecycle state, connected coach/tweens, current caller contracts and one terminal error, with focused and full-sequence regression evidence.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "name": "Qualify removal of superseded UI projection implementation",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Close current consumer and semantic-test migration before removing the test-only legacy nonfinalized UI projection adapters and old SemanticViewModel composer methods. Retain active finalized authority and actor/action token helpers; preserve literal identity differences as current-owner migration requirements rather than claim byte parity.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
+      "name": "Classify current paired observer wrong-scenario failures",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001",
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Diagnose the eight wrong-scenario assertions in the unchanged canonical hidden partition 3: jazz_club_recording_night and kitty_cat_lounge_slow_night under all four profiles. Preserve independent complete public-state traversals and current pin/layer ownership; distinguish stale fixture setup from a production selection defect before repair.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+      "name": "Qualify late duel surface failure boundary",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001",
+        "BTH061-AUDIT-SEQUENCE-BASELINE-008"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the separate reachable-code candidate where duel success feedback and an autosave request precede a potentially failing duel-surface helper. Distinguish prepared/queued autosave from an actual persisted write, reproduce with a valid producer state, and qualify direct and outer caller recovery before proposing a repair. This is source evidence only, not a proven player-state defect.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_CANDIDATE_VALID_PRODUCER_REPRODUCTION_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No implementation, commit or delivery yet."
+      },
+      "evidence": [],
+      "implementation_batches": [],
+      "next_action": "Reproduce the separate late duel-surface helper failure with a valid current producer state. Distinguish queued autosave from an actual write and qualify direct/outer recovery; source evidence alone is not a proven persisted defect.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No external blocker; proposal and focused native qualification in progress. Paused feature objectives remain unchanged.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T00:58:50.638981+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PUBLISH-NEXT-009",
+      "name": "Deliver phase009 audit repairs to NEXT",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Follow the committed phase009 repairs and qualified cleanup through the existing authorized main-to-NEXT watcher; verify exact served source/tree/assets and changed behavior where feasible without bypassing disk/import/CPU guards.",
+        "source": "Standing trusted user authorization: Yes push all finished work to next; current parent audit continuation.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "qualified-source",
+            "description": "Associated scoped source commit has focused canonical native qualification.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "exact-next",
+            "description": "Verify exact deployed source/tree/provenance/assets and relevant launch/behavior evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "THREE_QUALIFIED_SOURCE_COMMITS_NEXT_OWNED_RELEASE_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Associated source41c6384f qualified natively; exact NEXT delivery is not yet verified."
+      },
+      "evidence": [
+        {
+          "kind": "phase009_canonical_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish the qualified source commits and preserved concurrent main work, then verify exact NEXT source/tree/assets/launch through the existing release owner when status permits. Do not restart or bypass the separately owned pipeline.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Observed status automation=enabled, updated=2026-11-05T01:59:10Z; last error=No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
+      "name": "Classify canonical static semantic geometry failures",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001",
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Compare the five canonical static semantic geometry assertions against exact pre-removal code and trace their current presentation, retained canvas and scenario-refresh owners. Preserve all assertions, authored-lane timing and callback checks; distinguish obsolete fixture assumptions from production defects before repair.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
+      "name": "Align actor route motion with authored physical distances",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-SEMANTIC-BASELINE-009"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify the renderer distance-metric mismatch: non-square board route duration and public midpoint use physical pixel distances while the renderer weights normalized segment lengths. Preserve points, lanes, sealed duration, endpoints, reduced motion, ping-pong and autonomous scheduling; verify actual draw/hit midpoint without weakening the existing assertion.",
+        "source": "Current phase009 original/candidate observations and current owning-interface source review under trusted parent continuation of deprecated-code audit.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-ownership-proof",
+            "description": "Trace every changed boundary and preserve relevant authority, input ownership and expected semantics.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          },
+          {
+            "id": "native-regression",
+            "description": "Qualify focused current checks and retain full-sequence failures without assertion weakening; associate actual commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_009.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ],
+        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+      },
+      "evidence": [
+        {
+          "kind": "final009_canonical_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Associated tested source: sequence19to0; allfourhiddenpartitionsPASS; obsoleteUI18methods/359linesremovedand19callersmigrated,88retainedbodiesrawexact; static5originalbaseline now0 afterqualifiedgeometryoracles+physicalroutemetric,15regressioncases/restore/archiveparse/livenessPASS. Individualsourceepochs/scopes retained; whole180flow andNEXTremainOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_owned_release_qualification",
+        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:59:16.819058+00:00"
     }
   ],
   "batches": [

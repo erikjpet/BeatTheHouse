@@ -1,0 +1,4300 @@
+{
+  "phase": "009",
+  "observed_at": "2026-11-05T01:23:21.424691+00:00",
+  "source_commit": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+  "umbrella_complete": false,
+  "source_repair": {
+    "scripts/ui/foundation_main.gd": {
+      "original_raw_sha256": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+      "candidate_raw_sha256": "85843be981cd6abf139fc19b6bb8e3dbf410963fb601b20932764e5367bcfe15",
+      "original_top_level_methods": 1309,
+      "candidate_top_level_methods": 1309,
+      "raw_exact_other_methods": 1303,
+      "changed_top_level_methods": [
+        "confirm_world_map_travel",
+        "_complete_event_choice_resolution",
+        "_coach_lifecycle_snapshot",
+        "_restore_coach_lifecycle_snapshot",
+        "_restore_talk_dock_lifecycle_snapshot",
+        "_travel_to"
+      ],
+      "added_top_level_methods": [],
+      "removed_top_level_methods": []
+    },
+    "scripts/tests/foundation/scenario_sequence_contract.gd": {
+      "original_raw_sha256": "2f0a8fc26e79f03f86cfe32b7286ddafa59d661dc54286f7e59860c8e2f974f0",
+      "candidate_raw_sha256": "a2f0111a5d289922d4531b8933838faebee66adee438d8a8c4ae135cea8f0a1e",
+      "original_top_level_methods": 89,
+      "candidate_top_level_methods": 91,
+      "raw_exact_other_methods": 86,
+      "changed_top_level_methods": [
+        "_check_lifecycle_caller_failure_contract",
+        "_check_lifecycle_finalization",
+        "_delivery_event_module_run_state"
+      ],
+      "added_top_level_methods": [
+        "_prepare_lifecycle_fixture_room",
+        "_prepare_lifecycle_world_map_presentation"
+      ],
+      "removed_top_level_methods": []
+    },
+    "original_failure_append_lines": 575,
+    "all_original_failure_append_lines_exact": true,
+    "sequence_nested_change": "LifecycleRejectingGenerator.travel_environment_result now creates the current owned destination instead of a bare home dictionary.",
+    "guards_unchanged": true,
+    "runtime_raw_sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+    "main_reviewed_candidate_normalized_byte_exact": true,
+    "main_reviewed_candidate_eol": "Evidence candidate LF; canonical original/current CRLF. Whole-file LF normalization is exact.",
+    "qualification": "Copied-resource focused passes; canonical maintained sequence qualification pending."
+  },
+  "canonical_sequence": [
+    {
+      "duration_msec": 64209,
+      "failure_count": 0,
+      "failures": [],
+      "id": "scenario_sequence_contract",
+      "passed": true
+    }
+  ],
+  "paired_observer_partitions": [
+    {
+      "partition": 0,
+      "passed": true,
+      "checks": [
+        {
+          "duration_msec": 44365,
+          "failure_count": 0,
+          "failures": [],
+          "id": "scenario_semantic_hidden_contract_0",
+          "passed": true
+        }
+      ],
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content009-hidden-part0-canonical-r2\\result.json"
+    },
+    {
+      "partition": 1,
+      "passed": true,
+      "checks": [
+        {
+          "duration_msec": 49450,
+          "failure_count": 0,
+          "failures": [],
+          "id": "scenario_semantic_hidden_contract_1",
+          "passed": true
+        }
+      ],
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content009-hidden-part1-canonical-r2\\result.json"
+    },
+    {
+      "partition": 2,
+      "passed": true,
+      "checks": [
+        {
+          "duration_msec": 41917,
+          "failure_count": 0,
+          "failures": [],
+          "id": "scenario_semantic_hidden_contract_2",
+          "passed": true
+        }
+      ],
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content009-hidden-part2-canonical-r2\\result.json"
+    },
+    {
+      "partition": 3,
+      "passed": true,
+      "checks": [
+        {
+          "duration_msec": 38304,
+          "failure_count": 0,
+          "failures": [],
+          "id": "scenario_semantic_hidden_contract_3",
+          "passed": true
+        }
+      ],
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content009-hidden-part3-canonical-r2\\result.json"
+    }
+  ],
+  "all_four_partitions_pass": true,
+  "baseline_failure_count": 19,
+  "all575_failure_assertion_lines_unchanged": true,
+  "liveness": "PASS",
+  "original_order_profile": {
+    "name": "content009-profile-r1",
+    "job_closed": true,
+    "whole_process_cap_seconds": 180,
+    "timed_out": true,
+    "script_error": false,
+    "active_at_release": 0,
+    "events": 295,
+    "completed": [
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "init_content_load",
+        "detail": "",
+        "seconds": 16.981001
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "init_fixture_library",
+        "detail": "",
+        "seconds": 0.000648
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "init_content_fingerprint",
+        "detail": "",
+        "seconds": 0.045864
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "init_fixture_fingerprint",
+        "detail": "",
+        "seconds": 0.000292
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_canonical_pack_paths",
+        "seconds": 0.000631
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_player_facing_description_copy",
+        "seconds": 0.001773
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_destination_decision_contract",
+        "seconds": 0.000592
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_release_copy_style_blockers",
+        "seconds": 0.863888
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_content_art_presentation",
+        "seconds": 0.009025
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_blackjack_item_content",
+        "seconds": 0.189791
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_m2_pack_availability",
+        "seconds": 0.000451
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_tier_two_venue_progression",
+        "seconds": 5.754038
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_baccarat_grand_casino_only",
+        "seconds": 0.00014
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_environment_game_pool_distribution",
+        "seconds": 1.755876
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_physical_game_fixture_capacity",
+        "seconds": 0.085687
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_environment_encounter_freshness",
+        "seconds": 0.428584
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_travel_unlock_event_copy",
+        "seconds": 0.001208
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_high_risk_table_limit_overrides",
+        "seconds": 0.013012
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_environment_open_hours",
+        "seconds": 0.000761
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_dialogue_system_content",
+        "seconds": 0.000278
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_talk_content_pass_content",
+        "seconds": 0.088809
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_content_validation_boot_surfacing",
+        "seconds": 0.05809
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_t4_3_event_pack",
+        "seconds": 1.792429
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_action_trigger_candidate_index",
+        "seconds": 0.007572
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_t4_4_item_pack",
+        "seconds": 0.233627
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_content_group_modularity",
+        "seconds": 0.031488
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_challenge_pack_content",
+        "seconds": 0.000568
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_s0_2_baseline_regression_fixtures",
+        "seconds": 0.026027
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_core_child",
+        "detail": "_check_sa_2_per_frame_contracts",
+        "seconds": 0.607023
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_content_core",
+        "seconds": 11.952461
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_content_scenario_engine",
+        "seconds": 26.474701
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_punchline_layer_contract",
+        "seconds": 7.773892
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_tier2_scenario_contract",
+        "seconds": 15.863712
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_scenario_backlog_contract",
+        "seconds": 12.966371
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_schema",
+        "seconds": 0.068894
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_public_projection_privacy",
+        "seconds": 0.014291
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_catalog_rollout",
+        "seconds": 5.672174
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_registered_operations",
+        "seconds": 0.111292
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_interaction_identity",
+        "seconds": 0.014054
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_semantic_inventory",
+        "seconds": 0.160142
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_base_semantic_producer",
+        "seconds": 0.008614
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_finalization",
+        "seconds": 4.388526
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_event_popup_button_release_recovery",
+        "seconds": 0.040216
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_caller_failure_contract",
+        "seconds": 1.763737
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_negative_fixtures",
+        "seconds": 0.426661
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_commands",
+        "seconds": 0.104973
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_created_owner_command_authority",
+        "seconds": 0.055493
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_augment_availability",
+        "seconds": 0.054442
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_boundary_provenance",
+        "seconds": 0.073523
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_mutually_exclusive_branch_cleanup",
+        "seconds": 0.135705
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_handler_reducer_contracts",
+        "seconds": 0.169271
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_serialized_fact_ingress",
+        "seconds": 0.08356
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_run_state_fact_subscription_routing",
+        "seconds": 5.620841
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_atomic_runtime_failures",
+        "seconds": 0.107819
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_sequence_persistence_seam",
+        "seconds": 0.043166
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_policy_matrix",
+        "seconds": 0.290113
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_save_service_phase_matrix",
+        "seconds": 0.737934
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_receipt_reconstruction",
+        "seconds": 0.604247
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_depth_remediation_contracts",
+        "seconds": 2.38059
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_authoritative_receipt_capacity",
+        "seconds": 17.586377
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_completion_evidence",
+        "seconds": 0.047083
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_extension_dispatch",
+        "seconds": 0.002195
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_definition_validation_receipt",
+        "seconds": 0.020399
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_suppressed_sequence_compatibility",
+        "seconds": 8.686617
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_transition_and_event_delivery",
+        "seconds": 0.133273
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_rollout_growth_contract",
+        "seconds": 3.892535
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_delivery_day_production_package",
+        "seconds": 6.549948
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_delivery_day_world_map_route_install",
+        "seconds": 1.043465
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_executable_evidence_contract",
+        "seconds": 0.03995
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_material_projection",
+        "seconds": 0.014904
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "ScenarioPresentationContractScript.check",
+        "seconds": 0.211121
+      },
+      {
+        "prefix": "CONTENT_PROFILE008_SEQUENCE",
+        "stage": "sequence_child",
+        "detail": "_check_host_transaction_seam",
+        "seconds": 0.131446
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_scenario_sequence_contract",
+        "seconds": 61.491593
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_scenario_definitions",
+        "seconds": 0.047289
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_delivery_day",
+        "seconds": 0.010084
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_lotto_fever",
+        "seconds": 0.006357
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_aftermath",
+        "seconds": 0.007249
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_dead_shift",
+        "seconds": 0.010534
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_inventory_night",
+        "seconds": 0.006372
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_street_craps",
+        "seconds": 0.0065
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_cruiser_parked",
+        "seconds": 0.006341
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_fence_night",
+        "seconds": 0.006291
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_nothing_moving",
+        "seconds": 0.006331
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_conventioneers",
+        "seconds": 0.008572
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_stakeout",
+        "seconds": 0.00754
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_weekly_rates",
+        "seconds": 0.008997
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_wedding_overflow",
+        "seconds": 0.008918
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_wake",
+        "seconds": 0.008236
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_fight_night",
+        "seconds": 0.013223
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_payday_rush",
+        "seconds": 0.009023
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_lock_in",
+        "seconds": 0.011626
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_darts_league_night",
+        "seconds": 0.013806
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_live_band",
+        "seconds": 0.011455
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_dead_tuesday",
+        "seconds": 0.006893
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_trucker_convoy",
+        "seconds": 0.008952
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_tour_bus_stop",
+        "seconds": 0.008521
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_graveyard_shift",
+        "seconds": 0.009565
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_road_crew_payday",
+        "seconds": 0.008626
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_storm_shelter",
+        "seconds": 0.009695
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_open_mic_night",
+        "seconds": 0.010357
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_headliner_night",
+        "seconds": 0.012034
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_bringer_show",
+        "seconds": 0.01045
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_high_stakes_night",
+        "seconds": 0.010688
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_greased_week",
+        "seconds": 0.012214
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_debt_court",
+        "seconds": 0.011329
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_new_muscle",
+        "seconds": 0.012352
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_raid_jitters",
+        "seconds": 0.012275
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_guest_legend",
+        "seconds": 0.013965
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_rent_party",
+        "seconds": 0.012689
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_recording_night",
+        "seconds": 0.01079
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_union_trouble",
+        "seconds": 0.010764
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_amateur_night",
+        "seconds": 0.012974
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_buyout",
+        "seconds": 0.012606
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_slow_night",
+        "seconds": 0.010888
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_bachelorette_storm",
+        "seconds": 0.015485
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_wedding_charter",
+        "seconds": 0.012259
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_whale_aboard",
+        "seconds": 0.012288
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_fog_delay",
+        "seconds": 0.011805
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_engine_trouble",
+        "seconds": 0.013606
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_captains_invitational",
+        "seconds": 0.014147
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_bonfire_night",
+        "seconds": 0.008914
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_storm_coming",
+        "seconds": 0.009646
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_festival_weekend",
+        "seconds": 0.010877
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_estate_lot_day",
+        "seconds": 0.006613
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_serial_check_day",
+        "seconds": 0.006638
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_sals_mood",
+        "seconds": 0.006743
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_gala_night",
+        "seconds": 0.01248
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_convention_crowd",
+        "seconds": 0.012681
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_audit_night",
+        "seconds": 0.012518
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "definition_census_and_prose",
+        "seconds": 0.588043
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "census_assertions",
+        "seconds": 9.6e-05
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_consequence_handler_contracts",
+        "seconds": 0.001208
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_layout_validation_scope",
+        "seconds": 0.000584
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_icon_vocabulary",
+        "seconds": 0.000535
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_physical_icon_authoring",
+        "seconds": 0.060416
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_read_only_visual_composition",
+        "seconds": 0.000305
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_presentation_records",
+        "seconds": 0.047438
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_hidden_late_description_hostile",
+        "seconds": 0.000385
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_repeated_stock_sentences",
+        "seconds": 0.003961
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_generated_prose_hostiles",
+        "seconds": 0.000159
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_partial_scenario_save_restore",
+        "seconds": 4.091776
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|clean",
+        "seconds": 1.033538
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|turn_and_grievance",
+        "seconds": 0.642921
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|rigged_numbers",
+        "seconds": 0.637692
+      }
+    ],
+    "unpaired_observations": [
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "check_callable",
+        "detail": "content",
+        "entered_engine_usec": 34946147
+      },
+      {
+        "prefix": "CONTENT_PROFILE007",
+        "stage": "content_child",
+        "detail": "_check_scenario_semantic_presentation_contract",
+        "entered_engine_usec": 171469348
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_SEMANTIC",
+        "stage": "semantic_child",
+        "detail": "Env068EnvironmentReadabilityContractScript.check",
+        "entered_engine_usec": 171469372
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_hidden_state_neutrality",
+        "entered_engine_usec": 176312113
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_delivery_day",
+        "entered_engine_usec": 176312560
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|unrevealed_tickets",
+        "entered_engine_usec": 178639450
+      }
+    ],
+    "unpaired_limit": "Some original observer early returns omit after events; unpaired events are not all active at timeout. Only the terminal log establishes the final observed location. Returned checks do not imply passed assertions.",
+    "last_trace_events": [
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day",
+        "phase": "hidden_scenario:before",
+        "ticks_usec": 176312560
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|clean",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 176312665
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|clean",
+        "phase": "hidden_observer:after",
+        "ticks_usec": 177346203
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|turn_and_grievance",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 177350279
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|turn_and_grievance",
+        "phase": "hidden_observer:after",
+        "ticks_usec": 177993200
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|rigged_numbers",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 177997354
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|rigged_numbers",
+        "phase": "hidden_observer:after",
+        "ticks_usec": 178635046
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "corner_store_delivery_day|unrevealed_tickets",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 178639450
+      }
+    ],
+    "assertion_pass_inferred_from_return": false,
+    "clock_limit": "Durations use paired engine ticks; absolute engine ticks are not whole-job wall offsets."
+  },
+  "independent_semantic_profile": {
+    "name": "content009-semantic-direct-r1",
+    "job_closed": true,
+    "whole_process_cap_seconds": 180,
+    "timed_out": true,
+    "script_error": false,
+    "active_at_release": 0,
+    "events": 664,
+    "completed": [
+      {
+        "prefix": "CONTENT_PROFILE009_DIRECT",
+        "stage": "library_load",
+        "detail": "canonical ContentLibrary.load()",
+        "seconds": 17.08564
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_scenario_definitions",
+        "seconds": 0.05083
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_delivery_day",
+        "seconds": 0.010432
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_lotto_fever",
+        "seconds": 0.006395
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_aftermath",
+        "seconds": 0.006212
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_dead_shift",
+        "seconds": 0.006309
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "corner_store_inventory_night",
+        "seconds": 0.006832
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_street_craps",
+        "seconds": 0.006807
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_cruiser_parked",
+        "seconds": 0.006583
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_fence_night",
+        "seconds": 0.006482
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "back_alley_nothing_moving",
+        "seconds": 0.006552
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_conventioneers",
+        "seconds": 0.009737
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_stakeout",
+        "seconds": 0.007816
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_weekly_rates",
+        "seconds": 0.009387
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "motel_wedding_overflow",
+        "seconds": 0.009022
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_wake",
+        "seconds": 0.00854
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_fight_night",
+        "seconds": 0.014037
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_payday_rush",
+        "seconds": 0.008792
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_lock_in",
+        "seconds": 0.011985
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_darts_league_night",
+        "seconds": 0.0141
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_live_band",
+        "seconds": 0.012019
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "bar_dead_tuesday",
+        "seconds": 0.007238
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_trucker_convoy",
+        "seconds": 0.009117
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_tour_bus_stop",
+        "seconds": 0.008889
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_graveyard_shift",
+        "seconds": 0.010006
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_road_crew_payday",
+        "seconds": 0.009023
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "gas_station_storm_shelter",
+        "seconds": 0.010141
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_open_mic_night",
+        "seconds": 0.011145
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_headliner_night",
+        "seconds": 0.012568
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_bringer_show",
+        "seconds": 0.010685
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_high_stakes_night",
+        "seconds": 0.011044
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_greased_week",
+        "seconds": 0.012506
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_debt_court",
+        "seconds": 0.011165
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_new_muscle",
+        "seconds": 0.012534
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "punchline_raid_jitters",
+        "seconds": 0.012303
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_guest_legend",
+        "seconds": 0.014378
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_rent_party",
+        "seconds": 0.010702
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_recording_night",
+        "seconds": 0.008946
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "jazz_club_union_trouble",
+        "seconds": 0.010783
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_amateur_night",
+        "seconds": 0.012869
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_buyout",
+        "seconds": 0.012464
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_slow_night",
+        "seconds": 0.011
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "kitty_cat_lounge_bachelorette_storm",
+        "seconds": 0.014941
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_wedding_charter",
+        "seconds": 0.012321
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_whale_aboard",
+        "seconds": 0.01183
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_fog_delay",
+        "seconds": 0.012007
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_engine_trouble",
+        "seconds": 0.014075
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "delta_queen_captains_invitational",
+        "seconds": 0.014469
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_bonfire_night",
+        "seconds": 0.008794
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_storm_coming",
+        "seconds": 0.009774
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "beach_festival_weekend",
+        "seconds": 0.010869
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_estate_lot_day",
+        "seconds": 0.006537
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_serial_check_day",
+        "seconds": 0.006558
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "pawn_shop_sals_mood",
+        "seconds": 0.006728
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_gala_night",
+        "seconds": 0.012574
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_convention_crowd",
+        "seconds": 0.012265
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "definition",
+        "detail": "grand_casino_audit_night",
+        "seconds": 0.012739
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "definition_census_and_prose",
+        "seconds": 0.590281
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "census_assertions",
+        "seconds": 0.000121
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_consequence_handler_contracts",
+        "seconds": 0.001193
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_layout_validation_scope",
+        "seconds": 0.149417
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_icon_vocabulary",
+        "seconds": 0.000588
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_physical_icon_authoring",
+        "seconds": 0.059782
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_read_only_visual_composition",
+        "seconds": 0.000419
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_presentation_records",
+        "seconds": 0.047849
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_hidden_late_description_hostile",
+        "seconds": 0.000399
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_repeated_stock_sentences",
+        "seconds": 0.003959
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_generated_prose_hostiles",
+        "seconds": 0.000158
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_partial_scenario_save_restore",
+        "seconds": 4.936011
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|clean",
+        "seconds": 1.088836
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|turn_and_grievance",
+        "seconds": 0.675732
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|rigged_numbers",
+        "seconds": 0.672705
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_delivery_day|unrevealed_tickets",
+        "seconds": 0.752022
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_delivery_day",
+        "seconds": 3.208243
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_lotto_fever|clean",
+        "seconds": 1.104871
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_lotto_fever|turn_and_grievance",
+        "seconds": 0.706158
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_lotto_fever|rigged_numbers",
+        "seconds": 0.692337
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_lotto_fever|unrevealed_tickets",
+        "seconds": 0.683816
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_lotto_fever",
+        "seconds": 3.207242
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_aftermath|clean",
+        "seconds": 0.974833
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_aftermath|turn_and_grievance",
+        "seconds": 0.588132
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_aftermath|rigged_numbers",
+        "seconds": 0.588231
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_aftermath|unrevealed_tickets",
+        "seconds": 0.590341
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_aftermath",
+        "seconds": 2.760149
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_dead_shift|clean",
+        "seconds": 0.981285
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_dead_shift|turn_and_grievance",
+        "seconds": 0.614595
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_dead_shift|rigged_numbers",
+        "seconds": 0.601583
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_dead_shift|unrevealed_tickets",
+        "seconds": 0.632493
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_dead_shift",
+        "seconds": 2.850285
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_inventory_night|clean",
+        "seconds": 1.070749
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_inventory_night|turn_and_grievance",
+        "seconds": 0.675494
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_inventory_night|rigged_numbers",
+        "seconds": 0.713679
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "corner_store_inventory_night|unrevealed_tickets",
+        "seconds": 0.697134
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "corner_store_inventory_night",
+        "seconds": 3.176857
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_street_craps|clean",
+        "seconds": 0.767789
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_street_craps|turn_and_grievance",
+        "seconds": 0.579314
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_street_craps|rigged_numbers",
+        "seconds": 0.617009
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_street_craps|unrevealed_tickets",
+        "seconds": 0.644853
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "back_alley_street_craps",
+        "seconds": 2.628817
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_cruiser_parked|clean",
+        "seconds": 0.523181
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_cruiser_parked|turn_and_grievance",
+        "seconds": 0.513765
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_cruiser_parked|rigged_numbers",
+        "seconds": 0.556527
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_cruiser_parked|unrevealed_tickets",
+        "seconds": 0.576565
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "back_alley_cruiser_parked",
+        "seconds": 2.187526
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_fence_night|clean",
+        "seconds": 0.537105
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_fence_night|turn_and_grievance",
+        "seconds": 0.56233
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_fence_night|rigged_numbers",
+        "seconds": 0.533945
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_fence_night|unrevealed_tickets",
+        "seconds": 0.51399
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "back_alley_fence_night",
+        "seconds": 2.164642
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_nothing_moving|clean",
+        "seconds": 0.529716
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_nothing_moving|turn_and_grievance",
+        "seconds": 0.531892
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_nothing_moving|rigged_numbers",
+        "seconds": 0.532363
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "back_alley_nothing_moving|unrevealed_tickets",
+        "seconds": 0.531782
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "back_alley_nothing_moving",
+        "seconds": 2.143852
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_conventioneers|clean",
+        "seconds": 0.683608
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_conventioneers|turn_and_grievance",
+        "seconds": 0.67974
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_conventioneers|rigged_numbers",
+        "seconds": 0.675704
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_conventioneers|unrevealed_tickets",
+        "seconds": 0.706758
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "motel_conventioneers",
+        "seconds": 2.763396
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_stakeout|clean",
+        "seconds": 0.676251
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_stakeout|turn_and_grievance",
+        "seconds": 0.674956
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_stakeout|rigged_numbers",
+        "seconds": 0.676489
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_stakeout|unrevealed_tickets",
+        "seconds": 0.677455
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "motel_stakeout",
+        "seconds": 2.724282
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_weekly_rates|clean",
+        "seconds": 0.693076
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_weekly_rates|turn_and_grievance",
+        "seconds": 0.729402
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_weekly_rates|rigged_numbers",
+        "seconds": 0.686118
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_weekly_rates|unrevealed_tickets",
+        "seconds": 0.697818
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "motel_weekly_rates",
+        "seconds": 2.826581
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_wedding_overflow|clean",
+        "seconds": 0.757987
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_wedding_overflow|turn_and_grievance",
+        "seconds": 0.763853
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_wedding_overflow|rigged_numbers",
+        "seconds": 0.764414
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "motel_wedding_overflow|unrevealed_tickets",
+        "seconds": 0.800261
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "motel_wedding_overflow",
+        "seconds": 3.109311
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_wake|clean",
+        "seconds": 1.567666
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_wake|turn_and_grievance",
+        "seconds": 0.65304
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_wake|rigged_numbers",
+        "seconds": 0.689415
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_wake|unrevealed_tickets",
+        "seconds": 0.680821
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_wake",
+        "seconds": 3.611737
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_fight_night|clean",
+        "seconds": 1.143921
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_fight_night|turn_and_grievance",
+        "seconds": 0.664604
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_fight_night|rigged_numbers",
+        "seconds": 0.698162
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_fight_night|unrevealed_tickets",
+        "seconds": 0.693224
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_fight_night",
+        "seconds": 3.224995
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_payday_rush|clean",
+        "seconds": 1.849781
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_payday_rush|turn_and_grievance",
+        "seconds": 0.742732
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_payday_rush|rigged_numbers",
+        "seconds": 0.713837
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_payday_rush|unrevealed_tickets",
+        "seconds": 0.762065
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_payday_rush",
+        "seconds": 4.091507
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_lock_in|clean",
+        "seconds": 1.132263
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_lock_in|turn_and_grievance",
+        "seconds": 0.665562
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_lock_in|rigged_numbers",
+        "seconds": 0.660806
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_lock_in|unrevealed_tickets",
+        "seconds": 0.674402
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_lock_in",
+        "seconds": 3.155397
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_darts_league_night|clean",
+        "seconds": 0.637288
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_darts_league_night|turn_and_grievance",
+        "seconds": 0.646379
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_darts_league_night|rigged_numbers",
+        "seconds": 0.640111
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_darts_league_night|unrevealed_tickets",
+        "seconds": 0.629629
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_darts_league_night",
+        "seconds": 2.575449
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_live_band|clean",
+        "seconds": 0.611573
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_live_band|turn_and_grievance",
+        "seconds": 0.65048
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_live_band|rigged_numbers",
+        "seconds": 0.717225
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_live_band|unrevealed_tickets",
+        "seconds": 0.848981
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_live_band",
+        "seconds": 2.867046
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_dead_tuesday|clean",
+        "seconds": 2.074376
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_dead_tuesday|turn_and_grievance",
+        "seconds": 1.240123
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_dead_tuesday|rigged_numbers",
+        "seconds": 1.057274
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "bar_dead_tuesday|unrevealed_tickets",
+        "seconds": 0.687353
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "bar_dead_tuesday",
+        "seconds": 5.112004
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_trucker_convoy|clean",
+        "seconds": 1.395717
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_trucker_convoy|turn_and_grievance",
+        "seconds": 0.619466
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_trucker_convoy|rigged_numbers",
+        "seconds": 0.616598
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_trucker_convoy|unrevealed_tickets",
+        "seconds": 0.649735
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "gas_station_trucker_convoy",
+        "seconds": 3.304983
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_tour_bus_stop|clean",
+        "seconds": 0.785669
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_tour_bus_stop|turn_and_grievance",
+        "seconds": 0.697212
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_tour_bus_stop|rigged_numbers",
+        "seconds": 0.667349
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_tour_bus_stop|unrevealed_tickets",
+        "seconds": 0.694812
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "gas_station_tour_bus_stop",
+        "seconds": 2.866849
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_graveyard_shift|clean",
+        "seconds": 1.019185
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_graveyard_shift|turn_and_grievance",
+        "seconds": 0.598081
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_graveyard_shift|rigged_numbers",
+        "seconds": 0.618181
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_graveyard_shift|unrevealed_tickets",
+        "seconds": 0.594048
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "gas_station_graveyard_shift",
+        "seconds": 2.848573
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_road_crew_payday|clean",
+        "seconds": 0.645067
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_road_crew_payday|turn_and_grievance",
+        "seconds": 0.693383
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_road_crew_payday|rigged_numbers",
+        "seconds": 0.673209
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_road_crew_payday|unrevealed_tickets",
+        "seconds": 0.623123
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "gas_station_road_crew_payday",
+        "seconds": 2.656247
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_storm_shelter|clean",
+        "seconds": 0.650275
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_storm_shelter|turn_and_grievance",
+        "seconds": 0.649557
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_storm_shelter|rigged_numbers",
+        "seconds": 0.651229
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "gas_station_storm_shelter|unrevealed_tickets",
+        "seconds": 0.662002
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "gas_station_storm_shelter",
+        "seconds": 2.631651
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_open_mic_night|clean",
+        "seconds": 0.786838
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_open_mic_night|turn_and_grievance",
+        "seconds": 0.761394
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_open_mic_night|rigged_numbers",
+        "seconds": 0.730628
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_open_mic_night|unrevealed_tickets",
+        "seconds": 0.726732
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_open_mic_night",
+        "seconds": 3.032869
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_headliner_night|clean",
+        "seconds": 0.755339
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_headliner_night|turn_and_grievance",
+        "seconds": 0.731801
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_headliner_night|rigged_numbers",
+        "seconds": 0.728925
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_headliner_night|unrevealed_tickets",
+        "seconds": 0.70198
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_headliner_night",
+        "seconds": 2.943642
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_bringer_show|clean",
+        "seconds": 0.75883
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_bringer_show|turn_and_grievance",
+        "seconds": 0.763582
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_bringer_show|rigged_numbers",
+        "seconds": 0.762802
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_bringer_show|unrevealed_tickets",
+        "seconds": 0.839495
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_bringer_show",
+        "seconds": 3.149579
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_high_stakes_night|clean",
+        "seconds": 2.145942
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_high_stakes_night|turn_and_grievance",
+        "seconds": 1.597926
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_high_stakes_night|rigged_numbers",
+        "seconds": 1.644606
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_high_stakes_night|unrevealed_tickets",
+        "seconds": 1.664271
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_high_stakes_night",
+        "seconds": 7.085174
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_greased_week|clean",
+        "seconds": 1.799425
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_greased_week|turn_and_grievance",
+        "seconds": 1.847028
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_greased_week|rigged_numbers",
+        "seconds": 1.839795
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_greased_week|unrevealed_tickets",
+        "seconds": 1.745188
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_greased_week",
+        "seconds": 7.268509
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_debt_court|clean",
+        "seconds": 0.778918
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_debt_court|turn_and_grievance",
+        "seconds": 0.773332
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_debt_court|rigged_numbers",
+        "seconds": 0.753853
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_debt_court|unrevealed_tickets",
+        "seconds": 0.745725
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_debt_court",
+        "seconds": 3.07876
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_new_muscle|clean",
+        "seconds": 1.761734
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_new_muscle|turn_and_grievance",
+        "seconds": 1.796315
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_new_muscle|rigged_numbers",
+        "seconds": 1.739592
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_new_muscle|unrevealed_tickets",
+        "seconds": 1.745582
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_new_muscle",
+        "seconds": 7.076259
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_raid_jitters|clean",
+        "seconds": 0.747199
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_raid_jitters|turn_and_grievance",
+        "seconds": 0.81365
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_raid_jitters|rigged_numbers",
+        "seconds": 0.814798
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "punchline_raid_jitters|unrevealed_tickets",
+        "seconds": 0.820276
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "punchline_raid_jitters",
+        "seconds": 3.224323
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_wedding_charter|clean",
+        "seconds": 0.882815
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_wedding_charter|turn_and_grievance",
+        "seconds": 0.829369
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_wedding_charter|rigged_numbers",
+        "seconds": 0.834848
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_wedding_charter|unrevealed_tickets",
+        "seconds": 0.81755
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "delta_queen_wedding_charter",
+        "seconds": 3.389019
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_whale_aboard|clean",
+        "seconds": 0.768818
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_whale_aboard|turn_and_grievance",
+        "seconds": 0.737542
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_whale_aboard|rigged_numbers",
+        "seconds": 0.722024
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_whale_aboard|unrevealed_tickets",
+        "seconds": 0.726586
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "delta_queen_whale_aboard",
+        "seconds": 2.977146
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_fog_delay|clean",
+        "seconds": 0.679089
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_fog_delay|turn_and_grievance",
+        "seconds": 0.676847
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_fog_delay|rigged_numbers",
+        "seconds": 0.677284
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_fog_delay|unrevealed_tickets",
+        "seconds": 0.681655
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "delta_queen_fog_delay",
+        "seconds": 2.737188
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_engine_trouble|clean",
+        "seconds": 0.647577
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_engine_trouble|turn_and_grievance",
+        "seconds": 0.666164
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_engine_trouble|rigged_numbers",
+        "seconds": 0.672304
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_engine_trouble|unrevealed_tickets",
+        "seconds": 0.665685
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "delta_queen_engine_trouble",
+        "seconds": 2.677313
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_captains_invitational|clean",
+        "seconds": 0.793917
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_captains_invitational|turn_and_grievance",
+        "seconds": 0.783847
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_captains_invitational|rigged_numbers",
+        "seconds": 0.775527
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "delta_queen_captains_invitational|unrevealed_tickets",
+        "seconds": 0.776552
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "delta_queen_captains_invitational",
+        "seconds": 3.15429
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_bonfire_night|clean",
+        "seconds": 0.409589
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_bonfire_night|turn_and_grievance",
+        "seconds": 0.405825
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_bonfire_night|rigged_numbers",
+        "seconds": 0.424602
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_bonfire_night|unrevealed_tickets",
+        "seconds": 0.41732
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "beach_bonfire_night",
+        "seconds": 1.674586
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_storm_coming|clean",
+        "seconds": 0.439593
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_storm_coming|turn_and_grievance",
+        "seconds": 0.440322
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_storm_coming|rigged_numbers",
+        "seconds": 0.431496
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_storm_coming|unrevealed_tickets",
+        "seconds": 0.43315
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "beach_storm_coming",
+        "seconds": 1.763074
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_festival_weekend|clean",
+        "seconds": 0.484028
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_festival_weekend|turn_and_grievance",
+        "seconds": 0.485194
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_festival_weekend|rigged_numbers",
+        "seconds": 0.478869
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "beach_festival_weekend|unrevealed_tickets",
+        "seconds": 0.477037
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "beach_festival_weekend",
+        "seconds": 1.941408
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_estate_lot_day|clean",
+        "seconds": 0.612517
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_estate_lot_day|turn_and_grievance",
+        "seconds": 0.622907
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_estate_lot_day|rigged_numbers",
+        "seconds": 0.612877
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_estate_lot_day|unrevealed_tickets",
+        "seconds": 0.621737
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "pawn_shop_estate_lot_day",
+        "seconds": 2.487254
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_serial_check_day|clean",
+        "seconds": 0.508615
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_serial_check_day|turn_and_grievance",
+        "seconds": 0.519489
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_serial_check_day|rigged_numbers",
+        "seconds": 0.554833
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_serial_check_day|unrevealed_tickets",
+        "seconds": 0.511278
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "pawn_shop_serial_check_day",
+        "seconds": 2.111549
+      }
+    ],
+    "unpaired_observations": [
+      {
+        "prefix": "CONTENT_PROFILE009_DIRECT",
+        "stage": "complete_semantic_check",
+        "detail": "ScenarioSemanticPresentationContractScript.check",
+        "entered_engine_usec": 26081284
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_SEMANTIC",
+        "stage": "semantic_child",
+        "detail": "Env068EnvironmentReadabilityContractScript.check",
+        "entered_engine_usec": 26081351
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "env_entry",
+        "detail": "_check_hidden_state_neutrality",
+        "entered_engine_usec": 31923040
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "jazz_club_guest_legend",
+        "entered_engine_usec": 143497680
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_guest_legend|clean",
+        "entered_engine_usec": 143497846
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_guest_legend|turn_and_grievance",
+        "entered_engine_usec": 143839619
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_guest_legend|rigged_numbers",
+        "entered_engine_usec": 144166805
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_guest_legend|unrevealed_tickets",
+        "entered_engine_usec": 144476458
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "jazz_club_rent_party",
+        "entered_engine_usec": 144785977
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_rent_party|clean",
+        "entered_engine_usec": 144786079
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_rent_party|turn_and_grievance",
+        "entered_engine_usec": 145066294
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_rent_party|rigged_numbers",
+        "entered_engine_usec": 145347037
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_rent_party|unrevealed_tickets",
+        "entered_engine_usec": 145626361
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "jazz_club_recording_night",
+        "entered_engine_usec": 145907075
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_recording_night|clean",
+        "entered_engine_usec": 145907194
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_recording_night|turn_and_grievance",
+        "entered_engine_usec": 146184335
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_recording_night|rigged_numbers",
+        "entered_engine_usec": 146473586
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_recording_night|unrevealed_tickets",
+        "entered_engine_usec": 146776961
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "jazz_club_union_trouble",
+        "entered_engine_usec": 147073741
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_union_trouble|clean",
+        "entered_engine_usec": 147073857
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_union_trouble|turn_and_grievance",
+        "entered_engine_usec": 147365104
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_union_trouble|rigged_numbers",
+        "entered_engine_usec": 147649943
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "jazz_club_union_trouble|unrevealed_tickets",
+        "entered_engine_usec": 147937362
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "kitty_cat_lounge_amateur_night",
+        "entered_engine_usec": 148219211
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_amateur_night|clean",
+        "entered_engine_usec": 148219328
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+        "entered_engine_usec": 148780990
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_amateur_night|rigged_numbers",
+        "entered_engine_usec": 149084300
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_amateur_night|unrevealed_tickets",
+        "entered_engine_usec": 149388751
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "kitty_cat_lounge_buyout",
+        "entered_engine_usec": 149692472
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_buyout|clean",
+        "entered_engine_usec": 149692586
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_buyout|turn_and_grievance",
+        "entered_engine_usec": 149977912
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_buyout|rigged_numbers",
+        "entered_engine_usec": 150265361
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_buyout|unrevealed_tickets",
+        "entered_engine_usec": 150559494
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "kitty_cat_lounge_slow_night",
+        "entered_engine_usec": 150856725
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_slow_night|clean",
+        "entered_engine_usec": 150856846
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_slow_night|turn_and_grievance",
+        "entered_engine_usec": 151160980
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_slow_night|rigged_numbers",
+        "entered_engine_usec": 151462331
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_slow_night|unrevealed_tickets",
+        "entered_engine_usec": 151755501
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "kitty_cat_lounge_bachelorette_storm",
+        "entered_engine_usec": 152052881
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_bachelorette_storm|clean",
+        "entered_engine_usec": 152053010
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_bachelorette_storm|turn_and_grievance",
+        "entered_engine_usec": 152375288
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_bachelorette_storm|rigged_numbers",
+        "entered_engine_usec": 152697930
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "kitty_cat_lounge_bachelorette_storm|unrevealed_tickets",
+        "entered_engine_usec": 153036460
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_scenario",
+        "detail": "pawn_shop_sals_mood",
+        "entered_engine_usec": 178295783
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "stage": "hidden_observer",
+        "detail": "pawn_shop_sals_mood|clean",
+        "entered_engine_usec": 178295907
+      }
+    ],
+    "unpaired_limit": "Some original observer early returns omit after events; unpaired events are not all active at timeout. Only the terminal log establishes the final observed location. Returned checks do not imply passed assertions.",
+    "last_trace_events": [
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day|rigged_numbers",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 177220458
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day|rigged_numbers",
+        "phase": "hidden_observer:after",
+        "ticks_usec": 177775291
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day|unrevealed_tickets",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 177779765
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day|unrevealed_tickets",
+        "phase": "hidden_observer:after",
+        "ticks_usec": 178291043
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day",
+        "phase": "hidden_observers_returned",
+        "ticks_usec": 178295147
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_serial_check_day",
+        "phase": "hidden_scenario:after",
+        "ticks_usec": 178295417
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_sals_mood",
+        "phase": "hidden_scenario:before",
+        "ticks_usec": 178295783
+      },
+      {
+        "prefix": "CONTENT_PROFILE009_ENV068",
+        "detail": "pawn_shop_sals_mood|clean",
+        "phase": "hidden_observer:before",
+        "ticks_usec": 178295907
+      }
+    ],
+    "assertion_pass_inferred_from_return": false,
+    "clock_limit": "Durations use paired engine ticks; absolute engine ticks are not whole-job wall offsets."
+  },
+  "jobs": [
+    {
+      "name": "content009-actor-liveness-r1",
+      "task": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
+      "head": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "wall_seconds": 7.873977,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "4fab6bd8099c93fcd8f7157a775839fdd180e87d8f010cdbcfba78bd3b8aa4e9"
+    },
+    {
+      "name": "content009-actor-metric-baseline-r1",
+      "task": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
+      "head": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "wall_seconds": 2.743775,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "dc4953acf908085663a96152423057f0bee84ac10f099e0ecd9c9a2e39ca4ca9"
+    },
+    {
+      "name": "content009-actor-metric-candidate-r1",
+      "task": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
+      "head": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "wall_seconds": 2.682078,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "dc4953acf908085663a96152423057f0bee84ac10f099e0ecd9c9a2e39ca4ca9"
+    },
+    {
+      "name": "content009-event-baseline-r1",
+      "task": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 34.9617,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "5b3638ea4a8111e794d6d6578b734b88a5f6b40488a59cd5e948b2178c8d1447"
+    },
+    {
+      "name": "content009-event-candidate-r1",
+      "task": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 36.611146,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "5b3638ea4a8111e794d6d6578b734b88a5f6b40488a59cd5e948b2178c8d1447"
+    },
+    {
+      "name": "content009-event-candidate-r2",
+      "task": "BTH061-AUDIT-FIXTURE-AUTHORITY-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 34.63109,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b7130c7b540cd89782a7316bf2a9e6f89b867a8ebc9b851b1bc99e1de7b64f64"
+    },
+    {
+      "name": "content009-hidden-part0-canonical-r2",
+      "task": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 78.690182,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-hidden-part1-canonical-r2",
+      "task": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 86.577721,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-hidden-part2-canonical-r2",
+      "task": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 78.404139,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-hidden-part3-canonical-r2",
+      "task": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 74.722299,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-hidden-part3-r1",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 69.140691,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-lifecycle-baseline-r1",
+      "task": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 29.675797,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-baseline-r5",
+      "task": "BTH061-AUDIT-FIXTURE-AUTHORITY-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 32.106872,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r1",
+      "task": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 33.12395,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r3",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 30.266481,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r4",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 30.614045,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r5",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 32.058243,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r6",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 31.378784,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-lifecycle-candidate-r7",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 30.707048,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "b51fc4423847264a556b26223cb1fa98a3946d9c9231b62c382823ca48b77837"
+    },
+    {
+      "name": "content009-liveness-r1",
+      "task": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 7.315092,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "4fab6bd8099c93fcd8f7157a775839fdd180e87d8f010cdbcfba78bd3b8aa4e9"
+    },
+    {
+      "name": "content009-maintained-sequence-r1",
+      "task": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 98.716701,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-profile-r1",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 180.085027,
+      "limit_seconds": 180,
+      "timed_out": true,
+      "script_error": false,
+      "exit": null,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "0fad1d6f4aeeb8e7e7d1fcff91217733bad6cbe3bacf9f8567ac12b6a80b7d50"
+    },
+    {
+      "name": "content009-semantic-attribution-r1",
+      "task": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
+      "head": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "wall_seconds": 49.62393,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "490b02edbd695cf1163fdc23834850b7605fa817b4bbccc83b8289810e069ae9"
+    },
+    {
+      "name": "content009-semantic-direct-r1",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "head": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "wall_seconds": 180.070569,
+      "limit_seconds": 180,
+      "timed_out": true,
+      "script_error": false,
+      "exit": null,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "e237aa3e73d7d9e5e37d6af9103ebd24b999b23411e0ddf1ab2050a402d2b39e"
+    },
+    {
+      "name": "content009-semantic-final-r1",
+      "task": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
+      "head": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "wall_seconds": 48.72137,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-ui-archive-parse-r1",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 8.464598,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "cb8dc20fba2e614742b71904e60f2de811128c6638e789ffb1e602f05b55b955"
+    },
+    {
+      "name": "content009-ui-liveness-r1",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 7.637949,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "4fab6bd8099c93fcd8f7157a775839fdd180e87d8f010cdbcfba78bd3b8aa4e9"
+    },
+    {
+      "name": "content009-ui-presentation-diagnostic-r3",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 24.352159,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "fb8770a0a134cedaaaf1d59006a4b4fdb0f9048b2b768b7402bb5ceeb3ca0fd5"
+    },
+    {
+      "name": "content009-ui-presentation-proposal-r1",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 24.315121,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "fb8770a0a134cedaaaf1d59006a4b4fdb0f9048b2b768b7402bb5ceeb3ca0fd5"
+    },
+    {
+      "name": "content009-ui-presentation-proposal-r4",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 25.350881,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "fb8770a0a134cedaaaf1d59006a4b4fdb0f9048b2b768b7402bb5ceeb3ca0fd5"
+    },
+    {
+      "name": "content009-ui-semantics-baseline-r1",
+      "task": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 48.303154,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-ui-semantics-canonical-r1",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 47.480345,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-ui-sequence-canonical-r1",
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "head": "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "wall_seconds": 106.652857,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    }
+  ],
+  "next": {
+    "updated_at": "2026-11-05T01:59:10Z",
+    "phase": "failed",
+    "automation": "enabled",
+    "available_commit": "0e93f761f864a3bb844fabda48efe05f63792a98",
+    "deployed_commit": null,
+    "error": "No qualified owned lifecycle release for this donor",
+    "served_metadata": {
+      "observed_at": "2026-11-05T01:58:33.0479263Z",
+      "metadata_url": "http://localhost:8088/p/beat-the-house/play/next.json",
+      "source_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "source_tree": "02e0f2124346a37b20d22e300f8ea05e68827f68",
+      "version": "0.6.0-dev+0c0952594ec9",
+      "watcher_phase": "failed",
+      "watcher_error": "No qualified owned lifecycle release for this donor",
+      "watcher_automation": "enabled"
+    }
+  },
+  "limits": [
+    "Whole original-order180second command still does not complete; no wholeaggregate/catalog/Scratchpass.",
+    "Paired trace durations use integerengine-clock differences. Originalearlyreturns canleaveunpairedtraces; unpaired isnot proofactiveattimeout.",
+    "Copied-resourcefocuseddiagnostics haveScriptResourceidentitylimits; completecanonicalselectorqualifies thelandedrepair.",
+    "Originalplayerincidentsavesareunavailable; syntheticcurrentproducerfixturesarelabelled.",
+    "Currenttaskcode/guardsandnamedfeaturepausepreserved. No pipeline/cap/budget/reserve or browsersecuritychanges.",
+    "Engine rootcertificate-store diagnostic appearsinbaseline/currentnative logs; noscript/parseerror wasobserved inpassingjobs."
+  ],
+  "ui_legacy_removal": {
+    "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+    "source_commit": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+    "removed_methods": 18,
+    "removed_method_lines": 359,
+    "migrated_call_sites": 19,
+    "all88_retained_production_method_blocks_raw_exact": true,
+    "actual_applied_proof": {
+      "task": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "source_basis": {
+        "scripts/ui/environment_interaction_controller.gd": "55dfefac7f12e1cd79e23387c905e390adb1f573703eac25a9010a2752a8e841",
+        "scripts/ui/scenario_semantic_view_model.gd": "776dd3a6ca1b5787ddec7756d18fe57c206c40d434db10cb54f0ae870edc58d6",
+        "scripts/tests/foundation/scenario_presentation_contract.gd": "4876a988c0f1f5a4095eb76290adf2540a5af93e56bbc1cd98b4e6a88c25639f",
+        "scripts/tests/foundation/scenario_sequence_contract.gd": "a2f0111a5d289922d4531b8933838faebee66adee438d8a8c4ae135cea8f0a1e",
+        "scripts/tests/foundation/scenario_semantic_presentation_contract.gd": "6e2ffa0c38f8e33d5748bd98f6bc2f6599cbf2eced7de0d4e9f55793174b6fcd",
+        "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd": "64ac9b9030b71fed11e72bad7a113cfdfc7bd85b1a21be047260dea9ac117e8b",
+        "scripts/core/content_library.gd": "74943e1ae863b2619e551e10355b85ec4d49c88e8f217dbe450054c3da8f35f8",
+        "scripts/core/environment_instance.gd": "a48089f462bc9da433530b479f6be294f345ae3404b6cadf09445acafb2a626a",
+        "scripts/core/environment_base_semantic_records.gd": "c802738a899e37c9ad3797fe57ade27bc7598d926a08535d4f8ed6fbb939b657",
+        "scripts/core/scenario_operation_registry.gd": "2c0f3ed356bb1f48bade3ad824c347e63e91e74cb2a3dcc1bd179321c7ac36d2",
+        "scripts/core/scenario_layout_resolver.gd": "10145d71b10cdccb3ee6e33265712331d63c43a0bb21f3556d44ee802d8134db",
+        "scripts/core/room_presentation_publication.gd": "8c1e7fbcad9fba50fc217d8ce353a592d3a1b0c580e78720e86a1b0d602e8661",
+        "scripts/core/run_state.gd": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+        "scripts/ui/foundation_main.gd": "85843be981cd6abf139fc19b6bb8e3dbf410963fb601b20932764e5367bcfe15",
+        "scripts/ui/pixel_scene_canvas.gd": "d1ea133d1da2b5fd82823e47f28cc3729ee6d59189699963617f35a50f3fc86f"
+      },
+      "current_hashes": {
+        "scripts/ui/environment_interaction_controller.gd": "32b6eab39dc936f547305fddb286ff31b949067a472a940088757414a14be918",
+        "scripts/ui/scenario_semantic_view_model.gd": "7aca65c2c015c54f4a2ddbf4a97588d5bc2c6407593d887dee65327ef0fdef65",
+        "scripts/tests/fixtures/current_projection_fixture.gd": "fc4b547f6bdebc9521e81186be46b587fffde12916c4af32d7b6a500f20f6b54",
+        "scripts/tests/foundation/scenario_presentation_contract.gd": "60d89233470d108c0c4fd807b8c86878857d330d69ad58e7352695d38fd9dcc7",
+        "scripts/tests/foundation/scenario_sequence_contract.gd": "f9d7662d3404938f555eeac75403f578058e280f2303bd0888616b358f57c779",
+        "scripts/tests/foundation/scenario_semantic_presentation_contract.gd": "96d47404ebd5d8ccb29b17f0323c3f84ff069133c68dfa0bd683985475a11a29",
+        "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd": "cb8dc20fba2e614742b71904e60f2de811128c6638e789ffb1e602f05b55b955"
+      },
+      "runtime_qualification": "Copied presentation PASS; canonical sequence/semantics/liveness pending.",
+      "production": {
+        "scripts/ui/environment_interaction_controller.gd": {
+          "removed_methods": [
+            "_validated_manifest_scenario_authority",
+            "project_sequence_interactions",
+            "project_sequence_interaction_result"
+          ],
+          "all_retained_methods_raw_exact": true,
+          "retained_methods": 78,
+          "removed_method_lines": 61
+        },
+        "scripts/ui/scenario_semantic_view_model.gd": {
+          "removed_methods": [
+            "prepare_projection",
+            "failure_authority",
+            "compose",
+            "_base_semantic_record",
+            "_apply_resolved_base",
+            "_append_augmented_actions",
+            "_scenario_record",
+            "_presentation_error_record",
+            "_apply_service_game_route_state",
+            "_interaction_rect",
+            "_visual_lookup",
+            "_augment_lookup",
+            "_fallback_text",
+            "_owner_for_type",
+            "_sort_records"
+          ],
+          "all_retained_methods_raw_exact": true,
+          "retained_methods": 10,
+          "removed_method_lines": 298
+        }
+      }
+    },
+    "actual_closure": {
+      "task_id": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
+      "observed_at": "2026-11-05T01:36:28.288301+00:00",
+      "head_at_review": "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "worktree_source_review": true,
+      "production": {
+        "scripts/ui/environment_interaction_controller.gd": {
+          "original_raw_sha256": "55dfefac7f12e1cd79e23387c905e390adb1f573703eac25a9010a2752a8e841",
+          "current_raw_sha256": "32b6eab39dc936f547305fddb286ff31b949067a472a940088757414a14be918",
+          "original_methods": 81,
+          "removed_methods": [
+            "_validated_manifest_scenario_authority",
+            "project_sequence_interaction_result",
+            "project_sequence_interactions"
+          ],
+          "removed_method_lines": 61,
+          "retained_methods": 78,
+          "all_retained_method_blocks_raw_exact": true,
+          "no_added_production_method": true
+        },
+        "scripts/ui/scenario_semantic_view_model.gd": {
+          "original_raw_sha256": "776dd3a6ca1b5787ddec7756d18fe57c206c40d434db10cb54f0ae870edc58d6",
+          "current_raw_sha256": "7aca65c2c015c54f4a2ddbf4a97588d5bc2c6407593d887dee65327ef0fdef65",
+          "original_methods": 25,
+          "removed_methods": [
+            "_append_augmented_actions",
+            "_apply_resolved_base",
+            "_apply_service_game_route_state",
+            "_augment_lookup",
+            "_base_semantic_record",
+            "_fallback_text",
+            "_interaction_rect",
+            "_owner_for_type",
+            "_presentation_error_record",
+            "_scenario_record",
+            "_sort_records",
+            "_visual_lookup",
+            "compose",
+            "failure_authority",
+            "prepare_projection"
+          ],
+          "removed_method_lines": 298,
+          "retained_methods": 10,
+          "all_retained_method_blocks_raw_exact": true,
+          "no_added_production_method": true
+        }
+      },
+      "retained_production_method_blocks_raw_exact": 88,
+      "removed_methods": 18,
+      "removed_method_lines": 359,
+      "actual_source_sha256": {
+        "scripts/ui/environment_interaction_controller.gd": "32b6eab39dc936f547305fddb286ff31b949067a472a940088757414a14be918",
+        "scripts/ui/scenario_semantic_view_model.gd": "7aca65c2c015c54f4a2ddbf4a97588d5bc2c6407593d887dee65327ef0fdef65",
+        "scripts/tests/fixtures/current_projection_fixture.gd": "fc4b547f6bdebc9521e81186be46b587fffde12916c4af32d7b6a500f20f6b54",
+        "scripts/tests/foundation/scenario_presentation_contract.gd": "60d89233470d108c0c4fd807b8c86878857d330d69ad58e7352695d38fd9dcc7",
+        "scripts/tests/foundation/scenario_sequence_contract.gd": "f9d7662d3404938f555eeac75403f578058e280f2303bd0888616b358f57c779",
+        "scripts/tests/foundation/scenario_semantic_presentation_contract.gd": "96d47404ebd5d8ccb29b17f0323c3f84ff069133c68dfa0bd683985475a11a29",
+        "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd": "cb8dc20fba2e614742b71904e60f2de811128c6638e789ffb1e602f05b55b955",
+        "scripts/ui/foundation_main.gd": "85843be981cd6abf139fc19b6bb8e3dbf410963fb601b20932764e5367bcfe15",
+        "scripts/tests/foundation/env06_8_environment_readability_contract.gd": "f407eda05ecaec797e83d439808e98a14e3e4f986c848146494e0f6dcad286db",
+        "scripts/core/scenario_sequence_runtime.gd": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566"
+      },
+      "reviewed_r4_content_exact_except_documented_new_file_eol": true,
+      "eol_adaptations": [
+        {
+          "path": "scripts/tests/fixtures/current_projection_fixture.gd",
+          "proposal_raw_sha256": "f003fe9301d5a00c8c3d3daae602dbf1f708bd927b7e7fdbb8b9ea1abce91d1e",
+          "applied_raw_sha256": "fc4b547f6bdebc9521e81186be46b587fffde12916c4af32d7b6a500f20f6b54",
+          "normalized_LF_byte_exact": true
+        }
+      ],
+      "root_baseline_sequence_inverse_raw_exact": true,
+      "root_Main_Env_Runtime_qualified_hashes_preserved": true,
+      "tracked_code_and_resource_files_scanned": 1029,
+      "scanned_extensions": [
+        ".cjs",
+        ".cs",
+        ".gd",
+        ".gdshader",
+        ".godot",
+        ".js",
+        ".mjs",
+        ".ps1",
+        ".py",
+        ".tres",
+        ".ts",
+        ".tscn",
+        ".tsx"
+      ],
+      "new_untracked_fixture_included": true,
+      "all19_current_call_migrations": [
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_composed_actions_and_geometry",
+          "old_call": "var composed := ScenarioSemanticViewModelScript.compose([_base_record()], prepared, {})",
+          "current_assignment": "_dict(fixture.get(\"public\", {}))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_small_screen_expansion",
+          "old_call": "var composed := ScenarioSemanticViewModelScript.compose([], prepared, {})",
+          "current_assignment": "_dict(fixture.get(\"public\", {}))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_fail_closed_presentation",
+          "old_call": "var disabled_composed := ScenarioSemanticViewModelScript.compose([disabled_base], augment_prepared, {})",
+          "current_assignment": "CurrentProjectionFixtureScript.reduced_projection(enabled_fixture, _array(augment_prepared.get(\"interaction_overlays\", [])))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_fail_closed_presentation",
+          "old_call": "var composed := ScenarioSemanticViewModelScript.compose([_base_record()], invalid_prepared, {})",
+          "current_assignment": "EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result([base], invalid_prepared)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_competing_augment_presentation",
+          "old_call": "var composed := ScenarioSemanticViewModelScript.compose([_base_record()], prepared, {})",
+          "current_assignment": "CurrentProjectionFixtureScript.reduced_projection(fixture, _array(prepared.get(\"interaction_overlays\", [])))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_competing_augment_presentation",
+          "old_call": "var collision_composed := ScenarioSemanticViewModelScript.compose([_base_record()], collision_prepared, {})",
+          "current_assignment": "CurrentProjectionFixtureScript.reduced_projection(fixture, _array(collision_prepared.get(\"interaction_overlays\", [])))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_competing_augment_presentation",
+          "old_call": "var equal_forward := ScenarioSemanticViewModelScript.compose([_base_record()], equal_forward_prepared, {})",
+          "current_assignment": "CurrentProjectionFixtureScript.reduced_projection(fixture, _array(equal_forward_prepared.get(\"interaction_overlays\", [])))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_presentation_contract.gd",
+          "owning_method": "_check_competing_augment_presentation",
+          "old_call": "var equal_reverse := ScenarioSemanticViewModelScript.compose([_base_record()], equal_reverse_prepared, {})",
+          "current_assignment": "CurrentProjectionFixtureScript.reduced_projection(fixture, _array(equal_reverse_prepared.get(\"interaction_overlays\", [])))"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_ordinary_interaction_coexistence",
+          "old_call": "var records := EnvironmentInteractionControllerScript.project_sequence_interactions(",
+          "current_assignment": "CurrentProjectionFixtureScript.resolved_records("
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var missing_layout := EnvironmentInteractionControllerScript.project_sequence_interaction_result([missing_authority_base], targeted_projection)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project([missing_authority_base], targeted_projection)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var stale_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], stale_projection, stale_environment)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project([base], stale_projection, stale_environment)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var orphan_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([], orphan_projection, {\"id\": \"orphan_fixture\"})",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project([], orphan_projection, {\"id\": \"orphan_fixture\"})"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var orphan_wrapper := EnvironmentInteractionControllerScript.project_sequence_interactions([], orphan_projection, {\"id\": \"orphan_fixture\"})",
+          "current_assignment": "CurrentProjectionFixtureScript.resolved_records([], orphan_projection, {\"id\": \"orphan_fixture\"})"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var invalid_settings := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], targeted_projection, invalid_settings_environment)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project([base], targeted_projection, invalid_settings_environment)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_semantic_presentation_contract.gd",
+          "owning_method": "_check_atomic_projection_failures",
+          "old_call": "var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result(divergent_base, divergent_projection, divergent_environment)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project(divergent_base, divergent_projection, divergent_environment)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_sequence_contract.gd",
+          "owning_method": "_check_lifecycle_finalization",
+          "old_call": "var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get(\"records\", [])), run_state.scenario_sequence_projection())",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project(_array(finalized.get(\"records\", [])), run_state.scenario_sequence_projection())"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_sequence_contract.gd",
+          "owning_method": "_check_lifecycle_finalization",
+          "old_call": "var forged_projection_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get(\"records\", [])), forged_projection, run_state.current_environment)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project(_array(finalized.get(\"records\", [])), forged_projection, run_state.current_environment)"
+        },
+        {
+          "path": "scripts/tests/foundation/scenario_sequence_contract.gd",
+          "owning_method": "_check_lifecycle_finalization",
+          "old_call": "var collision_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(collision_base_records, run_state.scenario_sequence_projection(), run_state.current_environment)",
+          "current_assignment": "CurrentProjectionFixtureScript.resolve_then_project(collision_base_records, run_state.scenario_sequence_projection(), run_state.current_environment)"
+        },
+        {
+          "path": "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd",
+          "owning_method": "_run",
+          "old_call": "var projected := InteractionControllerScript.project_sequence_interaction_result(base_records, projection, environment)",
+          "current_assignment": "InteractionControllerScript.project_finalized_sequence_interaction_result(base_records, finalized)"
+        }
+      ],
+      "unique_adapter_declarations_or_calls_remaining": 0,
+      "target_qualified_removed_method_calls_remaining": 0,
+      "resource_alias_inventories": 47,
+      "literal_dynamic_dispatch_to_removed_owner_methods": 0,
+      "remaining_alias_dynamic_dispatch_uses": [],
+      "proposed_current_preload_graph_acyclic": true,
+      "new_fixture_has_no_foundation_contract_dependency": true,
+      "native_jobs_by_reviewer": 0,
+      "canonical_edits_by_reviewer": false,
+      "scope_limits": [
+        "Tracked implementation/tool/resource closure plus explicitly included new fixture. Diagnostic .tmp/evidence copies, historical docs and fixture custody are retained provenance, not active API callers.",
+        "Literal alias/dispatch inventory is paired with source review of lazy UI loading, active token/actor/action consumers and save ownership; no claim about arbitrary external code reflection.",
+        "This receipt does not claim all native semantic acceptance, whole-catalog success, commit or NEXT delivery."
+      ]
+    },
+    "canonical_removal_applied": true,
+    "first_failed_migration_proposals_preserved": true
+  },
+  "duel_boundary": "Separate source-only unqualified late helper/autosave-request ordering; no actual persistence or valid-player defect claimed.",
+  "frozen_observer_basis": {
+    "canonical_runner_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c",
+    "canonical_sequence_sha256": "2f0a8fc26e79f03f86cfe32b7286ddafa59d661dc54286f7e59860c8e2f974f0",
+    "canonical_semantic_sha256": "6e2ffa0c38f8e33d5748bd98f6bc2f6599cbf2eced7de0d4e9f55793174b6fcd",
+    "canonical_env068_sha256": "9f0cf7bca5b5221891eaa39e25c4893d5bb9f9e3a15263ee8b658e4e13da23e6",
+    "proposal_files": {
+      "foundation_content_profile009.gd": {
+        "sha256": "0fad1d6f4aeeb8e7e7d1fcff91217733bad6cbe3bacf9f8567ac12b6a80b7d50",
+        "bytes": 2717765,
+        "staged_resource": "res://.tmp/generated_tests/foundation_content_profile009.gd"
+      },
+      "scenario_sequence_contract_profile008.gd": {
+        "sha256": "f5ce0894d6e579df60e8560a627ef5c7ea9ac19af68b135503bee212351e691a",
+        "bytes": 513102,
+        "staged_resource": "res://.tmp/generated_tests/scenario_sequence_contract_profile008.gd"
+      },
+      "scenario_semantic_presentation_contract_profile009.gd": {
+        "sha256": "eaf8943a1d46a4838ad6196e8abc65fb476bd3b27767e0ce71709536574fd170",
+        "bytes": 132279,
+        "staged_resource": "res://.tmp/generated_tests/scenario_semantic_presentation_contract_profile009.gd"
+      },
+      "env06_8_environment_readability_contract_profile009.gd": {
+        "sha256": "e6b856c56a133c27c97ebc692cade17ff8381f19d5166d54c20417a4fdf5708f",
+        "bytes": 83070,
+        "staged_resource": "res://.tmp/generated_tests/env06_8_environment_readability_contract_profile009.gd"
+      }
+    },
+    "maintained_sources": {
+      "scripts/tests/foundation/check_core_content.gd": "ad5581e6ea6bd49697a20d0d80150c92709fc0f871fc6c5f4c8a9591ac813385",
+      "scripts/tests/foundation/check_slots_surfaces.gd": "3852e23591ee287c4af64f3829471f4870cd583298be38d62fdaf803999428dc",
+      "scripts/tests/foundation/check_table_games.gd": "013f39f457f7399c4b88ea61057c321c1086112b786da81ab5a1fe9cece4cc9f",
+      "scripts/tests/foundation/check_items_events_world.gd": "7487cf457ae60cb49ec9d72822f387be3b2f4d2a9258a75435c1a6038ea8dc30",
+      "scripts/tests/foundation/check_delivery_runs.gd": "9eddd97c0fd1dc38243c4617b5a8685fcf4b48b54ec4976448091db602ef0c0c",
+      "scripts/tests/foundation/check_lenders_release_saves.gd": "c6043bb1db5476a3c4ae8f7d02d829885067e1b061d6d7ee7d4a82de838abbe2",
+      "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+      "scripts/tests/foundation/check_cage_environment_rework.gd": "e518b57cbfb9bd5741fbdecef2412131b7eff165f9c68c436b31991b0ff90fe3",
+      "scripts/tests/foundation/check_coin_pusher.gd": "b1c5a8e0f0d3cc9996c61c0e0d0de4ce5f740b1f439fc130f1cc02944e422791"
+    },
+    "source_count": 9,
+    "required_symbol_count": 34,
+    "canonical_runner_method_count": 942
+  },
+  "observer_time_repair": {
+    "original": "9f0cf7bca5b5221891eaa39e25c4893d5bb9f9e3a15263ee8b658e4e13da23e6",
+    "candidate": "f407eda05ecaec797e83d439808e98a14e3e4f986c848146494e0f6dcad286db",
+    "scope": "One test-only active-cycle setup; original assertions/profiles/pins/layers unchanged. Native qualification pending."
+  },
+  "final_observed_at": "2026-11-05T01:59:16.819058+00:00",
+  "source_commits": [
+    "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+    "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+    "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e"
+  ],
+  "canonical_after_removal_sequence": [
+    {
+      "duration_msec": 67823,
+      "failure_count": 0,
+      "failures": [],
+      "id": "scenario_sequence_contract",
+      "passed": true
+    }
+  ],
+  "canonical_semantic_final": [
+    {
+      "duration_msec": 8305,
+      "failure_count": 0,
+      "failures": [],
+      "id": "scenario_semantic_presentation_contract",
+      "passed": true
+    },
+    {
+      "duration_msec": 4583,
+      "failure_count": 0,
+      "failures": [],
+      "id": "scenario_semantic_restore_contract",
+      "passed": true
+    }
+  ],
+  "actor_route_regression": {
+    "checks": 15,
+    "failures": [],
+    "passed": true
+  },
+  "actor_route_repair": {
+    "source_sha256": "d1ea133d1da2b5fd82823e47f28cc3729ee6d59189699963617f35a50f3fc86f",
+    "candidate_sha256": "e1d0ef3e835c4025777ebb8338c865b47672e7159f2edcf8b98a5aa6e15cafc6",
+    "methods": 535,
+    "other_method_blocks_raw_exact": 534,
+    "only_changed": "_actor_route_position",
+    "tolerance": "The literal0.001 now measures physicalpixels; subpixel interpolation change is intentional and covered by the focused regression.",
+    "all_scheduling_and_duration_fields_unchanged": true
+  },
+  "current_geometry_fixtures": {
+    "original_sha256": "96d47404ebd5d8ccb29b17f0323c3f84ff069133c68dfa0bd683985475a11a29",
+    "candidate_sha256": "35c669ecb0ce700e212dd1ca5188d2a250e37a802bdeed89223ea3d18aea9e0e",
+    "changed_methods": [
+      "_check_finalized_canvas_authority",
+      "_check_scenario_refresh_manifest_lifecycle",
+      "_check_single_environment_plane"
+    ],
+    "other_method_blocks_raw_exact": 60,
+    "actor_public_midpoint_assertion_unchanged": true,
+    "qualification": "Native attribution and independent source reviews complete; canonical post-apply checks pending."
+  },
+  "semantic_original_candidate_nonregression": {
+    "same_five_ordered_static_failures": true,
+    "baseline_checks": [
+      {
+        "duration_msec": 8198,
+        "failure_count": 5,
+        "failures": [
+          "Canvas composition moved generated room objects after scenario projection.",
+          "Public canvas draw/hit routing diverged from sealed base geometry after stale normalized_rect replacement.",
+          "Proof-ready scenario refresh left scenario::command_console without immediate scenario-family room geometry.",
+          "Proof-ready scenario refresh left scenario::fixture_100 without immediate scenario-family room geometry.",
+          "Public non-reduced canvas did not draw/hit the routed actor at the authored-lane midpoint."
+        ],
+        "id": "scenario_semantic_presentation_contract",
+        "passed": false
+      },
+      {
+        "duration_msec": 4385,
+        "failure_count": 0,
+        "failures": [],
+        "id": "scenario_semantic_restore_contract",
+        "passed": true
+      }
+    ],
+    "candidate_checks": [
+      {
+        "duration_msec": 8382,
+        "failure_count": 5,
+        "failures": [
+          "Canvas composition moved generated room objects after scenario projection.",
+          "Public canvas draw/hit routing diverged from sealed base geometry after stale normalized_rect replacement.",
+          "Proof-ready scenario refresh left scenario::command_console without immediate scenario-family room geometry.",
+          "Proof-ready scenario refresh left scenario::fixture_100 without immediate scenario-family room geometry.",
+          "Public non-reduced canvas did not draw/hit the routed actor at the authored-lane midpoint."
+        ],
+        "id": "scenario_semantic_presentation_contract",
+        "passed": false
+      },
+      {
+        "duration_msec": 4585,
+        "failure_count": 0,
+        "failures": [],
+        "id": "scenario_semantic_restore_contract",
+        "passed": true
+      }
+    ],
+    "old_sources_exact_through_job": true,
+    "candidate_restored_exact": true,
+    "scope": "Exact canonical loaded original/current selected contracts under180s/caps; new no-class-name fixture remains unreferenced in old graph. Nonregression, not full-green static acceptance."
+  },
+  "all_tasks_complete": false,
+  "whole_codebase_complete": false
+}
