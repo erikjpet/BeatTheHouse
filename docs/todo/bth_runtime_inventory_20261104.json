@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T05:41:02.434162+00:00",
+  "observed_at": "2026-11-05T06:41:13.973709+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed.",
     "complete": false,
@@ -10631,6 +10631,96 @@
           "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
         ],
         "limit": "Actual owned-process closure only. Reproduction/diagnostic failures retained; no files cleared or other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task9:catalog012-profile-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog012-profile-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json:pid:22856",
+        "started_at": "2026-11-05T06:28:14.398741+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\owner.json",
+          "docs/testing/deprecated_code_audit_continuation_012.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T06:33:18.291900+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json:pid:22856",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\owner.json",
+          "docs/testing/deprecated_code_audit_continuation_012.md",
+          "Pinned runner in-memory preclose active0; independently verified all3source originals and full1242hash proof."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T06:33:18.291900+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\owner.json",
+          "docs/testing/deprecated_code_audit_continuation_012.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\tools\\audit_temporary_source_owner.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\tools\\audit_temporary_source_owner.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\tools\\audit_temporary_source_owner.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\tools\\audit_temporary_source_owner.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T06:33:18.291900+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog012-profile-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\owner.json",
+            "docs/testing/deprecated_code_audit_continuation_012.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T06:33:18.291900+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\owner.json",
+          "docs/testing/deprecated_code_audit_continuation_012.md"
+        ],
+        "limit": "Only this exact owned Job. Native stage still failed300.272s; exit1 preserved. Memory-derived exact Job precloseactive0 plus exact guards qualifies restoration; all3 originalcores/all1242hashes verified. No full-stage/browser/deployment pass or peer census inferred. No files cleared."
       }
     }
   ],

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T05:46:45.591923+00:00",
+  "updated_at": "2026-11-05T06:40:43.249410+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13774,6 +13774,11 @@
           "kind": "measured_continuation_without_cleanup",
           "reference": "docs/testing/deprecated_code_audit_continuation_011.md",
           "summary": "Currentparentrequestsfinalization/layerentrymeasurement only; nofilescleared/noobsoletecodecleanup/no production optimizationcommitted. Exact-source observer identifiesnextowner costs; wholeaudit remainsOpen."
+        },
+        {
+          "kind": "finer_attribution_and_source_owner_hardening_without_cleanup",
+          "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
+          "summary": "Bounded helper has tested implementationcommitbc04 and independently verified actual pilot restoration; catalog still fails at300.272s. Cleanup remains stopped, nofilescleared, pausedfeatures preserved; incomplete wholecodebase/audit acceptance staysOpen."
         }
       ],
       "implementation_batches": [
@@ -13791,7 +13796,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T05:46:45.591923+00:00"
+      "updated_at": "2026-11-05T06:40:43.249410+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20535,7 +20540,7 @@
         }
       },
       "state": "open",
-      "status": "NESTED_FINALIZATION_AND_LAYER_COSTS_MEASURED_011",
+      "status": "FINER_PUBLICATION_MIGRATION_STORAGE_ATTRIBUTED_REPAIR_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20673,22 +20678,32 @@
           "kind": "actual_class_nested_timing_and_exact_restoration",
           "reference": "docs/testing/deprecated_code_audit_continuation_011.md",
           "summary": "83spans7actualproductionmethods/0newinstancefields, planned4/55/220unchanged. Guard300.268s failed;146profilescompleted;5882nestedpairs. Source2exactlyrestoredandall1239originalhashesmatch, job0. Targetinitialmanifest9.592s/134;layerinstall4.131/finalize4.002/store2.521s/12; nestedrowsinclusive. No optimization/pass/cleanup claim."
+        },
+        {
+          "kind": "trusted_parent_finer_attribution",
+          "reference": "Parent01a1a147-7f07-7583-baf0-771a839f1013 current delegation",
+          "summary": "Continue finer reconciliation/publication/migration/storage attribution; harden exception-path restoration before reuse; preserve original files/allguards; no filecleanupauthorized."
+        },
+        {
+          "kind": "hardened_owner_and_finer_actual_class_timing",
+          "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
+          "summary": "124spans13methods,4/55/220recipe unchanged;300.272s timeoutexit1,149profiles/12layers completed,17759closed nestedspans/2censored. Target layoutrefresh6.010s/287 and publicationvalidation7.710s/748; layer definition2.420s/24 vs optionalbefore/compare0.001373s/12. All1242originalhashes restored; closure0. No productionoptimization or fullpass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Split measured manifest reconciliation/publication work, layer-install sequence migration and world-node membership/storage before choosing a bounded optimization. Preserve physical/semantic authentication, producer identity, migration/reentry, RNG, publication and rollback. Repeated baseline layout and raw layer copies are not aggregate leaders. Harden temporary-source owner exception paths before reuse; no source remains unrestored. Full original180/current300stage remain Open; no guard increase or cleanup.",
+      "next_action": "Use measured ownership to qualify a bounded authority-preserving repair: target-travel layout refresh/publication and persistence projection, plus layer-install definition resolution. Preserve current validation/defaults, exact state/RNG/save semantics, independent220profiles and all time/process guards. No cleanup/release machinery operation.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Nested measurement completed with exact source restoration and verified owned closure. Further attribution/optimization is active engineering work, without an external approval/save/deployment dependency. Cold-import qualification is separately owned.",
+        "description": "Finer attribution and owner hardening completed. A substantive authority-preserving production repair and complete unchanged-guard acceptance remain engineering work; no external approval/save/deployment dependency. Cold-import qualification separately owned.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T05:41:02.434162+00:00",
+        "observed_at": "2026-11-05T06:40:43.249410+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_011.md"
+          "docs/testing/deprecated_code_audit_continuation_012.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T05:46:45.591923+00:00"
+      "updated_at": "2026-11-05T06:40:43.249410+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -22838,6 +22853,101 @@
         }
       ],
       "updated_at": "2026-11-05T05:44:51.246331+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SOURCE-OWNER-012",
+      "name": "Harden temporary-source diagnostic restoration",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Harden the temporary-source diagnostic owner before reuse: retain exact originals, atomically replace sources with durable mutation intent, isolate each restoration attempt, survive journal/receipt failures using actual in-memory owned-job closure evidence, refuse unknown writers, and preserve all guards and files. Qualify fault paths on fresh private dummy files and one actual guarded diagnostic before reuse. No production state/validation or release-control change is authorized by this helper task.",
+        "source": "Current trusted parent delegation01a1a147-7f07-7583-baf0-771a839f1013 explicitly requires exception-path restoration hardening before temporary-source instrumentation reuse; phase011 protocol review identifies concrete failure paths.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "fault-path-restoration",
+            "description": "Meaningful retained-artifact fault tests cover atomic apply failure, post-apply journal failure, malformed/missing journal, independent source failures, receipt failure, unknown writer and closure failure without changing guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_012.md",
+              "docs/testing/deprecated_code_audit_continuation_012.json",
+              "evidence/owner012-root-fault-tests-r1/result.json"
+            ]
+          },
+          {
+            "id": "actual-guarded-pilot",
+            "description": "One reviewed actual-class diagnostic retains guard readback, native closure0 and exact restoration of every source; no stage-pass inference from closure.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_012.md",
+              "evidence/catalog012-owner-hardened-r1/owner.json",
+              "evidence/catalog012-independent-final-review-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "COMMITTED_36_FAULT_TESTS_AND_ACTUAL_GUARDED_RESTORATION_VERIFIED",
+      "owner": {
+        "name": "Audit restoration-owner hardening",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "bc04d0049ebc97931ecbba1f68849c7ef159d861",
+          "evidence": [
+            "tools/audit_temporary_source_owner.py",
+            "tools/tests/test_audit_temporary_source_owner.py",
+            "evidence/owner012-root-fault-tests-r1/result.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Manual audit/testing Python utility and tests only; no game or release-service behavior change."
+      },
+      "evidence": [
+        {
+          "kind": "observed_prototype_failure_paths",
+          "reference": "docs/testing/deprecated_code_audit_continuation_011.md",
+          "summary": "Previous actual job restored sources successfully. Its unexercised partial-write flag timing, per-source finally exception handling, and journal/receipt errors require hardening before reuse; current parent explicitly directs repair."
+        },
+        {
+          "kind": "committed_exception_path_repair_and_guarded_pilot",
+          "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
+          "summary": "bc04d004:36meaningful private-file fault tests PASS; actual3core pilot preserves all guards, closure0 and independent all1242originalhash restoration. Native/runner/owner exit1 correctly preserves catalog300.272s timeout; no stage-pass inference."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "None within this bounded helper: committed fault-tested owner and actual guarded restoration are qualified. Reserve its exact declared source set and pin the reviewed runner/spec before any later diagnostic; catalog/Audit parents remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Bounded helper accepted with exact commit, fault tests and independently verified actual restoration. Catalog performance defect remains in its open parent.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T06:40:43.249410+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_012.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T06:40:43.249410+00:00"
     }
   ],
   "batches": [

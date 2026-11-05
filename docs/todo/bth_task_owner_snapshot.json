@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T05:44:51.246331+00:00",
+  "observed_at": "2026-11-05T06:41:13.973709+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T05:41:02.434162+00:00",
-      "source": "Actual phase011 root recording/publishing measuredfinalization/layerentrycosts, not acandidatefix. Oneownedguardedjobexit1 atcanonical300.268s; jobclosed0andtwooriginals/all1239sourcehashesrestored. Read-onlyreviewscomplete. Cleanupstopped, filespreserved, pausednamedfeatureworkunchanged; coldimportqualificationseparate."
+      "observed_at": "2026-11-05T06:41:13.973709+00:00",
+      "source": "Actual phase012: committed ownerhardeningbc04,36faulttestsPASS, actual3core timingpilotclosed0/all1242originalhashesverified. Catalog300.272timeoutremainsOpen; finerownershiprecording and scopedpublicationactive. No filescleared, no peer/service intervention. Deploymentqualificationseparatelyowned."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

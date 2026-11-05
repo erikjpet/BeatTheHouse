@@ -1,0 +1,2185 @@
+{
+  "schema": "bth.audit_continuation_012/v1",
+  "observed_at": "2026-11-05T06:40:43.249410+00:00",
+  "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+  "helper_task_id": "BTH061-AUDIT-SOURCE-OWNER-012",
+  "source_head": "bc04d0049ebc97931ecbba1f68849c7ef159d861",
+  "application_source_basis": "a11607ee93829734b271308617324d0ca0682aa3",
+  "helper_commit": "bc04d0049ebc97931ecbba1f68849c7ef159d861",
+  "cleanup_stopped": true,
+  "existing_files_cleared": false,
+  "production_optimization_committed": false,
+  "owner_hardening": {
+    "fault_tests": 36,
+    "fault_tests_passed": 36,
+    "root_result": {
+      "task": "BTH061-AUDIT-SOURCE-OWNER-012",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/tests",
+        "-p",
+        "test_audit_temporary_source_owner.py",
+        "-v"
+      ],
+      "exit": 0,
+      "seconds": 3.812,
+      "source_sha256": {
+        "tools/audit_temporary_source_owner.py": "0543fe08ffa84940061e120573e68c1f2778c7e421c366ff6e247f19229ca693",
+        "tools/tests/test_audit_temporary_source_owner.py": "e754fffbfdc42f2d16cb395de5e6728be5e337f75ed04390e29bb68991d421cd"
+      },
+      "source_unchanged_during_tests": true,
+      "scope": "Python fake-scope fault tests with retained private dummy targets only. No actual core or native process used.",
+      "artifact_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\owner012-root-fault-tests-r1\\cases",
+      "files_cleared": false,
+      "stdout": "stdout.log",
+      "stderr": "stderr.log"
+    },
+    "historical_private_file_counterexamples": {
+      "scope": "Exact historical owner control flow with injected I/O faults, retained private dummy sources and synthetic no-process runner/journal. These synthetic records are not native guard or runtime qualification.",
+      "historical_wrapper_sha256": "532bd43563f1d9cabe8aaf9d23a359220a84cd9e619ac7912a51c8e0f44a1dbe",
+      "cases": [
+        {
+          "case": "partial_apply",
+          "root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\source-owner012-old-reproduction-r1\\c0",
+          "exit_code": 1,
+          "exception": null,
+          "states": {
+            "state": {
+              "is_original": false,
+              "is_candidate": false,
+              "bytes": 9
+            },
+            "generator": {
+              "is_original": true,
+              "is_candidate": false,
+              "bytes": 29
+            }
+          },
+          "expected_defect_reproduced": true,
+          "real_core_files_used": false,
+          "native_processes_launched": 0
+        },
+        {
+          "case": "first_restore_failure",
+          "root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\source-owner012-old-reproduction-r1\\c1",
+          "exit_code": null,
+          "exception": "OSError: injected first-source restore failure",
+          "states": {
+            "state": {
+              "is_original": false,
+              "is_candidate": true,
+              "bytes": 26
+            },
+            "generator": {
+              "is_original": false,
+              "is_candidate": true,
+              "bytes": 30
+            }
+          },
+          "expected_defect_reproduced": true,
+          "real_core_files_used": false,
+          "native_processes_launched": 0
+        },
+        {
+          "case": "malformed_job_journal",
+          "root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\source-owner012-old-reproduction-r1\\c2",
+          "exit_code": null,
+          "exception": "JSONDecodeError: Expecting property name enclosed in double quotes: line 1 column 3 (char 2)",
+          "states": {
+            "state": {
+              "is_original": false,
+              "is_candidate": true,
+              "bytes": 26
+            },
+            "generator": {
+              "is_original": false,
+              "is_candidate": true,
+              "bytes": 30
+            }
+          },
+          "expected_defect_reproduced": true,
+          "real_core_files_used": false,
+          "native_processes_launched": 0
+        }
+      ],
+      "files_cleared": false
+    },
+    "qualified_scope": "Reviewed two/three-source diagnostic owner only. Fault tests use private dummy files/fake scopes. Actual pilot separately qualifies real guarded closure and restoration, while preserving failed native exit1.",
+    "cooperative_source_reservation_required": true,
+    "limits": "Observed byte checks and atomic replacement are not a cross-process compare-and-swap. Reserve declared sources against peer writers. Uncertain closure or unknown writer remains a reported failure; do not overwrite it or weaken guards."
+  },
+  "coverage": {
+    "planned_shards": 4,
+    "planned_check_ids": 55,
+    "planned_profiles": 220,
+    "completed_profiles": 149,
+    "started_profiles": 150,
+    "completed_layer_entries": 12,
+    "full_stage_pass": false,
+    "last_outer": {
+      "detail": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+      "payload": {},
+      "phase": "target_travel:before",
+      "stage": "observer_phase",
+      "ticks_usec": 297374714,
+      "source": "foundation_systems.systems_core.godot.log"
+    }
+  },
+  "canonical_stage_result": {
+    "name": "foundation_systems",
+    "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+    "arguments": [
+      "four deterministic systems shards"
+    ],
+    "exit_code": 1,
+    "timed_out": false,
+    "duration_msec": 300272,
+    "duration_sec": 300.272,
+    "suite_time_baseline_sec": 29.141,
+    "suite_time_budget_sec": 43.712,
+    "suite_time_budget_exceeded": true,
+    "stderr_issue_count": 1,
+    "stderr_issues": [
+      "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+    ],
+    "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\maintained\\foundation_systems.stdout.txt",
+    "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1\\maintained\\foundation_systems.stderr.txt",
+    "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+  },
+  "owned_job": {
+    "name": "catalog012-profile-r1",
+    "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "argv": [
+      "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+      "-NoProfile",
+      "-NonInteractive",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog012-proposal/invoke-systems-profile012-r1.ps1",
+      "-RepositoryRoot",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+      "-GodotPath",
+      "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+      "-ReportRoot",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-profile-r1/maintained",
+      "-RunStage"
+    ],
+    "started_utc": 1793860094.3987405,
+    "head": "bc04d0049ebc97931ecbba1f68849c7ef159d861",
+    "source_sha256": {
+      "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+      "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+      "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+      "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+      "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+      "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+      "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+      "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+    },
+    "deadline_seconds": 330,
+    "errors": [
+      "nonzero exit, timeout or script error"
+    ],
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "pid": 22856,
+    "assigned_before_execution": true,
+    "exit": 1,
+    "timed_out": false,
+    "script_error": false,
+    "before_cleanup_pids": [],
+    "active_at_release": 0,
+    "cpu_seconds": 307.5,
+    "finished_utc": 1793860398.2919002
+  },
+  "source_restoration": {
+    "schema": "bth.temporary_source_owner/v1",
+    "task": "BTH061-AUDIT-SOURCE-OWNER-012",
+    "started_utc": 1793860094.1062906,
+    "runner_sha256": "d0607cef0ba3d33540690fda0b85c9e04ba2658763923687c17a0bc5a8dcace5",
+    "manifest_sha256": "4e8dabec811a334664168b0a8d74fd779dbff63e9eb34bd3c6692d14c6caaf24",
+    "spec_sha256": "c9703c7c26e803f74dfce8057e7aff113a238853346729bf2c7c2ebfe6f100a4",
+    "job_name": "catalog012-profile-r1",
+    "sources": {
+      "scripts/core/run_state.gd": {
+        "original_sha256": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+        "candidate_sha256": "ff9ddd11d6a18952024a49ca7d530c22d3f5f8c5eac4c0ab9cc90a80a620879f",
+        "retained_original": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\original-0.gd.txt",
+        "mutation_intended": true,
+        "applied": true,
+        "restored": true
+      },
+      "scripts/core/run_generator.gd": {
+        "original_sha256": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd",
+        "candidate_sha256": "eb6411e3e3e62a047327cd217e702c00d61dcd42a5b1235777ca5d058eef9ab8",
+        "retained_original": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\original-1.gd.txt",
+        "mutation_intended": true,
+        "applied": true,
+        "restored": true
+      },
+      "scripts/core/scenario_engine.gd": {
+        "original_sha256": "27d7fc0c7292edff54289be9836a74b6e0c821a23d8d10316246f52b873d3c95",
+        "candidate_sha256": "1c1d9d6869fcb870bc76e0e1a839b3787202c90622d0ce4bec22087d8e0710bb",
+        "retained_original": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\original-2.gd.txt",
+        "mutation_intended": true,
+        "applied": true,
+        "restored": true
+      }
+    },
+    "errors": [],
+    "run_started": true,
+    "restoration_complete": true,
+    "executed_spec": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-owner-hardened-r1\\executed-spec.json",
+    "phase": "finished",
+    "closure": {
+      "verified": true,
+      "guards_qualified": true,
+      "errors": [],
+      "evidence": "pinned_runner_preclose_accounting",
+      "active_at_release": 0,
+      "finished_utc": 1793860398.2919002,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "handle_close": "runner_attempted; existing close does not check Win32 BOOL"
+    },
+    "native_exit": 1,
+    "finished_utc": 1793860398.4309425,
+    "runner_exit": 1,
+    "owner_exit": 1
+  },
+  "independent_post_run_review": {
+    "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-independent-final-review-r1.json",
+    "sha256": "6e7cd2b52e091c9e5f179b20770ec14b83d7c0d885e74770295d141569500b3c"
+  },
+  "original_source_file_count": 1242,
+  "all_original_source_hashes_restored": true,
+  "source_instrumentation": {
+    "methods": 13,
+    "statement_spans": 124,
+    "added_static_helpers": 6,
+    "new_instance_fields": 0,
+    "class_and_resource_paths_preserved": true,
+    "original_call_arguments_defaults_short_circuits_and_order_preserved": true,
+    "scope": "Temporary actual-production-receiver statement timing. Copied test observer resource identities differ; begin logging overhead included. No call/predicate hoist, state cache or authority bypass."
+  },
+  "trace": {
+    "outer_event_count": 2434,
+    "nested_event_count": 35520,
+    "closed_nested_count": 17759,
+    "partial_lines": [],
+    "outer_groups": [
+      {
+        "stage": "content_child",
+        "phase": "",
+        "count": 6,
+        "total_seconds": 142.084561,
+        "max_seconds": 65.670068
+      },
+      {
+        "stage": "init",
+        "phase": "",
+        "count": 2,
+        "total_seconds": 15.980391,
+        "max_seconds": 15.979612
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "arrival_and_authored_reads",
+        "count": 149,
+        "total_seconds": 2.482572000000001,
+        "max_seconds": 0.025985
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "clock_and_hidden_fixture",
+        "count": 150,
+        "total_seconds": 0.021189000000000003,
+        "max_seconds": 0.000424
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "initial_generation",
+        "count": 150,
+        "total_seconds": 15.355227999999995,
+        "max_seconds": 0.131465
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "layer_entry",
+        "count": 12,
+        "total_seconds": 15.348861,
+        "max_seconds": 1.454313
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "optional_finalization",
+        "count": 149,
+        "total_seconds": 0.007321000000000002,
+        "max_seconds": 0.000573
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "run_state_start",
+        "count": 150,
+        "total_seconds": 0.1536170000000001,
+        "max_seconds": 0.001311
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "runtime_description_trace",
+        "count": 149,
+        "total_seconds": 1.1123290000000001,
+        "max_seconds": 0.011057
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "target_travel",
+        "count": 149,
+        "total_seconds": 82.67848999999998,
+        "max_seconds": 0.994638
+      },
+      {
+        "stage": "profile",
+        "phase": "",
+        "count": 149,
+        "total_seconds": 117.208737,
+        "max_seconds": 1.894937
+      }
+    ],
+    "nested_groups": [
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.trusted_finalize_return",
+        "count": 137,
+        "total_seconds": 29.324515,
+        "mean_seconds": 0.21404755474452555,
+        "max_seconds": 0.268392
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_manifest_reconcile",
+        "count": 137,
+        "total_seconds": 9.400224000000001,
+        "mean_seconds": 0.06861477372262774,
+        "max_seconds": 0.095762
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.reconcile_current_environment_object_manifest.publish",
+        "count": 287,
+        "total_seconds": 8.384629000000002,
+        "mean_seconds": 0.02921473519163763,
+        "max_seconds": 0.062741
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._environment_for_persistent_storage.body",
+        "count": 599,
+        "total_seconds": 7.714374000000002,
+        "mean_seconds": 0.012878754590984975,
+        "max_seconds": 0.066581
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.publish_room_presentation.validate_current",
+        "count": 748,
+        "total_seconds": 7.709851999999999,
+        "mean_seconds": 0.010307288770053475,
+        "max_seconds": 0.021725
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.reconcile_current_environment_object_manifest.refresh_generated_layout",
+        "count": 287,
+        "total_seconds": 6.009908999999999,
+        "mean_seconds": 0.020940449477351915,
+        "max_seconds": 0.032257
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.publish_room_presentation.construct_publication",
+        "count": 748,
+        "total_seconds": 4.927872000000001,
+        "mean_seconds": 0.0065880641711229945,
+        "max_seconds": 0.022058
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_reentry",
+        "count": 137,
+        "total_seconds": 4.703529000000001,
+        "mean_seconds": 0.034332328467153284,
+        "max_seconds": 0.043949
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.install_layer",
+        "count": 12,
+        "total_seconds": 4.051272,
+        "mean_seconds": 0.337606,
+        "max_seconds": 0.442845
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.finalize",
+        "count": 12,
+        "total_seconds": 3.934589,
+        "mean_seconds": 0.3278824166666667,
+        "max_seconds": 0.357823
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_tail",
+        "count": 137,
+        "total_seconds": 3.9307889999999994,
+        "mean_seconds": 0.028691890510948906,
+        "max_seconds": 0.036618
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.publish",
+        "count": 137,
+        "total_seconds": 3.807114999999997,
+        "mean_seconds": 0.027789160583941607,
+        "max_seconds": 0.035418
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.trusted_finalize_return",
+        "count": 12,
+        "total_seconds": 3.2622690000000003,
+        "mean_seconds": 0.27185575,
+        "max_seconds": 0.294656
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_migrate",
+        "count": 137,
+        "total_seconds": 3.2343919999999993,
+        "mean_seconds": 0.023608700729927008,
+        "max_seconds": 0.03025
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.ensure_state",
+        "count": 137,
+        "total_seconds": 3.124868,
+        "mean_seconds": 0.022809255474452554,
+        "max_seconds": 0.029407
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.reconcile_membership",
+        "count": 150,
+        "total_seconds": 2.890151999999999,
+        "mean_seconds": 0.01926768,
+        "max_seconds": 0.023357
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.store_world_node",
+        "count": 12,
+        "total_seconds": 2.4952460000000003,
+        "mean_seconds": 0.20793716666666667,
+        "max_seconds": 0.217933
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.sequence_migrate",
+        "count": 12,
+        "total_seconds": 2.423518,
+        "mean_seconds": 0.20195983333333334,
+        "max_seconds": 0.285994
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.definition",
+        "count": 24,
+        "total_seconds": 2.4201199999999994,
+        "mean_seconds": 0.10083833333333334,
+        "max_seconds": 0.285324
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_build",
+        "count": 138,
+        "total_seconds": 2.2851259999999987,
+        "mean_seconds": 0.016558884057971013,
+        "max_seconds": 0.02495
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_records",
+        "count": 138,
+        "total_seconds": 2.175889999999999,
+        "mean_seconds": 0.01576731884057971,
+        "max_seconds": 0.02157
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._environment_for_persistent_storage.body",
+        "count": 36,
+        "total_seconds": 2.111835,
+        "mean_seconds": 0.05866208333333334,
+        "max_seconds": 0.108666
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.publish_room_presentation.validate_candidate",
+        "count": 137,
+        "total_seconds": 1.9741709999999992,
+        "mean_seconds": 0.014410007299270073,
+        "max_seconds": 0.025743
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.publish_room_presentation.validate_current",
+        "count": 300,
+        "total_seconds": 1.821526000000001,
+        "mean_seconds": 0.006071753333333333,
+        "max_seconds": 0.008194
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.publish_room_presentation.construct_publication",
+        "count": 120,
+        "total_seconds": 1.78553,
+        "mean_seconds": 0.014879416666666666,
+        "max_seconds": 0.027166
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_layout",
+        "count": 138,
+        "total_seconds": 1.717813,
+        "mean_seconds": 0.012447920289855072,
+        "max_seconds": 0.016342
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_layout",
+        "count": 138,
+        "total_seconds": 1.7114379999999993,
+        "mean_seconds": 0.012401724637681159,
+        "max_seconds": 0.016419
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.publish_room_presentation.validate_current",
+        "count": 120,
+        "total_seconds": 1.6533349999999993,
+        "mean_seconds": 0.013777791666666667,
+        "max_seconds": 0.018483
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.bind_base_records",
+        "count": 138,
+        "total_seconds": 1.5079529999999988,
+        "mean_seconds": 0.010927195652173913,
+        "max_seconds": 0.015771
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.host_semantics",
+        "count": 137,
+        "total_seconds": 1.4400650000000002,
+        "mean_seconds": 0.010511423357664234,
+        "max_seconds": 0.015631
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.rollback_snapshot",
+        "count": 12,
+        "total_seconds": 1.398519,
+        "mean_seconds": 0.11654325,
+        "max_seconds": 0.122373
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.inactive_publish",
+        "count": 150,
+        "total_seconds": 1.2735390000000004,
+        "mean_seconds": 0.00849026,
+        "max_seconds": 0.009953
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.publish",
+        "count": 150,
+        "total_seconds": 1.2707539999999997,
+        "mean_seconds": 0.008471693333333334,
+        "max_seconds": 0.009866
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.reconcile_current_environment_object_manifest.publish",
+        "count": 150,
+        "total_seconds": 1.2581470000000001,
+        "mean_seconds": 0.008387646666666667,
+        "max_seconds": 0.010982
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.world_store_including_projection",
+        "count": 12,
+        "total_seconds": 1.2260619999999998,
+        "mean_seconds": 0.10217183333333334,
+        "max_seconds": 0.109171
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.crew_after",
+        "count": 12,
+        "total_seconds": 1.175301,
+        "mean_seconds": 0.09794175,
+        "max_seconds": 0.104484
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.initial_state",
+        "count": 137,
+        "total_seconds": 1.1458740000000003,
+        "mean_seconds": 0.008364043795620437,
+        "max_seconds": 0.010137
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.world_store_including_projection",
+        "count": 150,
+        "total_seconds": 1.010986,
+        "mean_seconds": 0.006739906666666667,
+        "max_seconds": 0.009015
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_manifest_reconcile",
+        "count": 12,
+        "total_seconds": 0.991258,
+        "mean_seconds": 0.08260483333333334,
+        "max_seconds": 0.084596
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state._environment_for_persistent_storage.body",
+        "count": 300,
+        "total_seconds": 0.9901279999999993,
+        "mean_seconds": 0.0033004266666666667,
+        "max_seconds": 0.009829
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_validate",
+        "count": 137,
+        "total_seconds": 0.9738900000000001,
+        "mean_seconds": 0.007108686131386861,
+        "max_seconds": 0.01096
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.reconcile_current_environment_object_manifest.refresh_generated_layout",
+        "count": 150,
+        "total_seconds": 0.9621399999999999,
+        "mean_seconds": 0.006414266666666666,
+        "max_seconds": 0.007869
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.reconcile_current_environment_object_manifest.publish",
+        "count": 24,
+        "total_seconds": 0.9177349999999999,
+        "mean_seconds": 0.03823895833333333,
+        "max_seconds": 0.055538
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_physical_validation",
+        "count": 138,
+        "total_seconds": 0.8955270000000001,
+        "mean_seconds": 0.006489326086956522,
+        "max_seconds": 0.009081
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_physical_validation",
+        "count": 138,
+        "total_seconds": 0.892371,
+        "mean_seconds": 0.006466456521739131,
+        "max_seconds": 0.012705
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.crew_before",
+        "count": 12,
+        "total_seconds": 0.864828,
+        "mean_seconds": 0.07206900000000001,
+        "max_seconds": 0.090856
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.stamp_records",
+        "count": 138,
+        "total_seconds": 0.8574399999999996,
+        "mean_seconds": 0.006213333333333334,
+        "max_seconds": 0.011082
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.reconcile_membership",
+        "count": 12,
+        "total_seconds": 0.774931,
+        "mean_seconds": 0.06457758333333333,
+        "max_seconds": 0.065974
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.trusted_fast_path_attempt",
+        "count": 560,
+        "total_seconds": 0.729879,
+        "mean_seconds": 0.0013033553571428571,
+        "max_seconds": 0.002666
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.target_normalize",
+        "count": 12,
+        "total_seconds": 0.638576,
+        "mean_seconds": 0.05321466666666667,
+        "max_seconds": 0.062611
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.reconcile_current_environment_object_manifest.refresh_generated_layout",
+        "count": 24,
+        "total_seconds": 0.612422,
+        "mean_seconds": 0.025517583333333333,
+        "max_seconds": 0.028143
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.manifest_reconcile",
+        "count": 12,
+        "total_seconds": 0.563299,
+        "mean_seconds": 0.046941583333333335,
+        "max_seconds": 0.048656
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.publish_room_presentation.construct_publication",
+        "count": 300,
+        "total_seconds": 0.5532039999999999,
+        "mean_seconds": 0.0018440133333333334,
+        "max_seconds": 0.002248
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_reentry",
+        "count": 12,
+        "total_seconds": 0.517084,
+        "mean_seconds": 0.043090333333333335,
+        "max_seconds": 0.044608
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_tail",
+        "count": 12,
+        "total_seconds": 0.453676,
+        "mean_seconds": 0.03780633333333333,
+        "max_seconds": 0.046383
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.publish",
+        "count": 12,
+        "total_seconds": 0.442363,
+        "mean_seconds": 0.03686358333333333,
+        "max_seconds": 0.045371
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.publish",
+        "count": 12,
+        "total_seconds": 0.43847400000000003,
+        "mean_seconds": 0.0365395,
+        "max_seconds": 0.03942
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.publish",
+        "count": 12,
+        "total_seconds": 0.43149099999999996,
+        "mean_seconds": 0.035957583333333334,
+        "max_seconds": 0.036787
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.publish_room_presentation.base_plane_extract",
+        "count": 748,
+        "total_seconds": 0.4160620000000005,
+        "mean_seconds": 0.0005562326203208556,
+        "max_seconds": 0.001891
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.target_layer_lookup",
+        "count": 12,
+        "total_seconds": 0.384786,
+        "mean_seconds": 0.032065500000000004,
+        "max_seconds": 0.033334
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.store_source",
+        "count": 12,
+        "total_seconds": 0.38179399999999997,
+        "mean_seconds": 0.031816166666666666,
+        "max_seconds": 0.041261
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.environment_layer_state.store_source",
+        "count": 12,
+        "total_seconds": 0.36977800000000005,
+        "mean_seconds": 0.030814833333333333,
+        "max_seconds": 0.032194
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_migrate",
+        "count": 12,
+        "total_seconds": 0.365472,
+        "mean_seconds": 0.030456,
+        "max_seconds": 0.03158
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.ensure_state",
+        "count": 12,
+        "total_seconds": 0.356246,
+        "mean_seconds": 0.029687166666666667,
+        "max_seconds": 0.030782
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_build",
+        "count": 12,
+        "total_seconds": 0.29752799999999996,
+        "mean_seconds": 0.024794,
+        "max_seconds": 0.028288
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.produce_records",
+        "count": 138,
+        "total_seconds": 0.28842499999999993,
+        "mean_seconds": 0.002090036231884058,
+        "max_seconds": 0.004141
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.physical_layout",
+        "count": 12,
+        "total_seconds": 0.254455,
+        "mean_seconds": 0.021204583333333332,
+        "max_seconds": 0.022333
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_records",
+        "count": 12,
+        "total_seconds": 0.228774,
+        "mean_seconds": 0.019064499999999998,
+        "max_seconds": 0.021868
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.trusted_fingerprint",
+        "count": 137,
+        "total_seconds": 0.2149640000000001,
+        "mean_seconds": 0.0015690802919708028,
+        "max_seconds": 0.001958
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.publish_room_presentation.validate_candidate",
+        "count": 12,
+        "total_seconds": 0.19563400000000003,
+        "mean_seconds": 0.016302833333333332,
+        "max_seconds": 0.016776
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.host_semantics",
+        "count": 12,
+        "total_seconds": 0.19400099999999998,
+        "mean_seconds": 0.01616675,
+        "max_seconds": 0.017172
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.inactive_publish",
+        "count": 12,
+        "total_seconds": 0.18644000000000002,
+        "mean_seconds": 0.015536666666666667,
+        "max_seconds": 0.016454
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.capture_baseline",
+        "count": 137,
+        "total_seconds": 0.1821519999999999,
+        "mean_seconds": 0.0013295766423357665,
+        "max_seconds": 0.002213
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_layout",
+        "count": 12,
+        "total_seconds": 0.175587,
+        "mean_seconds": 0.01463225,
+        "max_seconds": 0.021897
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_layout",
+        "count": 12,
+        "total_seconds": 0.167802,
+        "mean_seconds": 0.0139835,
+        "max_seconds": 0.014572
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.travel_targets",
+        "count": 12,
+        "total_seconds": 0.16701100000000002,
+        "mean_seconds": 0.013917583333333334,
+        "max_seconds": 0.014998
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.bind_base_records",
+        "count": 12,
+        "total_seconds": 0.160648,
+        "mean_seconds": 0.013387333333333334,
+        "max_seconds": 0.016791
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.reconcile_current_environment_object_manifest.runtime_entry_sync",
+        "count": 287,
+        "total_seconds": 0.15816099999999997,
+        "mean_seconds": 0.0005510836236933798,
+        "max_seconds": 0.000918
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_semantic_commit",
+        "count": 137,
+        "total_seconds": 0.14657,
+        "mean_seconds": 0.0010698540145985401,
+        "max_seconds": 0.001633
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_validate",
+        "count": 12,
+        "total_seconds": 0.135437,
+        "mean_seconds": 0.011286416666666667,
+        "max_seconds": 0.011767
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.initial_state",
+        "count": 12,
+        "total_seconds": 0.10817500000000001,
+        "mean_seconds": 0.009014583333333333,
+        "max_seconds": 0.009571
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.publish_room_presentation.base_plane_extract",
+        "count": 300,
+        "total_seconds": 0.09410799999999997,
+        "mean_seconds": 0.00031369333333333335,
+        "max_seconds": 0.000524
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.stamp_records",
+        "count": 12,
+        "total_seconds": 0.09333799999999999,
+        "mean_seconds": 0.007778166666666667,
+        "max_seconds": 0.009187
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_physical_validation",
+        "count": 12,
+        "total_seconds": 0.08981299999999999,
+        "mean_seconds": 0.007484416666666666,
+        "max_seconds": 0.009
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_physical_validation",
+        "count": 12,
+        "total_seconds": 0.087993,
+        "mean_seconds": 0.00733275,
+        "max_seconds": 0.007845
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.declared_interactions",
+        "count": 138,
+        "total_seconds": 0.08169499999999998,
+        "mean_seconds": 0.0005919927536231884,
+        "max_seconds": 0.000998
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.publish_room_presentation.base_plane_extract",
+        "count": 120,
+        "total_seconds": 0.07925499999999998,
+        "mean_seconds": 0.0006604583333333333,
+        "max_seconds": 0.001522
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.authoritative_baseline",
+        "count": 138,
+        "total_seconds": 0.078121,
+        "mean_seconds": 0.0005660942028985508,
+        "max_seconds": 0.000807
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_baseline",
+        "count": 138,
+        "total_seconds": 0.07492600000000002,
+        "mean_seconds": 0.0005429420289855073,
+        "max_seconds": 0.000852
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.reconcile_current_environment_object_manifest.runtime_entry_sync",
+        "count": 150,
+        "total_seconds": 0.07109400000000002,
+        "mean_seconds": 0.00047396,
+        "max_seconds": 0.000623
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.arrival",
+        "count": 12,
+        "total_seconds": 0.06961300000000001,
+        "mean_seconds": 0.0058010833333333334,
+        "max_seconds": 0.006446
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.producer_context",
+        "count": 138,
+        "total_seconds": 0.064603,
+        "mean_seconds": 0.0004681376811594203,
+        "max_seconds": 0.000552
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.definition",
+        "count": 710,
+        "total_seconds": 0.06422799999999995,
+        "mean_seconds": 9.046197183098591e-05,
+        "max_seconds": 0.000231
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.result_snapshot",
+        "count": 137,
+        "total_seconds": 0.06408600000000002,
+        "mean_seconds": 0.00046778102189781024,
+        "max_seconds": 0.000798
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.copy_source_environment",
+        "count": 36,
+        "total_seconds": 0.05210499999999998,
+        "mean_seconds": 0.001447361111111111,
+        "max_seconds": 0.002764
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.prepare_current_environment_object_membership_for_publication.store_layer",
+        "count": 12,
+        "total_seconds": 0.051581,
+        "mean_seconds": 0.0042984166666666665,
+        "max_seconds": 0.004831
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.suppression_predicate",
+        "count": 710,
+        "total_seconds": 0.049324000000000014,
+        "mean_seconds": 6.947042253521127e-05,
+        "max_seconds": 0.000648
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.generate_games",
+        "count": 12,
+        "total_seconds": 0.04628300000000001,
+        "mean_seconds": 0.003856916666666667,
+        "max_seconds": 0.004353
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.trusted_fast_path_attempt",
+        "count": 36,
+        "total_seconds": 0.043411,
+        "mean_seconds": 0.0012058611111111111,
+        "max_seconds": 0.002224
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_snapshot",
+        "count": 137,
+        "total_seconds": 0.042379000000000014,
+        "mean_seconds": 0.00030933576642335766,
+        "max_seconds": 0.000444
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.reconcile_current_environment_object_manifest.copy_manifest_return",
+        "count": 287,
+        "total_seconds": 0.03758199999999999,
+        "mean_seconds": 0.00013094773519163762,
+        "max_seconds": 0.000333
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.produce_records",
+        "count": 12,
+        "total_seconds": 0.033027,
+        "mean_seconds": 0.00275225,
+        "max_seconds": 0.003021
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.definition",
+        "count": 287,
+        "total_seconds": 0.031314999999999996,
+        "mean_seconds": 0.00010911149825783972,
+        "max_seconds": 0.000206
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.dynamic_actors",
+        "count": 138,
+        "total_seconds": 0.02849800000000001,
+        "mean_seconds": 0.0002065072463768116,
+        "max_seconds": 0.00034
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.legacy_normalize",
+        "count": 287,
+        "total_seconds": 0.027749999999999997,
+        "mean_seconds": 9.668989547038328e-05,
+        "max_seconds": 0.000194
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.copy_all_layers",
+        "count": 36,
+        "total_seconds": 0.025321999999999994,
+        "mean_seconds": 0.0007033888888888889,
+        "max_seconds": 0.000898
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.capture_baseline",
+        "count": 12,
+        "total_seconds": 0.022248000000000004,
+        "mean_seconds": 0.001854,
+        "max_seconds": 0.00207
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.copy_state_return",
+        "count": 137,
+        "total_seconds": 0.021893000000000003,
+        "mean_seconds": 0.0001598029197080292,
+        "max_seconds": 0.00024
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.suppression_predicate",
+        "count": 287,
+        "total_seconds": 0.021827999999999983,
+        "mean_seconds": 7.605574912891986e-05,
+        "max_seconds": 0.000165
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.trusted_fingerprint",
+        "count": 12,
+        "total_seconds": 0.019666,
+        "mean_seconds": 0.0016388333333333333,
+        "max_seconds": 0.001686
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.definition",
+        "count": 138,
+        "total_seconds": 0.019310999999999995,
+        "mean_seconds": 0.00013993478260869565,
+        "max_seconds": 0.000241
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 150,
+        "total_seconds": 0.017065999999999998,
+        "mean_seconds": 0.00011377333333333333,
+        "max_seconds": 0.000301
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_semantic_commit",
+        "count": 12,
+        "total_seconds": 0.015508000000000001,
+        "mean_seconds": 0.0012923333333333333,
+        "max_seconds": 0.001517
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.prior_inventory",
+        "count": 137,
+        "total_seconds": 0.014802999999999998,
+        "mean_seconds": 0.00010805109489051095,
+        "max_seconds": 0.000202
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.ensure_sequence_state.runtime_normalize",
+        "count": 137,
+        "total_seconds": 0.014541999999999994,
+        "mean_seconds": 0.00010614598540145986,
+        "max_seconds": 0.000161
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.reconcile_current_environment_object_manifest.runtime_entry_sync",
+        "count": 24,
+        "total_seconds": 0.013898999999999996,
+        "mean_seconds": 0.000579125,
+        "max_seconds": 0.000759
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.publish_room_presentation.candidate_envelope_copy",
+        "count": 137,
+        "total_seconds": 0.012801000000000009,
+        "mean_seconds": 9.343795620437956e-05,
+        "max_seconds": 0.00019
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.environment_layer_state.copy_target_return",
+        "count": 12,
+        "total_seconds": 0.012698999999999998,
+        "mean_seconds": 0.00105825,
+        "max_seconds": 0.001386
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_layout_records",
+        "count": 138,
+        "total_seconds": 0.012608,
+        "mean_seconds": 9.136231884057971e-05,
+        "max_seconds": 0.000196
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_interactions",
+        "count": 138,
+        "total_seconds": 0.012148000000000006,
+        "mean_seconds": 8.802898550724637e-05,
+        "max_seconds": 0.000178
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.world_activation",
+        "count": 137,
+        "total_seconds": 0.011689999999999994,
+        "mean_seconds": 8.532846715328468e-05,
+        "max_seconds": 0.000145
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.reconcile_current_environment_object_manifest.copy_manifest_return",
+        "count": 150,
+        "total_seconds": 0.011258000000000002,
+        "mean_seconds": 7.505333333333334e-05,
+        "max_seconds": 0.00016
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 150,
+        "total_seconds": 0.010697000000000002,
+        "mean_seconds": 7.131333333333333e-05,
+        "max_seconds": 0.000184
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.canonical_interaction_geometry",
+        "count": 138,
+        "total_seconds": 0.010046999999999993,
+        "mean_seconds": 7.280434782608696e-05,
+        "max_seconds": 0.000201
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "scenario_engine.ensure_sequence_state.suppression_predicate",
+        "count": 150,
+        "total_seconds": 0.009694,
+        "mean_seconds": 6.462666666666667e-05,
+        "max_seconds": 0.000124
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.optional_before_snapshot",
+        "count": 137,
+        "total_seconds": 0.009286,
+        "mean_seconds": 6.778102189781022e-05,
+        "max_seconds": 0.000183
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.host_context",
+        "count": 138,
+        "total_seconds": 0.009162000000000003,
+        "mean_seconds": 6.639130434782608e-05,
+        "max_seconds": 0.000159
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.declared_interactions",
+        "count": 12,
+        "total_seconds": 0.008288,
+        "mean_seconds": 0.0006906666666666667,
+        "max_seconds": 0.000974
+      },
+      {
+        "mode": "target_travel",
+        "scope": "scenario_engine.migrate_environment_sequence.optional_changed_compare",
+        "count": 137,
+        "total_seconds": 0.008262000000000005,
+        "mean_seconds": 6.0306569343065696e-05,
+        "max_seconds": 0.000155
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.copy_all_layers",
+        "count": 12,
+        "total_seconds": 0.008195000000000001,
+        "mean_seconds": 0.0006829166666666666,
+        "max_seconds": 0.000812
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.authoritative_baseline",
+        "count": 12,
+        "total_seconds": 0.008186,
+        "mean_seconds": 0.0006821666666666666,
+        "max_seconds": 0.000811
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_baseline",
+        "count": 12,
+        "total_seconds": 0.007756000000000002,
+        "mean_seconds": 0.0006463333333333334,
+        "max_seconds": 0.000779
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "scenario_engine.ensure_sequence_state.definition",
+        "count": 150,
+        "total_seconds": 0.0073389999999999974,
+        "mean_seconds": 4.892666666666667e-05,
+        "max_seconds": 0.00051
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.copy_target",
+        "count": 12,
+        "total_seconds": 0.007283,
+        "mean_seconds": 0.0006069166666666666,
+        "max_seconds": 0.000654
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.action_digest",
+        "count": 138,
+        "total_seconds": 0.006466,
+        "mean_seconds": 4.685507246376812e-05,
+        "max_seconds": 0.00013
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 150,
+        "total_seconds": 0.006339000000000003,
+        "mean_seconds": 4.226e-05,
+        "max_seconds": 0.000137
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 150,
+        "total_seconds": 0.006272999999999999,
+        "mean_seconds": 4.182e-05,
+        "max_seconds": 9.5e-05
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.result_snapshot",
+        "count": 12,
+        "total_seconds": 0.006127,
+        "mean_seconds": 0.0005105833333333334,
+        "max_seconds": 0.000559
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.producer_context",
+        "count": 12,
+        "total_seconds": 0.005540999999999999,
+        "mean_seconds": 0.00046175000000000003,
+        "max_seconds": 0.000516
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.character_chain",
+        "count": 12,
+        "total_seconds": 0.005135000000000001,
+        "mean_seconds": 0.00042791666666666667,
+        "max_seconds": 0.000479
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.strip_semantic_ephemera",
+        "count": 36,
+        "total_seconds": 0.004172,
+        "mean_seconds": 0.00011588888888888889,
+        "max_seconds": 0.000324
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.reconcile_current_environment_object_manifest.copy_manifest_return",
+        "count": 24,
+        "total_seconds": 0.003878999999999999,
+        "mean_seconds": 0.00016162499999999998,
+        "max_seconds": 0.000266
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_snapshot",
+        "count": 12,
+        "total_seconds": 0.003699,
+        "mean_seconds": 0.00030825,
+        "max_seconds": 0.000384
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.definition",
+        "count": 36,
+        "total_seconds": 0.0034430000000000003,
+        "mean_seconds": 9.563888888888888e-05,
+        "max_seconds": 0.000176
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.dynamic_actors",
+        "count": 12,
+        "total_seconds": 0.002416,
+        "mean_seconds": 0.00020133333333333334,
+        "max_seconds": 0.000275
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.suppression_predicate",
+        "count": 36,
+        "total_seconds": 0.0021000000000000003,
+        "mean_seconds": 5.833333333333333e-05,
+        "max_seconds": 0.000132
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.definition",
+        "count": 12,
+        "total_seconds": 0.0018930000000000002,
+        "mean_seconds": 0.00015775,
+        "max_seconds": 0.000211
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.legacy_normalize",
+        "count": 24,
+        "total_seconds": 0.0018870000000000002,
+        "mean_seconds": 7.8625e-05,
+        "max_seconds": 0.00018
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.suppression_predicate",
+        "count": 24,
+        "total_seconds": 0.0018830000000000001,
+        "mean_seconds": 7.845833333333333e-05,
+        "max_seconds": 0.000138
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.copy_state_return",
+        "count": 12,
+        "total_seconds": 0.0018360000000000002,
+        "mean_seconds": 0.000153,
+        "max_seconds": 0.00027
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 12,
+        "total_seconds": 0.001563,
+        "mean_seconds": 0.00013025,
+        "max_seconds": 0.000234
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.scenario_reconcile",
+        "count": 12,
+        "total_seconds": 0.0015619999999999998,
+        "mean_seconds": 0.00013016666666666667,
+        "max_seconds": 0.000181
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.ensure_sequence_state.runtime_normalize",
+        "count": 12,
+        "total_seconds": 0.0012649999999999998,
+        "mean_seconds": 0.00010541666666666666,
+        "max_seconds": 0.000217
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.exit_validate",
+        "count": 12,
+        "total_seconds": 0.001215,
+        "mean_seconds": 0.00010125,
+        "max_seconds": 0.000159
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.publish_room_presentation.candidate_envelope_copy",
+        "count": 12,
+        "total_seconds": 0.0011920000000000001,
+        "mean_seconds": 9.933333333333334e-05,
+        "max_seconds": 0.000158
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.prior_inventory",
+        "count": 12,
+        "total_seconds": 0.001183,
+        "mean_seconds": 9.858333333333334e-05,
+        "max_seconds": 0.000146
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.departure",
+        "count": 12,
+        "total_seconds": 0.001164,
+        "mean_seconds": 9.7e-05,
+        "max_seconds": 0.000139
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.host_context",
+        "count": 12,
+        "total_seconds": 0.001114,
+        "mean_seconds": 9.283333333333333e-05,
+        "max_seconds": 0.000147
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_interactions",
+        "count": 12,
+        "total_seconds": 0.001054,
+        "mean_seconds": 8.783333333333333e-05,
+        "max_seconds": 0.000146
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.world_activation",
+        "count": 12,
+        "total_seconds": 0.001003,
+        "mean_seconds": 8.358333333333334e-05,
+        "max_seconds": 0.000153
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.host_context",
+        "count": 12,
+        "total_seconds": 0.0009609999999999998,
+        "mean_seconds": 8.008333333333333e-05,
+        "max_seconds": 9.2e-05
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_layout_records",
+        "count": 12,
+        "total_seconds": 0.000941,
+        "mean_seconds": 7.841666666666667e-05,
+        "max_seconds": 0.000129
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.canonical_interaction_geometry",
+        "count": 12,
+        "total_seconds": 0.0009060000000000001,
+        "mean_seconds": 7.55e-05,
+        "max_seconds": 0.000134
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.access",
+        "count": 12,
+        "total_seconds": 0.0008249999999999999,
+        "mean_seconds": 6.874999999999999e-05,
+        "max_seconds": 9.6e-05
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.scenario_normalize",
+        "count": 12,
+        "total_seconds": 0.0008230000000000001,
+        "mean_seconds": 6.858333333333334e-05,
+        "max_seconds": 0.000144
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.source_preflight",
+        "count": 12,
+        "total_seconds": 0.0008209999999999999,
+        "mean_seconds": 6.841666666666667e-05,
+        "max_seconds": 0.000176
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.optional_before_snapshot",
+        "count": 12,
+        "total_seconds": 0.0008059999999999998,
+        "mean_seconds": 6.716666666666667e-05,
+        "max_seconds": 0.000114
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 12,
+        "total_seconds": 0.000735,
+        "mean_seconds": 6.125e-05,
+        "max_seconds": 0.000116
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "scenario_engine.migrate_environment_sequence.optional_changed_compare",
+        "count": 12,
+        "total_seconds": 0.000567,
+        "mean_seconds": 4.7249999999999997e-05,
+        "max_seconds": 0.000113
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.action_digest",
+        "count": 12,
+        "total_seconds": 0.000521,
+        "mean_seconds": 4.341666666666667e-05,
+        "max_seconds": 5.4e-05
+      }
+    ],
+    "active_outer": [
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_semantic_presentation_contract",
+        "phase": "before"
+      },
+      {
+        "stage": "semantic_child",
+        "detail": "Env068EnvironmentReadabilityContractScript.check",
+        "phase": "before"
+      },
+      {
+        "stage": "profile",
+        "detail": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+        "phase": "before"
+      },
+      {
+        "stage": "observer_phase",
+        "detail": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+        "phase": "target_travel:before"
+      }
+    ],
+    "active_nested": [
+      {
+        "scope": "run_state.scenario_finalize_installed_environment.trusted_finalize_return",
+        "context": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+        "mode": "target_travel"
+      },
+      {
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.prior_inventory",
+        "context": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+        "mode": "target_travel"
+      }
+    ],
+    "last_outer": {
+      "detail": "kitty_cat_lounge_amateur_night|turn_and_grievance",
+      "payload": {},
+      "phase": "target_travel:before",
+      "stage": "observer_phase",
+      "ticks_usec": 297374714,
+      "source": "foundation_systems.systems_core.godot.log"
+    }
+  },
+  "interpretation": {
+    "inclusive_rows_overlap": true,
+    "unclosed_spans_are_censored_not_hang_proof": true,
+    "cross_run_speedup_claimed": false,
+    "whole_180_second_recipe_qualified": false,
+    "no_new_required_NEXT_behavior": "Committed Python audit utility/tests and evidence only. Cold-import deployment qualification belongs to the separately assigned owner; no release machinery changed."
+  },
+  "evidence": [
+    "evidence/catalog012-proposal",
+    "evidence/catalog012-root-static-r1.json",
+    "evidence/catalog012-profile-r1",
+    "evidence/catalog012-owner-hardened-r1",
+    "evidence/catalog012-profile-analysis-r1.json",
+    "evidence/catalog012-independent-final-review-r1.json",
+    "evidence/owner012-root-fault-tests-r1",
+    "evidence/source-owner012-old-reproduction-r1",
+    "evidence/catalog012-proposal/independent-raw-interval-attribution-r1.json"
+  ],
+  "manual_reconciliation": {
+    "git_verified": true,
+    "assigned_audit_task9_findings": 0,
+    "outside_current_errors": 78,
+    "outside_all_errors": 544,
+    "outside_runtime_errors": 54,
+    "runtime_instances": 133,
+    "evidence": [
+      "evidence/reconciliation012-results-current-r1.json",
+      "evidence/reconciliation012-results-all-r1.json",
+      "evidence/continuation012-scope-source-proof-r1.json"
+    ],
+    "preservation": "Policies/metadata, unrelated objectives/batches, all132prior runtime records, unrelated owner observations, full1242originalsourcehashes and preserved checkout/tutorial bytes exact."
+  },
+  "measured_call_ownership": {
+    "method": "Independent raw-event interval containment, not subtraction of unrelated populations. Inclusive children overlap parents.",
+    "layer_install_definition": {
+      "count": 12,
+      "definition_seconds": 2.418501,
+      "enclosing_sequence_migrate_seconds": 2.423518,
+      "preferred_definition": "empty dictionary",
+      "flags_unchanged": true
+    },
+    "layer_finalizer_definition": {
+      "count": 12,
+      "definition_seconds": 0.001619,
+      "preferred_definition": "owned definition",
+      "flags_unchanged": true
+    },
+    "definition_flag_limit": "definition_prevalidated is not an argument to the timed resolver call. Flags do not prove actual branch/cache behavior.",
+    "initial_finalizer_reconciliation_children": {
+      "count_each": 137,
+      "publication_seconds": 5.999044,
+      "layout_refresh_seconds": 3.260331,
+      "publication_current_validation_seconds": 2.140956,
+      "publication_candidate_validation_seconds": 1.974171,
+      "publication_construction_seconds": 1.633847,
+      "precision": "Exact microsecond aggregate from independent raw interval containment."
+    }
+  },
+  "independent_raw_interval_attribution": {
+    "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog012-proposal\\independent-raw-interval-attribution-r1.json",
+    "sha256": "30719fe905be0b2ef76dbd2260b167c7599816bc55744195c433e696ad7530a9",
+    "log_sha256": "7b3a2486e2084a14cbee57dcf2572d247405ca3bdd9a9cc274b4d00f9e3150f0",
+    "publication_validate_current_nearest_selected_parent": [
+      {
+        "group": [
+          "target_travel",
+          "run_state.reconcile_current_environment_object_manifest.publish"
+        ],
+        "count": 287,
+        "sum_usec": 3651845,
+        "sum_seconds": 3.651845,
+        "mean_usec": 12724.198606271777,
+        "median_usec": 12563,
+        "p95_nearest_rank_usec": 18131,
+        "max_usec": 21725
+      },
+      {
+        "group": [
+          "target_travel",
+          "run_state._finalized_scenario_layout_result.publish"
+        ],
+        "count": 137,
+        "sum_usec": 1990535,
+        "sum_seconds": 1.990535,
+        "mean_usec": 14529.452554744526,
+        "median_usec": 14323,
+        "p95_nearest_rank_usec": 18389,
+        "max_usec": 20978
+      },
+      {
+        "group": [
+          "target_travel",
+          "run_state.prepare_current_environment_object_membership_for_publication.publish"
+        ],
+        "count": 150,
+        "sum_usec": 910706,
+        "sum_seconds": 0.910706,
+        "mean_usec": 6071.373333333333,
+        "median_usec": 6065.0,
+        "p95_nearest_rank_usec": 6797,
+        "max_usec": 7000
+      },
+      {
+        "group": [
+          "target_travel",
+          "run_state.prepare_current_environment_object_membership_for_publication.reconcile_membership"
+        ],
+        "count": 150,
+        "sum_usec": 904605,
+        "sum_seconds": 0.904605,
+        "mean_usec": 6030.7,
+        "median_usec": 6090.0,
+        "p95_nearest_rank_usec": 6693,
+        "max_usec": 6920
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.reconcile_current_environment_object_manifest.publish"
+        ],
+        "count": 24,
+        "sum_usec": 357192,
+        "sum_seconds": 0.357192,
+        "mean_usec": 14883,
+        "median_usec": 14877.5,
+        "p95_nearest_rank_usec": 18304,
+        "max_usec": 18483
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.prepare_current_environment_object_membership_for_publication.publish"
+        ],
+        "count": 12,
+        "sum_usec": 199420,
+        "sum_seconds": 0.19942,
+        "mean_usec": 16618.333333333332,
+        "median_usec": 16605.0,
+        "p95_nearest_rank_usec": 17369,
+        "max_usec": 17369
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state._finalized_scenario_layout_result.publish"
+        ],
+        "count": 12,
+        "sum_usec": 198181,
+        "sum_seconds": 0.198181,
+        "mean_usec": 16515.083333333332,
+        "median_usec": 16583.0,
+        "p95_nearest_rank_usec": 17162,
+        "max_usec": 17162
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_generator.enter_environment_layer.publish"
+        ],
+        "count": 12,
+        "sum_usec": 196125,
+        "sum_seconds": 0.196125,
+        "mean_usec": 16343.75,
+        "median_usec": 16278.5,
+        "p95_nearest_rank_usec": 16932,
+        "max_usec": 16932
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_generator.enter_environment_layer.crew_after"
+        ],
+        "count": 12,
+        "sum_usec": 195105,
+        "sum_seconds": 0.195105,
+        "mean_usec": 16258.75,
+        "median_usec": 16314.0,
+        "p95_nearest_rank_usec": 16941,
+        "max_usec": 16941
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.prepare_current_environment_object_membership_for_publication.reconcile_membership"
+        ],
+        "count": 12,
+        "sum_usec": 195098,
+        "sum_seconds": 0.195098,
+        "mean_usec": 16258.166666666666,
+        "median_usec": 16280.0,
+        "p95_nearest_rank_usec": 16748,
+        "max_usec": 16748
+      },
+      {
+        "group": [
+          "target_travel",
+          "outside_selected_spans"
+        ],
+        "count": 12,
+        "sum_usec": 168836,
+        "sum_seconds": 0.168836,
+        "mean_usec": 14069.666666666666,
+        "median_usec": 14246.5,
+        "p95_nearest_rank_usec": 19527,
+        "max_usec": 19527
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_generator.enter_environment_layer.crew_before"
+        ],
+        "count": 12,
+        "sum_usec": 144464,
+        "sum_seconds": 0.144464,
+        "mean_usec": 12038.666666666666,
+        "median_usec": 11939.5,
+        "p95_nearest_rank_usec": 12929,
+        "max_usec": 12929
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.install_environment_layer_state.store_source"
+        ],
+        "count": 12,
+        "sum_usec": 85749,
+        "sum_seconds": 0.085749,
+        "mean_usec": 7145.75,
+        "median_usec": 6945.0,
+        "p95_nearest_rank_usec": 10751,
+        "max_usec": 10751
+      },
+      {
+        "group": [
+          "target_travel",
+          "run_state.scenario_finalize_installed_environment.inactive_publish"
+        ],
+        "count": 12,
+        "sum_usec": 83325,
+        "sum_seconds": 0.083325,
+        "mean_usec": 6943.75,
+        "median_usec": 7084.0,
+        "p95_nearest_rank_usec": 7283,
+        "max_usec": 7283
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.environment_layer_state.store_source"
+        ],
+        "count": 12,
+        "sum_usec": 82001,
+        "sum_seconds": 0.082001,
+        "mean_usec": 6833.416666666667,
+        "median_usec": 6975.5,
+        "p95_nearest_rank_usec": 7235,
+        "max_usec": 7235
+      }
+    ],
+    "persistence_nearest_selected_parent_flags": [
+      {
+        "group": [
+          "target_travel",
+          "outside_selected_spans",
+          "{\"deep_copy\": true, \"preserve_runtime_projection\": false}"
+        ],
+        "count": 149,
+        "sum_usec": 5739526,
+        "sum_seconds": 5.739526,
+        "mean_usec": 38520.30872483221,
+        "median_usec": 36352,
+        "p95_nearest_rank_usec": 63417,
+        "max_usec": 66581
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_state.prepare_current_environment_object_membership_for_publication.world_store_including_projection",
+          "{\"deep_copy\": true, \"preserve_runtime_projection\": false}"
+        ],
+        "count": 12,
+        "sum_usec": 1219539,
+        "sum_seconds": 1.219539,
+        "mean_usec": 101628.25,
+        "median_usec": 101346.5,
+        "p95_nearest_rank_usec": 108666,
+        "max_usec": 108666
+      },
+      {
+        "group": [
+          "target_travel",
+          "run_state.prepare_current_environment_object_membership_for_publication.world_store_including_projection",
+          "{\"deep_copy\": true, \"preserve_runtime_projection\": false}"
+        ],
+        "count": 150,
+        "sum_usec": 993860,
+        "sum_seconds": 0.99386,
+        "mean_usec": 6625.733333333334,
+        "median_usec": 6600.5,
+        "p95_nearest_rank_usec": 7378,
+        "max_usec": 8860
+      },
+      {
+        "group": [
+          "target_travel",
+          "outside_selected_spans",
+          "{\"deep_copy\": false, \"preserve_runtime_projection\": false}"
+        ],
+        "count": 150,
+        "sum_usec": 967580,
+        "sum_seconds": 0.96758,
+        "mean_usec": 6450.533333333334,
+        "median_usec": 6486.0,
+        "p95_nearest_rank_usec": 7168,
+        "max_usec": 9430
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_generator.enter_environment_layer.rollback_snapshot",
+          "{\"deep_copy\": false, \"preserve_runtime_projection\": false}"
+        ],
+        "count": 12,
+        "sum_usec": 492303,
+        "sum_seconds": 0.492303,
+        "mean_usec": 41025.25,
+        "median_usec": 40666.5,
+        "p95_nearest_rank_usec": 46630,
+        "max_usec": 46630
+      },
+      {
+        "group": [
+          "layer_entry",
+          "run_generator.enter_environment_layer.rollback_snapshot",
+          "{\"deep_copy\": false, \"preserve_runtime_projection\": true}"
+        ],
+        "count": 12,
+        "sum_usec": 399993,
+        "sum_seconds": 0.399993,
+        "mean_usec": 33332.75,
+        "median_usec": 33540.0,
+        "p95_nearest_rank_usec": 33909,
+        "max_usec": 33909
+      },
+      {
+        "group": [
+          "target_travel",
+          "outside_selected_spans",
+          "{\"deep_copy\": false, \"preserve_runtime_projection\": true}"
+        ],
+        "count": 150,
+        "sum_usec": 13408,
+        "sum_seconds": 0.013408,
+        "mean_usec": 89.38666666666667,
+        "median_usec": 86.0,
+        "p95_nearest_rank_usec": 118,
+        "max_usec": 168
+      }
+    ],
+    "source_anchors": {
+      "scripts/core/run_state.gd": {
+        "sha256": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+        "publication_current_validate": 1563,
+        "publication_candidate_validate": 1575,
+        "publication_construct": 1581,
+        "manifest_sync": 1625,
+        "manifest_layout": 1627,
+        "manifest_publication": 1634,
+        "world_store_including_projection": [
+          1844,
+          1848
+        ],
+        "layer_install_migrate": [
+          5951,
+          5955
+        ],
+        "static_persistence_body": [
+          16239,
+          16276
+        ]
+      },
+      "scripts/core/scenario_engine.gd": {
+        "sha256": "27d7fc0c7292edff54289be9836a74b6e0c821a23d8d10316246f52b873d3c95",
+        "definition_resolver": [
+          160,
+          197
+        ],
+        "migrate_definition": 253,
+        "migrate_optional_before": 267,
+        "migrate_ensure": 275,
+        "migrate_optional_after": 276,
+        "ensure_definition": 294
+      },
+      "scripts/core/run_generator.gd": {
+        "sha256": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd",
+        "layer_install": 676,
+        "layer_finalize": 689,
+        "layer_rollback": 632
+      }
+    },
+    "semantics_and_reuse_limits": [
+      "Inclusive parents and children overlap; aggregate group rows must not be blindly added.",
+      "Counts include closed work in partial150th profile; open spans have no duration and their cap position is not a bottleneck measurement.",
+      "Flags identify call variants but do not establish causal equivalence or cache eligibility.",
+      "Expensive layer definition resolution is enclosed by install migration(preferred{}); cheap finalizer migration receives its owned preferred definition. The resolver does not accept definition_prevalidated as an argument.",
+      "Ensure.default-definition lookup is a separate callsite and is cheap in this observed layer prefix.",
+      "Persistence.body includes filtering,manifest refresh,ephemera cleanup and projection canonicalization; deep_copy=false does not mean zero copying/work.",
+      "World-store parent includes its nested persistent-environment argument. Layer world-store projection count12 must not be subtracted from aggregate storagecount36.",
+      "Repeated publication validations occur at distinct owner boundaries and candidate/input states; timing does not prove safe call removal/reuse.",
+      "No comparison to an older source epoch is a speedup result; no wholeSystems pass or compiled addon qualification is claimed."
+    ]
+  }
+}
