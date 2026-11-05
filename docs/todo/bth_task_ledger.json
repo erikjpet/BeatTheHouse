@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T05:21:46.067608+00:00",
+  "updated_at": "2026-11-05T05:27:43.903723+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -46,6 +46,166 @@
     "reconciled_main_commit": "e1e71f26d37040142c5f851b3bbd3d1f89d61355"
   },
   "objectives": [
+    {
+      "id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+      "name": "Keep forced-closing Walk fallback publicly executable",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the distinct R11 forced-closing departure finding: after a naturally settled final Lounge action and closing acknowledgement, the capped public map can omit the eligible free Walk fallback while visible routes are unavailable or unaffordable. Trace and faithfully reproduce the actual public Host/map/choice/dispatch path, assess ordinary waiting and reopening to classify the exact softlock risk, and fix public executable cost0 fallback access if confirmed. Preserve ordinary/hidden route rules, eligibility, authority, fares, wallet/history/RNG/clocks, prior outcomes and once-only settlement. Qualify official Save/fresh-process cold and independent review with an exact tested local commit. Preserve all original player states and files, fixed16:9/touch/focus, and the explicit item/scenario pause; do not implement paused scenarios or clear files. The initial delegation covered local investigation/fix/test/commit only.\n\nNew authorized release follow-through: publish the separately tested closing-fallback fix to main, then verify exact promoted/served NEXT source/tree, matching assets, startup and scoped changed behavior where feasible through the existing guarded pipeline. Preserve all five completed local checks and their historical semantic Host/simulated-delta limits; keep this expanded objective Open until delivery acceptance is evidenced.",
+        "source": "Trusted parent delegation2026-11-05; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-r11-closing-fallback-1067-finding.json. Read-only dedup of current ledger and both plan views found no closing-fallback equivalent. Parent fresh-main handoff source base 45af92d9c8e663094cd322165aeafbe2a046da1f. Historical observation is pinned f305; source support is separate from current reproduction and no new publication is inferred.\n\nTrusted parent delegation2026-11-05 explicitly authorizes publication of tested closing-fallback fix 838016895d03a16b2ed060185cf6312fe82bc348 and exact NEXT follow-through under the trusted user direction: Continue playtesting fixing issues getting them NEXT. Preserve the existing watcher/qualification/resource guards; do not restart the watcher, run a manual substitute build, clear files or bypass a guard. Keep full objective Open until actual publication and required NEXT acceptance are evidenced. Parent merged fresh shared main before this registry update; source handoff 245ca4f6f483043a4a3b9ec394b1d76f3ba2af43.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_dedup_public_host_reproduce",
+            "description": "Deduplicate the finding, trace the independently selected closing fallback versus capped public choices, and reproduce or precisely disposition the actual public Host/map/choice/dispatch path on current source using faithful owned equivalent state; no manually injected free route or original resident-profile access.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
+            ]
+          },
+          {
+            "id": "public_executable_zero_walk",
+            "description": "If confirmed, retain an eligible cost0 Walk in the real public executable departure choices despite ordinary card caps, and qualify its normal dispatch/arrival while preserving normal fares, caps, hidden-route filtering, eligibility and authority outside the forced-closing exception.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
+            ]
+          },
+          {
+            "id": "waiting_reopening_classification",
+            "description": "Assess ordinary waiting and venue reopening as possible recovery, distinguishing a blocked public departure path from an indefinite hard softlock. Record only observed recovery and exact limits; no unsupported hard-softlock, clock-injection or current-Web claim.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
+            ]
+          },
+          {
+            "id": "save_cold_once_only_state",
+            "description": "Use official Save and fresh-process cold checks for relevant closing/grace/route state, wallets, RNG/clocks/history and exactly-once prior settlement/departure. Preserve naturally settled outcomes without replay, refunds, original-save access, save editing or file clearing.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
+            ]
+          },
+          {
+            "id": "review_test_exact_commit",
+            "description": "Pass focused meaningful regressions and independent scoped review, associate an exact tested local implementation commit, and reconcile both task views with the faithful reproduction, recovery classification and evidence limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
+            ]
+          },
+          {
+            "id": "publication_next_delivery",
+            "description": "Publish exact tested fix normally to main with resulting commit/tree and fix ancestry, then verify exact promoted/served NEXT identity, matching assets and basic startup, plus changed closing-route behavior where feasible. Preserve existing cold-import/resource guards and distinguish historical native semantic Host qualification from any unobserved Web/pixel behavior.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        },
+        "acceptance_scope": {
+          "covered": [
+            "Authentic owned current semantic Host action/closing-dialogue/map/public-choice/dispatch with natural stake6/gross2/net-4cash12to8, distinct from original R11 minimum1/two-pair outcome",
+            "Selected eligible house fallback outside ordinary capped3 retained as public4 with executable Walk0/110minute quote and normal Host travel",
+            "Strict populated paid-cache/history and duplicate boundaries, plus two official Save/fresh-process cold states",
+            "Map clock pause and normal room-clock reopening assessed with simulated delta05:30to13:00",
+            "Visibility/locked/unvisited negative eligibility classes under source review only"
+          ],
+          "excluded": [
+            "Original R11 resident-state recovery",
+            "Indefinite hard-softlock claim",
+            "Fresh Web or deployed changed behavior",
+            "Paused scenario/item implementation, file clearing or original profile changes",
+            "Native coin-pusher kernel/physics or rebuild claims"
+          ]
+        }
+      },
+      "state": "open",
+      "status": "LOCAL_COMPLETE_PUBLICATION_NEXT_ACCEPTANCE_REQUESTED",
+      "owner": {
+        "name": "Fix Back Alley travel / forced-closing fallback",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "838016895d03a16b2ed060185cf6312fe82bc348",
+          "evidence": [
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Newly authorized main publication and exact normal guarded NEXT delivery; target publication/deployed acceptance pending."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-r11-closing-fallback-1067-finding.json",
+          "summary": "Pinned f305 R11: genuine final minimum1 Neon Jacks hand settles naturally two-pair cash10to11; cold preserves settled+1 once. Closing acknowledgement opens real map, but Jazz/Bar/Riverboat quoted fare15 routes are closed/away or unaffordable and visited always-open Alley is excluded. No disabled Travel clicked; internally selected fallback ID and waiting-to-reopen recovery untested. Product public departure gap, no security denial or indefinite-hard-softlock claim."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
+          "summary": "75 focused qualified checks; faithful owned Host public route and official-cold evidence bounded as recorded, original states untouched."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+          "summary": "Independent final approval of75 qualified checks (producer61 plus cold14), exact frozen view-model/test/world-map hashes, five actual owned-zero Job closures, faithful semantic Host reproduction, strict paid-cache/cold guards and bounded waiting/source-review limits. Both broader objectives remain Open."
+        },
+        {
+          "kind": "authorization",
+          "reference": "Trusted parent delegation2026-11-05",
+          "summary": "Trusted parent delegation2026-11-05 explicitly authorizes publication of tested closing-fallback fix 838016895d03a16b2ed060185cf6312fe82bc348 and exact NEXT follow-through under the trusted user direction: Continue playtesting fixing issues getting them NEXT. Preserve the existing watcher/qualification/resource guards; do not restart the watcher, run a manual substitute build, clear files or bypass a guard. Keep full objective Open until actual publication and required NEXT acceptance are evidenced."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Active parent reviews merged source/history, publishes the exact tested closing fix normally, then observes the existing watcher and records actual exact NEXT identity/assets/startup and scoped behavior when its qualification guard permits progress.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T05:27:43.903723+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        {
+          "scope": "forced_closing_public_travel_fallback",
+          "description": "If confirmed, narrowly retain an already eligible forced-closing cost0 Walk fallback in public capped targets, choice and normal dispatch. Preserve ordinary/hidden routes, authority/payment, outcomes/RNG/clocks, scheduling, fixed16:9/touch/focus and paused item/scenario work; no file clearing or original-state changes."
+        }
+      ],
+      "updated_at": "2026-11-05T05:27:43.903723+00:00"
+    },
     {
       "id": "BTH-PERF-20261104",
       "name": "Whole-game substantial performance/leak audit and fixes",
@@ -13676,6 +13836,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
         }
       ],
       "deployment": {
@@ -13752,6 +13918,11 @@
           "kind": "cleanup_stopped_bug_fix_continuation",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "No further obsolete-code removal. Scoped late-duel defect repaired and committed; catalog owner/limit mismatch investigated, exact maintained-stage measurement separate. Whole requested audit remains incomplete/Open."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
         }
       ],
       "implementation_batches": [
@@ -13769,7 +13940,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:34:02.257639+00:00"
+      "updated_at": "2026-11-05T04:59:11.338692+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20513,7 +20684,7 @@
         }
       },
       "state": "open",
-      "status": "MAINTAINED_SYSTEMS_CORE_300S_TIMEOUT_REPRODUCED",
+      "status": "CURRENT_SYSTEMS_TIMEOUT_WITH_ORIGINAL_ORDER_PHASE_ATTRIBUTION",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20548,6 +20719,12 @@
           "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
         }
       ],
@@ -20608,10 +20785,25 @@
           "kind": "exact_maintained_inner_stage_timeout",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Current exact4/55Systems plan timed out in firstsystems_core shard at300.295s; no completion or55checks-passclaim. Canonical43.712suitebudgetalsoexceeded. Outer330supervisor didnotexpire; allownedprocesses0. Limits/order/assertions unchanged;9bnativequalification separate."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
+        },
+        {
+          "kind": "current_original_order_timing_observer",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Complete4/55recipe preserved under300/43.712guard. Frozen observer3originalsrestorebyteexact; calls/assertions/profiles retained. Timings identifycompletedpredecessors andin-flightphase, withperprofileworldsnapshots whenreached. Diagnosticcopiedresourceidentities/overhead explicit; noaggregatepassclaimed."
+        },
+        {
+          "kind": "measured_owner_disposition",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Observed134profileprefix: targettravel75.570s,layer16.432s,initial14.011s; runtimeTrace1.027s. Nestedtravelinstall45.046s/finalize31.890s vsprime1.565s identifiesnextowner, notproofitsinternalcause. Retainall220plannedprofiles andcurrentguard; no candidateoptimizationyet."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Profile exact systems_core/full content validation before its first completion under the existing canonical guards, then repair measured repeated work while preserving every assertion/profile and predecessor. Original full180 diagnostic and current4/55stage remain unqualified; do not infer success from focused pieces or increase limits.",
+      "next_action": "Attribute internal costs in RunState.scenario_finalize_installed_environment and generator layer-entry installation, then optimize measured repeated work with exact state/RNG/authority and current full-stage regression evidence. Prefix timings do not support priming or description-traversal dominance. Preserve every assertion/profile, independent fixture, predecessor and ingress/default; do not raise guards. Cleanup remains stopped.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20623,7 +20815,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:53:40.303763+00:00"
+      "updated_at": "2026-11-05T05:07:28.658435+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -21734,7 +21926,7 @@
         }
       },
       "state": "open",
-      "status": "COMMITTED_FOCUSED_DUEL_REGRESSION_PASS_NEXT_DELIVERY_OPEN",
+      "status": "PUBLISHED_MAIN_DUEL_FOCUSED_PASS_NEXT_COLD_IMPORT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21743,6 +21935,12 @@
       "commits": [
         {
           "sha": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
@@ -21755,7 +21953,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Tested late-duel commit546dfe48e3a4c04e118d1055ec7624ec91da2dbc requires publication and exact NEXT delivery; served7ac predates this fix."
+        "scope": "Published source546dfe48 in main45af92d9. Exact watcher45af at2026-11-05T04:57:29Z failed cold-import qualification required; served7ac predates fix. Delivery remains Open."
       },
       "evidence": [
         {
@@ -21767,20 +21965,28 @@
           "kind": "real_producer_baseline_and_canonical_regression",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Baseline13 failed checks with actual rejected direct transition installed after natural flush; unchanged external4cases and maintained4cases pass after repair. Baseline and all owned saves retained."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified duel bug commit through authorized main and existing watcher, then verify exact deployed source/assets. Complete remaining wrapper-focused compatibility and maintained Systems-stage evidence without weakening guards.",
+      "next_action": "Follow existing NEXT owner after required cold-import qualification, then verify exact source/tree/provenance/assets and relevant launch acceptance. All four event and four wrapper cases pass with owned saves; no additional cleanup or paused feature work.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No external blocker to this scoped active investigation/verification. Latest parent explicitly stops cleanup while playtesting and issue fixes continue; no new general module hold is inferred.",
+        "state": "active",
+        "kind": "external_validation_dependency",
+        "description": "Existing NEXT watcher for45af92d9: Asset/importer/settings inputs changed; cold-import qualification required. Qualification is separately owned; no bypass/restart authorized or attempted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:34:02.257639+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T04:59:11.338692+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation010-next-block-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:53:40.303763+00:00"
+      "updated_at": "2026-11-05T04:59:11.338692+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-009",
@@ -22566,157 +22772,6 @@
         }
       ],
       "updated_at": "2026-11-05T02:21:56.344835+00:00"
-    },
-    {
-      "id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
-      "name": "Keep forced-closing Walk fallback publicly executable",
-      "aliases": [],
-      "kind": "objective",
-      "parent_ids": [],
-      "group": "current",
-      "objective": {
-        "text": "Investigate the distinct R11 forced-closing departure finding: after a naturally settled final Lounge action and closing acknowledgement, the capped public map can omit the eligible free Walk fallback while visible routes are unavailable or unaffordable. Trace and faithfully reproduce the actual public Host/map/choice/dispatch path, assess ordinary waiting and reopening to classify the exact softlock risk, and fix public executable cost0 fallback access if confirmed. Preserve ordinary/hidden route rules, eligibility, authority, fares, wallet/history/RNG/clocks, prior outcomes and once-only settlement. Qualify official Save/fresh-process cold and independent review with an exact tested local commit. Preserve all original player states and files, fixed16:9/touch/focus, and the explicit item/scenario pause; do not implement paused scenarios or clear files. This delegation is local investigation/fix/test/commit only.",
-        "source": "Trusted parent delegation2026-11-05; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-r11-closing-fallback-1067-finding.json. Read-only dedup of current ledger and both plan views found no closing-fallback equivalent. Parent fresh-main handoff source base 45af92d9c8e663094cd322165aeafbe2a046da1f. Historical observation is pinned f305; source support is separate from current reproduction and no new publication is inferred.",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "trace_dedup_public_host_reproduce",
-            "description": "Deduplicate the finding, trace the independently selected closing fallback versus capped public choices, and reproduce or precisely disposition the actual public Host/map/choice/dispatch path on current source using faithful owned equivalent state; no manually injected free route or original resident-profile access.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
-            ]
-          },
-          {
-            "id": "public_executable_zero_walk",
-            "description": "If confirmed, retain an eligible cost0 Walk in the real public executable departure choices despite ordinary card caps, and qualify its normal dispatch/arrival while preserving normal fares, caps, hidden-route filtering, eligibility and authority outside the forced-closing exception.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
-            ]
-          },
-          {
-            "id": "waiting_reopening_classification",
-            "description": "Assess ordinary waiting and venue reopening as possible recovery, distinguishing a blocked public departure path from an indefinite hard softlock. Record only observed recovery and exact limits; no unsupported hard-softlock, clock-injection or current-Web claim.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
-            ]
-          },
-          {
-            "id": "save_cold_once_only_state",
-            "description": "Use official Save and fresh-process cold checks for relevant closing/grace/route state, wallets, RNG/clocks/history and exactly-once prior settlement/departure. Preserve naturally settled outcomes without replay, refunds, original-save access, save editing or file clearing.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
-            ]
-          },
-          {
-            "id": "review_test_exact_commit",
-            "description": "Pass focused meaningful regressions and independent scoped review, associate an exact tested local implementation commit, and reconcile both task views with the faithful reproduction, recovery classification and evidence limits.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-              "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-              "commit:838016895d03a16b2ed060185cf6312fe82bc348"
-            ]
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": false,
-          "areas": []
-        },
-        "acceptance_scope": {
-          "covered": [
-            "Authentic owned current semantic Host action/closing-dialogue/map/public-choice/dispatch with natural stake6/gross2/net-4cash12to8, distinct from original R11 minimum1/two-pair outcome",
-            "Selected eligible house fallback outside ordinary capped3 retained as public4 with executable Walk0/110minute quote and normal Host travel",
-            "Strict populated paid-cache/history and duplicate boundaries, plus two official Save/fresh-process cold states",
-            "Map clock pause and normal room-clock reopening assessed with simulated delta05:30to13:00",
-            "Visibility/locked/unvisited negative eligibility classes under source review only"
-          ],
-          "excluded": [
-            "Original R11 resident-state recovery",
-            "Indefinite hard-softlock claim",
-            "Fresh Web or deployed changed behavior",
-            "Paused scenario/item implementation, file clearing or original profile changes",
-            "Native coin-pusher kernel/physics or rebuild claims"
-          ]
-        }
-      },
-      "state": "complete",
-      "status": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
-      "owner": {
-        "name": "Fix Back Alley travel / forced-closing fallback",
-        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "838016895d03a16b2ed060185cf6312fe82bc348",
-          "evidence": [
-            "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-            "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": [],
-        "scope": "Current request covers local investigation/fix/test/commit only; no publication or NEXT delivery claimed."
-      },
-      "evidence": [
-        {
-          "kind": "qa_observation",
-          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-r11-closing-fallback-1067-finding.json",
-          "summary": "Pinned f305 R11: genuine final minimum1 Neon Jacks hand settles naturally two-pair cash10to11; cold preserves settled+1 once. Closing acknowledgement opens real map, but Jazz/Bar/Riverboat quoted fare15 routes are closed/away or unaffordable and visited always-open Alley is excluded. No disabled Travel clicked; internally selected fallback ID and waiting-to-reopen recovery untested. Product public departure gap, no security denial or indefinite-hard-softlock claim."
-        },
-        {
-          "kind": "regression_test",
-          "reference": "docs/testing/travel_closing_fallback_r11_1067_20261105.json",
-          "summary": "75 focused qualified checks; faithful owned Host public route and official-cold evidence bounded as recorded, original states untouched."
-        },
-        {
-          "kind": "review",
-          "reference": "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-          "summary": "Independent final approval of75 qualified checks (producer61 plus cold14), exact frozen view-model/test/world-map hashes, five actual owned-zero Job closures, faithful semantic Host reproduction, strict paid-cache/cold guards and bounded waiting/source-review limits. Both broader objectives remain Open."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "Distinct local closing-fallback case complete with exact tested commit and qualification; retain waiting/reopening and original-state limits. Broader closing/interruption objectives remain independently Open. No publication requested.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
-        "requires_user_input": false,
-        "observed_at": "2026-11-05T05:21:46.067608+00:00",
-        "evidence": [
-          "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
-          "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
-        ]
-      },
-      "planned_app_changes": [
-        {
-          "scope": "forced_closing_public_travel_fallback",
-          "description": "If confirmed, narrowly retain an already eligible forced-closing cost0 Walk fallback in public capped targets, choice and normal dispatch. Preserve ordinary/hidden routes, authority/payment, outcomes/RNG/clocks, scheduling, fixed16:9/touch/focus and paused item/scenario work; no file clearing or original-state changes."
-        }
-      ],
-      "updated_at": "2026-11-05T05:21:46.067608+00:00"
     }
   ],
   "batches": [

@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_continuation_010/v1",
-  "observed_at": "2026-11-05T04:53:40.303763+00:00",
+  "observed_at": "2026-11-05T05:06:18.448227+00:00",
   "cleanup_stopped": true,
   "preserved_prior_files": true,
   "fix_commit": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
@@ -491,6 +491,48 @@
         "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-maintained-systems-r2\\maintained\\foundation_systems.stderr.txt",
         "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
       }
+    },
+    {
+      "name": "catalog010-profile-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "seconds": 303.294,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "canonical_inner_stage_result": {
+        "name": "foundation_systems",
+        "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "arguments": [
+          "four deterministic systems shards"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "duration_msec": 300283,
+        "duration_sec": 300.283,
+        "suite_time_baseline_sec": 29.141,
+        "suite_time_budget_sec": 43.712,
+        "suite_time_budget_exceeded": true,
+        "stderr_issue_count": 1,
+        "stderr_issues": [
+          "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+        ],
+        "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-profile-r1\\maintained\\foundation_systems.stdout.txt",
+        "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-profile-r1\\maintained\\foundation_systems.stderr.txt",
+        "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+      },
+      "scope": "Instrumented attribution, copiedresourceidentities; no maintained acceptance substitution",
+      "receipt": "evidence/catalog010-profile-r1/job.json"
     }
   ],
   "previous_phase009_release": {
@@ -572,5 +614,232 @@
   "wrapper_observer_sha256": {
     "duel-wrapper-fixture-r1.gd": "0a5e57346d4929a23676263735b3ae9f4040dd2359ae13b87bc392f4899ad242",
     "duel-wrapper-focused-runner-r1.gd": "8338c4a4701c0007463f429bdbb5dc648b469f8d1cc7d9615a191ec6e8205ab5"
+  },
+  "publication": {
+    "published_main": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+    "source_fix": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+    "remote_readback_exact": true,
+    "watcher_status": {
+      "automation": "enabled",
+      "source_branch": "main",
+      "poll_seconds": 120,
+      "pid": 39200,
+      "started_at": "2026-11-05T04:25:00Z",
+      "phase": "failed",
+      "cpu_limit_percent": 10,
+      "cpu_job_guardian_pid": "30024",
+      "updated_at": "2026-11-05T04:57:29Z",
+      "available_commit": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+      "last_checked_at": "2026-11-05T04:57:23Z",
+      "check_error": null,
+      "deployed_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+      "mirror_handoff": {
+        "handoff_id": "7ac1b6b2df897c83e24464a3954ffa30416564d6-9e8ce400b7110bcc8066a9814776d002007f61214c5108c0bed2835f5bd7e661",
+        "state": "PENDING",
+        "record": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\records\\7ac1b6b2df897c83e24464a3954ffa30416564d6-9e8ce400b7110bcc8066a9814776d002007f61214c5108c0bed2835f5bd7e661.json",
+        "automatic_library_sync": false
+      },
+      "mirror_handoff_error": null,
+      "building_commit": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+      "build_started_at": "2026-11-05T04:57:23Z",
+      "error": "Asset/importer/settings inputs changed; cold-import qualification required"
+    },
+    "receipt": "evidence/continuation010-next-block-r1.json",
+    "services_guards_reserves_mutated": false
+  },
+  "catalog_current_original_order_attribution": {
+    "scope": "Instrumented original-order observer only; copied ScriptResource identities and timing/printing overhead. No full acceptance or sum-of-separate-runs claim.",
+    "event_count": 2194,
+    "groups": [
+      {
+        "stage": "content_child",
+        "phase": "",
+        "count": 6,
+        "total_seconds": 148.383882,
+        "max_seconds": 67.325286
+      },
+      {
+        "stage": "init",
+        "phase": "",
+        "count": 2,
+        "total_seconds": 17.348597,
+        "max_seconds": 17.347849
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "arrival_and_authored_reads",
+        "count": 134,
+        "total_seconds": 2.2529799999999987,
+        "max_seconds": 0.030599
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "clock_and_hidden_fixture",
+        "count": 135,
+        "total_seconds": 0.019069,
+        "max_seconds": 0.000485
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "initial_generation",
+        "count": 135,
+        "total_seconds": 14.011360999999999,
+        "max_seconds": 0.165733
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "layer_entry",
+        "count": 12,
+        "total_seconds": 16.431559000000004,
+        "max_seconds": 1.503751
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "optional_finalization",
+        "count": 134,
+        "total_seconds": 0.008266999999999995,
+        "max_seconds": 0.00017
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "run_state_start",
+        "count": 135,
+        "total_seconds": 0.144138,
+        "max_seconds": 0.00167
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "runtime_description_trace",
+        "count": 134,
+        "total_seconds": 1.026984,
+        "max_seconds": 0.01116
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "target_travel",
+        "count": 134,
+        "total_seconds": 75.56996499999998,
+        "max_seconds": 1.001933
+      },
+      {
+        "stage": "profile",
+        "phase": "",
+        "count": 134,
+        "total_seconds": 109.48985800000001,
+        "max_seconds": 2.00699
+      }
+    ],
+    "completed_content": [
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "init",
+        "detail": "content_library.load",
+        "phase": "",
+        "seconds": 17.347849
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "init",
+        "detail": "_fixture_library",
+        "phase": "",
+        "seconds": 0.000748
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_content_core",
+        "phase": "",
+        "seconds": 13.126537
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_content_scenario_engine",
+        "phase": "",
+        "seconds": 28.715396
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_punchline_layer_contract",
+        "phase": "",
+        "seconds": 8.614122
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_tier2_scenario_contract",
+        "phase": "",
+        "seconds": 17.044397
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_scenario_backlog_contract",
+        "phase": "",
+        "seconds": 13.558144
+      },
+      {
+        "source": "foundation_systems.systems_core.godot.log",
+        "stage": "content_child",
+        "detail": "_check_scenario_sequence_contract",
+        "phase": "",
+        "seconds": 67.325286
+      }
+    ],
+    "active_at_timeout": [
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_semantic_presentation_contract",
+        "phase": "before"
+      },
+      {
+        "stage": "semantic_child",
+        "detail": "Env068EnvironmentReadabilityContractScript.check",
+        "phase": "before"
+      },
+      {
+        "stage": "profile",
+        "detail": "jazz_club_guest_legend|rigged_numbers",
+        "phase": "before"
+      },
+      {
+        "stage": "observer_phase",
+        "detail": "jazz_club_guest_legend|rigged_numbers",
+        "phase": "target_travel:before"
+      }
+    ],
+    "last_event": {
+      "detail": "jazz_club_guest_legend|rigged_numbers",
+      "payload": {},
+      "phase": "target_travel:before",
+      "stage": "observer_phase",
+      "ticks_usec": 297553935,
+      "source": "foundation_systems.systems_core.godot.log"
+    },
+    "world_snapshot_count": 269,
+    "full_trace_receipt": "evidence/catalog010-profile-analysis-r1.json",
+    "canonical_stage_result": {
+      "name": "foundation_systems",
+      "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+      "arguments": [
+        "four deterministic systems shards"
+      ],
+      "exit_code": 1,
+      "timed_out": false,
+      "duration_msec": 300283,
+      "duration_sec": 300.283,
+      "suite_time_baseline_sec": 29.141,
+      "suite_time_budget_sec": 43.712,
+      "suite_time_budget_exceeded": true,
+      "stderr_issue_count": 1,
+      "stderr_issues": [
+        "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+      ],
+      "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-profile-r1\\maintained\\foundation_systems.stdout.txt",
+      "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog010-profile-r1\\maintained\\foundation_systems.stderr.txt",
+      "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+    },
+    "independent_byte_inversion_proof": "evidence/catalog010-profile-proposal/independent-static-review.json"
   }
 }

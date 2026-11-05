@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T05:21:46.067608+00:00",
+  "observed_at": "2026-11-05T05:27:43.903723+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T04:53:40.303763+00:00",
-      "source": "Actual root qualifying/publishing committed late-duel bug546dfe48, exact maintained Systems4/55stage and wrapper compatibility; read-only reviewers active. Cleanup stopped; historical phase009 exact7ac delivery verified. Whole audit and original forced-travel success/aggregate scope Open. No pipeline or guard changes."
+      "observed_at": "2026-11-05T05:06:18.448227+00:00",
+      "source": "Actual root finalizing committed/published duel546dfe48, tested4event+4wrappercases, retained exact Systems300timeout plusoriginal-orderprofile; allsixownedjobsclosed0. Exactprior7ac verified; new45afwatcher failedcold-importqualification separatelyowned. Cleanupstopped; nopeer/service/guardchanges. Wholeaudit, catalogperformance, requireddueldelivery and originalforced-travel successpathOpen."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
@@ -26,9 +26,9 @@
     {
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
-      "state": "ended",
-      "observed_at": "2026-11-05T05:21:46.067608+00:00",
-      "source": "Current local closing-fallback task completed at exact fix 838016895d03a16b2ed060185cf6312fe82bc348 with independent75-check qualification and five owned Jobs closed. Semantic Host and simulated-delta reopening scope retained; no continuing runtime, publication or original-state recovery claimed. Broader BTH061-007/BTH061-AUDIT-INTERRUPT-BASELINE-004 and all other Open objectives were not closed or re-observed."
+      "state": "active",
+      "observed_at": "2026-11-05T05:27:43.903723+00:00",
+      "source": "Actual new task6 parent turn owns authorized publication of exact closing fix 838016895d03a16b2ed060185cf6312fe82bc348 and normal guarded NEXT follow-through after fresh shared-main merge. Five local75-check criteria remain accepted with historical limits; publication and exact delivery pending. No approval hold, watcher restart, manual build, file clearing or guard bypass inferred. Other objectives not re-observed."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
