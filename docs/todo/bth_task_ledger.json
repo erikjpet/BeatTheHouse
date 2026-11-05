@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T01:18:16.839752+00:00",
+  "updated_at": "2026-11-05T01:21:27.791375+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21240,8 +21240,13 @@
             "id": "publication",
             "description": "Publish the exact tested scoped fix to main under the new explicit authorization; record resulting main SHA/tree and included fix ancestry, excluding the older denied6f branch.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+              "commit:e5f4f624233e6495d33019c908bc6ca5d867482d",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-main-push.json"
+            ]
           },
           {
             "id": "next_delivery",
@@ -21258,7 +21263,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_COMPLETE_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Blackjack draft risk notice",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -21276,12 +21281,12 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
         "evidence": [
           "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
           "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
         ],
-        "scope": "Newly authorized main/NEXT delivery. Main publication in progress; NEXT export currently reserve-blocked. Exact target identity/assets/startup remain open."
+        "scope": "Actual main publication confirmed. Exact target observed by watcher; old NEXT retained behind existing export reserve. New target identity/assets/startup remain open."
       },
       "evidence": [
         {
@@ -21313,16 +21318,21 @@
           "kind": "verification",
           "reference": "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
           "summary": "Read-only watcher status: prior NEXT retained behind unchanged export reserve; new publication/identity/assets/startup acceptance remains open."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "summary": "Actual normal main push PASS at e5f4f624233e6495d33019c908bc6ca5d867482d/tree064aa9427155417ace65f0ff710aa4f096ec4ba0; watcher available matches. Prior0c served; new target NEXT acceptance remains reserve-blocked and unverified."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Parent proceeds with authorized normal main publication, then observes the existing guarded NEXT watcher and verifies exact promoted/served identity, matching assets and startup when the reserve permits export.",
+      "next_action": "Observe the existing guarded NEXT watcher after its export reserve permits progress, then verify exact promoted/served source and tree, matching assets and basic startup for the published fix. No guard bypass or approval hold.",
       "blocker": {
         "state": "active",
         "kind": "pipeline_disk_reserve",
-        "description": "Existing NEXT export reserve at watcher status 2026-11-05T01:18:07Z: free 12949155840 bytes below required 13958643712; deployed 0c0952594ec93fb892db807bbeaffef801a9f6a0 retained. This blocks NEXT export only; normal main publication proceeds, no approval/user-input hold or gate bypass.",
+        "description": "Main publication is confirmed and watcher sees exact target e5f4f624233e6495d33019c908bc6ca5d867482d at 2026-11-05T01:19:38Z. NEXT export has 12958265344 bytes free below 13958643712 required; prior deployed/served0c retained. Export-only blocker; no approval/user-input hold or gate bypass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:18:07Z",
+        "observed_at": "2026-11-05T01:19:38Z",
         "evidence": [
           "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
           "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
@@ -21334,7 +21344,7 @@
           "description": "If reproduced, narrow the notice lifecycle for unfunded draft edits; preserve financial rules/state, RNG, clocks, scheduling, geometry, fixed 16:9 layout and touch/focus behavior."
         }
       ],
-      "updated_at": "2026-11-05T01:18:16.839752+00:00"
+      "updated_at": "2026-11-05T01:21:27.791375+00:00"
     }
   ],
   "batches": [

@@ -1,7 +1,7 @@
 {
   "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
-  "recorded_at": "2026-11-05T01:18:16.839752+00:00",
-  "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+  "recorded_at": "2026-11-05T01:21:27.791375+00:00",
+  "state": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
   "implementation_commit": "af2609246170978782e1b2b19f83cff544196976",
   "authorization": "Trusted parent delegation2026-11-05 explicitly authorizes publishing tested fix af2609246170978782e1b2b19f83cff544196976 to main and normal guarded NEXT verification, under the trusted user instruction: Yes push all finished work to next. Preserve the existing export reserve and keep the task Open until required publication and NEXT acceptance are evidenced. Older denied publication6f is separate and is neither included nor retried.",
   "local_qualification": {
@@ -14,19 +14,32 @@
     "limit": "Historical qualified current-source native evidence; no new tests or deployed behavior claim in this release preparation."
   },
   "publication": {
-    "state": "pending",
-    "main_commit": null,
-    "tree": null,
-    "evidence": []
+    "state": "pass",
+    "main_commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
+    "tree": "064aa9427155417ace65f0ff710aa4f096ec4ba0",
+    "implementation_commit": "af2609246170978782e1b2b19f83cff544196976",
+    "update": "50ae45824..e5f4f6242",
+    "exit_code": 0,
+    "evidence": [
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-main-push.json"
+    ],
+    "scope": "Actual normal push confirmed; fix association remains the exact implementation commit, with native133 qualification unchanged."
   },
   "next_delivery": {
     "state": "pending",
-    "target_commit": null,
+    "target_commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
     "identity_verified": false,
     "assets_verified": false,
-    "startup_verified": false
+    "startup_verified": false,
+    "observed_target_matches": true
   },
-  "watcher_observation": {
+  "blocker": {
+    "scope": "NEXT export only",
+    "kind": "pipeline_disk_reserve",
+    "requires_user_input": false
+  },
+  "next_action": "Observe the existing guarded NEXT watcher after its export reserve permits progress, then verify exact promoted/served source and tree, matching assets and basic startup for the published fix. No guard bypass or approval hold.",
+  "prepublication_observation": {
     "source": "D:/Projects/site/state/bth-next/status.json",
     "read_at": "2026-11-05T01:18:16.839752+00:00",
     "snapshot": {
@@ -42,10 +55,22 @@
     "reserve_required_bytes": 13958643712,
     "limit": "Read-only existing-watcher status. Old deployed NEXT retained; no build, promotion, publication or served identity claim."
   },
-  "blocker": {
-    "scope": "NEXT export only",
-    "kind": "pipeline_disk_reserve",
-    "requires_user_input": false
-  },
-  "next_action": "Parent proceeds with authorized normal main publication, then observes the existing guarded NEXT watcher and verifies exact promoted/served identity, matching assets and startup when the reserve permits export."
+  "watcher_observation": {
+    "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-published-next-observation.json",
+    "snapshot": {
+      "observed_at": "2026-11-05T01:19:53.2946509Z",
+      "watcher_updated_at": "2026-11-05T01:19:38Z",
+      "last_checked_at": "2026-11-05T01:19:38Z",
+      "available_commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
+      "deployed_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "phase": "failed",
+      "error": "Insufficient shared disk reserve for export: 12958265344 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+      "served_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "served_tree": "02e0f2124346a37b20d22e300f8ea05e68827f68",
+      "scope": "Read-only normal watcher and served metadata; no new export, assets or startup accepted"
+    },
+    "reserve_free_bytes": 12958265344,
+    "reserve_required_bytes": 13958643712,
+    "limit": "The watcher sees the exact published target. Old deployed/HTTP-served NEXT is retained. New target identity/assets/startup remain unverified."
+  }
 }
