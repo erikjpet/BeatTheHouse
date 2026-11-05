@@ -1517,15 +1517,34 @@ func _enter_grand_casino_duel_surface() -> bool:
 			_show_message(str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely.")
 			_refresh()
 			return false
-	_reset_game_surface_runtime_state()
+	var prepared_surface := _prepare_grand_casino_duel_surface()
+	if prepared_surface.is_empty():
+		_restore_foundation_lifecycle_snapshot(rollback)
+		return false
+	_enter_prepared_grand_casino_duel_surface(prepared_surface)
+	return true
+
+
+func _prepare_grand_casino_duel_surface() -> Dictionary:
+	if run_state == null or not run_state.grand_casino_duel_active(run_state.current_environment):
+		return {}
 	var duel_game_ids := JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", []))
 	var local_flags := JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
 	var duel_game_id := str(local_flags.get("showdown_game_id", "")).strip_edges()
 	if duel_game_id.is_empty() or not duel_game_ids.has(duel_game_id):
-		return false
+		return {}
 	var game_module := _game_module_for_id(duel_game_id)
 	if game_module == null:
-		return false
+		return {}
+	return {"game_id": duel_game_id, "module": game_module}
+
+
+func _enter_prepared_grand_casino_duel_surface(prepared_surface: Dictionary) -> void:
+	# Preparation resolves the real table before event success is published. Keep
+	# that module through the synchronous commit rather than looking it up again.
+	var duel_game_id: String = prepared_surface["game_id"]
+	var game_module: GameModule = prepared_surface["module"]
+	_reset_game_surface_runtime_state()
 	_set_active_game_binding(duel_game_id)
 	current_game = game_module
 	current_game_state_key = duel_game_id
@@ -1543,7 +1562,6 @@ func _enter_grand_casino_duel_surface() -> bool:
 	_show_message(str(result.get("message", "Rourke cuts the cards.")))
 	_autosave_foundation_run("Duel autosaved.")
 	_refresh()
-	return true
 
 
 func back_to_environment() -> void:
@@ -4066,6 +4084,7 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
 	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
 	var entered_layer := false
+	var prepared_duel_surface: Dictionary = {}
 	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
 		var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)
 		if not bool(layer_entry.get("ok", false)):
@@ -4085,6 +4104,14 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 				_show_message(room_error)
 				_refresh()
 			return {"ok": false, "errors": [room_error]}
+		prepared_duel_surface = _prepare_grand_casino_duel_surface()
+		if prepared_duel_surface.is_empty():
+			var surface_failure := {"ok": false, "errors": ["Rourke's Back Room table could not open."]}
+			if not caller_owns_event_rollback:
+				_restore_foundation_lifecycle_snapshot(event_rollback)
+				_present_event_resolution_failure(surface_failure)
+				_refresh_after_foundation_lifecycle_rollback(event_rollback)
+			return surface_failure
 	if bool(result.get("ok", false)):
 		last_game_result = {}
 		last_item_result = {}
@@ -4126,10 +4153,7 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 	_autosave_foundation_run("Autosaved.")
 	_refresh_talk_dock()
 	if bool(result.get("duel_ready", false)):
-		if not _enter_grand_casino_duel_surface():
-			_show_message("Rourke's Back Room table could not open.")
-			_refresh()
-			return {"ok": false, "errors": ["Rourke's Back Room table could not open."]}
+		_enter_prepared_grand_casino_duel_surface(prepared_duel_surface)
 		return result
 	if showdown_continues:
 		_set_current_screen(SCREEN_EVENT)
