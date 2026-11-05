@@ -1,0 +1,1068 @@
+{
+  "schema": "bth.audit_continuation_011/v1",
+  "observed_at": "2026-11-05T05:41:02.434162+00:00",
+  "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+  "source_head": "245ca4f6f483043a4a3b9ec394b1d76f3ba2af43",
+  "cleanup_stopped": true,
+  "existing_files_cleared": false,
+  "production_source_change_committed": false,
+  "coverage": {
+    "planned_shards": 4,
+    "planned_check_ids": 55,
+    "planned_profiles": 220,
+    "completed_profiles": 146,
+    "last_outer": {
+      "detail": "jazz_club_union_trouble|rigged_numbers",
+      "payload": {},
+      "phase": "initial_generation:before",
+      "stage": "observer_phase",
+      "ticks_usec": 297702013,
+      "source": "foundation_systems.systems_core.godot.log"
+    },
+    "full_stage_pass": false
+  },
+  "canonical_stage_result": {
+    "name": "foundation_systems",
+    "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+    "arguments": [
+      "four deterministic systems shards"
+    ],
+    "exit_code": 1,
+    "timed_out": false,
+    "duration_msec": 300268,
+    "duration_sec": 300.268,
+    "suite_time_baseline_sec": 29.141,
+    "suite_time_budget_sec": 43.712,
+    "suite_time_budget_exceeded": true,
+    "stderr_issue_count": 1,
+    "stderr_issues": [
+      "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+    ],
+    "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-profile-r2\\maintained\\foundation_systems.stdout.txt",
+    "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-profile-r2\\maintained\\foundation_systems.stderr.txt",
+    "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+  },
+  "owned_job": {
+    "name": "catalog011-profile-r2",
+    "exit": 1,
+    "timed_out": false,
+    "script_error": false,
+    "started_utc": 1793856610.9805942,
+    "finished_utc": 1793856914.3455539,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "assigned_before_execution": true,
+    "active_at_release": 0
+  },
+  "source_restoration": {
+    "schema": "bth.catalog011_inplace_owner/v1",
+    "started_at": "2026-11-05T05:30:10.954064+00:00",
+    "manifest": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-proposal-r2\\temporary-source-mapping.json",
+    "manifest_sha256": "48a9d00212e627e262750cf2216b0dbb8ed4c7d42603f22e4495722ff232933d",
+    "spec": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-proposal-r2\\catalog011-profile-r2.json",
+    "spec_sha256": "539b0907c60df99ac9a69bc63f84c1158ec9b88ad24af6489b3553b726b35f38",
+    "sources": {
+      "scripts/core/run_state.gd": {
+        "original_sha256": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+        "instrumented_sha256": "064a74525b3d4e74ade9e951b06ec3ac0d5178fc50e86b26932c9704e4f73994",
+        "retained_original": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-inplace-owner-r2\\original-0.gd.txt",
+        "temporary_write": true,
+        "restored": true
+      },
+      "scripts/core/run_generator.gd": {
+        "original_sha256": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd",
+        "instrumented_sha256": "9ca8d33aad52070c6a8e3e939eb8f490dd2d07ce0639c1d05d63879cff7273cc",
+        "retained_original": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog011-inplace-owner-r2\\original-1.gd.txt",
+        "temporary_write": true,
+        "restored": true
+      }
+    },
+    "job_name": "catalog011-profile-r2",
+    "run_started": true,
+    "restoration_complete": true,
+    "errors": [],
+    "native_job": {
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "finished_utc": 1793856914.3455539,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "finished_at": "2026-11-05T05:35:14.446643+00:00",
+    "job_exit": 1
+  },
+  "original_source_file_count": 1239,
+  "all_original_source_hashes_restored": true,
+  "source_instrumentation": {
+    "methods": 7,
+    "statement_spans": 83,
+    "added_static_helpers": 4,
+    "new_instance_fields": 0,
+    "class_and_resource_paths_preserved": true,
+    "original_call_arguments_and_order_preserved": true,
+    "scope": "Temporary actual-production-receiver instrumentation; copied test observer identities differ. No functional optimization or acceptance substitution."
+  },
+  "trace": {
+    "outer_events": 2384,
+    "nested_events": 11764,
+    "closed_nested_spans": 5882,
+    "unclosed_nested_spans": [],
+    "partial_lines": [],
+    "outer_groups": [
+      {
+        "stage": "content_child",
+        "phase": "",
+        "count": 6,
+        "total_seconds": 140.11571500000002,
+        "max_seconds": 64.437382
+      },
+      {
+        "stage": "init",
+        "phase": "",
+        "count": 2,
+        "total_seconds": 16.392079,
+        "max_seconds": 16.391408
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "arrival_and_authored_reads",
+        "count": 146,
+        "total_seconds": 2.5176320000000008,
+        "max_seconds": 0.029031
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "clock_and_hidden_fixture",
+        "count": 147,
+        "total_seconds": 0.020159000000000014,
+        "max_seconds": 0.000437
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "initial_generation",
+        "count": 146,
+        "total_seconds": 15.277940000000006,
+        "max_seconds": 0.165416
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "layer_entry",
+        "count": 12,
+        "total_seconds": 15.601296999999999,
+        "max_seconds": 1.377169
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "optional_finalization",
+        "count": 146,
+        "total_seconds": 0.007958000000000003,
+        "max_seconds": 0.00055
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "run_state_start",
+        "count": 147,
+        "total_seconds": 0.16117700000000007,
+        "max_seconds": 0.001817
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "runtime_description_trace",
+        "count": 146,
+        "total_seconds": 1.1451719999999994,
+        "max_seconds": 0.01795
+      },
+      {
+        "stage": "observer_phase",
+        "phase": "target_travel",
+        "count": 146,
+        "total_seconds": 84.01906200000005,
+        "max_seconds": 1.05934
+      },
+      {
+        "stage": "profile",
+        "phase": "",
+        "count": 146,
+        "total_seconds": 118.90618399999998,
+        "max_seconds": 1.812233
+      }
+    ],
+    "nested_groups": [
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.trusted_finalize_return",
+        "count": 134,
+        "total_seconds": 29.598448,
+        "mean_seconds": 0.22088394029850747,
+        "max_seconds": 0.319688
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_manifest_reconcile",
+        "count": 134,
+        "total_seconds": 9.592291,
+        "mean_seconds": 0.07158426119402984,
+        "max_seconds": 0.106087
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_reentry",
+        "count": 134,
+        "total_seconds": 4.726861,
+        "mean_seconds": 0.03527508208955224,
+        "max_seconds": 0.050918
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.install_layer",
+        "count": 12,
+        "total_seconds": 4.130731,
+        "mean_seconds": 0.34422758333333336,
+        "max_seconds": 0.417933
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_tail",
+        "count": 134,
+        "total_seconds": 4.056545000000001,
+        "mean_seconds": 0.030272723880597013,
+        "max_seconds": 0.099008
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.finalize",
+        "count": 12,
+        "total_seconds": 4.001802,
+        "mean_seconds": 0.3334835,
+        "max_seconds": 0.350345
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.publish",
+        "count": 134,
+        "total_seconds": 3.917086999999998,
+        "mean_seconds": 0.02923199253731343,
+        "max_seconds": 0.097698
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.trusted_finalize_return",
+        "count": 12,
+        "total_seconds": 3.3159479999999997,
+        "mean_seconds": 0.276329,
+        "max_seconds": 0.290182
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_migrate",
+        "count": 134,
+        "total_seconds": 3.0104800000000003,
+        "mean_seconds": 0.02246626865671642,
+        "max_seconds": 0.031236
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.store_world_node",
+        "count": 12,
+        "total_seconds": 2.5205789999999997,
+        "mean_seconds": 0.21004825,
+        "max_seconds": 0.217588
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.sequence_migrate",
+        "count": 12,
+        "total_seconds": 2.47363,
+        "mean_seconds": 0.20613583333333335,
+        "max_seconds": 0.277249
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_build",
+        "count": 134,
+        "total_seconds": 2.2841959999999997,
+        "mean_seconds": 0.01704623880597015,
+        "max_seconds": 0.023701
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_records",
+        "count": 134,
+        "total_seconds": 2.2186690000000007,
+        "mean_seconds": 0.01655723134328358,
+        "max_seconds": 0.025905
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_layout",
+        "count": 134,
+        "total_seconds": 1.7517309999999995,
+        "mean_seconds": 0.013072619402985075,
+        "max_seconds": 0.023298
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_layout",
+        "count": 134,
+        "total_seconds": 1.7426240000000008,
+        "mean_seconds": 0.013004656716417911,
+        "max_seconds": 0.023713
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.bind_base_records",
+        "count": 134,
+        "total_seconds": 1.549906,
+        "mean_seconds": 0.011566462686567164,
+        "max_seconds": 0.021082
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.rollback_snapshot",
+        "count": 12,
+        "total_seconds": 1.4387169999999998,
+        "mean_seconds": 0.11989308333333333,
+        "max_seconds": 0.128353
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.inactive_publish",
+        "count": 146,
+        "total_seconds": 1.2449240000000006,
+        "mean_seconds": 0.008526876712328766,
+        "max_seconds": 0.01584
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.crew_after",
+        "count": 12,
+        "total_seconds": 1.184657,
+        "mean_seconds": 0.09872141666666667,
+        "max_seconds": 0.1042
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_manifest_reconcile",
+        "count": 12,
+        "total_seconds": 1.033755,
+        "mean_seconds": 0.08614625000000001,
+        "max_seconds": 0.10029
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_validate",
+        "count": 134,
+        "total_seconds": 1.0034719999999997,
+        "mean_seconds": 0.007488597014925373,
+        "max_seconds": 0.015443
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_physical_validation",
+        "count": 134,
+        "total_seconds": 0.9030010000000004,
+        "mean_seconds": 0.006738813432835821,
+        "max_seconds": 0.012333
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_physical_validation",
+        "count": 134,
+        "total_seconds": 0.9016059999999998,
+        "mean_seconds": 0.0067284029850746266,
+        "max_seconds": 0.012415
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.stamp_records",
+        "count": 134,
+        "total_seconds": 0.872534,
+        "mean_seconds": 0.00651144776119403,
+        "max_seconds": 0.009845
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.crew_before",
+        "count": 12,
+        "total_seconds": 0.8609150000000001,
+        "mean_seconds": 0.07174291666666667,
+        "max_seconds": 0.074727
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.target_normalize",
+        "count": 12,
+        "total_seconds": 0.6563960000000001,
+        "mean_seconds": 0.05469966666666667,
+        "max_seconds": 0.061298
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.manifest_reconcile",
+        "count": 12,
+        "total_seconds": 0.5750790000000001,
+        "mean_seconds": 0.04792325,
+        "max_seconds": 0.054819
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_reentry",
+        "count": 12,
+        "total_seconds": 0.5336820000000001,
+        "mean_seconds": 0.0444735,
+        "max_seconds": 0.050506
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_tail",
+        "count": 12,
+        "total_seconds": 0.4536180000000001,
+        "mean_seconds": 0.0378015,
+        "max_seconds": 0.039538
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.publish",
+        "count": 12,
+        "total_seconds": 0.441132,
+        "mean_seconds": 0.036761,
+        "max_seconds": 0.038442
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.publish",
+        "count": 12,
+        "total_seconds": 0.44021299999999997,
+        "mean_seconds": 0.036684416666666664,
+        "max_seconds": 0.040183
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.target_layer_lookup",
+        "count": 12,
+        "total_seconds": 0.39776399999999995,
+        "mean_seconds": 0.033147,
+        "max_seconds": 0.038085
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.environment_layer_state.store_source",
+        "count": 12,
+        "total_seconds": 0.38295100000000004,
+        "mean_seconds": 0.031912583333333334,
+        "max_seconds": 0.036894
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.store_source",
+        "count": 12,
+        "total_seconds": 0.381492,
+        "mean_seconds": 0.031791,
+        "max_seconds": 0.035511
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_migrate",
+        "count": 12,
+        "total_seconds": 0.351929,
+        "mean_seconds": 0.029327416666666665,
+        "max_seconds": 0.030771
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_build",
+        "count": 12,
+        "total_seconds": 0.30045299999999997,
+        "mean_seconds": 0.02503775,
+        "max_seconds": 0.02586
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.produce_records",
+        "count": 134,
+        "total_seconds": 0.28541800000000006,
+        "mean_seconds": 0.0021299850746268655,
+        "max_seconds": 0.003732
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.physical_layout",
+        "count": 12,
+        "total_seconds": 0.261855,
+        "mean_seconds": 0.02182125,
+        "max_seconds": 0.022659
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_records",
+        "count": 12,
+        "total_seconds": 0.23292,
+        "mean_seconds": 0.01941,
+        "max_seconds": 0.022057
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.inactive_publish",
+        "count": 12,
+        "total_seconds": 0.185007,
+        "mean_seconds": 0.01541725,
+        "max_seconds": 0.016753
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_layout",
+        "count": 12,
+        "total_seconds": 0.17304700000000003,
+        "mean_seconds": 0.014420583333333334,
+        "max_seconds": 0.015226
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_layout",
+        "count": 12,
+        "total_seconds": 0.17176,
+        "mean_seconds": 0.014313333333333334,
+        "max_seconds": 0.015124
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.travel_targets",
+        "count": 12,
+        "total_seconds": 0.17069600000000004,
+        "mean_seconds": 0.014224666666666667,
+        "max_seconds": 0.015146
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.bind_base_records",
+        "count": 12,
+        "total_seconds": 0.161518,
+        "mean_seconds": 0.013459833333333334,
+        "max_seconds": 0.014911
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_semantic_commit",
+        "count": 134,
+        "total_seconds": 0.15038800000000008,
+        "mean_seconds": 0.0011222985074626865,
+        "max_seconds": 0.001924
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.inventory_validate",
+        "count": 12,
+        "total_seconds": 0.138751,
+        "mean_seconds": 0.011562583333333333,
+        "max_seconds": 0.01209
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.stamp_records",
+        "count": 12,
+        "total_seconds": 0.09505000000000001,
+        "mean_seconds": 0.007920833333333334,
+        "max_seconds": 0.00832
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.baseline_physical_validation",
+        "count": 12,
+        "total_seconds": 0.090471,
+        "mean_seconds": 0.00753925,
+        "max_seconds": 0.00806
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.baseline_physical_validation",
+        "count": 12,
+        "total_seconds": 0.089706,
+        "mean_seconds": 0.0074754999999999995,
+        "max_seconds": 0.007976
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.declared_interactions",
+        "count": 134,
+        "total_seconds": 0.07857499999999998,
+        "mean_seconds": 0.0005863805970149254,
+        "max_seconds": 0.000923
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_baseline",
+        "count": 134,
+        "total_seconds": 0.07652499999999997,
+        "mean_seconds": 0.0005710820895522388,
+        "max_seconds": 0.001199
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.authoritative_baseline",
+        "count": 134,
+        "total_seconds": 0.07602700000000001,
+        "mean_seconds": 0.000567365671641791,
+        "max_seconds": 0.000929
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.result_snapshot",
+        "count": 134,
+        "total_seconds": 0.070188,
+        "mean_seconds": 0.0005237910447761193,
+        "max_seconds": 0.000978
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.arrival",
+        "count": 12,
+        "total_seconds": 0.06624100000000001,
+        "mean_seconds": 0.0055200833333333334,
+        "max_seconds": 0.006014
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.producer_context",
+        "count": 134,
+        "total_seconds": 0.06370400000000002,
+        "mean_seconds": 0.0004754029850746269,
+        "max_seconds": 0.000715
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.copy_source_environment",
+        "count": 36,
+        "total_seconds": 0.05374599999999998,
+        "mean_seconds": 0.0014929444444444445,
+        "max_seconds": 0.002869
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.generate_games",
+        "count": 12,
+        "total_seconds": 0.048278,
+        "mean_seconds": 0.004023166666666666,
+        "max_seconds": 0.004598
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_snapshot",
+        "count": 134,
+        "total_seconds": 0.04264299999999997,
+        "mean_seconds": 0.0003182313432835821,
+        "max_seconds": 0.000527
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.produce_records",
+        "count": 12,
+        "total_seconds": 0.032975,
+        "mean_seconds": 0.0027479166666666667,
+        "max_seconds": 0.002926
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.dynamic_actors",
+        "count": 134,
+        "total_seconds": 0.027797000000000006,
+        "mean_seconds": 0.00020744029850746268,
+        "max_seconds": 0.000333
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.copy_all_layers",
+        "count": 36,
+        "total_seconds": 0.027240000000000004,
+        "mean_seconds": 0.0007566666666666667,
+        "max_seconds": 0.000968
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 146,
+        "total_seconds": 0.021747999999999993,
+        "mean_seconds": 0.00014895890410958904,
+        "max_seconds": 0.000228
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.definition",
+        "count": 134,
+        "total_seconds": 0.019280999999999993,
+        "mean_seconds": 0.00014388805970149253,
+        "max_seconds": 0.000236
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_semantic_commit",
+        "count": 12,
+        "total_seconds": 0.017042,
+        "mean_seconds": 0.0014201666666666666,
+        "max_seconds": 0.001993
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.prior_inventory",
+        "count": 134,
+        "total_seconds": 0.013832000000000007,
+        "mean_seconds": 0.00010322388059701493,
+        "max_seconds": 0.000153
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.environment_layer_state.copy_target_return",
+        "count": 12,
+        "total_seconds": 0.012492,
+        "mean_seconds": 0.001041,
+        "max_seconds": 0.001266
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_interactions",
+        "count": 134,
+        "total_seconds": 0.011669000000000002,
+        "mean_seconds": 8.708208955223881e-05,
+        "max_seconds": 0.000215
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_layout_records",
+        "count": 134,
+        "total_seconds": 0.011228000000000004,
+        "mean_seconds": 8.37910447761194e-05,
+        "max_seconds": 0.000159
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 146,
+        "total_seconds": 0.010562000000000002,
+        "mean_seconds": 7.234246575342466e-05,
+        "max_seconds": 0.00021
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.host_context",
+        "count": 134,
+        "total_seconds": 0.009565,
+        "mean_seconds": 7.138059701492537e-05,
+        "max_seconds": 0.000161
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._finalized_scenario_layout_result.world_activation",
+        "count": 134,
+        "total_seconds": 0.008382000000000004,
+        "mean_seconds": 6.255223880597015e-05,
+        "max_seconds": 0.000159
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.canonical_interaction_geometry",
+        "count": 134,
+        "total_seconds": 0.008359999999999998,
+        "mean_seconds": 6.238805970149254e-05,
+        "max_seconds": 0.000146
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.copy_all_layers",
+        "count": 12,
+        "total_seconds": 0.008355,
+        "mean_seconds": 0.00069625,
+        "max_seconds": 0.000819
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.authoritative_baseline",
+        "count": 12,
+        "total_seconds": 0.008187,
+        "mean_seconds": 0.00068225,
+        "max_seconds": 0.000774
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.declared_interactions",
+        "count": 12,
+        "total_seconds": 0.008154,
+        "mean_seconds": 0.0006795,
+        "max_seconds": 0.000757
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 146,
+        "total_seconds": 0.007698000000000001,
+        "mean_seconds": 5.272602739726027e-05,
+        "max_seconds": 0.000113
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.authoritative_baseline",
+        "count": 12,
+        "total_seconds": 0.007668,
+        "mean_seconds": 0.000639,
+        "max_seconds": 0.000731
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.copy_target",
+        "count": 12,
+        "total_seconds": 0.007314000000000001,
+        "mean_seconds": 0.0006095,
+        "max_seconds": 0.000741
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.result_snapshot",
+        "count": 12,
+        "total_seconds": 0.006406000000000001,
+        "mean_seconds": 0.0005338333333333333,
+        "max_seconds": 0.000571
+      },
+      {
+        "mode": "initial_generation",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 146,
+        "total_seconds": 0.006292999999999999,
+        "mean_seconds": 4.3102739726027396e-05,
+        "max_seconds": 0.000105
+      },
+      {
+        "mode": "target_travel",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.action_digest",
+        "count": 134,
+        "total_seconds": 0.006246000000000003,
+        "mean_seconds": 4.6611940298507465e-05,
+        "max_seconds": 0.000111
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.producer_context",
+        "count": 12,
+        "total_seconds": 0.005791999999999999,
+        "mean_seconds": 0.00048266666666666667,
+        "max_seconds": 0.000548
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.character_chain",
+        "count": 12,
+        "total_seconds": 0.005238,
+        "mean_seconds": 0.0004365,
+        "max_seconds": 0.000509
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.initial_result_snapshot",
+        "count": 12,
+        "total_seconds": 0.00434,
+        "mean_seconds": 0.00036166666666666666,
+        "max_seconds": 0.000467
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._store_current_environment_layer_state_reconciled.strip_semantic_ephemera",
+        "count": 36,
+        "total_seconds": 0.004219999999999999,
+        "mean_seconds": 0.00011722222222222223,
+        "max_seconds": 0.000311
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.dynamic_actors",
+        "count": 12,
+        "total_seconds": 0.002503,
+        "mean_seconds": 0.00020858333333333333,
+        "max_seconds": 0.000291
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.definition",
+        "count": 12,
+        "total_seconds": 0.001851,
+        "mean_seconds": 0.00015425,
+        "max_seconds": 0.000225
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.scenario_reconcile",
+        "count": 12,
+        "total_seconds": 0.001561,
+        "mean_seconds": 0.00013008333333333334,
+        "max_seconds": 0.000172
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.definition",
+        "count": 12,
+        "total_seconds": 0.0015409999999999998,
+        "mean_seconds": 0.00012841666666666668,
+        "max_seconds": 0.000173
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.prior_inventory",
+        "count": 12,
+        "total_seconds": 0.0014230000000000002,
+        "mean_seconds": 0.00011858333333333333,
+        "max_seconds": 0.000154
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_interactions",
+        "count": 12,
+        "total_seconds": 0.001368,
+        "mean_seconds": 0.000114,
+        "max_seconds": 0.000157
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.exit_validate",
+        "count": 12,
+        "total_seconds": 0.0013579999999999998,
+        "mean_seconds": 0.00011316666666666666,
+        "max_seconds": 0.000184
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.terminal_layout_records",
+        "count": 12,
+        "total_seconds": 0.001271,
+        "mean_seconds": 0.00010591666666666666,
+        "max_seconds": 0.000144
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.departure",
+        "count": 12,
+        "total_seconds": 0.001209,
+        "mean_seconds": 0.00010075,
+        "max_seconds": 0.000149
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.scenario_normalize",
+        "count": 12,
+        "total_seconds": 0.0010810000000000001,
+        "mean_seconds": 9.008333333333333e-05,
+        "max_seconds": 0.000139
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.host_context",
+        "count": 12,
+        "total_seconds": 0.00108,
+        "mean_seconds": 8.999999999999999e-05,
+        "max_seconds": 9.8e-05
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.install_environment_layer_state.host_context",
+        "count": 12,
+        "total_seconds": 0.0009819999999999996,
+        "mean_seconds": 8.183333333333333e-05,
+        "max_seconds": 0.000102
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.access",
+        "count": 12,
+        "total_seconds": 0.0008849999999999999,
+        "mean_seconds": 7.375e-05,
+        "max_seconds": 0.000133
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._finalized_scenario_layout_result.world_activation",
+        "count": 12,
+        "total_seconds": 0.0008690000000000001,
+        "mean_seconds": 7.241666666666667e-05,
+        "max_seconds": 0.000125
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.canonical_interaction_geometry",
+        "count": 12,
+        "total_seconds": 0.0008100000000000001,
+        "mean_seconds": 6.75e-05,
+        "max_seconds": 0.000121
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_generator.enter_environment_layer.source_preflight",
+        "count": 12,
+        "total_seconds": 0.0007260000000000001,
+        "mean_seconds": 6.05e-05,
+        "max_seconds": 0.000115
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state.scenario_finalize_installed_environment.world_presence",
+        "count": 12,
+        "total_seconds": 0.000549,
+        "mean_seconds": 4.575e-05,
+        "max_seconds": 9.6e-05
+      },
+      {
+        "mode": "layer_entry",
+        "scope": "run_state._scenario_finalize_trusted_base_semantics.action_digest",
+        "count": 12,
+        "total_seconds": 0.0005250000000000001,
+        "mean_seconds": 4.375e-05,
+        "max_seconds": 4.8e-05
+      }
+    ],
+    "active_outer": [
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_semantic_presentation_contract",
+        "phase": "before"
+      },
+      {
+        "stage": "semantic_child",
+        "detail": "Env068EnvironmentReadabilityContractScript.check",
+        "phase": "before"
+      },
+      {
+        "stage": "profile",
+        "detail": "jazz_club_union_trouble|rigged_numbers",
+        "phase": "before"
+      },
+      {
+        "stage": "observer_phase",
+        "detail": "jazz_club_union_trouble|rigged_numbers",
+        "phase": "initial_generation:before"
+      }
+    ]
+  },
+  "timing_limits": "Begin-log overhead and nested inclusive spans; parent/child rows overlap and must not be summed. Partial current process only; unentered branches are unmeasured, not zero. No native-plugin admission claim.",
+  "owner_protocol_reuse_limit": "This run restored both sources. Before reusing prototype, harden partial-write journaling, per-source restoration exception isolation and unreadable-journal/receipt handling; fault-test private dummy files. No active restoration remains.",
+  "evidence": [
+    "evidence/catalog011-proposal",
+    "evidence/catalog011-proposal-r2",
+    "evidence/catalog011-source-review/review.md",
+    "evidence/catalog011-root-static-r2.json",
+    "evidence/catalog011-inplace-owner-r2/owner.json",
+    "evidence/catalog011-inplace-owner-r2/owner-wrapper-executed.py.txt",
+    "evidence/catalog011-inplace-owner-r2/protocol-review.md",
+    "evidence/catalog011-profile-analysis-r2.json"
+  ]
+}

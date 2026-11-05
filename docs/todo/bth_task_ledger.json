@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T05:07:28.658435+00:00",
+  "updated_at": "2026-11-05T05:41:02.434162+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "CLEANUP_STOPPED_CATALOG_AND_DUEL_BUG_INVESTIGATION_ACTIVE",
+      "status": "CLEANUP_STOPPED_MEASURED_CATALOG_BUG_INVESTIGATION_ACTIVE",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13763,12 +13763,17 @@
           "kind": "published_main_and_current_watcher",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
+        },
+        {
+          "kind": "measured_continuation_without_cleanup",
+          "reference": "docs/testing/deprecated_code_audit_continuation_011.md",
+          "summary": "Currentparentrequestsfinalization/layerentrymeasurement only; nofilescleared/noobsoletecodecleanup/no production optimizationcommitted. Exact-source observer identifiesnextowner costs; wholeaudit remainsOpen."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Preserve all files and perform no further deprecated-code cleanup/removal under the latest user direction. Continue playtesting/fixing catalog-flow and late-duel bugs outside the named paused feature scope. Full original audit objective remains Open; already committed removals remain historical evidence.",
+      "next_action": "Preserve all files and perform no further deprecated-code cleanup/removal. Continue measured catalog finalization/layer-entry investigation outside paused named feature work. Whole original audit remains incomplete/Open; deployment qualification is separate.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13780,7 +13785,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:59:11.338692+00:00"
+      "updated_at": "2026-11-05T05:41:02.434162+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20524,7 +20529,7 @@
         }
       },
       "state": "open",
-      "status": "CURRENT_SYSTEMS_TIMEOUT_WITH_ORIGINAL_ORDER_PHASE_ATTRIBUTION",
+      "status": "NESTED_FINALIZATION_AND_LAYER_COSTS_MEASURED_011",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20563,6 +20568,12 @@
         },
         {
           "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        },
+        {
+          "sha": "245ca4f6f483043a4a3b9ec394b1d76f3ba2af43",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
@@ -20640,22 +20651,32 @@
           "kind": "measured_owner_disposition",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Observed134profileprefix: targettravel75.570s,layer16.432s,initial14.011s; runtimeTrace1.027s. Nestedtravelinstall45.046s/finalize31.890s vsprime1.565s identifiesnextowner, notproofitsinternalcause. Retainall220plannedprofiles andcurrentguard; no candidateoptimizationyet."
+        },
+        {
+          "kind": "trusted_parent_measured_continuation",
+          "reference": "Parent01a1a147-7f07-7583-baf0-771a839f1013 current delegation",
+          "summary": "Continue measuredfinalization/layerentry investigation behindCONTENT-TIMEOUT-006; allguardsandpausedworkpreserved; coldimportseparatelyowned; do notclearfiles. Rootfetchedmain245ca4f6 clean, no production source changes yet."
+        },
+        {
+          "kind": "actual_class_nested_timing_and_exact_restoration",
+          "reference": "docs/testing/deprecated_code_audit_continuation_011.md",
+          "summary": "83spans7actualproductionmethods/0newinstancefields, planned4/55/220unchanged. Guard300.268s failed;146profilescompleted;5882nestedpairs. Source2exactlyrestoredandall1239originalhashesmatch, job0. Targetinitialmanifest9.592s/134;layerinstall4.131/finalize4.002/store2.521s/12; nestedrowsinclusive. No optimization/pass/cleanup claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Attribute internal costs in RunState.scenario_finalize_installed_environment and generator layer-entry installation, then optimize measured repeated work with exact state/RNG/authority and current full-stage regression evidence. Prefix timings do not support priming or description-traversal dominance. Preserve every assertion/profile, independent fixture, predecessor and ingress/default; do not raise guards. Cleanup remains stopped.",
+      "next_action": "Split measured manifest reconciliation/publication work, layer-install sequence migration and world-node membership/storage before choosing a bounded optimization. Preserve physical/semantic authentication, producer identity, migration/reentry, RNG, publication and rollback. Repeated baseline layout and raw layer copies are not aggregate leaders. Harden temporary-source owner exception paths before reuse; no source remains unrestored. Full original180/current300stage remain Open; no guard increase or cleanup.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "A current maintained300-second stage timeout is reproduced; the substantive performance repair remains active work, not an external approval/save hold.",
+        "description": "Nested measurement completed with exact source restoration and verified owned closure. Further attribution/optimization is active engineering work, without an external approval/save/deployment dependency. Cold-import qualification is separately owned.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:53:40.303763+00:00",
+        "observed_at": "2026-11-05T05:41:02.434162+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_011.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T05:07:28.658435+00:00"
+      "updated_at": "2026-11-05T05:41:02.434162+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
