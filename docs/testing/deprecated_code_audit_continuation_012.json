@@ -1800,7 +1800,14 @@
       "evidence/reconciliation012-results-all-r1.json",
       "evidence/continuation012-scope-source-proof-r1.json"
     ],
-    "preservation": "Policies/metadata, unrelated objectives/batches, all132prior runtime records, unrelated owner observations, full1242originalsourcehashes and preserved checkout/tutorial bytes exact."
+    "preservation": "Policies/metadata, unrelated objectives/batches, all132prior runtime records, unrelated owner observations, full1242originalsourcehashes and preserved checkout/tutorial bytes exact.",
+    "post_association_evidence": [
+      "evidence/reconciliation012-encoding-corrected-current-r1.json",
+      "evidence/reconciliation012-encoding-corrected-all-r1.json",
+      "evidence/continuation012-association-encoding-repair-r1/receipt.json"
+    ],
+    "post_association_outside_task_objects_and_markdown_preserved": true,
+    "line_preservation_scope": "Git-normalized line content; checkout CRLF versus Git blob LF is not whole-file byte identity."
   },
   "measured_call_ownership": {
     "method": "Independent raw-event interval containment, not subtraction of unrelated populations. Inclusive children overlap parents.",
