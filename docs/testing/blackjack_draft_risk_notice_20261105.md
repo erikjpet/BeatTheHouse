@@ -17,3 +17,7 @@ Qualified checks total 133. The current-source native check uses an owned ordina
 Independent review: Parent-confirmed independent source and final runtime review approved 133 qualified checks, exact physical source hashes and all three qualified owned-zero Job closures; no further checks or blockers.
 
 Diagnostics and original observation hashes are retained in the [JSON receipt](blackjack_draft_risk_notice_20261105.json). Native changed-behavior evidence is distinct from fresh Web input. No original R12 profile access, funded action, Save/cold matrix or deployed verification is claimed. This local task requires no publication or NEXT delivery. Unrelated R11 and older denied publication6f remain untouched; item/scenario work remains paused.
+
+## Newly authorized release follow-through
+
+The local receipt above describes completed qualification under the initial scope. New authorization expands the same parent task to main publication and guarded NEXT delivery; the full task is Open while those required acceptance checks are pending. See [release follow-through](blackjack_draft_risk_notice_release_20261105.md). Historical native results and limits are unchanged.

@@ -199,5 +199,14 @@
     "commit": null,
     "evidence": [],
     "scope": "Local investigation/fix/test/commit request only; publication and NEXT are outside this objective."
+  },
+  "release_followthrough": {
+    "recorded_at": "2026-11-05T01:18:16.839752+00:00",
+    "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+    "references": [
+      "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+      "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
+    ],
+    "scope": "New authorization expands the parent objective; all local qualification facts above remain historical and unchanged."
   }
 }

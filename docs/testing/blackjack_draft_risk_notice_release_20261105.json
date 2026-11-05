@@ -1,0 +1,51 @@
+{
+  "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+  "recorded_at": "2026-11-05T01:18:16.839752+00:00",
+  "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+  "implementation_commit": "af2609246170978782e1b2b19f83cff544196976",
+  "authorization": "Trusted parent delegation2026-11-05 explicitly authorizes publishing tested fix af2609246170978782e1b2b19f83cff544196976 to main and normal guarded NEXT verification, under the trusted user instruction: Yes push all finished work to next. Preserve the existing export reserve and keep the task Open until required publication and NEXT acceptance are evidenced. Older denied publication6f is separate and is neither included nor retried.",
+  "local_qualification": {
+    "state": "complete",
+    "checks": 133,
+    "references": [
+      "docs/testing/blackjack_draft_risk_notice_20261105.md",
+      "docs/testing/blackjack_draft_risk_notice_20261105.json"
+    ],
+    "limit": "Historical qualified current-source native evidence; no new tests or deployed behavior claim in this release preparation."
+  },
+  "publication": {
+    "state": "pending",
+    "main_commit": null,
+    "tree": null,
+    "evidence": []
+  },
+  "next_delivery": {
+    "state": "pending",
+    "target_commit": null,
+    "identity_verified": false,
+    "assets_verified": false,
+    "startup_verified": false
+  },
+  "watcher_observation": {
+    "source": "D:/Projects/site/state/bth-next/status.json",
+    "read_at": "2026-11-05T01:18:16.839752+00:00",
+    "snapshot": {
+      "updated_at": "2026-11-05T01:18:07Z",
+      "last_checked_at": "2026-11-05T01:17:22Z",
+      "available_commit": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "deployed_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "phase": "failed",
+      "check_error": null,
+      "error": "Insufficient shared disk reserve for export: 12949155840 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT"
+    },
+    "reserve_free_bytes": 12949155840,
+    "reserve_required_bytes": 13958643712,
+    "limit": "Read-only existing-watcher status. Old deployed NEXT retained; no build, promotion, publication or served identity claim."
+  },
+  "blocker": {
+    "scope": "NEXT export only",
+    "kind": "pipeline_disk_reserve",
+    "requires_user_input": false
+  },
+  "next_action": "Parent proceeds with authorized normal main publication, then observes the existing guarded NEXT watcher and verifies exact promoted/served identity, matching assets and startup when the reserve permits export."
+}
