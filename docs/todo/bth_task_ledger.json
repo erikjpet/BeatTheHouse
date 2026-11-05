@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T01:21:27.791375+00:00",
+  "updated_at": "2026-11-05T01:25:17.856925+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21263,7 +21263,7 @@
         }
       },
       "state": "open",
-      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
+      "status": "PUBLISHED_MAIN_NATIVE133_PASS_NEXT_STOPPED_RESERVE_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Blackjack draft risk notice",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -21286,7 +21286,7 @@
           "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
           "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
         ],
-        "scope": "Actual main publication confirmed. Exact target observed by watcher; old NEXT retained behind existing export reserve. New target identity/assets/startup remain open."
+        "scope": "Published and observed source; existing watcher now stopped and current capacity below required reserve. Exact target NEXT identity/assets/startup remain pending."
       },
       "evidence": [
         {
@@ -21326,16 +21326,17 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Observe the existing guarded NEXT watcher after its export reserve permits progress, then verify exact promoted/served source and tree, matching assets and basic startup for the published fix. No guard bypass or approval hold.",
+      "next_action": "Reconcile the existing stop request with its resource owner/operator and restore only the normal guarded watcher when authorized and capacity is admitted; then verify exact promoted/served source containing af260924, matching assets and startup. Preserve the stop evidence, resource gates and last good NEXT; no manual substitute build.",
       "blocker": {
         "state": "active",
-        "kind": "pipeline_disk_reserve",
-        "description": "Main publication is confirmed and watcher sees exact target e5f4f624233e6495d33019c908bc6ca5d867482d at 2026-11-05T01:19:38Z. NEXT export has 12958265344 bytes free below 13958643712 required; prior deployed/served0c retained. Export-only blocker; no approval/user-input hold or gate bypass.",
+        "kind": "pipeline_stopped_and_disk_reserve",
+        "description": "Existing watcher stopped cleanly2026-11-05T01:21:53Z after stop-request01:21:21Z (operator/reason unconfirmed); guardian exit0/owned0. Current D free12958261248 bytes is also below unchanged13958643712 required. Fix is published; NEXT remains0c095259 and target delivery is unverified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:19:38Z",
+        "observed_at": "2026-11-05T01:25:17.856925+00:00",
         "evidence": [
           "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
-          "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
+          "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final-pipeline-blockers.json"
         ]
       },
       "planned_app_changes": [
@@ -21344,7 +21345,7 @@
           "description": "If reproduced, narrow the notice lifecycle for unfunded draft edits; preserve financial rules/state, RNG, clocks, scheduling, geometry, fixed 16:9 layout and touch/focus behavior."
         }
       ],
-      "updated_at": "2026-11-05T01:21:27.791375+00:00"
+      "updated_at": "2026-11-05T01:25:17.856925+00:00"
     }
   ],
   "batches": [

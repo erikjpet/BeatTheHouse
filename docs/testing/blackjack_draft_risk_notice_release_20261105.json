@@ -1,7 +1,7 @@
 {
   "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
   "recorded_at": "2026-11-05T01:21:27.791375+00:00",
-  "state": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
+  "state": "PUBLISHED_MAIN_NEXT_STOPPED_AND_RESERVE_BLOCKED",
   "implementation_commit": "af2609246170978782e1b2b19f83cff544196976",
   "authorization": "Trusted parent delegation2026-11-05 explicitly authorizes publishing tested fix af2609246170978782e1b2b19f83cff544196976 to main and normal guarded NEXT verification, under the trusted user instruction: Yes push all finished work to next. Preserve the existing export reserve and keep the task Open until required publication and NEXT acceptance are evidenced. Older denied publication6f is separate and is neither included nor retried.",
   "local_qualification": {
@@ -34,11 +34,12 @@
     "observed_target_matches": true
   },
   "blocker": {
-    "scope": "NEXT export only",
-    "kind": "pipeline_disk_reserve",
-    "requires_user_input": false
+    "scope": "NEXT delivery only",
+    "kind": "pipeline_stopped_and_disk_reserve",
+    "requires_user_input": false,
+    "description": "Existing watcher stopped cleanly2026-11-05T01:21:53Z after stop-request01:21:21Z (operator/reason unconfirmed); guardian exit0/owned0. Current D free12958261248 bytes is also below unchanged13958643712 required. Fix is published; NEXT remains0c095259 and target delivery is unverified."
   },
-  "next_action": "Observe the existing guarded NEXT watcher after its export reserve permits progress, then verify exact promoted/served source and tree, matching assets and basic startup for the published fix. No guard bypass or approval hold.",
+  "next_action": "Reconcile the existing stop request with its resource owner/operator and restore only the normal guarded watcher when authorized and capacity is admitted; then verify exact promoted/served source containing af260924, matching assets and startup. Preserve the stop evidence, resource gates and last good NEXT; no manual substitute build.",
   "prepublication_observation": {
     "source": "D:/Projects/site/state/bth-next/status.json",
     "read_at": "2026-11-05T01:18:16.839752+00:00",
@@ -72,5 +73,41 @@
     "reserve_free_bytes": 12958265344,
     "reserve_required_bytes": 13958643712,
     "limit": "The watcher sees the exact published target. Old deployed/HTTP-served NEXT is retained. New target identity/assets/startup remain unverified."
+  },
+  "latest_pipeline_observation": {
+    "observed_at": "2026-11-05T01:24:17.770280+00:00",
+    "watcher": {
+      "automation": "stopped",
+      "phase": "stopped",
+      "updated_at": "2026-11-05T01:21:53Z",
+      "last_checked_at": "2026-11-05T01:21:53Z",
+      "pid": 17888,
+      "cpu_job_guardian_pid": "20828",
+      "available_commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
+      "deployed_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "error": "Insufficient shared disk reserve for export: 12936171520 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT"
+    },
+    "guardian": {
+      "guardian_pid": 20828,
+      "worker_pid": 17888,
+      "started_at": "2026-11-04T23:32:23.286702+00:00",
+      "finished_at": "2026-11-05T01:21:53.613726+00:00",
+      "worker_exit_code": 0,
+      "error": null,
+      "active_at_release": 0,
+      "cleanup_errors": []
+    },
+    "stop_request": {
+      "path": "D:\\Projects\\site\\state\\bth-next\\stop-request",
+      "mtime_utc": "2026-11-05T01:21:21.115818+00:00",
+      "content": "Stop after the active owned build finishes.",
+      "operator_or_reason": "unconfirmed"
+    },
+    "current_disk": {
+      "free_bytes": 12958261248,
+      "required_bytes": 13958643712,
+      "limit": "Actual current free-space read plus unchanged maintained reserve threshold; not a new admission attempt."
+    },
+    "actions": "Read-only observation. No restart, stop-request removal, retention/cleanup, manual build or resource guard change."
   }
 }
