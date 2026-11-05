@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-05T01:25:17.856925+00:00",
-      "source": "Actual task6 release follow-through: Blackjack notice fix published, watcher source observed; new stopped-service and current capacity blockers recorded read-only. No machinery or other-owner updates."
+      "observed_at": "2026-11-05T02:04:55.187085+00:00",
+      "source": "Actual new task6 parent turn owns authorized publication/NEXT follow-through for BTH-JOURNAL-PULLTABS-CURRENCY-001 and separate reproduction/fix-if-confirmed for BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001. Four local journal checks remain accepted; practice runtime reproduction is pending. Other pre-existing task objectives were not re-observed; no approval hold or new result is invented."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",

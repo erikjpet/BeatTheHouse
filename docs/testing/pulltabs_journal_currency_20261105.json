@@ -1,0 +1,187 @@
+{
+  "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+  "alias": "OBS-R13-PULLTABS-JOURNAL-CURRENCY-1016",
+  "recorded_at": "2026-11-05T02:00:55.665517+00:00",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+  "implementation_commit": "2e33f54fbfb9b70141e0bc775231b43aa2a653f5",
+  "base_commit": "0e93f761f864a3bb844fabda48efe05f63792a98",
+  "scope": "Ten metadata additions stamp typed action-time currency and current-row delta across five new receipt producers. Runtime qualification is bounded to Bar cash and canonical Grand-chip cases; native Grand Host coverage is purchase only. Scanner stamps are source-reviewed only. Public Grand-practice redemption remains unqualified and separately Open because its pre-existing apply route can credit cash while a row stamps intended chips. No wallet accounting, gameplay behavior, legacy unknown row or shared Journal change is made.",
+  "acceptance_scope": {
+    "covered": [
+      "Five producer metadata stamps under source review",
+      "Bar cash and canonical grand_casino_1 chip production-module API cases",
+      "Native Foundation cash/Grand practice purchases only",
+      "Four official Save and independent fresh-cold protected-state/Journal checks",
+      "Scanner metadata source review without item invocation"
+    ],
+    "excluded": [
+      "Actual Grand-practice redemption wallet route for practice_pull_tabs; separately Open BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "Universal wallet-currency correctness across every environment",
+      "Original profiles, fresh Web behavior, item effects, publication or NEXT delivery"
+    ]
+  },
+  "source_sha256": {
+    "game": {
+      "path": "scripts/games/pull_tabs.gd",
+      "sha256": "36b33e1aa9acb6e48cd96eee585acab559016c539d0909cb5c6604e9f6848aba"
+    },
+    "journal": {
+      "path": "scripts/ui/run_journal_view_model.gd",
+      "sha256": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45"
+    },
+    "test": {
+      "path": "scripts/tests/pull_tab_journal_currency_check.gd",
+      "sha256": "a4c1291b93ffabd9316af83c59b9c0d43e67ef64bd2cc94a28b373ac795b1e1a"
+    }
+  },
+  "source_equivalence": {
+    "base_commit": "0e93f761f864a3bb844fabda48efe05f63792a98",
+    "original_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "served_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+    "git_blob": "639625344f50c88d0b1025bc6e06ffe8e4c024e3",
+    "scope": "Parent-verified pre-fix source equivalence only; not a new Web reproduction."
+  },
+  "original_observation": {
+    "reference": "qa-continuation-1016.json",
+    "sha256": "1aefc38ccaa305f6e4b38afa039feff17ea20c22128cf7c8acb6455d5870f1ef",
+    "tested_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "summary": "Independent historical R13 Bar $1 purchase creates a new -1 row with unrecorded currency. Wallet arithmetic100-3fare-1ticket-3natural Machine Jam Wait=93, once only, with normal Save/cold custody. This does not close the original save-rollback task; no original profile is accessed or replayed."
+  },
+  "baseline": {
+    "checks": 19,
+    "failures": [
+      "cash native purchase freezes account and exact local amount including zero",
+      "cash native purchase journal renders one explicit amount"
+    ],
+    "source_sha256": {
+      "game": "9514533b53b9816a83e096e51746844694e44771fa6b413d0d39fb29f5354dd8",
+      "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+      "test": "bac9102c00e37b279f5e09b81f00ad0b80b0214798232f2120c6550d3dd9b55d"
+    },
+    "reference": "evidence/pulltabs-journal-baseline-result.json",
+    "scope": "One current native cash purchase; expected missing typed-currency and journal-unit failures."
+  },
+  "diagnostics": [
+    {
+      "label": "pulltabs-journal-producer",
+      "checks": 194,
+      "failure_count": 6,
+      "classification": "Fixture diagnostic, not a product failure",
+      "source_test_sha256": "bac9102c00e37b279f5e09b81f00ad0b80b0214798232f2120c6550d3dd9b55d",
+      "description": "Test incorrectly expected Grand posted price1 instead of2 and used a synthetic noncanonical Grand id for redemption, preventing the existing id-based normal application route. Final test asserts actual posted price/context, uses canonical grand_casino_1, and applies redemption exactly once through the unchanged caller. No extra host-currency routing step or accounting change was introduced.",
+      "evidence": [
+        "evidence/pulltabs-journal-producer-result.json",
+        "evidence/pulltabs-journal-producer.json",
+        "evidence/pulltabs-journal-producer.log"
+      ]
+    },
+    {
+      "classification": "Environment diagnostic retained",
+      "description": "Known root certificate store diagnostic remains in native logs; no TLS or trust changes were made. Qualified owned jobs exit0 and their assertion results pass."
+    }
+  ],
+  "qualification": {
+    "checks": 224,
+    "summary": "198 producer checks plus26 independent fresh-process cold checks pass. Cash and Grand chip native Foundation practice purchases respect actual posted prices1 and2. Generated cash and canonical grand_casino_1 API cases cover single/buy-set, zero sort, normal one-application redemption, explicit current-row amounts and unchanged legacy unknown rows. Four official Save/fresh-cold slots cover unopened and filed/redeemed states with full protected history, machine/stock/custody, wallets, RNG, clocks and journal-line continuity; repeated read-only Journal rendering cannot debit or rewrite rows.",
+    "jobs": [
+      {
+        "label": "pulltabs-journal-baseline",
+        "checks": 19,
+        "qualification": false,
+        "result": "pulltabs-journal-baseline-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+        "failures": [
+          "cash native purchase freezes account and exact local amount including zero",
+          "cash native purchase journal renders one explicit amount"
+        ],
+        "raw_artifact_sha256": {
+          "job": "3d9829514d596b346a9bc5643c5179c451f26943ff5470b11fcd2792f3790d6f",
+          "result": "2e45cdeec84b963dad23a11689798e58b562a74b7a6823b822c825688e04fcc7",
+          "log": "a73f682bd9927e6cba5df223bf68640f1be1b3826a577063be6f7032942e0813"
+        },
+        "nonce": "9cfb9edbfb71430d82effd569b525fda",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-journal-producer",
+        "checks": 194,
+        "qualification": false,
+        "result": "pulltabs-journal-producer-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+        "failures": [
+          "chips first posted ticket costs one",
+          "chips native host pays one exactly once without cross-wallet funding",
+          "chips native purchase freezes account and exact local amount including zero",
+          "chips native purchase journal renders one explicit amount",
+          "chips other wallet unchanged",
+          "chips normal cash-in credits gross local prize once without subtracting old purchases"
+        ],
+        "raw_artifact_sha256": {
+          "job": "06b8f39c4256c4ed0c4030e8bb0d5c6b23a7bbadb5fe56c18e99774663e9e0f1",
+          "result": "e258edf7a492cb27c6c36b0743230343e09fe6a45c4838146f5c1a37d830d435",
+          "log": "1416dda3496053ccf80d26580e6098f26eca9b0f5d912c11484e4528f9de3351"
+        },
+        "nonce": "83470908f1894161a3b76c154573ac2d",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-journal-producer-qualified",
+        "checks": 198,
+        "qualification": true,
+        "result": "pulltabs-journal-producer-qualified-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+        "failures": [],
+        "raw_artifact_sha256": {
+          "job": "6780f87083d924c5dc8ebc8e7d60b1841ed062ad363d6b38d4032b02f5abc5d0",
+          "result": "1a90b40c128fc271b08fd6080ec58bc579c4e406fa601da32b9acfa1eec45359",
+          "log": "4148e83b0b22dd145912abb8f37d384786e68b7f61563c32daa7c84fa1f5b71e"
+        },
+        "nonce": "d4240b5a377b44308988a11f850ab971",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-journal-cold-qualified",
+        "checks": 26,
+        "qualification": true,
+        "result": "pulltabs-journal-cold-qualified-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+        "failures": [],
+        "raw_artifact_sha256": {
+          "job": "3eb43bffeb3c4cdf0e2572185181fc2b61020a78e28afa31f51ea0dce74ea546",
+          "result": "d6fc2e99ef1018b317945019f472f18ec4e80906f216b9ed3983966bb219f170",
+          "log": "ee0ff8fe4434f49b41971bfdd32d6dc9a887bef59b9840d257799f3a05ded306"
+        },
+        "nonce": "eaa42cf107e148ce8afd8fc08b66d206",
+        "exit_code": 0,
+        "active_at_release": 0
+      }
+    ]
+  },
+  "independent_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Parent-confirmed independent source/final receipt approval: exact product/test/Journal hashes match,198 producer plus26 cold checks pass, all four actual nonce-bound Jobs ended with owned0, and source-only scanner/practice-redemption limits are accurate."
+  },
+  "fidelity": "Two actual native Foundation practice purchases with funding-only synthetic initial cash97/chips25, plus generated production module API cases selected by bounded natural paid probes. Pull Tabs has no sealed receipt authority: buy/sort self-apply; redemption applies once via its caller. Grand redemption qualification uses canonical grand_casino_1, not public practice_pull_tabs cash-in. Scanner metadata is source-review scope only; no item is invoked. Official SaveService producer and separate cold evidence are distinct from original-profile or Web checks.",
+  "limits": [
+    "No original R13/R11/R12 profile access, copying, hashing, replay or fresh Web check.",
+    "No Machine Jam reproduction, forced winnings, item-effect implementation or changed RNG/rules/authority/security.",
+    "Grand public-practice redemption is not runtime-reproduced or qualified here; BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001 remains a separate source-supported Open finding needing an owner.",
+    "This producer-coverage task does not close the original Pull Tabs rollback finding or related objectives.",
+    "Local fix/test/commit only; no publication or NEXT claim."
+  ],
+  "related_tasks": {
+    "BTH061-PULLTABS-SAVE-001": "Unchanged; this separate new-producer currency qualification does not establish original rollback closure.",
+    "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001": "Open source-supported/runtime-unreproduced follow-up; actual practice_pull_tabs redemption route lacks canonical Grand id context. Coordinator ownership reference absent; explicitly unassigned. Journal qualification covers canonical Grand redemption, native Grand practice purchase only, and does not fix accounting routing."
+  },
+  "deployment": {
+    "required": false,
+    "state": "not_applicable",
+    "commit": null,
+    "evidence": [],
+    "scope": "Local investigation/fix/test/commit only; no publication or NEXT delivery is authorized or claimed."
+  }
+}
