@@ -1,6 +1,8 @@
 class_name ScenarioSemanticPresentationContract
 extends RefCounted
 
+const CurrentProjectionFixtureScript := preload("res://scripts/tests/fixtures/current_projection_fixture.gd")
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
@@ -10,7 +12,6 @@ const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/enviro
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
-const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
@@ -1203,7 +1204,7 @@ static func _check_ordinary_interaction_coexistence(library: Variant, failures: 
 			},
 		},
 	}
-	var records := EnvironmentInteractionControllerScript.project_sequence_interactions(
+	var records := CurrentProjectionFixtureScript.resolved_records(
 		base_records,
 		projection,
 		environment
@@ -1429,7 +1430,7 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	missing_authority_base.erase("label_rect")
 	missing_authority_base.erase("small_screen_label_rect")
 	missing_authority_base.erase("slot_id")
-	var missing_layout := EnvironmentInteractionControllerScript.project_sequence_interaction_result([missing_authority_base], targeted_projection)
+	var missing_layout := CurrentProjectionFixtureScript.resolve_then_project([missing_authority_base], targeted_projection)
 	var missing_records := _array(missing_layout.get("records", []))
 	var preserved := _record(missing_records, "travel:leave")
 	if bool(missing_layout.get("ok", true)) or preserved.is_empty() \
@@ -1445,7 +1446,7 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	var stale_environment := environment.duplicate(true)
 	stale_environment["id"] = "stale_fixture"
 	stale_environment["semantic_anchors"] = {}
-	var stale_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], stale_projection, stale_environment)
+	var stale_result := CurrentProjectionFixtureScript.resolve_then_project([base], stale_projection, stale_environment)
 	var stale_base := _record(_array(stale_result.get("records", [])), "travel:leave")
 	if not bool(stale_result.get("ok", false)) \
 			or not _snapshot_rect(stale_base.get("focus_rect", {})).is_equal_approx(_snapshot_rect(base.get("focus_rect", {}))) \
@@ -1461,8 +1462,8 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 		},
 	}
 	orphan_projection["semantic_state"]["interactions"]["scenario::orphan"]["normalized_hit_rect"] = {"x": 0.2, "y": 0.2, "w": 0.2, "h": 0.2}
-	var orphan_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result([], orphan_projection, {"id": "orphan_fixture"})
-	var orphan_wrapper := EnvironmentInteractionControllerScript.project_sequence_interactions([], orphan_projection, {"id": "orphan_fixture"})
+	var orphan_result := CurrentProjectionFixtureScript.resolve_then_project([], orphan_projection, {"id": "orphan_fixture"})
+	var orphan_wrapper := CurrentProjectionFixtureScript.resolved_records([], orphan_projection, {"id": "orphan_fixture"})
 	if bool(orphan_result.get("ok", true)) or not _record(_array(orphan_result.get("records", [])), "scenario::orphan").is_empty() \
 			or not orphan_wrapper.is_empty() or not _contains_text(_array(orphan_result.get("errors", [])), "raw hit rectangles"):
 		failures.append("An orphan semantic rectangle became hit authority or the compatibility caller ignored structured projection errors.")
@@ -1511,7 +1512,7 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 			"reduce_motion": false,
 			"production_canvas": true,
 	}
-	var invalid_settings := EnvironmentInteractionControllerScript.project_sequence_interaction_result([base], targeted_projection, invalid_settings_environment)
+	var invalid_settings := CurrentProjectionFixtureScript.resolve_then_project([base], targeted_projection, invalid_settings_environment)
 	if bool(invalid_settings.get("ok", true)) or not _contains_text(_array(invalid_settings.get("errors", [])), "setting small_screen_mode must be boolean"):
 		failures.append("Malformed production accessibility settings bypassed structured layout validation.")
 	var divergent_scenario_id := "bar_darts_league_night"
@@ -1537,7 +1538,7 @@ static func _check_atomic_projection_failures(library: Variant, failures: Array)
 	var divergent_environment := environment.duplicate(true)
 	divergent_environment["scenario_id"] = divergent_scenario_id
 	divergent_environment["scenario_state"] = {"id": divergent_scenario_id, "layer_id": ""}
-	var divergent := EnvironmentInteractionControllerScript.project_sequence_interaction_result(divergent_base, divergent_projection, divergent_environment)
+	var divergent := CurrentProjectionFixtureScript.resolve_then_project(divergent_base, divergent_projection, divergent_environment)
 	if bool(divergent.get("ok", true)) or not _contains_text(_array(divergent.get("errors", [])), "remains actionable") or not _record(_array(divergent.get("records", [])), divergent_identity).is_empty():
 		failures.append("Actionable scenario semantics diverged from a disabled visual instead of failing atomically.")
 

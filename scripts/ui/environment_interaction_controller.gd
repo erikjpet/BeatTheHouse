@@ -618,10 +618,6 @@ static func _object_manifest_join_proof(environment: Dictionary, require_rendere
 	return RoomPresentationPublicationScript._object_manifest_join_proof(environment, require_renderer_proofs)
 
 
-static func _validated_manifest_scenario_authority(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
-	return RoomPresentationPublicationScript._validated_manifest_scenario_authority(environment, require_renderer_proofs)
-
-
 static func _manifest_layout_correlation_errors(manifest_rows: Array, bindings: Dictionary) -> Array:
 	return RoomPresentationPublicationScript._manifest_layout_correlation_errors(manifest_rows, bindings)
 
@@ -1289,10 +1285,6 @@ static func _reconcile_unsealed_record_slots(records: Array, appended_ids: Dicti
 	return records
 
 
-static func project_sequence_interactions(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Array:
-	return _array(project_sequence_interaction_result(base_records, projection, environment).get("records", base_records))
-
-
 static func project_finalized_sequence_interaction_result(base_records: Array, finalized: Dictionary) -> Dictionary:
 	if not bool(finalized.get("ok", false)):
 		return projection_failure_result(base_records, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
@@ -1388,59 +1380,6 @@ static func _finalized_actor_authority_errors(semantic_state: Dictionary, author
 			if JSON.stringify(values[1]) != JSON.stringify(values[2]):
 				errors.append("Finalized scenario actor %s %s diverged from sealed canvas authority." % [identity, str(values[0])])
 	return errors
-
-
-static func project_sequence_interaction_result(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
-	var prepared := ScenarioSemanticViewModelScript.prepare_projection(base_records, projection, environment)
-	if not bool(prepared.get("ok", false)):
-		return projection_failure_result(
-			base_records,
-			_array(prepared.get("errors", [])),
-			_dict(prepared.get("layout_audit", {})),
-			_dict(prepared.get("fallback_authority", {}))
-		)
-	var resolved_projection := _dict(prepared.get("projection", projection))
-	var semantic_state := _dict(resolved_projection.get("semantic_state", {}))
-	if not semantic_state.has("interactions") and not semantic_state.has("scene_objects") and not semantic_state.has("actors"):
-		return {
-			"ok": true,
-			"records": base_records.duplicate(true),
-			"projection": resolved_projection,
-			"errors": [],
-			"warnings": _array(prepared.get("warnings", [])),
-			"layout_authority": {},
-			"layout_authority_digest": "",
-			"layout_audit": _dict(prepared.get("layout_audit", {})),
-		}
-	var authority := _dict(prepared.get("layout_authority", {}))
-	var authority_digest := str(prepared.get("layout_authority_digest", ""))
-	var composed := _compose_projected_records(base_records, resolved_projection, authority, authority_digest)
-	if not bool(composed.get("ok", false)):
-		return projection_failure_result(
-			base_records,
-			_array(composed.get("errors", [])),
-			_dict(prepared.get("layout_audit", {})),
-			_dict(prepared.get("fallback_authority", {}))
-		)
-	var composed_records := _array(composed.get("records", []))
-	var coverage_errors := _projected_record_authority_errors(composed_records, authority, authority_digest, resolved_projection)
-	if not coverage_errors.is_empty():
-		return projection_failure_result(
-			base_records,
-			coverage_errors,
-			_dict(prepared.get("layout_audit", {})),
-			_dict(prepared.get("fallback_authority", {}))
-		)
-	return {
-		"ok": true,
-		"records": composed_records,
-		"projection": resolved_projection,
-		"errors": [],
-		"warnings": _array(prepared.get("warnings", [])),
-		"layout_authority": authority,
-		"layout_authority_digest": authority_digest,
-		"layout_audit": _dict(prepared.get("layout_audit", {})),
-	}
 
 
 static func projection_failure_result(base_records: Array, errors: Array, layout_audit: Dictionary = {}, _fallback_authority: Dictionary = {}, trusted_projection: Dictionary = {}) -> Dictionary:

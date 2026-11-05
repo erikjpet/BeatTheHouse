@@ -1,5 +1,7 @@
 extends RefCounted
 
+const CurrentProjectionFixtureScript := preload("res://scripts/tests/fixtures/current_projection_fixture.gd")
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
@@ -313,7 +315,7 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_delivery_day_world_map_route_install(library, failures)
 	_check_executable_evidence_contract(failures)
 	_check_material_projection(failures)
-	ScenarioPresentationContractScript.check(failures)
+	ScenarioPresentationContractScript.check(library, failures)
 	_check_host_transaction_seam(failures)
 
 
@@ -1651,7 +1653,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 				"authority_keys": _dict(production_projection.get("layout_authority", {})).keys(),
 			}),
 		])
-	var missing_layout_projection := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
+	var missing_layout_projection := CurrentProjectionFixtureScript.resolve_then_project(_array(finalized.get("records", [])), run_state.scenario_sequence_projection())
 	var missing_layout_records := _array(missing_layout_projection.get("records", []))
 	if bool(missing_layout_projection.get("ok", true)) or _record_by_object_id(missing_layout_records, "game:slot").is_empty() \
 			or not _record_by_object_id(missing_layout_records, "scenario::presentation_failure").is_empty() \
@@ -1663,7 +1665,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	forged_interactions["scenario::orphan_after_seal"] = _interaction_record("scenario", "orphan_after_seal", "Forged orphan", true)
 	forged_semantic["interactions"] = forged_interactions
 	forged_projection["semantic_state"] = forged_semantic
-	var forged_projection_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(_array(finalized.get("records", [])), forged_projection, run_state.current_environment)
+	var forged_projection_result := CurrentProjectionFixtureScript.resolve_then_project(_array(finalized.get("records", [])), forged_projection, run_state.current_environment)
 	var forged_projection_records := _array(forged_projection_result.get("records", []))
 	if bool(forged_projection_result.get("ok", true)) \
 			or not _record_by_object_id(forged_projection_records, "scenario::orphan_after_seal").is_empty() \
@@ -1675,7 +1677,7 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	collision_record["stable_object_id"] = "spoof"
 	var collision_base_records := _array(finalized.get("records", [])).duplicate(true)
 	collision_base_records.append(collision_record)
-	var collision_result := EnvironmentInteractionControllerScript.project_sequence_interaction_result(collision_base_records, run_state.scenario_sequence_projection(), run_state.current_environment)
+	var collision_result := CurrentProjectionFixtureScript.resolve_then_project(collision_base_records, run_state.scenario_sequence_projection(), run_state.current_environment)
 	var collision_projection := _array(collision_result.get("records", []))
 	var collision_count := 0
 	var collision_owner := ""

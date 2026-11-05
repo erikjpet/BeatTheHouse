@@ -123,7 +123,8 @@ func _run() -> void:
 			var selected_state := _dict(selected_value)
 			var state := _dict(selected_state.get("state", {}))
 			var projection := SequenceRuntimeScript.public_projection(state, definition)
-			var projected := InteractionControllerScript.project_sequence_interaction_result(base_records, projection, environment)
+			var finalized := LayoutResolverScript.resolve(base_records, projection, environment)
+			var projected := InteractionControllerScript.project_finalized_sequence_interaction_result(base_records, finalized)
 			if not bool(projected.get("ok", false)):
 				failures.append("%s/%s failed production projection: %s" % [scenario_id, str(selected_state.get("path", "state")), JSON.stringify(projected.get("errors", []))])
 				continue

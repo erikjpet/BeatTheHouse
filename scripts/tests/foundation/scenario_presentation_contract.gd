@@ -7,8 +7,10 @@ const ScenarioExtensionDispatchScript := preload("res://scripts/core/scenario_ex
 const EnvironmentInteractionViewModelScript := preload("res://scripts/ui/environment_interaction_view_model.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
 
+const CurrentProjectionFixtureScript := preload("res://scripts/tests/fixtures/current_projection_fixture.gd")
+
 const BOARD_SIZE := Vector2(900.0, 430.0)
-const SCENARIO_OBJECT_ID := "scenario:scenario:console:night"
+const SCENARIO_OBJECT_ID := "scenario::console:night"
 const DIRECT_TOKEN := "scenario_action:7:scenario:console%3Anight:brace%3Aexit"
 
 
@@ -20,14 +22,14 @@ class ActivationCapture:
 		object_id = value
 
 
-static func check(failures: Array) -> void:
-	_check_composed_actions_and_geometry(failures)
+static func check(library: Variant, failures: Array) -> void:
+	_check_composed_actions_and_geometry(library, failures)
 	_check_observable_action_consequence(failures)
 	_check_authored_action_observability_census(failures)
-	_check_small_screen_expansion(failures)
+	_check_small_screen_expansion(library, failures)
 	_check_renderer_failure_payload_is_empty(failures)
-	_check_competing_augment_presentation(failures)
-	_check_fail_closed_presentation(failures)
+	_check_competing_augment_presentation(library, failures)
+	_check_fail_closed_presentation(library, failures)
 	_check_live_event_presentation_restoration(failures)
 	_check_live_base_record_reconciliation(failures)
 	_check_live_slot_variation_restoration(failures)
@@ -464,9 +466,13 @@ static func _record_public_state_signature(target: String, public_state: String,
 	signatures_by_target[target] = target_signatures
 
 
-static func _check_composed_actions_and_geometry(failures: Array) -> void:
-	var prepared := _prepared_snapshot()
-	var composed := ScenarioSemanticViewModelScript.compose([_base_record()], prepared, {})
+static func _check_composed_actions_and_geometry(library: Variant, failures: Array) -> void:
+	var fixture := CurrentProjectionFixtureScript.physical(library)
+	if not bool(fixture.get("ok", false)):
+		failures.append("Current finalized projection fixture failed: %s" % JSON.stringify(fixture.get("errors", [])))
+		return
+	var prepared := _dict(fixture.get("renderer", {}))
+	var composed := _dict(fixture.get("public", {}))
 	if not bool(composed.get("ok", false)):
 		failures.append("Scenario presentation fixture did not compose: %s" % JSON.stringify(composed.get("errors", [])))
 		return
@@ -482,7 +488,13 @@ static func _check_composed_actions_and_geometry(failures: Array) -> void:
 	var first_action := _dict(actions[0])
 	if str(first_action.get("emit_object_id", "")) != DIRECT_TOKEN or str(first_action.get("input_action", "")) != "confirm":
 		failures.append("Scenario direct-action token/input mapping is not stable or colon-safe.")
-	var descriptor := ScenarioSemanticViewModelScript.action_descriptor_for_token(records, DIRECT_TOKEN)
+	var physical_descriptor := ScenarioSemanticViewModelScript.action_descriptor_for_token(records, DIRECT_TOKEN)
+	if _dict(physical_descriptor.get("sequence_record", {})) != scenario_record or _dict(physical_descriptor.get("sequence_action", {})) != _dict(_array(scenario_record.get("scenario_sequence_actions", []))[0]):
+		failures.append("Current physical action token lost its exact sequence record/action descriptor.")
+	# Keep the retained non-sequence descriptor branch as an explicit unit case;
+	# this synthetic record is not a room publication or source of hit authority.
+	var unit_record := {"enabled": true, "interactive": true, "inline_actions": ScenarioSemanticViewModelScript.inline_actions_for_interaction(CurrentProjectionFixtureScript.console_interaction(), 7)}
+	var descriptor := ScenarioSemanticViewModelScript.action_descriptor_for_token([unit_record], DIRECT_TOKEN)
 	if descriptor != {
 		"owner_namespace": "scenario",
 		"stable_object_id": "console:night",
@@ -553,7 +565,7 @@ static func _check_composed_actions_and_geometry(failures: Array) -> void:
 	canvas.free()
 
 
-static func _check_small_screen_expansion(failures: Array) -> void:
+static func _check_small_screen_expansion(library: Variant, failures: Array) -> void:
 	var semantic := {
 		"scene_objects": {"scenario::edge_exit": {
 			"owner_namespace": "scenario", "stable_object_id": "edge_exit", "label": "Edge exit",
@@ -581,7 +593,33 @@ static func _check_small_screen_expansion(failures: Array) -> void:
 		failures.append("Small-screen fixture did not begin with an undersized semantic visual.")
 	if expanded_rect.size.x < 104.0 or expanded_rect.size.y < 76.0 or not is_equal_approx(expanded_rect.end.x, BOARD_SIZE.x) or not is_equal_approx(expanded_rect.end.y, BOARD_SIZE.y):
 		failures.append("Small-screen resolver did not expand and clamp the undersized edge target.")
-	var composed := ScenarioSemanticViewModelScript.compose([], prepared, {})
+	# Direct canvas unit: consume the exact original extension visual/expanded
+	# rectangle, without recreating the removed overlay-to-room composer. This
+	# synthetic hit record is not a published room or source-authority fixture.
+	var extension_record := visual.duplicate(true)
+	extension_record["interactive"] = true
+	extension_record["decorative"] = false
+	extension_record["enabled"] = true
+	extension_record["available_actions"] = _array(_dict(_dict(semantic.get("interactions", {})).get("scenario::edge_exit", {})).get("available_actions", []))
+	extension_record["confirm_action_id"] = "leave"
+	var extension_canvas = PixelSceneCanvasScript.new()
+	extension_canvas.size = BOARD_SIZE
+	extension_canvas.render_environment_snapshot({"id": "small_screen_extension_unit", "archetype_id": "bar", "interactable_objects": [extension_record], "scenario_render_snapshot": prepared})
+	extension_canvas.set_small_screen_mode(true)
+	var extension_entry := _layout_by_id(_dict(extension_canvas.current_view_snapshot().get("object_layout", {})), "scenario:scenario:edge_exit")
+	var extension_consumed := _rect(_dict(extension_entry.get("rect", {})))
+	if not extension_consumed.is_equal_approx(expanded_rect) or extension_canvas.object_id_at_local_position(extension_consumed.get_center()) != "scenario:scenario:edge_exit":
+		failures.append("Canvas did not consume the exact original expanded/clamped renderer-extension geometry.")
+	extension_canvas.free()
+	# The extension resolver above still owns expansion/clamping. The current
+	# room case consumes its actual finalized slot authority rather than the old
+	# independent extension-to-room composer.
+	var fixture := CurrentProjectionFixtureScript.physical(library, "edge_exit")
+	if not bool(fixture.get("ok", false)):
+		failures.append("Current small-screen room fixture failed: %s" % JSON.stringify(fixture.get("errors", [])))
+		return
+	prepared = _dict(fixture.get("renderer", {}))
+	var composed := _dict(fixture.get("public", {}))
 	if not bool(composed.get("ok", false)):
 		failures.append("Small-screen resolved presentation did not compose: %s" % JSON.stringify(composed.get("errors", [])))
 		return
@@ -589,10 +627,15 @@ static func _check_small_screen_expansion(failures: Array) -> void:
 	canvas.size = BOARD_SIZE
 	canvas.render_environment_snapshot({"id": "small_screen_fixture", "archetype_id": "bar", "interactable_objects": _array(composed.get("records", [])), "scenario_render_snapshot": prepared})
 	canvas.set_small_screen_mode(true)
-	var entry := _layout_by_id(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario:scenario:edge_exit")
+	var entry := _layout_by_id(_dict(canvas.current_view_snapshot().get("object_layout", {})), "scenario::edge_exit")
 	var consumed_rect := _rect(_dict(entry.get("rect", {})))
-	if consumed_rect.size.x < 104.0 or consumed_rect.size.y < 76.0 or canvas.object_id_at_local_position(consumed_rect.get_center()) != "scenario:scenario:edge_exit":
+	if consumed_rect.size.x < 104.0 or consumed_rect.size.y < 76.0 or canvas.object_id_at_local_position(consumed_rect.get_center()) != "scenario::edge_exit":
 		failures.append("Canvas did not consume the resolver's expanded/clamped small-screen hit geometry.")
+	var sealed := _dict(_dict(_dict(fixture.get("finalized", {})).get("layout_authority", {})).get("scenario::edge_exit", {}))
+	var sealed_small := _rect(_dict(sealed.get("small_screen_rect", {})))
+	sealed_small = Rect2(sealed_small.position * BOARD_SIZE, sealed_small.size * BOARD_SIZE)
+	if not consumed_rect.is_equal_approx(sealed_small):
+		failures.append("Current canvas small-screen hit geometry diverged from its exact finalized authority.")
 	canvas.free()
 
 
@@ -664,21 +707,45 @@ static func _check_renderer_failure_payload_is_empty(failures: Array) -> void:
 			failures.append("Renderer dispatch retained failed %s payload." % key)
 
 
-static func _check_fail_closed_presentation(failures: Array) -> void:
-	var disabled_base := _base_record()
-	disabled_base["enabled"] = false
-	disabled_base["disabled_reason"] = "Route unavailable."
+static func _check_fail_closed_presentation(library: Variant, failures: Array) -> void:
+	var fixture := CurrentProjectionFixtureScript.room(library, true)
+	var enabled_fixture := CurrentProjectionFixtureScript.room(library)
+	if not bool(fixture.get("ok", false)) or not bool(enabled_fixture.get("ok", false)):
+		failures.append("Current fail-closed room fixture could not authenticate its base controls.")
+		return
+	var base := _dict(_array(enabled_fixture.get("records", []))[0])
 	var augment_prepared := {
 		"ok": true, "errors": [], "boundary_serial": 7, "visual_objects": [], "active_stages": [],
 		"interaction_overlays": [{
 			"owner_namespace": "scenario", "stable_object_id": "route_augment", "mode": "augment",
-			"target_owner_namespace": "travel", "target_stable_object_id": "travel:leave",
+			"target_owner_namespace": "base", "target_stable_object_id": "travel:leave",
 			"available_actions": [{"id": "shortcut", "label": "Take shortcut", "input_action": "ui_accept", "non_color_state": "ready"}],
 		}],
 	}
-	var disabled_composed := ScenarioSemanticViewModelScript.compose([disabled_base], augment_prepared, {})
+	var disabled_before := var_to_bytes(fixture)
+	var disabled_composed := CurrentProjectionFixtureScript.reduced_projection(enabled_fixture, _array(augment_prepared.get("interaction_overlays", [])))
 	var disabled_token := "scenario_action:7:scenario:route_augment:shortcut"
-	if not ScenarioSemanticViewModelScript.action_descriptor_for_token(_array(disabled_composed.get("records", [])), disabled_token).is_empty():
+	var disabled_reduction := _dict(disabled_composed.get("reduction", {}))
+	var disabled_public := _dict(disabled_composed.get("public", {}))
+	var sealed_records := _array(disabled_public.get("records", []))
+	var sealed_before := var_to_bytes(sealed_records)
+	# The real room owner seals valid semantics first, then refreshes current
+	# availability from its live producer. That view never rewrites the seal.
+	var disabled_records := EnvironmentInteractionControllerScript.restore_live_presentation_fields(sealed_records, _array(fixture.get("records", [])))
+	var disabled_result := _record_by_id(disabled_records, "travel:leave")
+	var sealed_result := _record_by_id(sealed_records, "travel:leave")
+	if not bool(disabled_reduction.get("ok", false)) or _array(disabled_reduction.get("accepted_overlay_source_identities", [])) != ["scenario::route_augment"] or not bool(disabled_public.get("ok", false)) or disabled_result.is_empty() or bool(disabled_result.get("enabled", true)) or disabled_result.get("owner_namespace") != sealed_result.get("owner_namespace") or disabled_result.get("stable_object_id") != sealed_result.get("stable_object_id") or var_to_bytes(disabled_result.get("focus_rect")) != var_to_bytes(sealed_result.get("focus_rect")) or var_to_bytes(sealed_records) != sealed_before or var_to_bytes(fixture) != disabled_before:
+		failures.append("Disabled-host fixture did not reach the real live-availability boundary with exact sealed geometry/identity and owned inputs.")
+	# Also retain the strict raw-input negative: authored actions on disabled
+	# causal semantics must receive the actual typed rejection and preserve base.
+	var rejected_disabled := CurrentProjectionFixtureScript.reduced_projection(fixture, _array(augment_prepared.get("interaction_overlays", [])))
+	var rejected_public := _dict(rejected_disabled.get("public", {}))
+	if bool(rejected_public.get("ok", true)) or not _array(rejected_public.get("errors", [])).has("Disabled scenario interaction base::travel:leave cannot retain action authority.") or var_to_bytes(rejected_public.get("records", [])) != var_to_bytes(fixture.get("records", [])) or var_to_bytes(fixture) != disabled_before:
+		failures.append("Disabled causal semantics bypassed its typed layout rejection or changed the complete ordinary control/input.")
+	var disabled_unit := CurrentProjectionFixtureScript.accepted_token_unit_record(_dict(disabled_composed.get("reduction", {})), _array(augment_prepared.get("interaction_overlays", [])), false)
+	if not ScenarioSemanticViewModelScript.action_descriptor_for_token([disabled_unit], disabled_token).is_empty():
+		failures.append("Disabled compatibility-token unit exposed its augmented action.")
+	if not ScenarioSemanticViewModelScript.action_descriptor_for_token(disabled_records, disabled_token).is_empty():
 		failures.append("Disabled host interaction exposed a directly routable augmented scenario action.")
 
 	var invalid_prepared := {
@@ -692,13 +759,13 @@ static func _check_fail_closed_presentation(failures: Array) -> void:
 			"normalized_rect": {"x": 0.4, "y": 0.4, "w": 0.1, "h": 0.1},
 		}],
 	}
-	var composed := ScenarioSemanticViewModelScript.compose([_base_record()], invalid_prepared, {})
+	var composed := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result([base], invalid_prepared)
 	var records := _array(composed.get("records", []))
 	var error_record := _record_by_id(records, "scenario:presentation_error")
-	if bool(composed.get("ok", true)) or error_record.is_empty() or bool(error_record.get("interactive", true)):
-		failures.append("Invalid scenario presentation did not fail closed with a noninteractive player-readable error.")
-	if PixelSceneCanvasScript.should_draw_hotspot_hint(error_record, false):
-		failures.append("Noninteractive scenario error records still advertise an interaction hotspot.")
+	if bool(composed.get("ok", true)) or not _array(composed.get("errors", [])).has("fixture renderer rejected") or records != [base] or not error_record.is_empty():
+		failures.append("Invalid finalized presentation did not retain its structured error and preserve the ordinary control exactly.")
+	if PixelSceneCanvasScript.should_draw_hotspot_hint({"interactive": false, "enabled": false}, false):
+		failures.append("Noninteractive scenario diagnostics still advertise an interaction hotspot.")
 	if PixelSceneCanvasScript.should_draw_hotspot_hint({"interactive": false, "disabled": false}, false):
 		failures.append("Decorative scenario staging still advertises an interaction hotspot.")
 
@@ -718,7 +785,13 @@ static func _check_fail_closed_presentation(failures: Array) -> void:
 	canvas.free()
 
 
-static func _check_competing_augment_presentation(failures: Array) -> void:
+static func _check_competing_augment_presentation(library: Variant, failures: Array) -> void:
+	var fixture := CurrentProjectionFixtureScript.room(library)
+	if not bool(fixture.get("ok", false)):
+		failures.append("Current augment room fixture could not authenticate its base control.")
+		return
+	var base := _dict(_array(fixture.get("records", []))[0])
+	var primary_action_id := str(_dict(_array(base.get("available_actions", []))[0]).get("id", ""))
 	var overlays: Array = []
 	for owner in ["event", "sweep", "scenario"]:
 		overlays.append({
@@ -738,9 +811,12 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 		"ok": true, "errors": [], "boundary_serial": 7,
 		"visual_objects": [], "active_stages": [], "interaction_overlays": overlays,
 	}
-	var composed := ScenarioSemanticViewModelScript.compose([_base_record()], prepared, {})
+	var composed := CurrentProjectionFixtureScript.reduced_projection(fixture, _array(prepared.get("interaction_overlays", [])))
 	var record := _record_by_id(_array(composed.get("records", [])), "travel:leave")
 	var public_text := JSON.stringify(record)
+	if not bool(_dict(composed.get("public", {})).get("ok", false)) or _array(_dict(composed.get("reduction", {})).get("accepted_overlay_source_identities", [])) != ["sweep::sweep_route_augment"]:
+		failures.append("Competing augment fixture did not reach the real reducer winner and current finalized projection.")
+	var token_unit := CurrentProjectionFixtureScript.accepted_token_unit_record(_dict(composed.get("reduction", {})), overlays)
 	if bool(composed.get("ok", true)) or record.is_empty():
 		failures.append("Competing augment presentation did not fail closed around its retained winner.")
 		return
@@ -748,22 +824,21 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 		if public_text.contains(forbidden_action):
 			failures.append("Rejected lower-priority augment leaked into public action surfaces: %s." % forbidden_action)
 		var token := "scenario_action:7:%s:%s_route_augment:%s" % [forbidden_action.trim_suffix("_shortcut"), forbidden_action.trim_suffix("_shortcut"), forbidden_action]
-		if not ScenarioSemanticViewModelScript.action_descriptor_for_token([record], token).is_empty():
+		if not ScenarioSemanticViewModelScript.action_descriptor_for_token([record], token).is_empty() or not ScenarioSemanticViewModelScript.action_descriptor_for_token([token_unit], token).is_empty():
 			failures.append("Rejected lower-priority augment retained a routable action token: %s." % forbidden_action)
-	var augmented_ids: Array = []
-	for action_value in _array(record.get("scenario_augmented_actions", [])):
-		augmented_ids.append(str(_dict(action_value).get("id", "")))
+	var augmented_ids := CurrentProjectionFixtureScript.augmented_action_ids(record)
 	var augmented_inline_ids: Array = []
-	for action_value in _array(record.get("scenario_augmented_inline_actions", [])):
+	for action_value in _array(token_unit.get("inline_actions", [])):
 		augmented_inline_ids.append(str(_dict(action_value).get("id", "")))
-	var inline_ids: Array = []
-	for action_value in _array(record.get("inline_actions", [])):
-		inline_ids.append(str(_dict(action_value).get("id", "")))
-	if augmented_ids != ["sweep_shortcut"] or augmented_inline_ids != ["sweep_shortcut"] or inline_ids != ["sweep_shortcut"]:
+	if augmented_ids != ["sweep_shortcut"] or augmented_inline_ids != ["sweep_shortcut"]:
 		failures.append("Winning sweep augment did not exclusively own available/inline public actions.")
 	var sweep_token := "scenario_action:7:sweep:sweep_route_augment:sweep_shortcut"
-	if ScenarioSemanticViewModelScript.action_descriptor_for_token([record], sweep_token).is_empty():
+	if ScenarioSemanticViewModelScript.action_descriptor_for_token([token_unit], sweep_token).is_empty():
 		failures.append("Accepted sweep augment lost its routable action token.")
+	# Tokens without a committed origin proof remain a unit-only compatibility
+	# check; the current room projector must not publish that legacy dispatch.
+	if not ScenarioSemanticViewModelScript.action_descriptor_for_token([record], sweep_token).is_empty():
+		failures.append("Current room projection exposed an uncommitted legacy augment token.")
 	for private_key in ["accepted_overlay_source_identities", "effective_priority", "effective_owner_namespace", "effective_winner", "source_key"]:
 		if public_text.contains(private_key):
 			failures.append("Composed interaction leaked reducer-private overlay metadata %s." % private_key)
@@ -772,22 +847,26 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 		"owner_namespace": "sweep", "stable_object_id": "collision_augment", "mode": "augment",
 		"target_owner_namespace": "base", "target_stable_object_id": "travel:leave",
 		"available_actions": [
-			{"id": "activate", "label": "Colliding activate", "input_action": "ui_accept", "non_color_state": "ready"},
+			{"id": primary_action_id, "label": "Colliding activate", "input_action": "ui_accept", "non_color_state": "ready"},
 			{"id": "sweep_unique", "label": "Sweep unique", "input_action": "ui_accept", "non_color_state": "ready"},
 		],
 	}
 	var collision_prepared := prepared.duplicate(true)
 	collision_prepared["interaction_overlays"] = [collision_overlay]
-	var collision_composed := ScenarioSemanticViewModelScript.compose([_base_record()], collision_prepared, {})
+	var collision_composed := CurrentProjectionFixtureScript.reduced_projection(fixture, _array(collision_prepared.get("interaction_overlays", [])))
 	var collision_record := _record_by_id(_array(collision_composed.get("records", [])), "travel:leave")
 	var collision_text := JSON.stringify(collision_record)
+	var collision_reduction := _dict(collision_composed.get("reduction", {}))
+	if not _contains_text(_array(collision_reduction.get("errors", [])), "augment action id %s collides" % primary_action_id) or not _array(collision_reduction.get("accepted_overlay_source_identities", [])).is_empty() or not bool(_dict(collision_composed.get("public", {})).get("ok", false)) or collision_record.is_empty():
+		failures.append("Primary-action collision fixture failed before its intended reducer collision boundary.")
+	var collision_unit := CurrentProjectionFixtureScript.accepted_token_unit_record(_dict(collision_composed.get("reduction", {})), _array(collision_prepared.get("interaction_overlays", [])))
 	if bool(collision_composed.get("ok", true)) \
 		or collision_text.contains("sweep_unique") \
-		or not _array(collision_record.get("scenario_augmented_actions", [])).is_empty() \
-		or not _array(collision_record.get("scenario_augmented_inline_actions", [])).is_empty() \
+		or not CurrentProjectionFixtureScript.augmented_action_ids(collision_record).is_empty() \
+		or not _array(collision_unit.get("inline_actions", [])).is_empty() \
 		or not _array(collision_record.get("inline_actions", [])).is_empty() \
 		or not ScenarioSemanticViewModelScript.action_descriptor_for_token([collision_record], "scenario_action:7:sweep:collision_augment:sweep_unique").is_empty():
-		failures.append("Base activate collision leaked part of a rejected augment into public/token surfaces.")
+		failures.append("Base primary-action collision leaked part of a rejected augment into public/token surfaces.")
 
 	var equal_a := {
 		"owner_namespace": "scenario", "stable_object_id": "a_equal_augment", "mode": "augment",
@@ -801,105 +880,21 @@ static func _check_competing_augment_presentation(failures: Array) -> void:
 	equal_forward_prepared["interaction_overlays"] = [equal_z, equal_a]
 	var equal_reverse_prepared := prepared.duplicate(true)
 	equal_reverse_prepared["interaction_overlays"] = [equal_a, equal_z]
-	var equal_forward := ScenarioSemanticViewModelScript.compose([_base_record()], equal_forward_prepared, {})
-	var equal_reverse := ScenarioSemanticViewModelScript.compose([_base_record()], equal_reverse_prepared, {})
+	var equal_forward := CurrentProjectionFixtureScript.reduced_projection(fixture, _array(equal_forward_prepared.get("interaction_overlays", [])))
+	var equal_reverse := CurrentProjectionFixtureScript.reduced_projection(fixture, _array(equal_reverse_prepared.get("interaction_overlays", [])))
 	var equal_record := _record_by_id(_array(equal_forward.get("records", [])), "travel:leave")
+	var equal_unit := CurrentProjectionFixtureScript.accepted_token_unit_record(_dict(equal_forward.get("reduction", {})), _array(equal_forward_prepared.get("interaction_overlays", [])))
+	if not bool(_dict(equal_forward.get("public", {})).get("ok", false)) or not bool(_dict(equal_reverse.get("public", {})).get("ok", false)) or _array(_dict(equal_forward.get("reduction", {})).get("accepted_overlay_source_identities", [])) != ["scenario::a_equal_augment"] or _array(_dict(equal_reverse.get("reduction", {})).get("accepted_overlay_source_identities", [])) != ["scenario::a_equal_augment"]:
+		failures.append("Equal-priority fixture did not reach its deterministic reducer winner/current projection.")
 	var a_token := "scenario_action:7:scenario:a_equal_augment:duplicate_action"
 	var z_token := "scenario_action:7:scenario:z_equal_augment:duplicate_action"
 	if JSON.stringify(equal_forward) != JSON.stringify(equal_reverse) \
 		or bool(equal_forward.get("ok", true)) \
-		or _array(equal_record.get("scenario_augmented_actions", [])).size() != 1 \
-		or _array(equal_record.get("scenario_augmented_inline_actions", [])).size() != 1 \
-		or _array(equal_record.get("inline_actions", [])).size() != 1 \
-		or ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_record], a_token).is_empty() \
-		or not ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_record], z_token).is_empty():
+		or CurrentProjectionFixtureScript.augmented_action_ids(equal_record).size() != 1 \
+		or _array(equal_unit.get("inline_actions", [])).size() != 1 \
+		or ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_unit], a_token).is_empty() \
+		or not ScenarioSemanticViewModelScript.action_descriptor_for_token([equal_unit], z_token).is_empty():
 		failures.append("Same-priority duplicate augment did not preserve one deterministic inline/token winner.")
-
-
-static func _prepared_snapshot() -> Dictionary:
-	return {
-		"schema_version": 1,
-		"scenario_id": "presentation_fixture",
-		"phase_id": "arrival",
-		"status": "active",
-		"boundary_serial": 7,
-		"ok": true,
-		"errors": [],
-		"warnings": [],
-		"interaction_overlays": [{
-			"owner_namespace": "scenario",
-			"stable_object_id": "console:night",
-			"mode": "add",
-			"label": "Brace console",
-			"state_label": "Exit lane exposed",
-			"prompt": "Choose how to brace the lane.",
-			"enabled": true,
-			"disabled_reason": "",
-			"available_actions": [
-				{"id": "brace:exit", "label": "Brace exit", "input_action": "confirm", "non_color_state": "ready"},
-				{"id": "refuse", "label": "Refuse", "input_action": "ui_down", "non_color_state": "choice"},
-			],
-			"input_actions": ["confirm", "ui_down"],
-			"non_color_state": "ready",
-			"focus_order": 1,
-			"hit_bounds": {"w": 60.0, "h": 52.0},
-			"min_target_size": 44.0,
-			"safe_exit": true,
-			"alternate_exit": false,
-		}],
-		"visual_objects": [{
-			"object_id": SCENARIO_OBJECT_ID,
-			"object_type": "scenario_object",
-			"visual_type": "scenario_object",
-			"source_id": "console:night",
-			"label": "Brace console",
-			"short_description": "A braced service console changes the exit lane.",
-			"presence": "scenario",
-			"interactive": false,
-			"decorative": true,
-			"enabled": true,
-			"visible": true,
-			"normalized_rect": {"x": 0.18, "y": 0.38, "w": 0.08, "h": 0.12},
-			"focus_rect": {"x": 0.18, "y": 0.38, "w": 0.08, "h": 0.12},
-			"small_screen_rect": {"x": 0.14, "y": 0.34, "w": 0.16, "h": 0.20},
-			"owner_namespace": "scenario",
-			"stable_object_id": "console:night",
-			"semantic_identity": "scenario::console:night",
-			"role": "obstacle",
-			"state": "braced",
-			"appearance": "striped",
-			"non_color_state": "braced; striped",
-			"z_order": 120,
-		}],
-		"services": [],
-		"games": [],
-		"routes": [],
-		"active_stages": [{"stage_id": "arrival_shift", "message": "The console slides into place."}],
-	}
-
-
-static func _base_record() -> Dictionary:
-	return {
-		"object_id": "travel:leave",
-		"object_type": "travel",
-		"visual_type": "travel",
-		"source_id": "leave",
-		"label": "Leave",
-		"short_description": "The marked exit remains clear.",
-		"identity_summary": "Exit",
-		"interactive": true,
-		"decorative": false,
-		"enabled": true,
-		"normalized_rect": {"x": 0.76, "y": 0.68, "w": 0.14, "h": 0.15},
-		"focus_rect": {"x": 0.76, "y": 0.68, "w": 0.14, "h": 0.15},
-		"action_summary": "Leave through the marked door.",
-		"available_actions": [{"id": "confirm_travel", "label": "Travel"}],
-		"inline_actions": [],
-		"confirm_action_id": "confirm_travel",
-		"safe_exit": true,
-		"alternate_exit": false,
-		"focus_order": 20,
-	}
 
 
 static func _record_by_id(records: Array, object_id: String) -> Dictionary:
