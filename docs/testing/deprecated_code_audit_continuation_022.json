@@ -1,0 +1,209 @@
+{
+  "schema": "bth.audit_continuation022/v1",
+  "observed_at": "2026-11-05T22:22:54.600408+00:00",
+  "task": "BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022",
+  "base_main": "c66a9c1e1046b81c80996d7e171a7d267cc1b84b",
+  "associated_evidence_commit": null,
+  "bounded_task_state": "open_pending_evidence_commit",
+  "files": [
+    {
+      "path": "scripts/core/grand_casino_duel_model.gd",
+      "raw_sha256": "dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91",
+      "lines": 175,
+      "methods": 7,
+      "constants": 4,
+      "disposition": "reviewed_active_or_compatibility_retained",
+      "scope": "Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending."
+    },
+    {
+      "path": "scripts/core/run_state_schema.gd",
+      "raw_sha256": "874da1b9ce80c5872bde4363b4a138dca6f5000a6fe67dd31bc9ba4f19352c70",
+      "lines": 123,
+      "methods": 4,
+      "constants": 2,
+      "disposition": "reviewed_active_or_compatibility_retained",
+      "scope": "Retain all4 methods and73 canonical fields. Legacy active_streets_run and pending_bag are accepted by active migrations; consumed_keys describes canonical outputs and does not exhaust accepted legacy inputs."
+    },
+    {
+      "path": "scripts/core/run_save_codec.gd",
+      "raw_sha256": "2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca",
+      "lines": 673,
+      "methods": 33,
+      "constants": 32,
+      "disposition": "reviewed_active_or_compatibility_retained",
+      "scope": "Retain all33 methods/32 constants/3 static fields as active or compatibility. Same-ID signed zero and seeded int/float numeric identity loss reproduced through public Codec APIs; separately tracked compatible repair remains Open."
+    },
+    {
+      "path": "scripts/core/save_service.gd",
+      "raw_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+      "lines": 571,
+      "methods": 35,
+      "constants": 10,
+      "disposition": "reviewed_active_or_compatibility_retained",
+      "scope": "Retain all35 methods/10 constants/9 state fields. Reflective _save_payload and compatibility-position _backup_path argument are active contracts. Discovery/load root differences and missing-root wrapper behavior are not established bugs; preserve maintained distinctions."
+    }
+  ],
+  "reviewed_original_total_lines": 1540,
+  "current_total_lines": 1542,
+  "total_methods": 79,
+  "total_constants": 48,
+  "schema_fields": 73,
+  "codec_static_fields": 3,
+  "service_instance_fields": 9,
+  "confirmed_obsolete_candidates": [],
+  "production_removals": [],
+  "production_changes": [
+    {
+      "task": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "commit": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+      "model_change": "Two added lines compute returned call_out swing from actual player-stack movement around unchanged settlement. Rules, stack mutation, schedule, RNG, terminal order and6 siblings remain exact.",
+      "test_change": "Existing maintained regression retained;80 additive checks cover direct and public RunState/story callout movement, nonclamped/exact/clipped values, input custody, conservation, RNG, schedule and repeat/terminal rejection.",
+      "native_result": "Same119 old4 receipt failures ->0 on initialeffcb and finalmerged40d4/0dc22, exacte387 test; independent45 initial and46 final native checks.",
+      "NEXT_required": true,
+      "NEXT_verified": false,
+      "published_merge": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e"
+    }
+  ],
+  "native_jobs": [
+    {
+      "name": "duel-callout022-baseline-r1",
+      "checks": 119,
+      "failures": 4,
+      "suite_passed": false,
+      "functional_capture_qualified": true
+    },
+    {
+      "name": "catalog022-signed-zero-baseline-r1",
+      "checks": 32,
+      "failures": 1,
+      "suite_passed": false,
+      "functional_capture_qualified": true
+    },
+    {
+      "name": "catalog022-scalar-type-baseline-r1",
+      "checks": null,
+      "failures": null,
+      "suite_passed": false,
+      "functional_capture_qualified": false,
+      "classification": "Private test inferred-Variant parse failure; preserved, explicitly excluded from reproduction."
+    },
+    {
+      "name": "catalog022-scalar-type-baseline-r2",
+      "checks": 29,
+      "failures": 1,
+      "suite_passed": false,
+      "functional_capture_qualified": true,
+      "correction": "Explicit Boolean declaration only; same source/guard."
+    },
+    {
+      "name": "duel-callout022-candidate-r2",
+      "checks": 119,
+      "failures": 0,
+      "suite_passed": true,
+      "functional_capture_qualified": true,
+      "source_epoch": "effcb0499bf9e8f4eef7d4f2a09bb332e51ae51488a085a9857244cbd249d398"
+    },
+    {
+      "name": "duel-callout022-candidate-r3",
+      "checks": 119,
+      "failures": 0,
+      "suite_passed": true,
+      "functional_capture_qualified": true,
+      "source_epoch": "0dc22a1212d68899f1ed41df2a0bc14a95b61730d8dae989fa730a62a999949b",
+      "source_head": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e"
+    }
+  ],
+  "runtime_inventory_before": 200,
+  "runtime_inventory_current": 206,
+  "prior200_prefix_preserved": true,
+  "all_owned_jobs_serial_and_closed0": true,
+  "native_guards": "Unchanged run_stage006;180 seconds,12% aggregate CPU,2GiB,assigned before resume,kill-on-close,no breakaway. Exact owned Job closure only; no global process census or file clearing.",
+  "independent_body_review_checks": 131,
+  "independent_duel_static_checks": 77,
+  "independent_duel_candidate_native_checks": 45,
+  "codec_findings": {
+    "task": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+    "C1": "Forward same-ID +0 then -0 environments admitted by Codec lose negative-zero float bits on reference reuse. Different-ID control preserves -0; inputs unchanged.32 checks/1 new failure, all24 maintained checks pass.",
+    "C2": "Public seeded definition supplied int1 at catalog float1.0 leaf restores float1.0 with ref-only entry.29 checks/1 new strict-kind failure, all24 maintained checks pass. Valid envelope/content/input custody; synthetic DTO only.",
+    "repair_status": "External comparison-refinement proposal and expanded control/cost review in progress. No codec source patch, fix acceptance or player/mounted-state incidence claim.",
+    "scope_authority": "The recorded user pause covers the named unfinished item/scenario objectives. It explicitly permits unrelated scenario-engine bug fixes, performance, playtesting and audits; no new pause or approval hold is imposed."
+  },
+  "recorded_core_body_dispositions_before": {
+    "reviewed": 65,
+    "remaining": 30,
+    "unknown": 0,
+    "unreviewed_total": 30
+  },
+  "recorded_core_body_dispositions_after": {
+    "reviewed": 69,
+    "remaining": 26,
+    "unknown": 0,
+    "unreviewed_total": 26
+  },
+  "prior65_not_requalified_this_phase": true,
+  "total_remaining_recorded_areas_before": 33,
+  "total_remaining_recorded_areas_after": 29,
+  "current_source_count": 1247,
+  "current_source_manifest_sha256": "0dc22a1212d68899f1ed41df2a0bc14a95b61730d8dae989fa730a62a999949b",
+  "current_source_head": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e",
+  "concurrent_main_integrated": "eebb8aa13957ea3ef705095cb1b7589a0592a646",
+  "final_merged_duel_native_qualification": "Root and independent46 checks qualify same119/0 on40d4/0dc22; published main exact40d4",
+  "source_epoch_limit": "Initial1247 FD2c baseline cohort -> exact two-file Duel effcb qualification -> incoming Coin Pusher2 files only at0dc22; fresh R3 admission and exact same119 native checks pass on merged40d4/0dc22. No Codec repair installed.",
+  "evidence_sha256": {
+    "evidence/catalog022-registration-r1.json": "72bfc0708018875a8938c6413787d196c2e09493d9549328b619270961327c0f",
+    "evidence/catalog022-schema-duel-review-r1.json": "0e67de3be7eea8fc47ec13fb5f404b2843d8d66b36e32eeed8d0d242e093743b",
+    "evidence/catalog022-codec-review-r1.json": "5773059b99fc97ee817518e4f0983dfb82246e5b3a002ddc9d7b93c880354bd3",
+    "evidence/catalog022-save-service-review-r1.json": "8ed788da70ff6fa2d07e9ecb71b9075b4eb330778ed857ca49fa8fcf977be0fd",
+    "evidence/catalog022-four-file-independent-peer-review-r1.json": "cc403bcb96874f7ca7ff46b0781a18f2e05bd18ac8b2fde109e88a03d87667dd",
+    "evidence/duel-callout022-baseline-root-postcheck-r1.json": "092c8ee80711dc692620d2235d37057ef0f0eb6049a9dd6a03b2abbdfeaf61a3",
+    "evidence/duel-callout022-baseline-independent-native-review-r1.json": "6cd8ef9ffd66d4a06abf02ce4644c58ff429ac4277ae7429872b34dfde84c169",
+    "evidence/catalog022-signed-zero-root-postcheck-r1.json": "9b812607d3e52e981ae927dfd188b1494fca4e01973a4eecb53244c729a662ea",
+    "evidence/catalog022-signed-zero-independent-native-review-r1.json": "99f0c5eacbd49e6f2f5a902df2b0f3ee9fcf2f47d8b4b3a7866d5ef08e8d42dd",
+    "evidence/catalog022-scalar-type-parse-attempt-r1.json": "03f604d9e9c9f3307d9b67dafb16f3049506a85d30aca6a7373e520ebbf376ef",
+    "evidence/catalog022-scalar-type-root-postcheck-r2.json": "ecbc79fc06e35936947f85d9fb01e6c63a9dff185f75a3debabe35ed1e198737",
+    "evidence/catalog022-scalar-type-independent-native-review-r2.json": "64e4ed6b0b4bc69ac9b33c514a5cee7b3a5939055f740391380a5bfd3bf49049",
+    "evidence/duel-callout022-candidate-root-postcheck-r2.json": "3b89addfc6fe5dd52b135800d1d39231467904eda2b5d4e0d3f18d431eb89e2b",
+    "evidence/duel-callout022-candidate-independent-native-review-r2.json": "6c91b1edc8df4397ab18830e3d8c2473a625bbec9c5f5a033291450f561bd588",
+    "evidence/duel-callout022-source-commit-r1.json": "fa68082e5fe1f97fae6109d170cae4a4494ea3abc19092c50d28f7d470df1ed7",
+    "evidence/duel-callout022-merged-main-source-r1.json": "56669e91e7d75375e7b025965affe9415be9870bb16d1bd5b267226dad2b611c",
+    "evidence/duel-callout022-candidate-root-preflight-r3.json": "d0423889c19361e5fdddea7bcfeedf81beed90ae3669e498479cb8119a1ffd6c",
+    "evidence/duel-callout022-candidate-root-postcheck-r3.json": "d5a5a3a3ca8552a2a7126dc0c68eef7d09b29190965fde06222b86fb2219b8fc",
+    "evidence/duel-callout022-candidate-proposal-r3/immutable-sha256.json": "7b70d26a4ccd10fbe9e56c70250ec592fdbc756bf877d1a5e5772d7e96323b2c",
+    "evidence/catalog022-precommit-current-r2.json": "f0f33ebf08c45a6b66d04ac58c6454ca37054e73150223155cba574d8aa876c5",
+    "evidence/catalog022-precommit-all-r2.json": "6f003b308711e4c667991cee6b09e32e43e1fe8ad3ebe49370bc7d8cf03c5b22",
+    "evidence/catalog022-precommit-current-r3.json": "6e777e47f22f71ca347534b44c974afeb77e5c4500fd011aa6b2192a1ef34e85",
+    "evidence/catalog022-precommit-all-r3.json": "f9f06007950195e48b61fad5bfe688a77af2d0369426fe868f63b256068b37c4",
+    "evidence/duel-callout022-candidate-independent-native-review-r3.json": "5ec1013c098e01d9105513c0980d20a6656e31c93563407b06d6f0d6bd6b75fe",
+    "evidence/duel-callout022-r3-independent-static-review-r1.json": "b3a8a943f12946687a7878a4f7ca46753f5e74e33a00cd97aea0eb70a0e843ab",
+    "evidence/duel-callout022-main-publication-r1.json": "87cec414ad8e60215a3d8f2f73060041b870151cf70645d518ce994961bce55a"
+  },
+  "limits": [
+    "All four body/declaration/consumer dispositions are bounded source review, not universal functional acceptance. No obsolete removal is justified by these files.",
+    "Whole-codebase candidate, consumer, compatibility, aggregate Content180/Systems300/comparator43.712/outer330 and shard55/all220 acceptance remain Open. No guard relaxed or excluded diagnostic retried.",
+    "Duel sourcec944 is published through exact remote main40d4 after independent finalmerged119/0 qualification. Separately owned NEXT remains required and unverified; no broader UI/playthrough/incidence acceptance.",
+    "All eight paused rows, excluded diagnostics and partials, portraits, personal saves, support4 and untracked1f24 prototype remain untouched; all failed artifacts preserved."
+  ],
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "manual_reconciliation": {
+    "current": {
+      "total_findings": 223,
+      "own_findings": 1,
+      "outside_runtime_errors": 163
+    },
+    "all": {
+      "total_findings": 839,
+      "own_findings": 1,
+      "outside_runtime_errors": 163
+    },
+    "own_finding": "Preexisting BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 historical machine-global-census blocker observed2026-11-04T21:28:34 crossed stale threshold. Original row/evidence preserved, no fresh observation or active global-census claim. Fresh unchanged maintained qualification remains required.",
+    "R1_invocation_excluded": "Missing safe.directory environment caused false audited COMMIT_NOT_FOUND findings. R2/R3 scoped Git reruns clear audited commit lookup findings; outside missing-commit and other findings remain visible."
+  },
+  "independent_final_duel_native_checks": 46,
+  "main_publication": {
+    "source_commit": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+    "published_merge": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e",
+    "exact_remote_verified": true,
+    "NEXT_verified": false
+  }
+}

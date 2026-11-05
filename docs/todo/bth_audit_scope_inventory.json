@@ -1761,6 +1761,49 @@
       "evidence": "docs/testing/deprecated_code_audit_continuation_021.md",
       "full_objective_complete": false,
       "bounded_task_state": "complete"
+    },
+    {
+      "phase": "022",
+      "task": "BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022",
+      "observed_at": "2026-11-05T22:23:30.880738+00:00",
+      "reviewed_source_commit": "c66a9c1e1046b81c80996d7e171a7d267cc1b84b",
+      "current_source_head": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e",
+      "source_files": {
+        "scripts/core/grand_casino_duel_model.gd": "dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91",
+        "scripts/core/run_state_schema.gd": "874da1b9ce80c5872bde4363b4a138dca6f5000a6fe67dd31bc9ba4f19352c70",
+        "scripts/core/run_save_codec.gd": "2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca",
+        "scripts/core/save_service.gd": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180"
+      },
+      "complete_current_body_files": 4,
+      "methods": 79,
+      "constants": 48,
+      "schema_fields": 73,
+      "state_fields": 12,
+      "all_retained": true,
+      "confirmed_obsolete_candidates": [],
+      "new_production_removals": [],
+      "source_changes": true,
+      "source_change_task": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "source_change_commit": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+      "native_jobs": 6,
+      "independent_checks": 131,
+      "recorded_core_before": {
+        "reviewed": 65,
+        "remaining": 30,
+        "unknown": 0,
+        "unreviewed_total": 30
+      },
+      "recorded_core_after": {
+        "reviewed": 69,
+        "remaining": 26,
+        "unknown": 0,
+        "unreviewed_total": 26
+      },
+      "prior65_requalified": false,
+      "associated_evidence_commit": null,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_022.md",
+      "full_objective_complete": false,
+      "bounded_task_state": "open_pending_evidence_commit"
     }
   ]
 }

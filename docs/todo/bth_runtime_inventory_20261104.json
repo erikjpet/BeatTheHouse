@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T20:20:09.821707+00:00",
+  "observed_at": "2026-11-05T22:27:39.044547+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -16482,6 +16482,516 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json"
         ],
         "limit": "Exact180/12percent/2GiB/assigned/kill-on-close/no-breakaway owned closure0. Same original full reputation_hourly script passes40 before and after sole fresh initializer. Full2gamegroups pass with unchanged original runner. Scoped source qualification only; no aggregate/whole-audit/personal-save/NEXT acceptance or cleanup."
+      }
+    },
+    {
+      "instance_id": "task9:duel-callout022-baseline-r1",
+      "task_id": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "duel-callout022-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json:pid:36132",
+        "started_at": "2026-11-05T21:42:24.877761+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T21:42:34.298246+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json:pid:36132",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T21:42:34.298246+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T21:42:34.298246+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "duel-callout022-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T21:42:34.298246+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; resource closure0. Completed119checks/4newreceiptfailures, no oldcontrol failures; public model/RunState story discrepancy qualified, not UI incidence. No source repair/whole-audit/NEXT acceptance or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:catalog022-signed-zero-baseline-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog022-signed-zero-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json:pid:37056",
+        "started_at": "2026-11-05T21:48:22.658854+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T21:48:33.851321+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json:pid:37056",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T21:48:33.851321+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T21:48:33.851321+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog022-signed-zero-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T21:48:33.851321+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; resource closure0. Completed32checks/1new same-ID signedzero loss; different-ID control succeeds. PublicCodec only, no player/mounted schema or complete fix acceptance. No source repair/whole-audit/NEXT acceptance or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:catalog022-scalar-type-baseline-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog022-scalar-type-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json:pid:34572",
+        "started_at": "2026-11-05T21:50:30.268606+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T21:50:35.792309+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json:pid:34572",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T21:50:35.792309+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T21:50:35.792309+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog022-scalar-type-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T21:50:35.792309+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-parse-attempt-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; resource closure0. Private test parse error before functional case. Guard stopped owned processes; exitnull/script_errortrue, all artifacts preserved; not a reproduction or satisfied baseline. No source repair/whole-audit/NEXT acceptance or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:catalog022-scalar-type-baseline-r2",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog022-scalar-type-baseline-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json:pid:18044",
+        "started_at": "2026-11-05T22:05:56.912769+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T22:06:08.718336+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json:pid:18044",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T22:06:08.718336+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T22:06:08.718336+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog022-scalar-type-baseline-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T22:06:08.718336+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json"
+        ],
+        "limit": "Unchanged 180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; resource closure0. Completed29checks/1 new supplied-int1 type loss; all24 maintained checks pass. R1 parse failure remains separately preserved. Public Codec synthetic DTO only, no player/RunState/schema/mount incidence or full repair acceptance."
+      }
+    },
+    {
+      "instance_id": "task9:duel-callout022-candidate-r2",
+      "task_id": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "duel-callout022-candidate-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json:pid:27084",
+        "started_at": "2026-11-05T22:17:02.536223+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T22:17:13.292512+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json:pid:27084",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T22:17:13.292512+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T22:17:13.292512+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "duel-callout022-candidate-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T22:17:13.292512+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json"
+        ],
+        "limit": "Unchanged 180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; resource closure0. Same119 unfiltered checks now0 failures after exactly two-line receipt fix plus exact regression. No broader UI/aggregate/009/NEXT claim; no file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:duel-callout022-candidate-r3",
+      "task_id": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "duel-callout022-candidate-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json:pid:23880",
+        "started_at": "2026-11-05T22:25:27.037643+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T22:25:37.902407+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json:pid:23880",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T22:25:37.902407+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T22:25:37.902407+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "duel-callout022-candidate-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T22:25:37.902407+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; exact owned Job closure0. Final merged-main40d4/source0dc22 same119 checks0 failures, exit0/noScriptError/timeout. Coin Pusher2 incoming paths preserved. Scoped receipt fix only, no NEXT/broaderUI/aggregate claim or file clearing."
       }
     }
   ],

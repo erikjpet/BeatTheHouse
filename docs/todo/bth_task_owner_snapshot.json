@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T21:03:45.435656+00:00",
+  "observed_at": "2026-11-05T22:29:42.614178+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T21:03:45.435656+00:00",
-      "source": "Phase021 bounded four-file review Complete with evidence commit 92483c02f246f70e6bb8e01739e3df0da8b584ce. All50 methods/18 constants retained; independent85 and three unchanged static contracts pass. No production or native changes. Recorded unreviewed core gaps34 (33remaining+1unknown) become30; prior61 not requalified. Whole audit, aggregate qualification and separately owned prior NEXT remain Open. Paused/excluded work, source1247, runtime200 and retained files preserved."
+      "observed_at": "2026-11-05T22:29:42.614178+00:00",
+      "source": "Phase022 four complete body dispositions qualified;69core reviewed/26remaining,3broader gaps. Duel sourcec944 published in main40d4; exact same119 checks pass on originalcandidate and finalmerged0dc22, independent final46 checks. Required NEXT still separately Open. Codec two public numeric identity bugs reproduced, external compatible repair/control/cost proposal under review, no adoption. Runtime206 preserves200prefix, all6 Jobs closed0; parse failure separate. Body evidence commit/association pending. Existing005 historical global-census evidence is stale, not reobserved. All paused/excluded work preserved."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

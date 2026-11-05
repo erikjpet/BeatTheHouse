@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T21:03:45.435656+00:00",
+  "updated_at": "2026-11-05T22:29:42.614178+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13066,13 +13066,12 @@
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/grand_casino_duel_ritual_projection.gd",
@@ -13277,13 +13276,12 @@
             },
             {
               "id": "scripts/core/run_save_codec.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "Complete current body and active/compatibility consumers retained at raw 2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca. Retain all33 methods/32 constants/3 static fields as active or compatibility. Same-ID signed zero and seeded int/float numeric identity loss reproduced through public Codec APIs; separately tracked compatible repair remains Open. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/run_state.gd",
@@ -13297,13 +13295,12 @@
             },
             {
               "id": "scripts/core/run_state_schema.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "Complete current body and active/compatibility consumers retained at raw 874da1b9ce80c5872bde4363b4a138dca6f5000a6fe67dd31bc9ba4f19352c70. Retain all4 methods and73 canonical fields. Legacy active_streets_run and pending_bag are accepted by active migrations; consumed_keys describes canonical outputs and does not exhaust accepted legacy inputs. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/run_terminal_evaluator.gd",
@@ -13318,13 +13315,12 @@
             },
             {
               "id": "scripts/core/save_service.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "Complete current body and active/compatibility consumers retained at raw bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180. Retain all35 methods/10 constants/9 state fields. Reflective _save_payload and compatibility-position _backup_path argument are active contracts. Discovery/load root differences and missing-root wrapper behavior are not established bugs; preserve maintained distinctions. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/scenario_engine.gd",
@@ -13643,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_CURRENT_CORE_BODY_GAPS_QUALIFIED_WHOLE_AUDIT_OPEN_021",
+      "status": "FOUR_MORE_CORE_BODIES_REVIEWED_DUEL_FIX_COMMITTED_CODEC_REPAIR_REVIEW_ACTIVE_022",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13983,7 +13979,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue the remaining30 recorded core body gaps and broader UI/data/tools/external parity coverage outside paused implementation and excluded diagnostics. Preserve aggregate guards and separately owned NEXT verification.",
+      "next_action": "Publish qualified phase022 evidence and Duel receipt repair after final merged-source qualification; continue the26 recorded core body gaps,3 broader gaps, Codec numeric identity repair and remaining aggregate qualification without retrying excluded diagnostics.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13995,7 +13991,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T21:03:45.435656+00:00"
+      "updated_at": "2026-11-05T22:23:30.880738+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -24738,6 +24734,300 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T21:03:45.435656+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022",
+      "name": "Review storage and Grand Casino duel core gaps",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review complete current GrandCasinoDuelModel, RunStateSchema, RunSaveCodec and SaveService bodies, historical deltas and present caller/dispatch/storage compatibility. Classify declarations as active/retained or confirmed obsolete candidates with evidence; register a separate implementation task before any justified code removal or fix. Preserve saved authority, active native/web paths, malformed/legacy inputs and guarded storage boundaries. This is bounded source audit, not full functional, aggregate or whole-codebase acceptance.",
+        "source": "Trusted parent continuation to progress remaining core review gaps outside paused implementation and excluded diagnostics; four files remain recorded as remaining after phase021.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "complete-current-source-disposition",
+            "description": "Every declaration in the four pinned current files has body/consumer/compatibility disposition, with historical comparison and explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_022.md",
+              "docs/testing/deprecated_code_audit_continuation_022.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review qualifies the bounded evidence; associate an actual evidence commit before completion. Any source candidate needs separate tests/commit/delivery qualification.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/grand_casino_duel_model.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
+              ],
+              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+            },
+            {
+              "id": "scripts/core/run_state_schema.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
+              ],
+              "scope": "Complete current body and active/compatibility consumers retained at raw 874da1b9ce80c5872bde4363b4a138dca6f5000a6fe67dd31bc9ba4f19352c70. Retain all4 methods and73 canonical fields. Legacy active_streets_run and pending_bag are accepted by active migrations; consumed_keys describes canonical outputs and does not exhaust accepted legacy inputs. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+            },
+            {
+              "id": "scripts/core/run_save_codec.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
+              ],
+              "scope": "Complete current body and active/compatibility consumers retained at raw 2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca. Retain all33 methods/32 constants/3 static fields as active or compatibility. Same-ID signed zero and seeded int/float numeric identity loss reproduced through public Codec APIs; separately tracked compatible repair remains Open. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+            },
+            {
+              "id": "scripts/core/save_service.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_022.md",
+                "docs/testing/deprecated_code_audit_continuation_022.json"
+              ],
+              "scope": "Complete current body and active/compatibility consumers retained at raw bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180. Retain all35 methods/10 constants/9 state fields. Reflective _save_payload and compatibility-position _backup_path argument are active contracts. Discovery/load root differences and missing-root wrapper behavior are not established bugs; preserve maintained distinctions. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "FOUR_COMPLETE_CURRENT_BODIES_RETAINED_EVIDENCE_COMMIT_PENDING_022",
+      "owner": {
+        "name": "Audit storage and duel core coverage",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only audit evidence and coverage; no production patch or NEXT claim. Separately register any justified implementation with required acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "full_current_body_and_consumer_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_022.json",
+          "summary": "Four complete bodies,79methods/48constants/73schema fields, independent131 checks. All active or compatibility; no obsolete removal. Duel2-line current delta separately qualified; numeric findings tracked independently. Prior65 dispositions not requalified."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit the qualified phase022 source review and associate its exact evidence commit before marking this bounded coverage child Complete. Whole audit and Codec/Duel delivery remain separately Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent source audit is active. No source removal, native workload or approval/user/save/scheduler hold is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T21:12:52.887656+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T22:23:30.880738+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+      "name": "Qualify short-stack duel callout receipt movement",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Faithfully reproduce a short-stack active Rourke duel callout using existing public model and real caller/story boundaries. Determine whether swing is a nominal quote or settled receipt; if actual movement is intended, repair only receipt reporting while preserving chip settlement, rules, outcomes, schedule, input ownership, RNG and save/public API. Preserve all existing checks and prove valid bounds, nonclamped cases and repeat rejection.",
+        "source": "Source review022: call_out returns requested swing after _apply_transfer clamps actual movement; GrandCasinoRunFacade logs it as stack_swing, while apply_hand explicitly records actual movement. Blackjack current callout path has no short-stack guard. Native reproduction and final semantic authority still required. Related body-review task BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-and-native-reproduction",
+            "description": "Qualify the actual public-boundary discrepancy with faithful source authority and native reproduction under unchanged owned resource guards; retain all failures and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-independent-native-review-r1.json"
+            ]
+          },
+          {
+            "id": "scoped-compatible-repair",
+            "description": "Any adopted code repair preserves existing semantics apart from the proven defect, has meaningful regression/parity evidence and an associated tested commit. No unsupported optimization or guard change.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-source-commit-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r2.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "TESTED_SOURCE_COMMIT_PUBLISHED_MAIN_FINAL119_PASS_NEXT_PENDING_022",
+      "owner": {
+        "name": "Audit source-supported duel callout receipt",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-source-commit-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r2.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-baseline-root-postcheck-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+        ],
+        "scope": "Adopting the independently reviewed production receipt repair requires its associated tested source commit and separately owned exact NEXT verification; no delivery is accepted yet."
+      },
+      "evidence": [
+        {
+          "kind": "candidate_native_119_pass",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r2.json",
+          "summary": "Same e387 test119 checks: old source4 failures, two-line Model receipt candidate0 failures; actual180/12percent/2GiB assigned and closure0. No NEXT acceptance."
+        },
+        {
+          "kind": "final_merged_source_same119_pass",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json",
+          "summary": "Exact model dd0d/teste387 on merged source1247_0dc22, sourcecommitc944, merge40d4; same119/0 native exit0 guards/closure0. Independent final review/publication pending; NEXT remains required."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Verify source c944 contained in published main merge40d4 through separately owned ordinary NEXT identity, served assets and changed-behavior acceptance. Keep task Open until required delivery is qualified.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "The scoped two-line receipt repair is tested, independently qualified and published to main; separately assigned NEXT acceptance remains required. No new external approval, save or scheduler hold is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T22:29:42.614178+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T22:29:42.614178+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "name": "Qualify codec numeric identity during reference reuse",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Use ordinary valid recorded DTO inputs and public codec pack/unpack to qualify exact numeric identity across same-identity environment reference reuse and seeded patches. Preserve wire/authentication metadata, current/legacy formats, reference ownership, all bounds and existing guards. No callback experiment, captured-capsule decode/resign, new codec/framework or excluded Runtime diagnostic. Adopt a source repair only after exact cause/parity and bounded cost are supported.",
+        "source": "Source review022: environment reference registry hash/equality and recursive dictionary patch use comparisons that may merge +0/-0 or numerically equal int/float leaves before exact numeric encoding. Direct public pack/unpack reproduction, accepted input/normalization authority and actual incidence remain unqualified. Related body-review task BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "public-roundtrip-numeric-identity",
+            "description": "Qualify the actual public-boundary discrepancy with faithful source authority and native reproduction under unchanged owned resource guards; retain all failures and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-independent-native-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-independent-native-review-r2.json"
+            ]
+          },
+          {
+            "id": "scoped-compatible-repair",
+            "description": "Any adopted code repair preserves existing semantics apart from the proven defect, has meaningful regression/parity evidence and an associated tested commit. No unsupported optimization or guard change.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOTH_PUBLIC_NUMERIC_IDENTITY_LOSSES_REPRODUCED_COMPATIBLE_REPAIR_REVIEW_ACTIVE_022",
+      "owner": {
+        "name": "Audit source-supported codec numeric identity",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Investigation only so far. Any adopted production repair must gain its exact associated source commit and separately owned NEXT verification before this objective closes."
+      },
+      "evidence": [
+        {
+          "kind": "C1_signedzero_public_native_and_C2_parse_attempt",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-signed-zero-root-postcheck-r1.json",
+          "summary": "C1 public4API32checks/1same-ID loss, valid envelope/content and unchanged input; different-ID negativezero control passes. C2 R1 is private-test parse error only, not runtime evidence. Original artifacts preserved, explicit bool correction in fresh R2 preparing; no source patch or guard change."
+        },
+        {
+          "kind": "C2_R2_functional_public_numeric_kind_loss",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json",
+          "summary": "Corrected explicit-bool private test executed29 checks/1 new supplied-int1 becomes float1.0 failure. All24 maintained checks pass; valid envelope/content and unchanged synthetic DTO. R1 parse failure preserved. No player or mounted-state incidence and no complete fix acceptance."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Review exact numeric identity repair and expanded forward/reverse/nested/packed/dictionary/seeded controls plus bounded cost before any adoption; preserve native equality semantics, wire compatibility, all guards and excluded diagnostics.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "New source-supported candidate under active independent investigation; not yet a proven player defect or accepted source change. No external approval/save/scheduler hold.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T21:21:43.135230+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T22:19:35.629432+00:00"
     }
   ],
   "batches": [
