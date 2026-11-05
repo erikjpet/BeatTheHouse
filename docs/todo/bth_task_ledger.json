@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T02:07:51.535050+00:00",
+  "updated_at": "2026-11-05T02:21:56.344835+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -22197,8 +22197,16 @@
             "id": "publication_next_delivery",
             "description": "Publish the exact tested journal fix to main and record resulting commit/tree and fix ancestry; then verify the exact promoted/served NEXT source/tree, matching assets and basic startup, plus scoped changed receipt behavior where feasible. Preserve the existing export reserve and distinguish bounded native qualification from any unobserved Web behavior.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_journal_release_20261105.md",
+              "docs/testing/pulltabs_journal_release_20261105.json",
+              "commit:28f27a92c6ce3f9997e55810c4518f1f22cd6228",
+              "evidence/next-pulltabs-a208-deployed-identity.json",
+              "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+              "evidence/next-pulltabs-a208-startup-visual-review.json",
+              "evidence/pulltabs-final-next-observation.json"
+            ]
           }
         ],
         "coverage": {
@@ -22221,8 +22229,8 @@
           ]
         }
       },
-      "state": "open",
-      "status": "LOCAL_COMPLETE_PUBLICATION_NEXT_ACCEPTANCE_REQUESTED",
+      "state": "complete",
+      "status": "PUBLISHED_EXACT_NEXT_ACCEPTANCE_COMPLETE",
       "owner": {
         "name": "Fix Back Alley travel / Pull Tabs journal currency",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -22239,10 +22247,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Newly authorized normal main/NEXT delivery; exact publication/deployed target and acceptance are pending, without bypassing the existing export reserve."
+        "state": "verified",
+        "commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+        "evidence": [
+          "docs/testing/pulltabs_journal_release_20261105.md",
+          "docs/testing/pulltabs_journal_release_20261105.json",
+          "evidence/next-pulltabs-a208-deployed-identity.json",
+          "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+          "evidence/next-pulltabs-a208-startup-visual-review.json",
+          "evidence/pulltabs-final-next-observation.json"
+        ],
+        "scope": "Main publication and exact NEXT identity/assets/startup verified; native behavior proof retains its distinct bounded scope."
       },
       "evidence": [
         {
@@ -22264,17 +22279,26 @@
           "kind": "authorization",
           "reference": "Trusted parent delegation2026-11-05",
           "summary": "Trusted parent delegation2026-11-05 newly authorizes publication of tested Pull Tabs journal fix 2e33f54fbfb9b70141e0bc775231b43aa2a653f5 and normal guarded NEXT delivery under the trusted user instruction Yes push all finished work to next. Preserve completed local qualification, exact fix association and bounded acceptance_scope. Keep the full task Open until actual publication and exact deployed acceptance are evidenced; do not bypass the existing export reserve."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/pulltabs_journal_release_20261105.json",
+          "summary": "Exact NEXT a208b61a556382d1c35f1070e562e41a40d2259a, tree b2c7fb071971b45e6632233c66bf5b028bd07b37, promoted2026-11-05T02:13:43Z and passed source/pointer/next/302/BUILD/manifest/REF/version identity, provenance/PCK audit1166, matching streamed PCK/JS/native and qualified engine-asset chain. A fresh disposable browser separately passed four resources200, no page errors, rendered the correct-version main menu and closed its owned Job with0 active processes. Existing watcher resumed externally; this task did not start/restart it or remove a stop flag. Newer shared main a7e8c71f97f24011124f8a3897bf7c1c840a2c47 and its later candidate reserve failure do not undo the verified a208 delivery. No new HEAD deployment or paid Web gameplay is claimed. Final read-only observation evidence/pulltabs-final-next-observation.json at2026-11-05T02:21:08Z still serves exact a208/treeb2c7; newer a7 candidate has13631754240 bytes free below13958643712 required. This newer-candidate failure is separate from both accepted fixes."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Parent reconciles fresh main and independently reviews the scoped release, publishes tested journal fix normally, then follows the existing guarded NEXT watcher and records exact delivery acceptance.",
+      "next_action": "Requested journal publication and exact a208 NEXT delivery complete; retain dated native/release evidence and scope limits. No newer shared HEAD is claimed deployed.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:04:55.187085+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T02:21:01.672196+00:00",
+        "evidence": [
+          "evidence/next-pulltabs-a208-deployed-identity.json",
+          "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+          "evidence/next-pulltabs-a208-startup-visual-review.json"
+        ]
       },
       "planned_app_changes": [
         {
@@ -22282,7 +22306,7 @@
           "description": "If confirmed, narrowly add typed currency and current-row delta to applicable new receipt producers; preserve financial/gameplay state and rules, RNG, authority/security, tickets/piles/stock, legacy unknown rows, scheduling, fixed 16:9/touch/focus and paused item/scenario effects."
         }
       ],
-      "updated_at": "2026-11-05T02:04:55.187085+00:00"
+      "updated_at": "2026-11-05T02:21:56.344835+00:00"
     },
     {
       "id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
@@ -22292,37 +22316,67 @@
       "parent_ids": [],
       "group": "current",
       "objective": {
-        "text": "Investigate the distinct source-supported Pull Tabs Grand-default practice redemption route: practice environment id practice_pull_tabs may fail existing id-only Grand routing when the redemption result omits archetype, causing a cash credit instead of chips. Reproduce the actual context, fix correct currency routing if confirmed under a separate assignment without double application, qualify wallets/tickets/piles/exactly-once official Save/fresh-cold custody, review and associate a tested commit. Registering the finding and completing the journal metadata task do not establish runtime reproduction or authorize an accounting change in that task. Preserve original profiles, game rules/RNG/authority/security and paused item/scenario work.",
-        "source": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation.\n\nTrusted parent delegation2026-11-05 now assigns the active task6 parent to reproduce the distinct actual practice-redemption context and fix the route if confirmed. This is separate from the journal metadata fix; no prior source-only observation is relabeled as runtime reproduction.",
+        "text": "Investigate the distinct source-supported Pull Tabs Grand-default practice redemption route: practice environment id practice_pull_tabs may fail existing id-only Grand routing when the redemption result omits archetype, causing a cash credit instead of chips. Reproduce the actual context, fix correct currency routing if confirmed under a separate assignment without double application, qualify wallets/tickets/piles/exactly-once official Save/fresh-cold custody, review and associate a tested commit. Registering the finding and completing the journal metadata task do not establish runtime reproduction or authorize an accounting change in that task. Preserve original profiles, game rules/RNG/authority/security and paused item/scenario work.\n\nNew authorized follow-through: publish the tested practice route fix and verify exact normal guarded NEXT delivery, preserving local qualification and leaving the full objective Open until actual delivery acceptance is evidenced.",
+        "source": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation.\n\nTrusted parent delegation2026-11-05 now assigns the active task6 parent to reproduce the distinct actual practice-redemption context and fix the route if confirmed. This is separate from the journal metadata fix; no prior source-only observation is relabeled as runtime reproduction.\n\nTrusted parent delegation2026-11-05 authorizes publication of the tested practice-redemption fix and normal guarded NEXT verification under the trusted user instruction Yes push all finished work to next. Preserve existing pipeline guards and the full Open objective until delivery acceptance is evidenced.",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "actual_practice_reproduce",
             "description": "Reproduce or precisely disposition actual public Grand-default practice redemption with environment id practice_pull_tabs using a new owned context; document exact context and observed wallet route without original-profile access or a fabricated Web claim.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+              "commit:a208b61a556382d1c35f1070e562e41a40d2259a"
+            ]
           },
           {
             "id": "correct_route_once",
             "description": "If confirmed and separately assigned, correct the receiving currency route while preserving one normal application, correct cash/Grand-chip wallet selection, payout/security adjustments and existing canonical-environment behavior; do not add duplicate credits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+              "commit:a208b61a556382d1c35f1070e562e41a40d2259a"
+            ]
           },
           {
             "id": "wallet_custody_cold",
             "description": "Qualify wallet changes, paid ticket/pile state, exactly-once redemption and relevant official Save/fresh-process cold custody without forcing winnings, replaying outcomes or changing RNG/rules/authority.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+              "commit:a208b61a556382d1c35f1070e562e41a40d2259a"
+            ]
           },
           {
             "id": "review_test_commit",
             "description": "Obtain focused regression evidence and independent review, then associate the exact tested implementation commit and reconcile both task views. Finding registration or journal metadata qualification alone does not close this task.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+              "commit:a208b61a556382d1c35f1070e562e41a40d2259a"
+            ]
+          },
+          {
+            "id": "publication_next_delivery",
+            "description": "Publish the separately tested practice route fix normally, record exact main/tree and fix ancestry, then verify exact promoted/served NEXT identity, matching assets, startup and changed behavior where feasible without bypassing the existing pipeline guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+              "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+              "evidence/next-pulltabs-a208-deployed-identity.json",
+              "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+              "evidence/next-pulltabs-a208-startup-visual-review.json",
+              "evidence/pulltabs-final-next-observation.json"
+            ]
           }
         ],
         "coverage": {
@@ -22331,37 +22385,61 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "OPEN_ACTUAL_PRACTICE_REPRODUCTION_IN_PROGRESS",
+      "state": "complete",
+      "status": "PUBLISHED_EXACT_NEXT_ACCEPTANCE_COMPLETE",
       "owner": {
         "name": "Fix Back Alley travel / Pull Tabs practice redemption",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a208b61a556382d1c35f1070e562e41a40d2259a",
+          "evidence": [
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": [],
-        "scope": "Finding registration only in this delegation; no implementation, publication or deployed acceptance claimed."
+        "required": true,
+        "state": "verified",
+        "commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+        "evidence": [
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.md",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+          "evidence/next-pulltabs-a208-deployed-identity.json",
+          "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+          "evidence/next-pulltabs-a208-startup-visual-review.json",
+          "evidence/pulltabs-final-next-observation.json"
+        ],
+        "scope": "Local route fix, publication and exact NEXT identity/assets/startup verified; native/Web evidence limits remain explicit."
       },
       "evidence": [
         {
           "kind": "source_review",
           "reference": "scripts/ui/foundation_action_view_model.gd:456; scripts/ui/foundation_main.gd:6891; scripts/core/game_module.gd:1216; scripts/core/grand_casino_run_facade.gd:101",
           "summary": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+          "summary": "246 qualified native checks pinned at a208b61a556382d1c35f1070e562e41a40d2259a; independent review, actual practice reproduction and all five owned-zero closures retained. No newer shared MainAUDIT qualification claimed."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Active parent reproduces actual public Grand-default practice_pull_tabs redemption using a new owned context, then isolates and fixes currency application if confirmed without duplicate credit; qualify wallets, official Save/fresh-cold and independent reviewed commit.",
+      "next_action": "Requested practice fix, publication and exact a208 NEXT delivery complete; retain natural reproduction, direct33+15 and adjacent198 evidence with their limits.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:04:55.187085+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T02:21:01.672196+00:00",
+        "evidence": [
+          "evidence/next-pulltabs-a208-deployed-identity.json",
+          "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+          "evidence/next-pulltabs-a208-startup-visual-review.json"
+        ]
       },
       "planned_app_changes": [
         {
@@ -22369,7 +22447,7 @@
           "description": "If confirmed, narrowly correct actual Grand-default practice redemption currency routing while preserving one normal result application, cash/canonical-Grand behavior, security, wallets/ticket custody, RNG/rules, fixed16:9/touch/focus and paused item/scenario effects."
         }
       ],
-      "updated_at": "2026-11-05T02:04:55.187085+00:00"
+      "updated_at": "2026-11-05T02:21:56.344835+00:00"
     }
   ],
   "batches": [

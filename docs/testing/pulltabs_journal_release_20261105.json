@@ -1,0 +1,73 @@
+{
+  "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+  "recorded_at": "2026-11-05T02:21:56.344835+00:00",
+  "state": "PUBLISHED_EXACT_NEXT_ACCEPTANCE_COMPLETE",
+  "implementation_commit": "2e33f54fbfb9b70141e0bc775231b43aa2a653f5",
+  "local_qualification": {
+    "references": [
+      "docs/testing/pulltabs_journal_currency_20261105.md",
+      "docs/testing/pulltabs_journal_currency_20261105.json"
+    ],
+    "checks": 224,
+    "limit": "Original bounded native qualification is historical; source/behavior limits remain unchanged."
+  },
+  "publication": {
+    "state": "pass",
+    "commit": "28f27a92c6ce3f9997e55810c4518f1f22cd6228",
+    "tree": "1a018281b9c636f21e201a616905d20a5ec27dba",
+    "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-main-next-observation.json"
+  },
+  "next_delivery": {
+    "state": "verified",
+    "target_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "deployed_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "served_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "served_tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+    "identity_verified": true,
+    "assets_verified": true,
+    "startup_verified": true
+  },
+  "pipeline_observation": {
+    "observed_at": "2026-11-05T02:21:08Z",
+    "watcher_updated_at": "2026-11-05T02:20:45Z",
+    "automation": "enabled",
+    "phase": "failed",
+    "available_commit": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+    "error": "Insufficient shared disk reserve for export: 13631754240 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+    "stop_request": null,
+    "disk_free_bytes": 13631754240,
+    "required_disk_bytes": 13958643712,
+    "limit": "Existing watcher observation only. No restart, guard bypass, manual build or new target delivery accepted."
+  },
+  "next_action": "Requested journal publication and exact a208 NEXT delivery complete; retain dated native/release evidence and scope limits. No newer shared HEAD is claimed deployed.",
+  "current_publication_including_both_fixes": {
+    "state": "pass",
+    "commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+    "evidence": [
+      "Parent-confirmed normal push and matching ls-remote for a208b61a556382d1c35f1070e562e41a40d2259a"
+    ]
+  },
+  "native_qualification_source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+  "native_evidence_scope": "Original journal224 checks remain historical on game36b33; adjacent journal198 passed on gameaa461 pinned at a208. Practice direct33+15 is separate evidence; no new journal cold26 rerun or newer shared MainAUDIT qualification is claimed.",
+  "delivery": {
+    "identity_pass": true,
+    "assets_pass": true,
+    "startup_pass": true,
+    "source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "source_tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+    "identity_receipt_sha256": "ec10a4f0dd0a7df2d7547ca5be38101f873f083f26d22427771330bf5ed3bab9",
+    "evidence": [
+      "evidence/next-pulltabs-a208-deployed-identity.json",
+      "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+      "evidence/next-pulltabs-a208-startup-visual-review.json",
+      "evidence/pulltabs-final-next-observation.json"
+    ],
+    "scope": "Exact deployed source/tree, pointer/next/302/BUILD/manifest/REF/version and provenance/PCK audit, matching served assets, plus fresh disposable main-menu startup; no paid Web changed-gameplay claim."
+  },
+  "delivery_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Independent final combined review read identity/assets provenance, startup report and actual owned Job, viewed the correct-version main-menu image, and approved all required acceptance for both distinct IDs. No paid Web behavior claim or remaining required gap."
+  }
+}

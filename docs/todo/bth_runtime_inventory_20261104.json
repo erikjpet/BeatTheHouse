@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T02:07:52.588036+00:00",
+  "observed_at": "2026-11-05T02:21:56.344835+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -18,7 +18,8 @@
       "docs/testing/quarter_roulette_publication_20261104.json",
       "docs/testing/roulette_sealed_pending_r08.json",
       "docs/testing/blackjack_draft_risk_notice_20261105.json",
-      "docs/testing/pulltabs_journal_currency_20261105.json"
+      "docs/testing/pulltabs_journal_currency_20261105.json",
+      "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
     ]
   },
   "instances": [
@@ -9219,6 +9220,421 @@
           "docs/testing/pulltabs_journal_currency_20261105.json"
         ],
         "limit": "Actual owned-process closure only. Expected baseline and diagnostic test failures retained; no other runtime was re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-practice-baseline:b937a8fbcc1f4509a5f7f3bb158ea927",
+      "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "b937a8fbcc1f4509a5f7f3bb158ea927",
+        "key": "owned-native-job:b937a8fbcc1f4509a5f7f3bb158ea927:pid:15816",
+        "started_at": "2026-11-05T02:07:21.268370+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T02:07:41.855140+00:00",
+        "key": "owned-native-job:b937a8fbcc1f4509a5f7f3bb158ea927:pid:15816",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T02:07:41.855140+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T02:07:41.855140+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "b937a8fbcc1f4509a5f7f3bb158ea927",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T02:07:41.855140+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-practice-producer:0bc534d4bd674b84aa8dd2da245a1769",
+      "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0bc534d4bd674b84aa8dd2da245a1769",
+        "key": "owned-native-job:0bc534d4bd674b84aa8dd2da245a1769:pid:30740",
+        "started_at": "2026-11-05T02:08:24.476451+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T02:08:45.664423+00:00",
+        "key": "owned-native-job:0bc534d4bd674b84aa8dd2da245a1769:pid:30740",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T02:08:45.664423+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T02:08:45.664423+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "0bc534d4bd674b84aa8dd2da245a1769",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T02:08:45.664423+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-practice-cold:6d9163ee51a445c7b396c2e863756507",
+      "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "6d9163ee51a445c7b396c2e863756507",
+        "key": "owned-native-job:6d9163ee51a445c7b396c2e863756507:pid:29260",
+        "started_at": "2026-11-05T02:09:07.728474+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T02:09:19.149249+00:00",
+        "key": "owned-native-job:6d9163ee51a445c7b396c2e863756507:pid:29260",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T02:09:19.149249+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T02:09:19.149249+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "6d9163ee51a445c7b396c2e863756507",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T02:09:19.149249+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-practice-adjacent-journal:d4a0721d1c964521b3ff7dde6bb6ccbc",
+      "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d4a0721d1c964521b3ff7dde6bb6ccbc",
+        "key": "owned-native-job:d4a0721d1c964521b3ff7dde6bb6ccbc:pid:35004",
+        "started_at": "2026-11-05T02:09:47.717999+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T02:10:06.487822+00:00",
+        "key": "owned-native-job:d4a0721d1c964521b3ff7dde6bb6ccbc:pid:35004",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T02:10:06.487822+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T02:10:06.487822+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d4a0721d1c964521b3ff7dde6bb6ccbc",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T02:10:06.487822+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:web-pulltabs-a208-startup:765ca9d08dc94780b3258c0e0f149bda",
+      "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "765ca9d08dc94780b3258c0e0f149bda",
+        "key": "owned-browser-startup-job:765ca9d08dc94780b3258c0e0f149bda:pid:19304",
+        "started_at": "2026-11-05T02:15:44.441229+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T02:16:06.876301+00:00",
+        "key": "owned-browser-startup-job:765ca9d08dc94780b3258c0e0f149bda:pid:19304",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+          "Owned active_at_release=0; no host-process census claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T02:16:06.876301+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T02:16:06.876301+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "765ca9d08dc94780b3258c0e0f149bda",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+            "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T02:16:06.876301+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+          "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only; original reproduction and diagnostics retained. Other runtime records not re-observed."
       }
     }
   ],

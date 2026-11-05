@@ -1,0 +1,185 @@
+{
+  "task_id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+  "recorded_at": "2026-11-05T02:21:56.344835+00:00",
+  "state": "PUBLISHED_EXACT_NEXT_ACCEPTANCE_COMPLETE",
+  "implementation_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+  "scope": "One outer redemption result field carries environment_archetype_id into the existing normal caller application route. Actual Grand-default practice redemption therefore selects the intended chips wallet without an extra application or changed payout. The separately reviewed journal metadata fix remains intact; no changes to prices, game rules, RNG, security or legacy rows.",
+  "source_sha256": {
+    "game": {
+      "path": "scripts/games/pull_tabs.gd",
+      "sha256": "aa461ebd77a70a7c9317e79a512357d5f11610941ecc66d16331a696f7237312"
+    },
+    "practice_test": {
+      "path": "scripts/tests/pull_tab_practice_redemption_currency_check.gd",
+      "sha256": "dc65f678e5f90503ff136cf88d7211744cec557566881fdc7d7fd98ef025b165"
+    },
+    "journal_test": {
+      "path": "scripts/tests/pull_tab_journal_currency_check.gd",
+      "sha256": "a4c1291b93ffabd9316af83c59b9c0d43e67ef64bd2cc94a28b373ac795b1e1a"
+    },
+    "journal": {
+      "path": "scripts/ui/run_journal_view_model.gd",
+      "sha256": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45"
+    }
+  },
+  "reproduction": {
+    "checks": 27,
+    "expected_failures": 1,
+    "summary": "Actual default native Foundation Grand practice reproduces the route defect with one expected wallet failure. Natural posted cost2 funds from practice cash100000 to99998, chips0; a natural prize2 is redeemed through the normal counter. Baseline incorrectly returns cash100000/chips0 while its journal stamps chips+2; desired route leaves cash99998/chips2. No original profile or Web reproduction is claimed.",
+    "reference": "evidence/pulltabs-practice-baseline-result.json"
+  },
+  "qualification": {
+    "checks": 246,
+    "summary": "Pinned a208 qualification totals246: practice producer33, independent fresh-cold15, adjacent journal producer198. The original journal224, including26 cold checks, remains historical on game36b33. The four game/test/Journal files match later shared main a7e8, but that main also changes shared MainAUDIT; these246 checks were not rerun or claimed as a7e8 qualification. Browser startup is a separate acceptance check, not additional native assertions.",
+    "jobs": [
+      {
+        "label": "pulltabs-practice-baseline",
+        "checks": 27,
+        "qualification": false,
+        "result": "pulltabs-practice-baseline-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-baseline.json",
+        "failures": [
+          "default Grand Practice redemption credits intended chips once and leaves cash unchanged"
+        ],
+        "artifact_sha256": {
+          "job": "e91871bb374f5c9016b0c697e5e6b05fcb3a6ea0aee5e80d9a3a54c16c1904d9",
+          "result": "93cbd0f63796d9f5a8bb2dab15635bfefe52226202954348d6384f4dff4c1eac",
+          "log": "e1ca7cb04406f3c98d3b5eec4008adddd36a8e7a3eb40306bec1a60408a89e77"
+        },
+        "nonce": "b937a8fbcc1f4509a5f7f3bb158ea927",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-practice-producer",
+        "checks": 33,
+        "qualification": true,
+        "result": "pulltabs-practice-producer-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-producer.json",
+        "failures": [],
+        "artifact_sha256": {
+          "job": "68d36dd2e2208be25577a766b0765bb7dc22648cf4b352f0efbe677998ebcee5",
+          "result": "41571c800ea2d9939c1b57fc751ef0d61b88efb02ffc1bad42cc25ae7cca419f",
+          "log": "14ab290b6dcfb50f65ffab4cecd82a85e1669d10007d461d63d0764e9520c209"
+        },
+        "nonce": "0bc534d4bd674b84aa8dd2da245a1769",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-practice-cold",
+        "checks": 15,
+        "qualification": true,
+        "result": "pulltabs-practice-cold-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-cold.json",
+        "failures": [],
+        "artifact_sha256": {
+          "job": "51b2c4b9cb32418d6cb3aab3ab5b3015bf1a8112ec777d0c4a2a1c63bd41a499",
+          "result": "fc02ef570f0564805130abee42365cefcf0e20b231cc0dbaf07569c648115f57",
+          "log": "7c1e63f0a2a39d241c91551bb2b946879a0a6bd429284b7f2ed8306f08c27c9c"
+        },
+        "nonce": "6d9163ee51a445c7b396c2e863756507",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "pulltabs-practice-adjacent-journal",
+        "checks": 198,
+        "qualification": true,
+        "result": "pulltabs-practice-adjacent-journal-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-practice-adjacent-journal.json",
+        "failures": [],
+        "artifact_sha256": {
+          "job": "13e896d630c619e02105117e7424ce9f1fcd91cb459f38d3dc0fb8d2661ca659",
+          "result": "87a2054bb3bae870a24a78706bfea88dd2719bda7b53f751d7aa0712f4cf9789",
+          "log": "cd9253d516f63309d771b46a2e79c2f43299a83844ad5f3390c5018048f3ca9d"
+        },
+        "nonce": "d4a0721d1c964521b3ff7dde6bb6ccbc",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "web-pulltabs-a208-startup",
+        "checks": 0,
+        "qualification": true,
+        "result_kind": "browser_startup",
+        "result": "next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\web-pulltabs-a208-startup.json",
+        "failures": [],
+        "artifact_sha256": {
+          "job": "0d7915446b827fc303ac75272d355c34b3aec63a3003ddcc6eee12fa5d297d44",
+          "result": "89781a53ce68992056e80c86d426cb6bfd55def44ccf41563a921aa9bad2df3a",
+          "log": "3b6d7a8ebde76b361f3b2d70a908937999306aed1c9131342490cbf3b495b978"
+        },
+        "nonce": "765ca9d08dc94780b3258c0e0f149bda",
+        "exit_code": 0,
+        "active_at_release": 0
+      }
+    ],
+    "scope_breakdown": {
+      "direct_practice_producer": 33,
+      "direct_practice_cold": 15,
+      "adjacent_journal_producer": 198,
+      "total_current": 246
+    }
+  },
+  "review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Independent loan_room_review approved the exact pinned a208 source and246 native checks: practice33+15 plus adjacent journal198, with all four actual native Jobs owned0."
+  },
+  "limits": [
+    "Pinned a208 native practice and official owned Save/fresh-cold evidence are distinct from separate exact-build browser startup; no paid Web changed-gameplay check or original R13/R11/R12 profile access/copy/hash/replay.",
+    "No forced winnings, item-effect implementation, changed prices/rules/RNG/security/authority or legacy Journal rewrite.",
+    "Later a7e8 shared MainAUDIT changes are not covered by a claimed rerun; only the four scoped game/test/Journal files are unchanged.",
+    "The original BTH061-PULLTABS-SAVE-001 rollback task and all other objectives remain unchanged."
+  ],
+  "publication_next": {
+    "required": true,
+    "state": "verified",
+    "commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "scope": "Newly authorized publication and normal guarded NEXT acceptance; local qualification alone does not close the full objective."
+  },
+  "next_action": "Requested practice fix, publication and exact a208 NEXT delivery complete; retain natural reproduction, direct33+15 and adjacent198 evidence with their limits.",
+  "publication": {
+    "state": "pass",
+    "commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+    "evidence": [
+      "Parent-confirmed normal push and matching ls-remote for a208b61a556382d1c35f1070e562e41a40d2259a"
+    ]
+  },
+  "pipeline_observation": {
+    "observed_at": "2026-11-05T02:21:08Z",
+    "watcher_updated_at": "2026-11-05T02:20:45Z",
+    "automation": "enabled",
+    "phase": "failed",
+    "available_commit": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+    "error": "Insufficient shared disk reserve for export: 13631754240 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+    "stop_request": null,
+    "disk_free_bytes": 13631754240,
+    "required_disk_bytes": 13958643712,
+    "limit": "Existing watcher observation only. No restart, guard bypass, manual build or new target delivery accepted."
+  },
+  "native_qualification_source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+  "delivery": {
+    "identity_pass": true,
+    "assets_pass": true,
+    "startup_pass": true,
+    "source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+    "source_tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+    "identity_receipt_sha256": "ec10a4f0dd0a7df2d7547ca5be38101f873f083f26d22427771330bf5ed3bab9",
+    "evidence": [
+      "evidence/next-pulltabs-a208-deployed-identity.json",
+      "evidence/next-a208b61a556382d1c35f1070e562e41a40d2259a-startup.json",
+      "evidence/next-pulltabs-a208-startup-visual-review.json",
+      "evidence/pulltabs-final-next-observation.json"
+    ],
+    "scope": "Exact deployed source/tree, pointer/next/302/BUILD/manifest/REF/version and provenance/PCK audit, matching served assets, plus fresh disposable main-menu startup; no paid Web changed-gameplay claim."
+  },
+  "delivery_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Independent final combined review read identity/assets provenance, startup report and actual owned Job, viewed the correct-version main-menu image, and approved all required acceptance for both distinct IDs. No paid Web behavior claim or remaining required gap."
+  }
+}
