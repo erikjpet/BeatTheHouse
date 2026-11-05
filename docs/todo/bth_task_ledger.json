@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T08:46:36.778153+00:00",
+  "updated_at": "2026-11-05T09:00:08.311641+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13701,6 +13701,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_013.md"
           ]
+        },
+        {
+          "sha": "468dd78d878392ff22dc407403b5f37be858b4eb",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md",
+            "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
         }
       ],
       "deployment": {
@@ -13814,7 +13821,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T08:46:36.778153+00:00"
+      "updated_at": "2026-11-05T09:00:08.311641+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20626,6 +20633,13 @@
             "docs/testing/deprecated_code_audit_continuation_013.md",
             "docs/testing/deprecated_code_audit_continuation_013.json"
           ]
+        },
+        {
+          "sha": "468dd78d878392ff22dc407403b5f37be858b4eb",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md",
+            "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
         }
       ],
       "deployment": {
@@ -20745,7 +20759,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T08:46:36.778153+00:00"
+      "updated_at": "2026-11-05T09:00:08.311641+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23059,6 +23073,13 @@
             "scripts/tests/scenario_definition_catalog_lookup_check.gd",
             "docs/testing/deprecated_code_audit_continuation_013.md"
           ]
+        },
+        {
+          "sha": "468dd78d878392ff22dc407403b5f37be858b4eb",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md",
+            "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
         }
       ],
       "deployment": {
@@ -23093,7 +23114,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T08:46:36.778153+00:00"
+      "updated_at": "2026-11-05T09:00:08.311641+00:00"
     },
     {
       "id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
@@ -23138,7 +23159,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "468dd78d878392ff22dc407403b5f37be858b4eb",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md",
+            "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -23171,7 +23200,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T08:46:36.778153+00:00"
+      "updated_at": "2026-11-05T09:00:08.311641+00:00"
     }
   ],
   "batches": [
