@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T00:16:40.251041+00:00",
+  "observed_at": "2026-11-05T01:13:13.122615+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -16,7 +16,8 @@
       "docs/testing/coin_pusher_drop_price_20261104.json",
       "docs/testing/roulette_journal_currency_20261104.json",
       "docs/testing/quarter_roulette_publication_20261104.json",
-      "docs/testing/roulette_sealed_pending_r08.json"
+      "docs/testing/roulette_sealed_pending_r08.json",
+      "docs/testing/blackjack_draft_risk_notice_20261105.json"
     ]
   },
   "instances": [
@@ -5600,6 +5601,421 @@
           "docs/testing/deprecated_code_audit_continuation_008.md"
         ],
         "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task6:blackjack-draft-risk-baseline:790689280764443db270dcb2fdb73aa6",
+      "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "790689280764443db270dcb2fdb73aa6",
+        "key": "owned-native-job:790689280764443db270dcb2fdb73aa6:pid:38368",
+        "started_at": "2026-11-05T01:06:58.039702+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:07:14.610112+00:00",
+        "key": "owned-native-job:790689280764443db270dcb2fdb73aa6:pid:38368",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:07:14.610112+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:07:14.610112+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "790689280764443db270dcb2fdb73aa6",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:07:14.610112+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+          "docs/testing/blackjack_draft_risk_notice_20261105.json"
+        ],
+        "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:blackjack-draft-risk-final:c49734ba93aa4fecb7144a9639cbd3bd",
+      "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "c49734ba93aa4fecb7144a9639cbd3bd",
+        "key": "owned-native-job:c49734ba93aa4fecb7144a9639cbd3bd:pid:32176",
+        "started_at": "2026-11-05T01:08:37.833957+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:08:54.532384+00:00",
+        "key": "owned-native-job:c49734ba93aa4fecb7144a9639cbd3bd:pid:32176",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:08:54.532384+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:08:54.532384+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "c49734ba93aa4fecb7144a9639cbd3bd",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:08:54.532384+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+          "docs/testing/blackjack_draft_risk_notice_20261105.json"
+        ],
+        "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:blackjack-draft-risk-qualified:b583c32e3a43412fae6c1f4ae207b050",
+      "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "b583c32e3a43412fae6c1f4ae207b050",
+        "key": "owned-native-job:b583c32e3a43412fae6c1f4ae207b050:pid:39436",
+        "started_at": "2026-11-05T01:10:49.313491+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:11:06.492181+00:00",
+        "key": "owned-native-job:b583c32e3a43412fae6c1f4ae207b050:pid:39436",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:11:06.492181+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:11:06.492181+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "b583c32e3a43412fae6c1f4ae207b050",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:11:06.492181+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+          "docs/testing/blackjack_draft_risk_notice_20261105.json"
+        ],
+        "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:blackjack-draft-risk-affordability:5c4796ad48764568aece25d353bf8cb8",
+      "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5c4796ad48764568aece25d353bf8cb8",
+        "key": "owned-native-job:5c4796ad48764568aece25d353bf8cb8:pid:26400",
+        "started_at": "2026-11-05T01:11:06.586181+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:11:12.508352+00:00",
+        "key": "owned-native-job:5c4796ad48764568aece25d353bf8cb8:pid:26400",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:11:12.508352+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:11:12.508352+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5c4796ad48764568aece25d353bf8cb8",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:11:12.508352+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+          "docs/testing/blackjack_draft_risk_notice_20261105.json"
+        ],
+        "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:blackjack-draft-risk-reveal:7e2869cd761742d59e48958dc16edcbb",
+      "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "7e2869cd761742d59e48958dc16edcbb",
+        "key": "owned-native-job:7e2869cd761742d59e48958dc16edcbb:pid:37104",
+        "started_at": "2026-11-05T01:11:12.605349+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:11:17.912389+00:00",
+        "key": "owned-native-job:7e2869cd761742d59e48958dc16edcbb:pid:37104",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:11:17.912389+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:11:17.912389+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "7e2869cd761742d59e48958dc16edcbb",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:11:17.912389+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+          "docs/testing/blackjack_draft_risk_notice_20261105.json"
+        ],
+        "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
       }
     }
   ],

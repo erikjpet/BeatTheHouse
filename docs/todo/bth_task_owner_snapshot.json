@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T01:04:10.676912+00:00",
+  "observed_at": "2026-11-05T01:13:13.122615+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-05T01:04:10.676912+00:00",
-      "source": "Actual task6 parent is actively investigating BTH-BLACKJACK-DRAFT-RISK-NOTICE-001 on fresh branch fix/blackjack-draft-risk-20261105 from public50ae45824d79fdefb13b0c0ce1cd814c9108db37; child registers stable ID before product edits. Local fix/test/commit only; no publication retry, original-profile access or unrelated R11 action."
+      "observed_at": "2026-11-05T01:13:13.122615+00:00",
+      "source": "Actual task6 parent completed local Blackjack draft-notice product/test commit af2609246170978782e1b2b19f83cff544196976; independent review approved, focused native jobs closed. Tracking receipt/reconciliation is actively being finalized; no publication action is authorized or attempted by this local objective."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
