@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T01:25:17.856925+00:00",
+  "updated_at": "2026-11-05T01:57:40.697250+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21346,6 +21346,179 @@
         }
       ],
       "updated_at": "2026-11-05T01:25:17.856925+00:00"
+    },
+    {
+      "id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+      "name": "Record typed currency in new Pull Tabs journal receipts",
+      "aliases": [
+        "OBS-R13-PULLTABS-JOURNAL-CURRENCY-1016"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the distinct R13 Pull Tabs journal-currency omission on newly produced history. Trace current purchase, buy-set, redeem, zero-sort and scan rows as appropriate, and fix typed action-time currency/current-row delta if confirmed. Qualify focused cash and Grand-chip cases plus official Save/fresh-process cold and exactly-once accounting, independent review and an exact tested local commit. Preserve wallets, game rules, RNG, authority/security, tickets, piles, stock and legacy unknown-currency rows. Keep original R13/R11/R12 profiles untouched and item/scenario work paused; do not implement item effects. This task is independent producer coverage and does not close BTH061-PULLTABS-SAVE-001 or related family objectives. Current scope is local investigation/fix/test/commit only.",
+        "source": "Trusted parent local-only delegation2026-11-05 after parent deduplication found no existing Pull Tabs currency ID; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1016.json. Fresh branch fix/pulltabs-journal-currency-20261105 starts from public0e93f761f864a3bb844fabda48efe05f63792a98. Pinned f305 observation is historical; no current NEXT reproduction or publication authorization is inferred.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_reproduce_dedup",
+            "description": "Deduplicate the distinct producer-coverage observation, trace current Pull Tabs purchase, buy-set, redeem, zero-sort and scan receipt paths as appropriate, and reproduce or precisely disposition missing metadata on current source with labeled fixtures.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "producer_accounting_legacy",
+            "description": "New applicable Pull Tabs rows carry typed action-time cash or Grand-chip currency and current-row delta, including relevant zero cases. Preserve wallets, ticket/stock/pile state, prices/rules, RNG, authority/security and intentionally unknown legacy rows; no item effects are implemented.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "cold_custody_exactly_once",
+            "description": "Focused cash and Grand-chip qualification includes official Save and fresh-process cold persistence of relevant new receipts, wallets and full ticket/pile/stock state with exactly-once accounting and no outcome replay or original-profile access.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "review_test_commit",
+            "description": "Pass focused regression checks and independent scoped review, associate an exact tested local implementation commit, and reconcile both task views with source-safe evidence and explicit limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_CURRENT_SOURCE_INVESTIGATION",
+      "owner": {
+        "name": "Fix Back Alley travel / Pull Tabs journal currency",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Current local request covers investigation/fix/test/commit only; no publication or NEXT delivery is authorized or inferred."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1016.json",
+          "summary": "R13 pinned f305: one Bar $1 purchase produces Pull Tabs -1 / Recorded change -1 (currency not recorded). Accounting reconciles100-3fare-1ticket-3natural Machine Jam Wait=93, once only; normal Save/cold custody passed. New producer observation only: no original rollback closure, current-build, winning-cash-in, partial-peel or RNG-equality claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace current Pull Tabs receipt producers and reproduce the omission with labeled cash/Grand-chip fixtures; implement a narrow metadata fix if warranted, qualify official Save/fresh-cold and exactly-once boundaries, obtain independent review and associate an exact tested local commit.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:42:25.433045+00:00",
+        "evidence": [
+          "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1016.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "pulltabs_journal_currency_metadata",
+          "description": "If confirmed, narrowly add typed currency and current-row delta to applicable new receipt producers; preserve financial/gameplay state and rules, RNG, authority/security, tickets/piles/stock, legacy unknown rows, scheduling, fixed 16:9/touch/focus and paused item/scenario effects."
+        }
+      ],
+      "updated_at": "2026-11-05T01:42:25.433045+00:00"
+    },
+    {
+      "id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
+      "name": "Investigate Pull Tabs practice redemption currency routing",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the distinct source-supported Pull Tabs Grand-default practice redemption route: practice environment id practice_pull_tabs may fail existing id-only Grand routing when the redemption result omits archetype, causing a cash credit instead of chips. Reproduce the actual context, fix correct currency routing if confirmed under a separate assignment without double application, qualify wallets/tickets/piles/exactly-once official Save/fresh-cold custody, review and associate a tested commit. Registering the finding and completing the journal metadata task do not establish runtime reproduction or authorize an accounting change in that task. Preserve original profiles, game rules/RNG/authority/security and paused item/scenario work.",
+        "source": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "actual_practice_reproduce",
+            "description": "Reproduce or precisely disposition actual public Grand-default practice redemption with environment id practice_pull_tabs using a new owned context; document exact context and observed wallet route without original-profile access or a fabricated Web claim.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "correct_route_once",
+            "description": "If confirmed and separately assigned, correct the receiving currency route while preserving one normal application, correct cash/Grand-chip wallet selection, payout/security adjustments and existing canonical-environment behavior; do not add duplicate credits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "wallet_custody_cold",
+            "description": "Qualify wallet changes, paid ticket/pile state, exactly-once redemption and relevant official Save/fresh-process cold custody without forcing winnings, replaying outcomes or changing RNG/rules/authority.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "review_test_commit",
+            "description": "Obtain focused regression evidence and independent review, then associate the exact tested implementation commit and reconcile both task views. Finding registration or journal metadata qualification alone does not close this task.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_SOURCE_SUPPORTED_RUNTIME_UNREPRODUCED_NEEDS_OWNER",
+      "owner": {
+        "name": "Unassigned / coordinator follow-up needed",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Finding registration only in this delegation; no implementation, publication or deployed acceptance claimed."
+      },
+      "evidence": [
+        {
+          "kind": "source_review",
+          "reference": "scripts/ui/foundation_action_view_model.gd:456; scripts/ui/foundation_main.gd:6891; scripts/core/game_module.gd:1216; scripts/core/grand_casino_run_facade.gd:101",
+          "summary": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Coordinator assigns an actual follow-up owner, then reproduce the real Grand-default practice context and trace redemption result application before any separate route fix; preserve canonical Grand journal qualification and record runtime evidence separately from this source-supported lead.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:57:40.697250+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T01:57:40.697250+00:00"
     }
   ],
   "batches": [

@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T01:25:17.856925+00:00",
+  "observed_at": "2026-11-05T01:57:40.697250+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-05T01:25:17.856925+00:00",
-      "source": "Actual task6 release follow-through: Blackjack notice fix published, watcher source observed; new stopped-service and current capacity blockers recorded read-only. No machinery or other-owner updates."
+      "observed_at": "2026-11-05T01:57:40.697250+00:00",
+      "source": "Actual task6 parent continues current Pull Tabs journal producer/fresh-cold qualification and local documentation. Adjacent practice-redemption route finding is registered source-only for coordinator follow-up, without claiming an active runtime owner or authorizing accounting changes in the journal fix."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
