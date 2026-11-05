@@ -1,0 +1,202 @@
+{
+  "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+  "recorded_at": "2026-11-05T05:44:51.246331+00:00",
+  "state": "PUBLISHED_MAIN_NEXT_IMPORT_NATIVE_QUALIFICATION_PENDING",
+  "implementation_commit": "838016895d03a16b2ed060185cf6312fe82bc348",
+  "local_qualification": {
+    "state": "complete",
+    "qualification_source_commit": "838016895d03a16b2ed060185cf6312fe82bc348",
+    "checks": 75,
+    "producer": 61,
+    "cold": 14,
+    "references": [
+      "docs/testing/travel_closing_fallback_r11_1067_20261105.md",
+      "docs/testing/travel_closing_fallback_r11_1067_20261105.json"
+    ],
+    "scope": "Historical semantic Host/public map/dispatch and official-cold qualification, with simulated-delta reopening and original-state/Web/native-kernel limits unchanged."
+  },
+  "publication": {
+    "state": "pass",
+    "main_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+    "main_tree": "270e84b6c457e69e83fa589236de997f17513f98",
+    "fix_commit": "838016895d03a16b2ed060185cf6312fe82bc348",
+    "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-main-next-observation.json"
+  },
+  "next_delivery": {
+    "state": "pending",
+    "target_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+    "target_tree": "270e84b6c457e69e83fa589236de997f17513f98",
+    "served_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+    "served_tree": "73464a344151940375b200646481395ec1fb9931",
+    "served_version": "0.6.0-dev+7ac1b6b2df89",
+    "fix_ancestor_of_served": false,
+    "fix_ancestor_check_exit_code": 1,
+    "target_artifact_count": 0,
+    "identity_verified": false,
+    "assets_verified": false,
+    "startup_verified": false,
+    "target_artifact_count_observed_at": "2026-11-05T05:43:15.5460469Z"
+  },
+  "pipeline_observation": {
+    "observed_at": "2026-11-05T05:43:15.5460469Z",
+    "published_fix_main": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+    "watcher": {
+      "automation": "enabled",
+      "phase": "failed",
+      "pid": 22328,
+      "started_at": "2026-11-05T05:39:56Z",
+      "updated_at": "2026-11-05T05:42:05Z",
+      "last_checked_at": "2026-11-05T05:42:05Z",
+      "available_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+      "building_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+      "build_log": null,
+      "deployed_commit": null,
+      "error": "Asset/importer/settings inputs changed; cold-import qualification required"
+    },
+    "served": {
+      "source_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+      "source_tree": "73464a344151940375b200646481395ec1fb9931",
+      "version": "0.6.0-dev+7ac1b6b2df89"
+    },
+    "fix_ancestor_of_served_exit_code": 1,
+    "target_artifact_count": 0,
+    "scope": "Final bounded read-only checkpoint; no target startup/assets or deployment acceptance claimed. Native/import qualification must follow recorded owner and exact newest main; producer qualification only if its transient guard recurs."
+  },
+  "independent_guard_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Independent read-only guard audit approved factual deployment dependency: current5d refuses cold-import qualification before a new attempt/log/import_cache; stale status log/pid/finished fields belong to245. Exactly one of1413 import input rows and one of19 guarded-native rows changed, both coin_pusher_step_kernel.cpp inherited from upstream9b8ef678b95a86ef8bac57d16b383dfb9521c546. Old245 cold request is exact-SHA/single-consumed and not transferable. A new5d cold request alone would next refuse native reuse (source-supported guard forecast, not an executed attempt); maintained pipeline has no automatic full-native fallback. Root performed no request, watcher, pin, guard or native-builder mutation.",
+    "evidence": [
+      "evidence/closing-fallback-main-next-observation.json",
+      "evidence/closing-fallback-release-guard-assessment.json",
+      "C:/Users/theep/Documents/Codex/2026-11-03/task-18/next-9b-route-assessment-r1/assessment.json"
+    ],
+    "current_failure_before_new_attempt": true,
+    "changed_import_rows": 1,
+    "total_import_rows": 1413,
+    "changed_native_guard_rows": 1,
+    "total_native_guard_rows": 19,
+    "inherited_change_commit": "9b8ef678b95a86ef8bac57d16b383dfb9521c546",
+    "prior_request_transferable": false,
+    "cold_request_alone_insufficient": "Source review only: native reuse guard would still reject; no request executed.",
+    "automatic_full_native_fallback": false,
+    "observation_scope": "Dated earlier independent guard assessment; not a claim that its stale245 log or transient installed-producer error is the latest executed failure."
+  },
+  "blocker": {
+    "kind": "pipeline_import_native_qualification",
+    "description": "Final bounded observation 2026-11-05T05:43:15.5460469Z: watcher pid22328/start05:39:56 currently fails cold-import qualification at05:42:05 for5d, with no new5d log and artifact count0; served7ac still lacks838. Transient05:38 installed-producer guard and prior05:32 cold/stale245 native-log attribution remain dated history. Independent guard review records inherited native input change as downstream qualification dependency, not an executed current native build. Existing normal pipeline owners must qualify exact newest main after metadata; qualify installed producer if that guard recurs. No approval/user-input hold, new disk-block claim or task pipeline mutation.",
+    "requires_user_input": false
+  },
+  "next_action": "Existing pipeline/import owner and recorded native owner BTH-PERF-20261104-005 (task18/ref01a1a3e8-562c-7169-a765-f4b4f9ae60cc) qualify changed native/import inputs through the reviewed normal path. Recorded ownership was not queried live or reassigned. Resolve exact NEWEST main after final metadata publication, then verify exact target identity/assets/startup and scoped behavior. If the installed-producer guard recurs, the existing pipeline owner must qualify that installed producer through the reviewed path too. No stale5d/245 request, watcher/producer/native action, manual substitute build, guard/pin change or file clearing by this task.",
+  "limits": [
+    "Final bounded05:43 checkpoint fails cold-import qualification before a new5d build log/artifact. Prior245 native-refusal and05:38 installed-producer transient are separate dated history.",
+    "Inherited guarded native change is outside closing fix; local75 does not qualify native solver/kernel change or a new full target build.",
+    "Disk capacity passed only at dated05:32 observation; no fresh disk measurement or approval hold is inferred.",
+    "No task watcher/request/installed-producer/native mutation, alternate build, guard/pin change, file clearing, original-state access or new test process."
+  ],
+  "guard_assessment": {
+    "reference": "evidence/closing-fallback-release-guard-assessment.json",
+    "sha256": "d35784f1519ea692bba0fb5dba49376185078e57513f3932a3a716fd6971fe42",
+    "scope": "Final independent read-only guard attribution."
+  },
+  "existing_owner_handoff": {
+    "canonical_task_id": "BTH-PERF-20261104-005",
+    "owner_task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+    "task": "task18",
+    "assessment_reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-18/next-9b-route-assessment-r1/assessment.json",
+    "assessment_sha256": "c1b8778f3740f1f8f68591808964ca228ea438b67128b58afb1e92565590a15f",
+    "owner_status": "Recorded ownership only; not queried live or reassigned.",
+    "qualification_target": "Resolve exact newest main after final metadata publication; exact-SHA qualification/request is not transferable from245 or stale5d."
+  },
+  "dated_pipeline_history": [
+    {
+      "recorded_at": "2026-11-05T05:35:19.385851+00:00",
+      "pipeline_observation": {
+        "observed_at": "2026-11-05T05:32:08.6890665Z",
+        "source_fix": "838016895d03a16b2ed060185cf6312fe82bc348",
+        "published_main": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+        "published_tree": "270e84b6c457e69e83fa589236de997f17513f98",
+        "publication": "confirmed push and ls-remote",
+        "watcher": {
+          "automation": "enabled",
+          "phase": "failed",
+          "pid": 39200,
+          "started_at": "2026-11-05T04:25:00Z",
+          "updated_at": "2026-11-05T05:31:50Z",
+          "last_checked_at": "2026-11-05T05:31:50Z",
+          "available_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+          "building_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+          "build_log": "state\\bth-next\\logs\\245ca4f6f483043a4a3b9ec394b1d76f3ba2af43-1793856416062486800.log",
+          "deployed_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+          "error": "Asset/importer/settings inputs changed; cold-import qualification required"
+        },
+        "served": {
+          "source_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+          "source_tree": "73464a344151940375b200646481395ec1fb9931",
+          "version": "0.6.0-dev+7ac1b6b2df89",
+          "archive_sha256": "9e8ce400b7110bcc8066a9814776d002007f61214c5108c0bed2835f5bd7e661"
+        },
+        "fix_ancestor_of_served_exit_code": 1,
+        "target_artifact_count": 0,
+        "current_disk_free_bytes": 14194671616,
+        "required_disk_bytes": 13958643712,
+        "guarded_native_baseline": "b46fabb2853c312b67399606f59804eaefa62d47",
+        "guarded_input_changes": [
+          "native/coin_pusher/src/coin_pusher_step_kernel.cpp"
+        ],
+        "prior_245_build_error": "Guarded native, addon, engine/template or unchanged exporter inputs changed; native reuse refused.",
+        "attribution": "Current5d failed cold-import qualification before a new build log; status retains prior245 log. Native-refusal log belongs to245. Changed guarded native input is inherited from upstream, not closing fix.",
+        "task_actions": "Read-only pipeline observation. No request file, watcher mutation, alternate build, guard/pin change, file clearing or original state access."
+      },
+      "blocker": {
+        "kind": "pipeline_import_native_qualification",
+        "description": "Actual deployment dependency at 2026-11-05T05:32:08.6890665Z: target5d cold-import qualification failed before a new target build log/artifact. The status build_log is stale prior245; its NativeReuseRefused belongs to245. Independent guard review confirms inherited upstream coin_pusher_step_kernel.cpp differs from native reuse baseline, so import/native qualification is needed in the normal pipeline. D capacity passes; no current disk or user-approval blocker. Exact fix is absent from served7ac and target artifact count is0. Final guard/recorded-owner assessments are linked. Any qualification must resolve exact newest main after final metadata publication; no stale5d request.",
+        "requires_user_input": false
+      },
+      "next_action": "Recorded native owner BTH-PERF-20261104-005 (task18/ref01a1a3e8-562c-7169-a765-f4b4f9ae60cc) is the existing handoff for native qualification; owner activity was not queried or reassigned. Qualify the exact newest main after final metadata publication through the reviewed normal import/native pipeline, then verify that target identity/assets/startup and scoped behavior. Resolve that exact SHA at handoff; no stale5d/245 request, watcher mutation, manual substitute build, guard/pin change or file clearing."
+    },
+    {
+      "classification": "Transient installed-producer qualification guard",
+      "reference": "evidence/closing-fallback-release-final-observation.json",
+      "pipeline_observation": {
+        "observed_at": "2026-11-05T05:38:53.9265303Z",
+        "published_main": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+        "watcher": {
+          "automation": "enabled",
+          "phase": "failed",
+          "pid": 15544,
+          "started_at": "2026-11-05T05:37:52Z",
+          "updated_at": "2026-11-05T05:37:58Z",
+          "last_checked_at": "2026-11-05T05:37:52Z",
+          "available_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+          "building_commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+          "deployed_commit": null,
+          "error": "Installed producer code changed since qualification"
+        },
+        "served": {
+          "source_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+          "source_tree": "73464a344151940375b200646481395ec1fb9931",
+          "version": "0.6.0-dev+7ac1b6b2df89"
+        },
+        "stop_request_exists": true,
+        "stop_request_modified_utc": "2026-11-05T05:38:44.2277976Z",
+        "observation_scope": "Read-only final checkpoint. Watcher control changes occurred externally; task did not start/stop/restart it or clear files. Required source qualification remains missing; no target delivery claimed."
+      },
+      "blocker": {
+        "kind": "pipeline_installed_producer_qualification",
+        "description": "Latest observation 2026-11-05T05:38:53.9265303Z: externally restarted watcher pid15544/start05:37:52 sees5d but first refuses Installed producer code changed since qualification. Served7ac still lacks838; stop request exists, with no root mutation. Earlier05:32 cold-import refusal/stale245 native log and05:35 independent inherited-native guard assessment remain dated downstream evidence, not the current executed error. Qualify changed installed producer first, then exact newest-main native/import inputs through reviewed normal pipeline; no approval/user-input hold. No new disk measurement in this latest checkpoint;05:32 capacity passed.",
+        "requires_user_input": false
+      },
+      "next_action": "Existing pipeline owner first qualifies the changed INSTALLED producer through the reviewed normal path; recorded native owner BTH-PERF-20261104-005 (task18/ref01a1a3e8-562c-7169-a765-f4b4f9ae60cc) remains the native-qualification handoff, with ownership not queried live or reassigned. Resolve exact NEWEST main after final metadata publication, then qualify its native/import inputs and verify exact target identity/assets/startup plus scoped behavior. No stale5d/245 request, watcher/producer/native mutation, manual substitute build, guard/pin change or file clearing by this task."
+    },
+    {
+      "observed_at": "2026-11-05T05:40:04Z",
+      "source": "Trusted parent read-only observation",
+      "error": "Asset/importer/settings inputs changed; cold-import qualification required",
+      "served_commit": "7ac1b6b2df897c83e24464a3954ffa30416564d6",
+      "note": "Return to cold-import guard after transient producer error; no task pipeline action."
+    }
+  ],
+  "latest_observation_reference": "evidence/closing-fallback-release-bounded-checkpoint.json",
+  "primary_current_error": "Asset/importer/settings inputs changed; cold-import qualification required"
+}

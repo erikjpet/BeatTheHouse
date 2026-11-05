@@ -1,0 +1,217 @@
+{
+  "task_id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+  "recorded_at": "2026-11-05T05:21:46.067608+00:00",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+  "implementation_commit": "838016895d03a16b2ed060185cf6312fe82bc348",
+  "qualification_source_commit": "838016895d03a16b2ed060185cf6312fe82bc348",
+  "base_commit": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+  "scope": "Narrow travel-view-model fix retains the already selected eligible forced-closing fallback in public target choices and keeps actual map/choice data consistent. Qualification exercises semantic Host/public-map/dispatch behavior, not full pixel rendering or pointer hit-testing. Ordinary routes and arrival/payment authority remain intact; no world-map, scenario, item, kernel or original-state change.",
+  "source_sha256": {
+    "travel_view_model": {
+      "path": "scripts/ui/foundation_travel_view_model.gd",
+      "sha256": "41214108bb1decd3fc1e1b77e13e62e9cfcdcb064ef63ba98502b92712959ae7"
+    },
+    "test": {
+      "path": "scripts/tests/travel_closing_fallback_public_check.gd",
+      "sha256": "badf3b41c280f84d844afdfd22443082c858e7b0e40f581e8ef7f3f9d27afa06"
+    },
+    "world_map": {
+      "path": "scripts/core/world_map.gd",
+      "sha256": "d7c435bd44a9c44c250154c603b21b2a64ac8fa28764f649055e987abb6d113d"
+    }
+  },
+  "original_observation": {
+    "reference": "qa-r11-closing-fallback-1067-finding.json",
+    "sha256": "d8b28e8c38c104657e6215de9d8a83cf2f2cd4615ad8866e083c92b9dc9bf08f",
+    "tested_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "summary": "Historical settled final Lounge hand preserves cash11/Heat2 and once-only two-pair payout. Public departure shows fare15/unavailable routes and visited always-open Alley excluded. No disabled Travel attempt or indefinite-hard-softlock claim."
+  },
+  "pre_fix_source_equivalence": {
+    "path": "scripts/ui/foundation_travel_view_model.gd",
+    "commits": [
+      "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+      "45af92d9c8e663094cd322165aeafbe2a046da1f"
+    ],
+    "git_lf_normalized_sha256": "6a80ebdc663dba4e710fac792df23a892de4fbfbdbacfdecd3c74f94be61ea38",
+    "physical_pre_fix_sha256": "0c43d366bba1b37e8a0800acc36f3adddad5a6166c364f97ef593e617393ef2f",
+    "scope": "Parent/loan reviewer full-file Git LF-normalized pre-fix equivalence and public screenshot review; physical CRLF checkout hashing is recorded separately, not treated as unequal source or a fresh Web/original-state reproduction."
+  },
+  "reproduction": {
+    "summary": "Faithful owned current normal Host reproduction settles a natural Video Poker hand at posted stake6/gross2/net-4, cash12to8, then authentic forced-closing dialogue opens the real map. Derived house fallback is outside the ordinary capped3/public3 before the fix. This is not the historical R11 minimum1/two-pair outcome or original resident state. Generated reproduction33 has one real missing-fallback failure plus one incorrect test quote assumption1 versus actual6.",
+    "original_state_access": false,
+    "manual_free_route_injected": false
+  },
+  "diagnostics": [
+    {
+      "label": "closing-fallback-baseline",
+      "classification": "Test-only parse diagnostic; no result/ assertions",
+      "summary": "Initial parser minutes Variant at line139 corrected to explicit int before any product patch; original Job/log retained."
+    },
+    {
+      "label": "closing-fallback-repro",
+      "checks": 26,
+      "failures": 2,
+      "classification": "Fixture miss, not accepted product-path reproduction",
+      "summary": "Only Alley was visited, so this setup did not exercise the capped independently chosen fallback path; preserved unchanged."
+    },
+    {
+      "label": "closing-fallback-repro-generated",
+      "checks": 33,
+      "failures": 2,
+      "classification": "One confirmed product failure plus one test quote-assumption error",
+      "summary": "Real public Host missing fallback accepted independently; separate expected stake1 was wrong because the posted natural hand stake is6. All artifacts retained; final test asserts actual posted stake."
+    },
+    {
+      "classification": "Unchanged environmental/room warnings retained",
+      "summary": "Real generated baseline and fixed producer each retain108 existing room warnings across17 types; cold0. Known root certificate-store diagnostic remains. Qualified jobs have no Script Errors; initial parse diagnostic remains separately recorded."
+    }
+  ],
+  "waiting_assessment": {
+    "actual_R11_recovery_tested": false,
+    "source_findings": "Map overlay pauses clock; closed-room foreground clock advances1.5 game minutes per second; reopening13:00 clears closing state.",
+    "summary": "Owned semantic reconstruction keeps map-overlay time frozen. Unpaused room frame-clock processing exercised with simulated delta advances05:30to13:00 and reopening clears forced state/stale override. Source supports1.5 game minutes/second in foreground. This is not an elapsed-real-time wait or12:59 test, and actual R11 recovery remains untested; the evidence supports a bounded public-departure obstruction rather than a demonstrated indefinite hard softlock.",
+    "reconstructed_native_test": "Producer semantic reconstruction holds map time frozen, then uses simulated delta through normal unpaused room frame-clock processing from05:30to13:00, clearing forced state and stale override. Wallets/history/RNG unchanged across this reopening assessment; actual R11 recovery not run."
+  },
+  "qualification": {
+    "checks": 75,
+    "summary": "Producer61 plus official fresh-cold14 pass. Semantic Host closing acknowledgement exposes selected house outside ordinary3 as public4, enabled Walk0 quoted110minutes, and normal public Travel/arrival succeeds without replaying settlement. Open/grace/stale/duplicate boundaries and strict populated paid-cache/history checks remain intact. Two official slots cover closed and arrived states with strict full protected-state comparison. Ordinary/hidden visibility, locked and unvisited negative eligibility classes are source-review scope only.",
+    "jobs": [
+      {
+        "label": "closing-fallback-baseline",
+        "checks": 0,
+        "qualification": false,
+        "result": null,
+        "diagnostic": "Test-only parse diagnostic before any product patch: line139 minutes inferred Variant; corrected to explicit int. No result JSON or assertions were produced. Original Job/log are retained; real baseline uses distinct closing-fallback-repro label.",
+        "expected_nonce": "1f838dc0794542f9b6777876c2d8db2d",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-baseline.json",
+        "result_available": false,
+        "failures": [],
+        "artifact_sha256": {
+          "job": "46dfe6df80fc18e8435f73157bc347783eb9e6ac9a5268ff34ac77584e5accec",
+          "log": "66a8526ecc8e1f49602c3ce4d01c6385eb03f2a9f78535f0977cfd77fd37e665"
+        },
+        "nonce": "1f838dc0794542f9b6777876c2d8db2d",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "closing-fallback-repro",
+        "checks": 26,
+        "qualification": false,
+        "result": "closing-fallback-repro-result.json",
+        "expected_nonce": "b4783539dd3245ee9746a073e5e21985",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro.json",
+        "result_available": true,
+        "failures": [
+          "four generated candidates did not offer Video Poker and an excluded eligible visited fallback",
+          "bounded requested phase completes"
+        ],
+        "artifact_sha256": {
+          "job": "b90efd14c8f6d24cef60fab54bb03acbaa77aeb3be7368e9606b52b2a515eb7e",
+          "result": "0e30eea528f5977824877f4f7cf07b446d2d349c7544becef592620480415b77",
+          "log": "e3a3f9cdec2116c56090aac5644aee073df9e5d0423ff4602dd8a48f1f3b0e0e"
+        },
+        "nonce": "b4783539dd3245ee9746a073e5e21985",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "closing-fallback-repro-generated",
+        "checks": 33,
+        "qualification": false,
+        "result": "closing-fallback-repro-generated-result.json",
+        "expected_nonce": "d802d540474c44a9bd28db5bec85bfb0",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-repro-generated.json",
+        "result_available": true,
+        "failures": [
+          "ordinary cabinet quotes one-unit minimum before payment",
+          "forced closing retains selected fallback in executable public map choices despite ordinary cap"
+        ],
+        "artifact_sha256": {
+          "job": "7218829d8a5750ea871cfb68386f564139c27dd00e781e619faad0cdfd5aba69",
+          "result": "aaa14859c183d6848dcf94b27dcf0c7d5443793dcd8f57302971c0bee45a6681",
+          "log": "745385bc2b73bc8f7fe4da51f2413b69c00721513df54a2b4f0f08cb44e88159"
+        },
+        "nonce": "d802d540474c44a9bd28db5bec85bfb0",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "closing-fallback-producer",
+        "checks": 61,
+        "qualification": true,
+        "result": "closing-fallback-producer-result.json",
+        "expected_nonce": "9809c8d9df2b4df0b2c162b00b1ad09f",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-producer.json",
+        "result_available": true,
+        "failures": [],
+        "artifact_sha256": {
+          "job": "e7be23f53e7b6a7c097386c15225bea3892a298154c5d585f80197baa9f6fbf8",
+          "result": "3d372d4e38bc1003de6bee764ca6f5c490fece31bae6182f2016535a18d16bcc",
+          "log": "10d620eaa71e6c27c6c1265fdc9a11c82447a784b642225d4654adfbd20a7fd5"
+        },
+        "nonce": "9809c8d9df2b4df0b2c162b00b1ad09f",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "closing-fallback-cold",
+        "checks": 14,
+        "qualification": true,
+        "result": "closing-fallback-cold-result.json",
+        "expected_nonce": "73855bdfaa064fe59b3ecbec1672a4f6",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\closing-fallback-cold.json",
+        "result_available": true,
+        "failures": [],
+        "artifact_sha256": {
+          "job": "80618cc837262dd1522e6e442b6702aeb55ae1d3019d99f514a3993ba9f75fe2",
+          "result": "6c1f0ab1cb903090e75509d8664d20105a0db29707259006afff28ba2661b298",
+          "log": "ea27304a00484e0c8dbeb0ab71d38b973c16148b03e58392fabbb9283b214050"
+        },
+        "nonce": "73855bdfaa064fe59b3ecbec1672a4f6",
+        "exit_code": 0,
+        "active_at_release": 0
+      }
+    ]
+  },
+  "acceptance_scope": {
+    "covered": [
+      "Authentic owned current semantic Host action/closing-dialogue/map/public-choice/dispatch with natural stake6/gross2/net-4cash12to8, distinct from original R11 minimum1/two-pair outcome",
+      "Selected eligible house fallback outside ordinary capped3 retained as public4 with executable Walk0/110minute quote and normal Host travel",
+      "Strict populated paid-cache/history and duplicate boundaries, plus two official Save/fresh-process cold states",
+      "Map clock pause and normal room-clock reopening assessed with simulated delta05:30to13:00",
+      "Visibility/locked/unvisited negative eligibility classes under source review only"
+    ],
+    "excluded": [
+      "Original R11 resident-state recovery",
+      "Indefinite hard-softlock claim",
+      "Fresh Web or deployed changed behavior",
+      "Paused scenario/item implementation, file clearing or original profile changes",
+      "Native coin-pusher kernel/physics or rebuild claims"
+    ]
+  },
+  "independent_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Independent final approval of75 qualified checks (producer61 plus cold14), exact frozen view-model/test/world-map hashes, five actual owned-zero Job closures, faithful semantic Host reproduction, strict paid-cache/cold guards and bounded waiting/source-review limits. Both broader objectives remain Open."
+  },
+  "related_objectives": {
+    "BTH061-007": "Remains Open and unchanged; this completed distinct case does not close the broader objective.",
+    "BTH061-AUDIT-INTERRUPT-BASELINE-004": "Remains Open and unchanged; this completed distinct case does not close the broader objective."
+  },
+  "limits": [
+    "Historical R11 outcome, public screenshots and full-file Git-LF source equivalence are distinct from owned current reconstruction; no original R11 resident state, profile, actual waiting recovery or Web/deployed acceptance.",
+    "Semantic Host/map/dispatch qualification is not full pixel-rendering or pointer hit-testing coverage.",
+    "Reopening uses simulated delta through normal unpaused room clock05:30to13:00, not a12:59 or elapsed-real-time recovery test; map pause is separately observed.",
+    "No original-state access, file clearing, save edit, replay, refund, authority bypass or paused scenario/item implementation.",
+    "No native solver/kernel behavior or new-build qualification; backend call count was not measured.",
+    "Local investigation/fix/test/commit only; no publication or NEXT claim."
+  ],
+  "deployment": {
+    "required": false,
+    "state": "not_applicable",
+    "commit": null,
+    "evidence": [],
+    "scope": "Current request covers local investigation/fix/test/commit only; no publication or NEXT delivery claimed."
+  }
+}

@@ -41,6 +41,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 	var enriched = snapshot.duplicate(true)
 	var current_id = host.run_state.current_world_node_id()
 	var target_ids = host._travel_target_ids()
+	var closing_walk_target_id = host._closing_time_walk_fallback_target_id()
 	var travel_enabled_ids: Array = []
 	var travel_disabled_ids: Array = []
 	var travel_paths: Array = []
@@ -78,20 +79,32 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 		var status = host.run_state.travel_route_status(route) if not route.is_empty() else {}
 		var route_hidden = bool(status.get("hidden", false))
 		var route_locked = bool(status.get("locked", false))
+		var closing_walk_choice: Dictionary = {}
+		if is_target and not is_current and not route_hidden and not route_locked and node_id == closing_walk_target_id:
+			var choice: Dictionary = host._travel_choice(node_id, target_ids)
+			if bool(choice.get("force_walk_fallback", false)):
+				closing_walk_choice = choice
+				route = JsonCoerceScript._copy_dict(choice.get("route", {}))
 		var enabled = is_target and not is_current and not route.is_empty() and not route_hidden and bool(status.get("available", true))
 		var visible_travel_target = is_target and not is_current and not route_hidden
 		var open_status_text = ""
 		var open_now = true
 		var closing_soon = false
 		if visible_travel_target:
-			var node_archetype = host._environment_archetype(node_id)
-			var arrival_minute = host._arrival_minute_for_route(route, false)
-			var open_status = host._environment_open_status_at(node_archetype, arrival_minute)
-			open_status_text = host.TutorialFlowScript.environment_status_text(host.run_state, node_archetype, arrival_minute)
-			open_now = bool(open_status.get("open", true))
-			closing_soon = bool(open_status.get("closing_soon", false))
-			if not open_now and not bool(status.get("venue_hours_override", false)):
-				enabled = false
+			if not closing_walk_choice.is_empty():
+				open_status_text = str(closing_walk_choice.get("open_status_text", ""))
+				open_now = bool(closing_walk_choice.get("open_now", true))
+				closing_soon = bool(closing_walk_choice.get("closing_soon", false))
+				enabled = bool(closing_walk_choice.get("enabled", false))
+			else:
+				var node_archetype = host._environment_archetype(node_id)
+				var arrival_minute = host._arrival_minute_for_route(route, false)
+				var open_status = host._environment_open_status_at(node_archetype, arrival_minute)
+				open_status_text = host.TutorialFlowScript.environment_status_text(host.run_state, node_archetype, arrival_minute)
+				open_now = bool(open_status.get("open", true))
+				closing_soon = bool(open_status.get("closing_soon", false))
+				if not open_now and not bool(status.get("venue_hours_override", false)):
+					enabled = false
 		if not host._world_map_node_should_render(node, is_current, visible_travel_target and not route_locked) and node_id != sweep_marker_node_id and not courier_targets_by_id.has(node_id):
 			continue
 		node["current"] = is_current
@@ -125,7 +138,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			node["travel_method"] = host._world_map_travel_method({"route": route, "distance": str(status.get("distance", route.get("distance", "near")))})
 			node["distance"] = str(status.get("distance", route.get("distance", "")))
 			node["distance_blocks"] = int(route.get("distance_blocks", 0))
-			node["cost"] = int(status.get("cost", route.get("cost", 0)))
+			node["cost"] = int(closing_walk_choice.get("cost", status.get("cost", route.get("cost", 0))))
 			node["risk"] = str(status.get("risk", route.get("risk", "")))
 			node["risk_decay"] = int(status.get("risk_decay", route.get("risk_decay", 0)))
 			node["risk_event"] = JsonCoerceScript._copy_dict(status.get("risk_event", {}))
@@ -470,6 +483,10 @@ static func travel_target_ids(host: Variant) -> Array:
 			result.append(local_target_id)
 	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
 	result = _retain_delivery_next_hops(host, result, total_target_limit)
+	# The closing exit can be outside the ordinary presentation cap.
+	var closing_walk_target_id = host._closing_time_walk_fallback_target_id()
+	if not closing_walk_target_id.is_empty() and not result.has(closing_walk_target_id):
+		result.append(closing_walk_target_id)
 	result = _remove_hidden_world_targets(host, result)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
