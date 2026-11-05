@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T10:19:32.961862+00:00",
+  "updated_at": "2026-11-05T10:24:34.531135+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13714,6 +13714,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_014.md"
           ]
+        },
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
         }
       ],
       "deployment": {
@@ -13832,7 +13839,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20657,6 +20664,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_014.md"
           ]
+        },
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
         }
       ],
       "deployment": {
@@ -20786,7 +20800,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23193,6 +23207,13 @@
             "docs/testing/deprecated_code_audit_continuation_013.md",
             "docs/testing/deprecated_code_audit_continuation_013.json"
           ]
+        },
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
         }
       ],
       "deployment": {
@@ -23232,7 +23253,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23281,7 +23302,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -23314,7 +23343,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     },
     {
       "id": "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014",
@@ -23378,6 +23407,13 @@
             "tools/audit_temporary_source_owner.py",
             "tools/tests/test_audit_temporary_source_owner.py"
           ]
+        },
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
         }
       ],
       "deployment": {
@@ -23412,7 +23448,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     },
     {
       "id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
@@ -23460,7 +23496,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6e193c6779da47a708f032405dd040a71d79c773",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -23498,7 +23542,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:19:32.961862+00:00"
+      "updated_at": "2026-11-05T10:24:34.531135+00:00"
     }
   ],
   "batches": [
