@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T08:46:36.778153+00:00",
+  "observed_at": "2026-11-05T10:19:32.961862+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T08:46:36.778153+00:00",
-      "source": "Actual phase013 root publication/evidence checkpoint: tested source3c0fd716 committed;662canonical/sequence/layer/storage/liveness pass; full currentSystems300.255stillfail; rejectedprojection unchanged. All16ownedJobs0, no other runtime re-observed. Main publication being finalized; cold-import/NEXTqualificationseparatelyowned; no cleanup/pausedfeature changes."
+      "observed_at": "2026-11-05T10:19:32.961862+00:00",
+      "source": "Actual root checkpoint: helper5e9 qualified,7known ownedJobs closed0 incl additional94check key-cost baseline. All production .gd unchanged; canonicalmaterialpath and typedmemo qualification still active. Aggregate/audit/NEXT remain Open, pausedfeatures preserved, no cleanup."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

@@ -1,0 +1,538 @@
+{
+  "schema": "bth.audit_continuation_014/v1",
+  "draft_status": "ROOT_REVIEWED_CHECKPOINT",
+  "generated_utc": "2026-11-05T10:08:13.146428+00:00",
+  "parent_task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+  "cutoff": "The primary native_job_census contains five historical phase014 receipts. Separate post-cutoff fields retain the later private material-path prototype and original-source key-cost baseline; they do not change the primary attribution population.",
+  "source_snapshot": {
+    "observed_head": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+    "committed_helper": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+    "prior_game_source_epoch": "86213665dd66ac25ed32d3ed459e021630d4e128",
+    "only_adopted_source_change": "Exact owner utility and its tests; no game .gd change",
+    "current_hashes": {
+      "scripts/core/scenario_sequence_schema.gd": "780b974bd5c870839fb3620e501e18d528c93c446806ba04136028bfb9187a7c",
+      "scripts/core/run_state.gd": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+      "scripts/core/run_generator.gd": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd",
+      "scripts/core/scenario_engine.gd": "d4b8b8d98d44929270770a00a5072af0877c57efc016c3d69203f1c09fdac378",
+      "tools/audit_temporary_source_owner.py": "cfe62ffaaf1c7ddb1deae75bc0122e6dcb195003074b60cd9d190008b4a746ce",
+      "tools/tests/test_audit_temporary_source_owner.py": "8f0021eedd6f969a7fd13897b793b44ae3177613f5496e135bbdbf72c121503b"
+    },
+    "current_qualified_pins": {
+      "files_verified": 1243,
+      "mismatches": [],
+      "difference_from_862": "Only adopted owner/test exact2tool delta; actual RunState/Generator fully original"
+    },
+    "no_canonical_schema_candidate_applied": true
+  },
+  "task_dispositions": {
+    "BTH061-AUDIT-001": {
+      "observed_state": "open",
+      "observed_status": "CLEANUP_STOPPED_MEASURED_CATALOG_BUG_INVESTIGATION_ACTIVE",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "pending"
+    },
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006": {
+      "observed_state": "open",
+      "observed_status": "REMAINING_SCHEMA_AND_PERSISTENCE_ATTRIBUTION_ACTIVE_014",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "not_applicable"
+    },
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013": {
+      "observed_state": "open",
+      "observed_status": "REJECTED_PROTOTYPE_PRESERVED_FINER_STORAGE_ATTRIBUTION_ACTIVE_014",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "pending"
+    },
+    "BTH061-AUDIT-LAYER-DEFINITION-013": {
+      "observed_state": "open",
+      "observed_status": "SCOPED_SOURCE_COMMITTED_FOCUSED_PASS_NEXT_OPEN",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "pending"
+    },
+    "BTH061-AUDIT-SCHEMA-VALIDATION-014": {
+      "observed_state": "open",
+      "observed_status": "FINER_ATTRIBUTION_AND_EXACT_INPUT_SAFETY_REVIEW_ACTIVE",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "pending"
+    },
+    "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014": {
+      "observed_state": "open",
+      "observed_status": "PRIVATE_40_FAULT_TESTS_PASS_ACTUAL_180_PILOT_PENDING",
+      "proposed_checkpoint_disposition": "eligible_for_scoped_complete_after_root_metadata_reconciliation",
+      "deployment_state": "not_applicable",
+      "integrated_checkpoint_state": "complete_with_5e9e06bd_and_required_fault_native_evidence"
+    },
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014": {
+      "observed_state": "open",
+      "observed_status": "CANONICAL_COUNTEREXAMPLES_REPRODUCED_NARROW_REPAIR_REVIEW_ACTIVE",
+      "proposed_checkpoint_disposition": "open",
+      "deployment_state": "pending"
+    }
+  },
+  "native_job_census": {
+    "count": 5,
+    "all_five_finished_active_zero": true,
+    "exit_zero_count": 4,
+    "preserved_parse_failure_count": 1,
+    "jobs": [
+      {
+        "name": "schema014-counterexamples-r1",
+        "receipt": "evidence/schema014-counterexamples-r1/job.json",
+        "receipt_sha256": "8fcff136a44cda0130463ff1ddf8163874ed1463e6acb37bb870cd3006ba73c2",
+        "deadline_seconds": 180,
+        "exit": null,
+        "timed_out": false,
+        "script_error": true,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "finished_utc": 1793871298.4528365,
+        "errors": [
+          "nonzero exit, timeout or script error"
+        ],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "name": "schema014-counterexamples-r2",
+        "receipt": "evidence/schema014-counterexamples-r2/job.json",
+        "receipt_sha256": "ea9babba9949ecd2134fc08ae61ab6d519cc2661c0b4b37aee5b1470433e3742",
+        "deadline_seconds": 180,
+        "exit": 0,
+        "timed_out": false,
+        "script_error": false,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "finished_utc": 1793871446.7100637,
+        "errors": [],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "name": "catalog014-schema-observer-r1",
+        "receipt": "evidence/catalog014-schema-observer-r1/job.json",
+        "receipt_sha256": "cd1aa660b8d990733eaf3e06a33107e388136f81cc4ba5eb7889349e5aaa4010",
+        "deadline_seconds": 180,
+        "exit": 0,
+        "timed_out": false,
+        "script_error": false,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "finished_utc": 1793871656.279586,
+        "errors": [],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "name": "storage014-baseline-r1",
+        "receipt": "evidence/storage014-baseline-r1/job.json",
+        "receipt_sha256": "cc6a45525cdfa96e494174c6531f4a282ed87a5225c63b469ca7cb76e38875c3",
+        "deadline_seconds": 180,
+        "exit": 0,
+        "timed_out": false,
+        "script_error": false,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "finished_utc": 1793872209.3911932,
+        "errors": [],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "name": "storage014-profile-r1",
+        "receipt": "evidence/storage014-profile-r1/job.json",
+        "receipt_sha256": "3655df02a2b1f554a7b59f237f0861e99b2100346063c0f861e30609b7d424fb",
+        "deadline_seconds": 180,
+        "exit": 0,
+        "timed_out": false,
+        "script_error": false,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "finished_utc": 1793872399.3884797,
+        "errors": [],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      }
+    ],
+    "not_a_full_current_runtime_snapshot": true
+  },
+  "resource_and_acceptance_guards": {
+    "focused_standalone_seconds": 180,
+    "cpu_percent": 12,
+    "memory_bytes": 2147483648,
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "maintained_systems": {
+      "shards": 4,
+      "registered_ids": 55,
+      "hidden_profiles": 220,
+      "aggregate_seconds": 300,
+      "nominal_baseline_arithmetic_seconds": 43.7115,
+      "actual_canonical_suite_comparator_seconds": 43.712,
+      "outer_supervisor_seconds": 330,
+      "fresh_full_stage_run_this_checkpoint": false
+    },
+    "original_whole_content_diagnostic_seconds": 180,
+    "whole_content_and_systems_acceptance": "OPEN; no newly observed full pass"
+  },
+  "schema_attribution": {
+    "status": "PASS_BOUNDED_DIAGNOSTIC",
+    "check_count": 831,
+    "records": 55,
+    "schema_calls": 165,
+    "trace_events": 1595,
+    "begin_events": 220,
+    "statement_events": 1155,
+    "end_events": 220,
+    "open_frames": 0,
+    "outer_observed_frame_usec": 6727572,
+    "aftermath_sibling_usec": 5070155,
+    "aftermath_fraction_percent": 75.36,
+    "calculated_signature_sibling_usec": 662007,
+    "phase_graph_sibling_usec": 325438,
+    "no_executable_strings_sibling_usec": 153427,
+    "shape_bounds_sibling_usec": 144392,
+    "memo_key_sibling_usec": 107854,
+    "nested_not_additive": {
+      "signature_normalized_prefix_usec": 453750,
+      "memo_registry_identity_usec": 14784,
+      "memo_registered_handlers_and_copies_usec": 8007,
+      "memo_registered_operations_and_copies_usec": 972,
+      "memo_authority_projection_usec": 2065,
+      "memo_definition_shallow_prepare_usec": 234
+    },
+    "complete_ordered_errors_equal_all_three_receivers": true,
+    "errors_total_per_receiver": 809,
+    "error_append_owners": {
+      "declared_targets": 749,
+      "cross_references": 6,
+      "aftermath": 54
+    },
+    "memo_per_receiver_delta": {
+      "full_runs": 55,
+      "hits": 0,
+      "entries": 0,
+      "order_entries": 0,
+      "evictions": 0
+    },
+    "result_sha256": "a320d20f5241c3dd389c9fef2e8baa1e5e1132e244348041829bfe2b4121eccd",
+    "raw_log_sha256": "48c96dc6191d5b7f3100e8daa9129dfbb43795188ff46cce6d4d3e3cdb838c27",
+    "scope": "All55 original-order unbound definitions with default empty inventory, copied Schema independent identities/memo pools, same canonical Registry. Nested values contain observer overhead and must not be added to parents. No cold-cache/current-System-dominance, production acceptance or speedup claim."
+  },
+  "memo_type_safety": {
+    "task": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+    "state": "open",
+    "diagnostic_checks": 39,
+    "diagnostic_failures": 0,
+    "meaning_of_exit_zero": "Expected existing canonical counterexamples reproduced; not correctness acceptance",
+    "existing_false_accepts": [
+      {
+        "case": "StringName transition message",
+        "variant_type": 21
+      },
+      {
+        "case": "PackedStringArray mechanic tags",
+        "variant_type": 34
+      }
+    ],
+    "mechanism": "Valid fixture warm-up yields the same existing JSON key; warm alternative returns[] on memo hit although a cold unchanged-source run rejects its unsupported Variant type. Typed Array[String] is a valid control. No failure-cache or production memo repair applied.",
+    "preserved_r1_failure": "Typed preload resource_path observations failed GDScript parsing before tests; additive r2 observation correction is separately retained, r1 receipt/log not overwritten."
+  },
+  "source_owner_deadline": {
+    "task": "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014",
+    "commit": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+    "fault_tests": 40,
+    "original_fault_methods_retained": 36,
+    "new_fault_methods": 4,
+    "accepted_limits": "guards-family exact built-in int180 or330; reject bool,float and out-of-set values",
+    "source_allowlists_unchanged": true,
+    "runner_resource_lifecycle_and_restoration_unchanged": true,
+    "actual_storage_pilot_owner_exit": 0,
+    "actual_closure_active_at_release": 0,
+    "actual_guard_qualification": true,
+    "actual_restoration_complete": true,
+    "restored_original_receivers": [
+      "scripts/core/run_state.gd",
+      "scripts/core/run_generator.gd"
+    ],
+    "current1243_expected_source_pins_exact": true,
+    "bounded_completion_evidence_present": true,
+    "metadata_action": "Root may reconcile this scoped helper to Complete using the commit plus unit and actual native/restoration receipts. This draft does not edit/finalize either ledger."
+  },
+  "storage_attribution": {
+    "qualified_bounded_fixture": true,
+    "complete_semantic_off_on_and_cross_source_equality": true,
+    "baseline_sidecars": 101,
+    "profile_sidecars": 100,
+    "common_sidecars_byte_equal": 100,
+    "counts": {
+      "baseline_report_checks": 612,
+      "baseline_final_marker_checks": 616,
+      "profile_report_checks": 609,
+      "profile_final_marker_checks": 613,
+      "explanation": "Baseline mint2+export4 checks=6; profile restore3 checks=3; difference-3. Each final report installation adds4 checks after report serialization."
+    },
+    "checkpoint_sha256": "58ca2024e4054c686b78269caf30a5eb31b81b3288033948b9fa0b4209ccf9d7",
+    "known_private_companion_sha256": "f111b50e03f00eeb38ea7e89527fc9e4d25455b7ef5ccffbcf639216fdcb1ad6",
+    "events": 1157,
+    "selected_projection_calls": 16,
+    "contexts": 8,
+    "selected_projection_inclusive_total_usec": 984110,
+    "direct_true_false_usec": 111659,
+    "direct_true_false_sibling_components_usec": {
+      "copy_filter": 3648,
+      "game_filter": 241,
+      "refresh": 14773,
+      "semantic_strip": 6360,
+      "active_binding": 5900,
+      "runtime_canonicalize": 80280
+    },
+    "direct_runtime_included_opaque_layout_usec": 73358,
+    "layer_world_store_usec": 117590,
+    "layer_runtime_canonicalize_usec": 84729,
+    "layer_runtime_included_opaque_layout_usec": 76531,
+    "world_entry_projection_usec": 52975,
+    "world_entry_enclosing_usec": {
+      "world_enter": 55563,
+      "enter_body": 66537,
+      "generator_owner": 66636
+    },
+    "authoritative_analysis": "evidence/storage014-independent-analysis-r1/cross-source-and-attribution-r1.json",
+    "authoritative_analysis_sha256": "b4fa18d945ecd39fb2c18d30bd4172acb81a4a00d8234cef14da5466bb5b87fd",
+    "limitations": [
+      "One representative actual Punchline world/layer fixture, not all prior149outside calls",
+      "Inclusive values contain observer logging; no cross-population subtraction or overlapping summation",
+      "No EnvironmentInstance internals, only actual opaque call cost",
+      "No cold-cache, arbitrary container alias topology, malformed/cycle or full Systems pass",
+      "Control/profile pass timings differ even on uninstrumented baseline; no pure observer-cost or speedup inference",
+      "Only known task-private key/checkpoint hash observations; no private contents or broad inventory"
+    ]
+  },
+  "environmental_diagnostic": {
+    "message": "ERROR: Failed to read the root certificate store.",
+    "observed_in": [
+      "schema014-counterexamples-r2",
+      "catalog014-schema-observer-r1",
+      "storage014-baseline-r1",
+      "storage014-profile-r1"
+    ],
+    "interpretation": "Recorded Windows/Godot CA-store diagnostic in passing local headless runs. No network/certificate functionality qualification follows; do not classify the separate r1 GDScript parse failure as this environmental line."
+  },
+  "outstanding_proposals": [
+    {
+      "task": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "kind": "phase015 invocation-local exact material-path String fingerprints",
+      "candidate_sha256": "10d2b07ed344a702d49f17e7b3cce7a88647f3218d79bc6f977f222cb24a0f50",
+      "state_at014_cutoff": "Evidence-only, source-inverse and conditional stable-data review; later private native job outside this checkpoint. No canonical application, measured benefit or acceptance included."
+    },
+    {
+      "task": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "kind": "local memo type-safety prototype",
+      "candidate_sha256": "4bd88aec92866ed5a0644d6e4ca23182e6ef497ac8ee91bf11fb976715b7f359",
+      "state_at014_cutoff": "Evidence-only; canonical source unchanged and native regression/performance/compatibility qualification pending."
+    },
+    {
+      "task": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "kind": "historical defer-clone projection prototype",
+      "state": "Rejected, preserved and unapplied; attribution does not revive it."
+    }
+  ],
+  "scope_preservation": {
+    "all_parent_ids_open": true,
+    "no_fresh_full_systems_or_whole_content_acceptance": true,
+    "paused_feature_ids_unchanged": [
+      "BTH-11",
+      "BTH-SCENARIO-WEDDING-001",
+      "BTH-SCENARIO-ARRIVAL-002",
+      "BTH-15",
+      "BTH-17",
+      "BTH-15-FACTUAL-HELP-001",
+      "BTH-17-FACTUAL-HELP-001",
+      "LEDGER022"
+    ],
+    "cleanup": "None; preserve all originals, failed runs, prototypes, traces and sidecars.",
+    "layer013_next": "Required separate exact NEXT qualification remains pending/untouched. No deployment, service or watcher action is part of this checkpoint."
+  },
+  "next_actions": [
+    "Root reconcile both metadata views after reviewing this draft; bounded helper alone has commit plus required pilot evidence.",
+    "Keep SchemaValidation014 and MemoTypeSafety014 Open; independently qualify any exact-source candidate under unchanged limits before adopting it.",
+    "Continue measured storage owners with matched input/flags and exact state/RNG/save/rollback/authority parity; opaque EnvironmentInstance internals remain unattributed.",
+    "Retain unchanged all55/all220 and maintained300/43.712/330 acceptance; a later bounded prototype cannot close parent audit or replace full-stage evidence."
+  ],
+  "artifact_sha256": {
+    "evidence/catalog014-schema-observer-proposal/immutable-sha256-r1.json": "825944431bac82df05f14fb515d160967003ff81e05f8a67588ff13b84f46b1a",
+    "evidence/catalog014-schema-observer-proposal/proposal-proof-r1.json": "7dacf310f434a65d4dcf683d37ba5bd5204dad5dee212afa9604c28e4b15c051",
+    "evidence/catalog014-schema-observer-proposal/source-basis-proof-r1.json": "45fbab01a84e921b5388c4c4185a76b71953fecdcf63721a3925cc4254e1e471",
+    "evidence/catalog014-schema-observer-proposal/independent-observer-review-r1.json": "5a2b78c1d98383d85413299515346dfd527ab96c0edea8aee3d3231f7e6ae1be",
+    "evidence/catalog014-schema-observer-proposal/independent-schema-analysis-r1.json": "0f7047730de5c036b02bf4ddda88dc3c5d6e54f265a738bb39ae48ac61dd332f",
+    "evidence/schema014-counterexample-proposal-r1/immutable-sha256-r1.json": "3f2ec42b332fa2f48bf83b703fbc8417a572b3127c4dbb05f0afe33f886c3ad5",
+    "evidence/schema014-counterexample-proposal-r2/immutable-sha256-r1.json": "c106c84a57d22ca1ada488c29d1aeb5c3bef95cad7558d3a192b6ec485be9fde",
+    "evidence/schema014-counterexample-proposal-r2/r1-resource-observation-inverse-proof.json": "51a121bf23830cb863036c41cf3a4956c58204b3ad9af0e87ef0ff2be3b589f8",
+    "evidence/schema014-counterexamples-r2/result.json": "f33743369bf89e634b7b853000dc445c2999d4598bd5860735fd08470944cd5e",
+    "evidence/schema014-counterexamples-r2-independent-analysis-r1.json": "4b0354697b6851722bba238edab8f9040cd4196ad15964a7f89f239972fc8aeb",
+    "evidence/source-owner014-deadline-proposal/proposal-proof.json": "66b5ab9b25ebf0f87a97acd022a2c782e887ffe9a7a35c7f509709579e7c7290",
+    "evidence/source-owner014-deadline-proposal/independent-static-review-r1.json": "edfad33f988eab81936724ac7eba2f8665215632f1f528ed5f4e8c33198b8b11",
+    "evidence/own14-unit-r1/result.json": "0a51f4c4f84072459d22438843b5e3c025939a895e0a57dfe34e0201cd8350b9",
+    "evidence/own14-unit-r1/stderr.log": "33d975ca5067ca462abc14dba9417033be390f685619686f82746f7328491616",
+    "evidence/catalog014-storage-proposal/frozen-bundle-r1.json": "2225ee4d618d76ecc4aa09260e825b99492c2d9d8cda777dd98aab8acaf32428",
+    "evidence/catalog014-storage-proposal/source-proposal-proof.json": "d48e175b8842df1a97f80915a070e3674c1033b17223cbd216992edd3848a162",
+    "evidence/catalog014-storage-proposal/source-original-proof-owner014-proposed.json": "9aad8cbc388dba203619f7149ad33bfd68c922e1a00e0d79fe64afea071837f8",
+    "evidence/catalog014-storage-proposal/checkpoint-parser-static-review-r1.json": "529f26ea2c36a373dde5546a7c85157a1afe4d3631c089a3f949d52377aa6be0",
+    "evidence/storage014-owner-r1/owner.json": "8d5b1594489433a84ec20d01f4429203235166e285a037095a3fa6e12ae6d585",
+    "evidence/storage014-independent-analysis-r1/baseline-r1.json": "fc737ecd88d3399f1310a799b5ca8a37742f28bb0043035e52137ffbef4c370f",
+    "evidence/storage014-independent-analysis-r1/profile-r1.json": "e497206fdee68e4d671dce7f1fecd4e02fb84bbb7fa7b126511eed8c11fd290b",
+    "evidence/storage014-independent-analysis-r1/cross-source-and-attribution-r1.json": "b4fa18d945ecd39fb2c18d30bd4172acb81a4a00d8234cef14da5466bb5b87fd",
+    "evidence/catalog015-material-path-proposal/proposal-proof-r1.json": "100aeaa27cf19e71ecda04c1a0905528c6c6609c795f1c2100725bb3a3790021",
+    "evidence/catalog015-material-path-proposal/candidate-static-review-r1.json": "324d199c3b24bea5ddb22a0fa0bda890ae55aa1648e77be4f20c923861428baa",
+    "evidence/memo014-type-safety-proposal-r1/proposal-proof.json": "71156f5264104525fbf26ad2fa9a9186a008fc178e2c83968e0802ef8dd822dc",
+    "evidence/memo014-type-safety-proposal-r1/immutable-sha256.json": "2e4214a5f071e7c8b6eda8a6bde7085fc114964146e8ee3eed8656d6696c25dd"
+  },
+  "draft_author_actions": {
+    "repository_edits": 0,
+    "ledger_edits": 0,
+    "native_jobs": 0,
+    "cleanup": 0,
+    "only_writes": "this new sibling draft MD and JSON"
+  },
+  "observed_metadata_snapshots": {
+    "audit-independent/docs/todo/bth_task_ledger.json": {
+      "sha256": "de661ca795bf7182bf9b8e67b146ef34ff3aed8148188af18076c1032a783c17",
+      "read_only": true
+    },
+    "audit-independent/docs/plans/0.6.1_stability_release_plan.md": {
+      "sha256": "9dd41c971e63afae7a783b5388c6136f990e19b98a2f8ce01ceeee6035ea069e",
+      "read_only": true
+    }
+  },
+  "integrated_at": "2026-11-05T10:14:02.070679+00:00",
+  "root_checkpoint": {
+    "helper_commit": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+    "bounded_helper_complete": true,
+    "phase014_owned_jobs": 5,
+    "later_private_prototype_jobs": 1,
+    "all_six_known_owned_jobs_closed0": true,
+    "running_owned_native_jobs": [],
+    "global_process_census_claim": false,
+    "scope": "Only the five phase014 diagnostics establish this attribution/helper checkpoint. The later private material-path prototype passed1133checks/55definitions/13cases and is retained separately; no production Schema repair or complete audit is inferred.",
+    "all_seven_known_owned_jobs_closed0": true
+  },
+  "post_cutoff_material_prototype": {
+    "job": "catalog015-material-path-differential-r1",
+    "receipt_sha256": "9608c07f29c74af429356dd25b774c6dfa471b2d6a3136af88cae2f7832956a2",
+    "result": "evidence/catalog015-material-path-differential-r1/diagnostic/material-result.json",
+    "result_sha256": "8675847f32558139c5c2066a5e777abfa171158c4e77513a1a5da4c5ed3322e0",
+    "status": "private_comparison_pass_production_qualification_open",
+    "checks": 1133,
+    "definitions": 55,
+    "edge_cases": 13,
+    "canonical_schema_applied": false
+  },
+  "report_authorship": "Root reviewed the retained additive draft, refreshed actual scoped task states, and added the separately closed private prototype receipt. Original draft/proofs remain unchanged.",
+  "historical_field_scope": "task_dispositions.observed_* and observed_metadata_snapshots are the retained draft-author observations before root reconciliation; root_checkpoint and the structured task ledger describe the integrated checkpoint state. No production Schema repair is applied.",
+  "post_checkpoint_key_cost_baseline": {
+    "job": "memo014-key-cost-baseline-r1",
+    "job_sha256": "109317923a1db5825fd1be0b709b11907192b61eed6a0beceac4927ef1e08799",
+    "result_sha256": "44152258bb9fe6cff915a58928e5f92691376746ffd67c187ad40562de5e7cc4",
+    "source_schema_raw_sha256": "780b974bd5c870839fb3620e501e18d528c93c446806ba04136028bfb9187a7c",
+    "checks": 94,
+    "samples": 198,
+    "key_cost_summaries": {
+      "positive_first_key": {
+        "count": 1,
+        "max_usec": 905,
+        "mean_usec": 905.0,
+        "median_usec": 905,
+        "min_usec": 905,
+        "total_usec": 905
+      },
+      "positive_repeat_key": {
+        "count": 32,
+        "max_usec": 938,
+        "mean_usec": 794.65625,
+        "median_usec": 780,
+        "min_usec": 771,
+        "total_usec": 25429
+      },
+      "raw55_first": {
+        "count": 55,
+        "max_usec": 2002,
+        "mean_usec": 1550.96363636364,
+        "median_usec": 1576,
+        "min_usec": 1158,
+        "total_usec": 85303
+      },
+      "raw55_repeat": {
+        "count": 110,
+        "max_usec": 2002,
+        "mean_usec": 1526.10909090909,
+        "median_usec": 1565,
+        "min_usec": 1146,
+        "total_usec": 167872
+      }
+    },
+    "actual_positive_validate_hit_cost": {
+      "count": 32,
+      "max_usec": 831,
+      "mean_usec": 777.9375,
+      "median_usec": 776,
+      "min_usec": 770,
+      "total_usec": 24894
+    },
+    "stats_after_hits": {
+      "entries": 1,
+      "evictions": 0,
+      "full_runs": 1,
+      "hits": 32,
+      "max_entries": 256,
+      "order_entries": 1
+    },
+    "comparison_limits": "Use identical driver bytes/order/inputs and equivalent native guards. Key values may differ across processes and key schemes; compare admissions/costs, not key hash equality. If other validated helper changes are composed later, cold full-validation time is not attributable to memo alone.",
+    "bootstrap_metadata_limit": "Wrapper description sourceProof.observed_head is null because proof uses source_head; exact1243sourcepins, Job.head and actual driver file hash remain authoritative. No guard or admission failure."
+  },
+  "manual_reconciliation": {
+    "current": "evidence/catalog014-checkpoint-reconciliation-current-r2.json",
+    "all": "evidence/catalog014-checkpoint-reconciliation-all-r2.json",
+    "own_audit_findings": 0,
+    "unrelated_current_errors": 78,
+    "unrelated_all_errors": 544,
+    "unrelated_runtime_errors": 54,
+    "runtime_instances": 156,
+    "scope": "No unrelated task/runtime evidence was changed to hide findings; previous149 runtime records and all paused policy/task objects are preserved."
+  }
+}

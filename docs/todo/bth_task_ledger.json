@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T09:00:08.311641+00:00",
+  "updated_at": "2026-11-05T10:19:32.961862+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13708,6 +13708,12 @@
             "docs/testing/deprecated_code_audit_continuation_013.md",
             "docs/testing/deprecated_code_audit_continuation_013.json"
           ]
+        },
+        {
+          "sha": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md"
+          ]
         }
       ],
       "deployment": {
@@ -13804,6 +13810,11 @@
           "kind": "scoped_performance_repair_without_cleanup_or_parent_closure",
           "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
           "summary": "Phase013 source3c0fd716 removes one redundant fullcatalogcopy, retainingadmission/schema/extension/physical-target authority. Focusedbaseline/candidate qualified; aggregate stillfails, projectioncandidate rejected, nofilescleared orpausedfeaturechanges. Full requested audit remainsincomplete/Open; NEXTqualificationseparate."
+        },
+        {
+          "kind": "measured_owners_and_bounded_tool_helper",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "Phase014 attributes aftermath/layoutowners and confirms existing typedmemo bug. Only manualhelper5e9 committed; no cleanup or productionSchema repair. Full audit, content180, Systems300/43.712 and delivery remain Open; all6known Jobs0 with R1parsefailure retained."
         }
       ],
       "implementation_batches": [
@@ -13821,7 +13832,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T09:00:08.311641+00:00"
+      "updated_at": "2026-11-05T10:14:02.070679+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20565,7 +20576,7 @@
         }
       },
       "state": "open",
-      "status": "SCOPED_DEFINITION_FIX_COMMITTED_AGGREGATE_AND_STORAGE_OPEN_013",
+      "status": "MEASURED_AFTERMATH_LAYOUT_AND_MEMO_REPAIRS_OPEN_014",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20639,6 +20650,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_013.md",
             "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
+        },
+        {
+          "sha": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md"
           ]
         }
       ],
@@ -20744,10 +20761,20 @@
           "kind": "bounded_source_repair_and_unchanged_aggregate_failure",
           "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
           "summary": "Source3c0fd716 qualified under canonical662+sequence/layer/storage/liveness checks.55copiedresource warm unboundfallback pairs18.53% lower sum; no gameplay/stage speedup. Same exactmaintained4/55 recipe baseline300.234/candidate300.255fail; comparator43.712alsofailed. All16Jobs0; other1241originalsources exact; projection rejected/unapplied; parentOpen."
+        },
+        {
+          "kind": "trusted_parent_remaining_bottleneck_continuation",
+          "reference": "Parent01a1a147-7f07-7583-baf0-771a839f1013 current delegation",
+          "summary": "Continue remaining measured audit/Systems bottlenecks; preserve exact semantics300guard, discardregressions, nofilecleanup/pausedwork. Rootmain86213665fetched0/0; three read-only investigations active, no newsourcecandidate ornativejob."
+        },
+        {
+          "kind": "measured_owners_and_bounded_tool_helper",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "Phase014 attributes aftermath/layoutowners and confirms existing typedmemo bug. Only manualhelper5e9 committed; no cleanup or productionSchema repair. Full audit, content180, Systems300/43.712 and delivery remain Open; all6known Jobs0 with R1parsefailure retained."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue measured definition/schema-ingress and persistence postprocessor/layout work: both current uninstrumented Systems recipes still hit300s and43.712s budget. Preserve target-catalog proof, callbacks/state/RNG/save semantics, all55IDs/220plannedprofiles and the original180/current300 guards; no cleanup or paused feature work.",
+      "next_action": "Continue canonical material-path reduction qualification, measured key-type correctness repair and storage layout/authority review. Preserve exact validation/state/save/alias behavior,55IDs/220profiles and180/300/43.712/330 guards. No cleanup or paused feature changes; aggregate acceptance remains Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20759,7 +20786,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T09:00:08.311641+00:00"
+      "updated_at": "2026-11-05T10:14:02.070679+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23153,7 +23180,7 @@
         }
       },
       "state": "open",
-      "status": "DEFER_CLONE_REJECTED_POSTPROCESSOR_PROFILE_OPEN",
+      "status": "FINER_STORAGE_ATTRIBUTION_COMPLETE_LAYOUT_OWNER_REVIEW_ACTIVE_014",
       "owner": {
         "name": "Audit catalog performance repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23185,10 +23212,15 @@
           "kind": "baseline_candidate_projection_experiment_rejected",
           "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
           "summary": "Unapplied prototype: correctedR2 passes713checks/100pairs incl16encoded and4explicitopaqueidentity cases; all200flatshapes complete. Default2rep timing211008->221756us is5.1%slower, notstablebenefit. Originalr1oraclerecursion160errors retained. RunState262bunchanged; no cycles/full-domain or productionrepair claim."
+        },
+        {
+          "kind": "actual_class_matched_storage_attribution",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "Baseline612/616 andprofile609/613 checks;100sharedsidecars exact, fullsave/RNG/cache parity and same actual checkpoint/companion.1157events/16calls attributed. All1243expectedpins restored; no arbitraryalias/allroom/fullstage or productionoptimization claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Keep the tested defer-clone prototype unapplied. Profile the four unchanged persistence postprocessors and their ensure_generated_layout/reconcile work on matched callers/flags before choosing a material reduction; preserve all copy/authority/save/rollback semantics and guards.",
+      "next_action": "Continue measured EnvironmentInstance layout/authority owner review using faithful postprocessor entry inputs and unchanged identity/authority boundaries. Default projection111659us includes runtimecanonical80280/layout73358; rootcopy3648us. Reject copy shortcuts and qualify any actual reduction separately.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -23200,7 +23232,273 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T09:00:08.311641+00:00"
+      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "name": "Attribute and reduce repeated schema-validation work safely",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Attribute the remaining measured schema-validation cost on current source, then qualify a substantive reduction only with exact ordered diagnostics, typed input/alias behavior, independent target authority, registry observations and bounded state preserved. Reject unsafe memo identities and regressions. Keep full Systems300-second guard and43.712-second budget, original180-second content diagnostic, source-restore guarantees and paused feature scope unchanged.",
+        "source": "Current trusted parent continuation: continue open audit and Systems timeout investigation at remaining measured bottlenecks; preserve exact semantics/300-second guard, discard regressions, no cleanup/paused changes. Phase013 separate component pass measured schema6.236095s/55 unbound authored definitions; failed target authority remains required.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "authoritative-finer-attribution",
+            "description": "Retained exact-source bounded timings separate memo key/authority/registry preparation and substantive validator owners, with exact error arrays/input effects and limits documented.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_014.md",
+              "docs/testing/deprecated_code_audit_continuation_014.json",
+              "evidence/catalog014-schema-observer-proposal/independent-schema-analysis-r1.json"
+            ]
+          },
+          {
+            "id": "qualified-compatible-reduction",
+            "description": "A scoped committed reduction has meaningful same-input benefit and focused compatibility/authority/rejection/liveness coverage without weakened guards or skipped validation. Rejected prototypes remain preserved and do not complete this criterion.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FINER_ATTRIBUTION_COMPLETE_MATERIAL_PATH_PRODUCTION_QUALIFICATION_OPEN",
+      "owner": {
+        "name": "Audit schema performance investigation",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Any resulting production repair requires separately assigned exact NEXT qualification. Private prototypes exist; no production Schema candidate is applied at this checkpoint and no deployment is claimed."
+      },
+      "evidence": [
+        {
+          "kind": "remaining_measured_owner",
+          "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
+          "summary": "After published3c0fd716 B-only repair, both fullSystems recipes still fail300s; schema dominates separate resolver component observation. Raw55 rightly lack independent target proof, and attempted prewarming does not establish success-memo hits."
+        },
+        {
+          "kind": "bounded_finer_attribution",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "831checks/all55 and165fullcalls preserve all809orderederrors perreceiver/input/counters. Aftermath5.070155/6.727572s=75.36%; memo107.854ms. Later privateprototype1133comparisons passes; no canonicalSchema repair yet."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Qualify the invocation-local material-path fingerprint prototype on the actual canonical Schema with complete ordered outputs/errors and relevant contract/liveness checks before implementation acceptance. Keep fullSystems300/43.712 and all55/220 guards unchanged; no failed-result memo.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Root and independent schema, persistence and safety reviewers are actively investigating current86213665; no external approval, scheduler or original-save dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T09:11:25.152368+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014",
+      "name": "Qualify stricter focused temporary-source deadlines",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Permit only exact integer180 or330 guards-family temporary-source recipes so focused diagnostics retain their stricter180-second cap. Preserve the existing source allowlist, runner pinning, atomic restoration, exact owned closure and12percentCPU/2GiB guards. Retain the qualified330-second supervisor for the unchanged fullSystems300-second stage.",
+        "source": "Necessary bounded protective-tool follow-up in current parent-authorized finer storage investigation: existing bc04 owner only admits330, while standalone probes require180. Independent byte review and40 private candidate fault tests pass; no canonical adoption or native pilot yet.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused-deadline-fault-tests",
+            "description": "Exact180 admission and pinned-spec use qualify against retained40 fault tests, all36 original methods preserved; malformed limits/wrong families/new receivers reject before mutation.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_014.md",
+              "docs/testing/deprecated_code_audit_continuation_014.json",
+              "evidence/own14-unit-r1/result.json",
+              "evidence/storage014-owner-r1/owner.json"
+            ]
+          },
+          {
+            "id": "actual-180-source-restoration",
+            "description": "One actual reviewed180-second diagnostic retains unchanged native guards, exact Job0 closure and complete original source restoration before the helper task closes with a commit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_014.md",
+              "docs/testing/deprecated_code_audit_continuation_014.json",
+              "evidence/own14-unit-r1/result.json",
+              "evidence/storage014-owner-r1/owner.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "COMMITTED_40_FAULT_TESTS_AND_ACTUAL_180_RESTORATION_VERIFIED",
+      "owner": {
+        "name": "Audit focused guard qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "5e9e06bd32452758dbc4d3a4a01f77be23b76244",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_014.md",
+            "docs/testing/deprecated_code_audit_continuation_014.json",
+            "tools/audit_temporary_source_owner.py",
+            "tools/tests/test_audit_temporary_source_owner.py"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Manual audit Python utility/tests only; no game or release-service change."
+      },
+      "evidence": [
+        {
+          "kind": "private_candidate_fault_qualification",
+          "reference": "evidence/own14-unit-r1/result.json",
+          "summary": "40tests pass4.212s in retained private Python fake roots; canonical tool remains0543 and testse754 unchanged. No native or source adoption claim."
+        },
+        {
+          "kind": "actual_180_pilot_and_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "5e9e06bd exact2tools; actual storage180 pilot owner/native/runnerexit0, verifiedclosure0, both originals restored and all1243expectedpins exact. No sourceallowlist/CPU/memory/fullstageguard change."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "None within this bounded helper. Exact180/330 admission, retained40 fault tests and actual guarded restoration are committed; reserve/pin the unchanged allowed receivers and runner for later use. Parent audit and timeout work remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped helper has its required commit and both fault/native restoration acceptances. No game or NEXT change is claimed.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T10:14:02.070679+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_014.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T10:14:02.070679+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "name": "Prevent successful-validation memo type collisions",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repair the confirmed existing successful-validation memo false acceptance: a valid canonical fixture warms a JSON key shared by StringName transition text or PackedStringArray mechanic tags; the malformed alternative then bypasses ordinary type rejection. Preserve exact cold diagnostics, independent target and registry authority, input ownership, bounded cache and truthful memo statistics; do not extend caching to failed results.",
+        "source": "Discovered during parent-authorized generic validator safety review. Exact canonical native diagnosticR2 independently confirms39checks/0 failures: TYPE21 andTYPE34 coldreject, warmfalseaccept, clearrestores exactreject; independent target inventory and original runtime fixture used without resigning/stamping.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "canonical-counterexample",
+            "description": "Original-source bounded canonical receiver reproduces both typed false acceptances with exact cold/warm errors, keys and memo hit/full-run counters.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "evidence/schema014-counterexamples-r2/result.json",
+              "evidence/schema014-counterexamples-r2-independent-analysis-r1.json"
+            ]
+          },
+          {
+            "id": "typed-memo-repair-qualified",
+            "description": "Scoped committed repair retains exact ordinary rejection for colliding alternatives after positive warm hits, valid memo behavior, authority/custom-registry/malformed boundaries and meaningful focused compatibility without weakened guards.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CANONICAL_COUNTEREXAMPLES_REPRODUCED_NARROW_REPAIR_REVIEW_ACTIVE",
+      "owner": {
+        "name": "Audit validation memo correctness",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Required exact NEXT verification of any resulting production repair is separately assigned."
+      },
+      "evidence": [
+        {
+          "kind": "existing_positive_cache_bug",
+          "reference": "evidence/schema014-counterexamples-r2-independent-analysis-r1.json",
+          "summary": "Canonical39check counterexample diagnostic reproduces current successmemo bugs with normal cold errors unsupportedVariant21/34, then empty warm result; hit1/full_runs1 proves skip. This is diagnostic reproduction, not production correctness or suite pass."
+        },
+        {
+          "kind": "confirmed_existing_memo_false_accept",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "Canonical39counterexamplechecks confirm validwarm StringNameTYPE21/PackedTYPE34 alternatives wronglyaccepted; exactcoldreject restored byclear. Narrowtyped/admission proposal remainsunapplied pendingcanonicalred/green and key-hit performance qualification."
+        },
+        {
+          "kind": "canonical_key_cost_baseline",
+          "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
+          "summary": "Additional originalSchema780b probe94checks/198keys passes; raw55first mean1550.964us,110repeatmean1526.109us;32actualpositivehitsmean777.938us,1full/32hits/1entry. No candidate cost or performance acceptance; admitted inputs unchanged and actualJob0."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Review a narrow complete typed/order memo identity or conservative admission repair before implementation. Qualify existing typed counterexamples, valid hits and actual custom-registry/malformed/authority boundaries. Keep failure caching absent and all paused feature code untouched.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Active bounded engineering and independent review; no user input, original-save, scheduler or approval dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T09:41:59.868380+00:00",
+        "evidence": [
+          "evidence/schema014-counterexamples-r2-independent-analysis-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T10:19:32.961862+00:00"
     }
   ],
   "batches": [
