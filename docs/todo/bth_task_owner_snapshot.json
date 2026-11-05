@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T02:07:52.588036+00:00",
+  "observed_at": "2026-11-05T02:18:46.828157+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T02:07:52.588036+00:00",
-      "source": "Actual phase009 root integrating/publishing three qualified audit source commits and preserved concurrent main work. Sequence, static/restore, hidden partitions, route regressions and liveness pass;18UI methods removed. Whole audit/original180flow/duel followup and exact NEXT delivery remain Open. Served metadata retains0c095259; current watcher is enabled but owned donor release qualification fails. No machinery or guards changed."
+      "observed_at": "2026-11-05T02:18:46.828157+00:00",
+      "source": "Actual phase009 finishing publication:three qualified source commits pushed/remote-readback in maina7e8c71f;35owned Jobsclosed0. Exact watcheravailablea7e8 checked but reserve guard refusedexport; served/deployedpeerbuilda208b61a. Finaltracking/reconciliation underway. Wholeaudit/original180flow/duelfollowupOpen; no service/guard changes."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
