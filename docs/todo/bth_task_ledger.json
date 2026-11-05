@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T10:24:34.531135+00:00",
+  "updated_at": "2026-11-05T11:51:09.812310+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13721,6 +13721,20 @@
             "docs/testing/deprecated_code_audit_continuation_014.md",
             "docs/testing/deprecated_code_audit_continuation_014.json"
           ]
+        },
+        {
+          "sha": "c6875e54b87d79c1a5cdf4d6a95ce4d42ee6a012",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
+          ]
+        },
+        {
+          "sha": "69bd0f7e3270d87d436d6a39b71fda1f392f67f1",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
+          ]
         }
       ],
       "deployment": {
@@ -13822,6 +13836,11 @@
           "kind": "measured_owners_and_bounded_tool_helper",
           "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
           "summary": "Phase014 attributes aftermath/layoutowners and confirms existing typedmemo bug. Only manualhelper5e9 committed; no cleanup or productionSchema repair. Full audit, content180, Systems300/43.712 and delivery remain Open; all6known Jobs0 with R1parsefailure retained."
+        },
+        {
+          "kind": "scoped_bounded_fix_without_parent_closure",
+          "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
+          "summary": "Final69bd material-path reduction qualified under same-data canonical/private/38-step/liveness checks, with4MiBper-call charge. Aggregate remains300.242limitfailure andincompletecoverage; no all55/all220stagepass, no guardweaken/cleanup/pausedchanges. Full audit staysOpen; deliveryseparate."
         }
       ],
       "implementation_batches": [
@@ -13839,7 +13858,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:24:34.531135+00:00"
+      "updated_at": "2026-11-05T11:51:09.812310+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20583,7 +20602,7 @@
         }
       },
       "state": "open",
-      "status": "MEASURED_AFTERMATH_LAYOUT_AND_MEMO_REPAIRS_OPEN_014",
+      "status": "BOUNDED_SCHEMA_REPAIR_COMMITTED_FULLSYSTEMS300_FAILURE_RETAINED_015",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20670,6 +20689,20 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_014.md",
             "docs/testing/deprecated_code_audit_continuation_014.json"
+          ]
+        },
+        {
+          "sha": "c6875e54b87d79c1a5cdf4d6a95ce4d42ee6a012",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
+          ]
+        },
+        {
+          "sha": "69bd0f7e3270d87d436d6a39b71fda1f392f67f1",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
           ]
         }
       ],
@@ -20785,10 +20818,15 @@
           "kind": "measured_owners_and_bounded_tool_helper",
           "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
           "summary": "Phase014 attributes aftermath/layoutowners and confirms existing typedmemo bug. Only manualhelper5e9 committed; no cleanup or productionSchema repair. Full audit, content180, Systems300/43.712 and delivery remain Open; all6known Jobs0 with R1parsefailure retained."
+        },
+        {
+          "kind": "scoped_bounded_fix_without_parent_closure",
+          "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
+          "summary": "Final69bd material-path reduction qualified under same-data canonical/private/38-step/liveness checks, with4MiBper-call charge. Aggregate remains300.242limitfailure andincompletecoverage; no all55/all220stagepass, no guardweaken/cleanup/pausedchanges. Full audit staysOpen; deliveryseparate."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue canonical material-path reduction qualification, measured key-type correctness repair and storage layout/authority review. Preserve exact validation/state/save/alias behavior,55IDs/220profiles and180/300/43.712/330 guards. No cleanup or paused feature changes; aggregate acceptance remains Open.",
+      "next_action": "Continue remaining measured storage/layout/authority and typed-memo investigation. Retain exact300.242s fullSystems failure,43.712 comparator,180content guard,4shards/55checks/all220planned recipe and all semantic/state/save bounds. Do not infer culprit from last resource or completion from absent reports; no repeat without new cause/change.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20800,7 +20838,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:24:34.531135+00:00"
+      "updated_at": "2026-11-05T11:51:09.812310+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23238,6 +23276,11 @@
           "kind": "actual_class_matched_storage_attribution",
           "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
           "summary": "Baseline612/616 andprofile609/613 checks;100sharedsidecars exact, fullsave/RNG/cache parity and same actual checkpoint/companion.1157events/16calls attributed. All1243expectedpins restored; no arbitraryalias/allroom/fullstage or productionoptimization claim."
+        },
+        {
+          "kind": "remaining_measured_layout_owner",
+          "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
+          "summary": "Storage111659us/default opaqueLayout73358 remains separate. Staticlayout review recommends exactpost-runtime-removal entrycapture usingexisting2receivers andfaithfulprivate replay; no callconfirmedobsolete/safelyremovable, no source/cache/authorityshortcut applied."
         }
       ],
       "implementation_batches": [],
@@ -23253,7 +23296,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:24:34.531135+00:00"
+      "updated_at": "2026-11-05T11:51:09.812310+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23278,15 +23321,26 @@
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_014.md",
               "docs/testing/deprecated_code_audit_continuation_014.json",
-              "evidence/catalog014-schema-observer-proposal/independent-schema-analysis-r1.json"
+              "evidence/catalog014-schema-observer-proposal/independent-schema-analysis-r1.json",
+              "docs/testing/deprecated_code_audit_continuation_015.md",
+              "docs/testing/deprecated_code_audit_continuation_015.json",
+              "evidence/catalog015-budget-analysis-r1/independent-budget-comparison-r1.json",
+              "evidence/catalog015-bounded-performance-analysis-r1/independent-bounded-performance-crosscheck-r1.json",
+              "evidence/catalog015-sequence-bounded-independent-review-r1.json"
             ]
           },
           {
             "id": "qualified-compatible-reduction",
             "description": "A scoped committed reduction has meaningful same-input benefit and focused compatibility/authority/rejection/liveness coverage without weakened guards or skipped validation. Rejected prototypes remain preserved and do not complete this criterion.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_015.md",
+              "docs/testing/deprecated_code_audit_continuation_015.json",
+              "evidence/catalog015-budget-analysis-r1/independent-budget-comparison-r1.json",
+              "evidence/catalog015-bounded-performance-analysis-r1/independent-bounded-performance-crosscheck-r1.json",
+              "evidence/catalog015-sequence-bounded-independent-review-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -23296,7 +23350,7 @@
         }
       },
       "state": "open",
-      "status": "FINER_ATTRIBUTION_COMPLETE_MATERIAL_PATH_PRODUCTION_QUALIFICATION_OPEN",
+      "status": "BOUNDED_SOURCE_COMMITTED_FOCUSED_PASS_SYSTEMS300_FAIL_NEXT_OPEN_015",
       "owner": {
         "name": "Audit schema performance investigation",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23309,6 +23363,20 @@
             "docs/testing/deprecated_code_audit_continuation_014.md",
             "docs/testing/deprecated_code_audit_continuation_014.json"
           ]
+        },
+        {
+          "sha": "c6875e54b87d79c1a5cdf4d6a95ce4d42ee6a012",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
+          ]
+        },
+        {
+          "sha": "69bd0f7e3270d87d436d6a39b71fda1f392f67f1",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md",
+            "docs/testing/deprecated_code_audit_continuation_015.json"
+          ]
         }
       ],
       "deployment": {
@@ -23316,7 +23384,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Any resulting production repair requires separately assigned exact NEXT qualification. Private prototypes exist; no production Schema candidate is applied at this checkpoint and no deployment is claimed."
+        "scope": "Final source69bd requires separately assigned exact NEXT identity/behavior qualification. Focused repair is committed; delivery remains pending. Parent fullSystems300/43.712 failure is separate and still Open."
       },
       "evidence": [
         {
@@ -23328,22 +23396,27 @@
           "kind": "bounded_finer_attribution",
           "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
           "summary": "831checks/all55 and165fullcalls preserve all809orderederrors perreceiver/input/counters. Aftermath5.070155/6.727572s=75.36%; memo107.854ms. Later privateprototype1133comparisons passes; no canonicalSchema repair yet."
+        },
+        {
+          "kind": "bounded_committed_material_path_reduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
+          "summary": "c687+69bd replace repeated canonicalization with per-call exactStringsets andlazyphaseF,4MiB charge+clear/originalscan. Final55privatewhole48.192%lower/helper65.286%,all55faster; actual596/847digestparity,largeA/B/Acase,final38steps52.888/livenessPASS. FullSystems300.242stillfails; NEXTpending,childOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify the invocation-local material-path fingerprint prototype on the actual canonical Schema with complete ordered outputs/errors and relevant contract/liveness checks before implementation acceptance. Keep fullSystems300/43.712 and all55/220 guards unchanged; no failed-result memo.",
+      "next_action": "Follow final69bd through separately assigned exact NEXT qualification, retaining focused596/1133/38-step/liveness evidence. Continue parent aggregate and storage/layout work; the unchanged owning Systems recipe still fails300s/43.712. No failed-result memo or cleanup.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Root and independent schema, persistence and safety reviewers are actively investigating current86213665; no external approval, scheduler or original-save dependency.",
+        "description": "Bounded source/focused qualification committed; separately assigned NEXT and parent aggregate/storage investigation remain active engineering work without user approval or original-save dependencies.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T09:11:25.152368+00:00",
+        "observed_at": "2026-11-05T11:51:09.812310+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_013.md"
+          "docs/testing/deprecated_code_audit_continuation_015.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:24:34.531135+00:00"
+      "updated_at": "2026-11-05T11:51:09.812310+00:00"
     },
     {
       "id": "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014",
@@ -23527,10 +23600,15 @@
           "kind": "canonical_key_cost_baseline",
           "reference": "docs/testing/deprecated_code_audit_continuation_014.md",
           "summary": "Additional originalSchema780b probe94checks/198keys passes; raw55first mean1550.964us,110repeatmean1526.109us;32actualpositivehitsmean777.938us,1full/32hits/1entry. No candidate cost or performance acceptance; admitted inputs unchanged and actualJob0."
+        },
+        {
+          "kind": "remaining_confirmed_memo_bug",
+          "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
+          "summary": "ExistingStringName/Packed warmfalseaccept remainsunfixed. Material-path69bd changes no memo key/registry/validator/store bodies, but any futuretypedrepair muststrictlycomposeoverboundedbase andqualifyperformance; no newmissing-user/approvalhold."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review a narrow complete typed/order memo identity or conservative admission repair before implementation. Qualify existing typed counterexamples, valid hits and actual custom-registry/malformed/authority boundaries. Keep failure caching absent and all paused feature code untouched.",
+      "next_action": "Qualify existing typed-memo correction against the new bounded69bd/ec base with strict delta composition, actual same-test canonical red/green and matched key-hit costs before adoption. Preserve existing94-check key baseline where its unchanged key-call dependency bytes apply; do not overwrite Schema with old whole4bd proposal. No failed-result memo.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -23542,7 +23620,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T10:24:34.531135+00:00"
+      "updated_at": "2026-11-05T11:51:09.812310+00:00"
     }
   ],
   "batches": [

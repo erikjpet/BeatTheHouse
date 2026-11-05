@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T10:19:32.961862+00:00",
+  "observed_at": "2026-11-05T11:51:09.812310+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -21,7 +21,8 @@
       "docs/testing/pulltabs_journal_currency_20261105.json",
       "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
       "docs/testing/deprecated_code_audit_continuation_013.md",
-      "docs/testing/deprecated_code_audit_continuation_014.md"
+      "docs/testing/deprecated_code_audit_continuation_014.md",
+      "docs/testing/deprecated_code_audit_continuation_015.md"
     ]
   },
   "instances": [
@@ -12678,6 +12679,856 @@
           "docs/testing/deprecated_code_audit_continuation_014.md"
         ],
         "limit": "Only exact assigned canonical key-cost baseline Job,180/12%/2GiB and closure0. No candidate/fullstage/global-process claim; all files retained."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-bounded-material-path-differential-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-bounded-material-path-differential-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json:pid:19680",
+        "started_at": "2026-11-05T11:20:38.054814+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:21:09.478174+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json:pid:19680",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:21:09.478174+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:21:09.478174+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-bounded-material-path-differential-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:21:09.478174+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-bounded-material-path-differential-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-budget-baseline-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-budget-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json:pid:36904",
+        "started_at": "2026-11-05T11:10:46.412971+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:11:02.246326+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json:pid:36904",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:11:02.246326+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:11:02.246326+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-budget-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:11:02.246326+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-budget-candidate-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-budget-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json:pid:39004",
+        "started_at": "2026-11-05T11:13:23.221151+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:13:39.849186+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json:pid:39004",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:13:39.849186+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:13:39.849186+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-budget-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:13:39.849186+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-budget-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-canonical-baseline-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-canonical-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json:pid:29284",
+        "started_at": "2026-11-05T10:27:23.630773+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T10:27:46.374573+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json:pid:29284",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T10:27:46.374573+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T10:27:46.374573+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-canonical-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T10:27:46.374573+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-canonical-candidate-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-canonical-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json:pid:6804",
+        "started_at": "2026-11-05T10:29:01.614385+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T10:29:17.838310+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json:pid:6804",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T10:29:17.838310+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T10:29:17.838310+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-canonical-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T10:29:17.838310+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-liveness-bounded-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-liveness-bounded-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json:pid:1440",
+        "started_at": "2026-11-05T11:16:18.462181+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:16:25.735007+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json:pid:1440",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:16:25.735007+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:16:25.735007+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-liveness-bounded-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:16:25.735007+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-liveness-candidate-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-liveness-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json:pid:35224",
+        "started_at": "2026-11-05T10:31:07.884040+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T10:31:15.138953+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json:pid:35224",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T10:31:15.138953+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T10:31:15.138953+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-liveness-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T10:31:15.138953+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-maintained-bounded-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-maintained-bounded-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json:pid:13092",
+        "started_at": "2026-11-05T11:30:00.080103+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:35:03.404366+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json:pid:13092",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:35:03.404366+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:35:03.404366+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-maintained-bounded-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:35:03.404366+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-maintained-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-sequence-bounded-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-sequence-bounded-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json:pid:2992",
+        "started_at": "2026-11-05T11:37:31.897741+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T11:38:53.402529+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json:pid:2992",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T11:38:53.402529+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T11:38:53.402529+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-sequence-bounded-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T11:38:53.402529+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:catalog015-sequence-candidate-r1",
+      "task_id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog015-sequence-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json:pid:30700",
+        "started_at": "2026-11-05T10:35:49.086280+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T10:37:12.816145+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json:pid:30700",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md",
+          "Exact assigned owned Job final active0, no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T10:37:12.816145+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T10:37:12.816145+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog015-sequence-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T10:37:12.816145+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog015-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_015.md"
+        ],
+        "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
       }
     }
   ],
