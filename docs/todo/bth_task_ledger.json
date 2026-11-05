@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T15:19:24.772730+00:00",
+  "updated_at": "2026-11-05T15:29:51.611091+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13749,6 +13749,13 @@
             "docs/testing/deprecated_code_audit_continuation_016.md",
             "docs/testing/deprecated_code_audit_continuation_016.json"
           ]
+        },
+        {
+          "sha": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_017.md",
+            "docs/testing/deprecated_code_audit_continuation_017.json"
+          ]
         }
       ],
       "deployment": {
@@ -13865,12 +13872,17 @@
           "kind": "phase017_authority_reference_and_canonical_inner_capture",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        },
+        {
+          "kind": "verified_main_publication",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Publish the scoped test-only authority reference repair; continue the whole audit and measured layout investigation without cleanup, paused-feature changes or parent closure.",
+      "next_action": "The scoped test-only authority repair is published as 3aaee724; continue the whole audit and measured layout investigation without cleanup, paused-feature changes or parent closure.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13882,7 +13894,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+      "updated_at": "2026-11-05T15:29:51.611091+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20742,6 +20754,13 @@
             "docs/testing/deprecated_code_audit_continuation_016.md",
             "docs/testing/deprecated_code_audit_continuation_016.json"
           ]
+        },
+        {
+          "sha": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_017.md",
+            "docs/testing/deprecated_code_audit_continuation_017.json"
+          ]
         }
       ],
       "deployment": {
@@ -20876,10 +20895,15 @@
           "kind": "phase017_authority_reference_and_canonical_inner_capture",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        },
+        {
+          "kind": "verified_main_publication",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish exact retained historical/current authority fixtures and two maintained test repairs. Continue canonical normalize/validate leaf attribution on four qualified existing-value captures; preserve180/300/43.712/330 and original aggregate recipe. No aggregate acceptance or guard change.",
+      "next_action": "Exact retained historical/current authority fixtures and two maintained test repairs are published as 3aaee724. Continue canonical normalize/validate leaf attribution on four qualified existing-value captures; preserve180/300/43.712/330 and original aggregate recipe. No aggregate acceptance or guard change.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20891,7 +20915,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+      "updated_at": "2026-11-05T15:29:51.611091+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23319,6 +23343,13 @@
             "docs/testing/deprecated_code_audit_continuation_016.md",
             "docs/testing/deprecated_code_audit_continuation_016.json"
           ]
+        },
+        {
+          "sha": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_017.md",
+            "docs/testing/deprecated_code_audit_continuation_017.json"
+          ]
         }
       ],
       "deployment": {
@@ -23358,6 +23389,11 @@
           "kind": "phase017_authority_reference_and_canonical_inner_capture",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        },
+        {
+          "kind": "verified_main_publication",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
         }
       ],
       "implementation_batches": [],
@@ -23373,7 +23409,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+      "updated_at": "2026-11-05T15:29:51.611091+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23674,6 +23710,13 @@
             "docs/testing/deprecated_code_audit_continuation_016.md",
             "docs/testing/deprecated_code_audit_continuation_016.json"
           ]
+        },
+        {
+          "sha": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_017.md",
+            "docs/testing/deprecated_code_audit_continuation_017.json"
+          ]
         }
       ],
       "deployment": {
@@ -23718,6 +23761,11 @@
           "kind": "phase017_authority_reference_and_canonical_inner_capture",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        },
+        {
+          "kind": "verified_main_publication",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
         }
       ],
       "implementation_batches": [],
@@ -23733,7 +23781,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+      "updated_at": "2026-11-05T15:29:51.611091+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
@@ -23779,14 +23827,26 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "MAINTAINED_REFERENCE_CONTRACTS_PASS_COMMIT_AND_PUBLICATION_PENDING",
+      "state": "complete",
+      "status": "COMMITTED_PUBLISHED_EXACT_OLD_CURRENT_REFERENCES_BOTH_CONTRACTS_PASS",
       "owner": {
         "name": "Audit authority reference reconciliation",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_017.md",
+            "docs/testing/deprecated_code_audit_continuation_017.json",
+            "scripts/tests/foundation/scenario_uniqueness_pair_precompute_contract.gd",
+            "scripts/tests/foundation/scenario_validation_memo_contract.gd",
+            "scripts/tests/fixtures/scenario_uniqueness_authority_accepted_env06_7.canonical.json",
+            "scripts/tests/fixtures/scenario_uniqueness_authority_current.canonical.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -23799,22 +23859,28 @@
           "kind": "phase017_authority_reference_and_canonical_inner_capture",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        },
+        {
+          "kind": "verified_main_publication",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit and publish the exact two maintained test repairs and two qualified inert reference fixtures, then associate the verified commit/publication before completing this child. Parent audit, aggregate timeout and typed-memo repair stay Open.",
+      "next_action": "None within this bounded test-only repair. Commit 3aaee724 is verified on main with exact old/current references and both maintained contracts passing. Parent audit, aggregate timeout, typed-memo repair and separately assigned production NEXT acceptance remain Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "description": "Bounded test-only scope has a verified published commit and all required reference/runtime acceptance. Tests and fixtures are excluded by all four existing export presets; no game deployment acceptance is claimed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "observed_at": "2026-11-05T15:29:51.611091+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_017.md"
+          "docs/testing/deprecated_code_audit_continuation_017.md",
+          "docs/testing/deprecated_code_audit_continuation_017.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+      "updated_at": "2026-11-05T15:29:51.611091+00:00"
     }
   ],
   "batches": [

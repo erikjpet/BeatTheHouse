@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T15:19:24.772730+00:00",
+  "observed_at": "2026-11-05T15:29:51.611091+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T15:19:24.772730+00:00",
-      "source": "Actual phase017 checkpoint: six guarded owned Jobs closed0; independent historical/current authority recovery and exact four-file test repair qualified. Two maintained contracts PASS.11 actual canonical inner capture pairs/full72 outerparity qualified, next narrow canonical leaf investigation active. Productionec/all paused work and files preserved; five tracked tasks Open until scoped commit/publication association; parents remain Open."
+      "observed_at": "2026-11-05T15:29:51.611091+00:00",
+      "source": "Actual phase017 source commit 3aaee724 published and separately remote-main verified; bounded authority fixture child now Complete with code/test evidence commit. All six Jobs closed0 and parent audit/content/memo/persistence tasks remain Open. Narrow four-value canonical leaf proposal is independent continuation; no production source change, cleanup or NEXT acceptance."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

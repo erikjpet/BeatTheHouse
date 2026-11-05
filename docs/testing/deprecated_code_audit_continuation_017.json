@@ -11,8 +11,8 @@
     "BTH061-AUDIT-PERSISTENCE-PROJECTION-013"
   ],
   "bounded_repair_id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
-  "repair_state": "qualified_commit_and_publication_pending",
-  "associated_commit": null,
+  "repair_state": "committed_published_scoped_child_complete",
+  "associated_commit": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
   "authority": {
     "original_sha256": "45446147aef3f81132a059791c5d61104c553221f397fa4c14ca00a3aff389d4",
     "original_bytes": 1784388,
@@ -236,6 +236,21 @@
         "own_findings": 0,
         "runtime_errors": 54
       }
+    },
+    "association_final_pending": false,
+    "association_receipts": {
+      "current": {
+        "path": "evidence/catalog017-association-current-r1.json",
+        "sha256": "8a36d05537b687dd5ec9a1dc4e184eb9c839b301bdfdeca017f9132f7b461fdd",
+        "own_findings": 0,
+        "outside_findings": 78
+      },
+      "all": {
+        "path": "evidence/catalog017-association-all-r1.json",
+        "sha256": "893bbc1ae8a7d47a9e03b7e3eafe470cbcbdc146c42ca0756412cb229f426164",
+        "own_findings": 0,
+        "outside_findings": 544
+      }
     }
   },
   "evidence_sha256": {
@@ -255,6 +270,28 @@
     "evidence/storage017-inner-capture-independent-native-review-r1.json": "ce7da199727f68b5e5e811f96f58d9da1b807d1ade493c07ff884ad7b00d7a4b",
     "evidence/storage017-manifest-static-alias-review-r1.json": "094245bc3b039a8e3d4459b99e3d6c9ff6c84ddcf1390ec88f8473794c4cbc7f",
     "evidence/catalog017-final-current-r1.json": "fef75e147fc3b9bfa6a723019dfe82f43fda9eac7658f9f2d68ff420f5e9555b",
-    "evidence/catalog017-final-all-r1.json": "0c14b6a8e456d40b332ab8d234a78535d659d57d9a5d910fd48e272bb7fe877a"
+    "evidence/catalog017-final-all-r1.json": "0c14b6a8e456d40b332ab8d234a78535d659d57d9a5d910fd48e272bb7fe877a",
+    "evidence/catalog017-main-publication-r1.json": "afa0f8dfa472f759af56eb0075030bd540decd7fa25eb687f35d0c1b8550306c",
+    "evidence/catalog017-prepublication-independent-review-r1/review.md": "e84a114eac125986dbd5ca3fef3b7db5c27e9e8317007a7df32247d03b8d06ae",
+    "evidence/catalog017-prepublication-independent-review-r1/prepublication-checks.json": "c603c0b29e2c4699d7206f1ccc9722cb89b71cb0a196740f431b261fe41f9846",
+    "evidence/catalog017-staged-source-proof-r1.json": "80a07ae600076ac65c61657e530e9862f7c6915090ff095b9fa5b325814228ce",
+    "evidence/catalog017-ledger-scope-proof-r1.json": "38cff845d2cb0a6d21cdf4bcdd8d8137cd46f0ed6eb70cf6b1fa62d3cb199fdb",
+    "evidence/catalog017-association-current-r1.json": "8a36d05537b687dd5ec9a1dc4e184eb9c839b301bdfdeca017f9132f7b461fdd",
+    "evidence/catalog017-association-all-r1.json": "893bbc1ae8a7d47a9e03b7e3eafe470cbcbdc146c42ca0756412cb229f426164"
+  },
+  "main_publication": {
+    "observed_at": "2026-11-05T15:29:51.611091+00:00",
+    "source_commit": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+    "push_confirmed": true,
+    "remote_main_ls_remote_exact": "3aaee724a63ca37b5942ef45349f32e1707a2dcd",
+    "remote_verification_scope": "Successful authorized normal push plus separate elevated network read returned exact refs/heads/main. Earlier default-sandbox read failed to connect; it was not taken as verification.",
+    "test_only_export_excluded": true,
+    "NEXT_game_acceptance_claimed": false,
+    "parents_remain_open": [
+      "BTH061-AUDIT-001",
+      "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "BTH061-AUDIT-PERSISTENCE-PROJECTION-013"
+    ]
   }
 }

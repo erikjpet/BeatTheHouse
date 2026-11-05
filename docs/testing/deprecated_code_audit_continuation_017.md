@@ -2,7 +2,7 @@
 
 The baseline authority assertion was stale after legitimate authored-content changes. This scoped repair changes two maintained tests and adds two inert reference fixtures; production Schema remains `ec321eb0`, all paused features and files are preserved, and the whole audit remains Open. The [JSON report](deprecated_code_audit_continuation_017.json) pins the evidence and exact task scope.
 
-`BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017` was registered in both ledgers before implementation. It remains Open until its qualified repair has an associated published commit. Audit001, ContentTimeout006, MemoTypeSafety014 and PersistenceProjection013 remain Open independently.
+`BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017` was registered in both ledgers before implementation. Its qualified test-only repair is now Complete with associated commit `3aaee724a63ca37b5942ef45349f32e1707a2dcd`, successfully pushed and separately verified on remote main. Audit001, ContentTimeout006, MemoTypeSafety014 and PersistenceProjection013 remain Open independently.
 
 The unchanged precompute test reproduced its sole original pin failure: current canonical authority is `80ec3bc7`, 1,784,784 bytes; the expected original is `45446147`, 1,784,388 bytes. Actual authority still has 55 definitions and 1,485 pairs with zero findings. A separate capture retained the complete current workproduct.
 
@@ -23,3 +23,7 @@ Static review establishes only a conditional immutability boundary for finite JS
 All six phase017 native Jobs retained the original 180-second / 12% CPU / 2 GiB limits, assigned-before-execution, kill-on-close and no-breakaway, and closed with active0. Four exited0; the original baseline and additive authority capture exited1 on the preserved original pin assertion. All outputs remain. The existing Windows root-certificate diagnostic remains recorded without a certificate/network acceptance claim. No full content, Systems, native donor, production NEXT or global-process acceptance is inferred.
 
 The runtime inventory now has 187 records with its prior 185-record prefix unchanged. Final manual current/all reconciliation reports zero findings in this worker scope; the unchanged outside-scope findings remain 78 current / 544 total, including 54 outside runtime errors. The current and all receipts are pinned in the JSON report. Parent objectives, existing guards and separately assigned production delivery remain Open; cleanup stays stopped.
+
+Publication review passed 51 checks before the scoped commit. The exact historical/current fixture bytes are identical in the Git index; Git normalizes existing text line endings only. Pending `1f24` remains untracked and unpublished. Commit association closes only the bounded reference-repair child; all four parent objectives and separately assigned production NEXT acceptance remain Open.
+
+Post-association manual current/all verification again reports zero findings in this worker scope; 78 current / 544 total outside findings and 54 outside runtime errors remain unchanged. The child is Complete only with its verified source commit; all four parents remain Open.
