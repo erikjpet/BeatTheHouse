@@ -3790,7 +3790,11 @@ func confirm_world_map_travel() -> Dictionary:
 			# one-button acknowledgement first so the shared TalkDock queue cannot
 			# misclassify the requested action as abandoning Pal and add Heat.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true, caller_rollback)
+	# The complete source is restored by the travel wrapper before this caller
+	# publishes its one terminal acknowledgement. Direct travel keeps its default.
+	var travel_choice := JsonCoerceScript._copy_dict(result.get("choice", {}))
+	travel_choice["_caller_presents_travel_failure"] = true
+	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), travel_choice, true, caller_rollback)
 	if bool(travel_result.get("ok", false)):
 		_commit_foundation_coach_attention(caller_rollback)
 	else:
@@ -4065,19 +4069,21 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
 		var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)
 		if not bool(layer_entry.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(event_rollback)
-			_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
-			_refresh()
+			if not caller_owns_event_rollback:
+				_restore_foundation_lifecycle_snapshot(event_rollback)
+				_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
+				_refresh()
 			return {"ok": false, "errors": [str(layer_entry.get("message", "The event could not enter its destination room safely."))]}
 		entered_layer = true
 	if bool(result.get("ok", false)) and bool(result.get("duel_ready", false)):
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(event_rollback)
 			var room_errors := JsonCoerceScript._copy_array(room_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely."
-			_show_message(room_error)
-			_refresh()
+			if not caller_owns_event_rollback:
+				_restore_foundation_lifecycle_snapshot(event_rollback)
+				_show_message(room_error)
+				_refresh()
 			return {"ok": false, "errors": [room_error]}
 	if bool(result.get("ok", false)):
 		last_game_result = {}
@@ -7696,6 +7702,7 @@ func _coach_lifecycle_snapshot() -> Dictionary:
 		"active_dialogue_was_requested": coach_overlay.active_dialogue_was_requested,
 		"active_dialogue_acknowledged": coach_overlay.active_dialogue_acknowledged,
 		"focus_visual_enabled": coach_overlay.focus_visual_enabled,
+		"panel_suppressed": coach_overlay.panel_suppressed,
 		"visible": coach_overlay.visible,
 		"panel_visible": coach_overlay.panel.visible if coach_overlay.panel != null else false,
 		"panel_modulate": coach_overlay.panel.modulate if coach_overlay.panel != null else Color.WHITE,
@@ -7742,6 +7749,7 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	coach_overlay.active_dialogue_was_requested = bool(snapshot.get("active_dialogue_was_requested", false))
 	coach_overlay.active_dialogue_acknowledged = bool(snapshot.get("active_dialogue_acknowledged", false))
 	coach_overlay.focus_visual_enabled = bool(snapshot.get("focus_visual_enabled", true))
+	coach_overlay.panel_suppressed = bool(snapshot.get("panel_suppressed", false))
 	coach_overlay.visible = bool(snapshot.get("visible", false))
 	if coach_overlay.panel != null:
 		coach_overlay.panel.visible = bool(snapshot.get("panel_visible", false))
@@ -8024,6 +8032,13 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 					focus_control = response.get_child(child_index)
 				if focus_control is Control:
 					(focus_control as Control).grab_focus()
+	# Choice/package rendering may start a body reveal while reconstructing its
+	# controls. Restore the captured reveal after those presentation side effects.
+	talk_dock.full_body_text = str(snapshot.get("full_body_text", ""))
+	talk_dock.reveal_elapsed = float(snapshot.get("reveal_elapsed", 0.0))
+	talk_dock.typewriter_active = bool(snapshot.get("typewriter_active", false))
+	talk_dock.reserved_body_line_count = int(snapshot.get("reserved_body_line_count", 1))
+	talk_dock.set_process(bool(snapshot.get("processing", false)))
 
 
 func _talk_dock_control_lifecycle_snapshot(control: Control) -> Dictionary:
@@ -8349,11 +8364,15 @@ func _travel_to_with_lifecycle_snapshot(target_id: String, target_label: String,
 
 
 func _travel_to(target_id: String, target_label: String, choice_data: Dictionary = {}, require_immediate_result: bool = false) -> Dictionary:
+	# Map confirmation owns its terminal acknowledgement after rollback. This
+	# private request flag is never copied into the route or a run receipt.
+	var present_failure := not bool(choice_data.get("_caller_presents_travel_failure", false))
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
-		_show_message("Travel is already in progress.")
-		_refresh_modal_contract_owner()
+		if present_failure:
+			_show_message("Travel is already in progress.")
+			_refresh_modal_contract_owner()
 		return {"ok": false, "errors": ["Travel is already in progress."]}
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
@@ -8381,8 +8400,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		var disabled_reason := str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop."))
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		_show_message(disabled_reason)
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message(disabled_reason)
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [disabled_reason]}
 	if _is_meta_session():
 		var meta_target_id := target_id.strip_edges()
@@ -8401,8 +8421,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		_show_message("That interior casino door is not available.")
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message("That interior casino door is not available.")
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": ["That interior casino door is not available."]}
 	var departure_source_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges() if local_casino_room_move else run_state.current_world_node_id()
 	var departure_kind := "grand_room" if local_casino_room_move else "world"
@@ -8412,8 +8433,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		var departure_error := str(departure_errors[0]) if not departure_errors.is_empty() else "Travel could not begin safely."
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		_show_message(departure_error)
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message(departure_error)
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [departure_error]}
 	var expected_offer_target_id := str(choice_data.get("expected_offer_target_node_id", "")).strip_edges()
 	var offer_route_fare := maxi(0, int(choice_data.get("offer_route_fare", 0)))
@@ -8478,8 +8500,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var clock_errors := JsonCoerceScript._copy_array(clock_result.get("errors", []))
 		var clock_error := str(clock_errors[0]) if not clock_errors.is_empty() else "Travel time could not advance safely."
-		_show_message(clock_error)
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message(clock_error)
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [clock_error]}
 	var expected_home_node_id := str(choice_data.get("expected_active_home_node_id", "")).strip_edges()
 	if not expected_home_node_id.is_empty() and not _character_offer_home_matches(run_state, expected_home_node_id):
@@ -8507,8 +8530,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			var room_errors := JsonCoerceScript._copy_array(install_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The interior casino room could not be prepared."
-			_show_message(room_error)
-			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+			if present_failure:
+				_show_message(room_error)
+				_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [room_error]}
 		if bool(choice_data.get("high_limit_buy_in", false)):
 			run_state.narrative_flags["grand_casino_high_limit_access"] = true
@@ -8523,8 +8547,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			var install_errors := JsonCoerceScript._copy_array(install_result.get("errors", []))
 			var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Travel destination could not be installed."
-			_show_message(install_error)
-			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+			if present_failure:
+				_show_message(install_error)
+				_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 			return {"ok": false, "errors": [install_error]}
 	# Production RunGenerator seals scenario semantics as part of its atomic
 	# install. Retain the fallback for injected/custom generators that do not
@@ -8540,8 +8565,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var finalization_errors := JsonCoerceScript._copy_array(destination_finalization.get("errors", []))
 		var finalization_error := str(finalization_errors[0]) if not finalization_errors.is_empty() else "The arrived room could not be finalized safely."
-		_show_message(finalization_error)
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message(finalization_error)
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [finalization_error]}
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_generation_install_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
@@ -8552,8 +8578,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		var delivery_errors := JsonCoerceScript._copy_array(delivery_arrival.get("errors", []))
 		var delivery_error := str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely."))
-		_show_message(delivery_error)
-		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
+		if present_failure:
+			_show_message(delivery_error)
+			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [delivery_error]}
 	if not expected_home_node_id.is_empty() and (not _character_offer_home_matches(run_state, expected_home_node_id) \
 			or run_state.current_world_node_id() != expected_home_node_id or not run_state.is_current_home_environment()):

@@ -87,7 +87,15 @@ class LifecycleRejectingGenerator:
 	func travel_environment_result(run_state: RunState, target_archetype_id: String, _target_prevalidated: bool = false) -> Dictionary:
 		if not install_world_destination:
 			return super.travel_environment_result(run_state, target_archetype_id, _target_prevalidated)
-		run_state.current_environment = {"id": "%s_fixture" % target_archetype_id, "archetype_id": target_archetype_id, "world_node_id": target_archetype_id, "display_name": "Fixture Destination", "kind": "home", "event_ids": [], "game_ids": [], "item_offers": [], "service_ids": [], "lender_hooks": [], "next_archetypes": []}
+		var destination_rng := RngStream.new()
+		destination_rng.configure(91205)
+		var destination := EnvironmentInstance.from_archetype(library.environment_archetype(target_archetype_id), 1, destination_rng, library).to_dict()
+		destination["id"] = "%s_fixture" % target_archetype_id
+		destination["world_node_id"] = target_archetype_id
+		run_state.current_environment = destination
+		var destination_membership := run_state.reconcile_environment_object_membership(run_state.current_environment)
+		if not bool(destination_membership.get("ok", false)):
+			return destination_membership
 		run_state.world_map["current_node_id"] = target_archetype_id
 		return {"ok": true, "errors": [], "source_id": "bar_node", "target_id": target_archetype_id, "environment": run_state.current_environment.duplicate(true)}
 
@@ -373,6 +381,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	layer_rng.configure(91201)
 	var layered_environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, layer_rng, library).to_dict()
 	layer_probe.run_state.current_environment = layered_environment
+	_prepare_lifecycle_fixture_room(layer_probe)
 	_install_real_event_popup(layer_probe, "side_door")
 	_install_active_tutorial_presentation(layer_probe, "tutorial_family_phone", "event:side_door", "family_phone", scene_tree, true)
 	var layer_hover_signal_count := layer_probe.environment_hover_signal_log.size()
@@ -426,12 +435,23 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 		failures.append("Tutorial event-card completion did not restore its authoritative queue, connected coach, actual TalkDock selection/badge/layout/focus, and popup state exactly before the one terminal layer error.")
 	_free_lifecycle_presentation_probe(layer_probe)
 
-	var map_probe := _lifecycle_probe(library, _lifecycle_run(true))
+	var map_run := _lifecycle_run(true)
+	# The authored coach anchor remains travel:corner_store while this action
+	# deliberately confirms motel. Both must exist in the rendered source map.
+	var map_nodes := _array(map_run.world_map.get("nodes", []))
+	map_nodes.append({"id": "corner_store", "archetype_id": "corner_store", "kind": "store", "tier": 1, "state": "revealed", "seen": true, "label": "Corner Store", "position": {"x": 0.75, "y": 0.25}, "environment": {}})
+	map_run.world_map["nodes"] = map_nodes
+	var map_edges := _array(map_run.world_map.get("edges", []))
+	map_edges.append({"a": "bar_node", "b": "corner_store"})
+	map_run.world_map["edges"] = map_edges
+	var map_probe := _lifecycle_probe(library, map_run)
 	var map_generator := LifecycleRejectingGenerator.new(library)
 	map_generator.install_world_destination = true
 	map_probe.generator = map_generator
+	_prepare_lifecycle_fixture_room(map_probe)
 	_install_real_world_map_popup(map_probe, "motel", "Motel")
 	_install_active_tutorial_presentation(map_probe, "tutorial_travel_corner", "travel:motel", "map_destination", scene_tree)
+	_prepare_lifecycle_world_map_presentation(map_probe)
 	var map_before := _public_caller_probe_state(map_probe)
 	var map_preexisting_talk_tweens: Array = map_probe.talk_dock.attention_tween_lifecycle_snapshot()
 	var map_preexisting_coach_tween: Variant = map_probe.coach_overlay.attention_tween_lifecycle_snapshot().get("tween", null)
@@ -459,6 +479,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	var success_rng := RngStream.new()
 	success_rng.configure(91204)
 	success_probe.run_state.current_environment = EnvironmentInstanceScript.from_archetype(library.environment_archetype("small_underground_casino"), 1, success_rng, library).to_dict()
+	_prepare_lifecycle_fixture_room(success_probe)
 	success_probe._build_event_choice_popup_overlay()
 	success_probe.lifecycle_snapshot_count = 0
 	var event_open_ok := success_probe.activate_interactable_object("event:side_door")
@@ -510,6 +531,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 		"route": {"id": "bar_node_to_motel", "from": "bar_node", "to": "motel", "distance": "near", "cost": 0, "suspicion_delta": 0},
 	}
 	_install_real_world_map_popup(direct_probe, "motel", "Motel")
+	_prepare_lifecycle_fixture_room(direct_probe)
 	var direct_exit_before := _public_caller_probe_state(direct_probe)
 	var direct_exit_message_start := direct_probe.message_log.size()
 	var direct_exit_ok := direct_probe.activate_interactable_object("travel:leave")
@@ -551,6 +573,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	delivery_probe.last_hook_result = {"sentinel": "hook_result"}
 	delivery_probe.selected_travel_target_id = "motel"
 	delivery_probe.selected_travel_label = "Motel"
+	_prepare_lifecycle_fixture_room(delivery_probe)
 	var delivery_before := _caller_probe_state(delivery_probe)
 	var delivery_result := delivery_probe._travel_to("motel", "Motel", {
 		"id": "motel", "label": "Motel", "enabled": true, "distance": "near", "travel_minutes": 6,
@@ -613,6 +636,7 @@ static func _check_lifecycle_caller_failure_contract(library: ContentLibrary, fa
 	forced_probe.current_screen = FoundationMain.SCREEN_ENVIRONMENT
 	forced_probe.selected_action_category = FoundationMain.ACTION_CATEGORY_TRAVEL
 	forced_probe.run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	forced_probe.run_state.narrative_flags["health_inspector_origin_environment_id"] = str(forced_probe.run_state.current_environment.get("id", ""))
 	forced_probe.forced_choice = {"id": "motel", "label": "Motel", "enabled": true}
 	var forced_before := _caller_probe_state(forced_probe)
 	var forced_result := forced_probe._apply_forced_environment_travel("health_inspector")
@@ -630,6 +654,40 @@ static func _lifecycle_probe(library: ContentLibrary, run_state: RunState) -> Li
 	probe.selected_action_category = FoundationMain.ACTION_CATEGORY_TRAVEL
 	return probe
 
+
+static func _prepare_lifecycle_fixture_room(probe: LifecycleCallerProbe) -> void:
+	# Produce the synthetic room's physical envelope and detached catalog before
+	# taking the transaction before-image. Count only autosaves under test.
+	var membership := probe.run_state.reconcile_environment_object_membership(probe.run_state.current_environment)
+	assert(bool(membership.get("ok", false)), "Lifecycle fixture room membership failed: %s" % JSON.stringify(membership))
+	probe._prepare_room_presentation_at_boundary()
+	var authority := probe.run_state.validate_room_action_authority()
+	assert(bool(authority.get("ok", false)), "Lifecycle fixture room authority failed: %s" % JSON.stringify(authority))
+	probe.autosave_count = 0
+
+static func _prepare_lifecycle_world_map_presentation(probe: LifecycleCallerProbe) -> void:
+	# Attach only the existing map controls to the presentation fixture's real
+	# tree. Main itself stays detached so its full boot does not run in a probe.
+	probe.world_map_overlay.reparent(probe.talk_dock_fixture_root, false)
+	probe.world_map_overlay.size = probe.talk_dock_fixture_root.size
+	probe.world_map_holder.size = Vector2(800.0, 430.0)
+	probe.world_map_nodes_layer.size = probe.world_map_holder.size
+	var snapshot := probe._world_map_snapshot()
+	probe.world_map_overlay_controller.sync_node_buttons(snapshot)
+	# Preserve meaningful divergence: the host confirms motel while its live
+	# controller starts on another valid node and keeps distinct cache sentinels.
+	probe.world_map_overlay_controller.sync_from_host("corner_store", "corner_store", "Controller Corner Store", "controller-map-cache", "controller-canvas-cache")
+	probe._apply_talk_dock_environment_reserve()
+	probe._sync_talk_dock_coach_avoid_rect()
+	probe.talk_dock._position_panel()
+	probe._apply_talk_dock_environment_reserve()
+	var settled := _public_caller_probe_state(probe)
+	probe._on_talk_dock_occupied_rect_changed(probe.talk_dock.occupied_global_rect())
+	assert(_public_caller_probe_state(probe) == settled, "Lifecycle world-map fixture did not settle through its current layout owner.")
+	assert(probe.world_map_overlay_controller.global_rect_for_node("corner_store").has_area(), "Lifecycle world-map fixture lacks its actual corner-store anchor control.")
+	assert(probe.coach_overlay.focus_visual_enabled, "Lifecycle world-map fixture unexpectedly hid its coach focus.")
+	assert(probe.selected_world_map_node_id == "motel" and str(probe.world_map_overlay_controller.export_state().get("selected_node_id", "")) == "corner_store", "Lifecycle world-map fixture lost its distinct host/controller selections.")
+	probe.autosave_count = 0
 
 static func _install_real_event_popup(probe: LifecycleCallerProbe, event_id: String) -> void:
 	probe._build_event_choice_popup_overlay()
@@ -1124,6 +1182,8 @@ static func _check_base_semantic_producer(library: ContentLibrary, failures: Arr
 
 static func _check_lifecycle_finalization(library: ContentLibrary, failures: Array) -> void:
 	var definition := finalization_fixture_definition()
+	# This contract exercises authored world-boundary ingress and its capacity guard.
+	definition["sequence"]["fact_subscriptions"].append("world_boundary")
 	definition["sequence"]["expiry"] = {"boundary": "night_end", "after": 1, "policy": "cleanup"}
 	definition["sequence"]["sequence_signature"] = SequenceSchemaScript.calculated_signature_hash(definition)
 	var run_state := RunStateScript.new()
@@ -4953,68 +5013,45 @@ static func _delivery_event_module_run_state(definition: Dictionary, library: Co
 	var environment := EnvironmentInstanceScript.from_archetype(library.environment_archetype("corner_store"), 1, rng, library, {}, installed_definition).to_dict()
 	environment["world_node_id"] = DELIVERY_NODE_ID
 	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
-	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
-	var stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(authoritative.get("records", [])), environment, library)
-	var produced := EnvironmentBaseSemanticRecordsScript.from_interactable_records(_array(stamped.get("records", [])))
-	var base_interactions := _array(produced.get("interactions", []))
-	var base_actors := _array(produced.get("actors", []))
-	var instance_inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library, base_interactions, base_actors)
-	var inventory_errors := _array(authoritative.get("errors", [])) + _array(stamped.get("errors", [])) + _array(produced.get("errors", [])) + EnvironmentSemanticInventoryScript.validate(instance_inventory)
-	if not inventory_errors.is_empty():
-		environment["scenario_sequence_lifecycle_errors"] = inventory_errors
-		run_state.current_environment = environment
+	# Cross the complete current owning installation boundary: reconstruct the
+	# catalog definition/cache, install RunState, then finalize and publish. Raw
+	# EnvironmentInstance.to_dict() intentionally omits the trusted definition.
+	var generator = RunGeneratorScript.new(library)
+	var installed := generator._install_environment(run_state, environment)
+	if not bool(installed.get("ok", false)):
+		run_state.current_environment["scenario_sequence_lifecycle_errors"] = ["EventModule fixture installation failed: %s" % JSON.stringify(installed.get("errors", []))]
 		return run_state
-	var event_choices := EnvironmentSemanticInventoryScript.event_choice_index(_array(environment.get("event_ids", [])), library)
-	var trusted_delivered := delivered.duplicate(true)
-	var semantic := _dict(trusted_delivered.get("semantic_state", {}))
-	var exact_inventory := EnvironmentSemanticInventoryScript.exact_collections(instance_inventory)
-	exact_inventory["event_choices"] = event_choices.duplicate(true)
-	semantic["target_inventory"] = exact_inventory
-	semantic["declared_targets"] = SequenceSchemaScript.verified_declared_targets(installed_definition, exact_inventory)
-	semantic["base_interactions"] = base_interactions.duplicate(true)
-	semantic["inventory_schema_version"] = int(instance_inventory.get("schema_version", 0))
-	semantic["inventory_digest"] = str(instance_inventory.get("digest", ""))
-	semantic["event_choices"] = event_choices.duplicate(true)
-	trusted_delivered["semantic_state"] = semantic
-	environment["scenario_state"] = ScenarioEngineScript.initial_state(installed_definition)
-	environment["scenario_sequence_definition"] = installed_definition
-	environment["scenario_sequence_state"] = trusted_delivered
-	environment["scenario_base_interactions"] = base_interactions.duplicate(true)
-	environment["scenario_base_actors"] = base_actors.duplicate(true)
-	environment["scenario_semantic_inventory"] = instance_inventory
-	environment["scenario_semantic_inventory_version"] = int(instance_inventory.get("schema_version", 0))
-	environment["scenario_semantic_digest"] = str(instance_inventory.get("digest", ""))
-	environment["scenario_semantic_action_digest"] = SequenceRuntimeScript.base_interaction_action_authority_digest(base_interactions)
-	environment["scenario_semantic_ready"] = true
-	environment["scenario_restore_contract"] = RunStateScript.ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1
-	environment["scenario_event_choices"] = event_choices
-	environment["scenario_layout_base_records"] = _array(stamped.get("records", []))
-	environment["scenario_layout_context"] = {}
-	# This boundary is about EventModule's atomic result publication, not active
-	# room geometry. Derive a real passive seal from the production layout
-	# resolver, then retain the exact catalog-authenticated awaiting-stock state.
-	var passive_state := trusted_delivered.duplicate(true)
-	passive_state["status"] = SequenceRuntimeScript.STATUS_CLEANED
-	var passive_projection := SequenceRuntimeScript.public_projection(passive_state, installed_definition)
-	var passive_layout := ScenarioLayoutResolverScript.resolve(_array(stamped.get("records", [])), passive_projection, environment)
-	if not bool(passive_layout.get("ok", false)):
-		environment["scenario_sequence_lifecycle_errors"] = _array(passive_layout.get("errors", []))
-		run_state.current_environment = environment
+	if not run_state._scenario_semantic_ready():
+		run_state.current_environment["scenario_sequence_lifecycle_errors"] = ["EventModule fixture installation omitted its active semantic seal."]
 		return run_state
-	environment["scenario_sequence_projection"] = _dict(passive_layout.get("projection", {}))
-	environment["scenario_layout_authority"] = _dict(passive_layout.get("layout_authority", {}))
-	environment["scenario_layout_audit"] = _dict(passive_layout.get("layout_audit", {}))
-	environment["scenario_layout_authority_digest"] = str(passive_layout.get("layout_authority_digest", ""))
-	environment["scenario_render_snapshot"] = ScenarioLayoutResolverScript.sealed_renderer_snapshot(passive_layout)
-	var normalization_probe := environment.duplicate(true)
-	var normalized_state := ScenarioEngineScript.ensure_sequence_state(normalization_probe, installed_definition)
-	if str(normalized_state.get("status", "")) != SequenceRuntimeScript.STATUS_ACTIVE:
-		var host_probe := ScenarioEngineScript.sequence_host_semantics(environment)
-		var initial_probe := SequenceRuntimeScript.initial_state(installed_definition, DELIVERY_NODE_ID, "event_boundary_probe", host_probe)
-		environment["scenario_sequence_lifecycle_errors"] = ["event boundary normalization probe: %s initial=%s host=%s" % [JSON.stringify(normalized_state.get("errors", [])), JSON.stringify(initial_probe.get("errors", [])), JSON.stringify(host_probe.get("inventory_errors", []))]]
-	run_state.current_environment = environment
+	for row_value in [
+		{"command": "inspect_manifest", "object": "delivery_event_gate", "receipt": "delivery:inspect"},
+		{"command": "shift_cartons", "object": "delivery_cartons", "receipt": "delivery:shift"},
+		{"command": "request_stock_check", "object": "sorting_shelf", "receipt": "delivery:request"},
+	]:
+		var row := _dict(row_value)
+		var state := _dict(run_state.current_environment.get("scenario_sequence_state", {}))
+		var command := _runtime_command(state, installed_definition, str(row["command"]), DELIVERY_NODE_ID, str(state.get("phase_id", "")), str(row["receipt"]), {}, "scenario", str(row["object"]))
+		var applied := run_state.scenario_sequence_command(
+			str(row["command"]), str(row["receipt"]), {}, "scenario", str(row["object"]), {},
+			str(command.get("action_origin_owner_namespace", "")), str(command.get("action_origin_stable_object_id", "")),
+			str(command.get("action_origin_receipt_key", "")), str(command.get("action_origin_boundary_id", "")), str(command.get("action_origin_fingerprint", ""))
+		)
+		if not bool(applied.get("ok", false)):
+			run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(applied.get("errors", []))
+			return run_state
+	var drained := run_state.scenario_drain_event_requests()
+	if not bool(drained.get("ok", false)):
+		run_state.current_environment["scenario_sequence_lifecycle_errors"] = _array(drained.get("errors", []))
+		return run_state
+	var actual := _dict(run_state.current_environment.get("scenario_sequence_state", {}))
+	# Confirm this new producer still establishes the same requested causal phase,
+	# outcome, command receipts and one drained request; renderer-owned provenance
+	# is intentionally produced by the current real installation boundary.
+	for key in ["phase_id", "status", "command_receipts", "event_request_queue", "event_request_history", "resolved_outcomes", "event_choice_receipts"]:
+		if JSON.stringify(actual.get(key)) != JSON.stringify(delivered.get(key)):
+			run_state.current_environment["scenario_sequence_lifecycle_errors"] = ["EventModule fixture production setup changed expected %s (%s)." % [key, seed_suffix]]
 	return run_state
-
 
 static func _delivery_event_module_observation(run_state) -> Dictionary:
 	return {

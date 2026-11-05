@@ -6,6 +6,7 @@ const EnvironmentInteractionControllerScript := preload("res://scripts/ui/enviro
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
@@ -706,6 +707,16 @@ static func _seeded_description_observer(library: Variant, archetype_id: String,
 		"scenario_pins_apply_mutations": true,
 	})
 	run_state.start_new(observer_seed, observer_config)
+	# Pins select a situation within an active venue cycle; observe at its opening.
+	# Prepare time before hidden fixtures or map priming through the clock owner.
+	var observer_archetype: Dictionary = library.environment_archetype(archetype_id)
+	var observer_cycle := EnvironmentHoursScript.scenario_cycle_status(observer_archetype, run_state.game_clock_minutes)
+	if not bool(observer_cycle.get("active", false)):
+		var observer_clock := run_state.advance_game_clock_minutes(int(observer_cycle.get("next_open_at", run_state.game_clock_minutes)) - run_state.game_clock_minutes)
+		observer_cycle = EnvironmentHoursScript.scenario_cycle_status(observer_archetype, run_state.game_clock_minutes)
+		if not bool(observer_clock.get("ok", false)) or not bool(observer_cycle.get("active", false)):
+			failures.append("env06_8 paired observer could not prepare an active scenario cycle for %s: %s" % [scenario_id, JSON.stringify(observer_clock.get("errors", []))])
+			return {}
 	if hidden_profile == "turn_and_grievance":
 		var turn := CrewTurnModelScript.empty_state()
 		turn["m"] = str(CrewStateModelScript.MEMBER_IDS[1])
