@@ -29,3 +29,7 @@ The screened callback diagnostic and its partials were excluded. Its entire task
 The runtime inventory now contains 192 records, preserving its prior 191-record prefix. Final current/all reconciliation and evidence-commit association are recorded before reporting publication. A bounded diagnostic checkpoint does not close its parent objectives.
 
 Prepublication current/all manual checks report zero findings in this worker scope, with 150 current / 766 total outside findings and 97 outside runtime errors. The 28 additional findings since registration are outside runtime observations crossing the age threshold; their records are unchanged. The scope check also caught unintended plan text re-encoding: its prior file is preserved and baseline text outside the four audit rows was restored exactly before publication.
+
+The six-file evidence checkpoint is published as `8d80355a514e151a91ab719e2598fe13d7db2209`, separately verified on remote main. That evidence commit is associated with all four related IDs in both task views; all remain Open. The copy candidate remains unapplied and unaccepted, with production source and NEXT acceptance unchanged.
+
+Post-association current/all manual checks again report zero findings in this worker scope. Latest outside counts are 164 current / 780 total, with 109 outside runtime errors. Additional age classifications since prepublication are recorded by code in the JSON report; no outside rows or observations were rewritten. All four IDs remain Open with the evidence commit associated.

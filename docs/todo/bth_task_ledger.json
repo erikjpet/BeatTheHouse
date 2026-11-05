@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T18:06:08.880100+00:00",
+  "updated_at": "2026-11-05T18:13:07.807956+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13763,6 +13763,13 @@
             "docs/testing/deprecated_code_audit_continuation_018.md",
             "docs/testing/deprecated_code_audit_continuation_018.json"
           ]
+        },
+        {
+          "sha": "8d80355a514e151a91ab719e2598fe13d7db2209",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md",
+            "docs/testing/deprecated_code_audit_continuation_019.json"
+          ]
         }
       ],
       "deployment": {
@@ -13909,12 +13916,17 @@
           "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
           "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
           "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
+        },
+        {
+          "kind": "published_runtime019_measurement_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Evidence commit8d80355a published normally and separately verified on remote main. Canonical16 and complete48parity/288timed comparison pass; candidate lacks consistent gain and remains unapplied/unaccepted. Four IDs remain Open; no production or NEXT acceptance."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Publish this bounded checkpoint and continue permitted source-supported audit work outside paused areas. The one-line cached-result clone candidate stays unapplied after inconsistent cost evidence. Preserve all files, authority and guards; the excluded screened branch remains unchanged and the whole audit remains Open.",
+      "next_action": "Checkpoint 8d80355a is published; continue permitted source-supported audit work outside paused areas. The one-line cached-result clone candidate stays unapplied after inconsistent cost evidence. Preserve all files, authority and guards; the excluded screened branch remains unchanged and the whole audit remains Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13926,7 +13938,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:06:08.880100+00:00"
+      "updated_at": "2026-11-05T18:13:07.807956+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20800,6 +20812,13 @@
             "docs/testing/deprecated_code_audit_continuation_018.md",
             "docs/testing/deprecated_code_audit_continuation_018.json"
           ]
+        },
+        {
+          "sha": "8d80355a514e151a91ab719e2598fe13d7db2209",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md",
+            "docs/testing/deprecated_code_audit_continuation_019.json"
+          ]
         }
       ],
       "deployment": {
@@ -20964,6 +20983,11 @@
           "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
           "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
           "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
+        },
+        {
+          "kind": "published_runtime019_measurement_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Evidence commit8d80355a published normally and separately verified on remote main. Canonical16 and complete48parity/288timed comparison pass; candidate lacks consistent gain and remains unapplied/unaccepted. Four IDs remain Open; no production or NEXT acceptance."
         }
       ],
       "implementation_batches": [],
@@ -20979,7 +21003,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:06:08.880100+00:00"
+      "updated_at": "2026-11-05T18:13:07.807956+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23421,6 +23445,13 @@
             "docs/testing/deprecated_code_audit_continuation_018.md",
             "docs/testing/deprecated_code_audit_continuation_018.json"
           ]
+        },
+        {
+          "sha": "8d80355a514e151a91ab719e2598fe13d7db2209",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md",
+            "docs/testing/deprecated_code_audit_continuation_019.json"
+          ]
         }
       ],
       "deployment": {
@@ -23490,6 +23521,11 @@
           "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
           "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
           "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
+        },
+        {
+          "kind": "published_runtime019_measurement_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Evidence commit8d80355a published normally and separately verified on remote main. Canonical16 and complete48parity/288timed comparison pass; candidate lacks consistent gain and remains unapplied/unaccepted. Four IDs remain Open; no production or NEXT acceptance."
         }
       ],
       "implementation_batches": [],
@@ -23505,7 +23541,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:06:08.880100+00:00"
+      "updated_at": "2026-11-05T18:13:07.807956+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -24127,7 +24163,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "8d80355a514e151a91ab719e2598fe13d7db2209",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md",
+            "docs/testing/deprecated_code_audit_continuation_019.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -24145,6 +24189,11 @@
           "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
           "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
           "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
+        },
+        {
+          "kind": "published_runtime019_measurement_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Evidence commit8d80355a published normally and separately verified on remote main. Canonical16 and complete48parity/288timed comparison pass; candidate lacks consistent gain and remains unapplied/unaccepted. Four IDs remain Open; no production or NEXT acceptance."
         }
       ],
       "implementation_batches": [],
@@ -24160,7 +24209,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:06:08.880100+00:00"
+      "updated_at": "2026-11-05T18:13:07.807956+00:00"
     }
   ],
   "batches": [

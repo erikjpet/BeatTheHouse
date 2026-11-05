@@ -10,7 +10,7 @@
     "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
     "BTH061-AUDIT-RUNTIME-OWNED-COPY-019"
   ],
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "8d80355a514e151a91ab719e2598fe13d7db2209",
   "canonical_leaf": {
     "observed_at": "2026-11-05T17:31:37.717619+00:00",
     "qualified": true,
@@ -2823,7 +2823,38 @@
       }
     },
     "outside_removed_since_registration": {},
-    "interpretation": "Only28 additional outside runtime stale-observation classifications; all outside records are preserved. Checker exit1 is outside-scope findings, not a passing whole backlog."
+    "interpretation": "Only28 additional outside runtime stale-observation classifications; all outside records are preserved. Checker exit1 is outside-scope findings, not a passing whole backlog.",
+    "association_pending": false,
+    "association": {
+      "current": {
+        "path": "evidence/catalog019-association-current-r1.json",
+        "sha256": "bd775852eadfac6217c11b87a05a950c443f13e16ff280741a50fd8ee7960208",
+        "findings": 164,
+        "own_findings": 0,
+        "outside_findings": 164,
+        "runtime_errors": 109,
+        "instances_checked": 192
+      },
+      "all": {
+        "path": "evidence/catalog019-association-all-r1.json",
+        "sha256": "e71d5d8c7b6ffd9594a3eee16bb8bbbe3bbaa59cfeb46201e6cc0269cc40674a",
+        "findings": 780,
+        "own_findings": 0,
+        "outside_findings": 780,
+        "runtime_errors": 109,
+        "instances_checked": 192
+      }
+    },
+    "outside_added_since_prepublication": {
+      "current": {
+        "BLOCKER_STALE": 2,
+        "RUNTIME_STALE_OBSERVATION": 12
+      },
+      "all": {
+        "BLOCKER_STALE": 2,
+        "RUNTIME_STALE_OBSERVATION": 12
+      }
+    }
   },
   "evidence_sha256": {
     "evidence/catalog019-registration-r1.json": "397423517248f6dd546f2b7d7d09966b2d6a495f8a8227526abc0b6457f217ec",
@@ -2851,6 +2882,23 @@
     "evidence/catalog019-plan-exact-scope-repair-r1.json": "4f72da4f1840f3922f1059395edcf62a17ed11cb4e8918303dcaf29c5a5eccac",
     "evidence/catalog019-prepublication-scope-proof-r1.json": "2b3380f54bbdfaf3b4757033fabee16fba379e5c575ee38da68cf1e463130de6",
     "evidence/catalog019-prepublication-current-r1.json": "30205b8649d87266c851ae078b5853735a901ff3d959fa03a4db7171d56fd585",
-    "evidence/catalog019-prepublication-all-r1.json": "c9f6cf0039eb27c067acd0ca48b671a57a2b5ce3884a2a4ffb24de40aed1e8e8"
+    "evidence/catalog019-prepublication-all-r1.json": "c9f6cf0039eb27c067acd0ca48b671a57a2b5ce3884a2a4ffb24de40aed1e8e8",
+    "evidence/catalog019-main-publication-r1.json": "c8c38935096cf9d4bfa5f05f5ce598a8a0ecc3b04f52fc35e075d2cefdaa1574",
+    "evidence/catalog019-publication-scope-independent-review-r1.json": "c334dc8163f1cd2e6613a8eb324ae640f47c4c7d31da982281ae33bbaeff6a95",
+    "evidence/catalog019-staged-scope-proof-r1.json": "5e6914c3c5b496570194d42cd9735c3015409e2adfd6d8dbd1b2be06a81f5c1c",
+    "evidence/catalog019-association-current-r1.json": "bd775852eadfac6217c11b87a05a950c443f13e16ff280741a50fd8ee7960208",
+    "evidence/catalog019-association-all-r1.json": "e71d5d8c7b6ffd9594a3eee16bb8bbbe3bbaa59cfeb46201e6cc0269cc40674a"
+  },
+  "main_publication": {
+    "observed_at": "2026-11-05T18:13:07.807956+00:00",
+    "evidence_commit": "8d80355a514e151a91ab719e2598fe13d7db2209",
+    "normal_push_confirmed": true,
+    "remote_main_ls_remote_exact": "8d80355a514e151a91ab719e2598fe13d7db2209",
+    "scope": "Six documentation/task-record files only; two qualified native measurements and candidate rejection. Production source unchanged.",
+    "all4_ids_remain_open": true,
+    "candidate_applied": false,
+    "screened_branch_retried_or_rerouted": false,
+    "NEXT_acceptance_claimed": false,
+    "independent_scope_review_sha256": "c334dc8163f1cd2e6613a8eb324ae640f47c4c7d31da982281ae33bbaeff6a95"
   }
 }
