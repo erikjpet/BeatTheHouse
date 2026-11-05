@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T04:55:03.032640+00:00",
+  "updated_at": "2026-11-05T05:07:28.658435+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13676,6 +13676,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
         }
       ],
       "deployment": {
@@ -13752,6 +13758,11 @@
           "kind": "cleanup_stopped_bug_fix_continuation",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "No further obsolete-code removal. Scoped late-duel defect repaired and committed; catalog owner/limit mismatch investigated, exact maintained-stage measurement separate. Whole requested audit remains incomplete/Open."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
         }
       ],
       "implementation_batches": [
@@ -13769,7 +13780,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:34:02.257639+00:00"
+      "updated_at": "2026-11-05T04:59:11.338692+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20513,7 +20524,7 @@
         }
       },
       "state": "open",
-      "status": "MAINTAINED_SYSTEMS_CORE_300S_TIMEOUT_REPRODUCED",
+      "status": "CURRENT_SYSTEMS_TIMEOUT_WITH_ORIGINAL_ORDER_PHASE_ATTRIBUTION",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20548,6 +20559,12 @@
           "sha": "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
         }
       ],
@@ -20608,10 +20625,25 @@
           "kind": "exact_maintained_inner_stage_timeout",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Current exact4/55Systems plan timed out in firstsystems_core shard at300.295s; no completion or55checks-passclaim. Canonical43.712suitebudgetalsoexceeded. Outer330supervisor didnotexpire; allownedprocesses0. Limits/order/assertions unchanged;9bnativequalification separate."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
+        },
+        {
+          "kind": "current_original_order_timing_observer",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Complete4/55recipe preserved under300/43.712guard. Frozen observer3originalsrestorebyteexact; calls/assertions/profiles retained. Timings identifycompletedpredecessors andin-flightphase, withperprofileworldsnapshots whenreached. Diagnosticcopiedresourceidentities/overhead explicit; noaggregatepassclaimed."
+        },
+        {
+          "kind": "measured_owner_disposition",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Observed134profileprefix: targettravel75.570s,layer16.432s,initial14.011s; runtimeTrace1.027s. Nestedtravelinstall45.046s/finalize31.890s vsprime1.565s identifiesnextowner, notproofitsinternalcause. Retainall220plannedprofiles andcurrentguard; no candidateoptimizationyet."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Profile exact systems_core/full content validation before its first completion under the existing canonical guards, then repair measured repeated work while preserving every assertion/profile and predecessor. Original full180 diagnostic and current4/55stage remain unqualified; do not infer success from focused pieces or increase limits.",
+      "next_action": "Attribute internal costs in RunState.scenario_finalize_installed_environment and generator layer-entry installation, then optimize measured repeated work with exact state/RNG/authority and current full-stage regression evidence. Prefix timings do not support priming or description-traversal dominance. Preserve every assertion/profile, independent fixture, predecessor and ingress/default; do not raise guards. Cleanup remains stopped.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20623,7 +20655,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:53:40.303763+00:00"
+      "updated_at": "2026-11-05T05:07:28.658435+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -21734,7 +21766,7 @@
         }
       },
       "state": "open",
-      "status": "COMMITTED_FOCUSED_DUEL_REGRESSION_PASS_NEXT_DELIVERY_OPEN",
+      "status": "PUBLISHED_MAIN_DUEL_FOCUSED_PASS_NEXT_COLD_IMPORT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21743,6 +21775,12 @@
       "commits": [
         {
           "sha": "546dfe48e3a4c04e118d1055ec7624ec91da2dbc",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md"
+          ]
+        },
+        {
+          "sha": "45af92d9c8e663094cd322165aeafbe2a046da1f",
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
@@ -21755,7 +21793,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_010.md"
         ],
-        "scope": "Tested late-duel commit546dfe48e3a4c04e118d1055ec7624ec91da2dbc requires publication and exact NEXT delivery; served7ac predates this fix."
+        "scope": "Published source546dfe48 in main45af92d9. Exact watcher45af at2026-11-05T04:57:29Z failed cold-import qualification required; served7ac predates fix. Delivery remains Open."
       },
       "evidence": [
         {
@@ -21767,20 +21805,28 @@
           "kind": "real_producer_baseline_and_canonical_regression",
           "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
           "summary": "Baseline13 failed checks with actual rejected direct transition installed after natural flush; unchanged external4cases and maintained4cases pass after repair. Baseline and all owned saves retained."
+        },
+        {
+          "kind": "published_main_and_current_watcher",
+          "reference": "docs/testing/deprecated_code_audit_continuation_010.md",
+          "summary": "Remote main exact45af92d9; tested source546dfe48. Existing watcher available/build45af failed cold-import qualification required; exact7ac remains deployed. No pipeline/guard/reserve changes or bypass; qualification separately owned."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified duel bug commit through authorized main and existing watcher, then verify exact deployed source/assets. Complete remaining wrapper-focused compatibility and maintained Systems-stage evidence without weakening guards.",
+      "next_action": "Follow existing NEXT owner after required cold-import qualification, then verify exact source/tree/provenance/assets and relevant launch acceptance. All four event and four wrapper cases pass with owned saves; no additional cleanup or paused feature work.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No external blocker to this scoped active investigation/verification. Latest parent explicitly stops cleanup while playtesting and issue fixes continue; no new general module hold is inferred.",
+        "state": "active",
+        "kind": "external_validation_dependency",
+        "description": "Existing NEXT watcher for45af92d9: Asset/importer/settings inputs changed; cold-import qualification required. Qualification is separately owned; no bypass/restart authorized or attempted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:34:02.257639+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T04:59:11.338692+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation010-next-block-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:53:40.303763+00:00"
+      "updated_at": "2026-11-05T04:59:11.338692+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-009",

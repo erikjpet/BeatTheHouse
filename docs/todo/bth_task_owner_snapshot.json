@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T04:53:40.303763+00:00",
+  "observed_at": "2026-11-05T05:06:18.448227+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T04:53:40.303763+00:00",
-      "source": "Actual root qualifying/publishing committed late-duel bug546dfe48, exact maintained Systems4/55stage and wrapper compatibility; read-only reviewers active. Cleanup stopped; historical phase009 exact7ac delivery verified. Whole audit and original forced-travel success/aggregate scope Open. No pipeline or guard changes."
+      "observed_at": "2026-11-05T05:06:18.448227+00:00",
+      "source": "Actual root finalizing committed/published duel546dfe48, tested4event+4wrappercases, retained exact Systems300timeout plusoriginal-orderprofile; allsixownedjobsclosed0. Exactprior7ac verified; new45afwatcher failedcold-importqualification separatelyowned. Cleanupstopped; nopeer/service/guardchanges. Wholeaudit, catalogperformance, requireddueldelivery and originalforced-travel successpathOpen."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
