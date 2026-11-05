@@ -1,0 +1,658 @@
+{
+  "schema": "bth.audit_continuation016/v1",
+  "draft": false,
+  "snapshot_only": true,
+  "created_utc": "2026-11-05T13:02:45.127405+00:00",
+  "root_finalization_pending": false,
+  "scope": "Evidence checkpoint only; prior witnesses retain their named epochs. Published Schema restored; no phase016 game source/regression accepted for main. All four objectives remain Open.",
+  "published_base": {
+    "main_commit": "1b2b56d61d5ccb24b4d12083d0bf1e648d825748",
+    "schema_sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee",
+    "canonical_R3_test_sha256": "43c38bda057752580a598507110b921041113cf59f6a37100ef86c6ea8b60cc9"
+  },
+  "local_unaccepted_working_snapshot": {
+    "schema_sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee",
+    "published_schema_restored": true,
+    "untracked_pending_test": "scripts/tests/scenario_validation_memo_type_safety_check.gd",
+    "test_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "test_published": false,
+    "all_prototype_artifacts_preserved": true
+  },
+  "open_objectives": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013"
+  ],
+  "memo": {
+    "same_R2_test_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "canonical_red_green": {
+      "baseline_checks": 41,
+      "baseline_failures": 11,
+      "candidate_2ec_checks": 56,
+      "candidate_2ec_failures": 0,
+      "candidate_d66_checks": 56,
+      "candidate_d66_failures": 0
+    },
+    "candidate_2ec_schema_sha256": "2ec80e2d4e9492487e45d3635e9a95379d164f1dea6f22d2a253a918684c10f4",
+    "candidate_d66_schema_sha256": "d66dfffdc862ab4ce37794f96d08c6f2a9a489792436cf3f1b0b96b90343f950",
+    "matched_cost": {
+      "driver_sha256": "30ce1ce9e53c349f2a37091ee23f7eb4f9f8b124d99cbcfac6af5b24cdd1777f",
+      "input_bank_variant_sha256": "de5a978ff528efdcb40fa61ad94a5a8d4a545df54c564c141fb6b585e629ad60",
+      "positive_input_variant_sha256": "ecd3301b4730d23387dd1e75db62436f5e66adc456f1300823f5477dba8e5184",
+      "checks_each_candidate": 94,
+      "keys_admitted": 198,
+      "actual_hits": 32,
+      "full_validation_runs": 1,
+      "original_mean_usec": 777.9375,
+      "rejected_2ec_mean_usec": 3545.15625,
+      "rejected_2ec_ratio_to_original": 4.5571221981200285,
+      "d66_mean_usec": 2881.5625,
+      "d66_ratio_to_original": 3.7041054069253634,
+      "d66_lower_than_rejected_2ec_percent": 18.71832165366477,
+      "decision": "2ec performance rejected; d66 still unaccepted"
+    },
+    "components": {
+      "checks": 1437,
+      "samples": 1188,
+      "references": 56,
+      "separate_passes": 6,
+      "custody_before_after_exact": true,
+      "memo_activity_zero": true,
+      "largest_separately_measured_component": "payload_admission",
+      "repeat_population_means_usec": {
+        "raw55_repeat": {
+          "payload_construction": 163.0,
+          "raw_inventory_admission": 4.25454545454545,
+          "payload_admission": 4542.75454545455,
+          "binary_encode": 748.890909090909,
+          "hex_hash": 604.509090909091,
+          "actual_whole_key_control": 6175.77272727273
+        },
+        "positive_repeat_key": {
+          "payload_construction": 246.84375,
+          "raw_inventory_admission": 49.71875,
+          "payload_admission": 2095.625,
+          "binary_encode": 259.84375,
+          "hex_hash": 232.03125,
+          "actual_whole_key_control": 2966.34375
+        }
+      },
+      "summing_or_subtracting_separate_passes_prohibited": true
+    },
+    "recursive_candidate": {
+      "schema_sha256": "998fe73ef27cf1a1445ffb33cc9bf6f861e753eb763b202f62620c34738de1c3",
+      "same_R2_checks": 56,
+      "failed_assertions": 0,
+      "boundary_checks_each": 29,
+      "boundary_cases": 9,
+      "same_cost_checks": 94,
+      "actual_hit_mean_usec": 2995.90625,
+      "ratio_to_original": 3.8510886157306983,
+      "higher_than_d66_percent": 3.9681162563713235,
+      "decision": "Rejected: no observed performance benefit; exact inverse restored d66, then publishedec was restored for the maintained baseline. No statistical significance claim."
+    }
+  },
+  "layout_capture": {
+    "status": "Canonical capture and72-call replay qualified at recorded epochs; native component analysis complete. No production optimization or parent acceptance.",
+    "report_file_checks_before_own_install": 76,
+    "final_stdout_checks_including_installation": 78,
+    "packets": [
+      {
+        "name": "root",
+        "layer": "casino",
+        "bytes": 5389956,
+        "sha256": "5be074cec0330950ee7d5d989e0aa87cb14f7d0c2994e516e7a19a5946a391e6",
+        "entry_sha256": "4df61aec9348df1d2d2f5cacc9a11e3aacfb10def592117d35413fcfc77971df",
+        "returned_sha256": "14b3627150613231bfd507535b528a5409d44b4e13aaa00194af91e19a317833",
+        "mutated_sha256": "6b2bd9346990d26b3ab57d0f1f1c22ae8a049f30835330b215f6bb379c96d547"
+      },
+      {
+        "name": "root-0",
+        "layer": "casino",
+        "bytes": 2079852,
+        "sha256": "a766a8c40a4140945aa3cd944ff3ba9607c8cb9f0679dfc8f702f239f47a0921",
+        "entry_sha256": "09116e4d7b153440b2b1be264d1f9915e743e14ba484a7f7f1db732aa0558b85",
+        "returned_sha256": "14b3627150613231bfd507535b528a5409d44b4e13aaa00194af91e19a317833",
+        "mutated_sha256": "e5d2c9e081bd89ec0d6132f7f1593612aa4ec305d6a6f75569230b96b5a5524f"
+      },
+      {
+        "name": "root-1",
+        "layer": "club",
+        "bytes": 356088,
+        "sha256": "e69f98df134d314a158ac6fe6cdd23dee17417e4139454dc1fa8255e0bc423e9",
+        "entry_sha256": "6be83b89a84890a9a82e3a2fcbeaff9f3b6c2b8f10b67977a66ae8852e1c41c9",
+        "returned_sha256": "153d2fdcfd7f65f2a1c7d5a53744557a499e8afa967843dde87bc7deaa77ac8c",
+        "mutated_sha256": "407270e607d9cf6f3b413d9a68db1da9147ec63b99cf8cb34d8479f0fb331a19"
+      },
+      {
+        "name": "root-2",
+        "layer": "back_room",
+        "bytes": 429392,
+        "sha256": "a390a4b950f56634318ed74db007af7706ea1cffaf2fa143f7b25d809142f702",
+        "entry_sha256": "1b757cd97cdbdd573cff95b7c8cba0a424c7995cd6a6b1663a36452d70c918d9",
+        "returned_sha256": "6f741cf53bd559555747293b2d9ab8456a558e73f674d0d33e833f2086880314",
+        "mutated_sha256": "1b757cd97cdbdd573cff95b7c8cba0a424c7995cd6a6b1663a36452d70c918d9"
+      }
+    ],
+    "durable_oracle_bytes": 491332,
+    "durable_oracle_sha256": "e6bd40ad13ee9486018228d7f96c93a355963df687b6752b0995286a4166b3a9",
+    "diagnostic_off_on_exact": true,
+    "original_input_and_named_aliases_preserved": true,
+    "plain_live_container_domain": {
+      "all_observed_live_containers_mutable_untyped_without_script_constraints": true,
+      "historical_unarchived_inmemory_flags_proved": false,
+      "arbitrary_alias_topology_proved": false,
+      "container_path_descriptors": 12497,
+      "all_complete_and_no_opaque_cycle_boundary_or_unsupported_flags": true,
+      "entry_and_post_inventories": 8,
+      "scope": "Current decoded ingress and actual canonical entry/post-assignment observations only; repeated path descriptors are not unique-container counts",
+      "next_replay_container_flag_gate_passes": true
+    },
+    "root_2_identity_caveat": {
+      "current_layout_is_actual_returned_dictionary": true,
+      "entry_equals_full_mutated_argument_bytes": true,
+      "packet": "root-2",
+      "old_object_manifest_reference_replaced": true,
+      "old_layout_reference_replaced": true,
+      "implication": "Contents alone do not preserve named identity side effects; replay must compare alias facts and old-alias contents too"
+    },
+    "source_restore": {
+      "source_count": 1245,
+      "support_count": 4,
+      "source_manifest_sha256": "679998d9f8aff684c2d249d6959e2335faec817f11042d4109f959f37452966a",
+      "all_sources_support_restored_exact": true,
+      "custody_all_exact": true,
+      "restore_after_owned_active_zero": true,
+      "run_state_original_sha256": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+      "run_generator_original_sha256": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd"
+    },
+    "retained_custody_metadata_only": {
+      "raw": {
+        "bytes": 5261320,
+        "sha256": "ec23d65193fe01b0710a1d516672825c189e15aecc5b5dfa3b2879f89a134247",
+        "review_action": "size/hash/ancestor metadata only; no content output/copy/restore/write"
+      },
+      "durable": {
+        "bytes": 491332,
+        "sha256": "e6bd40ad13ee9486018228d7f96c93a355963df687b6752b0995286a4166b3a9",
+        "review_action": "size/hash/ancestor metadata only; no content output/copy/restore/write"
+      },
+      "checkpoint": {
+        "bytes": 112760,
+        "sha256": "58ca2024e4054c686b78269caf30a5eb31b81b3288033948b9fa0b4209ccf9d7",
+        "review_action": "size/hash/ancestor metadata only; no content output/copy/restore/write"
+      },
+      "companion": {
+        "bytes": 32,
+        "sha256": "f111b50e03f00eeb38ea7e89527fc9e4d25455b7ef5ccffbcf639216fdcb1ad6",
+        "review_action": "size/hash/ancestor metadata only; no content output/copy/restore/write"
+      }
+    },
+    "certificate_environment_diagnostic": {
+      "site": "get_system_ca_certificates (platform/windows/os_windows.cpp:2570)",
+      "present": true,
+      "message": "ERROR: Failed to read the root certificate store.",
+      "same_message_in_prior_successful_memo016_child": true,
+      "classification": "Engine startup environment diagnostic; not a script/capture/inventory/write failure. Literal error-free stdout is not claimed."
+    },
+    "handle_close_limit": "runner_attempted; existing close does not check Win32 BOOL",
+    "call_boundary": "EnvironmentInstance.ensure_generated_layout invoked from RunState._canonicalize_runtime_projection_for_storage"
+  },
+  "pending": {
+    "typed_memo": "No candidate is accepted: admission architecture/cost remains unresolved. Preserve exact plain-data/type/authority gates; use existing component evidence before another design.",
+    "layout": "Measure opaque Binder, Manifest and persisted-authority internals with distinct inputs/duties and qualified named identity effects; no validation shortcut or new framework.",
+    "maintained_authority": "Capture actual production authority workproducts/hash/count on baseline/candidate before attribution; do not retune expected values.",
+    "parent_acceptance": "Audit001/Content006/Memo014/Persistence013 and separately assigned delivery remain Open. Full Systems300.242 failure retained; no repeated full stage."
+  },
+  "preserved_guards": {
+    "whole_content_seconds": 180,
+    "owning_systems_inner_seconds": 300,
+    "suite_comparator_seconds": 43.712,
+    "outer_supervisor_seconds": 330,
+    "owning_shards": 4,
+    "owning_checks": 55,
+    "planned_hidden_profile_traversals": 220,
+    "owning_stage_result": "Prior phase015 300.242s failure remains unresolved; no phase016 full-stage pass or culprit attribution."
+  },
+  "ledger_preservation_review": {
+    "kind": "Prior read-only comparison against main1b2; not a fresh runtime reconciliation",
+    "changed_existing_ids": 4,
+    "all_four_still_open": true,
+    "other_objectives_unchanged": 258,
+    "batches_unchanged": 8,
+    "unassigned_rows_unchanged": 121,
+    "paused_items_unchanged": 8,
+    "paused_objectives": 6,
+    "paused_batches": 2,
+    "prior_policies_acceptance_evidence_commits_deployment_owners_preserved": true,
+    "only_own_observation_refreshed": true,
+    "readable_detailed_umbrella_alias_reconciled_manually_by_root": true,
+    "three_cell_summary_retains_cleanup_stop_and_full_audit_open": true,
+    "cleanup_stopped": true
+  },
+  "named_owned_receipts_at_snapshot": {
+    "memo016-key-components-d66d-r1": {
+      "job_path": "evidence/memo016-key-components-d66d-r1/job.json",
+      "job_sha256": "d5d4823e9d3be3942395be4ad8782451c27cc2270262b8321fd4feda14958b79",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793882781.5411167,
+      "finished_utc": 1793882800.951857,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-key-cost-candidate-r1": {
+      "job_path": "evidence/memo016-key-cost-candidate-r1/job.json",
+      "job_sha256": "1b1597097648158cc0da081bff97a44e0cc543d10d3bb577a08c36d09e3a4e1e",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793881301.7016685,
+      "finished_utc": 1793881317.7488663,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-maintained-contract-baseline-r1": {
+      "job_path": "evidence/memo016-maintained-contract-baseline-r1/job.json",
+      "job_sha256": "bb60a85621d496e1650f1d090b2289df7b9c04e13aeea10fe4fef073b8d7c974",
+      "exit": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884551.8394213,
+      "finished_utc": 1793884570.8258703,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-parallel-key-cost-candidate-r1": {
+      "job_path": "evidence/memo016-parallel-key-cost-candidate-r1/job.json",
+      "job_sha256": "a30113299745d37684d264469a2a316d98cc32a3b69bf37f84e6c023f255f43f",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793881862.9521303,
+      "finished_utc": 1793881878.0685806,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-parallel-liveness-candidate-r1": {
+      "job_path": "evidence/memo016-parallel-liveness-candidate-r1/job.json",
+      "job_sha256": "760fdd98502ac35f89b973cfb731f0961db8aff9c69cecd2b136b4f66baf18a7",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884470.971942,
+      "finished_utc": 1793884478.2342417,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-parallel-memo-contract-candidate-r1": {
+      "job_path": "evidence/memo016-parallel-memo-contract-candidate-r1/job.json",
+      "job_sha256": "674d95ea51286f05cef522467132016bdca1ced3a165dad5d5e67a4f0d992dfb",
+      "exit": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884355.8747528,
+      "finished_utc": 1793884374.345762,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-parallel-type-safety-candidate-r1": {
+      "job_path": "evidence/memo016-parallel-type-safety-candidate-r1/job.json",
+      "job_sha256": "b00091acda11452ee278377f15b68cf5a81bbc99e36ebc6887fd97f67012d63f",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793881841.0846026,
+      "finished_utc": 1793881850.9772313,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-recursive-boundaries-baseline-r1": {
+      "job_path": "evidence/memo016-recursive-boundaries-baseline-r1/job.json",
+      "job_sha256": "d8532924efa411fc118bad322b7082f9c8642691e3b3b85f9a4f2e2de082af10",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884116.8356283,
+      "finished_utc": 1793884122.7171695,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-recursive-boundaries-candidate-r1": {
+      "job_path": "evidence/memo016-recursive-boundaries-candidate-r1/job.json",
+      "job_sha256": "d1b49a00e50d315c204aabb1bd556e3b551332f79ae61ed29e0beffd2c15b4a3",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884140.093051,
+      "finished_utc": 1793884145.65617,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-recursive-key-cost-candidate-r1": {
+      "job_path": "evidence/memo016-recursive-key-cost-candidate-r1/job.json",
+      "job_sha256": "b429fdc8ba075641ce23bdbc4472979289acf7bf499751306d8b5173dd2b3171",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884209.973889,
+      "finished_utc": 1793884225.0934663,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-recursive-type-safety-candidate-r1": {
+      "job_path": "evidence/memo016-recursive-type-safety-candidate-r1/job.json",
+      "job_sha256": "8d548a369d4f89664eedfa6e4453700c80559710a917acb8db8388f47bdfec3d",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793884197.7043478,
+      "finished_utc": 1793884207.3344133,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-type-safety-canonical-baseline-r1": {
+      "job_path": "evidence/memo016-type-safety-canonical-baseline-r1/job.json",
+      "job_sha256": "f9228c031bd2619bd0f9571c38d8f490725bd70c5b8a0ee2c45f71be308797f1",
+      "exit": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793881259.596954,
+      "finished_utc": 1793881269.357989,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "memo016-type-safety-canonical-candidate-r1": {
+      "job_path": "evidence/memo016-type-safety-canonical-candidate-r1/job.json",
+      "job_sha256": "a8bea53f12127c2fa8cccc1d68dc8e2bed4cfc4776087653abb085d3bab489d9",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793881284.2253811,
+      "finished_utc": 1793881294.1592245,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "storage016-layout-capture-r1": {
+      "job_path": "evidence/storage016-layout-capture-r1/job.json",
+      "job_sha256": "630ffddf749fcde5c1c255a3a7f1340db0264e5e86973c28f0e520e1e3d59031",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793882423.8330202,
+      "finished_utc": 1793882433.4870224,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "storage016-layout-replay-r1": {
+      "job_path": "evidence/storage016-layout-replay-r1/job.json",
+      "job_sha256": "32673be33682b2e4787f2ad87a69354068fb6c24bb74f7a73881d97cec36a0b6",
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "started_utc": 1793883516.3739243,
+      "finished_utc": 1793883541.9524136,
+      "deadline_seconds": 180,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    }
+  },
+  "limits": [
+    "Named controls only; no broad malformed-input or unsupported-native-encoding parity acceptance.",
+    "No RNG, arbitrary alias topology, RSS/allocator, cold-cache, full maintained Systems/content or aggregate acceptance.",
+    "No native-cohort, global-process-inventory, canonical/private dependency-substitution or deployment acceptance.",
+    "No new qualified production code, main/NEXT publication or parent-objective closure.",
+    "Current decoded live flags and named aliases do not establish historical unarchived flags or arbitrary graph aliases.",
+    "Capture clocks are observer-affected provenance; separate component passes cannot be summed/subtracted.",
+    "Pinned owner used pre-close accounting; CloseHandle BOOL remains unchecked.",
+    "Manual checkpoint reconciliation complete with zero own findings; unchanged outside findings remain78current/544all/54runtime. Main publication and commit association are recorded separately after this snapshot."
+  ],
+  "evidence_sha256": {
+    "evidence/catalog016-registration-r1.json": "78dba0cb8a635662eeea39c946da128de650c8a72e74a8ae44e1d9cace2ec7af",
+    "evidence/memo016-baseline-post-witness-r1.json": "f2f5c4d9fbde6a6db2b132199cb2cf6c9f0b3025812116a338838eb5c6b3588a",
+    "evidence/memo016-candidate-post-witness-r1.json": "fb6c6f6acef0514a6ac8c19d52bbbc32d8fb934112cc026fd81399995b4232d6",
+    "evidence/memo016-key-components-d66d-r1/job.json": "d5d4823e9d3be3942395be4ad8782451c27cc2270262b8321fd4feda14958b79",
+    "evidence/memo016-key-components-d66d-r1/result.json": "2aaa1d7dc51b4bff4090ab611496b6ae9e16d4529369dab35acffb08ce15306a",
+    "evidence/memo016-key-components-independent-review-r1.json": "369ef8a0fe30755783e1e9e817446b389c5a78be932f03e39ee5a9622ecf25e5",
+    "evidence/memo016-key-cost-candidate-r1/job.json": "1b1597097648158cc0da081bff97a44e0cc543d10d3bb577a08c36d09e3a4e1e",
+    "evidence/memo016-key-cost-candidate-r1/result.json": "fc056f260aa0ce1d3c7cdde4b1589bc9a78cc80233ea0d5915e317a4fbc9a4da",
+    "evidence/memo016-parallel-independent-native-review-r1.json": "688b31e103b6da30b0ec434e9f1aec6ba45481a2792dd412749deaadc5f47b01",
+    "evidence/memo016-parallel-key-cost-candidate-r1/job.json": "a30113299745d37684d264469a2a316d98cc32a3b69bf37f84e6c023f255f43f",
+    "evidence/memo016-parallel-key-cost-candidate-r1/result.json": "43993424e317a20e9c09b9c230d1567fd7bb525f115a0dde1d359d14302f1be5",
+    "evidence/memo016-parallel-post-witness-r1.json": "c5186c5cf2a120b0982ee89df3c08fa612d2223f3f1dffb5553b46b53c1a125e",
+    "evidence/memo016-parallel-type-safety-candidate-r1/job.json": "b00091acda11452ee278377f15b68cf5a81bbc99e36ebc6887fd97f67012d63f",
+    "evidence/memo016-parallel-type-safety-candidate-r1/result.json": "5d4b6860494d8702f7173cdcced6683b6038215f83daae3786948aa83358d11c",
+    "evidence/memo016-r2-rebase-independent-native-review-r1.json": "81f7b7ea54d969d937dbc2f6254dd4800a4f7ff6e605e9ce2cc60d2bc3562f0d",
+    "evidence/memo016-type-safety-canonical-baseline-r1/job.json": "f9228c031bd2619bd0f9571c38d8f490725bd70c5b8a0ee2c45f71be308797f1",
+    "evidence/memo016-type-safety-canonical-baseline-r1/result.json": "d363ac5ec1d28f96e50112360224415819cb8d0f3eaf61c9b2ad07ec217d3741",
+    "evidence/memo016-type-safety-canonical-candidate-r1/job.json": "a8bea53f12127c2fa8cccc1d68dc8e2bed4cfc4776087653abb085d3bab489d9",
+    "evidence/memo016-type-safety-canonical-candidate-r1/result.json": "5d4b6860494d8702f7173cdcced6683b6038215f83daae3786948aa83358d11c",
+    "evidence/storage016-capture-independent-native-review-r1.json": "a6cfa3b9748ba3533f03cd38afc455bd071484d04642f4e6dc76dc3d336e5ee7",
+    "evidence/storage016-capture-root-postcheck-r1.json": "73e58de88b1b27ef0c024278be4df93c2d39494580993aecf6605600cd8b6d70",
+    "evidence/storage016-capture-root-preflight-r1.json": "4d5a0112c0c9be3d60ccb2fa770256adc32c66d45c9818c83b604f8e1846005e",
+    "evidence/storage016-independent-review-r1.json": "6f2142353d8264df406b43281548eb2d62761b050025d3d4802b4fc8ab20f5a0",
+    "evidence/storage016-layout-capture-r1/capture-result.json": "07e02191cfb880aec0a4027ede4896252258847e8ab0a8938b0fb478c28d5907",
+    "evidence/storage016-layout-capture-r1/job.json": "630ffddf749fcde5c1c255a3a7f1340db0264e5e86973c28f0e520e1e3d59031",
+    "evidence/storage016-layout-owner-r1/events.jsonl": "51acd8c57ec0e15e5d5e0a672bbcd915aca75cdece9ba6d0c179d341dd062813",
+    "evidence/storage016-layout-owner-r1/owner.json": "ab1a0c2fccce30ab01c6b0b569eaa4d47eda3a11597e74d544bebfefcb4b6fbc",
+    "evidence/storage016-layout-replay-proposal-r1/immutable-sha256.json": "5e5671aae761046107015def33bc51162128f3f9d95308b5f84ac8e8fa1cfe5b",
+    "evidence/storage016-layout-replay-proposal-r1/input-proof.json": "73ef19ad6a99319b54f858ca86293a725e5da9992c56d6d12fff3ef96a522049",
+    "evidence/storage016-layout-replay-proposal-r1/source-identity-proof.json": "2417116e1bd6ee1bdbcda967e653c5aee778945c786b400b7507ab1c803d9473",
+    "evidence/storage016-layout-replay-proposal-r1/static-preparation-checks.json": "c6a2c2d741d6cd335801e64e08ff028379d3628ab7901b25f41eb84b2f7ff72b",
+    "evidence/storage016-replay-bootstrap-r1/result.json": "0c8f6c9156eb0357f77d857bd815affb6b73c292ad17a8a6b708f0d5b63e0b06",
+    "evidence/storage016-replay-independent-static-review-r1.json": "40a44ab5e2125549da640ee1d86ddb58765354f58d1f0fec42772bdb06347006",
+    "evidence/storage016-replay-root-postcheck-r1.json": "bbee41ab669d3f6437d7734932016aa9f0ef492e4e03f8c410c826dbe81e6a01",
+    "evidence/storage016-layout-replay-r1/job.json": "32673be33682b2e4787f2ad87a69354068fb6c24bb74f7a73881d97cec36a0b6",
+    "evidence/storage016-layout-replay-r1/stdout.log": "98c315b7f52f77c6031fe2aaa6073bfc6d05645d9eeb2ef7dcf3068d92b2b230",
+    "evidence/storage016-layout-replay-r1/diagnostic/layout-replay-result.json": "a1f11632fd4c88d3d79da3172692efccafe8ad1998842e6b335dd9f44d6412b9",
+    "evidence/memo016-recursive-admission-proposal-r1/composition-proof.json": "10d9550bc531d9a2af1b5baa06a7a61953197507c18b20c5f86fed5085d08e92",
+    "evidence/memo016-recursive-independent-native-review-r1.json": "3d25cdaed364ec10f8429de149f87f1f6fab145e72ac21b812acb036575930c3",
+    "evidence/memo016-recursive-rejection-inverse-r1.json": "84b902513384d0e2761f3aa781abc8b024a94f48850945b10f378e9fc2ed50b5",
+    "evidence/memo016-recursive-post-witness-r1.json": "6b5d3b0382d3aeb404bf144c91310347f21611d0394d271f93989c4b5db5a0c1",
+    "evidence/memo016-recursive-admission-proposal-r1/immutable-sha256-r1.json": "06fdbd79c4ce66b50a492e433745e9503d85bb4df49100f2360870268b356957",
+    "evidence/storage016-replay-independent-native-analysis-r1.json": "acf081deaa0f0c0198c607f5bf40711670952abb889115ca1f4cd56867ed5ba9",
+    "evidence/storage016-replay-independent-native-analysis-r1.md": "25b8f8a8c300533e1c24c5dbd4302269a9cb2e1c60ea539c94bb34839a07faa1",
+    "evidence/memo016-maintained-contract-baseline-qualification-r1/source-preflight.json": "5d04ec91787dd9331cb337cbd54abd8dcd9d0f1931bf7088d6a949c4d4459c66",
+    "evidence/memo016-maintained-contract-baseline-r1/stdout.log": "0cbd2b53db39d111c3cfe0b12ded7bd0e6737eb9df67799e16dbfc97f701b979",
+    "evidence/memo016-parallel-memo-contract-candidate-r1/stdout.log": "0cbd2b53db39d111c3cfe0b12ded7bd0e6737eb9df67799e16dbfc97f701b979",
+    "evidence/memo016-parallel-liveness-candidate-r1/stdout.log": "0260602a3c0aef4ce405b48dc92c8f10b6ede134f7e440b8afe6574545e077db",
+    "evidence/memo016-adjacent-contract-independent-review-r1.json": "752887797621c501bc99f2db720aa406604dd78f08d0e8757dabe115c1ea52d1",
+    "evidence/catalog016-final-reconciliation-current-r1.json": "bc6b07fd34cc8daeffc599202d8c7b27bea3b9422efd31658ddfcfe84f05ddae",
+    "evidence/catalog016-final-reconciliation-all-r1.json": "99809bf8401718ffba0bfccae6e8adbee945baef7e16a8753437788afdd88621"
+  },
+  "updated_utc": "2026-11-05T13:07:08.239304+00:00",
+  "named_receipt_rollup_scope": {
+    "named_jobs": 15,
+    "exit0": 12,
+    "exit1": 3,
+    "all_assigned_guarded_finished_active0": true,
+    "global_process_census": false,
+    "native_runtime_append": 15,
+    "prior_runtime_prefix_preserved": 166
+  },
+  "integrated_utc": "2026-11-05T13:22:33.394208+00:00",
+  "source_draft_markdown_sha256": "1e55293511b13707e5fb0c497698e470afdf30a1cfb48336c9f7901946a1365b",
+  "adjacent_maintained_checks": {
+    "candidate_memo_contract": "exit1: Validation memo changed the exact production uniqueness authority.",
+    "published_ec_same_contract_baseline": "exit1: same sole assertion",
+    "qualification": "Baseline failure exists. Neither actual authority hash nor pair count is emitted by this combined predicate, so underlying authority equality and candidate acceptance remain unproven. No expected hash or threshold was changed.",
+    "d66_no_pointer_liveness": "PASS, exit0, guardedclosed0"
+  },
+  "layout_replay_qualified": {
+    "file_checks": 675,
+    "final_stdout_checks": 677,
+    "calls": 72,
+    "inputs": 4,
+    "roles": 3,
+    "balanced_orders": 6,
+    "all_return_mutated_alias_and_live_flag_checks": true,
+    "completed_end_spans": 348,
+    "private_branch_events": 24,
+    "largest_disjoint_ensure_owner_usec": {
+      "manifest_reconciliation": 154143,
+      "binding": 143530,
+      "persisted_authority": 87419
+    },
+    "top_level_union_usec": 446200,
+    "nested_manifest_plus_original_copy_argument_usec": 119694,
+    "nested_physical_entries_usec": 21084,
+    "nested_surface_lookup_usec": 607,
+    "scope": "Private full-source diagnostic only. Nested spans overlap parents, logging/cache/order/Script identity affect times. Private branches do not prove original canonical branches. No optimization/native9b/fullSystems/NEXT acceptance."
+  },
+  "prior_qualified_source_witnesses": [
+    {
+      "path": "evidence/memo016-baseline-post-witness-r1.json",
+      "source_count": 1245,
+      "source_manifest_sha256": "7af30156b2d0d6c4d895bac9b4274b2d1ec42226e8d7fe4e184780c991fc14c4",
+      "support_count": 4,
+      "actual_full_set_matches_expected": true
+    },
+    {
+      "path": "evidence/memo016-candidate-post-witness-r1.json",
+      "source_count": 1245,
+      "source_manifest_sha256": "88f45c948714ad40244476612ece9af96e40636267dced0b138acdfe4e49cbf5",
+      "support_count": 4,
+      "actual_full_set_matches_expected": true
+    },
+    {
+      "path": "evidence/memo016-parallel-post-witness-r1.json",
+      "source_count": 1245,
+      "source_manifest_sha256": "679998d9f8aff684c2d249d6959e2335faec817f11042d4109f959f37452966a",
+      "support_count": 4,
+      "actual_full_set_matches_expected": true
+    }
+  ],
+  "manual_reconciliation": {
+    "own_findings": 0,
+    "current_outside_errors": 78,
+    "all_outside_errors": 544,
+    "runtime_instances": 181,
+    "outside_runtime_errors": 54,
+    "reports": [
+      "evidence/catalog016-final-reconciliation-current-r1.json",
+      "evidence/catalog016-final-reconciliation-all-r1.json"
+    ],
+    "other_owners_or_tasks_modified_to_hide_findings": false
+  }
+}

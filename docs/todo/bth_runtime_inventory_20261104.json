@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T11:51:09.812310+00:00",
+  "observed_at": "2026-11-05T13:22:33.394208+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -13529,6 +13529,1281 @@
           "docs/testing/deprecated_code_audit_continuation_015.md"
         ],
         "limit": "Only this exact assigned owned Job,12%/2GiB and180s focused or330s supervisor ofcanonical300. Closure0 is separate fromtest/fullstage outcome; no prior evidence/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-key-components-d66d-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-key-components-d66d-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json:pid:22928",
+        "started_at": "2026-11-05T12:46:21.541117+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:46:40.951857+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json:pid:22928",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:46:40.951857+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:46:40.951857+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-key-components-d66d-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:46:40.951857+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-components-d66d-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-key-cost-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-key-cost-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json:pid:35464",
+        "started_at": "2026-11-05T12:21:41.701669+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:21:57.748866+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json:pid:35464",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:21:57.748866+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:21:57.748866+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-key-cost-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:21:57.748866+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-maintained-contract-baseline-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-maintained-contract-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json:pid:15284",
+        "started_at": "2026-11-05T13:15:51.839421+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:16:10.825870+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json:pid:15284",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:16:10.825870+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:16:10.825870+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-maintained-contract-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:16:10.825870+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-maintained-contract-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-parallel-key-cost-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-parallel-key-cost-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json:pid:4120",
+        "started_at": "2026-11-05T12:31:02.952130+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:31:18.068581+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json:pid:4120",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:31:18.068581+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:31:18.068581+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-parallel-key-cost-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:31:18.068581+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-parallel-liveness-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-parallel-liveness-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json:pid:31268",
+        "started_at": "2026-11-05T13:14:30.971942+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:14:38.234242+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json:pid:31268",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:14:38.234242+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:14:38.234242+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-parallel-liveness-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:14:38.234242+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-parallel-memo-contract-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-parallel-memo-contract-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json:pid:37508",
+        "started_at": "2026-11-05T13:12:35.874753+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:12:54.345762+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json:pid:37508",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:12:54.345762+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:12:54.345762+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-parallel-memo-contract-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:12:54.345762+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-memo-contract-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-parallel-type-safety-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-parallel-type-safety-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json:pid:5408",
+        "started_at": "2026-11-05T12:30:41.084603+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:30:50.977231+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json:pid:5408",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:30:50.977231+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:30:50.977231+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-parallel-type-safety-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:30:50.977231+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-parallel-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-recursive-boundaries-baseline-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-recursive-boundaries-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json:pid:28152",
+        "started_at": "2026-11-05T13:08:36.835628+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:08:42.717170+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json:pid:28152",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:08:42.717170+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:08:42.717170+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-recursive-boundaries-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:08:42.717170+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-recursive-boundaries-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-recursive-boundaries-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json:pid:39720",
+        "started_at": "2026-11-05T13:09:00.093051+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:09:05.656170+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json:pid:39720",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:09:05.656170+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:09:05.656170+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-recursive-boundaries-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:09:05.656170+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-boundaries-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-recursive-key-cost-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-recursive-key-cost-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json:pid:23068",
+        "started_at": "2026-11-05T13:10:09.973889+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:10:25.093466+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json:pid:23068",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:10:25.093466+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:10:25.093466+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-recursive-key-cost-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:10:25.093466+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-key-cost-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-recursive-type-safety-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-recursive-type-safety-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json:pid:18628",
+        "started_at": "2026-11-05T13:09:57.704348+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T13:10:07.334413+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json:pid:18628",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T13:10:07.334413+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T13:10:07.334413+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-recursive-type-safety-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T13:10:07.334413+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-recursive-type-safety-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-type-safety-canonical-baseline-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-type-safety-canonical-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json:pid:8520",
+        "started_at": "2026-11-05T12:20:59.596954+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:21:09.357989+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json:pid:8520",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:21:09.357989+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:21:09.357989+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-type-safety-canonical-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:21:09.357989+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:memo016-type-safety-canonical-candidate-r1",
+      "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "memo016-type-safety-canonical-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json:pid:26464",
+        "started_at": "2026-11-05T12:21:24.225381+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:21:34.159225+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json:pid:26464",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:21:34.159225+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:21:34.159225+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "memo016-type-safety-canonical-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:21:34.159225+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo016-type-safety-canonical-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:storage016-layout-capture-r1",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "storage016-layout-capture-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json:pid:29496",
+        "started_at": "2026-11-05T12:40:23.833020+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:40:33.487022+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json:pid:29496",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:40:33.487022+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:40:33.487022+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "storage016-layout-capture-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:40:33.487022+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-capture-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
+      }
+    },
+    {
+      "instance_id": "task9:storage016-layout-replay-r1",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "storage016-layout-replay-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json:pid:39912",
+        "started_at": "2026-11-05T12:58:36.373924+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T12:59:01.952414+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json:pid:39912",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md",
+          "Exact assigned owned Job final active0; no global census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T12:59:01.952414+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T12:59:01.952414+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "storage016-layout-replay-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_016.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T12:59:01.952414+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage016-layout-replay-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_016.md"
+        ],
+        "limit": "Exact assigned180s/12%/2GiB owned Job only. Closure0 separate from test failure; no file/source/save clearing or global process claim."
       }
     }
   ],

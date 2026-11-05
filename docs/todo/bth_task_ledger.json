@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T11:58:44.344088+00:00",
+  "updated_at": "2026-11-05T13:22:33.394208+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "CLEANUP_STOPPED_MEASURED_CATALOG_BUG_INVESTIGATION_ACTIVE",
+      "status": "CLEANUP_STOPPED_MEASURED_MEMO_LAYOUT_PROGRESS_016",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13848,24 +13848,29 @@
           "kind": "scoped_bounded_fix_without_parent_closure",
           "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
           "summary": "Final69bd material-path reduction qualified under same-data canonical/private/38-step/liveness checks, with4MiBper-call charge. Aggregate remains300.242limitfailure andincompletecoverage; no all55/all220stagepass, no guardweaken/cleanup/pausedchanges. Full audit staysOpen; deliveryseparate."
+        },
+        {
+          "kind": "measured_unfinished_audit_checkpoint",
+          "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
+          "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Preserve all files and perform no further deprecated-code cleanup/removal. Continue measured catalog finalization/layer-entry investigation outside paused named feature work. Whole original audit remains incomplete/Open; deployment qualification is separate.",
+      "next_action": "Continue measured memo/layout/maintained-authority investigation; no more cleanup or paused named feature work. Whole original audit remains Open; all unaccepted prototypes and files preserved.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker to this scoped active investigation/verification. Latest parent explicitly stops cleanup while playtesting and issue fixes continue; no new general module hold is inferred.",
+        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:34:02.257639+00:00",
+        "observed_at": "2026-11-05T13:22:33.394208+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/deprecated_code_audit_continuation_016.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T11:58:44.344088+00:00"
+      "updated_at": "2026-11-05T13:22:33.394208+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20609,7 +20614,7 @@
         }
       },
       "state": "open",
-      "status": "BOUNDED_SCHEMA_REPAIR_COMMITTED_FULLSYSTEMS300_FAILURE_RETAINED_015",
+      "status": "ADMISSION_COST_AND_LAYOUT_OWNERS_MEASURED_BASELINE_AUTHORITY_FAILURE_OPEN_016",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20837,22 +20842,27 @@
           "kind": "scoped_bounded_fix_without_parent_closure",
           "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
           "summary": "Final69bd material-path reduction qualified under same-data canonical/private/38-step/liveness checks, with4MiBper-call charge. Aggregate remains300.242limitfailure andincompletecoverage; no all55/all220stagepass, no guardweaken/cleanup/pausedchanges. Full audit staysOpen; deliveryseparate."
+        },
+        {
+          "kind": "measured_unfinished_audit_checkpoint",
+          "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
+          "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue remaining measured storage/layout/authority and typed-memo investigation. Retain exact300.242s fullSystems failure,43.712 comparator,180content guard,4shards/55checks/all220planned recipe and all semantic/state/save bounds. Do not infer culprit from last resource or completion from absent reports; no repeat without new cause/change.",
+      "next_action": "Use qualified1437-check key components and72-call layout attribution to investigate admission architecture, opaque Binder/Manifest/authority internals and actual maintained authority workproducts. Preserve300/43.712/180/330/55/all220; no unchanged full-stage rerun or expected-value retuning.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Bounded definition-copy repair is committed, but full stage and storage reduction remain unresolved engineering work. Actual unchanged-guard baseline/candidate failures are retained; no missing-save, user approval or scheduler hold is asserted.",
+        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T08:46:36.778153+00:00",
+        "observed_at": "2026-11-05T13:22:33.394208+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_013.md"
+          "docs/testing/deprecated_code_audit_continuation_016.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T11:58:44.344088+00:00"
+      "updated_at": "2026-11-05T13:22:33.394208+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23246,7 +23256,7 @@
         }
       },
       "state": "open",
-      "status": "FINER_STORAGE_ATTRIBUTION_COMPLETE_LAYOUT_OWNER_REVIEW_ACTIVE_014",
+      "status": "EXACT_CAPTURE_AND_72_REPLAY_PARITY_QUALIFIED_LAYOUT_INTERNALS_OPEN_016",
       "owner": {
         "name": "Audit catalog performance repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23302,22 +23312,27 @@
           "kind": "remaining_measured_layout_owner",
           "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
           "summary": "Storage111659us/default opaqueLayout73358 remains separate. Staticlayout review recommends exactpost-runtime-removal entrycapture usingexisting2receivers andfaithfulprivate replay; no callconfirmedobsolete/safelyremovable, no source/cache/authorityshortcut applied."
+        },
+        {
+          "kind": "measured_unfinished_audit_checkpoint",
+          "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
+          "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue measured EnvironmentInstance layout/authority owner review using faithful postprocessor entry inputs and unchanged identity/authority boundaries. Default projection111659us includes runtimecanonical80280/layout73358; rootcopy3648us. Reject copy shortcuts and qualify any actual reduction separately.",
+      "next_action": "Measure opaque Manifest.reconcile, Binder.bind_base_layout and persisted-authority internals with distinct inputs/defaults, preserving full mutated outputs and named replacement identities. Reconciliation154143us/binding143530/authority87419 dominate selected private trace; no production optimization or removable call qualified.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Measured prototype is rejected; source remains unchanged. Remaining internal attribution and a substantive semantics-preserving repair are active engineering work without user input or original-save dependency.",
+        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T08:46:36.778153+00:00",
+        "observed_at": "2026-11-05T13:22:33.394208+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_013.md"
+          "docs/testing/deprecated_code_audit_continuation_016.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T11:58:44.344088+00:00"
+      "updated_at": "2026-11-05T13:22:33.394208+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23591,7 +23606,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_COUNTEREXAMPLES_REPRODUCED_NARROW_REPAIR_REVIEW_ACTIVE",
+      "status": "CORRECTNESS56_PASS_THREE_COST_PROPOSALS_UNACCEPTED_PUBLISHED_SCHEMA_RESTORED_016",
       "owner": {
         "name": "Audit validation memo correctness",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23640,22 +23655,27 @@
           "kind": "remaining_confirmed_memo_bug",
           "reference": "docs/testing/deprecated_code_audit_continuation_015.md",
           "summary": "ExistingStringName/Packed warmfalseaccept remainsunfixed. Material-path69bd changes no memo key/registry/validator/store bodies, but any futuretypedrepair muststrictlycomposeoverboundedbase andqualifyperformance; no newmissing-user/approvalhold."
+        },
+        {
+          "kind": "measured_unfinished_audit_checkpoint",
+          "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
+          "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify existing typed-memo correction against the new bounded69bd/ec base with strict delta composition, actual same-test canonical red/green and matched key-hit costs before adoption. Preserve existing94-check key baseline where its unchanged key-call dependency bytes apply; do not overwrite Schema with old whole4bd proposal. No failed-result memo.",
+      "next_action": "Preserve2ec/d66/998 prototypes and SAME1f24 pending regression. All56 correctness and29 boundary checks pass but hit costs remain3.70x-4.56x original; no candidate accepted. Investigate admission cost without skipped subgraphs/cache/weaker bounds. Capture actual authority hash/count before attributing the maintained baseline failure.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active bounded engineering and independent review; no user input, original-save, scheduler or approval dependency.",
+        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T09:41:59.868380+00:00",
+        "observed_at": "2026-11-05T13:22:33.394208+00:00",
         "evidence": [
-          "evidence/schema014-counterexamples-r2-independent-analysis-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_016.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T11:58:44.344088+00:00"
+      "updated_at": "2026-11-05T13:22:33.394208+00:00"
     }
   ],
   "batches": [
