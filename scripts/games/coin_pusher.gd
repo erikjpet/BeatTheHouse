@@ -2496,6 +2496,9 @@ func _feature_item_views(machine: Dictionary) -> Dictionary:
 
 
 func _sync_physical_features(machine: Dictionary) -> void:
+	# Compact live ticks keep bodies in the native cache. Publish them before
+	# editing features so the next cache reset preserves every live body.
+	CoinPusherLiveSessionScript.sync_native_body_state(machine)
 	var variation_id := str(machine.get("variation_id", "quarter_falls"))
 	var simulation := _simulation(machine)
 	if simulation.is_empty():
