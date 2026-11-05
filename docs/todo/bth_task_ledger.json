@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T15:29:51.611091+00:00",
+  "updated_at": "2026-11-05T16:49:41.619476+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "CLEANUP_STOPPED_AUTHORITY_FIXTURE_QUALIFIED_LAYOUT_AUDIT_STILL_OPEN",
+      "status": "THREE_SCOPED_MEASUREMENTS_PASS_WHOLE_AUDIT_OPEN_018",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13877,24 +13877,34 @@
           "kind": "verified_main_publication",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
+        },
+        {
+          "kind": "qualified_canonical_owned_manifest_leaf018",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage018-leaf-root-postcheck-r1.json",
+          "summary": "Actual four input83report/86final check PASS; full values, ordered errors, effects, flags and named ownership retained. Canonical method clocks1032/3559us, no aggregate/speedup/validation-removal inference. Independent native review and assigned guarded closure0 qualify current1247c17 epoch."
+        },
+        {
+          "kind": "phase018_three_native_measurements_and_factual_branch_block",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "The scoped test-only authority repair is published as 3aaee724; continue the whole audit and measured layout investigation without cleanup, paused-feature changes or parent closure.",
+      "next_action": "Publish this measured checkpoint and continue substantive Runtime normalization/cost and mutation-safe memo work outside paused areas. Preserve files, original authority, all guards and the separate platform-blocked callback branch; no cleanup or whole-audit closure.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "observed_at": "2026-11-05T16:49:41.619476+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_017.md"
+          "docs/testing/deprecated_code_audit_continuation_018.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:29:51.611091+00:00"
+      "updated_at": "2026-11-05T16:49:41.619476+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20638,7 +20648,7 @@
         }
       },
       "state": "open",
-      "status": "STALE_AUTHORITY_CONTRACT_REPAIR_QUALIFIED_AGGREGATE_TIMEOUT_OPEN",
+      "status": "CURRENT_CAPACITY_CONTROL_AND_772_API_CAPTURE_PASS_AGGREGATE_OPEN_018",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20900,22 +20910,32 @@
           "kind": "verified_main_publication",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
+        },
+        {
+          "kind": "qualified_canonical_owned_manifest_leaf018",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage018-leaf-root-postcheck-r1.json",
+          "summary": "Actual four input83report/86final check PASS; full values, ordered errors, effects, flags and named ownership retained. Canonical method clocks1032/3559us, no aggregate/speedup/validation-removal inference. Independent native review and assigned guarded closure0 qualify current1247c17 epoch."
+        },
+        {
+          "kind": "phase018_three_native_measurements_and_factual_branch_block",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Exact retained historical/current authority fixtures and two maintained test repairs are published as 3aaee724. Continue canonical normalize/validate leaf attribution on four qualified existing-value captures; preserve180/300/43.712/330 and original aggregate recipe. No aggregate acceptance or guard change.",
+      "next_action": "Use sixteen qualified current canonical API preimages for bounded normalization attribution after data-only native decode/flag/alias gates. Retain full256/overflow/replay cases; original content180 and Systems300/43.712/330/55/all220 acceptance remain Open, without another opaque run or cross-epoch timing subtraction.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "observed_at": "2026-11-05T16:49:41.619476+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_017.md"
+          "docs/testing/deprecated_code_audit_continuation_018.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:29:51.611091+00:00"
+      "updated_at": "2026-11-05T16:49:41.619476+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23309,7 +23329,7 @@
         }
       },
       "state": "open",
-      "status": "ELEVEN_CANONICAL_INNER_CAPTURES_QUALIFIED_NO_AUTHORITY_REMOVAL",
+      "status": "FOUR_OWNED_MANIFEST_LEAVES_QUALIFIED_NO_AUTHORITY_REMOVAL_018",
       "owner": {
         "name": "Audit catalog performance repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23394,22 +23414,32 @@
           "kind": "verified_main_publication",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
+        },
+        {
+          "kind": "qualified_canonical_owned_manifest_leaf018",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage018-leaf-root-postcheck-r1.json",
+          "summary": "Actual four input83report/86final check PASS; full values, ordered errors, effects, flags and named ownership retained. Canonical method clocks1032/3559us, no aggregate/speedup/validation-removal inference. Independent native review and assigned guarded closure0 qualify current1247c17 epoch."
+        },
+        {
+          "kind": "phase018_three_native_measurements_and_factual_branch_block",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Measure only canonical normalize_persisted and validate on four recorded owned existing_value inputs after data-only decode/flag/alias/output custody qualification. No validation removal, source identity assumption, borrowed-map replay, new cache or performance acceptance.",
+      "next_action": "Retain four actual-input leaf83/86 checks and ownership/flag/error evidence. Normalization1032us andvalidation3559us totals do not justify skipping authority or changing returned ownership. Further optimization requires a qualified substantive candidate, exact semantics and unchanged guards.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "observed_at": "2026-11-05T16:49:41.619476+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_017.md"
+          "docs/testing/deprecated_code_audit_continuation_018.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:29:51.611091+00:00"
+      "updated_at": "2026-11-05T16:49:41.619476+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23683,7 +23713,7 @@
         }
       },
       "state": "open",
-      "status": "AUTHORITY_BASELINE_QUALIFIED_TYPED_MEMO_REPAIR_STILL_UNACCEPTED",
+      "status": "FIXED_SUBTREE_CENSUS_PASS_PRODUCTION_REPAIR_UNACCEPTED_018",
       "owner": {
         "name": "Audit validation memo correctness",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23766,22 +23796,32 @@
           "kind": "verified_main_publication",
           "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
           "summary": "Exact scoped source/evidence commit 3aaee724 successfully pushed and separately verified on remote main. Test-only export-excluded child qualifies; no production/NEXT or parent acceptance follows."
+        },
+        {
+          "kind": "qualified_canonical_owned_manifest_leaf018",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\storage018-leaf-root-postcheck-r1.json",
+          "summary": "Actual four input83report/86final check PASS; full values, ordered errors, effects, flags and named ownership retained. Canonical method clocks1032/3559us, no aggregate/speedup/validation-removal inference. Independent native review and assigned guarded closure0 qualify current1247c17 epoch."
+        },
+        {
+          "kind": "phase018_three_native_measurements_and_factual_branch_block",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve pending1f24 and all rejected/unaccepted typed-memo prototypes; published ec unchanged. Use repaired exact authority contract for later typed admission/cost qualification. Existing warm type-collision bug remains open; no weaker eligibility or cache expansion.",
+      "next_action": "Evaluate mutation-safe producer composition and default-factory ownership using the current111-row census, then require exact budgets/callback fallback/FIFO and matched actual-hit cost before a repair. Mutable definitions remain majority of observed nodes. Continue independent work; callback-check child records its actual platform restriction and remains unexecuted.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "observed_at": "2026-11-05T16:49:41.619476+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_017.md"
+          "docs/testing/deprecated_code_audit_continuation_018.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T15:29:51.611091+00:00"
+      "updated_at": "2026-11-05T16:49:41.619476+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
@@ -23881,6 +23921,77 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T15:29:51.611091+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
+      "name": "Qualify memo callback mutation diagnostic",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Independently qualify the source-grounded memo callback/mutable-input hypothesis while preserving canonical provider authority, ordinary cold diagnostics, original input custody and all process/resource limits. This branch was initiated under the existing Memo014 objective; this child isolates its factual platform blocker without stopping independent parent work.",
+        "source": "Parent phase018 continuation authorized typed-memo investigation. Separate authoring subagent /root/semantic009_profile failed with platform content-screening classification of possible cybersecurity risk; exact outcome retained in the block receipt.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-and-native-diagnostic-qualified",
+            "description": "Completed independently reviewed controlled diagnostic and actual guarded native evidence establish or refute the hypothesis without executing opaque encoders, changing source authority or weakening guards.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "AUTHORING_STOPPED_BY_PLATFORM_SCREENING_NO_NATIVE_RESULT",
+      "owner": {
+        "name": "Audit memo callback diagnostic",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Unexecuted diagnostic branch only; no game source or deployment artifact was produced."
+      },
+      "evidence": [
+        {
+          "kind": "unexecuted_platform_content_screening",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo018-callback-unexecuted-platform-block-r1.json",
+          "summary": "Separate diagnostic authoring agent terminated after platform screening flagged possible cybersecurity risk. No completed executable/frozen review/native result returned. Source-grounded hypothesis remains unexecuted; partial work preserved with no retry or rerouting."
+        },
+        {
+          "kind": "phase018_unexecuted_callback_branch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "The authoring action was stopped by platform content screening for possible cybersecurity risk. No completed executable approval or native result; partials preserved. No retry/rephrase/reroute. Independent parent census and capacity work completed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Preserve the exact platform-block receipt, source-only hypothesis and partial files. Do not retry, rephrase or reroute the blocked executable task while the platform restriction remains unresolved. Continue independent Memo014 subtree/cost and audit work.",
+      "blocker": {
+        "state": "active",
+        "kind": "platform_content_screening",
+        "description": "Diagnostic authoring in /root/semantic009_profile terminated with: This content was flagged for possible cybersecurity risk. No completed diagnostic result or native execution followed. The platform restriction blocks only this branch; independent parent census and capacity work continues.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T16:40:00.817762+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo018-callback-unexecuted-platform-block-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T16:49:41.619476+00:00"
     }
   ],
   "batches": [

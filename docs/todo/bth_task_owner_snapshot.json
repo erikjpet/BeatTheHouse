@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T15:29:51.611091+00:00",
+  "observed_at": "2026-11-05T16:49:41.619476+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T15:29:51.611091+00:00",
-      "source": "Actual phase017 source commit 3aaee724 published and separately remote-main verified; bounded authority fixture child now Complete with code/test evidence commit. All six Jobs closed0 and parent audit/content/memo/persistence tasks remain Open. Narrow four-value canonical leaf proposal is independent continuation; no production source change, cleanup or NEXT acceptance."
+      "observed_at": "2026-11-05T16:49:41.619476+00:00",
+      "source": "Actual phase018 checkpoint: three independently qualified native Jobs exit0/closed0; leaf4, current full capacity control+772API/16samples and111-row667-subtree census. All1247 source/support4 and prior runtime records preserved; four parent objectives Open. Separate memo callback authoring child is platform-screened/unexecuted, no retry. Scoped report publication active; no production source, guard, cleanup, paused-feature or NEXT change."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
