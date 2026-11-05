@@ -1,0 +1,1152 @@
+{
+  "schema": "bth.audit_continuation_013/v1",
+  "draft": false,
+  "observed_at": "2026-11-05T08:46:36.778153+00:00",
+  "parent_task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+  "task_states": {
+    "BTH061-AUDIT-001": "open",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006": "open",
+    "BTH061-AUDIT-LAYER-DEFINITION-013": "open",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013": "open"
+  },
+  "source": {
+    "baseline_head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+    "B_applied_working_tree_only": false,
+    "production_commit": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+    "only_changed_production_file": "scripts/core/scenario_engine.gd",
+    "only_changed_method": "sequence_definition_for_environment",
+    "engine_original_sha256": "27d7fc0c7292edff54289be9836a74b6e0c821a23d8d10316246f52b873d3c95",
+    "engine_candidate_sha256": "d4b8b8d98d44929270770a00a5072af0877c57efc016c3d69203f1c09fdac378",
+    "new_test": "scripts/tests/scenario_definition_catalog_lookup_check.gd",
+    "new_test_sha256": "5b20c57e2cd0ccf4bf7be4deab108280843a3fab305daf98d17b9f3e91714d6b",
+    "other1241original_sources_raw_exact": true,
+    "Catalog_A_applied": false,
+    "RunState_projection_applied": false,
+    "RunState_original_sha256": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b"
+  },
+  "B_measurement": {
+    "kind": "private paired warm unbound-fallback resolver timing",
+    "pairs": 55,
+    "candidate_faster_pairs": 55,
+    "baseline_sum_seconds": 8.273362,
+    "candidate_sum_seconds": 6.74018,
+    "sum_reduction_percent": 18.53154739270445,
+    "order_groups": {
+      "baseline_first": {
+        "count": 28,
+        "baseline_sum_seconds": 4.244989,
+        "candidate_sum_seconds": 3.476341,
+        "baseline_median_ms": 142.19,
+        "candidate_median_ms": 113.41,
+        "ratio_of_paired_sums": 1.2211083435140568,
+        "candidate_faster_count": 28
+      },
+      "candidate_first": {
+        "count": 27,
+        "baseline_sum_seconds": 4.028373,
+        "candidate_sum_seconds": 3.263839,
+        "baseline_median_ms": 142.38,
+        "candidate_median_ms": 113.566,
+        "ratio_of_paired_sums": 1.2342437846964878,
+        "candidate_faster_count": 27
+      }
+    },
+    "scope_limit": "Copied diagnostic Engine resources; 55 unbound fallback calls, not normal gameplay, full stage or accepted physical authority. Components and paired records are distinct executions; no cross-pass subtraction or aggregate speedup claim.",
+    "schema_memo_limit": "Warm refers to the loaded catalog. Attempts to prewarm schema do not prove successful memo hits: all55 raw authored definitions lack independent target inventory and correctly reject. No schema-memo or accepted-room timing claim."
+  },
+  "actual_regression_history": [
+    {
+      "revision": "R1",
+      "state": "parse_failed",
+      "reason": "Engine identifier shadows native Engine class",
+      "test_sha256": "19d589fefd9672fb5c23b34dd2801428dc5978bc6fd042d352dc368db8896074",
+      "job_exit": null,
+      "script_error": true,
+      "evidence": "evidence/catalog013-resolver-canonical-baseline-r1/job.json"
+    },
+    {
+      "revision": "R2",
+      "state": "test_oracle_failed",
+      "check_count": 618,
+      "failure_count": 168,
+      "reason": "Incorrect positive expectation for 55 authored definitions without independently bound physical authority; baseline itself rejected them. This was a fixture/oracle failure, not a candidate regression.",
+      "evidence": "evidence/catalog013-resolver-canonical-baseline-r2/result.json"
+    },
+    {
+      "revision": "R3",
+      "state": "paired_actual_class_pass",
+      "baseline_checks": 662,
+      "candidate_checks": 662,
+      "all_check_values_exact_except_elapsed_usec": true,
+      "failure_count": 0,
+      "unbound_authority_cases": 55,
+      "cache_fixtures": 10,
+      "positive_alias": "Existing canonical runtime-definition/target-inventory proof and real schema validation receipt; catalog admission alone remains insufficient.",
+      "limits": [
+        "unchanged source scope, not exercised here",
+        "selected package/extension/schema failures may overlap; no isolated registration-mismatch cause claim; healthy catalog admission never grants target authority",
+        "existing process-local validation memo may change; this child test does not claim to restore it"
+      ],
+      "evidence": [
+        "evidence/catalog013-resolver-canonical-baseline-r3/result.json",
+        "evidence/catalog013-resolver-canonical-candidate-r3/result.json"
+      ]
+    }
+  ],
+  "focused": {
+    "layer": {
+      "baseline": {
+        "checks": 14,
+        "failures": [],
+        "evidence": "evidence/catalog013-layer-baseline-r1/stdout.log"
+      },
+      "candidate": {
+        "checks": 14,
+        "failures": [],
+        "evidence": "evidence/catalog013-layer-candidate-r1/stdout.log"
+      }
+    },
+    "storage_encoding": {
+      "baseline": {
+        "checks": 39,
+        "failures": [],
+        "exact_json_bytes": true,
+        "evidence": "evidence/catalog013-storage-encoding-baseline-r1/stdout.log"
+      },
+      "candidate": {
+        "checks": 39,
+        "failures": [],
+        "exact_json_bytes": true,
+        "evidence": "evidence/catalog013-storage-encoding-candidate-r1/stdout.log"
+      }
+    },
+    "liveness_candidate": {
+      "state": "pass",
+      "evidence": "evidence/catalog013-liveness-candidate-r1/stdout.log"
+    },
+    "sequence": {
+      "baseline": {
+        "state": "passed_selected_group",
+        "executed_check_ids": [
+          "scenario_sequence_contract"
+        ],
+        "selected_check_count": 1,
+        "registered_check_count": 58,
+        "skipped_other_checks": 57,
+        "ordered_steps": 38,
+        "group_seconds": 65.943,
+        "report_seconds": 82.807,
+        "outer_seconds": 100.35062527656555,
+        "job_exit": 0,
+        "active_at_release": 0,
+        "evidence": [
+          "evidence/catalog013-sequence-baseline-r1/result.json",
+          "evidence/catalog013-sequence-baseline-r1/job.json"
+        ]
+      },
+      "candidate": {
+        "state": "passed_selected_group",
+        "executed_check_ids": [
+          "scenario_sequence_contract"
+        ],
+        "selected_check_count": 1,
+        "registered_check_count": 58,
+        "skipped_other_checks": 57,
+        "ordered_steps": 38,
+        "group_seconds": 64.704,
+        "report_seconds": 81.432,
+        "outer_seconds": 98.31027889251709,
+        "job_exit": 0,
+        "active_at_release": 0,
+        "evidence": [
+          "evidence/catalog013-sequence-candidate-r1/result.json",
+          "evidence/catalog013-sequence-candidate-r1/job.json"
+        ]
+      }
+    }
+  },
+  "full_systems": {
+    "baseline": {
+      "state": "failed",
+      "duration_seconds": 300.234,
+      "exit": 1,
+      "harness_timed_out": false,
+      "reason": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout.",
+      "suite_budget_seconds": 43.712,
+      "suite_budget_exceeded": true,
+      "evidence": "evidence/catalog013-maintained-baseline-r2/maintained/stage-results.json"
+    },
+    "candidate": {
+      "state": "failed_unchanged_inner_guard_and_budget",
+      "head": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+      "canonical_stage_result": {
+        "name": "foundation_systems",
+        "command": "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "arguments": [
+          "four deterministic systems shards"
+        ],
+        "exit_code": 1,
+        "timed_out": false,
+        "duration_msec": 300255,
+        "duration_sec": 300.255,
+        "suite_time_baseline_sec": 29.141,
+        "suite_time_budget_sec": 43.712,
+        "suite_time_budget_exceeded": true,
+        "stderr_issue_count": 1,
+        "stderr_issues": [
+          "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+        ],
+        "stdout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\maintained\\foundation_systems.stdout.txt",
+        "stderr": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\maintained\\foundation_systems.stderr.txt",
+        "error": "Foundation systems shard harness exception: Foundation systems shard launch exceeded the 300 second timeout."
+      },
+      "owned_job": {
+        "name": "catalog013-maintained-candidate-r1",
+        "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "argv": [
+          "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+          "-NoProfile",
+          "-NonInteractive",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog013-maintained-proposal-candidate-r1/invoke-maintained-systems-stage-r2.ps1",
+          "-RepositoryRoot",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+          "-GodotPath",
+          "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+          "-ReportRoot",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1/maintained",
+          "-RunStage"
+        ],
+        "started_utc": 1793867664.8342774,
+        "head": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+        "source_sha256": {
+          "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+          "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+          "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+          "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+          "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+          "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+          "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+          "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+        },
+        "deadline_seconds": 330,
+        "errors": [
+          "nonzero exit, timeout or script error"
+        ],
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 27320,
+        "assigned_before_execution": true,
+        "exit": 1,
+        "timed_out": false,
+        "script_error": false,
+        "before_cleanup_pids": [],
+        "active_at_release": 0,
+        "cpu_seconds": 300.171875,
+        "finished_utc": 1793867968.2797983
+      },
+      "full_stage_pass": false
+    }
+  },
+  "projection": {
+    "state": "rejected_unapplied",
+    "corrected_R2_checks": 713,
+    "case_flag_pairs": 100,
+    "raw_variant_pairs": 96,
+    "opaque_identity_view_pairs": 4,
+    "encoded_save_pairs": 16,
+    "default_true_false_R2_baseline_usec": 211008,
+    "default_true_false_R2_candidate_usec": 221756,
+    "default_true_false_R2_candidate_slower_percent": 5.0936457385501965,
+    "R1_max_recursion_errors": 160,
+    "R1_shape_qualified": false,
+    "cycles_qualified": false,
+    "source_recommendation": null,
+    "evidence": "evidence/projection013-independent-disposition-r1/analysis.json"
+  },
+  "safety_and_scope": {
+    "cleanup_stopped": true,
+    "existing_files_cleared": false,
+    "paused_feature_changes": false,
+    "guards_unchanged": {
+      "cpu_percent": 12,
+      "memory_bytes": 2147483648,
+      "suspended_assignment": true,
+      "kill_on_close": true,
+      "breakaway": false,
+      "focused_seconds": 180,
+      "systems_inner_seconds": 300,
+      "systems_suite_budget_seconds": 43.712,
+      "systems_outer_seconds": 330
+    },
+    "completed_owned_jobs_verified_closed0": 16,
+    "running_jobs_observed": [],
+    "known_environment_root_CA_error": "Focused logs retain the same Windows root-certificate-store error; it is not omitted or described as error-free.",
+    "all1243candidate_source_hashes_match": true,
+    "normal_job_closure_is_not_test_acceptance": true,
+    "temporary_canonical_source_instrumentation_used": false,
+    "private_copied_component_observer_used": true
+  },
+  "pending": {
+    "B_commit": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+    "full_systems_acceptance": "Open: both uninstrumented baseline300.234s and candidate300.255s fail300s guard and43.712s comparator.",
+    "projection_reduction": "Open: tested defer-clone prototype rejected and unapplied; no repeatable material gain.",
+    "NEXT_qualification": "Required for the bounded production repair; cold-import/deployment qualification is separately assigned. No new delivery or Web gameplay claim.",
+    "whole_audit": "Open/incomplete; cleanup remains stopped."
+  },
+  "reviewer_actions": {
+    "canonical_edits": false,
+    "native_jobs": 0,
+    "only_new_draft_artifacts": true
+  },
+  "evidence_pins": {
+    "evidence/catalog013-canonical-candidate-application-r1.json": {
+      "sha256": "7bf14010929026f87673b8781868a3e3a6eee0f650f2fb960a96382e25759cd5",
+      "bytes": 863
+    },
+    "evidence/catalog013-resolver-canonical-baseline-r1/job.json": {
+      "sha256": "c4e2f14ee90b68d71c8c5bd2e02fc9e206ea6bdfef7a62ebcb27941bcd7440a2",
+      "bytes": 2124
+    },
+    "evidence/catalog013-resolver-canonical-baseline-r2/result.json": {
+      "sha256": "72cc09b303121cd8af74d3af2a651571e39ec91603cf83678a92d5fe8ea6c07a",
+      "bytes": 70559
+    },
+    "evidence/catalog013-resolver-canonical-baseline-r3/result.json": {
+      "sha256": "4987bd9111b5337a07f4671e9c365ed3898d2582c821261b03f89373aaab6a63",
+      "bytes": 209150
+    },
+    "evidence/catalog013-resolver-canonical-candidate-r3/result.json": {
+      "sha256": "4a514057c000811ce1a1e081dc4c18bf42d5f16f7c70f5273c0e7a5b6abb34f1",
+      "bytes": 209150
+    },
+    "evidence/catalog013-definition-proposal/independent-numeric-crosscheck-r1.json": {
+      "sha256": "7721c1eabc3599e4ffe04704da33ed0fdaffb7fb48f690497bad99c035891414",
+      "bytes": 4881
+    },
+    "evidence/catalog013-sequence-baseline-r1/result.json": {
+      "sha256": "580cb1c2c28fa098fcfc9ba1d36c78e59178a1dfe32e0c8ec0d6e628ba6a4aeb",
+      "bytes": 4122
+    },
+    "evidence/catalog013-sequence-candidate-r1/result.json": {
+      "sha256": "0b16498cb0511cc5a2e84bc6e71998a104c40264fe39ff5714c8e438777aa42a",
+      "bytes": 4122
+    },
+    "evidence/catalog013-maintained-baseline-r2/maintained/stage-results.json": {
+      "sha256": "15497ab6e6eea471ca724035a44b4c97ba947b123dec7378eb7307fa5cc58a79",
+      "bytes": 1153
+    },
+    "evidence/projection013-independent-disposition-r1/analysis.json": {
+      "sha256": "ff7ae651c9999d9325cb79b91ba8564a817cbfe8fa9b891e69b0824c0f0d2689",
+      "bytes": 7943
+    },
+    "evidence/catalog013-maintained-candidate-r1/maintained/stage-results.json": "90a7dc5b8a6b6e6fdaa14001acc59b1a3e9a60096b6394ee4256e7e9ae68a126",
+    "evidence/catalog013-independent-final-review-r1.json": "7626a04d2aae27e9aeb24f9e14e3d75418872335f4c5e3e535f9249a8a59c047"
+  },
+  "independent_post_run_review": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-independent-final-review-r1.json",
+    "sha256": "7626a04d2aae27e9aeb24f9e14e3d75418872335f4c5e3e535f9249a8a59c047"
+  },
+  "actual_owned_jobs": {
+    "catalog013-definition-diagnostic-bounded-r1": {
+      "name": "catalog013-definition-diagnostic-bounded-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog013-definition-proposal/invoke-definition-diagnostic013-r1.ps1",
+        "-RepositoryRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "-ReportRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1/diagnostic",
+        "-RunDiagnostic"
+      ],
+      "started_utc": 1793863994.4318714,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 17068,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 46.640625,
+      "finished_utc": 1793864041.1202018
+    },
+    "catalog013-layer-baseline-r1": {
+      "name": "catalog013-layer-baseline-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/layer_situation_cycle_check.gd"
+      ],
+      "started_utc": 1793862744.3363295,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "7ed4101bf1bc0d3c5ea32b8d9f24fd1936f30538daea9dca3d6abd06432f6540",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 6824,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 6.625,
+      "finished_utc": 1793862751.2933576
+    },
+    "catalog013-layer-candidate-r1": {
+      "name": "catalog013-layer-candidate-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/layer_situation_cycle_check.gd"
+      ],
+      "started_utc": 1793867133.7569697,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "7ed4101bf1bc0d3c5ea32b8d9f24fd1936f30538daea9dca3d6abd06432f6540",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 18924,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 6.40625,
+      "finished_utc": 1793867140.3279526
+    },
+    "catalog013-liveness-candidate-r1": {
+      "name": "catalog013-liveness-candidate-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+      ],
+      "started_utc": 1793867150.5930753,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "4fab6bd8099c93fcd8f7157a775839fdd180e87d8f010cdbcfba78bd3b8aa4e9",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 24220,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 6.90625,
+      "finished_utc": 1793867157.9181786
+    },
+    "catalog013-maintained-baseline-r2": {
+      "name": "catalog013-maintained-baseline-r2",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "argv": [
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog013-maintained-proposal-baseline-r2/invoke-maintained-systems-stage-r2.ps1",
+        "-RepositoryRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "-GodotPath",
+        "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "-ReportRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2/maintained",
+        "-RunStage"
+      ],
+      "started_utc": 1793863277.837628,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 330,
+      "errors": [
+        "nonzero exit, timeout or script error"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 23908,
+      "assigned_before_execution": true,
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 303.421875,
+      "finished_utc": 1793863580.9379332
+    },
+    "catalog013-maintained-candidate-r1": {
+      "name": "catalog013-maintained-candidate-r1",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "argv": [
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog013-maintained-proposal-candidate-r1/invoke-maintained-systems-stage-r2.ps1",
+        "-RepositoryRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "-GodotPath",
+        "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "-ReportRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1/maintained",
+        "-RunStage"
+      ],
+      "started_utc": 1793867664.8342774,
+      "head": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 330,
+      "errors": [
+        "nonzero exit, timeout or script error"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 27320,
+      "assigned_before_execution": true,
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 300.171875,
+      "finished_utc": 1793867968.2797983
+    },
+    "catalog013-projection-diagnostic-r1": {
+      "name": "catalog013-projection-diagnostic-r1",
+      "task": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "argv": [
+        "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9/evidence/catalog013-projection-launch-r1/invoke-projection-diagnostic013-r1.ps1",
+        "-RepositoryRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "-ReportRoot",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1/diagnostic",
+        "-RunDiagnostic"
+      ],
+      "started_utc": 1793864443.058625,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 34520,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 30.296875,
+      "finished_utc": 1793864473.2924266
+    },
+    "catalog013-projection-diagnostic-r2": {
+      "name": "catalog013-projection-diagnostic-r2",
+      "task": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\diagnostic\\project",
+        "--log-file",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2/godot.log",
+        "--script",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\diagnostic\\project\\.tmp\\generated_tests\\projection_parity_driver_r2.gd"
+      ],
+      "started_utc": 1793865436.6340597,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "1d906627e3937ea4d170276a5aa711f2099074ad63a99466841d7bb9719b0d70",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 27276,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 41.796875,
+      "finished_utc": 1793865478.6499023
+    },
+    "catalog013-resolver-canonical-baseline-r1": {
+      "name": "catalog013-resolver-canonical-baseline-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/scenario_definition_catalog_lookup_check.gd"
+      ],
+      "started_utc": 1793865610.8287325,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [
+        "nonzero exit, timeout or script error"
+      ],
+      "test_sha256": "19d589fefd9672fb5c23b34dd2801428dc5978bc6fd042d352dc368db8896074",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 2036,
+      "assigned_before_execution": true,
+      "exit": null,
+      "timed_out": false,
+      "script_error": true,
+      "before_cleanup_pids": [
+        2036,
+        7620,
+        36504
+      ],
+      "active_at_release": 0,
+      "cpu_seconds": 1.53125,
+      "finished_utc": 1793865612.4615932
+    },
+    "catalog013-resolver-canonical-baseline-r2": {
+      "name": "catalog013-resolver-canonical-baseline-r2",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/scenario_definition_catalog_lookup_check.gd"
+      ],
+      "started_utc": 1793865892.2182417,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [
+        "nonzero exit, timeout or script error"
+      ],
+      "test_sha256": "ac42605de33fc312f81716fb059e8c2d4761a8bb8d78785612e05fa6deed7d79",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 37452,
+      "assigned_before_execution": true,
+      "exit": 1,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 19.546875,
+      "finished_utc": 1793865911.8705778
+    },
+    "catalog013-resolver-canonical-baseline-r3": {
+      "name": "catalog013-resolver-canonical-baseline-r3",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/scenario_definition_catalog_lookup_check.gd"
+      ],
+      "started_utc": 1793866827.9282753,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "5b20c57e2cd0ccf4bf7be4deab108280843a3fab305daf98d17b9f3e91714d6b",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 21552,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 32.828125,
+      "finished_utc": 1793866860.8766382
+    },
+    "catalog013-resolver-canonical-candidate-r3": {
+      "name": "catalog013-resolver-canonical-candidate-r3",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/scenario_definition_catalog_lookup_check.gd"
+      ],
+      "started_utc": 1793866953.3765268,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "5b20c57e2cd0ccf4bf7be4deab108280843a3fab305daf98d17b9f3e91714d6b",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 6156,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 31.390625,
+      "finished_utc": 1793866984.953907
+    },
+    "catalog013-sequence-baseline-r1": {
+      "name": "catalog013-sequence-baseline-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://.tmp/generated_tests/foundation_check_split_runner.gd",
+        "--",
+        "--suite=contracts",
+        "--report=C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1/result.json",
+        "--check-ids=scenario_sequence_contract"
+      ],
+      "started_utc": 1793864979.9187846,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 37348,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 100.0,
+      "finished_utc": 1793865080.26941
+    },
+    "catalog013-sequence-candidate-r1": {
+      "name": "catalog013-sequence-candidate-r1",
+      "task": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://.tmp/generated_tests/foundation_check_split_runner.gd",
+        "--",
+        "--suite=contracts",
+        "--report=C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1/result.json",
+        "--check-ids=scenario_sequence_contract"
+      ],
+      "started_utc": 1793867229.0931358,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 1856,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 97.859375,
+      "finished_utc": 1793867327.4034147
+    },
+    "catalog013-storage-encoding-baseline-r1": {
+      "name": "catalog013-storage-encoding-baseline-r1",
+      "task": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/inactive_storage_encoding_check.gd"
+      ],
+      "started_utc": 1793862790.4140658,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "b0c757af711bc633a1dd004c130df0899d60fcf704b4733de6c18d4f7c9955eb",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 34372,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 9.96875,
+      "finished_utc": 1793862800.5242286
+    },
+    "catalog013-storage-encoding-candidate-r1": {
+      "name": "catalog013-storage-encoding-candidate-r1",
+      "task": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent",
+        "--script",
+        "res://scripts/tests/inactive_storage_encoding_check.gd"
+      ],
+      "started_utc": 1793867140.4219306,
+      "head": "3feaf0bb2b89194928106ecca5cdcd7cb77f261b",
+      "source_sha256": {
+        "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+        "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+        "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+        "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+        "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+        "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+        "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+        "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+      },
+      "deadline_seconds": 180,
+      "errors": [],
+      "test_sha256": "b0c757af711bc633a1dd004c130df0899d60fcf704b4733de6c18d4f7c9955eb",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "pid": 26100,
+      "assigned_before_execution": true,
+      "exit": 0,
+      "timed_out": false,
+      "script_error": false,
+      "before_cleanup_pids": [],
+      "active_at_release": 0,
+      "cpu_seconds": 10.015625,
+      "finished_utc": 1793867150.5061033
+    }
+  },
+  "aggregate_log_availability": {
+    "scope": "Both uninstrumented Systems runs",
+    "foundation_systems.stdout.txt": "Absent after the harness timeout; declared canonical path retained unchanged in stage records.",
+    "foundation_systems.json": "Absent; no aggregate check completion report exists.",
+    "foundation_systems.stderr.txt": "Present108bytes containing the exact harness timeout.",
+    "per_shard_godot_logs": "Present; original core shard logs retained. No all55/all220 completion inferred."
+  },
+  "report_authorship": "Root integrated the additive independent draft after actual committed-source Systems failure and independent post-run verification. Historical reviewer_actions describe the draft author only.",
+  "manual_reconciliation": {
+    "assigned_audit_task9_findings": 0,
+    "outside_current_errors": 78,
+    "outside_all_errors": 544,
+    "outside_runtime_errors": 54,
+    "runtime_instances": 149,
+    "git_verified": true,
+    "evidence": [
+      "evidence/reconciliation013-results-current-r1.json",
+      "evidence/reconciliation013-results-all-r1.json",
+      "evidence/continuation013-scope-preservation-r1.json"
+    ]
+  }
+}

@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T06:41:13.973709+00:00",
+  "observed_at": "2026-11-05T08:46:36.778153+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -19,7 +19,8 @@
       "docs/testing/roulette_sealed_pending_r08.json",
       "docs/testing/blackjack_draft_risk_notice_20261105.json",
       "docs/testing/pulltabs_journal_currency_20261105.json",
-      "docs/testing/pulltabs_practice_redeem_currency_20261105.json"
+      "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
+      "docs/testing/deprecated_code_audit_continuation_013.md"
     ]
   },
   "instances": [
@@ -10721,6 +10722,1366 @@
           "docs/testing/deprecated_code_audit_continuation_012.md"
         ],
         "limit": "Only this exact owned Job. Native stage still failed300.272s; exit1 preserved. Memory-derived exact Job precloseactive0 plus exact guards qualifies restoration; all3 originalcores/all1242hashes verified. No full-stage/browser/deployment pass or peer census inferred. No files cleared."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-definition-diagnostic-bounded-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-definition-diagnostic-bounded-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json:pid:17068",
+        "started_at": "2026-11-05T07:33:14.431871+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:34:01.120202+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json:pid:17068",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:34:01.120202+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:34:01.120202+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-definition-diagnostic-bounded-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:34:01.120202+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-definition-diagnostic-bounded-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-layer-baseline-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-layer-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json:pid:6824",
+        "started_at": "2026-11-05T07:12:24.336329+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:12:31.293358+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json:pid:6824",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:12:31.293358+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:12:31.293358+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-layer-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:12:31.293358+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-layer-candidate-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-layer-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json:pid:18924",
+        "started_at": "2026-11-05T08:25:33.756970+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:25:40.327953+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json:pid:18924",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:25:40.327953+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:25:40.327953+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-layer-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:25:40.327953+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-layer-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-liveness-candidate-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-liveness-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json:pid:24220",
+        "started_at": "2026-11-05T08:25:50.593075+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:25:57.918179+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json:pid:24220",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:25:57.918179+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:25:57.918179+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-liveness-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:25:57.918179+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-liveness-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-maintained-baseline-r2",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-maintained-baseline-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json:pid:23908",
+        "started_at": "2026-11-05T07:21:17.837628+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:26:20.937933+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json:pid:23908",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:26:20.937933+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:26:20.937933+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-maintained-baseline-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:26:20.937933+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-maintained-candidate-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-maintained-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json:pid:27320",
+        "started_at": "2026-11-05T08:34:24.834277+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:39:28.279798+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json:pid:27320",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:39:28.279798+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:39:28.279798+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-maintained-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:39:28.279798+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-maintained-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-projection-diagnostic-r1",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-projection-diagnostic-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json:pid:34520",
+        "started_at": "2026-11-05T07:40:43.058625+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:41:13.292427+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json:pid:34520",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:41:13.292427+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:41:13.292427+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-projection-diagnostic-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:41:13.292427+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-projection-diagnostic-r2",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-projection-diagnostic-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json:pid:27276",
+        "started_at": "2026-11-05T07:57:16.634060+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:57:58.649902+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json:pid:27276",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:57:58.649902+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:57:58.649902+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-projection-diagnostic-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:57:58.649902+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-projection-diagnostic-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-resolver-canonical-baseline-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-resolver-canonical-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json:pid:2036",
+        "started_at": "2026-11-05T08:00:10.828732+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:00:12.461593+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json:pid:2036",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:00:12.461593+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:00:12.461593+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-resolver-canonical-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:00:12.461593+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-resolver-canonical-baseline-r2",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-resolver-canonical-baseline-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json:pid:37452",
+        "started_at": "2026-11-05T08:04:52.218242+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:05:11.870578+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json:pid:37452",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:05:11.870578+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:05:11.870578+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-resolver-canonical-baseline-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:05:11.870578+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-resolver-canonical-baseline-r3",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-resolver-canonical-baseline-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json:pid:21552",
+        "started_at": "2026-11-05T08:20:27.928275+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:21:00.876638+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json:pid:21552",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:21:00.876638+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:21:00.876638+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-resolver-canonical-baseline-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:21:00.876638+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-baseline-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-resolver-canonical-candidate-r3",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-resolver-canonical-candidate-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json:pid:6156",
+        "started_at": "2026-11-05T08:22:33.376527+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:23:04.953907+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json:pid:6156",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:23:04.953907+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:23:04.953907+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-resolver-canonical-candidate-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:23:04.953907+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-resolver-canonical-candidate-r3\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-sequence-baseline-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-sequence-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json:pid:37348",
+        "started_at": "2026-11-05T07:49:39.918785+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:51:20.269410+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json:pid:37348",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:51:20.269410+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:51:20.269410+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-sequence-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:51:20.269410+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-sequence-candidate-r1",
+      "task_id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-sequence-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json:pid:1856",
+        "started_at": "2026-11-05T08:27:09.093136+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:28:47.403415+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json:pid:1856",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:28:47.403415+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:28:47.403415+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-sequence-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:28:47.403415+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-sequence-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-storage-encoding-baseline-r1",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-storage-encoding-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json:pid:34372",
+        "started_at": "2026-11-05T07:13:10.414066+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T07:13:20.524229+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json:pid:34372",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T07:13:20.524229+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T07:13:20.524229+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-storage-encoding-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T07:13:20.524229+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
+      }
+    },
+    {
+      "instance_id": "task9:catalog013-storage-encoding-candidate-r1",
+      "task_id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "catalog013-storage-encoding-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json:pid:26100",
+        "started_at": "2026-11-05T08:25:40.421931+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T08:25:50.506103+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json:pid:26100",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md",
+          "Actual assigned owned Job final active_at_release0; no global census inferred."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T08:25:50.506103+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T08:25:50.506103+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "catalog013-storage-encoding-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T08:25:50.506103+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog013-storage-encoding-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ],
+        "limit": "Only this exact assigned owned Job; closure0 and unchanged guards do not turn its parser/oracle/timeout outcome into a pass. Source/header/result scopes in phase013 report. No files cleared or peer/service stop."
       }
     }
   ],

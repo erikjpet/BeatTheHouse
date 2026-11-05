@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T06:51:55.546558+00:00",
+  "updated_at": "2026-11-05T08:46:36.778153+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13695,6 +13695,12 @@
             "docs/testing/deprecated_code_audit_continuation_012.md",
             "docs/testing/deprecated_code_audit_continuation_012.json"
           ]
+        },
+        {
+          "sha": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
         }
       ],
       "deployment": {
@@ -13704,7 +13710,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "The complete audit retains incomplete coverage and required acceptance. Scoped phase009 source is published separately; its exact NEXT delivery is reserve-blocked."
+        "scope": "The full audit retains incomplete coverage and acceptance. Historical child delivery evidence stays at its recorded scope. Phase013 source3c0fd716 requires delivery under BTH061-AUDIT-LAYER-DEFINITION-013; cold-import/NEXT qualification is separately owned and no new delivery is claimed here."
       },
       "evidence": [
         {
@@ -13786,6 +13792,11 @@
           "kind": "finer_attribution_and_source_owner_hardening_without_cleanup",
           "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
           "summary": "Bounded helper has tested implementationcommitbc04 and independently verified actual pilot restoration; catalog still fails at300.272s. Cleanup remains stopped, nofilescleared, pausedfeatures preserved; incomplete wholecodebase/audit acceptance staysOpen."
+        },
+        {
+          "kind": "scoped_performance_repair_without_cleanup_or_parent_closure",
+          "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
+          "summary": "Phase013 source3c0fd716 removes one redundant fullcatalogcopy, retainingadmission/schema/extension/physical-target authority. Focusedbaseline/candidate qualified; aggregate stillfails, projectioncandidate rejected, nofilescleared orpausedfeaturechanges. Full requested audit remainsincomplete/Open; NEXTqualificationseparate."
         }
       ],
       "implementation_batches": [
@@ -13803,7 +13814,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T06:51:55.546558+00:00"
+      "updated_at": "2026-11-05T08:46:36.778153+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20547,7 +20558,7 @@
         }
       },
       "state": "open",
-      "status": "FINER_PUBLICATION_MIGRATION_STORAGE_ATTRIBUTED_REPAIR_OPEN",
+      "status": "SCOPED_DEFINITION_FIX_COMMITTED_AGGREGATE_AND_STORAGE_OPEN_013",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20608,6 +20619,13 @@
             "docs/testing/deprecated_code_audit_continuation_012.md",
             "docs/testing/deprecated_code_audit_continuation_012.json"
           ]
+        },
+        {
+          "sha": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md",
+            "docs/testing/deprecated_code_audit_continuation_013.json"
+          ]
         }
       ],
       "deployment": {
@@ -20615,7 +20633,7 @@
         "state": "not_applicable",
         "commit": null,
         "evidence": [],
-        "scope": "Read-only attribution/follow-up; no source repair exists."
+        "scope": "This parent retains broad attribution and aggregate-repair acceptance. Committed production source3c0fd716 is tracked by BTH061-AUDIT-LAYER-DEFINITION-013 with required separately assigned NEXT qualification; the bounded child does not close this parent."
       },
       "evidence": [
         {
@@ -20702,22 +20720,32 @@
           "kind": "hardened_owner_and_finer_actual_class_timing",
           "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
           "summary": "124spans13methods,4/55/220recipe unchanged;300.272s timeoutexit1,149profiles/12layers completed,17759closed nestedspans/2censored. Target layoutrefresh6.010s/287 and publicationvalidation7.710s/748; layer definition2.420s/24 vs optionalbefore/compare0.001373s/12. All1242originalhashes restored; closure0. No productionoptimization or fullpass."
+        },
+        {
+          "kind": "trusted_parent_safe_reduction_continuation",
+          "reference": "Parent01a1a147-7f07-7583-baf0-771a839f1013 current delegation",
+          "summary": "Continue CONTENT-TIMEOUT006 using new attribution; investigate safe reductions in repeated layer-definition resolution/persistence projection, exact semantics/restoration/baseline validation, wholeauditOpen, nofilecleanup/nopausedfeatures. Main3feaf0bb fetched0/0; root/three read-only reviewers active, no candidate applied."
+        },
+        {
+          "kind": "bounded_source_repair_and_unchanged_aggregate_failure",
+          "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
+          "summary": "Source3c0fd716 qualified under canonical662+sequence/layer/storage/liveness checks.55copiedresource warm unboundfallback pairs18.53% lower sum; no gameplay/stage speedup. Same exactmaintained4/55 recipe baseline300.234/candidate300.255fail; comparator43.712alsofailed. All16Jobs0; other1241originalsources exact; projection rejected/unapplied; parentOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use measured ownership to qualify a bounded authority-preserving repair: target-travel layout refresh/publication and persistence projection, plus layer-install definition resolution. Preserve current validation/defaults, exact state/RNG/save semantics, independent220profiles and all time/process guards. No cleanup/release machinery operation.",
+      "next_action": "Continue measured definition/schema-ingress and persistence postprocessor/layout work: both current uninstrumented Systems recipes still hit300s and43.712s budget. Preserve target-catalog proof, callbacks/state/RNG/save semantics, all55IDs/220plannedprofiles and the original180/current300 guards; no cleanup or paused feature work.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Finer attribution and owner hardening completed. A substantive authority-preserving production repair and complete unchanged-guard acceptance remain engineering work; no external approval/save/deployment dependency. Cold-import qualification separately owned.",
+        "description": "Bounded definition-copy repair is committed, but full stage and storage reduction remain unresolved engineering work. Actual unchanged-guard baseline/candidate failures are retained; no missing-save, user approval or scheduler hold is asserted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T06:40:43.249410+00:00",
+        "observed_at": "2026-11-05T08:46:36.778153+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_012.md"
+          "docs/testing/deprecated_code_audit_continuation_013.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T06:51:55.546558+00:00"
+      "updated_at": "2026-11-05T08:46:36.778153+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -22969,6 +22997,181 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T06:51:55.546558+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-LAYER-DEFINITION-013",
+      "name": "Qualify layer-definition resolution reduction",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repeated layer-install definition resolution, preserving default flags, fallback versus seeded/embedded input distinctions, suppression, historical terminal content, readiness, schema/extension authority and result alias behavior. Investigate a bounded safe reduction against the frozen current baseline; reject candidates that only appear equivalent or weaken guards. Keep broader aggregate/audit acceptance separate.",
+        "source": "Current trusted parent continuation explicitly requests safe reductions based on phase012 attribution, exact semantics/restoration guarantees and baseline validation; no cleanup or paused feature work.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "semantic-parity",
+            "description": "Meaningful complete-Variant/state/RNG/authority/save/rollback baseline parity includes valid, malformed, stale and historical inputs and isolation/alias behavior relevant to the changed owner.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_013.md",
+              "docs/testing/deprecated_code_audit_continuation_013.json",
+              "evidence/catalog013-resolver-canonical-candidate-r3/result.json",
+              "evidence/catalog013-definition-proposal/independent-diagnostic-analysis-r1.json"
+            ]
+          },
+          {
+            "id": "measured-qualified-reduction",
+            "description": "A scoped committed candidate shows substantive same-input reduction with appropriate focused checks and mandatory performance liveness, retaining native resource guards and explicit aggregate acceptance limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_013.md",
+              "docs/testing/deprecated_code_audit_continuation_013.json",
+              "evidence/catalog013-resolver-canonical-candidate-r3/result.json",
+              "evidence/catalog013-definition-proposal/independent-diagnostic-analysis-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SCOPED_SOURCE_COMMITTED_FOCUSED_PASS_NEXT_OPEN",
+      "owner": {
+        "name": "Audit catalog performance repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "3c0fd716946f56cec0350d7ad43164bc29d14c28",
+          "evidence": [
+            "scripts/core/scenario_engine.gd",
+            "scripts/tests/scenario_definition_catalog_lookup_check.gd",
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Any resulting production source repair requires separate exact NEXT identity and relevant behavior qualification; deployment machinery is separately owned."
+      },
+      "evidence": [
+        {
+          "kind": "measured_phase012_owner",
+          "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
+          "summary": "Repeated layer-install definition resolution, preserving default flags, fallback versus seeded/embedded input distinctions, suppression, historical terminal content, readiness, schema/extension authority and result alias behavior."
+        },
+        {
+          "kind": "committed_lookup_reduction_and_focused_native_parity",
+          "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
+          "summary": "3c0fd716: selected-overlay admission replaces whole-catalog snapshot; no newcache/default/preferred/validation changes.55paired unboundfallback calls8.273362->6.740180s; actual662baseline/candidate/55authority/10cache match. Layer14, storage39/exactJSON, sequence38steps andlivenessPASS; fullSystems still300.255fail. NEXTrequiredseparate; childOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Follow source3c0fd716 through separately assigned cold-import/NEXT qualification, verify exact delivered identity and relevant behavior, then reconcile this bounded child. Continue parent aggregate/storage work; no full-stage acceptance or cleanup is inferred.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source and focused qualification are committed. Required NEXT qualification is separately assigned; no external hold prevents remaining parent investigation.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T08:46:36.778153+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T08:46:36.778153+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+      "name": "Qualify persistence projection reduction",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repeated persistence environment projection, preserving full saved Variant, input alias/mutation behavior, active/inactive runtime membership, semantic manifests, portable-ticket custody, nested layers, rollback and deep-copy/projection flags. Investigate a bounded safe reduction against the frozen current baseline; reject candidates that only appear equivalent or weaken guards. Keep broader aggregate/audit acceptance separate.",
+        "source": "Current trusted parent continuation explicitly requests safe reductions based on phase012 attribution, exact semantics/restoration guarantees and baseline validation; no cleanup or paused feature work.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "semantic-parity",
+            "description": "Meaningful complete-Variant/state/RNG/authority/save/rollback baseline parity includes valid, malformed, stale and historical inputs and isolation/alias behavior relevant to the changed owner.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "measured-qualified-reduction",
+            "description": "A scoped committed candidate shows substantive same-input reduction with appropriate focused checks and mandatory performance liveness, retaining native resource guards and explicit aggregate acceptance limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "DEFER_CLONE_REJECTED_POSTPROCESSOR_PROFILE_OPEN",
+      "owner": {
+        "name": "Audit catalog performance repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Any resulting production source repair requires separate exact NEXT identity and relevant behavior qualification; deployment machinery is separately owned."
+      },
+      "evidence": [
+        {
+          "kind": "measured_phase012_owner",
+          "reference": "docs/testing/deprecated_code_audit_continuation_012.md",
+          "summary": "Repeated persistence environment projection, preserving full saved Variant, input alias/mutation behavior, active/inactive runtime membership, semantic manifests, portable-ticket custody, nested layers, rollback and deep-copy/projection flags."
+        },
+        {
+          "kind": "baseline_candidate_projection_experiment_rejected",
+          "reference": "docs/testing/deprecated_code_audit_continuation_013.md",
+          "summary": "Unapplied prototype: correctedR2 passes713checks/100pairs incl16encoded and4explicitopaqueidentity cases; all200flatshapes complete. Default2rep timing211008->221756us is5.1%slower, notstablebenefit. Originalr1oraclerecursion160errors retained. RunState262bunchanged; no cycles/full-domain or productionrepair claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Keep the tested defer-clone prototype unapplied. Profile the four unchanged persistence postprocessors and their ensure_generated_layout/reconcile work on matched callers/flags before choosing a material reduction; preserve all copy/authority/save/rollback semantics and guards.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Measured prototype is rejected; source remains unchanged. Remaining internal attribution and a substantive semantics-preserving repair are active engineering work without user input or original-save dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T08:46:36.778153+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_013.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T08:46:36.778153+00:00"
     }
   ],
   "batches": [
