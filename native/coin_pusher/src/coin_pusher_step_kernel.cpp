@@ -1400,60 +1400,93 @@ struct Kernel {
     }
   }
   void write() {
+    // The bindings convert each literal dictionary key through String and
+    // Variant. Reuse STRING keys across this full export; keep every field
+    // write/erase and the existing body references unchanged. Local lifetime
+    // also avoids retaining Godot values across extension teardown.
+    const Variant key_id("id");
+    const Variant key_kind("kind");
+    const Variant key_x("x");
+    const Variant key_y("y");
+    const Variant key_z("z");
+    const Variant key_vx("vx");
+    const Variant key_vy("vy");
+    const Variant key_vz("vz");
+    const Variant key_x_remainder("x_remainder");
+    const Variant key_y_remainder("y_remainder");
+    const Variant key_z_remainder("z_remainder");
+    const Variant key_radius("radius");
+    const Variant key_height("height");
+    const Variant key_mass("mass");
+    const Variant key_sleep_ticks("sleep_ticks");
+    const Variant key_sleeping("sleeping");
+    const Variant key_rest_state("rest_state");
+    const Variant key_support_kind("support_kind");
+    const Variant key_support_ids("support_ids");
+    const Variant key_support_anchor_x("support_anchor_x");
+    const Variant key_support_anchor_y("support_anchor_y");
+    const Variant key_carried_sleep("carried_sleep");
+    const Variant key_plate_blocked("plate_blocked");
+    const Variant key_peg_contact_key("peg_contact_key");
+    const Variant key_meta("meta");
+    const Variant key_pending_platform_deposit("pending_platform_deposit");
+    const Variant key_fall_start_z("fall_start_z");
+    const Variant key_exit_state("exit_state");
+    const Variant key_exit_start_tick("exit_start_tick");
     Array a;
     for (Body &q : b) {
       Dictionary r = q.ref;
-      r["id"] = q.id;
-      r["kind"] = q.kind;
-      r["x"] = q.x;
-      r["y"] = q.y;
-      r["z"] = q.z;
-      r["vx"] = q.vx;
-      r["vy"] = q.vy;
-      r["vz"] = q.vz;
-      r["x_remainder"] = q.xr;
-      r["y_remainder"] = q.yr;
-      r["z_remainder"] = q.zr;
-      r["radius"] = q.r;
-      r["height"] = q.h;
-      r["mass"] = q.m;
-      r["sleep_ticks"] = q.sleep_ticks;
-      r["sleeping"] = q.sleeping;
-      r["rest_state"] = q.rest;
-      r["support_kind"] = q.support;
+      r[key_id] = q.id;
+      r[key_kind] = q.kind;
+      r[key_x] = q.x;
+      r[key_y] = q.y;
+      r[key_z] = q.z;
+      r[key_vx] = q.vx;
+      r[key_vy] = q.vy;
+      r[key_vz] = q.vz;
+      r[key_x_remainder] = q.xr;
+      r[key_y_remainder] = q.yr;
+      r[key_z_remainder] = q.zr;
+      r[key_radius] = q.r;
+      r[key_height] = q.h;
+      r[key_mass] = q.m;
+      r[key_sleep_ticks] = q.sleep_ticks;
+      r[key_sleeping] = q.sleeping;
+      r[key_rest_state] = q.rest;
+      r[key_support_kind] = q.support;
       Array support_ids;
       support_ids.resize(q.support_ids.size());
       for (int support_index = 0; support_index < int(q.support_ids.size()); ++support_index)
         support_ids[support_index] = q.support_ids[support_index];
-      r["support_ids"] = support_ids;
+      r[key_support_ids] = support_ids;
       if (q.has_support_anchor) {
-        r["support_anchor_x"] = q.support_anchor_x;
-        r["support_anchor_y"] = q.support_anchor_y;
+        r[key_support_anchor_x] = q.support_anchor_x;
+        r[key_support_anchor_y] = q.support_anchor_y;
       } else {
-        r.erase("support_anchor_x");
-        r.erase("support_anchor_y");
+        r.erase(key_support_anchor_x);
+        r.erase(key_support_anchor_y);
       }
-      r["carried_sleep"] = q.carried;
-      r["plate_blocked"] = q.plate_blocked;
+      r[key_carried_sleep] = q.carried;
+      r[key_plate_blocked] = q.plate_blocked;
       if (!q.peg_key.is_empty())
-        r["peg_contact_key"] = q.peg_key;
+        r[key_peg_contact_key] = q.peg_key;
       else
-        r.erase("peg_contact_key");
-      r["meta"] = q.meta;
+        r.erase(key_peg_contact_key);
+      r[key_meta] = q.meta;
       if (q.pending_deposit)
-        r["pending_platform_deposit"] = true;
+        r[key_pending_platform_deposit] = true;
       else
-        r.erase("pending_platform_deposit");
+        r.erase(key_pending_platform_deposit);
       if (q.has_fall_start)
-        r["fall_start_z"] = q.fall_start_z;
+        r[key_fall_start_z] = q.fall_start_z;
       else
-        r.erase("fall_start_z");
+        r.erase(key_fall_start_z);
       if (terminal(q)) {
-        r["exit_state"] = q.exit_state;
-        r["exit_start_tick"] = q.exit_start_tick;
+        r[key_exit_state] = q.exit_state;
+        r[key_exit_start_tick] = q.exit_start_tick;
       } else {
-        r.erase("exit_state");
-        r.erase("exit_start_tick");
+        r.erase(key_exit_state);
+        r.erase(key_exit_start_tick);
       }
       a.append(r);
     }
