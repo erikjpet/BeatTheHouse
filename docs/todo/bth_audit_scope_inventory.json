@@ -1723,6 +1723,43 @@
       "evidence": "docs/testing/deprecated_code_audit_continuation_020.md",
       "full_objective_complete": false,
       "NEXT_verified": false
+    },
+    {
+      "phase": "021",
+      "task": "BTH061-AUDIT-CORE-DELTA-COVERAGE-021",
+      "observed_at": "2026-11-05T20:54:54.882071+00:00",
+      "reviewed_source_commit": "d070fdc0459b64cb0cdf5d487e751a0b52ba42c1",
+      "source_files": {
+        "scripts/core/keys.gd": "820267eb92353059f47951058573ab7692e80b2c1700132b30eb4d1810bb0f15",
+        "scripts/core/run_money_flow_archive.gd": "b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6",
+        "scripts/core/run_terminal_evaluator.gd": "a8f99509a2eb32aca152cf669f7334a5c948d527e86d7b78cb079d4dd1a2d76f",
+        "scripts/core/storage_numeric_json.gd": "6b87ff3ecdeff7581d582101fc990f1a062699c4ee4ce3373d46e93834a4002a"
+      },
+      "complete_current_body_files": 4,
+      "methods": 50,
+      "constants": 18,
+      "all_retained": true,
+      "confirmed_obsolete_candidates": [],
+      "new_production_removals": [],
+      "source_changes": false,
+      "native_jobs": 0,
+      "independent_checks": 85,
+      "recorded_core_before": {
+        "reviewed": 61,
+        "remaining": 33,
+        "unknown": 1,
+        "unreviewed_total": 34
+      },
+      "recorded_core_after": {
+        "reviewed": 65,
+        "remaining": 30,
+        "unknown": 0,
+        "unreviewed_total": 30
+      },
+      "prior61_requalified": false,
+      "associated_evidence_commit": null,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_021.md",
+      "full_objective_complete": false
     }
   ]
 }

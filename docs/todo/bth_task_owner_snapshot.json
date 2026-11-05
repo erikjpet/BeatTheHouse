@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T20:20:09.821707+00:00",
+  "observed_at": "2026-11-05T20:54:54.882071+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T20:20:09.821707+00:00",
-      "source": "Phase020 qualified and published: four stale fixture tasks complete/e772; sole freshRunState sharedrep0 fix at363ece78f55ba4bbccf78a67ad6f54c75e521e13. Current original gamegroups0fail, fullVP/RTPC20pass, Crewcompletecausalcapture qualified; same fulllegacy/hourly40 before/after, unchanged original game runner, independent native acceptance. Crewparent/newchild remainOpen for separatelyowned exactNEXT; wholeaudit/aggregate work remainsOpen. Runtime200 preserves192prefix, exactown Jobsclosed0. No paused/excluded/portrait/cleanup/guard or NEXT operation."
+      "observed_at": "2026-11-05T20:54:54.882071+00:00",
+      "source": "Phase021: four full current core bodies qualified (943 lines,50 methods,18 constants), independent85 checks and3 existing static contracts passed. All retained; no production or native changes. Recorded core unreviewed34 (33remaining+1unknown) becomes30; prior61 not requalified. Bounded child stays Open until exact evidence commit association; umbrella, aggregate and prior NEXT remain Open. Paused/excluded work and all files preserved."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

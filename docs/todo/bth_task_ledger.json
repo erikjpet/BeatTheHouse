@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T20:20:09.821707+00:00",
+  "updated_at": "2026-11-05T20:54:54.882071+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13136,13 +13136,14 @@
             },
             {
               "id": "scripts/core/keys.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
                 "docs/todo/bth_audit_scope_inventory.json",
                 "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/deprecated_code_audit_continuation_021.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "All four current keys are used through explicit KeysScript preloads in result, durable-store, settings and action paths; namespace-text searches alone miss aliases. Retain. Complete current body at d070/fd2c raw 820267eb92353059f47951058573ab7692e80b2c1700132b30eb4d1810bb0f15. Bounded source classification; no new universal runtime/consumer/parity or parent completion claim."
             },
             {
               "id": "scripts/core/meta_collection_service.gd",
@@ -13265,13 +13266,14 @@
             },
             {
               "id": "scripts/core/run_money_flow_archive.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
                 "docs/todo/bth_audit_scope_inventory.json",
                 "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/deprecated_code_audit_continuation_021.md"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "All nine methods and schema are active in compaction, saved known/unknown prefix custody and report/UI summaries. Retain current recorded DTO behavior; no arbitrary-Object callback-purity claim. Complete current body at d070/fd2c raw b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6. Bounded source classification; no new universal runtime/consumer/parity or parent completion claim."
             },
             {
               "id": "scripts/core/run_save_codec.gd",
@@ -13305,13 +13307,14 @@
             },
             {
               "id": "scripts/core/run_terminal_evaluator.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
                 "docs/todo/bth_audit_scope_inventory.json",
                 "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/deprecated_code_audit_continuation_021.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "All23 methods and2 constants retained. Detailed diagnostics and terminal-only APIs have distinct live consumers; pending paid assets/liquid funds and per-game wager capacity are active current deltas. Complete current body at d070/fd2c raw a8f99509a2eb32aca152cf669f7334a5c948d527e86d7b78cb079d4dd1a2d76f. Bounded source classification; no new universal runtime/consumer/parity or parent completion claim."
             },
             {
               "id": "scripts/core/save_service.gd",
@@ -13494,13 +13497,14 @@
             },
             {
               "id": "scripts/core/storage_numeric_json.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
                 "docs/todo/bth_audit_scope_inventory.json",
                 "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/deprecated_code_audit_continuation_021.md"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "All18 methods and11 constants retained in active codec/save/UI storage paths; precision, signed-zero, occupied markers, engine grammar and local bounded arithmetic helpers are current compatibility. Complete current body at d070/fd2c raw 6b87ff3ecdeff7581d582101fc990f1a062699c4ee4ce3373d46e93834a4002a. Bounded source classification; no new universal runtime/consumer/parity or parent completion claim."
             },
             {
               "id": "scripts/core/surface_sfx_manifest.gd",
@@ -13639,7 +13643,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_STALE_FIXTURES_CLOSED_FRESH_CREW_FIX_MAIN_AUDIT_AND_NEXT_OPEN_020",
+      "status": "FOUR_CURRENT_CORE_BODY_GAPS_QUALIFIED_WHOLE_AUDIT_OPEN_021",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13962,12 +13966,17 @@
           "kind": "qualified_fresh_shared_reputation_initializer020",
           "reference": "docs/testing/deprecated_code_audit_continuation_020.md",
           "summary": "One-line fresh neutral sharedreputation0 source repair published on main. Exact original full2gamegroups nowPASS0fail; both oldCrew assertions unchanged and full generatedrunner identical to priorfailed2. Existing complete reputation_hourly branch40PASS before/after, missinglegacykey highest60/not90 and59/60/Heat/Continue controls retained. Native original180/12percent/2GiB/assigned/exactclosure0; independent native review qualifies. Exact NEXT remains separatelyassigned/pending; whole audit and aggregates remain Open."
+        },
+        {
+          "kind": "current_four_core_body_gap_closure021",
+          "reference": "docs/testing/deprecated_code_audit_continuation_021.md",
+          "summary": "Four full current bodies reviewed, all active/compatibility retained; no production removals. Recorded reviewed61 to65; unreviewed34 (33remaining+1unknown) to30 (30remaining+0unknown). Prior61 not requalified here. Parent full coverage/candidates/compatibility/aggregate acceptance remain Open."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue independent whole-codebase deprecated-code review and remaining aggregate timeout/authority qualification under the original guards; obtain separately owned NEXT evidence for the published fresh initializer. Preserve paused item/scenario implementation, files and excluded diagnostic.",
+      "next_action": "Continue the remaining30 recorded core body gaps and broader UI/data/tools/external parity coverage outside paused implementation and excluded diagnostics. Preserve aggregate guards and separately owned NEXT verification.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13979,7 +13988,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T20:20:09.821707+00:00"
+      "updated_at": "2026-11-05T20:54:54.882071+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -24598,6 +24607,114 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T20:20:09.821707+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CORE-DELTA-COVERAGE-021",
+      "name": "Resolve four current core semantic audit gaps",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review the complete current bodies and changed/new declarations of Keys, RunMoneyFlowArchive, RunTerminalEvaluator and StorageNumericJson, then trace present callers, dispatch and persistence/compatibility roles. Classify each as active/retained or a supported obsolete-code candidate. Do not infer obsolescence from zero text hits; register a separate implementation task before any supported production removal. This bounded review does not close whole-codebase coverage or aggregate qualification.",
+        "source": "Trusted parent direction to continue independent deprecated-code audit; these four files remain explicitly unqualified in umbrella current-source coverage after phase020.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "complete-current-source-disposition",
+            "description": "All current declarations and prior/current deltas in the four pinned files have explicit semantic and consumer/compatibility dispositions; no implementation or dynamic dispatch assumption is hidden.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json",
+              "docs/testing/deprecated_code_audit_continuation_021.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review qualifies bounded findings/limits; evidence and current coverage dispositions have an associated commit before completion. Any production candidate gets separate tests, commit and required delivery.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/keys.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_021.md"
+              ],
+              "scope": "All four current keys are used through explicit KeysScript preloads in result, durable-store, settings and action paths; namespace-text searches alone miss aliases. Retain. Current raw 820267eb92353059f47951058573ab7692e80b2c1700132b30eb4d1810bb0f15"
+            },
+            {
+              "id": "scripts/core/run_money_flow_archive.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_021.md"
+              ],
+              "scope": "All nine methods and schema are active in compaction, saved known/unknown prefix custody and report/UI summaries. Retain current recorded DTO behavior; no arbitrary-Object callback-purity claim. Current raw b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6"
+            },
+            {
+              "id": "scripts/core/run_terminal_evaluator.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_021.md"
+              ],
+              "scope": "All23 methods and2 constants retained. Detailed diagnostics and terminal-only APIs have distinct live consumers; pending paid assets/liquid funds and per-game wager capacity are active current deltas. Current raw a8f99509a2eb32aca152cf669f7334a5c948d527e86d7b78cb079d4dd1a2d76f"
+            },
+            {
+              "id": "scripts/core/storage_numeric_json.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_021.md"
+              ],
+              "scope": "All18 methods and11 constants retained in active codec/save/UI storage paths; precision, signed-zero, occupied markers, engine grammar and local bounded arithmetic helpers are current compatibility. Current raw 6b87ff3ecdeff7581d582101fc990f1a062699c4ee4ce3373d46e93834a4002a"
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "FOUR_CORE_CURRENT_BODY_REVIEWS_QUALIFIED_AWAITING_EVIDENCE_COMMIT_021",
+      "owner": {
+        "name": "Audit current core semantic coverage",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only audit evidence/coverage only; no production change or NEXT claim. Any justified source patch requires separately registered implementation and delivery acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "qualified_four_current_core_body_dispositions021",
+          "reference": "docs/testing/deprecated_code_audit_continuation_021.md",
+          "summary": "Full943 lines/50methods/18constants active/retain; independent85 checks. Three unchanged static source contracts pass. No supported obsolete source candidate, production edit, native run, aggregate or NEXT claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit qualified evidence and associate that exact commit before completing this bounded four-file review task; continue whole audit separately.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Permitted independent audit work is active; no user/save/scheduler hold. No code removal is yet justified.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T20:37:41.463702+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T20:54:54.882071+00:00"
     }
   ],
   "batches": [

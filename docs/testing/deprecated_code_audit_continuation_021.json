@@ -1,0 +1,122 @@
+{
+  "schema": "bth.audit_continuation021/v1",
+  "observed_at": "2026-11-05T20:54:54.882071+00:00",
+  "task": "BTH061-AUDIT-CORE-DELTA-COVERAGE-021",
+  "base_main": "d070fdc0459b64cb0cdf5d487e751a0b52ba42c1",
+  "scope": "Complete current bodies and present consumer/compatibility dispositions for four remaining core review-depth gaps; no production change.",
+  "associated_evidence_commit": null,
+  "bounded_task_state": "open_pending_evidence_commit_association",
+  "files": [
+    {
+      "path": "scripts/core/keys.gd",
+      "raw_sha256": "820267eb92353059f47951058573ab7692e80b2c1700132b30eb4d1810bb0f15",
+      "lines": 9,
+      "methods": 0,
+      "constants": 4,
+      "disposition": "reviewed_active_retained",
+      "scope": "All four current keys are used through explicit KeysScript preloads in result, durable-store, settings and action paths; namespace-text searches alone miss aliases. Retain."
+    },
+    {
+      "path": "scripts/core/run_money_flow_archive.gd",
+      "raw_sha256": "b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6",
+      "lines": 141,
+      "methods": 9,
+      "constants": 1,
+      "disposition": "reviewed_active_retained",
+      "scope": "All nine methods and schema are active in compaction, saved known/unknown prefix custody and report/UI summaries. Retain current recorded DTO behavior; no arbitrary-Object callback-purity claim."
+    },
+    {
+      "path": "scripts/core/run_terminal_evaluator.gd",
+      "raw_sha256": "a8f99509a2eb32aca152cf669f7334a5c948d527e86d7b78cb079d4dd1a2d76f",
+      "lines": 365,
+      "methods": 23,
+      "constants": 2,
+      "disposition": "reviewed_active_retained",
+      "scope": "All23 methods and2 constants retained. Detailed diagnostics and terminal-only APIs have distinct live consumers; pending paid assets/liquid funds and per-game wager capacity are active current deltas."
+    },
+    {
+      "path": "scripts/core/storage_numeric_json.gd",
+      "raw_sha256": "6b87ff3ecdeff7581d582101fc990f1a062699c4ee4ce3373d46e93834a4002a",
+      "lines": 428,
+      "methods": 18,
+      "constants": 11,
+      "disposition": "reviewed_active_retained",
+      "scope": "All18 methods and11 constants retained in active codec/save/UI storage paths; precision, signed-zero, occupied markers, engine grammar and local bounded arithmetic helpers are current compatibility."
+    }
+  ],
+  "total_lines": 943,
+  "total_methods": 50,
+  "total_constants": 18,
+  "confirmed_obsolete_candidates": [],
+  "production_removals": [],
+  "production_changes": false,
+  "native_jobs": 0,
+  "existing_source_contracts": {
+    "hot_paths": true,
+    "correctness": true,
+    "IoResult_and_Keys": true,
+    "scope": "Three unchanged read-only source-contract scripts passed; no new native numeric-vector or functional acceptance."
+  },
+  "independent_review_checks": 85,
+  "terminal_independent_checks": 38,
+  "recorded_core_body_dispositions_before": {
+    "reviewed": 61,
+    "remaining": 33,
+    "unknown": 1,
+    "unreviewed_total": 34
+  },
+  "recorded_core_body_dispositions_after": {
+    "reviewed": 65,
+    "remaining": 30,
+    "unknown": 0,
+    "unreviewed_total": 30
+  },
+  "prior61_not_requalified_this_phase": true,
+  "total_remaining_recorded_areas_before": 37,
+  "total_remaining_recorded_areas_after": 33,
+  "source_count": 1247,
+  "source_manifest_sha256": "fd2c64d5c05813d68648706b9ba4779aa9a79a9724c41039422ba21e0b593dec",
+  "all_source_unchanged": true,
+  "runtime_inventory_unchanged": 200,
+  "evidence_sha256": {
+    "evidence/catalog021-registration-r1.json": "967cf177003dbb8cec261332adb4365cd49ef1addbfa53f756cd9d47f5787c56",
+    "evidence/catalog021-terminal-root-review-r2.json": "5cd5aae1418db517dfea608ce2bfcbf60e4dba146b5abf94329d1f0741c14b09",
+    "evidence/catalog021-terminal-independent-review-r1.json": "c298e247bc9a35cc10c8f3453b9b8171351655c248c84e719ad17f03512a5d1d",
+    "evidence/catalog021-archive-keys-review-r2.json": "23f93e9e1b6b74f0ec50c542547ac2a05600e75f0143408c9fb1f617a59f7c05",
+    "evidence/catalog021-numeric-storage-review-r3.json": "712bcbdc5a3e0c4e22ed7d7f883c5d92edd0ea9cecfb73da4b1fa747baf86e1e",
+    "evidence/catalog021-four-file-independent-peer-review-r1.json": "4f4b51835559d868f7d50af9859ef58eec31ba5e51f9918446df9db1e8249533",
+    "evidence/catalog021-source-contracts-r1/result.json": "cbd986b53f4f8f79d36a9304e1b41afbaec61ef333b76e235e8115162982a02c",
+    "evidence/catalog021-key-contract-r1/result.json": "fbd89d3445f8673024c100d4b632de17cf3d65a665ddb3aa37649e1a8e1517f3"
+  },
+  "evidence_corrections_preserved": [
+    "Numeric R1 misattributed engine JSON.stringify(marker) to the storage module; R2 corrected only the graph edge and reciprocal caller. R3 corrected displayed inclusive method-span ends. All versions preserved.",
+    "Archive R2 narrows the earlier no-callback wording to recorded DTO consumer scope; arbitrary Object stringification is not claimed pure. No callback experiment or diagnostic occurred.",
+    "Root terminal R2 clarifies transitive reachability in the explicit direct-call graph. R1 preserved."
+  ],
+  "limits": [
+    "Body/declaration retention review is not new universal functional or numerical correctness acceptance. Six maintained numeric-test sources and555 vectors were inspected; vectors were not executed in this phase.",
+    "No source optimization or new removal is justified by these four reviews. Keys and archive old raw CSV differences normalize to the same existing LF bodies; historical evidence was not rewritten.",
+    "Whole-codebase candidate/consumer/parity coverage and Content180, Systems300/comparator43.712/outer330 and shard55/all220 acceptance remain Open.",
+    "Existing production Crew NEXT verification remains separately assigned and unchanged. No NEXT machinery operation or delivery claim.",
+    "Paused item/scenario implementation, portrait behavior, excluded diagnostic and partials, prototypes and unpublished1f24 remain untouched. No files cleared."
+  ],
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "precommit_manual_reconciliation": {
+    "current": {
+      "total_findings": 190,
+      "own_findings": 0,
+      "outside_runtime_errors": 135
+    },
+    "all": {
+      "total_findings": 806,
+      "own_findings": 0,
+      "outside_runtime_errors": 135
+    }
+  },
+  "precommit_manual_receipt_sha256": {
+    "current": "6af5f19ce2b96eedb8d3e537c844bea0f4e7a148bcd5c09055dc7eca5ecbf60c",
+    "all": "9828da270bcb1258533643aa1b55c3f41d8060b5491df2f2190bfc4ab4b52fc1"
+  },
+  "count_scope": "Unreviewed totals include every state other than reviewed; prior61 are not requalified."
+}
