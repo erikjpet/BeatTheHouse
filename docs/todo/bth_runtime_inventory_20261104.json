@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T22:56:16.910464+00:00",
+  "observed_at": "2026-11-05T00:16:40.251041+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
     "complete": false,
@@ -4370,6 +4370,1236 @@
           "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
         "limit": "Owned diagnostic/browser verification only; all fixtures/saves/evidence retained, no peer cleanup or guard bypass. Functional failures retained separately from clean process closure."
+      }
+    },
+    {
+      "instance_id": "task9:content008-capacity-baseline-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-capacity-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json:pid:22024",
+        "started_at": "2026-11-04T23:23:48.910029+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:24:28.002647+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json:pid:22024",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:24:28.002647+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:24:28.002647+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-capacity-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:24:28.002647+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-capacity-candidate-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-capacity-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json:pid:12340",
+        "started_at": "2026-11-04T23:27:55.306231+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:28:33.690264+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json:pid:12340",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:28:33.690264+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:28:33.690264+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-capacity-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:28:33.690264+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-capacity-telemetry-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-capacity-telemetry-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json:pid:32164",
+        "started_at": "2026-11-04T23:38:21.167471+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:39:00.019269+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json:pid:32164",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:39:00.019269+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:39:00.019269+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-capacity-telemetry-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:39:00.019269+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-capacity-telemetry-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-baseline-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json:pid:31976",
+        "started_at": "2026-11-04T23:45:57.543140+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:46:35.600728+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json:pid:31976",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:46:35.600728+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:46:35.600728+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:46:35.600728+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-candidate-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json:pid:28584",
+        "started_at": "2026-11-04T23:47:13.368444+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:47:40.847811+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json:pid:28584",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:47:40.847811+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:47:40.847811+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:47:40.847811+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-canonical-r1",
+      "task_id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-canonical-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json:pid:39480",
+        "started_at": "2026-11-04T23:59:00.341266+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:59:27.298289+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json:pid:39480",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:59:27.298289+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:59:27.298289+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-canonical-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:59:27.298289+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-canonical-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-contract-r1",
+      "task_id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-contract-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json:pid:36660",
+        "started_at": "2026-11-05T00:00:02.701117+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T00:00:12.544796+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json:pid:36660",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T00:00:12.544796+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T00:00:12.544796+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-contract-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T00:00:12.544796+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-contract-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-diff-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-diff-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json:pid:13436",
+        "started_at": "2026-11-04T23:52:53.682822+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:53:39.592406+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json:pid:13436",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:53:39.592406+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:53:39.592406+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-diff-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:53:39.592406+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-command-diff-r2",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-command-diff-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json:pid:15596",
+        "started_at": "2026-11-04T23:56:45.996106+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:57:33.000741+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json:pid:15596",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:57:33.000741+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:57:33.000741+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-command-diff-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:57:33.000741+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-command-diff-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-json-diff-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-json-diff-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json:pid:33512",
+        "started_at": "2026-11-04T23:26:22.659414+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:26:24.556483+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json:pid:33512",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:26:24.556483+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:26:24.556483+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-json-diff-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:26:24.556483+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-json-diff-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-liveness-r1",
+      "task_id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-liveness-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json:pid:31860",
+        "started_at": "2026-11-05T00:00:47.132055+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T00:00:54.728632+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json:pid:31860",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T00:00:54.728632+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T00:00:54.728632+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-liveness-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T00:00:54.728632+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-liveness-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-maintained-sequence-baseline-r1",
+      "task_id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-maintained-sequence-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json:pid:39900",
+        "started_at": "2026-11-05T00:10:04.646885+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T00:11:51.879505+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json:pid:39900",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T00:11:51.879505+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T00:11:51.879505+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-maintained-sequence-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T00:11:51.879505+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-baseline-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-maintained-sequence-r1",
+      "task_id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-maintained-sequence-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json:pid:32172",
+        "started_at": "2026-11-05T00:06:42.052595+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T00:08:19.340578+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json:pid:32172",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T00:08:19.340578+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T00:08:19.340578+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-maintained-sequence-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T00:08:19.340578+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-maintained-sequence-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-profile-candidate-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-profile-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json:pid:39328",
+        "started_at": "2026-11-05T00:01:29.180049+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T00:04:29.308005+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json:pid:39328",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T00:04:29.308005+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T00:04:29.308005+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-profile-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T00:04:29.308005+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-candidate-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
+      }
+    },
+    {
+      "instance_id": "task9:content008-profile-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content008-profile-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json:pid:38032",
+        "started_at": "2026-11-04T23:14:46.316164+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "No-reuse output/private directory selected before suspended owned launch."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T23:17:46.657071+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json:pid:38032",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "OwnedJob drained0 before release; no reused-PID claim."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T23:17:46.657071+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T23:17:46.657071+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content008-profile-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T23:17:46.657071+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content008-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ],
+        "limit": "Own private diagnostic/test only. Functional failures/timeouts remain failures despite verified process closure; fixtures/saves retained, no peers stopped."
       }
     }
   ],

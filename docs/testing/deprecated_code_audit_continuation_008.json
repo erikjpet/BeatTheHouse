@@ -1,0 +1,1243 @@
+{
+  "schema": "bth.deprecated_audit_continuation008/v1",
+  "observed_at": "2026-11-05T00:16:40.251041+00:00",
+  "base": "069734374cf935ed14130eaa79eea900a34f966c",
+  "full_objective_complete": false,
+  "original_full_flow": {
+    "whole_process_deadline_seconds": 180,
+    "timed_out": true,
+    "script_error": false,
+    "active_at_release": 0,
+    "completed_sequence_steps": 32,
+    "trace_count": 136,
+    "completed": [
+      {
+        "stage": "init_content_load",
+        "detail": "",
+        "seconds": 17.86893
+      },
+      {
+        "stage": "init_fixture_library",
+        "detail": "",
+        "seconds": 0.00056
+      },
+      {
+        "stage": "init_content_fingerprint",
+        "detail": "",
+        "seconds": 0.045112
+      },
+      {
+        "stage": "init_fixture_fingerprint",
+        "detail": "",
+        "seconds": 0.000249
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_canonical_pack_paths",
+        "seconds": 0.000582
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_player_facing_description_copy",
+        "seconds": 0.001724
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_destination_decision_contract",
+        "seconds": 0.000442
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_release_copy_style_blockers",
+        "seconds": 0.87017
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_art_presentation",
+        "seconds": 0.008923
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_blackjack_item_content",
+        "seconds": 0.188447
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_m2_pack_availability",
+        "seconds": 0.000381
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_tier_two_venue_progression",
+        "seconds": 5.983795
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_baccarat_grand_casino_only",
+        "seconds": 0.000125
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_game_pool_distribution",
+        "seconds": 1.872035
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_physical_game_fixture_capacity",
+        "seconds": 0.09245
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_encounter_freshness",
+        "seconds": 0.445168
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_travel_unlock_event_copy",
+        "seconds": 0.001257
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_high_risk_table_limit_overrides",
+        "seconds": 0.013926
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_open_hours",
+        "seconds": 0.000748
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_dialogue_system_content",
+        "seconds": 0.000241
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_talk_content_pass_content",
+        "seconds": 0.102396
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_validation_boot_surfacing",
+        "seconds": 0.05865
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_3_event_pack",
+        "seconds": 1.875225
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_action_trigger_candidate_index",
+        "seconds": 0.007586
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_4_item_pack",
+        "seconds": 0.249746
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_group_modularity",
+        "seconds": 0.031898
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_challenge_pack_content",
+        "seconds": 0.000579
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_s0_2_baseline_regression_fixtures",
+        "seconds": 0.02746
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_sa_2_per_frame_contracts",
+        "seconds": 0.627838
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_core",
+        "seconds": 12.462942
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_scenario_engine",
+        "seconds": 25.703574
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_punchline_layer_contract",
+        "seconds": 7.69091
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_tier2_scenario_contract",
+        "seconds": 16.130485
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_backlog_contract",
+        "seconds": 12.864949
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_schema",
+        "seconds": 0.071001
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_public_projection_privacy",
+        "seconds": 0.015351
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_catalog_rollout",
+        "seconds": 5.76084
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_registered_operations",
+        "seconds": 0.108057
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_interaction_identity",
+        "seconds": 0.014567
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_semantic_inventory",
+        "seconds": 0.165029
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_base_semantic_producer",
+        "seconds": 0.010086
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_finalization",
+        "seconds": 4.699683
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_event_popup_button_release_recovery",
+        "seconds": 0.041983
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_caller_failure_contract",
+        "seconds": 1.786984
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_negative_fixtures",
+        "seconds": 0.442111
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_commands",
+        "seconds": 0.137962
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_created_owner_command_authority",
+        "seconds": 0.062135
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_augment_availability",
+        "seconds": 0.056139
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_boundary_provenance",
+        "seconds": 0.076295
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_mutually_exclusive_branch_cleanup",
+        "seconds": 0.140483
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_handler_reducer_contracts",
+        "seconds": 0.161362
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_serialized_fact_ingress",
+        "seconds": 0.091727
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_run_state_fact_subscription_routing",
+        "seconds": 5.240785
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_atomic_runtime_failures",
+        "seconds": 0.113584
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_sequence_persistence_seam",
+        "seconds": 0.042065
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_policy_matrix",
+        "seconds": 0.294217
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_save_service_phase_matrix",
+        "seconds": 0.742687
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_receipt_reconstruction",
+        "seconds": 0.644807
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_depth_remediation_contracts",
+        "seconds": 2.329894
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_authoritative_receipt_capacity",
+        "seconds": 28.287332
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_completion_evidence",
+        "seconds": 0.045907
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_extension_dispatch",
+        "seconds": 0.002513
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_definition_validation_receipt",
+        "seconds": 0.02071
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_suppressed_sequence_compatibility",
+        "seconds": 8.058317
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_transition_and_event_delivery",
+        "seconds": 0.142795
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_rollout_growth_contract",
+        "seconds": 3.991537
+      }
+    ],
+    "censored": [
+      {
+        "stage": "check_callable",
+        "detail": "content",
+        "entered_engine_usec": 34997878
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_sequence_contract",
+        "entered_engine_usec": 109851110
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_delivery_day_production_package",
+        "entered_engine_usec": 173651845
+      }
+    ],
+    "assertion_pass_inferred_from_return": false,
+    "clock": "Paired integer Time.get_ticks_usec differences; absolute engine readings are not wall-cap offsets."
+  },
+  "fixed_full_flow": {
+    "whole_process_deadline_seconds": 180,
+    "timed_out": true,
+    "script_error": false,
+    "active_at_release": 0,
+    "completed_sequence_steps": 38,
+    "trace_count": 149,
+    "completed": [
+      {
+        "stage": "init_content_load",
+        "detail": "",
+        "seconds": 16.505963
+      },
+      {
+        "stage": "init_fixture_library",
+        "detail": "",
+        "seconds": 0.000642
+      },
+      {
+        "stage": "init_content_fingerprint",
+        "detail": "",
+        "seconds": 0.047718
+      },
+      {
+        "stage": "init_fixture_fingerprint",
+        "detail": "",
+        "seconds": 0.000252
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_canonical_pack_paths",
+        "seconds": 0.000636
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_player_facing_description_copy",
+        "seconds": 0.001799
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_destination_decision_contract",
+        "seconds": 0.000602
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_release_copy_style_blockers",
+        "seconds": 0.847636
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_art_presentation",
+        "seconds": 0.00933
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_blackjack_item_content",
+        "seconds": 0.191995
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_m2_pack_availability",
+        "seconds": 0.000415
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_tier_two_venue_progression",
+        "seconds": 5.654154
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_baccarat_grand_casino_only",
+        "seconds": 0.000134
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_game_pool_distribution",
+        "seconds": 1.783442
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_physical_game_fixture_capacity",
+        "seconds": 0.089026
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_encounter_freshness",
+        "seconds": 0.435664
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_travel_unlock_event_copy",
+        "seconds": 0.001225
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_high_risk_table_limit_overrides",
+        "seconds": 0.013575
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_open_hours",
+        "seconds": 0.000733
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_dialogue_system_content",
+        "seconds": 0.000238
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_talk_content_pass_content",
+        "seconds": 0.090292
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_validation_boot_surfacing",
+        "seconds": 0.052642
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_3_event_pack",
+        "seconds": 1.824594
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_action_trigger_candidate_index",
+        "seconds": 0.007612
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_4_item_pack",
+        "seconds": 0.256666
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_group_modularity",
+        "seconds": 0.035736
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_challenge_pack_content",
+        "seconds": 0.000666
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_s0_2_baseline_regression_fixtures",
+        "seconds": 0.027652
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_sa_2_per_frame_contracts",
+        "seconds": 0.64063
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_core",
+        "seconds": 11.968258
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_scenario_engine",
+        "seconds": 26.982349
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_punchline_layer_contract",
+        "seconds": 7.99522
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_tier2_scenario_contract",
+        "seconds": 15.979112
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_backlog_contract",
+        "seconds": 12.30997
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_schema",
+        "seconds": 0.066702
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_public_projection_privacy",
+        "seconds": 0.013466
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_catalog_rollout",
+        "seconds": 5.401784
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_registered_operations",
+        "seconds": 0.101988
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_interaction_identity",
+        "seconds": 0.013395
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_semantic_inventory",
+        "seconds": 0.141968
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_base_semantic_producer",
+        "seconds": 0.007961
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_finalization",
+        "seconds": 4.183413
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_event_popup_button_release_recovery",
+        "seconds": 0.043828
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_caller_failure_contract",
+        "seconds": 1.659111
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_negative_fixtures",
+        "seconds": 0.40707
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_commands",
+        "seconds": 0.103123
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_created_owner_command_authority",
+        "seconds": 0.050738
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_augment_availability",
+        "seconds": 0.049556
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_boundary_provenance",
+        "seconds": 0.06906
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_mutually_exclusive_branch_cleanup",
+        "seconds": 0.122567
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_handler_reducer_contracts",
+        "seconds": 0.138241
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_serialized_fact_ingress",
+        "seconds": 0.078549
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_run_state_fact_subscription_routing",
+        "seconds": 4.900567
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_atomic_runtime_failures",
+        "seconds": 0.108791
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_sequence_persistence_seam",
+        "seconds": 0.045462
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_lifecycle_policy_matrix",
+        "seconds": 0.306501
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_save_service_phase_matrix",
+        "seconds": 0.747821
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_receipt_reconstruction",
+        "seconds": 0.588844
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_depth_remediation_contracts",
+        "seconds": 2.256067
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_authoritative_receipt_capacity",
+        "seconds": 17.521962
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_completion_evidence",
+        "seconds": 0.047924
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_extension_dispatch",
+        "seconds": 0.002128
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_definition_validation_receipt",
+        "seconds": 0.019938
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_suppressed_sequence_compatibility",
+        "seconds": 7.96153
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_transition_and_event_delivery",
+        "seconds": 0.126766
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_rollout_growth_contract",
+        "seconds": 3.750756
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_delivery_day_production_package",
+        "seconds": 6.179076
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_delivery_day_world_map_route_install",
+        "seconds": 1.03975
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_executable_evidence_contract",
+        "seconds": 0.039763
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_material_projection",
+        "seconds": 0.015872
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "ScenarioPresentationContractScript.check",
+        "seconds": 0.210362
+      },
+      {
+        "stage": "sequence_child",
+        "detail": "_check_host_transaction_seam",
+        "seconds": 0.128845
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_sequence_contract",
+        "seconds": 58.653171
+      }
+    ],
+    "censored": [
+      {
+        "stage": "check_callable",
+        "detail": "content",
+        "entered_engine_usec": 33752511
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_semantic_presentation_contract",
+        "entered_engine_usec": 167641094
+      }
+    ],
+    "assertion_pass_inferred_from_return": false,
+    "clock": "Paired integer Time.get_ticks_usec differences; absolute engine readings are not wall-cap offsets."
+  },
+  "telemetry": {
+    "assertions_unchanged": true,
+    "canonical_sort_receiver_preserved": true,
+    "case_usec": 28665487,
+    "diagnostic_only": true,
+    "failures": [],
+    "inclusive_times_overlap": true,
+    "json_helpers": {
+      "_string_array(unique)": {
+        "calls": 17494,
+        "usec": 467551
+      },
+      "_valid_sha256": {
+        "calls": 133638,
+        "usec": 863054
+      }
+    },
+    "passed": true,
+    "runtime_helpers": {
+      "_canonical_variant": {
+        "calls": 36746,
+        "usec": 8959542
+      },
+      "_fingerprint": {
+        "calls": 36234,
+        "usec": 1825756
+      },
+      "_normalized_command_results": {
+        "calls": 772,
+        "usec": 3134243
+      },
+      "normalize_state": {
+        "calls": 772,
+        "usec": 13068846
+      }
+    }
+  },
+  "complete_variant_parity": {
+    "passed": true,
+    "accepted_command_pairs": 256,
+    "apply_command_result_pairs": 281,
+    "complete_value_comparison_pairs": 546,
+    "input_mutation_checks": 566,
+    "existing_unchanged_cases": [
+      {
+        "baseline_failures": [],
+        "candidate_failures": [],
+        "case": "atomic_runtime_failures",
+        "elapsed_usec": 221304,
+        "passed": true
+      },
+      {
+        "baseline_failures": [],
+        "candidate_failures": [],
+        "case": "lifecycle_commands",
+        "elapsed_usec": 178095,
+        "passed": true
+      },
+      {
+        "baseline_failures": [],
+        "candidate_failures": [],
+        "case": "handler_reducer_contracts",
+        "elapsed_usec": 278213,
+        "passed": true
+      },
+      {
+        "baseline_failures": [],
+        "candidate_failures": [],
+        "case": "receipt_reconstruction",
+        "elapsed_usec": 1219203,
+        "passed": true
+      }
+    ],
+    "sample_hashes": [
+      {
+        "baseline_bytes": 12116,
+        "baseline_sha256": "b8f2111a58313168b41a115f5375d7585b81cd9a4c1bb11c847703c44eb36efa",
+        "candidate_bytes": 12116,
+        "candidate_sha256": "b8f2111a58313168b41a115f5375d7585b81cd9a4c1bb11c847703c44eb36efa",
+        "equal": true,
+        "label": "initial_state"
+      },
+      {
+        "baseline_bytes": 14724,
+        "baseline_sha256": "5c4a8acd33bbaf21f77b42131d361f6bb88cd253fe88af3f4fef8c0ce461e217",
+        "candidate_bytes": 14724,
+        "candidate_sha256": "5c4a8acd33bbaf21f77b42131d361f6bb88cd253fe88af3f4fef8c0ce461e217",
+        "equal": true,
+        "label": "accepted:0"
+      },
+      {
+        "baseline_bytes": 14724,
+        "baseline_sha256": "f1abab9ea1ab17d508443b26835cd9f3fc462f207b7dd53dda7206144497bff2",
+        "candidate_bytes": 14724,
+        "candidate_sha256": "f1abab9ea1ab17d508443b26835cd9f3fc462f207b7dd53dda7206144497bff2",
+        "equal": true,
+        "label": "exact_replay:0"
+      },
+      {
+        "baseline_bytes": 14576,
+        "baseline_sha256": "b65e1470aaf16cd32b1f76cb01788a8bebd8c1af0465c5fd50aedbbabce1ac44",
+        "candidate_bytes": 14576,
+        "candidate_sha256": "b65e1470aaf16cd32b1f76cb01788a8bebd8c1af0465c5fd50aedbbabce1ac44",
+        "equal": true,
+        "label": "conflicting_replay:0"
+      },
+      {
+        "baseline_bytes": 305808,
+        "baseline_sha256": "820a4e1a335289b37da61ef740300e06f5faa317bd65441c3b87f327899d82f1",
+        "candidate_bytes": 305808,
+        "candidate_sha256": "820a4e1a335289b37da61ef740300e06f5faa317bd65441c3b87f327899d82f1",
+        "equal": true,
+        "label": "accepted:127"
+      },
+      {
+        "baseline_bytes": 305808,
+        "baseline_sha256": "36667921e8099ee82d214e68a12df4d38a0f6e5d6904cecf17c0a567ca38526f",
+        "candidate_bytes": 305808,
+        "candidate_sha256": "36667921e8099ee82d214e68a12df4d38a0f6e5d6904cecf17c0a567ca38526f",
+        "equal": true,
+        "label": "exact_replay:127"
+      },
+      {
+        "baseline_bytes": 305660,
+        "baseline_sha256": "760ad680c9f14be7210e33e8565a959fa6c538ec085cf745bbeb5e604bfa90c4",
+        "candidate_bytes": 305660,
+        "candidate_sha256": "760ad680c9f14be7210e33e8565a959fa6c538ec085cf745bbeb5e604bfa90c4",
+        "equal": true,
+        "label": "conflicting_replay:127"
+      },
+      {
+        "baseline_bytes": 599184,
+        "baseline_sha256": "6750201cc083e3fe9fe56022be1ab738e618110703b747097cf680842552168d",
+        "candidate_bytes": 599184,
+        "candidate_sha256": "6750201cc083e3fe9fe56022be1ab738e618110703b747097cf680842552168d",
+        "equal": true,
+        "label": "accepted:255"
+      },
+      {
+        "baseline_bytes": 599184,
+        "baseline_sha256": "02c6aa0c55bbd3ab0f9e0117820a8738fc34428d3621079fce078f5932ad7a7e",
+        "candidate_bytes": 599184,
+        "candidate_sha256": "02c6aa0c55bbd3ab0f9e0117820a8738fc34428d3621079fce078f5932ad7a7e",
+        "equal": true,
+        "label": "exact_replay:255"
+      },
+      {
+        "baseline_bytes": 599036,
+        "baseline_sha256": "cb84bda759d0ec724e7ceb4705e3ecffd7cbb683f67d39b0b324e59dd3def192",
+        "candidate_bytes": 599036,
+        "candidate_sha256": "cb84bda759d0ec724e7ceb4705e3ecffd7cbb683f67d39b0b324e59dd3def192",
+        "equal": true,
+        "label": "conflicting_replay:255"
+      },
+      {
+        "baseline_bytes": 599072,
+        "baseline_sha256": "fec2c34a0dcca014e2dde257b4449286e95257b792740b89a236c5e5fb94efc1",
+        "candidate_bytes": 599072,
+        "candidate_sha256": "fec2c34a0dcca014e2dde257b4449286e95257b792740b89a236c5e5fb94efc1",
+        "equal": true,
+        "label": "capacity_overflow"
+      },
+      {
+        "baseline_bytes": 599184,
+        "baseline_sha256": "8c31c430078c88a73428ba203274d9862bca3094dac7d8b19d28ccf525b8277f",
+        "candidate_bytes": 599184,
+        "candidate_sha256": "8c31c430078c88a73428ba203274d9862bca3094dac7d8b19d28ccf525b8277f",
+        "equal": true,
+        "label": "oldest_replay_at_capacity"
+      },
+      {
+        "baseline_bytes": 599184,
+        "baseline_sha256": "13fb12b702974734b408595536d469071319387dfffd22aaa2b5ce0d8203cc4d",
+        "candidate_bytes": 599184,
+        "candidate_sha256": "13fb12b702974734b408595536d469071319387dfffd22aaa2b5ce0d8203cc4d",
+        "equal": true,
+        "label": "legacy_cached_changed_false"
+      },
+      {
+        "baseline_bytes": 12260,
+        "baseline_sha256": "749a2816669edaa2142321ee14ae9b7eef9eace984ca2b4b87a40645abb45ff0",
+        "candidate_bytes": 12260,
+        "candidate_sha256": "749a2816669edaa2142321ee14ae9b7eef9eace984ca2b4b87a40645abb45ff0",
+        "equal": true,
+        "label": "negative:empty_receipt"
+      },
+      {
+        "baseline_bytes": 12276,
+        "baseline_sha256": "e4bc40cc445863b91d587e415464ebc3c26a10cccfbc89078e03629151df8cb7",
+        "candidate_bytes": 12276,
+        "candidate_sha256": "e4bc40cc445863b91d587e415464ebc3c26a10cccfbc89078e03629151df8cb7",
+        "equal": true,
+        "label": "negative:padded_receipt"
+      },
+      {
+        "baseline_bytes": 12256,
+        "baseline_sha256": "86a27c79f70f99354d42be09ce174cf4427b5bdb8da3b36cffb606f96b42a2cb",
+        "candidate_bytes": 12256,
+        "candidate_sha256": "86a27c79f70f99354d42be09ce174cf4427b5bdb8da3b36cffb606f96b42a2cb",
+        "equal": true,
+        "label": "negative:wrong_node"
+      },
+      {
+        "baseline_bytes": 12256,
+        "baseline_sha256": "ac87a75faa856d0788f9ba65482a31f3dd01aeb8a7fe2f872e36797889a2a088",
+        "candidate_bytes": 12256,
+        "candidate_sha256": "ac87a75faa856d0788f9ba65482a31f3dd01aeb8a7fe2f872e36797889a2a088",
+        "equal": true,
+        "label": "negative:stale_phase"
+      },
+      {
+        "baseline_bytes": 12260,
+        "baseline_sha256": "c842a445fff93b0b7bb1721fff97b35ba73d6ba7463d250bca76d1853c95e736",
+        "candidate_bytes": 12260,
+        "candidate_sha256": "c842a445fff93b0b7bb1721fff97b35ba73d6ba7463d250bca76d1853c95e736",
+        "equal": true,
+        "label": "negative:float_schema"
+      },
+      {
+        "baseline_bytes": 12272,
+        "baseline_sha256": "5108a7e0363c71403eddafe445277c5ac4d8eae5ef6ab4ab029a729145703100",
+        "candidate_bytes": 12272,
+        "candidate_sha256": "5108a7e0363c71403eddafe445277c5ac4d8eae5ef6ab4ab029a729145703100",
+        "equal": true,
+        "label": "negative:unknown_envelope"
+      },
+      {
+        "baseline_bytes": 12264,
+        "baseline_sha256": "a816dd1d2a1556452ff56863d307af0de3108961b996a31c47e70658709616f9",
+        "candidate_bytes": 12264,
+        "candidate_sha256": "a816dd1d2a1556452ff56863d307af0de3108961b996a31c47e70658709616f9",
+        "equal": true,
+        "label": "negative:wrong_payload_type"
+      },
+      {
+        "baseline_bytes": 12272,
+        "baseline_sha256": "ed906d5da0389c42c83b45c8db3659bacf916220f6b506e277a99d1efa2bfa98",
+        "candidate_bytes": 12272,
+        "candidate_sha256": "ed906d5da0389c42c83b45c8db3659bacf916220f6b506e277a99d1efa2bfa98",
+        "equal": true,
+        "label": "negative:oversized_payload"
+      },
+      {
+        "baseline_bytes": 12272,
+        "baseline_sha256": "623bde26980c5ab8fa6d94fe886bab2c0ac1456a074c772237c77f13d0b5ef93",
+        "candidate_bytes": 12272,
+        "candidate_sha256": "623bde26980c5ab8fa6d94fe886bab2c0ac1456a074c772237c77f13d0b5ef93",
+        "equal": true,
+        "label": "negative:non_string_key"
+      },
+      {
+        "baseline_bytes": 12272,
+        "baseline_sha256": "e2d8d7c1c5453cd53f762335050bd54cd3c2b83d9737dba580318cbef81811b0",
+        "candidate_bytes": 12272,
+        "candidate_sha256": "e2d8d7c1c5453cd53f762335050bd54cd3c2b83d9737dba580318cbef81811b0",
+        "equal": true,
+        "label": "negative:opaque_payload"
+      },
+      {
+        "baseline_bytes": 12264,
+        "baseline_sha256": "ca1af9858807ca583efdebd40106d3e0c60ca721b9d415f89f3bec43ad8a5cae",
+        "candidate_bytes": 12264,
+        "candidate_sha256": "ca1af9858807ca583efdebd40106d3e0c60ca721b9d415f89f3bec43ad8a5cae",
+        "equal": true,
+        "label": "negative:nonfinite_payload"
+      },
+      {
+        "baseline_bytes": 372,
+        "baseline_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "candidate_bytes": 372,
+        "candidate_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "equal": true,
+        "label": "negative_state:empty"
+      },
+      {
+        "baseline_bytes": 372,
+        "baseline_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "candidate_bytes": 372,
+        "candidate_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "equal": true,
+        "label": "negative_state:invalid_schema"
+      },
+      {
+        "baseline_bytes": 372,
+        "baseline_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "candidate_bytes": 372,
+        "candidate_sha256": "4036653880760526e7b2c5cf4cfaf65ea45cb897cdbb431d674e00a76db98645",
+        "equal": true,
+        "label": "negative_state:opaque"
+      },
+      {
+        "baseline_bytes": 11976,
+        "baseline_sha256": "5cd601db8e1e3c96d179b704112e2edf357bc8a89de57b756911af949e110046",
+        "candidate_bytes": 11976,
+        "candidate_sha256": "5cd601db8e1e3c96d179b704112e2edf357bc8a89de57b756911af949e110046",
+        "equal": true,
+        "label": "rollback_normalized_expected"
+      },
+      {
+        "baseline_bytes": 12176,
+        "baseline_sha256": "f0b36de93ad84740e58a39290c6506a277c785199fe6f74323398e11337f4e26",
+        "candidate_bytes": 12176,
+        "candidate_sha256": "f0b36de93ad84740e58a39290c6506a277c785199fe6f74323398e11337f4e26",
+        "equal": true,
+        "label": "rollback_after_handler"
+      },
+      {
+        "baseline_bytes": 14788,
+        "baseline_sha256": "0d16326df0362fff463f55aded1618243957a2d7bf67501072bf8a51278a9840",
+        "candidate_bytes": 14788,
+        "candidate_sha256": "0d16326df0362fff463f55aded1618243957a2d7bf67501072bf8a51278a9840",
+        "equal": true,
+        "label": "ownership:fresh_result"
+      },
+      {
+        "baseline_bytes": 14788,
+        "baseline_sha256": "0d16326df0362fff463f55aded1618243957a2d7bf67501072bf8a51278a9840",
+        "candidate_bytes": 14788,
+        "candidate_sha256": "0d16326df0362fff463f55aded1618243957a2d7bf67501072bf8a51278a9840",
+        "equal": true,
+        "label": "ownership:after_command_mutation"
+      },
+      {
+        "baseline_bytes": 14828,
+        "baseline_sha256": "f05d2807c17328f844fb73830e27fbc3957e04d46c9fef742f2fb2f519e584a6",
+        "candidate_bytes": 14828,
+        "candidate_sha256": "f05d2807c17328f844fb73830e27fbc3957e04d46c9fef742f2fb2f519e584a6",
+        "equal": true,
+        "label": "ownership:after_output_mutation"
+      },
+      {
+        "baseline_bytes": 816,
+        "baseline_sha256": "a1ec623fbc3e6fb49f3f98bf65ab4a2a466e26dfaca7e3f7ccfc9e6a49e71ea0",
+        "candidate_bytes": 816,
+        "candidate_sha256": "a1ec623fbc3e6fb49f3f98bf65ab4a2a466e26dfaca7e3f7ccfc9e6a49e71ea0",
+        "equal": true,
+        "label": "ownership:command_after_output_mutation"
+      },
+      {
+        "baseline_bytes": 8,
+        "baseline_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "candidate_bytes": 8,
+        "candidate_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "equal": true,
+        "label": "existing_assertions:atomic_runtime_failures"
+      },
+      {
+        "baseline_bytes": 8,
+        "baseline_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "candidate_bytes": 8,
+        "candidate_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "equal": true,
+        "label": "existing_assertions:lifecycle_commands"
+      },
+      {
+        "baseline_bytes": 8,
+        "baseline_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "candidate_bytes": 8,
+        "candidate_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "equal": true,
+        "label": "existing_assertions:handler_reducer_contracts"
+      },
+      {
+        "baseline_bytes": 8,
+        "baseline_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "candidate_bytes": 8,
+        "candidate_sha256": "3c88bf13b58cba9ca7fe10c55db47931f52b52975cf1e9eaa0c9b0ec29c7c6be",
+        "equal": true,
+        "label": "existing_assertions:receipt_reconstruction"
+      }
+    ],
+    "copied_script_identity_limit": true,
+    "limits": "Private anonymous Runtime and copied Contract resources. Copy hashes identify inputs; this is not canonical-resource/deployed/Web/play/save qualification. Existing Contract cases keep all other production preloads; ScenarioEngine reconstruction within receipt assertions still uses the canonical Runtime."
+  },
+  "canonical_capacity": {
+    "passed": true,
+    "duration_usec": 16957039,
+    "source_receipts": [
+      {
+        "bytes": 505498,
+        "path": "res://scripts/tests/foundation/scenario_sequence_contract.gd",
+        "sha256": "2f0a8fc26e79f03f86cfe32b7286ddafa59d661dc54286f7e59860c8e2f974f0"
+      },
+      {
+        "bytes": 156599,
+        "path": "res://scripts/core/scenario_sequence_runtime.gd",
+        "sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566"
+      },
+      {
+        "bytes": 88746,
+        "path": "res://scripts/core/scenario_operation_registry.gd",
+        "sha256": "2c0f3ed356bb1f48bade3ad824c347e63e91e74cb2a3dcc1bd179321c7ac36d2"
+      },
+      {
+        "bytes": 126620,
+        "path": "res://scripts/core/scenario_sequence_schema.gd",
+        "sha256": "780b974bd5c870839fb3620e501e18d528c93c446806ba04136028bfb9187a7c"
+      },
+      {
+        "bytes": 3301,
+        "path": "res://scripts/core/json_coerce.gd",
+        "sha256": "3b76332e8255526c75ad8808c7e30dc9b5d84a3b5997cf92029edcdd41b186c0"
+      },
+      {
+        "bytes": 3874,
+        "path": "res://scripts/core/function_options.gd",
+        "sha256": "100a63a9e63f96f5801d7976d98be251e42b3d2ef596af36bce3422c951e098c"
+      },
+      {
+        "bytes": 3628,
+        "path": "res://.tmp/generated_tests/capacity008_driver.gd",
+        "sha256": "62522326b7f920c89d8eebc33e14918aa3fc7d61640612cb0d0174add2b866e4"
+      }
+    ]
+  },
+  "new_contract": {
+    "checks": 14,
+    "failures": [],
+    "passed": true
+  },
+  "liveness": "PASS; actual owned Job exit0,0active",
+  "original_candidate_sequence": {
+    "observed_at": "2026-11-05T00:13:49.878182+00:00",
+    "baseline_runtime_sha256": "ef6ccc15be0c7260cdc23ebc08a6851929501827f1bd66c174a5bb626a153bec",
+    "candidate_runtime_sha256_restored": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+    "all19_ordered_canonical_failures_identical": true,
+    "baseline_check_duration_msec": 73036,
+    "candidate_check_duration_msec": 63633,
+    "baseline_report_duration_msec": 89524,
+    "candidate_report_duration_msec": 79930,
+    "failures": [
+      "Rejected production world-boundary enqueue/flush did not restore the run and live environment byte-for-byte.",
+      "Progressed sequence state transplanted to another current node advanced through fact ingress.",
+      "Node-binding quarantine was not exactly-once, save-stable, or free of recipient hidden-state leakage.",
+      "Tutorial event-card completion did not restore its authoritative queue, connected coach, actual TalkDock selection/badge/layout/focus, and popup state exactly before the one terminal layer error.",
+      "Tutorial world-map acknowledgement did not restore its authoritative queue, connected coach, actual TalkDock presentation, and map controller exactly before the one terminal delivery error.",
+      "Opening an event response card captured 0 complete lifecycle snapshots instead of using its presentation-only boundary.",
+      "Public direct-exit caller did not restore pre-focus state and propagate the exact travel failure without downstream success.",
+      "Public delivery-arrival travel caller did not restore a valid source/destination transaction or suppressed downstream success UI.",
+      "Health-inspector forced travel did not restore closing/forced flags and enclosing state or propagate its explicit failure.",
+      "EventModule did not produce immediate exact clear_the_aisle delivery aftermath/receipt: result=[] lifecycle=[] terminal_status=active terminal_phase=awaiting_stock terminal_errors=[].",
+      "EventModule left duplicate or pending clear_the_aisle delivery fact/request consequences.",
+      "EventModule clear_the_aisle resolution did not stay on its single advanced boundary.",
+      "EventModule duplicated or lost base clear_the_aisle event consequences.",
+      "EventModule production replay gate duplicated clear_the_aisle facts, receipts, reward, or boundaries.",
+      "EventModule did not produce immediate exact take_the_deal delivery aftermath/receipt: result=[] lifecycle=[] terminal_status=active terminal_phase=awaiting_stock terminal_errors=[].",
+      "EventModule left duplicate or pending take_the_deal delivery fact/request consequences.",
+      "EventModule take_the_deal resolution did not stay on its single advanced boundary.",
+      "EventModule duplicated or lost base take_the_deal event consequences.",
+      "EventModule production replay gate duplicated take_the_deal facts, receipts, reward, or boundaries."
+    ],
+    "full_case_green": false,
+    "own_jobs_released_zero": true,
+    "canonical_candidate_exact_bytes_restored": true
+  },
+  "unlanded_generic_helper_proposals": true,
+  "original_guards_and_all_selected_assertions_preserved": true,
+  "source_only_commit_association": "PENDING",
+  "next_delivery": "PENDING; separately assigned donor qualification; no new artifact or Web play claim",
+  "proposal_source_proof_at_preparation": {
+    "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "prepared_at": "2026-11-04T23:45:57.252539+00:00",
+    "source": "scripts/core/scenario_sequence_runtime.gd",
+    "original_raw_sha256": "ef6ccc15be0c7260cdc23ebc08a6851929501827f1bd66c174a5bb626a153bec",
+    "candidate_raw_sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+    "original_method_count": 114,
+    "only_changed_method": "apply_command",
+    "all_other_method_bodies_raw_exact": true,
+    "source_outside_removed_snapshot_and_changed_expression_raw_exact": true,
+    "rollback_original_state_clone_preserved": true,
+    "all_guards_receipts_replay_and_failure_returns_preserved": true,
+    "canonical_sort_receiver_unchanged": true,
+    "canonical_sources_written": false,
+    "runtime_execution_qualified": false,
+    "copy_hashes": {
+      "runtime_baseline.gd": "f47d04a9fb7f3aa66c24f4936f98521e16ca530bde70e92f1fee0551116d25c9",
+      "runtime_candidate.gd": "1a04a08d66ea3517275de2b0e5e1592845e03fe7d3e6ba3f7b11d5721688d88b",
+      "sequence_baseline.gd": "2b1c99cb746ee3fd7531bdf08732c8556846118c3a581b21575054b46c9e3c35",
+      "sequence_candidate.gd": "ddcaf2ba99a9cf7083512a6af366715338864eafe97c36ae95e62fa371000010",
+      "capacity_driver.gd": "0ca66eb6b959d8f13875468d89fc56b7ef8457e4c14b9140a4486a2616bec1f4"
+    },
+    "limits": "Anonymous Runtime copies retain canonical pure sort receiver; two sequence copies change only one preload. Diagnostic/private qualification only; no canonical change applied or publication authorized by this proof."
+  },
+  "canonical_application": {
+    "runtime_sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+    "qualified": true,
+    "original_runtime_temporarily_retested_and_candidate_exactly_restored": true,
+    "no_additional_runtime_change_after_tests": true
+  }
+}

@@ -358,7 +358,6 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 	var descriptor := {"action": _dict(causal_descriptor.get("action", {}))} if not causal_descriptor.is_empty() else _command_descriptor(state, definition, str(command_value.get("owner_namespace", "")), str(command_value.get("stable_object_id", "")), command_id, effective_context)
 	var cost := maxi(0, int(_dict(descriptor.get("action", {})).get("cost", 0)))
 	var original_state := state if prevalidated_state else state.duplicate(true)
-	var state_before := "" if prevalidated_state else JSON.stringify(_canonical_variant(state))
 	var handler_result := _apply_registered_handler(state, definition, command_value, effective_context, causal_descriptor)
 	state = _dict(handler_result.get("state", state))
 	if not bool(handler_result.get("ok", false)):
@@ -392,7 +391,8 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		"boundary_serial": int(state.get("boundary_serial", 0)),
 		"cost": cost,
 		"outcomes": JsonCoerceScript._unique_string_array(state.get("resolved_outcomes", [])),
-		"changed": true if prevalidated_state else state_before != JSON.stringify(_canonical_variant(state)),
+		# A successful fresh command has appended a new lifetime receipt.
+		"changed": true,
 		"state": {},
 	}
 	var results := _dict(state.get("command_results", {}))

@@ -1632,6 +1632,30 @@
       "delivery": "Exactaece9cffartifact/redirect/PCK/provenance/fourassetheadsverified; freshbrowserGPU/WebGLpreflightfailsbeforenavigation; startupunverified. Historical capacity/stopped observations superseded.",
       "evidence": "docs/testing/deprecated_code_audit_continuation_007.md",
       "whole_objective_complete": false
+    },
+    {
+      "phase": "008",
+      "parent_id": "BTH061-AUDIT-001",
+      "base": "069734374cf935ed14130eaa79eea900a34f966c",
+      "scope": "Original38step sequence timing and one measured equivalent command-performance cleanup; no paused feature/authoring work resumed.",
+      "changed_runtime": "scripts/core/scenario_sequence_runtime.gd",
+      "runtime_raw_sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+      "runtime_method_count": 114,
+      "other_method_bodies_raw_exact": 113,
+      "removed": "Two redundant whole-state canonical JSON conversions/comparison whose successful result is always true after fresh lifetime receipt append.",
+      "qualification": "546completeVariantcomparisons/281commandresults,256accepted; canonicalcapacity16.957s;newcontract14checks+livenessPASS. Canonicalbroadersequencehasexact19originalbaselinefailures; full180flowall38returnthenlatersemanticpresentationcensored.",
+      "unlanded_candidates": [
+        "Jsonorderedseen dedup:paritypass but3.17%casegainnotcausal; exactoriginalrestored",
+        "Nativehex:0.863s measuredselfcost, prototypeonly/no nativequalification",
+        "Schema pair-privateborrow cleanup:sourceproposalonly,notmeasuredcause/notapplied"
+      ],
+      "open_followups": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+        "BTH061-AUDIT-SEQUENCE-BASELINE-008"
+      ],
+      "full_objective_complete": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_008.md"
     }
   ]
 }
