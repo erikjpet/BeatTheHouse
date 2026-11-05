@@ -81,7 +81,9 @@ static func call_out(state: Dictionary, edge_id: String, terms: Dictionary) -> D
 	var rules := JsonCoerceScript._copy_dict(terms.get("rules", {}))
 	var swing := maxi(0, int(rules.get("correct_call_swing", 8))) if correct else maxi(0, int(rules.get("false_call_cost", 6)))
 	var transfer := swing if correct else -swing
+	var player_before := maxi(0, int(next_state.get("player_stack", 0)))
 	_apply_transfer(next_state, transfer)
+	transfer = int(next_state.get("player_stack", 0)) - player_before
 	edge["stripped"] = correct
 	edge["correct_call"] = correct
 	edge["called_edge_id"] = edge_id
