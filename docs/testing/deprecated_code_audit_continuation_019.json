@@ -1,0 +1,2856 @@
+{
+  "schema": "bth.audit_continuation019/v1",
+  "created_utc": "2026-11-05T18:06:08.880100+00:00",
+  "snapshot_only": true,
+  "base_main": "b9b6497fa72566a603bb1b1c0b396c3a3f60ab79",
+  "scope": "Canonical Runtime16 captured-data leaf qualification and exact one-line owned-copy comparison/disposition. No production patch, deletion/cleanup, paused-feature or portrait change, guard relaxation, aggregate or NEXT acceptance.",
+  "related_ids_remain_open": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+    "BTH061-AUDIT-RUNTIME-OWNED-COPY-019"
+  ],
+  "associated_evidence_commit": null,
+  "canonical_leaf": {
+    "observed_at": "2026-11-05T17:31:37.717619+00:00",
+    "qualified": true,
+    "checks": 1458,
+    "source_count": 1247,
+    "source_manifest_sha256": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "support4_exact": true,
+    "canonical_source_changed": false,
+    "guarded_assigned_closed0": true,
+    "native_wall_seconds": 25.758875846862793,
+    "report_checks": 489,
+    "final_checks": 492,
+    "canonical_control_calls": 16,
+    "timed_calls": 16,
+    "records": [
+      {
+        "input": "apply.001",
+        "normalize_usec": 919,
+        "full_return": {
+          "bytes": 12116,
+          "sha256": "0c06882e01db0e24f669de8fda4052b4bfbe7a99bf9393cea2295fcb14763d0f"
+        },
+        "input_post": {
+          "bytes": 27520,
+          "sha256": "d23d763172a04b663e0d1dc7066ce1cc1a582951d8f0871a42e19faea1714f0d"
+        }
+      },
+      {
+        "input": "apply.002",
+        "normalize_usec": 1130,
+        "full_return": {
+          "bytes": 14408,
+          "sha256": "b58016217672b15be61a1a60ee345ea0567da9359573b089a2bceeac00a03bcc"
+        },
+        "input_post": {
+          "bytes": 29812,
+          "sha256": "662b8cf129c7c3fc896d453ee817bf185bfe7a65bdec6ee639a930f7a151d14f"
+        }
+      },
+      {
+        "input": "apply.065",
+        "normalize_usec": 14026,
+        "full_return": {
+          "bytes": 158804,
+          "sha256": "5889fa142107df632960d3f419c27dffb7382385ccde7a529145a8d861811ec8"
+        },
+        "input_post": {
+          "bytes": 174208,
+          "sha256": "fd91d717b1aa6124f51301db04b4ae44a931ddd866ebf86d50eab32d2b26f79b"
+        }
+      },
+      {
+        "input": "apply.129",
+        "normalize_usec": 27660,
+        "full_return": {
+          "bytes": 305492,
+          "sha256": "5187cc244e16ef0bbde4a2910a2e0a72c7f23200d70ccf041753bdb4ffd294d2"
+        },
+        "input_post": {
+          "bytes": 320896,
+          "sha256": "589d7d6ecd3a8247fd2cef03b4fe192c78134cda77c6edb36353ceefebcfacb5"
+        }
+      },
+      {
+        "input": "apply.257",
+        "normalize_usec": 56133,
+        "full_return": {
+          "bytes": 598868,
+          "sha256": "b3aaba6ab9c9fda949a006f7d41662b74356942547525e6ba935f3665f0f814f"
+        },
+        "input_post": {
+          "bytes": 614280,
+          "sha256": "9180b0131e4482f7a05066335c6f795cf268ae18f1dd031c0f42615a173fb7a1"
+        }
+      },
+      {
+        "input": "apply.258",
+        "normalize_usec": 56704,
+        "full_return": {
+          "bytes": 598868,
+          "sha256": "b3aaba6ab9c9fda949a006f7d41662b74356942547525e6ba935f3665f0f814f"
+        },
+        "input_post": {
+          "bytes": 614272,
+          "sha256": "1dd828bbc9c392e02879ca2e9fe50571f3b5f31dc74d0caf5b9ec3eaf55be76f"
+        }
+      },
+      {
+        "input": "enqueue.001",
+        "normalize_usec": 874,
+        "full_return": {
+          "bytes": 11980,
+          "sha256": "19a546c1d9f060659db0f51396924cf95f95630fed93568b57a0a75491f440eb"
+        },
+        "input_post": {
+          "bytes": 26828,
+          "sha256": "a1274844f6d16de3911920ccefcc1403d92b8d905c7a438bfef4c48ed45df060"
+        }
+      },
+      {
+        "input": "enqueue.002",
+        "normalize_usec": 972,
+        "full_return": {
+          "bytes": 13296,
+          "sha256": "70766477e7662ebe8e31068c013dac6b396603162de534dff89a77f234217bc1"
+        },
+        "input_post": {
+          "bytes": 28144,
+          "sha256": "4b4b6ca03142e9402cd051d38ce385c7a355b8eaf8aebdf8c2e93c283a24de9f"
+        }
+      },
+      {
+        "input": "enqueue.065",
+        "normalize_usec": 6296,
+        "full_return": {
+          "bytes": 96204,
+          "sha256": "3e3595cc9ea338c5b91839bc08a0001d4ee37ec23e5b0f54fd7a90638dc357c4"
+        },
+        "input_post": {
+          "bytes": 111052,
+          "sha256": "99153fe1cfc12e82d3eabd81051e5ba01e7a5e4bd36fad5f2cc4edb5ab9d5c90"
+        }
+      },
+      {
+        "input": "enqueue.129",
+        "normalize_usec": 11976,
+        "full_return": {
+          "bytes": 180988,
+          "sha256": "abfc8eb070096c34c13982f69b1fddb05ec0c482a18032af2bdd6581dadfe495"
+        },
+        "input_post": {
+          "bytes": 195840,
+          "sha256": "ad430c718d767bb3fe40d16f2ce68edc3514a4152c364f10c0ac392aaa989f25"
+        }
+      },
+      {
+        "input": "enqueue.257",
+        "normalize_usec": 23414,
+        "full_return": {
+          "bytes": 351996,
+          "sha256": "6e63699642aaaa9acb1c781329b2a95ade10fec35f1ec970425b4e38b60cb213"
+        },
+        "input_post": {
+          "bytes": 366852,
+          "sha256": "bb1efa33fe837654186385e7279aa597dc36f2bd4ed19bcd54a86931b1f8d485"
+        }
+      },
+      {
+        "input": "enqueue.258",
+        "normalize_usec": 23323,
+        "full_return": {
+          "bytes": 351996,
+          "sha256": "6e63699642aaaa9acb1c781329b2a95ade10fec35f1ec970425b4e38b60cb213"
+        },
+        "input_post": {
+          "bytes": 366844,
+          "sha256": "10f292b52808fcee5db3eaaab9427280b10d4acaf3f8069246a5d8c8aa14253b"
+        }
+      },
+      {
+        "input": "flush.001",
+        "normalize_usec": 1019,
+        "full_return": {
+          "bytes": 12404,
+          "sha256": "9afa3e03e1af197ffcaf2aceeeef06232a456219e6d9f7ef65d36e35b6babf39"
+        },
+        "input_post": {
+          "bytes": 26872,
+          "sha256": "948db01572745064cee37659822c6402043422a39d83d40084eba0716e16c5ff"
+        }
+      },
+      {
+        "input": "flush.002",
+        "normalize_usec": 1079,
+        "full_return": {
+          "bytes": 13720,
+          "sha256": "f73493c50a9d313955a918c40886212621fa380d831ac24826085abf8778d750"
+        },
+        "input_post": {
+          "bytes": 28188,
+          "sha256": "5875024feb3dca29e3e705b58463981ccfb958173b4172d0c64d3cfa40f16cbd"
+        }
+      },
+      {
+        "input": "flush.065",
+        "normalize_usec": 6337,
+        "full_return": {
+          "bytes": 96628,
+          "sha256": "8c11c2ca7e98b595c75d5c1cbb2883b431a39f85a7b1faf1edf54e4fa73f1b1a"
+        },
+        "input_post": {
+          "bytes": 111096,
+          "sha256": "4f51f94ad2ac584bab8b920e12dd817503af72f4aa8c5f24d42cc88f78be56ed"
+        }
+      },
+      {
+        "input": "flush.129",
+        "normalize_usec": 12267,
+        "full_return": {
+          "bytes": 181416,
+          "sha256": "cb68c32a2211358cc0e3c9f8602df482bbd114886738b2e441ed4208de16596f"
+        },
+        "input_post": {
+          "bytes": 195884,
+          "sha256": "2d048c12122f82f812eedf72bff16f3c99d03028a4dbc3dd335f107e3ef3d719"
+        }
+      }
+    ],
+    "normalize_total_usec": 244129,
+    "full_values_archive": {
+      "bytes": 12477664,
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-normalize-leaf-r1\\diagnostic\\runtime-normalize-leaf-result.values.bin",
+      "sha256": "b46ac482174d08cba4bbc76a54ce5c3b0f49e5aad815b9fc42b9afaa391dd8f1",
+      "written": true
+    },
+    "job_sha256": "705957567f4b92ccd76ec7cdd597c4f5a86356a39cf0af19067e42d7dc699308",
+    "report_sha256": "ee195d7bd6479274bece79609f19e6657182bec2e18087173a5f2221897b4190",
+    "staged_driver_sha256": "f627e278af142a30ede2344f250f864cf8af36dd577e892ce2b54617d07790b5",
+    "static_review_sha256": "46904514fde37f45a4b8a6e6afbfd90356665eaa88772817f90a47d281e464f1",
+    "scope": "Canonical normalization on independently decoded finite acyclic mutable untyped data preimages. Complete output/control, input effects/flags and actual named ownership observations match. No full historical alias topology, universal deep ownership, original inline/API subtraction, internal share, cold/RNG/aggregate/optimization or NEXT acceptance."
+  },
+  "paired_cost": {
+    "observed_at": "2026-11-05T17:56:53.746133+00:00",
+    "qualified": true,
+    "checks": 1394,
+    "source_count": 1247,
+    "source_manifest_sha256": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "support4_exact": true,
+    "canonical_source_changed": false,
+    "guarded_assigned_closed0": true,
+    "qualifier_sha256": "db4d9d709a262fe6dc8cf4e9e19be80a27b0dfa5846df171006ab086f4d06815",
+    "qualifier_correction": "R1 retained unchanged: local receipt checker assumed file+3 from leaf; actual pair finish adds one size check and three fresh-write checks, so final1304 equals file1300+4. No native or packet change/rerun.",
+    "native_wall_seconds": 85.52636408805847,
+    "report_checks": 1300,
+    "final_checks": 1304,
+    "parity_calls": 48,
+    "timed_calls": 288,
+    "roles": [
+      "canonical",
+      "original",
+      "candidate"
+    ],
+    "timed_totals_usec": {
+      "canonical": 1438622,
+      "original": 1441781,
+      "candidate": 1444774
+    },
+    "six_order_totals_usec": [
+      {
+        "canonical": 242564,
+        "original": 242084,
+        "candidate": 239073
+      },
+      {
+        "canonical": 240296,
+        "candidate": 237983,
+        "original": 244170
+      },
+      {
+        "original": 239640,
+        "canonical": 239224,
+        "candidate": 236424
+      },
+      {
+        "original": 237817,
+        "candidate": 239275,
+        "canonical": 238122
+      },
+      {
+        "candidate": 239515,
+        "canonical": 239254,
+        "original": 238585
+      },
+      {
+        "candidate": 252504,
+        "original": 239485,
+        "canonical": 239162
+      }
+    ],
+    "case_timings": [
+      {
+        "input": "apply.001",
+        "microseconds": {
+          "canonical": [
+            993,
+            912,
+            1032,
+            910,
+            935,
+            934
+          ],
+          "original": [
+            985,
+            971,
+            904,
+            957,
+            923,
+            1025
+          ],
+          "candidate": [
+            936,
+            936,
+            940,
+            944,
+            920,
+            909
+          ]
+        },
+        "medians_usec": {
+          "canonical": 934.5,
+          "original": 964.0,
+          "candidate": 936.0
+        },
+        "totals_usec": {
+          "canonical": 5716,
+          "original": 5765,
+          "candidate": 5585
+        }
+      },
+      {
+        "input": "apply.002",
+        "microseconds": {
+          "canonical": [
+            1211,
+            1162,
+            1138,
+            1184,
+            1167,
+            1169
+          ],
+          "original": [
+            1241,
+            1164,
+            1165,
+            1126,
+            1161,
+            1171
+          ],
+          "candidate": [
+            1176,
+            1133,
+            1145,
+            1137,
+            1140,
+            1244
+          ]
+        },
+        "medians_usec": {
+          "canonical": 1168.0,
+          "original": 1164.5,
+          "candidate": 1142.5
+        },
+        "totals_usec": {
+          "canonical": 7031,
+          "original": 7028,
+          "candidate": 6975
+        }
+      },
+      {
+        "input": "apply.065",
+        "microseconds": {
+          "canonical": [
+            14441,
+            14535,
+            14609,
+            15621,
+            14626,
+            14150
+          ],
+          "original": [
+            15439,
+            16320,
+            14817,
+            14639,
+            14460,
+            14210
+          ],
+          "candidate": [
+            14398,
+            14985,
+            14369,
+            15028,
+            14665,
+            14116
+          ]
+        },
+        "medians_usec": {
+          "canonical": 14572.0,
+          "original": 14728.0,
+          "candidate": 14531.5
+        },
+        "totals_usec": {
+          "canonical": 87982,
+          "original": 89885,
+          "candidate": 87561
+        }
+      },
+      {
+        "input": "apply.129",
+        "microseconds": {
+          "canonical": [
+            27745,
+            28474,
+            28065,
+            28459,
+            28336,
+            28348
+          ],
+          "original": [
+            27794,
+            28213,
+            28319,
+            28121,
+            28129,
+            28273
+          ],
+          "candidate": [
+            28598,
+            27714,
+            27738,
+            28222,
+            29969,
+            30186
+          ]
+        },
+        "medians_usec": {
+          "canonical": 28342.0,
+          "original": 28171.0,
+          "candidate": 28410.0
+        },
+        "totals_usec": {
+          "canonical": 169427,
+          "original": 168849,
+          "candidate": 172427
+        }
+      },
+      {
+        "input": "apply.257",
+        "microseconds": {
+          "canonical": [
+            57514,
+            56841,
+            56100,
+            55980,
+            57308,
+            56983
+          ],
+          "original": [
+            57946,
+            57509,
+            56444,
+            56177,
+            57555,
+            57898
+          ],
+          "candidate": [
+            55429,
+            55458,
+            55579,
+            55504,
+            56653,
+            67830
+          ]
+        },
+        "medians_usec": {
+          "canonical": 56912.0,
+          "original": 57532.0,
+          "candidate": 55541.5
+        },
+        "totals_usec": {
+          "canonical": 340726,
+          "original": 343529,
+          "candidate": 346453
+        }
+      },
+      {
+        "input": "apply.258",
+        "microseconds": {
+          "canonical": [
+            55066,
+            53038,
+            53553,
+            51950,
+            52007,
+            52471
+          ],
+          "original": [
+            53426,
+            55213,
+            53678,
+            52416,
+            52639,
+            52280
+          ],
+          "candidate": [
+            53145,
+            52189,
+            51767,
+            53924,
+            51430,
+            51849
+          ]
+        },
+        "medians_usec": {
+          "canonical": 52754.5,
+          "original": 53032.5,
+          "candidate": 52019.0
+        },
+        "totals_usec": {
+          "canonical": 318085,
+          "original": 319652,
+          "candidate": 314304
+        }
+      },
+      {
+        "input": "enqueue.001",
+        "microseconds": {
+          "canonical": [
+            941,
+            882,
+            874,
+            861,
+            864,
+            868
+          ],
+          "original": [
+            899,
+            870,
+            868,
+            863,
+            859,
+            865
+          ],
+          "candidate": [
+            935,
+            873,
+            866,
+            867,
+            986,
+            868
+          ]
+        },
+        "medians_usec": {
+          "canonical": 871.0,
+          "original": 866.5,
+          "candidate": 870.5
+        },
+        "totals_usec": {
+          "canonical": 5290,
+          "original": 5224,
+          "candidate": 5395
+        }
+      },
+      {
+        "input": "enqueue.002",
+        "microseconds": {
+          "canonical": [
+            1074,
+            1014,
+            993,
+            1019,
+            1006,
+            1027
+          ],
+          "original": [
+            1022,
+            1003,
+            981,
+            991,
+            1032,
+            1057
+          ],
+          "candidate": [
+            1018,
+            996,
+            994,
+            989,
+            1019,
+            1048
+          ]
+        },
+        "medians_usec": {
+          "canonical": 1016.5,
+          "original": 1012.5,
+          "candidate": 1007.0
+        },
+        "totals_usec": {
+          "canonical": 6133,
+          "original": 6086,
+          "candidate": 6064
+        }
+      },
+      {
+        "input": "enqueue.065",
+        "microseconds": {
+          "canonical": [
+            6682,
+            6509,
+            6332,
+            6297,
+            6270,
+            6384
+          ],
+          "original": [
+            6202,
+            6417,
+            6285,
+            6390,
+            6269,
+            6235
+          ],
+          "candidate": [
+            6382,
+            6467,
+            6321,
+            6561,
+            6431,
+            6279
+          ]
+        },
+        "medians_usec": {
+          "canonical": 6358.0,
+          "original": 6277.0,
+          "candidate": 6406.5
+        },
+        "totals_usec": {
+          "canonical": 38474,
+          "original": 37798,
+          "candidate": 38441
+        }
+      },
+      {
+        "input": "enqueue.129",
+        "microseconds": {
+          "canonical": [
+            11450,
+            11427,
+            11433,
+            11228,
+            11149,
+            11388
+          ],
+          "original": [
+            11323,
+            11386,
+            11325,
+            11144,
+            11036,
+            11537
+          ],
+          "candidate": [
+            11377,
+            11332,
+            11297,
+            11142,
+            11234,
+            11386
+          ]
+        },
+        "medians_usec": {
+          "canonical": 11407.5,
+          "original": 11324.0,
+          "candidate": 11314.5
+        },
+        "totals_usec": {
+          "canonical": 68075,
+          "original": 67751,
+          "candidate": 67768
+        }
+      },
+      {
+        "input": "enqueue.257",
+        "microseconds": {
+          "canonical": [
+            22043,
+            22137,
+            22115,
+            22020,
+            22555,
+            22610
+          ],
+          "original": [
+            22328,
+            22071,
+            22091,
+            22458,
+            22155,
+            22194
+          ],
+          "candidate": [
+            22128,
+            22062,
+            22420,
+            22316,
+            22136,
+            23530
+          ]
+        },
+        "medians_usec": {
+          "canonical": 22126.0,
+          "original": 22174.5,
+          "candidate": 22226.0
+        },
+        "totals_usec": {
+          "canonical": 133480,
+          "original": 133297,
+          "candidate": 134592
+        }
+      },
+      {
+        "input": "enqueue.258",
+        "microseconds": {
+          "canonical": [
+            22673,
+            22870,
+            22885,
+            22603,
+            22838,
+            22503
+          ],
+          "original": [
+            23135,
+            22757,
+            22619,
+            22557,
+            22214,
+            22612
+          ],
+          "candidate": [
+            23024,
+            23060,
+            22822,
+            22608,
+            22612,
+            22856
+          ]
+        },
+        "medians_usec": {
+          "canonical": 22755.5,
+          "original": 22615.5,
+          "candidate": 22839.0
+        },
+        "totals_usec": {
+          "canonical": 136372,
+          "original": 135894,
+          "candidate": 136982
+        }
+      },
+      {
+        "input": "flush.001",
+        "microseconds": {
+          "canonical": [
+            1063,
+            980,
+            975,
+            985,
+            973,
+            969
+          ],
+          "original": [
+            1103,
+            993,
+            968,
+            989,
+            975,
+            972
+          ],
+          "candidate": [
+            1007,
+            970,
+            972,
+            1034,
+            977,
+            972
+          ]
+        },
+        "medians_usec": {
+          "canonical": 977.5,
+          "original": 982.0,
+          "candidate": 974.5
+        },
+        "totals_usec": {
+          "canonical": 5945,
+          "original": 6000,
+          "candidate": 5932
+        }
+      },
+      {
+        "input": "flush.002",
+        "microseconds": {
+          "canonical": [
+            1166,
+            1074,
+            1068,
+            1058,
+            1137,
+            1060
+          ],
+          "original": [
+            1091,
+            1096,
+            1061,
+            1123,
+            1065,
+            1054
+          ],
+          "candidate": [
+            1295,
+            1065,
+            1065,
+            1065,
+            1054,
+            1061
+          ]
+        },
+        "medians_usec": {
+          "canonical": 1071.0,
+          "original": 1078.0,
+          "candidate": 1065.0
+        },
+        "totals_usec": {
+          "canonical": 6563,
+          "original": 6490,
+          "candidate": 6605
+        }
+      },
+      {
+        "input": "flush.065",
+        "microseconds": {
+          "canonical": [
+            6442,
+            6429,
+            6338,
+            6252,
+            6369,
+            6550
+          ],
+          "original": [
+            6278,
+            6328,
+            6265,
+            6340,
+            6326,
+            6295
+          ],
+          "candidate": [
+            6350,
+            6329,
+            6351,
+            6366,
+            6597,
+            6493
+          ]
+        },
+        "medians_usec": {
+          "canonical": 6399.0,
+          "original": 6310.5,
+          "candidate": 6358.5
+        },
+        "totals_usec": {
+          "canonical": 38380,
+          "original": 37832,
+          "candidate": 38486
+        }
+      },
+      {
+        "input": "flush.129",
+        "microseconds": {
+          "canonical": [
+            12060,
+            12012,
+            11714,
+            11695,
+            11714,
+            11748
+          ],
+          "original": [
+            11872,
+            11859,
+            11850,
+            11526,
+            11787,
+            11807
+          ],
+          "candidate": [
+            11875,
+            12414,
+            11778,
+            11568,
+            11692,
+            11877
+          ]
+        },
+        "medians_usec": {
+          "canonical": 11731.0,
+          "original": 11828.5,
+          "candidate": 11826.5
+        },
+        "totals_usec": {
+          "canonical": 70943,
+          "original": 70701,
+          "candidate": 71204
+        }
+      }
+    ],
+    "archives": [
+      {
+        "bytes": 119200,
+        "input": "apply.001",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.001.bin",
+        "sha256": "ba729c28883df2f8dd115ab08175c82ab25fc0f011a99d4ac0d97b92c03da48e",
+        "written": true
+      },
+      {
+        "bytes": 132952,
+        "input": "apply.002",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.002.bin",
+        "sha256": "ea6c480b97006b3ae6a771d450752d34bd07f98208abbeffed7d150ee401ac92",
+        "written": true
+      },
+      {
+        "bytes": 999328,
+        "input": "apply.065",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.065.bin",
+        "sha256": "96717e11c0e9f44b7e3659b757e4a5b9faba73f3aa00e85f279a658af45ef0d5",
+        "written": true
+      },
+      {
+        "bytes": 1879456,
+        "input": "apply.129",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.129.bin",
+        "sha256": "bbef0e072159caf60ed8e9d2dd3905d6bd0a6e00e5260bffbad66dd681532698",
+        "written": true
+      },
+      {
+        "bytes": 3639736,
+        "input": "apply.257",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.257.bin",
+        "sha256": "7e1a11013939dca48ceb68c50ee5e6f5051650a854f4dedaad1c4265ba5f9812",
+        "written": true
+      },
+      {
+        "bytes": 3639712,
+        "input": "apply.258",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.apply.258.bin",
+        "sha256": "1ca366328a4ab5addae1b7f0461f317e74b0b32f211b564f7df8cb64c9bb4ec2",
+        "written": true
+      },
+      {
+        "bytes": 116716,
+        "input": "enqueue.001",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.001.bin",
+        "sha256": "cf3fdf2ae2f3284d932b97027653c7ff264429536c59d938730d6be3ee307f94",
+        "written": true
+      },
+      {
+        "bytes": 124612,
+        "input": "enqueue.002",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.002.bin",
+        "sha256": "a51eea7d56b9e0ef1795477c05a27b595fb0a77e7a87ef88fc106ea1a68d7526",
+        "written": true
+      },
+      {
+        "bytes": 622060,
+        "input": "enqueue.065",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.065.bin",
+        "sha256": "fad476cebb66a8408c78e262e6b1982400d1d38e3b0541f7bfbecb30eb41515c",
+        "written": true
+      },
+      {
+        "bytes": 1130776,
+        "input": "enqueue.129",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.129.bin",
+        "sha256": "dc358e86b2cabb2565ed69247275ae5aba958cc1fb0465724fec79b8c579abcb",
+        "written": true
+      },
+      {
+        "bytes": 2156836,
+        "input": "enqueue.257",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.257.bin",
+        "sha256": "ce5025ae6769b600340f8292932606bb94275e4a41f6bdba0626341524713c35",
+        "written": true
+      },
+      {
+        "bytes": 2156812,
+        "input": "enqueue.258",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.enqueue.258.bin",
+        "sha256": "a03a811ef7cc372f6e9426b6a8a9e635f4fc9314bae42fc4b9df56103482b5ce",
+        "written": true
+      },
+      {
+        "bytes": 118120,
+        "input": "flush.001",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.flush.001.bin",
+        "sha256": "cffd8486b0bf8d30b20a8727a52e2cde82b4d2b81a7fc833dfd0cf141201c87f",
+        "written": true
+      },
+      {
+        "bytes": 126016,
+        "input": "flush.002",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.flush.002.bin",
+        "sha256": "75920d8bbf964ed8372232a415644faae52dee74036dd08acde57eeeb475c386",
+        "written": true
+      },
+      {
+        "bytes": 623464,
+        "input": "flush.065",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.flush.065.bin",
+        "sha256": "203e2b28a8626468dc7dbabc9d39960133b6a14a0fc787157355e1fa4f80296a",
+        "written": true
+      },
+      {
+        "bytes": 1132192,
+        "input": "flush.129",
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-owned-copy-pair-r1\\diagnostic\\runtime-owned-copy-pair-result.parity.flush.129.bin",
+        "sha256": "6f671a4f83668aa9ab7fe4930fbb783b504d9b1dd7dad5fe3e5334a3206a4a53",
+        "written": true
+      }
+    ],
+    "job_sha256": "d811b9f0d7f5d4f6a28e2cb898dbcd5e56274b21b05500ec81e5b090c15139fc",
+    "report_sha256": "70287ca7e3e25846fbbb177cc9e220201e91e5a2cf699df6a43037584ba07f6f",
+    "scope": "Bounded16 plain mutable untyped captured-data leaf parity/cost only. No historical arbitrary alias topology, general accepted-domain flags, maintained full-case gain, original inline/API subtraction, aggregate or production/NEXT acceptance."
+  },
+  "candidate_disposition": {
+    "accepted": false,
+    "applied": false,
+    "canonical_line": 1802,
+    "before": "result[receipt_id] = cached.duplicate(true)",
+    "after_unapplied": "result[receipt_id] = cached",
+    "first_deep_clone1796_retained": true,
+    "all_other_source_bytes_retained": true,
+    "reason": "No consistent substantive cost benefit: candidate+2993us/+0.2076percent total against anonymous original;3/6 balanced orders faster and3slower. Preserve all samples; no regression or speedup inference from noise.",
+    "maintained_full_case_gain_qualified": false,
+    "general_flags_and_nested_ownership_qualified": false
+  },
+  "independent_reviews": {
+    "leaf_static": 75,
+    "leaf_native": 140,
+    "candidate_source_only": 35,
+    "pair_static": 90,
+    "pair_native": {
+      "schema": "bth.runtime019.owned_copy_pair_independent_native_review/v1",
+      "task": "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+      "reviewer": "/root/owner012_independent",
+      "reviewed_utc": "2026-11-05T18:04:09.115550+00:00",
+      "status": "NATIVE_PROTOCOL_QUALIFIED_COST_BENEFIT_UNMET_CANDIDATE_UNACCEPTED",
+      "check_count": 625,
+      "checks": [
+        "Frozena8e02/all16 rawpins exact",
+        "All1247C17 actual listedsource rawpins exact",
+        "Support4 exact",
+        "Originaltuple+5views apply.001",
+        "Originaltuple+5views apply.002",
+        "Originaltuple+5views apply.065",
+        "Originaltuple+5views apply.129",
+        "Originaltuple+5views apply.257",
+        "Originaltuple+5views apply.258",
+        "Originaltuple+5views enqueue.001",
+        "Originaltuple+5views enqueue.002",
+        "Originaltuple+5views enqueue.065",
+        "Originaltuple+5views enqueue.129",
+        "Originaltuple+5views enqueue.257",
+        "Originaltuple+5views enqueue.258",
+        "Originaltuple+5views flush.001",
+        "Originaltuple+5views flush.002",
+        "Originaltuple+5views flush.065",
+        "Originaltuple+5views flush.129",
+        "Lineagehashonly immutable-sha256.json",
+        "Lineagehashonly job.json",
+        "Lineagehashonly stdout.log",
+        "Lineagehashonly capacity018-result.json",
+        "Lineagehashonly capacity018-capture-root-postcheck-r2.json",
+        "Lineagehashonly capacity018-current-capture-independent-native-review-r2.json",
+        "Lineagehashonly capacity018-current-capture-independent-native-summary-r2.json",
+        "Lineagehashonly immutable-sha256.json",
+        "Lineagehashonly runtime019-normalize-source-suitability-r1.json",
+        "Lineagehashonly immutable-sha256.json",
+        "Lineagehashonly runtime019-owned-copy-independent-source-review-r1.json",
+        "Lineagehashonly runtime019-leaf-root-postcheck-r1.json",
+        "Lineagehashonly immutable-sha256.json",
+        "Lineagehashonly runtime-normalize-leaf-result.json",
+        "Lineagehashonly runtime-normalize-leaf-result.values.bin",
+        "Lineagehashonly job.json",
+        "One finalnative event",
+        "ActualfixedJob/headb9/180identity",
+        "Exit0/assigned-beforeexecution/closed0/no timeout-script error",
+        "Exact12percent2GiBkill/no-breakaway readbacks",
+        "ActualPASS1300file/1304final; +4=sizeguard1+write3",
+        "All48parityprecede288timers/336total",
+        "Actual2args/thirdhostomission",
+        "Privateproject readthrough actualcanonical scripts",
+        "Actualstagedsource exact runtime_owned_copy_pair_driver.gd",
+        "Actualstagedsource exact scenario_sequence_runtime_original.gd",
+        "Actualstagedsource exact scenario_sequence_runtime_candidate.gd",
+        "Threeactualdistinctrole Resources",
+        "Actualreceiverpath/hash canonical",
+        "Sharedcanonicaldependency identity+source canonicalJsonCoerceScript",
+        "Sharedcanonicaldependency identity+source canonicalOperationRegistryScript",
+        "Sharedcanonicaldependency identity+source canonicalSequenceSchemaScript",
+        "Actualreceiverpath/hash original",
+        "Sharedcanonicaldependency identity+source originalJsonCoerceScript",
+        "Sharedcanonicaldependency identity+source originalOperationRegistryScript",
+        "Sharedcanonicaldependency identity+source originalSequenceSchemaScript",
+        "Actualreceiverpath/hash candidate",
+        "Sharedcanonicaldependency identity+source candidateJsonCoerceScript",
+        "Sharedcanonicaldependency identity+source candidateOperationRegistryScript",
+        "Sharedcanonicaldependency identity+source candidateSequenceSchemaScript",
+        "Exactly16fixedcases alloracles",
+        "Full3parity18timed/flags/distinctroots apply.001",
+        "All3parityroles apply.001",
+        "Nativefullparity/oracle/input/ownership apply.001canonical",
+        "Actualheldnamedrefs apply.001canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.001canonical",
+        "Fullsupportedliveoutputflags apply.001canonical",
+        "Nativefullparity/oracle/input/ownership apply.001original",
+        "Actualheldnamedrefs apply.001original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.001original",
+        "Fullsupportedliveoutputflags apply.001original",
+        "Nativefullparity/oracle/input/ownership apply.001candidate",
+        "Actualheldnamedrefs apply.001candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.001candidate",
+        "Fullsupportedliveoutputflags apply.001candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.001(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.001(5, 2)",
+        "Sixobservationsperrole apply.001",
+        "Actualcompleteunchangedboundedbatchcompositions apply.001",
+        "Full3parity18timed/flags/distinctroots apply.002",
+        "All3parityroles apply.002",
+        "Nativefullparity/oracle/input/ownership apply.002canonical",
+        "Actualheldnamedrefs apply.002canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.002canonical",
+        "Fullsupportedliveoutputflags apply.002canonical",
+        "Nativefullparity/oracle/input/ownership apply.002original",
+        "Actualheldnamedrefs apply.002original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.002original",
+        "Fullsupportedliveoutputflags apply.002original",
+        "Nativefullparity/oracle/input/ownership apply.002candidate",
+        "Actualheldnamedrefs apply.002candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.002candidate",
+        "Fullsupportedliveoutputflags apply.002candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.002(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.002(5, 2)",
+        "Sixobservationsperrole apply.002",
+        "Actualcompleteunchangedboundedbatchcompositions apply.002",
+        "Full3parity18timed/flags/distinctroots apply.065",
+        "All3parityroles apply.065",
+        "Nativefullparity/oracle/input/ownership apply.065canonical",
+        "Actualheldnamedrefs apply.065canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.065canonical",
+        "Fullsupportedliveoutputflags apply.065canonical",
+        "Nativefullparity/oracle/input/ownership apply.065original",
+        "Actualheldnamedrefs apply.065original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.065original",
+        "Fullsupportedliveoutputflags apply.065original",
+        "Nativefullparity/oracle/input/ownership apply.065candidate",
+        "Actualheldnamedrefs apply.065candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.065candidate",
+        "Fullsupportedliveoutputflags apply.065candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.065(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.065(5, 2)",
+        "Sixobservationsperrole apply.065",
+        "Actualcompleteunchangedboundedbatchcompositions apply.065",
+        "Full3parity18timed/flags/distinctroots apply.129",
+        "All3parityroles apply.129",
+        "Nativefullparity/oracle/input/ownership apply.129canonical",
+        "Actualheldnamedrefs apply.129canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.129canonical",
+        "Fullsupportedliveoutputflags apply.129canonical",
+        "Nativefullparity/oracle/input/ownership apply.129original",
+        "Actualheldnamedrefs apply.129original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.129original",
+        "Fullsupportedliveoutputflags apply.129original",
+        "Nativefullparity/oracle/input/ownership apply.129candidate",
+        "Actualheldnamedrefs apply.129candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.129candidate",
+        "Fullsupportedliveoutputflags apply.129candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.129(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.129(5, 2)",
+        "Sixobservationsperrole apply.129",
+        "Actualcompleteunchangedboundedbatchcompositions apply.129",
+        "Full3parity18timed/flags/distinctroots apply.257",
+        "All3parityroles apply.257",
+        "Nativefullparity/oracle/input/ownership apply.257canonical",
+        "Actualheldnamedrefs apply.257canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.257canonical",
+        "Fullsupportedliveoutputflags apply.257canonical",
+        "Nativefullparity/oracle/input/ownership apply.257original",
+        "Actualheldnamedrefs apply.257original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.257original",
+        "Fullsupportedliveoutputflags apply.257original",
+        "Nativefullparity/oracle/input/ownership apply.257candidate",
+        "Actualheldnamedrefs apply.257candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.257candidate",
+        "Fullsupportedliveoutputflags apply.257candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.257(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.257(5, 2)",
+        "Sixobservationsperrole apply.257",
+        "Actualcompleteunchangedboundedbatchcompositions apply.257",
+        "Full3parity18timed/flags/distinctroots apply.258",
+        "All3parityroles apply.258",
+        "Nativefullparity/oracle/input/ownership apply.258canonical",
+        "Actualheldnamedrefs apply.258canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.258canonical",
+        "Fullsupportedliveoutputflags apply.258canonical",
+        "Nativefullparity/oracle/input/ownership apply.258original",
+        "Actualheldnamedrefs apply.258original",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.258original",
+        "Fullsupportedliveoutputflags apply.258original",
+        "Nativefullparity/oracle/input/ownership apply.258candidate",
+        "Actualheldnamedrefs apply.258candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix apply.258candidate",
+        "Fullsupportedliveoutputflags apply.258candidate",
+        "Exactbalancedslot/fulltimedoutcome apply.258(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome apply.258(5, 2)",
+        "Sixobservationsperrole apply.258",
+        "Actualcompleteunchangedboundedbatchcompositions apply.258",
+        "Full3parity18timed/flags/distinctroots enqueue.001",
+        "All3parityroles enqueue.001",
+        "Nativefullparity/oracle/input/ownership enqueue.001canonical",
+        "Actualheldnamedrefs enqueue.001canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.001canonical",
+        "Fullsupportedliveoutputflags enqueue.001canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.001original",
+        "Actualheldnamedrefs enqueue.001original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.001original",
+        "Fullsupportedliveoutputflags enqueue.001original",
+        "Nativefullparity/oracle/input/ownership enqueue.001candidate",
+        "Actualheldnamedrefs enqueue.001candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.001candidate",
+        "Fullsupportedliveoutputflags enqueue.001candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.001(5, 2)",
+        "Sixobservationsperrole enqueue.001",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.001",
+        "Full3parity18timed/flags/distinctroots enqueue.002",
+        "All3parityroles enqueue.002",
+        "Nativefullparity/oracle/input/ownership enqueue.002canonical",
+        "Actualheldnamedrefs enqueue.002canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.002canonical",
+        "Fullsupportedliveoutputflags enqueue.002canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.002original",
+        "Actualheldnamedrefs enqueue.002original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.002original",
+        "Fullsupportedliveoutputflags enqueue.002original",
+        "Nativefullparity/oracle/input/ownership enqueue.002candidate",
+        "Actualheldnamedrefs enqueue.002candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.002candidate",
+        "Fullsupportedliveoutputflags enqueue.002candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.002(5, 2)",
+        "Sixobservationsperrole enqueue.002",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.002",
+        "Full3parity18timed/flags/distinctroots enqueue.065",
+        "All3parityroles enqueue.065",
+        "Nativefullparity/oracle/input/ownership enqueue.065canonical",
+        "Actualheldnamedrefs enqueue.065canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.065canonical",
+        "Fullsupportedliveoutputflags enqueue.065canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.065original",
+        "Actualheldnamedrefs enqueue.065original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.065original",
+        "Fullsupportedliveoutputflags enqueue.065original",
+        "Nativefullparity/oracle/input/ownership enqueue.065candidate",
+        "Actualheldnamedrefs enqueue.065candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.065candidate",
+        "Fullsupportedliveoutputflags enqueue.065candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.065(5, 2)",
+        "Sixobservationsperrole enqueue.065",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.065",
+        "Full3parity18timed/flags/distinctroots enqueue.129",
+        "All3parityroles enqueue.129",
+        "Nativefullparity/oracle/input/ownership enqueue.129canonical",
+        "Actualheldnamedrefs enqueue.129canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.129canonical",
+        "Fullsupportedliveoutputflags enqueue.129canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.129original",
+        "Actualheldnamedrefs enqueue.129original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.129original",
+        "Fullsupportedliveoutputflags enqueue.129original",
+        "Nativefullparity/oracle/input/ownership enqueue.129candidate",
+        "Actualheldnamedrefs enqueue.129candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.129candidate",
+        "Fullsupportedliveoutputflags enqueue.129candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.129(5, 2)",
+        "Sixobservationsperrole enqueue.129",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.129",
+        "Full3parity18timed/flags/distinctroots enqueue.257",
+        "All3parityroles enqueue.257",
+        "Nativefullparity/oracle/input/ownership enqueue.257canonical",
+        "Actualheldnamedrefs enqueue.257canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.257canonical",
+        "Fullsupportedliveoutputflags enqueue.257canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.257original",
+        "Actualheldnamedrefs enqueue.257original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.257original",
+        "Fullsupportedliveoutputflags enqueue.257original",
+        "Nativefullparity/oracle/input/ownership enqueue.257candidate",
+        "Actualheldnamedrefs enqueue.257candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.257candidate",
+        "Fullsupportedliveoutputflags enqueue.257candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.257(5, 2)",
+        "Sixobservationsperrole enqueue.257",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.257",
+        "Full3parity18timed/flags/distinctroots enqueue.258",
+        "All3parityroles enqueue.258",
+        "Nativefullparity/oracle/input/ownership enqueue.258canonical",
+        "Actualheldnamedrefs enqueue.258canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.258canonical",
+        "Fullsupportedliveoutputflags enqueue.258canonical",
+        "Nativefullparity/oracle/input/ownership enqueue.258original",
+        "Actualheldnamedrefs enqueue.258original",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.258original",
+        "Fullsupportedliveoutputflags enqueue.258original",
+        "Nativefullparity/oracle/input/ownership enqueue.258candidate",
+        "Actualheldnamedrefs enqueue.258candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix enqueue.258candidate",
+        "Fullsupportedliveoutputflags enqueue.258candidate",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome enqueue.258(5, 2)",
+        "Sixobservationsperrole enqueue.258",
+        "Actualcompleteunchangedboundedbatchcompositions enqueue.258",
+        "Full3parity18timed/flags/distinctroots flush.001",
+        "All3parityroles flush.001",
+        "Nativefullparity/oracle/input/ownership flush.001canonical",
+        "Actualheldnamedrefs flush.001canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.001canonical",
+        "Fullsupportedliveoutputflags flush.001canonical",
+        "Nativefullparity/oracle/input/ownership flush.001original",
+        "Actualheldnamedrefs flush.001original",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.001original",
+        "Fullsupportedliveoutputflags flush.001original",
+        "Nativefullparity/oracle/input/ownership flush.001candidate",
+        "Actualheldnamedrefs flush.001candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.001candidate",
+        "Fullsupportedliveoutputflags flush.001candidate",
+        "Exactbalancedslot/fulltimedoutcome flush.001(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.001(5, 2)",
+        "Sixobservationsperrole flush.001",
+        "Actualcompleteunchangedboundedbatchcompositions flush.001",
+        "Full3parity18timed/flags/distinctroots flush.002",
+        "All3parityroles flush.002",
+        "Nativefullparity/oracle/input/ownership flush.002canonical",
+        "Actualheldnamedrefs flush.002canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.002canonical",
+        "Fullsupportedliveoutputflags flush.002canonical",
+        "Nativefullparity/oracle/input/ownership flush.002original",
+        "Actualheldnamedrefs flush.002original",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.002original",
+        "Fullsupportedliveoutputflags flush.002original",
+        "Nativefullparity/oracle/input/ownership flush.002candidate",
+        "Actualheldnamedrefs flush.002candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.002candidate",
+        "Fullsupportedliveoutputflags flush.002candidate",
+        "Exactbalancedslot/fulltimedoutcome flush.002(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.002(5, 2)",
+        "Sixobservationsperrole flush.002",
+        "Actualcompleteunchangedboundedbatchcompositions flush.002",
+        "Full3parity18timed/flags/distinctroots flush.065",
+        "All3parityroles flush.065",
+        "Nativefullparity/oracle/input/ownership flush.065canonical",
+        "Actualheldnamedrefs flush.065canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.065canonical",
+        "Fullsupportedliveoutputflags flush.065canonical",
+        "Nativefullparity/oracle/input/ownership flush.065original",
+        "Actualheldnamedrefs flush.065original",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.065original",
+        "Fullsupportedliveoutputflags flush.065original",
+        "Nativefullparity/oracle/input/ownership flush.065candidate",
+        "Actualheldnamedrefs flush.065candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.065candidate",
+        "Fullsupportedliveoutputflags flush.065candidate",
+        "Exactbalancedslot/fulltimedoutcome flush.065(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.065(5, 2)",
+        "Sixobservationsperrole flush.065",
+        "Actualcompleteunchangedboundedbatchcompositions flush.065",
+        "Full3parity18timed/flags/distinctroots flush.129",
+        "All3parityroles flush.129",
+        "Nativefullparity/oracle/input/ownership flush.129canonical",
+        "Actualheldnamedrefs flush.129canonical",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.129canonical",
+        "Fullsupportedliveoutputflags flush.129canonical",
+        "Nativefullparity/oracle/input/ownership flush.129original",
+        "Actualheldnamedrefs flush.129original",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.129original",
+        "Fullsupportedliveoutputflags flush.129original",
+        "Nativefullparity/oracle/input/ownership flush.129candidate",
+        "Actualheldnamedrefs flush.129candidate",
+        "Observednamedoutputmatches emptyonlywithinmatrix flush.129candidate",
+        "Fullsupportedliveoutputflags flush.129candidate",
+        "Exactbalancedslot/fulltimedoutcome flush.129(0, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(0, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(0, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(1, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(1, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(1, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(2, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(2, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(2, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(3, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(3, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(3, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(4, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(4, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(4, 2)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(5, 0)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(5, 1)",
+        "Exactbalancedslot/fulltimedoutcome flush.129(5, 2)",
+        "Sixobservationsperrole flush.129",
+        "Actualcompleteunchangedboundedbatchcompositions flush.129",
+        "Globalbalanced32/position/maxbounds/723facts12scalar609matrix",
+        "Exactly16percasearchive IDs",
+        "Actualcompletepercasearchive rawhashonly apply.001",
+        "Actualcompletepercasearchive rawhashonly apply.002",
+        "Actualcompletepercasearchive rawhashonly apply.065",
+        "Actualcompletepercasearchive rawhashonly apply.129",
+        "Actualcompletepercasearchive rawhashonly apply.257",
+        "Actualcompletepercasearchive rawhashonly apply.258",
+        "Actualcompletepercasearchive rawhashonly enqueue.001",
+        "Actualcompletepercasearchive rawhashonly enqueue.002",
+        "Actualcompletepercasearchive rawhashonly enqueue.065",
+        "Actualcompletepercasearchive rawhashonly enqueue.129",
+        "Actualcompletepercasearchive rawhashonly enqueue.257",
+        "Actualcompletepercasearchive rawhashonly enqueue.258",
+        "Actualcompletepercasearchive rawhashonly flush.001",
+        "Actualcompletepercasearchive rawhashonly flush.002",
+        "Actualcompletepercasearchive rawhashonly flush.065",
+        "Actualcompletepercasearchive rawhashonly flush.129",
+        "All288rawcosttotals/orderaggregates reproduced withoutdropping",
+        "Correctedroot1394receiptbinds same actualsource/Job/report/counts",
+        "Candidate+2993us/+0.207590percent aggregate/3of6orders faster"
+      ],
+      "blockers": [],
+      "blocking_findings": [],
+      "native_job": {
+        "receipt": {
+          "path": "evidence/runtime019-owned-copy-pair-r1/job.json",
+          "bytes": 2218,
+          "sha256": "d811b9f0d7f5d4f6a28e2cb898dbcd5e56274b21b05500ec81e5b090c15139fc"
+        },
+        "exit": 0,
+        "head": "b9b6497fa72566a603bb1b1c0b396c3a3f60ab79",
+        "deadline_seconds": 180,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "script_error": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "wall_seconds": 85.52636408805847,
+        "cpu_seconds": 85.4375
+      },
+      "actual_report": {
+        "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.json",
+        "bytes": 17136307,
+        "sha256": "70287ca7e3e25846fbbb177cc9e220201e91e5a2cf699df6a43037584ba07f6f"
+      },
+      "stdout": {
+        "path": "evidence/runtime019-owned-copy-pair-r1/stdout.log",
+        "bytes": 487,
+        "sha256": "d6fda81ce81d9d2218bd390fa7dbfa8d3cfbec4a157460fe1db342b7f842e1c8"
+      },
+      "root_postcheck": {
+        "path": "evidence/runtime019-pair-root-postcheck-r1.json",
+        "bytes": 19559,
+        "sha256": "055c7f6c88daafbc0e547aa4c9eea7c80c3c1f54789342151d1ec6251ac7f341"
+      },
+      "frozen_packet": {
+        "path": "evidence/runtime019-owned-copy-pair-proposal-r1/immutable-sha256.json",
+        "bytes": 2877,
+        "sha256": "a8e02d806a55cce329a7231d6cfdccfc04722eafbc7d2df5e1fc2c007bc9f1c0"
+      },
+      "static_review": {
+        "path": "evidence/runtime019-owned-copy-pair-independent-static-review-r1.json",
+        "bytes": 12069,
+        "sha256": "c97aa0c1393731774cc900861586f33ec344dc7c71f60411760c6e63178808f1"
+      },
+      "source_custody": {
+        "actualall1247C17_listedrawpins_exact": true,
+        "support4_exact": true,
+        "frozen16_exact": true,
+        "retained32captures80views_andalloraclelineage_exact": true,
+        "actualstaged3sources_exact": true,
+        "roles": [
+          {
+            "dependencies": [
+              {
+                "alias": "JsonCoerceScript",
+                "instance_id": "-9223372010011228752",
+                "path": "res://scripts/core/json_coerce.gd",
+                "sha256": "3b76332e8255526c75ad8808c7e30dc9b5d84a3b5997cf92029edcdd41b186c0"
+              },
+              {
+                "alias": "OperationRegistryScript",
+                "instance_id": "-9223372009726016078",
+                "path": "res://scripts/core/scenario_operation_registry.gd",
+                "sha256": "2c0f3ed356bb1f48bade3ad824c347e63e91e74cb2a3dcc1bd179321c7ac36d2"
+              },
+              {
+                "alias": "SequenceSchemaScript",
+                "instance_id": "-9223372009440803404",
+                "path": "res://scripts/core/scenario_sequence_schema.gd",
+                "sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee"
+              }
+            ],
+            "instance_id": "-9223372010883643990",
+            "path": "res://scripts/core/scenario_sequence_runtime.gd",
+            "role": "canonical",
+            "sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566"
+          },
+          {
+            "dependencies": [
+              {
+                "alias": "JsonCoerceScript",
+                "instance_id": "-9223372010011228752",
+                "path": "res://scripts/core/json_coerce.gd",
+                "sha256": "3b76332e8255526c75ad8808c7e30dc9b5d84a3b5997cf92029edcdd41b186c0"
+              },
+              {
+                "alias": "OperationRegistryScript",
+                "instance_id": "-9223372009726016078",
+                "path": "res://scripts/core/scenario_operation_registry.gd",
+                "sha256": "2c0f3ed356bb1f48bade3ad824c347e63e91e74cb2a3dcc1bd179321c7ac36d2"
+              },
+              {
+                "alias": "SequenceSchemaScript",
+                "instance_id": "-9223372009440803404",
+                "path": "res://scripts/core/scenario_sequence_schema.gd",
+                "sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee"
+              }
+            ],
+            "instance_id": "-9223372010598431316",
+            "path": "res://.tmp/generated_tests/runtime019-owned-copy-pair-r1/scenario_sequence_runtime_original.gd",
+            "role": "original",
+            "sha256": "1a04a08d66ea3517275de2b0e5e1592845e03fe7d3e6ba3f7b11d5721688d88b"
+          },
+          {
+            "dependencies": [
+              {
+                "alias": "JsonCoerceScript",
+                "instance_id": "-9223372010011228752",
+                "path": "res://scripts/core/json_coerce.gd",
+                "sha256": "3b76332e8255526c75ad8808c7e30dc9b5d84a3b5997cf92029edcdd41b186c0"
+              },
+              {
+                "alias": "OperationRegistryScript",
+                "instance_id": "-9223372009726016078",
+                "path": "res://scripts/core/scenario_operation_registry.gd",
+                "sha256": "2c0f3ed356bb1f48bade3ad824c347e63e91e74cb2a3dcc1bd179321c7ac36d2"
+              },
+              {
+                "alias": "SequenceSchemaScript",
+                "instance_id": "-9223372009440803404",
+                "path": "res://scripts/core/scenario_sequence_schema.gd",
+                "sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee"
+              }
+            ],
+            "instance_id": "-9223372010313218642",
+            "path": "res://.tmp/generated_tests/runtime019-owned-copy-pair-r1/scenario_sequence_runtime_candidate.gd",
+            "role": "candidate",
+            "sha256": "51a5136c197295049557e4d1dcf1ec5c674bd16d1892f2fed0f159dec9296b58"
+          }
+        ],
+        "canonical_source_changed": false
+      },
+      "actual_semantic_measurement_gates": {
+        "file_checks": 1300,
+        "final_checks": 1304,
+        "all48parity_before288timers": true,
+        "all16cases48parity288timed": true,
+        "actual2argthirdhostomission": true,
+        "all48fullreturnbytes/hash/inputposts/flags/namedownership_gates": true,
+        "all288fulltimedoutcome/input/namedownership/rootgates": true,
+        "all16completeprepostinput_andpostoutputbatchinventories": true,
+        "maxinput_nodes": 450019,
+        "maxoutput_nodes": 434071,
+        "unchanged_bounds": [
+          500000,
+          128
+        ],
+        "heldinputfacts": 723,
+        "containerfacts": 711,
+        "scalarfacts": 12,
+        "all609namedoutputmatrixentries_empty": true,
+        "scope": "Only recordednamedroots/content/flags inthisqualifiedplaincohort; not arbitrarydeepdisjointness/historicalaliasidentity."
+      },
+      "actual16_full_parity_archives_hashonly": [
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.001.bin",
+          "bytes": 119200,
+          "sha256": "ba729c28883df2f8dd115ab08175c82ab25fc0f011a99d4ac0d97b92c03da48e"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.002.bin",
+          "bytes": 132952,
+          "sha256": "ea6c480b97006b3ae6a771d450752d34bd07f98208abbeffed7d150ee401ac92"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.065.bin",
+          "bytes": 999328,
+          "sha256": "96717e11c0e9f44b7e3659b757e4a5b9faba73f3aa00e85f279a658af45ef0d5"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.129.bin",
+          "bytes": 1879456,
+          "sha256": "bbef0e072159caf60ed8e9d2dd3905d6bd0a6e00e5260bffbad66dd681532698"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.257.bin",
+          "bytes": 3639736,
+          "sha256": "7e1a11013939dca48ceb68c50ee5e6f5051650a854f4dedaad1c4265ba5f9812"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.apply.258.bin",
+          "bytes": 3639712,
+          "sha256": "1ca366328a4ab5addae1b7f0461f317e74b0b32f211b564f7df8cb64c9bb4ec2"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.001.bin",
+          "bytes": 116716,
+          "sha256": "cf3fdf2ae2f3284d932b97027653c7ff264429536c59d938730d6be3ee307f94"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.002.bin",
+          "bytes": 124612,
+          "sha256": "a51eea7d56b9e0ef1795477c05a27b595fb0a77e7a87ef88fc106ea1a68d7526"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.065.bin",
+          "bytes": 622060,
+          "sha256": "fad476cebb66a8408c78e262e6b1982400d1d38e3b0541f7bfbecb30eb41515c"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.129.bin",
+          "bytes": 1130776,
+          "sha256": "dc358e86b2cabb2565ed69247275ae5aba958cc1fb0465724fec79b8c579abcb"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.257.bin",
+          "bytes": 2156836,
+          "sha256": "ce5025ae6769b600340f8292932606bb94275e4a41f6bdba0626341524713c35"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.enqueue.258.bin",
+          "bytes": 2156812,
+          "sha256": "a03a811ef7cc372f6e9426b6a8a9e635f4fc9314bae42fc4b9df56103482b5ce"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.flush.001.bin",
+          "bytes": 118120,
+          "sha256": "cffd8486b0bf8d30b20a8727a52e2cde82b4d2b81a7fc833dfd0cf141201c87f"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.flush.002.bin",
+          "bytes": 126016,
+          "sha256": "75920d8bbf964ed8372232a415644faae52dee74036dd08acde57eeeb475c386"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.flush.065.bin",
+          "bytes": 623464,
+          "sha256": "203e2b28a8626468dc7dbabc9d39960133b6a14a0fc787157355e1fa4f80296a"
+        },
+        {
+          "path": "evidence/runtime019-owned-copy-pair-r1/diagnostic/runtime-owned-copy-pair-result.parity.flush.129.bin",
+          "bytes": 1132192,
+          "sha256": "6f671a4f83668aa9ab7fe4930fbb783b504d9b1dd7dad5fe3e5334a3206a4a53"
+        }
+      ],
+      "cost_analysis": {
+        "observations_total": 288,
+        "observations_per_role": 96,
+        "all_samples_retained": true,
+        "dropped_samples": [],
+        "trimming_or_winsorization": false,
+        "role_totals_usec": {
+          "canonical": 1438622,
+          "original": 1441781,
+          "candidate": 1444774
+        },
+        "candidate_minus_original_usec": 2993,
+        "candidate_vs_original_percent_slower": 0.20759047317172302,
+        "six_order_totals_usec": [
+          {
+            "canonical": 242564,
+            "original": 242084,
+            "candidate": 239073
+          },
+          {
+            "canonical": 240296,
+            "candidate": 237983,
+            "original": 244170
+          },
+          {
+            "original": 239640,
+            "canonical": 239224,
+            "candidate": 236424
+          },
+          {
+            "original": 237817,
+            "candidate": 239275,
+            "canonical": 238122
+          },
+          {
+            "candidate": 239515,
+            "canonical": 239254,
+            "original": 238585
+          },
+          {
+            "candidate": 252504,
+            "original": 239485,
+            "canonical": 239162
+          }
+        ],
+        "candidate_order_totals_faster": 3,
+        "candidate_order_totals_slower": 3,
+        "group_totals_usec": {
+          "apply": {
+            "canonical": 928967,
+            "original": 934708,
+            "candidate": 933305
+          },
+          "enqueue": {
+            "canonical": 387824,
+            "original": 386050,
+            "candidate": 389242
+          },
+          "flush": {
+            "canonical": 121831,
+            "original": 121023,
+            "candidate": 122227
+          }
+        },
+        "raw_case_timings_all288": [
+          {
+            "input": "apply.001",
+            "raw_usec": {
+              "canonical": [
+                993,
+                912,
+                1032,
+                910,
+                935,
+                934
+              ],
+              "original": [
+                985,
+                971,
+                904,
+                957,
+                923,
+                1025
+              ],
+              "candidate": [
+                936,
+                936,
+                940,
+                944,
+                920,
+                909
+              ]
+            },
+            "totals_usec": {
+              "canonical": 5716,
+              "original": 5765,
+              "candidate": 5585
+            },
+            "medians_usec": {
+              "canonical": 934.5,
+              "original": 964.0,
+              "candidate": 936.0
+            }
+          },
+          {
+            "input": "apply.002",
+            "raw_usec": {
+              "canonical": [
+                1211,
+                1162,
+                1138,
+                1184,
+                1167,
+                1169
+              ],
+              "original": [
+                1241,
+                1164,
+                1165,
+                1126,
+                1161,
+                1171
+              ],
+              "candidate": [
+                1176,
+                1133,
+                1145,
+                1137,
+                1140,
+                1244
+              ]
+            },
+            "totals_usec": {
+              "canonical": 7031,
+              "original": 7028,
+              "candidate": 6975
+            },
+            "medians_usec": {
+              "canonical": 1168.0,
+              "original": 1164.5,
+              "candidate": 1142.5
+            }
+          },
+          {
+            "input": "apply.065",
+            "raw_usec": {
+              "canonical": [
+                14441,
+                14535,
+                14609,
+                15621,
+                14626,
+                14150
+              ],
+              "original": [
+                15439,
+                16320,
+                14817,
+                14639,
+                14460,
+                14210
+              ],
+              "candidate": [
+                14398,
+                14985,
+                14369,
+                15028,
+                14665,
+                14116
+              ]
+            },
+            "totals_usec": {
+              "canonical": 87982,
+              "original": 89885,
+              "candidate": 87561
+            },
+            "medians_usec": {
+              "canonical": 14572.0,
+              "original": 14728.0,
+              "candidate": 14531.5
+            }
+          },
+          {
+            "input": "apply.129",
+            "raw_usec": {
+              "canonical": [
+                27745,
+                28474,
+                28065,
+                28459,
+                28336,
+                28348
+              ],
+              "original": [
+                27794,
+                28213,
+                28319,
+                28121,
+                28129,
+                28273
+              ],
+              "candidate": [
+                28598,
+                27714,
+                27738,
+                28222,
+                29969,
+                30186
+              ]
+            },
+            "totals_usec": {
+              "canonical": 169427,
+              "original": 168849,
+              "candidate": 172427
+            },
+            "medians_usec": {
+              "canonical": 28342.0,
+              "original": 28171.0,
+              "candidate": 28410.0
+            }
+          },
+          {
+            "input": "apply.257",
+            "raw_usec": {
+              "canonical": [
+                57514,
+                56841,
+                56100,
+                55980,
+                57308,
+                56983
+              ],
+              "original": [
+                57946,
+                57509,
+                56444,
+                56177,
+                57555,
+                57898
+              ],
+              "candidate": [
+                55429,
+                55458,
+                55579,
+                55504,
+                56653,
+                67830
+              ]
+            },
+            "totals_usec": {
+              "canonical": 340726,
+              "original": 343529,
+              "candidate": 346453
+            },
+            "medians_usec": {
+              "canonical": 56912.0,
+              "original": 57532.0,
+              "candidate": 55541.5
+            }
+          },
+          {
+            "input": "apply.258",
+            "raw_usec": {
+              "canonical": [
+                55066,
+                53038,
+                53553,
+                51950,
+                52007,
+                52471
+              ],
+              "original": [
+                53426,
+                55213,
+                53678,
+                52416,
+                52639,
+                52280
+              ],
+              "candidate": [
+                53145,
+                52189,
+                51767,
+                53924,
+                51430,
+                51849
+              ]
+            },
+            "totals_usec": {
+              "canonical": 318085,
+              "original": 319652,
+              "candidate": 314304
+            },
+            "medians_usec": {
+              "canonical": 52754.5,
+              "original": 53032.5,
+              "candidate": 52019.0
+            }
+          },
+          {
+            "input": "enqueue.001",
+            "raw_usec": {
+              "canonical": [
+                941,
+                882,
+                874,
+                861,
+                864,
+                868
+              ],
+              "original": [
+                899,
+                870,
+                868,
+                863,
+                859,
+                865
+              ],
+              "candidate": [
+                935,
+                873,
+                866,
+                867,
+                986,
+                868
+              ]
+            },
+            "totals_usec": {
+              "canonical": 5290,
+              "original": 5224,
+              "candidate": 5395
+            },
+            "medians_usec": {
+              "canonical": 871.0,
+              "original": 866.5,
+              "candidate": 870.5
+            }
+          },
+          {
+            "input": "enqueue.002",
+            "raw_usec": {
+              "canonical": [
+                1074,
+                1014,
+                993,
+                1019,
+                1006,
+                1027
+              ],
+              "original": [
+                1022,
+                1003,
+                981,
+                991,
+                1032,
+                1057
+              ],
+              "candidate": [
+                1018,
+                996,
+                994,
+                989,
+                1019,
+                1048
+              ]
+            },
+            "totals_usec": {
+              "canonical": 6133,
+              "original": 6086,
+              "candidate": 6064
+            },
+            "medians_usec": {
+              "canonical": 1016.5,
+              "original": 1012.5,
+              "candidate": 1007.0
+            }
+          },
+          {
+            "input": "enqueue.065",
+            "raw_usec": {
+              "canonical": [
+                6682,
+                6509,
+                6332,
+                6297,
+                6270,
+                6384
+              ],
+              "original": [
+                6202,
+                6417,
+                6285,
+                6390,
+                6269,
+                6235
+              ],
+              "candidate": [
+                6382,
+                6467,
+                6321,
+                6561,
+                6431,
+                6279
+              ]
+            },
+            "totals_usec": {
+              "canonical": 38474,
+              "original": 37798,
+              "candidate": 38441
+            },
+            "medians_usec": {
+              "canonical": 6358.0,
+              "original": 6277.0,
+              "candidate": 6406.5
+            }
+          },
+          {
+            "input": "enqueue.129",
+            "raw_usec": {
+              "canonical": [
+                11450,
+                11427,
+                11433,
+                11228,
+                11149,
+                11388
+              ],
+              "original": [
+                11323,
+                11386,
+                11325,
+                11144,
+                11036,
+                11537
+              ],
+              "candidate": [
+                11377,
+                11332,
+                11297,
+                11142,
+                11234,
+                11386
+              ]
+            },
+            "totals_usec": {
+              "canonical": 68075,
+              "original": 67751,
+              "candidate": 67768
+            },
+            "medians_usec": {
+              "canonical": 11407.5,
+              "original": 11324.0,
+              "candidate": 11314.5
+            }
+          },
+          {
+            "input": "enqueue.257",
+            "raw_usec": {
+              "canonical": [
+                22043,
+                22137,
+                22115,
+                22020,
+                22555,
+                22610
+              ],
+              "original": [
+                22328,
+                22071,
+                22091,
+                22458,
+                22155,
+                22194
+              ],
+              "candidate": [
+                22128,
+                22062,
+                22420,
+                22316,
+                22136,
+                23530
+              ]
+            },
+            "totals_usec": {
+              "canonical": 133480,
+              "original": 133297,
+              "candidate": 134592
+            },
+            "medians_usec": {
+              "canonical": 22126.0,
+              "original": 22174.5,
+              "candidate": 22226.0
+            }
+          },
+          {
+            "input": "enqueue.258",
+            "raw_usec": {
+              "canonical": [
+                22673,
+                22870,
+                22885,
+                22603,
+                22838,
+                22503
+              ],
+              "original": [
+                23135,
+                22757,
+                22619,
+                22557,
+                22214,
+                22612
+              ],
+              "candidate": [
+                23024,
+                23060,
+                22822,
+                22608,
+                22612,
+                22856
+              ]
+            },
+            "totals_usec": {
+              "canonical": 136372,
+              "original": 135894,
+              "candidate": 136982
+            },
+            "medians_usec": {
+              "canonical": 22755.5,
+              "original": 22615.5,
+              "candidate": 22839.0
+            }
+          },
+          {
+            "input": "flush.001",
+            "raw_usec": {
+              "canonical": [
+                1063,
+                980,
+                975,
+                985,
+                973,
+                969
+              ],
+              "original": [
+                1103,
+                993,
+                968,
+                989,
+                975,
+                972
+              ],
+              "candidate": [
+                1007,
+                970,
+                972,
+                1034,
+                977,
+                972
+              ]
+            },
+            "totals_usec": {
+              "canonical": 5945,
+              "original": 6000,
+              "candidate": 5932
+            },
+            "medians_usec": {
+              "canonical": 977.5,
+              "original": 982.0,
+              "candidate": 974.5
+            }
+          },
+          {
+            "input": "flush.002",
+            "raw_usec": {
+              "canonical": [
+                1166,
+                1074,
+                1068,
+                1058,
+                1137,
+                1060
+              ],
+              "original": [
+                1091,
+                1096,
+                1061,
+                1123,
+                1065,
+                1054
+              ],
+              "candidate": [
+                1295,
+                1065,
+                1065,
+                1065,
+                1054,
+                1061
+              ]
+            },
+            "totals_usec": {
+              "canonical": 6563,
+              "original": 6490,
+              "candidate": 6605
+            },
+            "medians_usec": {
+              "canonical": 1071.0,
+              "original": 1078.0,
+              "candidate": 1065.0
+            }
+          },
+          {
+            "input": "flush.065",
+            "raw_usec": {
+              "canonical": [
+                6442,
+                6429,
+                6338,
+                6252,
+                6369,
+                6550
+              ],
+              "original": [
+                6278,
+                6328,
+                6265,
+                6340,
+                6326,
+                6295
+              ],
+              "candidate": [
+                6350,
+                6329,
+                6351,
+                6366,
+                6597,
+                6493
+              ]
+            },
+            "totals_usec": {
+              "canonical": 38380,
+              "original": 37832,
+              "candidate": 38486
+            },
+            "medians_usec": {
+              "canonical": 6399.0,
+              "original": 6310.5,
+              "candidate": 6358.5
+            }
+          },
+          {
+            "input": "flush.129",
+            "raw_usec": {
+              "canonical": [
+                12060,
+                12012,
+                11714,
+                11695,
+                11714,
+                11748
+              ],
+              "original": [
+                11872,
+                11859,
+                11850,
+                11526,
+                11787,
+                11807
+              ],
+              "candidate": [
+                11875,
+                12414,
+                11778,
+                11568,
+                11692,
+                11877
+              ]
+            },
+            "totals_usec": {
+              "canonical": 70943,
+              "original": 70701,
+              "candidate": 71204
+            },
+            "medians_usec": {
+              "canonical": 11731.0,
+              "original": 11828.5,
+              "candidate": 11826.5
+            }
+          }
+        ],
+        "interpretation": "Fixedcohort candidate is0.207590percent slower overall. Mixedorders/cases andtinyapply-groupchange fail statedconsistent/substantive benefitcondition. Thisdoesnotprove underlyingperformance regression/significance or allocatorcause. No highsamplewasremoved.",
+        "decision": "Candidate remains external,unapplied,unaccepted; preserveoriginalcanonicalRuntime. No furthermaintainedfullcase orboundaryacceptance workperformed/requestedonthisrejectedcandidate."
+      },
+      "receipt_correction": {
+        "native_run_unchanged_and_not_rerun": true,
+        "root_explanation": "R1 retained unchanged: local receipt checker assumed file+3 from leaf; actual pair finish adds one size check and three fresh-write checks, so final1304 equals file1300+4. No native or packet change/rerun.",
+        "independent_count_reason": "Frozenpair_finish checks serializedreport64MiBsize(+1), then inheritedfreshwrite path/open/storeflushreadback(+3). File1300 therefore final1304; the earlierreceipt-only+3 assumption waswrong, not a nativefailure.",
+        "qualifier_R1_and_corrected_R2_preserved_per_root": true
+      },
+      "scope_limits": [
+        "PASS means fixedsemantic/measurementprotocol,not performanceadoption. Source-onlyownershipargument remainsbounded; broader typed/readonly/privatehelper/malformed-domain compatibility wasnotqualifiedanddoesnotneedfurtheracceptanceforthisrejection.",
+        "No API-minusleaf subtraction,772extrapolation,originalinlineexclusivecost,cold/globalRNG/peakRSS/38step/Systems55/all220/aggregate300-43.712/game/NEXT acceptance orguardweakening.",
+        "All16paritybinaryarchives andqualifiedB46lineagewerehashedasrawopaque files byPython; no newGodotVariantdecoder orwhole535445aggregateinventory wasrun.",
+        "Balancedpermutationsretainmatchedcallglue butnotremoveallocator/cache/schedulingnoise. Totalrole/case/orderdescriptions arenot confidence/significance estimates or predeclarednumericadoptionthresholds.",
+        "Knownrootcertificate startupdiagnostic remainsinstdout; actualJob/script/finalresultpassed, not error-freeengineoutputclaim.",
+        "Parentaudit/performanceobjectivesremainopen; no productionRuntimechange or successfulfix/commit/delivery claim ismade."
+      ],
+      "independent_subreview": "Existingreviewer separatelyconfirmedsemanticgates/allrawcosts/3-3orders/controls/timinglimits and1300+4countreason, no readsoutsideassignedresults/no jobs/edits.",
+      "actions": {
+        "allowedsource_and_result_reads_only": true,
+        "new_decoder": false,
+        "native_jobs": 0,
+        "canonical_edits": 0,
+        "proposal_edits": 0,
+        "git_mutations": 0,
+        "cleanup": false,
+        "fresh_artifact_only": "evidence/runtime019-owned-copy-pair-independent-native-review-r1.json"
+      }
+    },
+    "maintained_coverage_gaps": {
+      "schema": "bth.runtime019.owned_copy_existing_coverage_gap_review/v1",
+      "reviewed_utc": "2026-11-05T17:47:44.650602+00:00",
+      "task": "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+      "status": "EXISTING_COVERAGE_PARTIAL_GENERAL_FLAG_ALIAS_PARITY_NOT_QUALIFIED",
+      "candidate": {
+        "canonical_sha256": "1f2c55166f411f7b24c3d610f2f111694064c063eed82309a81e21e80626b566",
+        "anonymous_original_sha256": "1a04a08d66ea3517275de2b0e5e1592845e03fe7d3e6ba3f7b11d5721688d88b",
+        "anonymous_candidate_sha256": "51a5136c197295049557e4d1dcf1ec5c674bd16d1892f2fed0f159dec9296b58",
+        "source_manifest_sha256": "85df488b70312b2af0dd941b0f41221f896b0661910ef5dd3acee570efd78655",
+        "all7_manifest_members_exact": true,
+        "independent_raw_inverse_and_single1802_change_exact": true,
+        "retained": "1796 firstdeepcopy;1797-1800 integralfloat restoration;1801 validator and every other byte"
+      },
+      "prior_plan": {
+        "path": "evidence\\runtime019-owned-copy-maintained-regression-plan-r1.json",
+        "sha256": "b20005deba198afd0272dc88712ede28cb198b5fdeaafe21837d1154703d4783",
+        "role": "Retained unchanged; method/source pins and selector routes. This receipt refines coverage, adds no executable."
+      },
+      "coverage": [
+        {
+          "area": "invalid/extra-key cached results",
+          "maintained_evidence": "Contract3311-3318 checks exact11-key public/cache schema;3319-3323 injected handler_replayed must be removed/replay rejected;3324-3327 changed=1 must be rejected by normalize and Engine rebuild. Raw257 cachemap bounds3441-3445 also tested.",
+          "limit": "Not exhaustive for every malformed field. Because1806-1829 and admission predicates are byte-identical and store occurs only after acceptance, no new validation bypass is introduced by the candidate source. Existing tests provide relevant regression coverage, not fresh candidate pass evidence.",
+          "adoption_gap_for_this_delta": "No additional malformed-field blocker identified solely from this exact postvalidation copy removal."
+        },
+        {
+          "area": "JSON integral float restoration",
+          "maintained_evidence": "Contract3792-3826 creates five checkpoints, uses real save/load via3829-3862 and checks fullstate equality plus repaired/refused cached command replay. SaveService485-501 parses using StorageNumericJson and RunState.from_dict; StorageNumericJson18-22/72-73 leaves ordinary parsed numbers native. Runtime1797-1800 restores finite integral cached boundary_serial/cost; Runtime338/1815-1816 requires INT before successful replay.",
+          "limit": "This is an indirect saved-number restoration test. No focused maintained rawTYPE_FLOAT cachedcost/boundary assertion or NaN/fractional-cache fixture found.",
+          "adoption_gap_for_this_delta": "No new float-restoration gap identified if unchanged save/replay case passes and exact1797-1800 code remains; do not claim a focused typedfloat test exists."
+        },
+        {
+          "area": "caller input ownership/aliases",
+          "maintained_evidence": "scenario_command_change_check38/51/56/64 checks full initial/command/legacy bytes across fresh/replay/conflict/rollback;59-63 compares complete rollback to canonical normalized input.",
+          "limit": "Byte equality does not establish cached root/outcomes/empty-state identity, output mutation isolation, or separation between valid records sharing nested outcomes/empty-state containers. No direct maintained normalizer/helper cached-alias assertion found. Empty-flush is_same147/150/153 tests a different API boundary.",
+          "adoption_gap_for_this_delta": "Retained1796 source proof supports ownership, but current maintained tests alone do not qualify general cache alias relations. The captured16 namedrelations are bounded new evidence only, not arbitrary historical alias reconstruction."
+        },
+        {
+          "area": "typed/read-only/script-constrained cached containers",
+          "maintained_evidence": "None found for cachedDictionary/outcomesArray/empty stateDictionary liveflags or constraints. Array[String] failures lists elsewhere are not cached-container tests.",
+          "reachable_domain": "Runtime162 and Registry1349-1390 validate contents/types/stringkeys/cycles/counts, not typed/read-only flags. Runtime1806-1829 likewise accepts Array outcomes and emptyDictionary state by contents without flag/constraint rejection. Such valid-shaped typed/read-only containers are not excluded simply by these production guards.",
+          "adoption_gap_for_this_delta": "OPEN: show original/candidate equality of container type/constraint/read-only metadata and ownership for this accepted domain, or supply an independently sufficient engine-semantics/idempotence proof. The source proposal expects repeated duplication equivalence; it is not a maintained native test result.",
+          "accepted_shape_examples_without_new_fixture": "With otherwise valid exact11 fields and matching authority, a String-key typed cachedDictionary, typedString outcomesArray, or typed empty stateDictionary satisfies these content guards; read-only flags likewise are not rejected by a dedicated productionflag gate. This is a reachable-domain observation, not an executedfixture or claimed difference."
+        }
+      ],
+      "why_meaningful_cost_is_not_enough": "The16 captured preimages and current pair proposal intentionally gate plain mutable untyped finite data. They reject typed/read-only/constraint cases and serialization does not retain arbitrary shared topology. Therefore even exact value/flag/namedownership parity plus meaningful cost on those16 cannot itself close the accepted-domain flag/alias gap above. This is an evidence gap, not a demonstrated behavioral regression.",
+      "production_adoption_status": "Do not approve unrestricted production adoption from existing maintained tests plus the16 plain-data pair alone. Independent qualification of remaining accepted-domain flag/alias semantics is still needed. No new test/spec/driver is authored or run by this review.",
+      "search_scope": {
+        "tracked_GD_test_sources": 425,
+        "direct_Runtime_source_reference_tests": 35,
+        "cached_key_or_helper_reference_tests": [
+          "scripts/tests/foundation/env06_7_package_b_contract.gd",
+          "scripts/tests/foundation/env06_7_package_c_contract.gd",
+          "scripts/tests/foundation/env06_7_package_d_contract.gd",
+          "scripts/tests/foundation/env06_7_package_e_contract.gd",
+          "scripts/tests/foundation/scenario_sequence_contract.gd",
+          "scripts/tests/gala_captured_compatibility_check.gd",
+          "scripts/tests/scenario_action_cold_result_feedback_check.gd",
+          "scripts/tests/scenario_command_change_check.gd"
+        ],
+        "direct_private_cached_helper_calls": [],
+        "method": "Read-only tracked test sources; cachedfield/helper name scan plus direct Runtime references and containerflag/identity constructs. This is not a claim to have proved every indirect generic harness path. Untracked pending tests and excluded external diagnostic/partials are not counted as maintained coverage."
+      },
+      "actions": {
+        "new_driver_or_spec": 0,
+        "native_jobs": 0,
+        "canonical_edits": 0,
+        "git_edits": 0,
+        "deletions": 0,
+        "excluded_work_inspected_or_rerouted": false
+      },
+      "existing_independent_source_review": {
+        "path": "evidence\\runtime019-owned-copy-independent-source-review-r1.json",
+        "sha256": "6eef2ea739a102f00201b1a4da47ff6433d68d544802b19706186469b26062cb",
+        "relevant_limit": "That review already states engine typed/read-only/alias duplicate(true) behavior is not fully proved by code inspection; no native output/flags/performance or adoption approval. This coverage finding does not reject the bounded16 cost experiment."
+      }
+    }
+  },
+  "native_jobs": [
+    {
+      "name": "runtime019-normalize-leaf-r1",
+      "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "started_utc": 1793899729.7958086,
+      "finished_utc": 1793899755.5546844,
+      "wall_seconds": 25.758875846862793,
+      "cpu_seconds": 25.609375,
+      "guard_seconds": 180,
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "job_sha256": "705957567f4b92ccd76ec7cdd597c4f5a86356a39cf0af19067e42d7dc699308"
+    },
+    {
+      "name": "runtime019-owned-copy-pair-r1",
+      "task": "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+      "started_utc": 1793901278.073854,
+      "finished_utc": 1793901363.600218,
+      "wall_seconds": 85.52636408805847,
+      "cpu_seconds": 85.4375,
+      "guard_seconds": 180,
+      "exit": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "job_sha256": "d811b9f0d7f5d4f6a28e2cb898dbcd5e56274b21b05500ec81e5b090c15139fc"
+    }
+  ],
+  "source_custody": {
+    "actual_count": 1247,
+    "manifest_sha256": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "Runtime_1f2c_unchanged": true,
+    "Schema_ec_unchanged": true,
+    "pending_unaccepted_1f24_preserved_unpublished": true,
+    "all8_paused_rows_and_all_other_source_preserved": true,
+    "support4_unchanged": true,
+    "native_diagnostics_omit_addons": true
+  },
+  "retained_nonoperative_corrections": {
+    "bootstrap_R1": "Default-only WindowsPowerShell lacked Get-FileHash because inherited PowerShell7 PSModulePath. R2 removes that variable exactly as the unchanged existing native support already does. R1 logs preserved; no source/packet change.",
+    "local_qualifier_R1": "Final file/stdout check count incorrectly assumed+3 from prior leaf. Actual pair finish performs one size plus three fresh-write checks, so1300/1304. R1 script retained; R2 fixes receipt only. Native executed once.",
+    "plan_encoding": "Scope check caught unintended re-encoding outside four named rows. Entire pre-repair file preserved externally; original baseline text restored exactly outside those four rows. No unrelated encoding cleanup or feature/task edit."
+  },
+  "leaf_archive_scope": {
+    "bytes": 12477664,
+    "sha256": "b46ac482174d08cba4bbc76a54ce5c3b0f49e5aad815b9fc42b9afaa391dd8f1",
+    "aggregate_node_count": 535445,
+    "original_node_limit": 500000,
+    "used_as_opaque_hash_provenance_only_in_pair": true,
+    "original16_per_case_capture_and_native_gates_reused": true,
+    "no_guard_increase_or_new_codec": true
+  },
+  "unchanged_open_acceptance": [
+    "Whole requested audit coverage and remaining substantive obsolete-code dispositions",
+    "Original content180 and Systems300/43.712/330/55/all220 recipe",
+    "Meaningful Runtime full-case improvement with exact accepted-domain semantics",
+    "General typed/read-only/script-constrained cached-container and nested ownership behavior",
+    "Any resulting production NEXT qualification separately assigned"
+  ],
+  "excluded_work": {
+    "screened_callback_branch_and_partials": "Excluded; no inspection/retry/rephrase/reroute. Entire task row and Memo014 row unchanged this phase.",
+    "file_cleanup": false,
+    "paused_item_scenario_or_portrait_changes": false
+  },
+  "manual_reconciliation": {
+    "final_pending": false,
+    "runtime_count": 192,
+    "prior191_prefix_preserved": true,
+    "prepublication": {
+      "current": {
+        "path": "evidence/catalog019-prepublication-current-r1.json",
+        "sha256": "30205b8649d87266c851ae078b5853735a901ff3d959fa03a4db7171d56fd585",
+        "findings": 150,
+        "own_findings": 0,
+        "outside_findings": 150,
+        "runtime_errors": 97,
+        "instances_checked": 192
+      },
+      "all": {
+        "path": "evidence/catalog019-prepublication-all-r1.json",
+        "sha256": "c9f6cf0039eb27c067acd0ca48b671a57a2b5ce3884a2a4ffb24de40aed1e8e8",
+        "findings": 766,
+        "own_findings": 0,
+        "outside_findings": 766,
+        "runtime_errors": 97,
+        "instances_checked": 192
+      }
+    },
+    "outside_added_since_registration": {
+      "current": {
+        "RUNTIME_STALE_OBSERVATION": 28
+      },
+      "all": {
+        "RUNTIME_STALE_OBSERVATION": 28
+      }
+    },
+    "outside_removed_since_registration": {},
+    "interpretation": "Only28 additional outside runtime stale-observation classifications; all outside records are preserved. Checker exit1 is outside-scope findings, not a passing whole backlog."
+  },
+  "evidence_sha256": {
+    "evidence/catalog019-registration-r1.json": "397423517248f6dd546f2b7d7d09966b2d6a495f8a8227526abc0b6457f217ec",
+    "evidence/runtime019-owned-copy-registration-r1.json": "af3e98c4653babe54ccfec2d95d10da02766a7895c2381717d091616d594dd6a",
+    "evidence/runtime019-normalize-leaf-proposal-r1/immutable-sha256.json": "f24418fd1b333421665b70b644beb2380cab69f72f452d9bdba404ea0e7d14dd",
+    "evidence/runtime019-normalize-source-suitability-r1.json": "78407e36cce35ef8044bd9438b01c108913fb94753dcf74afc833f78c72e17a2",
+    "evidence/runtime019-normalize-leaf-independent-static-review-r1.json": "46904514fde37f45a4b8a6e6afbfd90356665eaa88772817f90a47d281e464f1",
+    "evidence/runtime019-leaf-bootstrap-r1/result.json": "097dbad120a842e2f6f334a87715add3e6f79bf51c2741f0ac52db138364bfff",
+    "evidence/runtime019-leaf-root-preflight-r1.json": "af2cbb3887b12508c3c38b91bc668a608250374e5de8923c04a993cea4c43d2c",
+    "evidence/runtime019-leaf-root-postcheck-r1.json": "fd5567415bcb672b5296e0ae05cddf5b50034b1d27e34871811084617aa0bb81",
+    "evidence/runtime019-normalize-leaf-independent-native-review-r1.json": "a48d919c455c1f0e8ab4677f349f7d41df5908b945fc61f2ff2f56e16d123e5a",
+    "evidence/runtime019-owned-copy-proposal-r1/immutable-sha256.json": "85df488b70312b2af0dd941b0f41221f896b0661910ef5dd3acee570efd78655",
+    "evidence/runtime019-owned-copy-independent-source-review-r1.json": "6eef2ea739a102f00201b1a4da47ff6433d68d544802b19706186469b26062cb",
+    "evidence/runtime019-owned-copy-maintained-regression-plan-r1.json": "b20005deba198afd0272dc88712ede28cb198b5fdeaafe21837d1154703d4783",
+    "evidence/runtime019-owned-copy-existing-coverage-gap-review-r1.json": "3b0cc86de264f9fc207a95a5149d0d5e5ef39356a2e700bbefe2059b8de6121b",
+    "evidence/runtime019-owned-copy-pair-proposal-r1/immutable-sha256.json": "a8e02d806a55cce329a7231d6cfdccfc04722eafbc7d2df5e1fc2c007bc9f1c0",
+    "evidence/runtime019-owned-copy-pair-independent-static-review-r1.json": "c97aa0c1393731774cc900861586f33ec344dc7c71f60411760c6e63178808f1",
+    "evidence/runtime019-pair-bootstrap-r1/result.json": "443fc56e9e9e45337563149feb46c37d0ba4c70257e27b43ef8f854aa922658a",
+    "evidence/runtime019-pair-bootstrap-r2/result.json": "cc821b49dd1daf405ea8eb03c106f0d12b2f25a0e14083da7c7bd0619505e17a",
+    "evidence/runtime019-pair-root-preflight-r1.json": "ed889aa34dc0080ece6cb7d65447ef8e002836aa9dee57e6cf084c4b031ade44",
+    "evidence/runtime019-pair-root-postcheck-r1.json": "055c7f6c88daafbc0e547aa4c9eea7c80c3c1f54789342151d1ec6251ac7f341",
+    "evidence/runtime019-owned-copy-pair-independent-native-review-r1.json": "1c5192a548ad20df8b0f8d523e5beb241272287cfabef92102ba705cfcac0ee3",
+    "qualify_runtime019_pair.py": "de3a477df3d8603ab79382c62429f108c3fe5b472fe9cac17e39c4bd08898dcd",
+    "qualify_runtime019_pair_r2.py": "db4d9d709a262fe6dc8cf4e9e19be80a27b0dfa5846df171006ab086f4d06815",
+    "evidence/catalog019-plan-exact-scope-repair-r1.json": "4f72da4f1840f3922f1059395edcf62a17ed11cb4e8918303dcaf29c5a5eccac",
+    "evidence/catalog019-prepublication-scope-proof-r1.json": "2b3380f54bbdfaf3b4757033fabee16fba379e5c575ee38da68cf1e463130de6",
+    "evidence/catalog019-prepublication-current-r1.json": "30205b8649d87266c851ae078b5853735a901ff3d959fa03a4db7171d56fd585",
+    "evidence/catalog019-prepublication-all-r1.json": "c9f6cf0039eb27c067acd0ca48b671a57a2b5ce3884a2a4ffb24de40aed1e8e8"
+  }
+}

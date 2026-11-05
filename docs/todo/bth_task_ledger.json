@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T17:01:29.883849+00:00",
+  "updated_at": "2026-11-05T18:06:08.880100+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "THREE_SCOPED_MEASUREMENTS_PASS_WHOLE_AUDIT_OPEN_018",
+      "status": "CANONICAL_LEAF_AND_PAIRED_COST_QUALIFIED_AUDIT_OPEN_019",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13899,24 +13899,34 @@
           "kind": "published_measurement_evidence_commit",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
+        },
+        {
+          "kind": "canonical_runtime_leaf019_qualified",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-leaf-root-postcheck-r1.json",
+          "summary": "Actual16case489report/492finalpass,32canonical2arg calls,244129us selectedtiming total, fullreturns/inputs/flags/namedownership retained; source1247/support4 exact, original guards assigned/closed0. No inline/aggregate/speedup or canonicalcandidate adoption."
+        },
+        {
+          "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Checkpoint 9c28def1 is published; continue substantive Runtime normalization/cost and mutation-safe memo work outside paused areas. Preserve files, original authority, all guards and the separate platform-blocked callback branch; no cleanup or whole-audit closure.",
+      "next_action": "Publish this bounded checkpoint and continue permitted source-supported audit work outside paused areas. The one-line cached-result clone candidate stays unapplied after inconsistent cost evidence. Preserve all files, authority and guards; the excluded screened branch remains unchanged and the whole audit remains Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
+        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T16:49:41.619476+00:00",
+        "observed_at": "2026-11-05T18:06:08.880100+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_018.md"
+          "docs/testing/deprecated_code_audit_continuation_019.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T17:01:29.883849+00:00"
+      "updated_at": "2026-11-05T18:06:08.880100+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20660,7 +20670,7 @@
         }
       },
       "state": "open",
-      "status": "CURRENT_CAPACITY_CONTROL_AND_772_API_CAPTURE_PASS_AGGREGATE_OPEN_018",
+      "status": "SIXTEEN_RUNTIME_LEAVES_PASS_COPY_CANDIDATE_NO_CONSISTENT_GAIN_019",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20944,22 +20954,32 @@
           "kind": "published_measurement_evidence_commit",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
+        },
+        {
+          "kind": "canonical_runtime_leaf019_qualified",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-leaf-root-postcheck-r1.json",
+          "summary": "Actual16case489report/492finalpass,32canonical2arg calls,244129us selectedtiming total, fullreturns/inputs/flags/namedownership retained; source1247/support4 exact, original guards assigned/closed0. No inline/aggregate/speedup or canonicalcandidate adoption."
+        },
+        {
+          "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use sixteen qualified current canonical API preimages for bounded normalization attribution after data-only native decode/flag/alias gates. Retain full256/overflow/replay cases; original content180 and Systems300/43.712/330/55/all220 acceptance remain Open, without another opaque run or cross-epoch timing subtraction.",
+      "next_action": "Retain qualified canonical16 and complete48-parity/288-timed comparison evidence. Prioritize measured higher-cost Runtime journal/fingerprint or owned-record work with exact caller/default/ownership and capacity controls before any source patch. Do not repeat this minor-copy experiment or extrapolate isolated clocks to aggregate300/43.712/330 or55/all220 acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
+        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T16:49:41.619476+00:00",
+        "observed_at": "2026-11-05T18:06:08.880100+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_018.md"
+          "docs/testing/deprecated_code_audit_continuation_019.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T17:01:29.883849+00:00"
+      "updated_at": "2026-11-05T18:06:08.880100+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23353,7 +23373,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_OWNED_MANIFEST_LEAVES_QUALIFIED_NO_AUTHORITY_REMOVAL_018",
+      "status": "CANONICAL_RUNTIME_LEAF_VALUES_FLAGS_AND_NAMED_OWNERSHIP_QUALIFIED_019",
       "owner": {
         "name": "Audit catalog performance repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23460,22 +23480,32 @@
           "kind": "published_measurement_evidence_commit",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
+        },
+        {
+          "kind": "canonical_runtime_leaf019_qualified",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-leaf-root-postcheck-r1.json",
+          "summary": "Actual16case489report/492finalpass,32canonical2arg calls,244129us selectedtiming total, fullreturns/inputs/flags/namedownership retained; source1247/support4 exact, original guards assigned/closed0. No inline/aggregate/speedup or canonicalcandidate adoption."
+        },
+        {
+          "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain four actual-input leaf83/86 checks and ownership/flag/error evidence. Normalization1032us andvalidation3559us totals do not justify skipping authority or changing returned ownership. Further optimization requires a qualified substantive candidate, exact semantics and unchanged guards.",
+      "next_action": "Preserve complete canonical16 return/input, live flag and named ownership evidence. The244129us isolated normalization total does not establish an original inline/API share or redundant authority check. No state authority or persistence ownership removal is accepted; investigate substantive owners under Content006.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
+        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T16:49:41.619476+00:00",
+        "observed_at": "2026-11-05T18:06:08.880100+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_018.md"
+          "docs/testing/deprecated_code_audit_continuation_019.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T17:01:29.883849+00:00"
+      "updated_at": "2026-11-05T18:06:08.880100+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -24053,6 +24083,84 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T17:01:29.883849+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+      "name": "Qualify removal of redundant owned command-result clone",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify a narrowly measured generic Runtime normalization optimization: cached command results are already deep-owned before scalar normalization and pure shape validation, so the final second deep copy may be redundant. Preserve the initial ownership clone, complete caller isolation, exact values/type flags, saved-float behavior, receipt membership/fingerprint checks, all bounds and default public APIs. No production adoption without substantive measured benefit and compatibility evidence.",
+        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806–1829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "owned-copy-semantic-parity",
+            "description": "Canonical/current full-source parity proves full output/input values, type/read-only flags, required ownership/named aliases and unchanged malformed, receipt/fingerprint and saved-float diagnostics for the exact candidate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "substantive-bounded-cost-and-regressions",
+            "description": "Matched qualified measurements show a substantive benefit, complete original256-capacity/overflow/replay assertions and required no-pointer liveness under unchanged guards; preserve aggregate acceptance separately.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CAPTURED_PARITY_PASS_NO_CONSISTENT_COST_BENEFIT_CANDIDATE_UNACCEPTED_019",
+      "owner": {
+        "name": "Audit Runtime owned-copy qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No resulting production change is accepted or deployed. Any future adopted performance repair needs its own source commit and separately assigned exact NEXT qualification; this is an evidence checkpoint only."
+      },
+      "evidence": [
+        {
+          "kind": "canonical_runtime_leaf019_qualified",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\runtime019-leaf-root-postcheck-r1.json",
+          "summary": "Actual16case489report/492finalpass,32canonical2arg calls,244129us selectedtiming total, fullreturns/inputs/flags/namedownership retained; source1247/support4 exact, original guards assigned/closed0. No inline/aggregate/speedup or canonicalcandidate adoption."
+        },
+        {
+          "kind": "phase019_canonical_leaf_and_rejected_copy_cost",
+          "reference": "docs/testing/deprecated_code_audit_continuation_019.md",
+          "summary": "Two guarded native Jobs passed with source1247C17 unchanged: canonical16 controls+16timed489/492 checks and three-role48parity+288timed1300/1304 checks. Full values/input effects/flags and named ownership qualified only in captured plain-data domain. Candidate no consistent gain, unapplied/unaccepted; no production, aggregate or NEXT claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Preserve the exact one-line candidate unapplied and retain all raw samples: candidate96 timed calls total1444774us versus original1441781us, with3of6 orders faster and3slower. General typed/read-only/script-constraint and nested alias/output-mutation isolation remain unqualified. Any reconsideration needs new substantive evidence and maintained full-capacity benefit; continue higher-cost investigation under Content006.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T18:06:08.880100+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_019.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T18:06:08.880100+00:00"
     }
   ],
   "batches": [
