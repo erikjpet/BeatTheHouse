@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T05:41:02.434162+00:00",
+  "updated_at": "2026-11-05T05:46:45.591923+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13682,6 +13682,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
+        },
+        {
+          "sha": "7c604f1a2e2e218411437de03677a6fc497cbd11",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_011.md"
+          ]
         }
       ],
       "deployment": {
@@ -13785,7 +13791,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T05:41:02.434162+00:00"
+      "updated_at": "2026-11-05T05:46:45.591923+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20577,6 +20583,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_010.md"
           ]
+        },
+        {
+          "sha": "7c604f1a2e2e218411437de03677a6fc497cbd11",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_011.md"
+          ]
         }
       ],
       "deployment": {
@@ -20676,7 +20688,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T05:41:02.434162+00:00"
+      "updated_at": "2026-11-05T05:46:45.591923+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",

@@ -1064,5 +1064,6 @@
     "evidence/catalog011-inplace-owner-r2/owner-wrapper-executed.py.txt",
     "evidence/catalog011-inplace-owner-r2/protocol-review.md",
     "evidence/catalog011-profile-analysis-r2.json"
-  ]
+  ],
+  "measurement_commit": "7c604f1a2e2e218411437de03677a6fc497cbd11"
 }
