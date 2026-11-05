@@ -37,8 +37,10 @@ func _init() -> void:
 	library.load(true)
 	var load_elapsed_ms := float(Time.get_ticks_usec() - load_started_usec) / 1000.0
 	var authority: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
-	if PrecomputeContractScript.canonical_authority_text(authority).sha256_text() != PrecomputeContractScript.PRODUCTION_AUTHORITY_SHA256 or (authority.get("pairs", []) as Array).size() != 1485:
+	var canonical_authority := PrecomputeContractScript.canonical_authority_text(authority)
+	if canonical_authority.sha256_text() != PrecomputeContractScript.CURRENT_PRODUCTION_AUTHORITY_SHA256 or (authority.get("pairs", []) as Array).size() != 1485:
 		failures.append("Validation memo changed the exact production uniqueness authority.")
+	PrecomputeContractScript.check_authority_fixtures(canonical_authority, failures)
 	var load_stats := Schema._successful_validation_memo_stats_for_tests()
 	if int(load_stats.get("entries", 0)) <= 0 or int(load_stats.get("entries", 0)) > Schema.SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES or int(load_stats.get("hits", 0)) < 55:
 		failures.append("Production load did not exercise the bounded positive-result memo: %s" % JSON.stringify(load_stats))

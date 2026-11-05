@@ -16,6 +16,11 @@ const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 # pairs and no warnings or failures.
 const PRODUCTION_AUTHORITY_SHA256 := "45446147aef3f81132a059791c5d61104c553221f397fa4c14ca00a3aff389d4"
 const PRODUCTION_AUTHORITY_BYTES := 1784388
+const PRODUCTION_AUTHORITY_FIXTURE_PATH := "res://scripts/tests/fixtures/scenario_uniqueness_authority_accepted_env06_7.canonical.json"
+# Current authored content is pinned separately from the retained historical oracle.
+const CURRENT_PRODUCTION_AUTHORITY_SHA256 := "80ec3bc73f5f2a1366cd9e756e00683aa7bf6eb1757598553044accc307f2245"
+const CURRENT_PRODUCTION_AUTHORITY_BYTES := 1784784
+const CURRENT_PRODUCTION_AUTHORITY_FIXTURE_PATH := "res://scripts/tests/fixtures/scenario_uniqueness_authority_current.canonical.json"
 const CANONICAL_FLOAT_SCALE := 1000000000000.0
 
 
@@ -49,8 +54,10 @@ func _init() -> void:
 	var authority: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
 	var authority_json := JSON.stringify(authority)
 	var canonical_json := canonical_authority_text(authority)
-	if canonical_json.sha256_text() != PRODUCTION_AUTHORITY_SHA256 or canonical_json.to_utf8_buffer().size() != PRODUCTION_AUTHORITY_BYTES:
-		failures.append("Optimized production authority JSON differs from the exact accepted ENV-06.7 baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [canonical_json.sha256_text(), canonical_json.to_utf8_buffer().size(), PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES])
+	check_authority_fixtures(canonical_json, failures)
+	_check_authority_fixture_refusals(failures)
+	if canonical_json.sha256_text() != CURRENT_PRODUCTION_AUTHORITY_SHA256 or canonical_json.to_utf8_buffer().size() != CURRENT_PRODUCTION_AUTHORITY_BYTES:
+		failures.append("Optimized production authority JSON differs from the exact current authored baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [canonical_json.sha256_text(), canonical_json.to_utf8_buffer().size(), CURRENT_PRODUCTION_AUTHORITY_SHA256, CURRENT_PRODUCTION_AUTHORITY_BYTES])
 	if (authority.get("pairs", []) as Array).size() != 1485 or not (authority.get("failures", []) as Array).is_empty() or not (authority.get("warnings", []) as Array).is_empty():
 		failures.append("Optimized production authority shape/findings differ from the exact accepted ENV-06.7 baseline.")
 	var audit_inputs := _production_audit_inputs(library)
@@ -196,3 +203,53 @@ func _pair_row(left_index: int, right_index: int, similarity: float, equal_hash:
 		"severity": str(band.get("severity", "")),
 		"blocking": bool(band.get("blocking", false)),
 	}
+
+
+# Test-only references: read exact native-qualified canonical bytes, without
+# reserializing JSON, regenerating an oracle or rerunning another catalog audit.
+static func check_authority_fixtures(canonical_json: String, failures: Array[String]) -> void:
+	_read_authority_fixture(PRODUCTION_AUTHORITY_FIXTURE_PATH, PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES, failures)
+	var current_fixture := _read_authority_fixture(CURRENT_PRODUCTION_AUTHORITY_FIXTURE_PATH, CURRENT_PRODUCTION_AUTHORITY_SHA256, CURRENT_PRODUCTION_AUTHORITY_BYTES, failures)
+	if canonical_json != current_fixture:
+		failures.append("Complete current production authority text differs from its exact canonical fixture.")
+
+
+static func _read_authority_fixture(path: String, expected_sha256: String, expected_bytes: int, failures: Array[String]) -> String:
+	if not FileAccess.file_exists(path):
+		failures.append("Authority canonical fixture is missing: %s." % path)
+		return ""
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		failures.append("Authority canonical fixture could not be opened: %s." % path)
+		return ""
+	if file.get_length() != expected_bytes:
+		file.close()
+		failures.append("Authority canonical fixture byte length differs: %s." % path)
+		return ""
+	var fixture_bytes := file.get_buffer(expected_bytes)
+	var read_error := file.get_error()
+	file.close()
+	if read_error != OK or fixture_bytes.size() != expected_bytes:
+		failures.append("Authority canonical fixture read was incomplete: %s." % path)
+		return ""
+	var fixture_text := fixture_bytes.get_string_from_utf8()
+	if fixture_text.to_utf8_buffer() != fixture_bytes or fixture_text.sha256_text() != expected_sha256:
+		failures.append("Authority canonical fixture exact UTF-8 bytes/hash differ: %s." % path)
+		return ""
+	return fixture_text
+
+
+static func _check_authority_fixture_refusals(failures: Array[String]) -> void:
+	# These exercise absence, length and digest refusal without editing a fixture.
+	var missing_errors: Array[String] = []
+	var missing_text := _read_authority_fixture(PRODUCTION_AUTHORITY_FIXTURE_PATH + ".missing", PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES, missing_errors)
+	if not missing_text.is_empty() or missing_errors.is_empty():
+		failures.append("Authority fixture reader accepted a missing reference.")
+	var length_errors: Array[String] = []
+	var wrong_length_text := _read_authority_fixture(CURRENT_PRODUCTION_AUTHORITY_FIXTURE_PATH, CURRENT_PRODUCTION_AUTHORITY_SHA256, CURRENT_PRODUCTION_AUTHORITY_BYTES - 1, length_errors)
+	if not wrong_length_text.is_empty() or length_errors.is_empty():
+		failures.append("Authority fixture reader accepted a wrong byte length.")
+	var digest_errors: Array[String] = []
+	var wrong_digest_text := _read_authority_fixture(CURRENT_PRODUCTION_AUTHORITY_FIXTURE_PATH, "0".repeat(64), CURRENT_PRODUCTION_AUTHORITY_BYTES, digest_errors)
+	if not wrong_digest_text.is_empty() or digest_errors.is_empty():
+		failures.append("Authority fixture reader accepted a correct-length reference with a wrong digest.")

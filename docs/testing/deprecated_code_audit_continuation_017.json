@@ -1,0 +1,260 @@
+{
+  "schema": "bth.audit_continuation017/v1",
+  "created_utc": "2026-11-05T15:19:24.772730+00:00",
+  "snapshot_only": true,
+  "base_main": "f0bbd02091f70ec9a55051989934fec295536210",
+  "scope": "Qualified maintained test-only stale authority reference repair plus actual canonical reconciliation/binding/authority capture. No production code or cleanup change; all four parent objectives Open.",
+  "open_parent_ids": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013"
+  ],
+  "bounded_repair_id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
+  "repair_state": "qualified_commit_and_publication_pending",
+  "associated_commit": null,
+  "authority": {
+    "original_sha256": "45446147aef3f81132a059791c5d61104c553221f397fa4c14ca00a3aff389d4",
+    "original_bytes": 1784388,
+    "current_sha256": "80ec3bc73f5f2a1366cd9e756e00683aa7bf6eb1757598553044accc307f2245",
+    "current_bytes": 1784784,
+    "both_cold55_zero_hits_55entries_1485clean": true,
+    "golden_checks": 325,
+    "golden_final_checks": 326,
+    "independent_causal_checks": 231,
+    "exact_difference": {
+      "changed_values": 70,
+      "row_fields": 14,
+      "dossier_fields": 2,
+      "pair_similarity_fields": 54,
+      "bytes_delta": 396
+    },
+    "complete_current_archive_reproduced": true,
+    "historical_provider_identity_claim": false
+  },
+  "test_repair": {
+    "observed_at": "2026-11-05T15:15:58.212271+00:00",
+    "task": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
+    "qualified": true,
+    "check_count": 42,
+    "checks": [
+      "frozen22 rawSHA exact",
+      "frozen:README.draft-before-child-selection.md",
+      "frozen:README.md",
+      "frozen:authored-commit-provenance.json",
+      "frozen:expected-source-after.json",
+      "frozen:patch-map.json",
+      "frozen:qualification-proof.json",
+      "frozen:review-source.diff",
+      "frozen:root-memo-child-spec.json",
+      "frozen:root-memo-spec.json",
+      "frozen:root-precompute-child-spec.json",
+      "frozen:root-precompute-spec.json",
+      "frozen:scenario_uniqueness_authority_accepted_env06_7.canonical.json",
+      "frozen:scenario_uniqueness_authority_current.canonical.json",
+      "frozen:scenario_uniqueness_pair_precompute_contract.gd",
+      "frozen:scenario_uniqueness_pair_precompute_contract.original.gd.txt",
+      "frozen:scenario_validation_memo_contract.gd",
+      "frozen:scenario_validation_memo_contract.original.gd.txt",
+      "frozen:selection.json",
+      "frozen:source-before.json",
+      "frozen:source-edits.json",
+      "frozen:static-source-preservation.json",
+      "frozen:support-proof.json",
+      "actual complete source1247 c17 map exact",
+      "support:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+      "support:D:\\Projects\\site\\scripts\\bth_cpu_job\\cpu_job.py",
+      "support:D:\\Projects\\site\\scripts\\bth_cpu_job\\native_proof_worker.py",
+      "support:D:\\Projects\\site\\scripts\\bth_cpu_job\\native_proof_job.py",
+      "catalog017-authority-fixture-precompute-r1:normal exit0",
+      "catalog017-authority-fixture-precompute-r1:assigned closure0",
+      "catalog017-authority-fixture-precompute-r1:unchanged18012percent2GiB",
+      "catalog017-authority-fixture-precompute-r1:actual exact test source",
+      "catalog017-authority-fixture-precompute-r1:sole maintained PASS without script errors",
+      "catalog017-authority-fixture-precompute-r1:known default developer placement absent",
+      "catalog017-authority-fixture-memo-r1:normal exit0",
+      "catalog017-authority-fixture-memo-r1:assigned closure0",
+      "catalog017-authority-fixture-memo-r1:unchanged18012percent2GiB",
+      "catalog017-authority-fixture-memo-r1:actual exact test source",
+      "catalog017-authority-fixture-memo-r1:sole maintained PASS without script errors",
+      "catalog017-authority-fixture-memo-r1:known default developer placement absent",
+      "exact2testmods2fixtureadds only",
+      "all4 existing export presets exclude tests and fixtures"
+    ],
+    "jobs": [
+      {
+        "name": "catalog017-authority-fixture-precompute-r1",
+        "job_sha256": "6934cc3f04b7fc74b511b8017e02813ca7954103bf1e04200da9446a8a54ddd7",
+        "stdout_sha256": "6bf0a8cac929cea77c9fc4379d4f12215a10e189bbea782417095050eb844a02",
+        "test_sha256": "e14ee5ee530673293d7366de040cf6096764ed3237400bb283b8a308b37dc5fb",
+        "pass_line": "SCENARIO_UNIQUENESS_PAIR_PRECOMPUTE PASS production_pairs=1485 production_failures=0 production_warnings=0 representative_pairs=6 receipt_load_ms=12947.2 full_audit_ms=2472.8",
+        "wall_seconds": 24.869568824768066,
+        "cpu_seconds": 24.71875,
+        "guarded_assigned_closed0": true
+      },
+      {
+        "name": "catalog017-authority-fixture-memo-r1",
+        "job_sha256": "6d09a4eb17e32ee26750471e4f67f5b70667725fba161313c113b879af5ad07c",
+        "stdout_sha256": "5a1a6e3270ba2b6ef408d331cafec40ac93af147368121832d9e736273d92f81",
+        "test_sha256": "b5fe1b676c30fdf1f4ab40acce913d4b4de93ee9bec56ad38452ab72cb2b2e68",
+        "pass_line": "SCENARIO_VALIDATION_MEMO PASS production_pairs=1485 load_ms=13007.5 load_hits=55 bounded_entries=256",
+        "wall_seconds": 19.208796977996826,
+        "cpu_seconds": 19.09375,
+        "guarded_assigned_closed0": true
+      }
+    ],
+    "source_count": 1247,
+    "source_manifest_sha256": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "changed_existing_source": [
+      "scripts/tests/foundation/scenario_uniqueness_pair_precompute_contract.gd",
+      "scripts/tests/foundation/scenario_validation_memo_contract.gd"
+    ],
+    "added_source": [
+      "scripts/tests/fixtures/scenario_uniqueness_authority_accepted_env06_7.canonical.json",
+      "scripts/tests/fixtures/scenario_uniqueness_authority_current.canonical.json"
+    ],
+    "production_source_unchanged": true,
+    "pending1f24_preserved_unpublished": true,
+    "guard_limits_unchanged": true,
+    "frozen_manifest_sha256": "1c69c33e4783466c301afeed83a70d3cf8502fbc88f934907324432963c14e52",
+    "export_presets_sha256": "ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad",
+    "all4_export_presets_exclude_tests": true,
+    "scope": "Maintained authority fixture repair only. Existing memo false-accept defect, aggregate timeout and game/NEXT delivery remain unqualified/open. Fixture reader runtime covers actual good files and absent/wrong-size/wrong-digest controls, not every IO-error race."
+  },
+  "layout": {
+    "outer_records": 72,
+    "outer_file_checks": 675,
+    "outer_final_checks": 677,
+    "actual_canonical_capture_pairs": 11,
+    "root_postchecks": 1471,
+    "kinds": {
+      "manifest": 4,
+      "default_authority": 4,
+      "binding": 3
+    },
+    "provenance_only_canonical_call_usec": {
+      "manifest": 18985,
+      "default_authority": 14334,
+      "binding": 23334
+    },
+    "input_mutations": "Only three binding.shared_occupancy outparams changed; retain same original dictionary reference and separate equal returned occupancy.",
+    "unsupported_flags_or_opaque_paths": 0,
+    "no_arbitrary_alias_or_hidden_default_flags_claim": true,
+    "next_scope": "Four recorded owned existing_value arguments; canonical normalize_persisted plus validate after complete native input/custody/control parity gates.",
+    "no_validation_removed_or_optimization_qualified": true
+  },
+  "native_jobs": [
+    {
+      "name": "catalog017-maintained-precompute-baseline-r1",
+      "exit": 1,
+      "wall_seconds": 23.75780963897705,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "736df03df1de8e9ae86c5a906ee5bfd4792a9f457241d5be81547a316a033938"
+    },
+    {
+      "name": "catalog017-authority-capture-r1",
+      "exit": 1,
+      "wall_seconds": 24.0862238407135,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "6b8e9abafb9fb8cdb36c142fde114ae64a7d74fd18f930fcefec079d6007e8c9"
+    },
+    {
+      "name": "catalog017-golden-reconstruction-r1",
+      "exit": 0,
+      "wall_seconds": 21.455344200134277,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "05eee1f3bf0250e01d88b790f312a7a858335e5e6da83c94bcdd79e11eb7b937"
+    },
+    {
+      "name": "storage017-inner-capture-r1",
+      "exit": 0,
+      "wall_seconds": 28.942077159881592,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "c7171a3c967aaf46d17eb225b363951ce584fee63a45f8c7d8727371b7399f37"
+    },
+    {
+      "name": "catalog017-authority-fixture-precompute-r1",
+      "exit": 0,
+      "wall_seconds": 24.869568824768066,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "6934cc3f04b7fc74b511b8017e02813ca7954103bf1e04200da9446a8a54ddd7"
+    },
+    {
+      "name": "catalog017-authority-fixture-memo-r1",
+      "exit": 0,
+      "wall_seconds": 19.208796977996826,
+      "guard_seconds": 180,
+      "guarded_assigned_closed0": true,
+      "job_sha256": "6d09a4eb17e32ee26750471e4f67f5b70667725fba161313c113b879af5ad07c"
+    }
+  ],
+  "source_custody": {
+    "before_actual": 1245,
+    "after_actual": 1247,
+    "includes_retained_unpublished_1f24": true,
+    "after_manifest_sha256": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "production_schema_sha256": "ec321eb0e1d1340eb9ef615fcd9b45269034b4ae27af2862f7712cd85a14c9ee",
+    "source_delta": "Two existing maintained tests and two new inert fixtures only; all other1243 source members unchanged.",
+    "all4_export_presets_exclude_tests": true,
+    "all_sources_saves_failed_runs_and_prototypes_preserved": true,
+    "paused8_unchanged": true
+  },
+  "unchanged_unfinished_acceptance": [
+    "Whole requested audit coverage",
+    "Confirmed typed-memo warm false acceptance and repair cost",
+    "Original180 content and Systems300/43.712/330 aggregate recipe",
+    "Canonical layout optimization/authority preservation",
+    "Separately assigned production NEXT delivery"
+  ],
+  "manual_reconciliation": {
+    "final_pending": false,
+    "last_registration_runtime_count": 185,
+    "current_runtime_count": 187,
+    "prior185_prefix_preserved": true,
+    "last_own_findings": 0,
+    "outside_current": 78,
+    "outside_all": 544,
+    "outside_runtime": 54,
+    "own_findings": 0,
+    "receipts": {
+      "current": {
+        "path": "evidence/catalog017-final-current-r1.json",
+        "sha256": "fef75e147fc3b9bfa6a723019dfe82f43fda9eac7658f9f2d68ff420f5e9555b",
+        "findings": 78,
+        "own_findings": 0,
+        "runtime_errors": 54
+      },
+      "all": {
+        "path": "evidence/catalog017-final-all-r1.json",
+        "sha256": "0c14b6a8e456d40b332ab8d234a78535d659d57d9a5d910fd48e272bb7fe877a",
+        "findings": 544,
+        "own_findings": 0,
+        "runtime_errors": 54
+      }
+    }
+  },
+  "evidence_sha256": {
+    "evidence/catalog017-authority-capture-root-postcheck-r1.json": "640e6858130ff8ac37f3602638c068685b8a78c6bf7ee4319605095a5b7bcc6d",
+    "evidence/catalog017-authority-capture-independent-native-review-r1.json": "d5ff1a47e4e33315a65d5b587255210e3c17d1960a6f6bd673bd0151f7d6d174",
+    "evidence/catalog017-golden-reconstruction-proposal-r1/immutable-sha256.json": "c14b40c045e5a9fa507b668c2098eb2c9cfb89cf05dd411e9a7d659893720105",
+    "evidence/catalog017-golden-root-postcheck-r1.json": "eb53570eda64bb73b01840718c87de077ff1006686d618eb2b6fbbf1ca1d91af",
+    "evidence/catalog017-golden-independent-native-review-r1.json": "d78e8d24c7de73284977b6b9a2708d27d07cbd8fc4668d7ec56355e1b22388bf",
+    "evidence/catalog017-golden-canonical-diff-r1.json": "90cbd5d263f00e017bc6e8018b332727ac365b3e5dbd67ad75916627306f5341",
+    "evidence/catalog017-authority-fixture-repair-proposal-r1/immutable-sha256.json": "1c69c33e4783466c301afeed83a70d3cf8502fbc88f934907324432963c14e52",
+    "evidence/catalog017-authority-fixture-repair-independent-review-r1/implementation-checks.json": "2ad402eb9419ebdde5f8c03076cde3b5fb0be58b09083b48150a3facfbfbfa9a",
+    "evidence/catalog017-fixture-adoption-r1/adoption.json": "13542ca36d8c609659f1292494d9d179a940f020bad146314b184985c229d21d",
+    "evidence/catalog017-fixture-root-postcheck-r1.json": "98116a80d3556c3f8c56056b8759ff83afc8dde61702cd31f1c47afc68254017",
+    "evidence/catalog017-authority-fixture-independent-native-review-r1.json": "42def27ea623cf1f42aca6084b8f21c525f4349dfd412f89ef5bab3ea91294d1",
+    "evidence/storage017-inner-capture-proposal-r1/immutable-sha256.json": "bc7870a452a5b4a405224eb1afc1d2235082ab7445ea06a21e17fcedb00fa681",
+    "evidence/storage017-inner-capture-root-postcheck-r1.json": "b47f17c5dcc6bb1640e72dff846e049cbc84138fb479faa509de7522ad8daf9e",
+    "evidence/storage017-inner-capture-independent-native-review-r1.json": "ce7da199727f68b5e5e811f96f58d9da1b807d1ade493c07ff884ad7b00d7a4b",
+    "evidence/storage017-manifest-static-alias-review-r1.json": "094245bc3b039a8e3d4459b99e3d6c9ff6c84ddcf1390ec88f8473794c4cbc7f",
+    "evidence/catalog017-final-current-r1.json": "fef75e147fc3b9bfa6a723019dfe82f43fda9eac7658f9f2d68ff420f5e9555b",
+    "evidence/catalog017-final-all-r1.json": "0c14b6a8e456d40b332ab8d234a78535d659d57d9a5d910fd48e272bb7fe877a"
+  }
+}

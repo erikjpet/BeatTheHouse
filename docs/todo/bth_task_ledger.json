@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T13:36:37.615693+00:00",
+  "updated_at": "2026-11-05T15:19:24.772730+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "CLEANUP_STOPPED_MEASURED_MEMO_LAYOUT_PROGRESS_016",
+      "status": "CLEANUP_STOPPED_AUTHORITY_FIXTURE_QUALIFIED_LAYOUT_AUDIT_STILL_OPEN",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13860,24 +13860,29 @@
           "kind": "measured_unfinished_audit_checkpoint",
           "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
           "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
+        },
+        {
+          "kind": "phase017_authority_reference_and_canonical_inner_capture",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue measured memo/layout/maintained-authority investigation; no more cleanup or paused named feature work. Whole original audit remains Open; all unaccepted prototypes and files preserved.",
+      "next_action": "Publish the scoped test-only authority reference repair; continue the whole audit and measured layout investigation without cleanup, paused-feature changes or parent closure.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
+        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T13:22:33.394208+00:00",
+        "observed_at": "2026-11-05T15:19:24.772730+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_016.md"
+          "docs/testing/deprecated_code_audit_continuation_017.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T13:36:37.615693+00:00"
+      "updated_at": "2026-11-05T15:19:24.772730+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20621,7 +20626,7 @@
         }
       },
       "state": "open",
-      "status": "ADMISSION_COST_AND_LAYOUT_OWNERS_MEASURED_BASELINE_AUTHORITY_FAILURE_OPEN_016",
+      "status": "STALE_AUTHORITY_CONTRACT_REPAIR_QUALIFIED_AGGREGATE_TIMEOUT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20861,22 +20866,32 @@
           "kind": "measured_unfinished_audit_checkpoint",
           "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
           "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
+        },
+        {
+          "kind": "qualified_current_authority_capture",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog017-authority-capture-root-postcheck-r1.json",
+          "summary": "Actual55definitions/1485cleanpairs/current80ec/1784784, originalsoleoldpin failurepreserved. Independent43checkreview qualifiesfreshvalueartifacts andguardedclosure; no pinretuning or historicalbodyclaim."
+        },
+        {
+          "kind": "phase017_authority_reference_and_canonical_inner_capture",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use qualified1437-check key components and72-call layout attribution to investigate admission architecture, opaque Binder/Manifest/authority internals and actual maintained authority workproducts. Preserve300/43.712/180/330/55/all220; no unchanged full-stage rerun or expected-value retuning.",
+      "next_action": "Publish exact retained historical/current authority fixtures and two maintained test repairs. Continue canonical normalize/validate leaf attribution on four qualified existing-value captures; preserve180/300/43.712/330 and original aggregate recipe. No aggregate acceptance or guard change.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
+        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T13:22:33.394208+00:00",
+        "observed_at": "2026-11-05T15:19:24.772730+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_016.md"
+          "docs/testing/deprecated_code_audit_continuation_017.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T13:36:37.615693+00:00"
+      "updated_at": "2026-11-05T15:19:24.772730+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23270,7 +23285,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_CAPTURE_AND_72_REPLAY_PARITY_QUALIFIED_LAYOUT_INTERNALS_OPEN_016",
+      "status": "ELEVEN_CANONICAL_INNER_CAPTURES_QUALIFIED_NO_AUTHORITY_REMOVAL",
       "owner": {
         "name": "Audit catalog performance repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23338,22 +23353,27 @@
           "kind": "measured_unfinished_audit_checkpoint",
           "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
           "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
+        },
+        {
+          "kind": "phase017_authority_reference_and_canonical_inner_capture",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Measure opaque Manifest.reconcile, Binder.bind_base_layout and persisted-authority internals with distinct inputs/defaults, preserving full mutated outputs and named replacement identities. Reconciliation154143us/binding143530/authority87419 dominate selected private trace; no production optimization or removable call qualified.",
+      "next_action": "Measure only canonical normalize_persisted and validate on four recorded owned existing_value inputs after data-only decode/flag/alias/output custody qualification. No validation removal, source identity assumption, borrowed-map replay, new cache or performance acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
+        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T13:22:33.394208+00:00",
+        "observed_at": "2026-11-05T15:19:24.772730+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_016.md"
+          "docs/testing/deprecated_code_audit_continuation_017.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T13:36:37.615693+00:00"
+      "updated_at": "2026-11-05T15:19:24.772730+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23627,7 +23647,7 @@
         }
       },
       "state": "open",
-      "status": "CORRECTNESS56_PASS_THREE_COST_PROPOSALS_UNACCEPTED_PUBLISHED_SCHEMA_RESTORED_016",
+      "status": "AUTHORITY_BASELINE_QUALIFIED_TYPED_MEMO_REPAIR_STILL_UNACCEPTED",
       "owner": {
         "name": "Audit validation memo correctness",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -23688,22 +23708,113 @@
           "kind": "measured_unfinished_audit_checkpoint",
           "reference": "docs/testing/deprecated_code_audit_continuation_016.md",
           "summary": "15closed guarded Jobs; typed correctness pass/cost rejection, exact layout capture/72replay parity and narrower owners; maintained authority failure exists on published baseline. No phase016 game fix accepted; all parents/delivery Open."
+        },
+        {
+          "kind": "qualified_current_authority_capture",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog017-authority-capture-root-postcheck-r1.json",
+          "summary": "Actual55definitions/1485cleanpairs/current80ec/1784784, originalsoleoldpin failurepreserved. Independent43checkreview qualifiesfreshvalueartifacts andguardedclosure; no pinretuning or historicalbodyclaim."
+        },
+        {
+          "kind": "phase017_authority_reference_and_canonical_inner_capture",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve2ec/d66/998 prototypes and SAME1f24 pending regression. All56 correctness and29 boundary checks pass but hit costs remain3.70x-4.56x original; no candidate accepted. Investigate admission cost without skipped subgraphs/cache/weaker bounds. Capture actual authority hash/count before attributing the maintained baseline failure.",
+      "next_action": "Preserve pending1f24 and all rejected/unaccepted typed-memo prototypes; published ec unchanged. Use repaired exact authority contract for later typed admission/cost qualification. Existing warm type-collision bug remains open; no weaker eligibility or cache expansion.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No external blocker or user/save/scheduler dependency. Typed admission architecture/cost, maintained authority workproducts and Binder/Manifest internals remain substantive internal engineering work.",
+        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T13:22:33.394208+00:00",
+        "observed_at": "2026-11-05T15:19:24.772730+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_016.md"
+          "docs/testing/deprecated_code_audit_continuation_017.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T13:36:37.615693+00:00"
+      "updated_at": "2026-11-05T15:19:24.772730+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
+      "name": "Reconcile maintained authority contracts with recovered exact references",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repair the stale authority reference in the two maintained contracts using exact native-qualified historical and current canonical bodies. Retain the original4544/1784388 oracle, all existing checks, timers,55 validations,1485 pairs and runtime guards. Add fail-closed fixture custody and full current-body equality; do not change active scenario content or production validation.",
+        "source": "Phase017 actual original test reproduces sole old-pin failure; two public cold audits recover old4544/1784388 exactly after five authentic historical sequence substitutions while current full archive reproduces byte-for-byte. Independent causal review and maintained test qualification remain required.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "causal-reference-custody",
+            "description": "Independent native/structural review qualifies exact historical recovery, complete current reproduction and attributable authored-input differences without resigning or changing expectations blindly.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_017.md",
+              "docs/testing/deprecated_code_audit_continuation_017.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog017-authority-fixture-independent-native-review-r1.json"
+            ]
+          },
+          {
+            "id": "maintained-fixture-contracts",
+            "description": "Both original maintained contracts pass with exact old/current canonical fixtures, fail-closed reader, complete current-body equality and unchanged substantive predicates/timers/guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_017.md",
+              "docs/testing/deprecated_code_audit_continuation_017.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog017-authority-fixture-independent-native-review-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "MAINTAINED_REFERENCE_CONTRACTS_PASS_COMMIT_AND_PUBLICATION_PENDING",
+      "owner": {
+        "name": "Audit authority reference reconciliation",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Maintained tests and inert test reference fixtures only; no game behavior or release asset change. Publication evidence required before completion; NEXT game verification remains separately assigned to production tasks."
+      },
+      "evidence": [
+        {
+          "kind": "phase017_authority_reference_and_canonical_inner_capture",
+          "reference": "docs/testing/deprecated_code_audit_continuation_017.md",
+          "summary": "Original old authority body recovered exactly;70 causally reviewed values/+396bytes; test-only old/current full fixtures and both maintained contracts pass unchanged guards.11 canonical inner captures/full72 parity qualified; no production code/validation removal and no aggregate or typed-memo acceptance."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit and publish the exact two maintained test repairs and two qualified inert reference fixtures, then associate the verified commit/publication before completing this child. Parent audit, aggregate timeout and typed-memo repair stay Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Active scoped publication and measured continuation; no external input, approval, save or scheduler hold. Parent/production acceptance remains substantively unfinished.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T15:19:24.772730+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_017.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-05T15:19:24.772730+00:00"
     }
   ],
   "batches": [
