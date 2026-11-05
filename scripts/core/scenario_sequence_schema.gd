@@ -77,6 +77,9 @@ const ALLOWED_EXCEPTION_ROWS := [
 	"primary_verb", "feedback_and_exit",
 ]
 const MAX_PHASES := 16
+# Per-invocation retained fingerprint charge; oversized paths use the original scan.
+const MATERIAL_PATH_FINGERPRINT_CACHE_BUDGET_BYTES := 4 * 1024 * 1024
+const MATERIAL_PATH_FINGERPRINT_ENTRY_OVERHEAD_BYTES := 128
 const MAX_BRANCHES_PER_PHASE := 8
 const MAX_OBJECTIVES := 8
 const MAX_STEPS_PER_OBJECTIVE := 8
@@ -1026,6 +1029,8 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 	var pending: Array = [{"phase_id": str(graph.get("initial_phase", "")), "targets": _material_target_seed(authored, target_inventory), "visited": []}]
 	var outcomes: Dictionary = {}
 	var outcome_fingerprints: Dictionary = {}
+	var fingerprint_cache_enabled := true
+	var fingerprint_cache_bytes := 0
 	var path_count := 0
 	var base_targets := _material_target_seed(authored, target_inventory)
 	while not pending.is_empty() and path_count < 512:
@@ -1060,12 +1065,33 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 				if not terminal_fingerprint_ready:
 					terminal_fingerprint = JSON.stringify(_canonical_variant(targets))
 					terminal_fingerprint_ready = true
-				var fingerprints: Dictionary = outcome_fingerprints.get(outcome_id, {})
-				if not fingerprints.has(terminal_fingerprint):
+				var duplicate := false
+				var fingerprints: Dictionary = {}
+				var fingerprint_charge := 0
+				if fingerprint_cache_enabled:
+					fingerprints = outcome_fingerprints.get(outcome_id, {})
+					duplicate = fingerprints.has(terminal_fingerprint)
+					if not duplicate:
+						fingerprint_charge = terminal_fingerprint.length() * 4 + MATERIAL_PATH_FINGERPRINT_ENTRY_OVERHEAD_BYTES
+						if fingerprint_charge > MATERIAL_PATH_FINGERPRINT_CACHE_BUDGET_BYTES - fingerprint_cache_bytes:
+							fingerprint_cache_enabled = false
+							# Clear inner maps as well as aliases before releasing the outer map.
+							fingerprints.clear()
+							for retained_fingerprints: Dictionary in outcome_fingerprints.values():
+								retained_fingerprints.clear()
+							outcome_fingerprints.clear()
+							fingerprint_cache_bytes = 0
+				if not fingerprint_cache_enabled:
+					# Preserve the original complete scan and exact JSON comparison.
+					for path_value in paths:
+						if JSON.stringify(_canonical_variant(path_value)) == terminal_fingerprint: duplicate = true
+				if not duplicate:
 					paths.append(targets.duplicate(true))
-					fingerprints[terminal_fingerprint] = true
+					if fingerprint_cache_enabled:
+						fingerprints[terminal_fingerprint] = true
+						outcome_fingerprints[outcome_id] = fingerprints
+						fingerprint_cache_bytes += fingerprint_charge
 				outcomes[outcome_id] = paths
-				outcome_fingerprints[outcome_id] = fingerprints
 			elif phase_index.has(next_phase):
 				pending.append({"phase_id": next_phase, "targets": targets.duplicate(true), "visited": visited.duplicate(false)})
 	if not pending.is_empty():

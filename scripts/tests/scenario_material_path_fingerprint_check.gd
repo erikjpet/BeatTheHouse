@@ -60,6 +60,7 @@ func _run() -> void:
 		_check_helper_expectations(case, result["value"], result["errors"])
 		helper_records.append({"label": label, "scope": "diagnostic helper-only; no whole-definition signature or authority claim", "authored": case["authored"], "target_inventory": {}, "expectation": case["expectation"], "authored_variant_sha256": _raw_digest(case["authored"]), "material": result})
 	_check(helper_records.size() == 13, "all13 frozen independent helper cases completed")
+	_run_fingerprint_budget_probe()
 	_finish()
 
 
@@ -142,6 +143,49 @@ func _helper_cases() -> Array:
 	cases.append(_case("malformed_phase_and_branch_rows", _authored("start", [null, 7, false, {"id": "start", "scene_ops": "not an Array", "branches": [null, 3, {"next_phase": "missing"}]}]), {"outcome_counts": {}, "added_errors": 0}))
 	cases.append(_case("helper_string_id_coercion", _authored("7", [{"id": 7, "branches": [{"outcome": 12}, {"outcome": 12}]}]), {"outcome_counts": {"12": 1}, "added_errors": 0}))
 	return cases
+
+
+func _run_fingerprint_budget_probe() -> void:
+	# One bounded invalid definition, not an authority grant or accepted content.
+	# FIFO terminal order is small A, large B, then identical small A again.
+	var repeated_text := "\n".repeat(512)
+	var groups: Array = []
+	for group_index in range(24):
+		var group: Dictionary = {}
+		for field_index in range(64):
+			group["field_%02d" % field_index] = repeated_text
+		groups.append(group)
+	var authored := _authored("start", [
+		_phase("start", [{"next_phase": "small"}, {"next_phase": "big"}, {"next_phase": "again"}]),
+		_phase("small", [{"outcome": "done"}], _spawn("shared", {"probe": "small"})),
+		_phase("big", [{"outcome": "done"}], _spawn("shared", {"bulk": groups})),
+		_phase("again", [{"outcome": "done"}], _spawn("shared", {"probe": "small"})),
+	])
+	authored["schema_version"] = 2
+	var label := "fingerprint_budget_disable_then_repeat"
+	var shape_errors: Array = []
+	CanonicalSchemaScript._validate_shape_bounds(label, authored, shape_errors)
+	_check(shape_errors.is_empty(), "budget probe passes unchanged generic shape bounds")
+	var leak := "sequence terminal path for outcome done leaks temporary scene_objects target scenario::shared after cleanup."
+	var validation := _validate({"id": "fingerprint_budget_probe", "sequence": authored}, {}, false, label)
+	_check(not validation["errors"].is_empty(), "bounded diagnostic definition remains rejected by whole validation")
+	_check(_contains_text(validation["errors"], leak), "bounded invalid definition reaches material cleanup after generic shape preflight")
+	var expectation := {"outcome_counts": {"done": 2}, "target_keys": [["scenario::shared"], ["scenario::shared"]], "added_errors": 2}
+	var case := _case(label, authored, expectation)
+	var result := _material(authored, {}, "synthetic_helper_only:" + label)
+	_check_helper_expectations(case, result["value"], result["errors"])
+	_check(_same_variant(_array(result["errors"]).slice(2), [leak, leak]), "budget probe preserves exact ordered cleanup leak errors")
+	var paths := _array(_dict(result["value"]).get("done", []))
+	var charges: Array = []
+	for path_value: Variant in paths:
+		# Literal contract values also parse on the pre-budget canonical baseline.
+		charges.append(JSON.stringify(CanonicalSchemaScript._canonical_variant(path_value)).length() * 4 + 128)
+	_check(charges.size() == 2 and int(charges[0]) <= 4 * 1024 * 1024 and int(charges[1]) > 4 * 1024 * 1024, "actual canonical small/large fingerprint charges straddle the 4MiB budget")
+	var first := _dict(_dict(_dict(paths[0]).get("scene_objects", {})).get("scenario::shared", {})) if paths.size() >= 1 else {}
+	var second := _dict(_dict(_dict(paths[1]).get("scene_objects", {})).get("scenario::shared", {})) if paths.size() >= 2 else {}
+	_check(first.get("probe") == "small" and _array(second.get("bulk", [])).size() == 24, "budget probe keeps first A then B and suppresses repeated A after fallback")
+	helper_records.append({"label": label, "scope": "bounded invalid helper-only diagnostic; whole validation rejection and shape preflight recorded; no authority grant", "authored": authored, "target_inventory": {}, "expectation": expectation, "authored_variant_sha256": _raw_digest(authored), "material": result, "shape_errors": shape_errors, "whole_validation": validation, "fingerprint_charges": charges, "charge_contract": "4*canonical_JSON_String.length()+128 per retained outcome entry; 4MiB per invocation; not a process RSS claim"})
+	_check(helper_records.size() == 14, "all13 frozen cases plus the additive budget fallback probe completed")
 
 
 func _case(label: String, authored: Dictionary, expectation: Dictionary) -> Dictionary:
