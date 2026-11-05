@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T05:27:43.903723+00:00",
+  "updated_at": "2026-11-05T05:44:51.246331+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -118,7 +118,11 @@
             "description": "Publish exact tested fix normally to main with resulting commit/tree and fix ancestry, then verify exact promoted/served NEXT identity, matching assets and basic startup, plus changed closing-route behavior where feasible. Preserve existing cold-import/resource guards and distinguish historical native semantic Host qualification from any unobserved Web/pixel behavior.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/travel_closing_fallback_release_20261105.md",
+              "docs/testing/travel_closing_fallback_release_20261105.json",
+              "commit:5d1f92e239f06d6b17d7e1d5446d1c115f50badf"
+            ]
           }
         ],
         "coverage": {
@@ -144,7 +148,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_COMPLETE_PUBLICATION_NEXT_ACCEPTANCE_REQUESTED",
+      "status": "PUBLISHED_MAIN_NEXT_IMPORT_NATIVE_QUALIFICATION_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / forced-closing fallback",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -162,9 +166,12 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Newly authorized main publication and exact normal guarded NEXT delivery; target publication/deployed acceptance pending."
+        "commit": "5d1f92e239f06d6b17d7e1d5446d1c115f50badf",
+        "evidence": [
+          "docs/testing/travel_closing_fallback_release_20261105.md",
+          "docs/testing/travel_closing_fallback_release_20261105.json"
+        ],
+        "scope": "Published5d pending exact delivery; final bounded first guard is cold-import qualification, inherited native inputs require normal qualification and transient producer error is dated history. Served7ac lacks fix; assets/startup Open."
       },
       "evidence": [
         {
@@ -186,17 +193,43 @@
           "kind": "authorization",
           "reference": "Trusted parent delegation2026-11-05",
           "summary": "Trusted parent delegation2026-11-05 explicitly authorizes publication of tested closing-fallback fix 838016895d03a16b2ed060185cf6312fe82bc348 and exact NEXT follow-through under the trusted user direction: Continue playtesting fixing issues getting them NEXT. Preserve the existing watcher/qualification/resource guards; do not restart the watcher, run a manual substitute build, clear files or bypass a guard. Keep full objective Open until actual publication and required NEXT acceptance are evidenced."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/travel_closing_fallback_release_20261105.json",
+          "summary": "Normal main publication confirmed at5d/tree270e. Target cold-import gate failed before new log; stale245 native-refusal and inherited guarded change independently attributed. Served7ac lacks838, artifact count0, dated disk passes; delivery pending without approval hold."
+        },
+        {
+          "kind": "verification",
+          "reference": "evidence/closing-fallback-release-guard-assessment.json",
+          "summary": "Final guard SHA256 d35784f1519ea692bba0fb5dba49376185078e57513f3932a3a716fd6971fe42; recorded native owner BTH-PERF-20261104-005/ref01a1a3e8-562c-7169-a765-f4b4f9ae60cc assessment SHA256 c1b8778f3740f1f8f68591808964ca228ea438b67128b58afb1e92565590a15f. No live-owner query/reassignment; qualification must target exact newest main after metadata publication, not stale5d."
+        },
+        {
+          "kind": "verification",
+          "reference": "evidence/closing-fallback-release-final-observation.json",
+          "summary": "Latest05:38:53 externally restarted watcher first fails installed-producer qualification; prior05:32/05:35 cold/native audit retained as dated history. Served7ac unchanged, no task pipeline mutation or new approval hold."
+        },
+        {
+          "kind": "verification",
+          "reference": "evidence/closing-fallback-release-bounded-checkpoint.json",
+          "summary": "Final bounded05:43:15 cold-import first guard after transient05:38 producer error; served7ac lacks838, target0artifacts/no newlog. Exact newest-main normal qualification/handoff required; no task pipeline action."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Active parent reviews merged source/history, publishes the exact tested closing fix normally, then observes the existing watcher and records actual exact NEXT identity/assets/startup and scoped behavior when its qualification guard permits progress.",
+      "next_action": "Existing pipeline/import owner and recorded native owner BTH-PERF-20261104-005 (task18/ref01a1a3e8-562c-7169-a765-f4b4f9ae60cc) qualify changed native/import inputs through the reviewed normal path. Recorded ownership was not queried live or reassigned. Resolve exact NEWEST main after final metadata publication, then verify exact target identity/assets/startup and scoped behavior. If the installed-producer guard recurs, the existing pipeline owner must qualify that installed producer through the reviewed path too. No stale5d/245 request, watcher/producer/native action, manual substitute build, guard/pin change or file clearing by this task.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "pipeline_import_native_qualification",
+        "description": "Final bounded observation 2026-11-05T05:43:15.5460469Z: watcher pid22328/start05:39:56 currently fails cold-import qualification at05:42:05 for5d, with no new5d log and artifact count0; served7ac still lacks838. Transient05:38 installed-producer guard and prior05:32 cold/stale245 native-log attribution remain dated history. Independent guard review records inherited native input change as downstream qualification dependency, not an executed current native build. Existing normal pipeline owners must qualify exact newest main after metadata; qualify installed producer if that guard recurs. No approval/user-input hold, new disk-block claim or task pipeline mutation.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T05:27:43.903723+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T05:43:15.546046Z",
+        "evidence": [
+          "docs/testing/travel_closing_fallback_release_20261105.md",
+          "docs/testing/travel_closing_fallback_release_20261105.json",
+          "evidence/closing-fallback-release-bounded-checkpoint.json",
+          "evidence/closing-fallback-release-guard-assessment.json",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-18/next-9b-route-assessment-r1/assessment.json"
+        ]
       },
       "planned_app_changes": [
         {
@@ -204,7 +237,7 @@
           "description": "If confirmed, narrowly retain an already eligible forced-closing cost0 Walk fallback in public capped targets, choice and normal dispatch. Preserve ordinary/hidden routes, authority/payment, outcomes/RNG/clocks, scheduling, fixed16:9/touch/focus and paused item/scenario work; no file clearing or original-state changes."
         }
       ],
-      "updated_at": "2026-11-05T05:27:43.903723+00:00"
+      "updated_at": "2026-11-05T05:44:51.246331+00:00"
     },
     {
       "id": "BTH-PERF-20261104",

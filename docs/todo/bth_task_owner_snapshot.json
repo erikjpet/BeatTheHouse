@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T05:27:43.903723+00:00",
+  "observed_at": "2026-11-05T05:44:51.246331+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-05T05:27:43.903723+00:00",
-      "source": "Actual new task6 parent turn owns authorized publication of exact closing fix 838016895d03a16b2ed060185cf6312fe82bc348 and normal guarded NEXT follow-through after fresh shared-main merge. Five local75-check criteria remain accepted with historical limits; publication and exact delivery pending. No approval hold, watcher restart, manual build, file clearing or guard bypass inferred. Other objectives not re-observed."
+      "observed_at": "2026-11-05T05:44:51.246331+00:00",
+      "source": "Actual task6 parent active at final bounded observation/report checkpoint after main5d publication. Latest05:43 cold-import guard and prior transient installed-producer/native audit sequence recorded; normal exact-newest-main owner handoff pending. Observation/report only: no new background runtime or watcher/producer/native action. Local75 evidence and other objectives not re-observed."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
