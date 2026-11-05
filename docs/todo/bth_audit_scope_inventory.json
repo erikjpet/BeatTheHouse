@@ -1800,10 +1800,10 @@
         "unreviewed_total": 26
       },
       "prior65_requalified": false,
-      "associated_evidence_commit": null,
+      "associated_evidence_commit": "5f9ba1727eb10dde0b7fe7459100a221c34b80f0",
       "evidence": "docs/testing/deprecated_code_audit_continuation_022.md",
       "full_objective_complete": false,
-      "bounded_task_state": "open_pending_evidence_commit"
+      "bounded_task_state": "complete"
     }
   ]
 }

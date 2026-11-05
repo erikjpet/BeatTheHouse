@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T22:29:42.614178+00:00",
+  "updated_at": "2026-11-05T22:34:41.652841+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13071,7 +13071,7 @@
                 "docs/testing/deprecated_code_audit_continuation_022.md",
                 "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source same119/0 independently qualified and main40d4 published. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/grand_casino_duel_ritual_projection.gd",
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_REVIEWED_DUEL_FIX_COMMITTED_CODEC_REPAIR_REVIEW_ACTIVE_022",
+      "status": "FOUR_MORE_CORE_BODIES_QUALIFIED_DUEL_MAIN_PUBLISHED_CODEC_REPAIR_OPEN_022",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13792,6 +13792,20 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_021.md",
             "docs/testing/deprecated_code_audit_continuation_021.json"
+          ]
+        },
+        {
+          "sha": "c9449ddd52ca28c1d986661b9f09f61937cafc6c",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json",
+            "docs/testing/deprecated_code_audit_continuation_022.json"
+          ]
+        },
+        {
+          "sha": "5f9ba1727eb10dde0b7fe7459100a221c34b80f0",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_022.md",
+            "docs/testing/deprecated_code_audit_continuation_022.json"
           ]
         }
       ],
@@ -13979,7 +13993,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Publish qualified phase022 evidence and Duel receipt repair after final merged-source qualification; continue the26 recorded core body gaps,3 broader gaps, Codec numeric identity repair and remaining aggregate qualification without retrying excluded diagnostics.",
+      "next_action": "Continue26 recorded core body gaps,3 broader gaps, qualified Codec numeric identity repair/control/cost work and remaining aggregate acceptance. Preserve005 stale census evidence pending a fresh unchanged invocation; do not retry excluded diagnostics. Required production NEXT remains separately assigned.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13991,7 +14005,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T22:23:30.880738+00:00"
+      "updated_at": "2026-11-05T22:34:41.652841+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -24763,8 +24777,12 @@
             "id": "independent-review-and-commit",
             "description": "Independent review qualifies the bounded evidence; associate an actual evidence commit before completion. Any source candidate needs separate tests/commit/delivery qualification.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-independent-primary-evidence-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-primary-evidence-commit-r1.json",
+              "5f9ba1727eb10dde0b7fe7459100a221c34b80f0"
+            ]
           }
         ],
         "coverage": {
@@ -24778,7 +24796,7 @@
                 "docs/testing/deprecated_code_audit_continuation_022.md",
                 "docs/testing/deprecated_code_audit_continuation_022.json"
               ],
-              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+              "scope": "Complete current body and active/compatibility consumers retained at raw dd0d8f0ea9fe8eab43d074f31ca288961266cc4c4e9ae005ebac1358383f3c91. Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source same119/0 independently qualified and main40d4 published. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
             },
             {
               "id": "scripts/core/run_state_schema.gd",
@@ -24810,14 +24828,23 @@
           ]
         }
       },
-      "state": "open",
-      "status": "FOUR_COMPLETE_CURRENT_BODIES_RETAINED_EVIDENCE_COMMIT_PENDING_022",
+      "state": "complete",
+      "status": "FOUR_CURRENT_BODIES_RETAINED_REVIEW_QUALIFIED_EVIDENCE_COMMIT_ASSOCIATED_022",
       "owner": {
         "name": "Audit storage and duel core coverage",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "5f9ba1727eb10dde0b7fe7459100a221c34b80f0",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_022.md",
+            "docs/testing/deprecated_code_audit_continuation_022.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-primary-evidence-commit-r1.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -24833,17 +24860,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit the qualified phase022 source review and associate its exact evidence commit before marking this bounded coverage child Complete. Whole audit and Codec/Duel delivery remain separately Open.",
+      "next_action": "Bounded four-file current-body review is complete at its associated evidence commit. Continue the separate whole-codebase audit, Codec repair and required Duel NEXT acceptance; this child grants no wider completion or delivery claim.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent source audit is active. No source removal, native workload or approval/user/save/scheduler hold is established.",
+        "description": "The bounded body/declaration/consumer review is qualified and associated with its actual evidence commit; no blocker or production delivery requirement for this evidence-only child.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T21:12:52.887656+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T22:34:41.652841+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_022.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T22:23:30.880738+00:00"
+      "updated_at": "2026-11-05T22:34:41.652841+00:00"
     },
     {
       "id": "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",

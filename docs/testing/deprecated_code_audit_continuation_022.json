@@ -3,8 +3,8 @@
   "observed_at": "2026-11-05T22:22:54.600408+00:00",
   "task": "BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022",
   "base_main": "c66a9c1e1046b81c80996d7e171a7d267cc1b84b",
-  "associated_evidence_commit": null,
-  "bounded_task_state": "open_pending_evidence_commit",
+  "associated_evidence_commit": "5f9ba1727eb10dde0b7fe7459100a221c34b80f0",
+  "bounded_task_state": "complete",
   "files": [
     {
       "path": "scripts/core/grand_casino_duel_model.gd",
@@ -13,7 +13,7 @@
       "methods": 7,
       "constants": 4,
       "disposition": "reviewed_active_or_compatibility_retained",
-      "scope": "Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source run pending."
+      "scope": "Retain all7 active methods. Original173-line body independently reviewed; current two-line call_out delta records actual settled movement, following apply_hand authority. Native same119 now0 failures; final merged-source same119/0 independently qualified and main40d4 published."
     },
     {
       "path": "scripts/core/run_state_schema.gd",
@@ -175,7 +175,9 @@
     "evidence/catalog022-precommit-all-r3.json": "f9f06007950195e48b61fad5bfe688a77af2d0369426fe868f63b256068b37c4",
     "evidence/duel-callout022-candidate-independent-native-review-r3.json": "5ec1013c098e01d9105513c0980d20a6656e31c93563407b06d6f0d6bd6b75fe",
     "evidence/duel-callout022-r3-independent-static-review-r1.json": "b3a8a943f12946687a7878a4f7ca46753f5e74e33a00cd97aea0eb70a0e843ab",
-    "evidence/duel-callout022-main-publication-r1.json": "87cec414ad8e60215a3d8f2f73060041b870151cf70645d518ce994961bce55a"
+    "evidence/duel-callout022-main-publication-r1.json": "87cec414ad8e60215a3d8f2f73060041b870151cf70645d518ce994961bce55a",
+    "evidence/catalog022-primary-evidence-commit-r1.json": "cafb68c949cf083049eca95a06eed6e855643f8aadbd18a7e84708b28338977d",
+    "evidence/catalog022-independent-primary-evidence-review-r1.json": "30aa806e3b7243031855d5f30cdc9414e153597ecd2a103f558e1a2201851cdd"
   },
   "limits": [
     "All four body/declaration/consumer dispositions are bounded source review, not universal functional acceptance. No obsolete removal is justified by these files.",
@@ -205,5 +207,6 @@
     "published_merge": "40d4ac78e7ee695b08e0e6e1eb5904e0152c397e",
     "exact_remote_verified": true,
     "NEXT_verified": false
-  }
+  },
+  "completed_at": "2026-11-05T22:34:41.652841+00:00"
 }
