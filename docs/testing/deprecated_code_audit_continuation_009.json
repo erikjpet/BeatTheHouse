@@ -3862,21 +3862,208 @@
     }
   ],
   "next": {
-    "updated_at": "2026-11-05T01:59:10Z",
-    "phase": "failed",
-    "automation": "enabled",
-    "available_commit": "0e93f761f864a3bb844fabda48efe05f63792a98",
-    "deployed_commit": null,
-    "error": "No qualified owned lifecycle release for this donor",
-    "served_metadata": {
-      "observed_at": "2026-11-05T01:58:33.0479263Z",
-      "metadata_url": "http://localhost:8088/p/beat-the-house/play/next.json",
-      "source_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
-      "source_tree": "02e0f2124346a37b20d22e300f8ea05e68827f68",
-      "version": "0.6.0-dev+0c0952594ec9",
-      "watcher_phase": "failed",
-      "watcher_error": "No qualified owned lifecycle release for this donor",
-      "watcher_automation": "enabled"
+    "observed_at": "2026-11-05T02:17:46.2691776Z",
+    "served": {
+      "source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+      "source_branch": "main",
+      "source_tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+      "built_at": "2026-11-05T02:13:37Z",
+      "version": "0.6.0-dev+a208b61a5563",
+      "native_reuse": {
+        "schema": "beat_the_house.verified_native_reuse/v1",
+        "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+        "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+        "guarded_paths": [
+          "native",
+          "addons",
+          "export_presets.cfg",
+          "project.godot",
+          "tools/build_native_solver.ps1",
+          "tools/bootstrap_native_toolchain.ps1",
+          "tools/bootstrap_native_solver.ps1",
+          "tools/verify_native_solver_runtime.ps1",
+          "tools/build_godot_web_release_template.ps1",
+          "tools/export_tree_identity.ps1",
+          "tools/audit_pck_manifest.py"
+        ],
+        "qualified_git_objects": [
+          "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+          "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+          "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+          "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+          "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+          "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+          "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+          "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+          "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+          "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+          "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+          "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+          "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+          "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+          "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+          "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+          "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+          "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+          "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+        ],
+        "target_git_objects": [
+          "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+          "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+          "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+          "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+          "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+          "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+          "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+          "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+          "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+          "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+          "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+          "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+          "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+          "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+          "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+          "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+          "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+          "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+          "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+        ],
+        "tuple": "web/template_release/wasm32/nothreads",
+        "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+        "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+        "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+        "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+        "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+        "editor_dependency_pins": [
+          {
+            "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll",
+            "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82"
+          },
+          {
+            "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll",
+            "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69"
+          }
+        ],
+        "source_exporter_sha256": "b1faa1148a6f3079528f58d6f6add4d115b5e0baebf87b06fd929e4c007b54de",
+        "imported_source_functions": [
+          {
+            "name": "Get-Sha256",
+            "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+          },
+          {
+            "name": "Get-StringSha256",
+            "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+          },
+          {
+            "name": "Get-ProjectVersion",
+            "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+          },
+          {
+            "name": "Get-SourceIdentity",
+            "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+          },
+          {
+            "name": "Get-ExportPresetCustomFeatures",
+            "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+          },
+          {
+            "name": "Get-ExportPresetOption",
+            "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+          },
+          {
+            "name": "Assert-CleanDistributionOutput",
+            "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+          },
+          {
+            "name": "Assert-NativeSolverExport",
+            "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+          },
+          {
+            "name": "Invoke-WebExportWithLockedTemplate",
+            "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+          },
+          {
+            "name": "Invoke-WithEmbeddedManifest",
+            "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+          },
+          {
+            "name": "Get-RelativeFiles",
+            "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+          },
+          {
+            "name": "Invoke-PckAudit",
+            "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+          },
+          {
+            "name": "Verify-ArchiveAgainstStaging",
+            "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+          }
+        ],
+        "native_compilation_performed": false,
+        "exporter_policy": {
+          "schema": "beat_the_house.reviewed_web_exporter/v1",
+          "reviewed_source_commit": "a08ee4a6e9888a5f2e8425474a86182ceab5fcc0",
+          "reviewed_source_tree": "bb0f0e404689b5b7cdafccfce9cac225027fbc2d",
+          "actual_anchor_commit": "61189c6b40d398f18d9b6f3392171e049124c9c8",
+          "qualified_git_objects": [
+            "100644 blob c2f40edc369191825862127271a515f884480fe9\ttools/export_itch.ps1",
+            "100644 blob ba7c0e7870be317b1a1ef91454405c6405e74377\ttools/export_itch_helpers.ps1",
+            "100644 blob 4684f9cc19e79eceb0b49c7aef713737bee7fb0e\ttools/web_gl_handles.lock.json",
+            "100644 blob 01a830c481e4bd4836b11d1d2a2dc406bccee22b\ttools/web_gl_handles.mjs",
+            "100644 blob 4b09ae12846d070425ad5031152d28440701952a\ttools/web_gl_handles_allocator.txt"
+          ],
+          "target_git_objects": [
+            "100644 blob c2f40edc369191825862127271a515f884480fe9\ttools/export_itch.ps1",
+            "100644 blob ba7c0e7870be317b1a1ef91454405c6405e74377\ttools/export_itch_helpers.ps1",
+            "100644 blob 4684f9cc19e79eceb0b49c7aef713737bee7fb0e\ttools/web_gl_handles.lock.json",
+            "100644 blob 01a830c481e4bd4836b11d1d2a2dc406bccee22b\ttools/web_gl_handles.mjs",
+            "100644 blob 4b09ae12846d070425ad5031152d28440701952a\ttools/web_gl_handles_allocator.txt"
+          ],
+          "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+          "patched_js_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+        }
+      },
+      "web_gl_handles": {
+        "schema": "bth.web_gl_handles/v1",
+        "policy_version": 1,
+        "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
+        "source_hash_format": "utf8_lf_v1",
+        "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+        "tool_sha256": "496d770ba2d8509fd3b97ede25a5fc8edce46104c5a258009206815d750c938a",
+        "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
+        "godot_commit": "89cea143987d564363e15d207438530651d943ac",
+        "emscripten_version": "4.0.20",
+        "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+        "build_profile_sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7",
+        "engine_assets": {
+          "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+          "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+        },
+        "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+        "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "tables": [
+          "buffers",
+          "textures",
+          "vaos",
+          "syncs"
+        ],
+        "rewrites": {
+          "allocator": 1,
+          "delete_buffers": 1,
+          "delete_textures": 1,
+          "delete_vaos": 1,
+          "delete_syncs": 1
+        }
+      },
+      "archive_sha256": "5aba570d0a4515f45745c526f09393fde2ff3fa338fa8ea523930da2a4298fad"
+    },
+    "watcher": {
+      "updated_at": "2026-11-05T02:17:44Z",
+      "deployed_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+      "phase": "failed",
+      "available_commit": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+      "error": "Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+      "automation": "enabled"
     }
   },
   "limits": [
@@ -4691,5 +4878,224 @@
       }
     },
     "qualification_reuse": "Exact peer source/test blobs and their committed native receipt retained. No audit/core/UI source changes from this second merge; no unchanged broad suite repeated."
+  },
+  "publication": {
+    "published_main": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+    "published_tree": "131941ed9109d3f56423247a61cbd22cc07c7347",
+    "published_source_commits": [
+      "41c6384f5da1b7b9df4707c105ea1fce052fd027",
+      "192d8c2a31c97a71c200afeaf8a8e391e20d7100",
+      "32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e"
+    ],
+    "normal_push_confirmed": true,
+    "remote_main_readback_confirmed": true,
+    "next_observation": {
+      "observed_at": "2026-11-05T02:17:46.2691776Z",
+      "served": {
+        "source_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+        "source_branch": "main",
+        "source_tree": "b2c7fb071971b45e6632233c66bf5b028bd07b37",
+        "built_at": "2026-11-05T02:13:37Z",
+        "version": "0.6.0-dev+a208b61a5563",
+        "native_reuse": {
+          "schema": "beat_the_house.verified_native_reuse/v1",
+          "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+          "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+          "guarded_paths": [
+            "native",
+            "addons",
+            "export_presets.cfg",
+            "project.godot",
+            "tools/build_native_solver.ps1",
+            "tools/bootstrap_native_toolchain.ps1",
+            "tools/bootstrap_native_solver.ps1",
+            "tools/verify_native_solver_runtime.ps1",
+            "tools/build_godot_web_release_template.ps1",
+            "tools/export_tree_identity.ps1",
+            "tools/audit_pck_manifest.py"
+          ],
+          "qualified_git_objects": [
+            "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+            "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+            "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+            "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+            "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+            "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+            "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+            "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+            "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+            "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+            "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+            "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+            "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+            "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+            "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+            "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+            "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+            "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+            "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+          ],
+          "target_git_objects": [
+            "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+            "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+            "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+            "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+            "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+            "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+            "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+            "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+            "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+            "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+            "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+            "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+            "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+            "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+            "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+            "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+            "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+            "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+            "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+          ],
+          "tuple": "web/template_release/wasm32/nothreads",
+          "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+          "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+          "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+          "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+          "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+          "editor_dependency_pins": [
+            {
+              "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll",
+              "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82"
+            },
+            {
+              "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll",
+              "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69"
+            }
+          ],
+          "source_exporter_sha256": "b1faa1148a6f3079528f58d6f6add4d115b5e0baebf87b06fd929e4c007b54de",
+          "imported_source_functions": [
+            {
+              "name": "Get-Sha256",
+              "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+            },
+            {
+              "name": "Get-StringSha256",
+              "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+            },
+            {
+              "name": "Get-ProjectVersion",
+              "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+            },
+            {
+              "name": "Get-SourceIdentity",
+              "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+            },
+            {
+              "name": "Get-ExportPresetCustomFeatures",
+              "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+            },
+            {
+              "name": "Get-ExportPresetOption",
+              "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+            },
+            {
+              "name": "Assert-CleanDistributionOutput",
+              "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+            },
+            {
+              "name": "Assert-NativeSolverExport",
+              "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+            },
+            {
+              "name": "Invoke-WebExportWithLockedTemplate",
+              "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+            },
+            {
+              "name": "Invoke-WithEmbeddedManifest",
+              "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+            },
+            {
+              "name": "Get-RelativeFiles",
+              "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+            },
+            {
+              "name": "Invoke-PckAudit",
+              "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+            },
+            {
+              "name": "Verify-ArchiveAgainstStaging",
+              "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+            }
+          ],
+          "native_compilation_performed": false,
+          "exporter_policy": {
+            "schema": "beat_the_house.reviewed_web_exporter/v1",
+            "reviewed_source_commit": "a08ee4a6e9888a5f2e8425474a86182ceab5fcc0",
+            "reviewed_source_tree": "bb0f0e404689b5b7cdafccfce9cac225027fbc2d",
+            "actual_anchor_commit": "61189c6b40d398f18d9b6f3392171e049124c9c8",
+            "qualified_git_objects": [
+              "100644 blob c2f40edc369191825862127271a515f884480fe9\ttools/export_itch.ps1",
+              "100644 blob ba7c0e7870be317b1a1ef91454405c6405e74377\ttools/export_itch_helpers.ps1",
+              "100644 blob 4684f9cc19e79eceb0b49c7aef713737bee7fb0e\ttools/web_gl_handles.lock.json",
+              "100644 blob 01a830c481e4bd4836b11d1d2a2dc406bccee22b\ttools/web_gl_handles.mjs",
+              "100644 blob 4b09ae12846d070425ad5031152d28440701952a\ttools/web_gl_handles_allocator.txt"
+            ],
+            "target_git_objects": [
+              "100644 blob c2f40edc369191825862127271a515f884480fe9\ttools/export_itch.ps1",
+              "100644 blob ba7c0e7870be317b1a1ef91454405c6405e74377\ttools/export_itch_helpers.ps1",
+              "100644 blob 4684f9cc19e79eceb0b49c7aef713737bee7fb0e\ttools/web_gl_handles.lock.json",
+              "100644 blob 01a830c481e4bd4836b11d1d2a2dc406bccee22b\ttools/web_gl_handles.mjs",
+              "100644 blob 4b09ae12846d070425ad5031152d28440701952a\ttools/web_gl_handles_allocator.txt"
+            ],
+            "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+            "patched_js_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+          }
+        },
+        "web_gl_handles": {
+          "schema": "bth.web_gl_handles/v1",
+          "policy_version": 1,
+          "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
+          "source_hash_format": "utf8_lf_v1",
+          "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+          "tool_sha256": "496d770ba2d8509fd3b97ede25a5fc8edce46104c5a258009206815d750c938a",
+          "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
+          "godot_commit": "89cea143987d564363e15d207438530651d943ac",
+          "emscripten_version": "4.0.20",
+          "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+          "build_profile_sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7",
+          "engine_assets": {
+            "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+            "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+          },
+          "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+          "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+          "tables": [
+            "buffers",
+            "textures",
+            "vaos",
+            "syncs"
+          ],
+          "rewrites": {
+            "allocator": 1,
+            "delete_buffers": 1,
+            "delete_textures": 1,
+            "delete_vaos": 1,
+            "delete_syncs": 1
+          }
+        },
+        "archive_sha256": "5aba570d0a4515f45745c526f09393fde2ff3fa338fa8ea523930da2a4298fad"
+      },
+      "watcher": {
+        "updated_at": "2026-11-05T02:17:44Z",
+        "deployed_commit": "a208b61a556382d1c35f1070e562e41a40d2259a",
+        "phase": "failed",
+        "available_commit": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+        "error": "Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "automation": "enabled"
+      }
+    },
+    "deployment_complete": false,
+    "all35_owned_native_jobs_closed": true,
+    "remaining": "Existing watcher checks the published source but export remains behind shared disk admission. No guard or service changed."
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T02:21:56.344835+00:00",
+  "updated_at": "2026-11-05T02:27:07.234911+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13639,7 +13639,7 @@
         }
       },
       "state": "open",
-      "status": "WHOLE_CODEBASE_AUDIT_CONTINUES_009_SCOPED_REPAIRS_COMMITTED",
+      "status": "WHOLE_CODEBASE_AUDIT_CONTINUES_009_SCOPED_REPAIRS_PUBLISHED",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13674,12 +13674,12 @@
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "be4cd6716e3e1f7614008c9cc70a27cee7b48def",
+        "state": "pending",
+        "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_03.md"
+          "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "First removal batch only; parent full coverage remains incomplete."
+        "scope": "The complete audit retains incomplete coverage and required acceptance. Scoped phase009 source is published separately; its exact NEXT delivery is reserve-blocked."
       },
       "evidence": [
         {
@@ -13741,17 +13741,19 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue current consumer/semantic coverage and qualify the separate late duel-surface/autosave-request boundary. Phase009 obsolete projection removal and baseline repairs are committed; whole-codebase coverage, original-order180catalog and exactNEXT delivery remain Open. Preserve named paused feature work.",
+      "next_action": "Continue incomplete current codebase/consumer coverage and valid-producer late duel-boundary investigation. Three scoped source commits are published in main a7e8c71f97f24011124f8a3897bf7c1c840a2c47. Full original-order180catalog and exact NEXT delivery remain Open; existing watcher export is reserve-blocked.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
+        "kind": "none",
+        "description": "No external blocker to independent audit work. Complete current coverage and late duel reproduction remain; scoped NEXT delivery has its separate actual reserve blocker.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T00:42:08.576967+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_009.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:07:51.535050+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -21313,7 +21315,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21334,7 +21336,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21349,19 +21351,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-ROLLBACK-PRESENTATION-009",
@@ -21404,7 +21406,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21425,7 +21427,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21440,19 +21442,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-UI-PROJECTION-LEGACY-009",
@@ -21494,7 +21496,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21515,7 +21517,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21525,19 +21527,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEMANTIC-OBSERVER-009",
@@ -21580,7 +21582,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21601,7 +21603,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21616,19 +21618,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
@@ -21733,7 +21735,7 @@
         }
       },
       "state": "open",
-      "status": "MERGED_CURRENT_MAIN_QUALIFIED_READY_TO_PUSH_NEXT_GUARD_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21757,6 +21759,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_009.md"
           ]
+        },
+        {
+          "sha": "a7e8c71f97f24011124f8a3897bf7c1c840a2c47",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
         }
       ],
       "deployment": {
@@ -21766,7 +21774,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Associated source41c6384f qualified natively; exact NEXT delivery is not yet verified."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21781,19 +21789,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the merged qualified source without replacing concurrent work, then follow exact NEXT delivery when the separately owned donor qualification succeeds. Retain original180catalog and fullauditOpen.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Observed status automation=enabled, updated=2026-11-05T01:59:10Z; last error=No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T02:07:51.535050+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
@@ -21836,7 +21844,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21857,7 +21865,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21867,19 +21875,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH061-AUDIT-ACTOR-ROUTE-METRIC-009",
@@ -21921,7 +21929,7 @@
         }
       },
       "state": "open",
-      "status": "CANONICAL_FOCUSED_ACCEPTANCE_COMMITTED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_FOCUSED_QUALIFIED_NEXT_DISK_ADMISSION_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21942,7 +21950,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ],
-        "scope": "Scoped source and canonical acceptance committed; no exact NEXT delivery has occurred."
+        "scope": "Source commits are ancestors of published main a7e8c71f97f24011124f8a3897bf7c1c840a2c47; exact NEXT delivery remains unverified."
       },
       "evidence": [
         {
@@ -21952,19 +21960,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the associated source commit through the existing NEXT release owner when its reported qualification failure is resolved. Preserve all guards and the named feature pause; do not claim deployment from native tests.",
+      "next_action": "Verify exact NEXT delivery when the separately owned existing watcher admits export. Source commits and native acceptance are published; preserve the reserve/import/CPU guards and explicit feature pause.",
       "blocker": {
         "state": "active",
-        "kind": "next_owned_release_qualification",
-        "description": "Status file reports automation enabled (updated 2026-11-05T01:59:10Z). Last export error: No qualified owned lifecycle release for this donor",
+        "kind": "disk_reserve",
+        "description": "Existing watcher status at 2026-11-05T02:17:44Z reports Insufficient shared disk reserve for export: 13631787008 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT; available=a7e8c71f97f24011124f8a3897bf7c1c840a2c47; deployed=a208b61a556382d1c35f1070e562e41a40d2259a",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:59:16.819058+00:00",
+        "observed_at": "2026-11-05T02:18:46.828157+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_009.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:18:46.828157+00:00"
     },
     {
       "id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
