@@ -1025,6 +1025,7 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 		phase_index[str(phase_data.get("id", ""))] = phase_data
 	var pending: Array = [{"phase_id": str(graph.get("initial_phase", "")), "targets": _material_target_seed(authored, target_inventory), "visited": []}]
 	var outcomes: Dictionary = {}
+	var outcome_fingerprints: Dictionary = {}
 	var path_count := 0
 	var base_targets := _material_target_seed(authored, target_inventory)
 	while not pending.is_empty() and path_count < 512:
@@ -1048,18 +1049,23 @@ static func _material_target_paths_by_outcome(authored: Dictionary, target_inven
 				_apply_material_target_projection(family, operation, targets)
 		if _phase_can_request_cleanup(authored, targets):
 			_proven_cleanup_projection(authored, targets, base_targets, "phase %s request_cleanup" % phase_id, errors)
+		var terminal_fingerprint := ""
+		var terminal_fingerprint_ready := false
 		for branch_value in _array(phase_data.get("branches", [])):
 			var branch := _dict(branch_value)
 			var outcome_id := str(branch.get("outcome", ""))
 			var next_phase := str(branch.get("next_phase", ""))
 			if not outcome_id.is_empty():
 				var paths := _array(outcomes.get(outcome_id, []))
-				var fingerprint := JSON.stringify(_canonical_variant(targets))
-				var duplicate := false
-				for path_value in paths:
-					if JSON.stringify(_canonical_variant(path_value)) == fingerprint: duplicate = true
-				if not duplicate: paths.append(targets.duplicate(true))
+				if not terminal_fingerprint_ready:
+					terminal_fingerprint = JSON.stringify(_canonical_variant(targets))
+					terminal_fingerprint_ready = true
+				var fingerprints: Dictionary = outcome_fingerprints.get(outcome_id, {})
+				if not fingerprints.has(terminal_fingerprint):
+					paths.append(targets.duplicate(true))
+					fingerprints[terminal_fingerprint] = true
 				outcomes[outcome_id] = paths
+				outcome_fingerprints[outcome_id] = fingerprints
 			elif phase_index.has(next_phase):
 				pending.append({"phase_id": next_phase, "targets": targets.duplicate(true), "visited": visited.duplicate(false)})
 	if not pending.is_empty():
