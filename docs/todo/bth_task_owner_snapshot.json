@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T16:49:41.619476+00:00",
+  "observed_at": "2026-11-05T17:01:29.883849+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T16:49:41.619476+00:00",
-      "source": "Actual phase018 checkpoint: three independently qualified native Jobs exit0/closed0; leaf4, current full capacity control+772API/16samples and111-row667-subtree census. All1247 source/support4 and prior runtime records preserved; four parent objectives Open. Separate memo callback authoring child is platform-screened/unexecuted, no retry. Scoped report publication active; no production source, guard, cleanup, paused-feature or NEXT change."
+      "observed_at": "2026-11-05T17:01:29.883849+00:00",
+      "source": "Actual phase018 evidence commit 9c28def1 published and remote-main verified. Three native diagnostics independently qualified, all owned Jobs closed0; source1247C17 unchanged. Four parent objectives and separately platform-blocked/unexecuted callback child remain Open with evidence commit association. No callback retry, production patch, guard change, cleanup, paused-feature edit or NEXT claim."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

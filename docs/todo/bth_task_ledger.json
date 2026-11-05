@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T16:49:41.619476+00:00",
+  "updated_at": "2026-11-05T17:01:29.883849+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13756,6 +13756,13 @@
             "docs/testing/deprecated_code_audit_continuation_017.md",
             "docs/testing/deprecated_code_audit_continuation_017.json"
           ]
+        },
+        {
+          "sha": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md",
+            "docs/testing/deprecated_code_audit_continuation_018.json"
+          ]
         }
       ],
       "deployment": {
@@ -13887,12 +13894,17 @@
           "kind": "phase018_three_native_measurements_and_factual_branch_block",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
+        },
+        {
+          "kind": "published_measurement_evidence_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Publish this measured checkpoint and continue substantive Runtime normalization/cost and mutation-safe memo work outside paused areas. Preserve files, original authority, all guards and the separate platform-blocked callback branch; no cleanup or whole-audit closure.",
+      "next_action": "Checkpoint 9c28def1 is published; continue substantive Runtime normalization/cost and mutation-safe memo work outside paused areas. Preserve files, original authority, all guards and the separate platform-blocked callback branch; no cleanup or whole-audit closure.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -13904,7 +13916,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T16:49:41.619476+00:00"
+      "updated_at": "2026-11-05T17:01:29.883849+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20771,6 +20783,13 @@
             "docs/testing/deprecated_code_audit_continuation_017.md",
             "docs/testing/deprecated_code_audit_continuation_017.json"
           ]
+        },
+        {
+          "sha": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md",
+            "docs/testing/deprecated_code_audit_continuation_018.json"
+          ]
         }
       ],
       "deployment": {
@@ -20920,6 +20939,11 @@
           "kind": "phase018_three_native_measurements_and_factual_branch_block",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
+        },
+        {
+          "kind": "published_measurement_evidence_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
         }
       ],
       "implementation_batches": [],
@@ -20935,7 +20959,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T16:49:41.619476+00:00"
+      "updated_at": "2026-11-05T17:01:29.883849+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -23370,6 +23394,13 @@
             "docs/testing/deprecated_code_audit_continuation_017.md",
             "docs/testing/deprecated_code_audit_continuation_017.json"
           ]
+        },
+        {
+          "sha": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md",
+            "docs/testing/deprecated_code_audit_continuation_018.json"
+          ]
         }
       ],
       "deployment": {
@@ -23424,6 +23455,11 @@
           "kind": "phase018_three_native_measurements_and_factual_branch_block",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
+        },
+        {
+          "kind": "published_measurement_evidence_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
         }
       ],
       "implementation_batches": [],
@@ -23439,7 +23475,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T16:49:41.619476+00:00"
+      "updated_at": "2026-11-05T17:01:29.883849+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23747,6 +23783,13 @@
             "docs/testing/deprecated_code_audit_continuation_017.md",
             "docs/testing/deprecated_code_audit_continuation_017.json"
           ]
+        },
+        {
+          "sha": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md",
+            "docs/testing/deprecated_code_audit_continuation_018.json"
+          ]
         }
       ],
       "deployment": {
@@ -23806,6 +23849,11 @@
           "kind": "phase018_three_native_measurements_and_factual_branch_block",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Three guarded assigned native Jobs exit0/closed0 with source1247/support4 exact: leaf83/86, full current capacity control+772API/16captures, census1867/1872 fixed111/667. No production patch/authority removal/aggregate acceptance. Separate callback authoring was platform-screened, no native result or retry."
+        },
+        {
+          "kind": "published_measurement_evidence_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
         }
       ],
       "implementation_batches": [],
@@ -23821,7 +23869,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T16:49:41.619476+00:00"
+      "updated_at": "2026-11-05T17:01:29.883849+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
@@ -23958,7 +24006,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md",
+            "docs/testing/deprecated_code_audit_continuation_018.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -23976,6 +24032,11 @@
           "kind": "phase018_unexecuted_callback_branch",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "The authoring action was stopped by platform content screening for possible cybersecurity risk. No completed executable approval or native result; partials preserved. No retry/rephrase/reroute. Independent parent census and capacity work completed."
+        },
+        {
+          "kind": "published_measurement_evidence_commit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
+          "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
         }
       ],
       "implementation_batches": [],
@@ -23991,7 +24052,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T16:49:41.619476+00:00"
+      "updated_at": "2026-11-05T17:01:29.883849+00:00"
     }
   ],
   "batches": [

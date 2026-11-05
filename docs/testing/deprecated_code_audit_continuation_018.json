@@ -11,7 +11,7 @@
     "BTH061-AUDIT-MEMO-TYPE-SAFETY-014"
   ],
   "blocked_child_id_remains_open": "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
   "leaf": {
     "observed_at": "2026-11-05T15:48:41.571856+00:00",
     "qualified": true,
@@ -2131,7 +2131,28 @@
         "outside_findings": 736,
         "outside_runtime_errors": 69
       }
-    }
+    },
+    "association_pending": false,
+    "association_receipts": {
+      "current": {
+        "path": "evidence/catalog018-association-current-r1.json",
+        "sha256": "ff6091cc3f923eeadb4c9faba4db9fb3e3ad63eed92f142d39a06f7983f9b40a",
+        "own_findings": 0,
+        "outside_findings": 122,
+        "outside_runtime_errors": 69
+      },
+      "all": {
+        "path": "evidence/catalog018-association-all-r1.json",
+        "sha256": "8b04450ef206ddc72dae8af443234d2803ea0b958d514d9ea959be8cdc44b687",
+        "own_findings": 0,
+        "outside_findings": 738,
+        "outside_runtime_errors": 69
+      }
+    },
+    "latest_stage": "post-association",
+    "latest_outside_current": 122,
+    "latest_outside_all": 738,
+    "latest_outside_runtime": 69
   },
   "evidence_sha256": {
     "evidence/catalog018-registration-r1.json": "d17de5be11487719b668b3413561f278f5dd09156b41663ba84efac4479c48f5",
@@ -2159,6 +2180,27 @@
     "evidence/catalog018-final-current-r1.json": "c49ce1c8426413a5cc06da11db8e01acbc2df3f7eeb6679e112229a43e3393a6",
     "evidence/catalog018-final-all-r1.json": "0e1e2defa57df50f060e9b68560f840fa118ad0dec2734699ff0a91e3a96c8b5",
     "evidence/memo018-census-interpretation-r1/interpretation.md": "e4d0ef1aec821465a97cc4f1d32cbd5bf445a9b8c55e4555dc2368cb42211fa1",
-    "evidence/memo018-census-interpretation-r1/interpretation.json": "a8630f5690801a770c253ace8c0015fb58ac4165c24b7dc4a5e3eaf9be1d4129"
+    "evidence/memo018-census-interpretation-r1/interpretation.json": "a8630f5690801a770c253ace8c0015fb58ac4165c24b7dc4a5e3eaf9be1d4129",
+    "evidence/catalog018-main-publication-r1.json": "e457893eceeafe23d0383fc5f83b293bcfaaf27f8d3c1e9cee7cf4ef9df6f64a",
+    "evidence/catalog018-prepublication-scope-proof-r1.json": "1ef189feb8cbd5004c26f9b909c2963b2dd85326d595fa94c89b30f60b7b0631",
+    "evidence/catalog018-association-current-r1.json": "ff6091cc3f923eeadb4c9faba4db9fb3e3ad63eed92f142d39a06f7983f9b40a",
+    "evidence/catalog018-association-all-r1.json": "8b04450ef206ddc72dae8af443234d2803ea0b958d514d9ea959be8cdc44b687",
+    "evidence/catalog018-publication-scope-independent-review-r1.json": "53085a10d78a1aef167f91535f9b33863ac72ea9d8c4a58a039eab54be1a5374"
+  },
+  "main_publication": {
+    "observed_at": "2026-11-05T17:01:29.883849+00:00",
+    "evidence_commit": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+    "normal_push_confirmed": true,
+    "remote_main_ls_remote_exact": "9c28def1634365d26fdec4b0bd451a8eca4af67e",
+    "scope": "Six documentation/task-record files only, three qualified native measurements; production source unchanged.",
+    "all5_objectives_remain_open": true,
+    "new_callback_native_or_retry": false,
+    "NEXT_acceptance_claimed": false
+  },
+  "publication_scope_review": {
+    "scope": "Exact9c28 six-file checkpoint reviewed after publication; association followup is separate.",
+    "checks": 34,
+    "blocking_findings": 0,
+    "sha256": "53085a10d78a1aef167f91535f9b33863ac72ea9d8c4a58a039eab54be1a5374"
   }
 }
