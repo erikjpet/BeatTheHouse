@@ -122,6 +122,10 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	if session.is_empty() or bool(session.get("input_locked", false)):
 		return {}
+	return _append_input(simulation, session, input)
+
+
+static func _append_input(simulation: Dictionary, session: Dictionary, input: Dictionary) -> Dictionary:
 	var event := input.duplicate(true)
 	event["tick"] = int(simulation.get("tick", 0))
 	(session["input_trace"] as Array).append(event)
@@ -265,6 +269,9 @@ static func advance_chunked_settle(machine: Dictionary, tick_budget: int = 8) ->
 		exit_work_ticks += drain_ticks
 		session["exit_work_ticks"] = exit_work_ticks
 		return {"done": exit_work_ticks >= MAX_SETTLE_TICKS, "ticks": drain_ticks, "total_ticks": exit_work_ticks, "settle_ticks": int(session.get("settle_ticks", 0)), "backlog_ticks": int(session.get("accumulator_units", 0)) / 1000, "draining_backlog": true, "bounded": true, "events": stepped.get("events", [])}
+	# Backlog ticks may leave the compact native cache authoritative. Publish
+	# before direct settlement reads or reloads the script body array.
+	sync_native_body_state(machine)
 	var used := int(session.get("settle_ticks", 0))
 	var ticks := budget
 	var events: Array = []
@@ -612,7 +619,11 @@ static func _release_due_drop(machine: Dictionary, simulation: Dictionary, tick_
 	provenance["chain_depth"] = maxi(0, int(item.get("chain_depth", 0)))
 	if not str(item.get("parent_body_id", "")).is_empty():
 		provenance["chain_parent_body_id"] = str(item.get("parent_body_id", ""))
-	queue_input(machine, {
+	# Reserved feeder work remains owed while external player input is locked.
+	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
+	if session.is_empty():
+		return
+	_append_input(simulation, session, {
 		"kind": "drop",
 		"x": x,
 		"density": maxi(1, int(item.get("density", 1))),
