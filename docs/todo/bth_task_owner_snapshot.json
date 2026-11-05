@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T04:53:40.303763+00:00",
+  "observed_at": "2026-11-05T04:59:40.327003+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -26,9 +26,9 @@
     {
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
-      "state": "ended",
-      "observed_at": "2026-11-05T02:21:56.344835+00:00",
-      "source": "Current task6 journal release and practice-redemption fix delegations completed: exact own commits2e33f54f/a208b61a, pinned native evidence and shared exact a208 NEXT identity/assets/startup accepted; all five actual owned Jobs closed. No continuing runtime or newer a7e8 build qualification claimed. Other pre-existing Open objectives were not re-observed or closed."
+      "state": "active",
+      "observed_at": "2026-11-05T04:59:40.327003+00:00",
+      "source": "Actual new task6 parent turn investigates BTH-TRAVEL-CLOSING-FALLBACK-R11-1067 after fresh-main handoff. Stable ID registered before implementation; actual public Host reproduction, waiting/reopening classification and focused fix/test/commit are pending. No security hold, original-state access, file clearing, paused-scenario implementation or publication is inferred. Prior completed Pull Tabs objectives remain unchanged."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
