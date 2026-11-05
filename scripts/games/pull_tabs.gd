@@ -1657,6 +1657,7 @@ func _resolve_winner_redemption(run_state: RunState, environment: Dictionary, rn
 		"deltas": deltas,
 		"won": payout > 0,
 		"environment_id": str(environment.get("id", "")),
+		"environment_archetype_id": str(environment.get("archetype_id", "")),
 		"message": message,
 	})
 	result["pull_tab_redeemed_count"] = winner_pile.size()
