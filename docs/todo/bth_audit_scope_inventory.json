@@ -1757,9 +1757,10 @@
         "unreviewed_total": 30
       },
       "prior61_requalified": false,
-      "associated_evidence_commit": null,
+      "associated_evidence_commit": "92483c02f246f70e6bb8e01739e3df0da8b584ce",
       "evidence": "docs/testing/deprecated_code_audit_continuation_021.md",
-      "full_objective_complete": false
+      "full_objective_complete": false,
+      "bounded_task_state": "complete"
     }
   ]
 }

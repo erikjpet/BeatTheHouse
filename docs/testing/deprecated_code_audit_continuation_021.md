@@ -1,6 +1,6 @@
 # Four current core review gaps
 
-The complete current bodies of four files are reviewed and retained: 943 lines, 50 methods and 18 constants. Independent peer review passed 85 checks with no blockers. No obsolete removal candidate or supported production fix was found. This closes four recorded body-review gaps after the evidence commit is associated; the whole deprecated-code audit remains Open. The [JSON report](deprecated_code_audit_continuation_021.json) pins the source and evidence.
+The complete current bodies of four files are reviewed and retained: 943 lines, 50 methods and 18 constants. Independent peer review passed 85 checks with no blockers. No obsolete removal candidate or supported production fix was found. Four recorded body-review gaps are closed with the associated evidence commit below; the whole deprecated-code audit remains Open. The [JSON report](deprecated_code_audit_continuation_021.json) pins the source and evidence.
 
 | Current file | Methods | Constants | Disposition |
 | --- | ---: | ---: | --- |
@@ -17,7 +17,7 @@ Numeric storage's parse and stringify are separate active public roots. The sour
 
 The three unchanged read-only source contracts for health hot paths, correctness and IoResult/Keys passed. No new native Job, source instrumentation, production edit or performance measurement occurred. All 1,247 expected source hashes remain at fd2c64d5; the 200-record runtime inventory is unchanged.
 
-The new task is BTH061-AUDIT-CORE-DELTA-COVERAGE-021. It remains Open until its evidence commit exists and is associated. The umbrella's recorded core body dispositions move from 61 reviewed / 34 unreviewed (33 remaining and 1 unknown) to 65 reviewed / 30 unreviewed (30 remaining and 0 unknown). This does not requalify the previous 61 reviews. Three broader recorded areas and the original aggregate acceptance remain Open.
+Task BTH061-AUDIT-CORE-DELTA-COVERAGE-021 is Complete with associated evidence commit `92483c02f246f70e6bb8e01739e3df0da8b584ce`. The umbrella's recorded core body dispositions move from 61 reviewed / 34 unreviewed (33 remaining and 1 unknown) to 65 reviewed / 30 unreviewed (30 remaining and 0 unknown). This does not requalify the previous 61 reviews. Three broader recorded areas and the original aggregate acceptance remain Open.
 
 Evidence-only graph, span and purity-wording corrections are retained with their earlier receipts. The final peer review binds the corrected versions. No excluded diagnostic, callback experiment or partial was accessed or executed; paused implementation, portrait behavior, prototypes and the unpublished 1f24 test are preserved. No files were cleared. Prior Crew delivery/NEXT requirements and all aggregate guards remain unchanged.
 

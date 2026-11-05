@@ -4,8 +4,8 @@
   "task": "BTH061-AUDIT-CORE-DELTA-COVERAGE-021",
   "base_main": "d070fdc0459b64cb0cdf5d487e751a0b52ba42c1",
   "scope": "Complete current bodies and present consumer/compatibility dispositions for four remaining core review-depth gaps; no production change.",
-  "associated_evidence_commit": null,
-  "bounded_task_state": "open_pending_evidence_commit_association",
+  "associated_evidence_commit": "92483c02f246f70e6bb8e01739e3df0da8b584ce",
+  "bounded_task_state": "complete",
   "files": [
     {
       "path": "scripts/core/keys.gd",
@@ -118,5 +118,6 @@
     "current": "6af5f19ce2b96eedb8d3e537c844bea0f4e7a148bcd5c09055dc7eca5ecbf60c",
     "all": "9828da270bcb1258533643aa1b55c3f41d8060b5491df2f2190bfc4ab4b52fc1"
   },
-  "count_scope": "Unreviewed totals include every state other than reviewed; prior61 are not requalified."
+  "count_scope": "Unreviewed totals include every state other than reviewed; prior61 are not requalified.",
+  "completed_at": "2026-11-05T21:03:45.435656+00:00"
 }

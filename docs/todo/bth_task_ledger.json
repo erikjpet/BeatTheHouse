@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T20:54:54.882071+00:00",
+  "updated_at": "2026-11-05T21:03:45.435656+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13790,6 +13790,13 @@
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-main-publication-r1.json"
           ]
+        },
+        {
+          "sha": "92483c02f246f70e6bb8e01739e3df0da8b584ce",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_021.md",
+            "docs/testing/deprecated_code_audit_continuation_021.json"
+          ]
         }
       ],
       "deployment": {
@@ -13988,7 +13995,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T20:54:54.882071+00:00"
+      "updated_at": "2026-11-05T21:03:45.435656+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -24636,9 +24643,12 @@
             "id": "independent-review-and-commit",
             "description": "Independent review qualifies bounded findings/limits; evidence and current coverage dispositions have an associated commit before completion. Any production candidate gets separate tests, commit and required delivery.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json"
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json",
+              "92483c02f246f70e6bb8e01739e3df0da8b584ce",
+              "docs/testing/deprecated_code_audit_continuation_021.md",
+              "docs/testing/deprecated_code_audit_continuation_021.json"
             ]
           }
         ],
@@ -24681,14 +24691,23 @@
           ]
         }
       },
-      "state": "open",
-      "status": "FOUR_CORE_CURRENT_BODY_REVIEWS_QUALIFIED_AWAITING_EVIDENCE_COMMIT_021",
+      "state": "complete",
+      "status": "FOUR_CURRENT_CORE_BODY_DISPOSITIONS_QUALIFIED_AND_COMMITTED_021",
       "owner": {
         "name": "Audit current core semantic coverage",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "92483c02f246f70e6bb8e01739e3df0da8b584ce",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_021.md",
+            "docs/testing/deprecated_code_audit_continuation_021.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -24704,17 +24723,21 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit qualified evidence and associate that exact commit before completing this bounded four-file review task; continue whole audit separately.",
+      "next_action": "Bounded four-file review is complete; preserve the current active code. Continue wider audit and aggregate qualification under BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Permitted independent audit work is active; no user/save/scheduler hold. No code removal is yet justified.",
+        "description": "Bounded source classification, independent review and three static contracts are qualified with an associated evidence commit. No production change or required NEXT delivery for this evidence-only child.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T20:37:41.463702+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T21:03:45.435656+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_021.md",
+          "docs/testing/deprecated_code_audit_continuation_021.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog021-four-file-independent-peer-review-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T20:54:54.882071+00:00"
+      "updated_at": "2026-11-05T21:03:45.435656+00:00"
     }
   ],
   "batches": [
