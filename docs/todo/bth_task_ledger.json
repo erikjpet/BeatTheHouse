@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T00:32:51.161088+00:00",
+  "updated_at": "2026-11-05T01:04:10.676912+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21177,6 +21177,102 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T00:21:38.293030+00:00"
+    },
+    {
+      "id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "name": "Refresh Blackjack risk notice after unfunded draft changes",
+      "aliases": [
+        "OBS-R12-BJ-STALE-DRAFT-NOTICE-1005"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the historical R12 Blackjack stale risk banner after unfunded draft changes, reproduce or disposition it on current source, and fix the underlying notice lifecycle if confirmed. Qualify Clear, Max, Undo and relevant sidebet/adjacent notice behavior with focused tests, unfunded-state invariants and independent review, then associate an exact tested local implementation commit. Preserve original profiles and prior outcomes, wallet and wager authority, rules, RNG, clocks, the fixed 16:9 viewport and touch/focus behavior. Keep item and scenario work paused. This local objective does not include publication or NEXT delivery.",
+        "source": "Trusted parent local-only delegation2026-11-05; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json and qa-continuation-1005.json. Fresh source branch fix/blackjack-draft-risk-20261105 starts at public upstream50ae45824d79fdefb13b0c0ce1cd814c9108db37. Older denied publication6f remains separate and is not included or retried.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_reproduce",
+            "description": "Reproduce or precisely disposition the historical R12 unfunded draft sequence on current source using labeled fixtures; distinguish pinned f305 observation from current native evidence and any untested Web build.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "notice_correctness",
+            "description": "Clear or refresh stale draft-risk notices after Clear, Max and Undo, while preserving relevant sidebet and adjacent notice behavior and fixed 16:9 touch/focus presentation.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "unfunded_invariants",
+            "description": "Verify unfunded draft changes preserve wallets, paid/at-risk state, cards/shoe, RNG, clocks, history and funding/settlement authority; no paid action or original profile replay is inferred.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "review_test_commit",
+            "description": "Pass focused regression checks and independent scoped review, associate the exact tested implementation commit, and reconcile both task views with the evidence and its limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_CURRENT_SOURCE_INVESTIGATION",
+      "owner": {
+        "name": "Fix Back Alley travel / Blackjack draft risk notice",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Current delegation requests local investigation/fix/test/commit only; no publication or deployed acceptance is authorized or inferred."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1005.json",
+          "summary": "Pinned f305 practice: displayed cash100000, chips0, shoe312; PP/Buster draft3 then Clear1, Undo3, Clear1, Max200, Undo1 while banner retained Buster added. Total risk $3. No Deal, funding, cards or paid action; current source/Web reproduction remains unqualified."
+        },
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json",
+          "summary": "Same-profile cold title continuation retains the distinct notice observation and reports no current R12 custody blocker. No profile/save-key access, no campaign or wager; unrelated R11 denied Spin remains untouched."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Reproduce the unfunded draft-notice sequence against current source, isolate stale notice handling, and qualify a narrow fix with focused tests and independent review before an exact local commit.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:04:10.676912+00:00",
+        "evidence": [
+          "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "blackjack_draft_notice_presentation",
+          "description": "If reproduced, narrow the notice lifecycle for unfunded draft edits; preserve financial rules/state, RNG, clocks, scheduling, geometry, fixed 16:9 layout and touch/focus behavior."
+        }
+      ],
+      "updated_at": "2026-11-05T01:04:10.676912+00:00"
     }
   ],
   "batches": [
