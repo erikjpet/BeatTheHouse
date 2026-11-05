@@ -8291,9 +8291,10 @@ func _actor_route_position(object_data: Dictionary) -> Vector2:
 		progress = 1.0 - absf(fposmod((actor_route_time - started_at) / duration, 2.0) - 1.0)
 	if points.size() == 2:
 		return start.lerp(endpoint, progress)
+	var board_size := Vector2(BOARD_SIZE)
 	var total_distance := 0.0
 	for index in range(1, points.size()):
-		total_distance += _actor_route_point(points, index - 1, stage, object_data).distance_to(_actor_route_point(points, index, stage, object_data))
+		total_distance += (_actor_route_point(points, index - 1, stage, object_data) * board_size).distance_to(_actor_route_point(points, index, stage, object_data) * board_size)
 	if total_distance <= 0.001:
 		return endpoint
 	var target_distance := total_distance * progress
@@ -8301,7 +8302,7 @@ func _actor_route_position(object_data: Dictionary) -> Vector2:
 	for index in range(1, points.size()):
 		var segment_start := _actor_route_point(points, index - 1, stage, object_data)
 		var segment_end := _actor_route_point(points, index, stage, object_data)
-		var segment_distance := segment_start.distance_to(segment_end)
+		var segment_distance := (segment_start * board_size).distance_to(segment_end * board_size)
 		if target_distance <= traversed + segment_distance or index == points.size() - 1:
 			return segment_start.lerp(segment_end, clampf((target_distance - traversed) / maxf(0.001, segment_distance), 0.0, 1.0))
 		traversed += segment_distance

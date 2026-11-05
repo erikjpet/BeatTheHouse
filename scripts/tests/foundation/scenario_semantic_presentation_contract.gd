@@ -134,6 +134,16 @@ static func _check_finalized_canvas_authority(library: Variant, failures: Array)
 	var trusted_base := _production_presentations(run_state.current_environment, library)
 	var presentation := _mutable_record(trusted_base, "game:slot")
 	var authored_slot_rect := _snapshot_rect(presentation.get("focus_rect", {}))
+	# Compare public cabinet geometry to the same owner before stale data is injected.
+	# Sealed slot-footprint replacement remains independently asserted below.
+	var reference_canvas = PixelSceneCanvasScript.new()
+	reference_canvas.size = BOARD_SIZE
+	reference_canvas.render_environment_snapshot({"id": "finalized_canvas_authority", "archetype_id": "bar", "interactable_objects": trusted_base})
+	var authored_slot_canvas_rect := _canvas_object_rect(reference_canvas, "game:slot")
+	reference_canvas.free()
+	if not authored_slot_canvas_rect.has_area():
+		failures.append("Sealed-canvas fixture did not render its pristine base slot cabinet.")
+		return
 	# Deliberately stale producer data: focus_rect is the producer geometry used
 	# by semantic stamping, while normalized_rect used to outrank it on canvas.
 	presentation["normalized_rect"] = {"x": 0.72, "y": 0.66, "w": 0.08, "h": 0.09}
@@ -164,7 +174,7 @@ static func _check_finalized_canvas_authority(library: Variant, failures: Array)
 	var view := _dict(canvas.current_view_snapshot())
 	var slot_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "game:slot").get("rect", {}))
 	var command_rect := _snapshot_rect(_layout_entry(_dict(view.get("object_layout", {})), "scenario::command_console").get("rect", {}))
-	var authored_slot_pixels := Rect2(authored_slot_rect.position * BOARD_SIZE, authored_slot_rect.size * BOARD_SIZE)
+	var authored_slot_pixels := authored_slot_canvas_rect
 	if not slot_rect.is_equal_approx(authored_slot_pixels) or canvas.object_id_at_local_position(slot_rect.get_center()) != "game:slot":
 		failures.append("Public canvas draw/hit routing diverged from sealed base geometry after stale normalized_rect replacement.")
 	var authored_command_rect := _snapshot_rect(command_authority.get("normalized_hit_rect", {}))
@@ -288,8 +298,8 @@ static func _check_scenario_refresh_manifest_lifecycle(library: Variant, failure
 		return
 
 	# Persistent restore and migration paths may legitimately arrive without this
-	# derived envelope. A proof-ready semantic refresh must republish the manifest
-	# and its generated family bindings in the same successful commit.
+	# derived envelope. Refresh must republish manifest and sealed scenario
+	# geometry while publication removes duplicate base-plane occupants.
 	run_state.current_environment.erase("object_manifest")
 	run_state.current_environment.erase("object_manifest_digest")
 	run_state.current_environment.erase("object_manifest_revision")
@@ -308,14 +318,63 @@ static func _check_scenario_refresh_manifest_lifecycle(library: Variant, failure
 			or int(environment.get("object_manifest_revision", 0)) != int(manifest.get("revision", -1)) \
 			or manifest_ids != expected_ids:
 		failures.append("Proof-ready scenario refresh did not publish the exact active renderer inventory and valid manifest mirrors: %s" % JSON.stringify({"expected": expected_ids, "manifest": manifest_ids, "errors": EnvironmentInstanceScript.object_manifest_errors(environment)}))
+	var authority := _dict(environment.get("scenario_layout_authority", {}))
+	var authority_digest := str(environment.get("scenario_layout_authority_digest", ""))
+	var room_snapshot := run_state.room_presentation_snapshot()
+	var published_finalized := _dict(room_snapshot.get("finalized", {}))
+	var published_environment := _dict(room_snapshot.get("environment", {}))
+	var projected_candidate := EnvironmentInteractionControllerScript.project_finalized_sequence_interaction_result(_array(published_finalized.get("records", [])), published_finalized)
+	var committed := EnvironmentInteractionControllerScript.committed_projection_status_result(run_state, projected_candidate, presentations)
+	var publication := _dict(room_snapshot.get("proof", {}))
+	var live_publication := run_state.validate_room_action_authority()
+	if room_snapshot.is_empty() or not bool(publication.get("ok", false)) or not bool(published_finalized.get("ok", false)) \
+			or not bool(live_publication.get("ok", false)) or not bool(committed.get("ok", false)) \
+			or authority_digest.is_empty() \
+			or str(refreshed.get("layout_authority_digest", "")) != authority_digest \
+			or str(published_finalized.get("layout_authority_digest", "")) != authority_digest \
+			or _dict(published_finalized.get("layout_authority", {})) != authority \
+			or _dict(published_environment.get("layout", {})) != layout \
+			or str(published_environment.get("object_manifest_digest", "")) != str(environment.get("object_manifest_digest", "")) \
+			or str(committed.get("layout_authority_digest", "")) != authority_digest:
+		failures.append("Proof-ready scenario refresh did not publish authenticated committed scenario geometry: %s" % JSON.stringify({"projection": committed.get("errors", []), "publication": publication.get("errors", []), "live_publication": live_publication.get("errors", [])}))
+	var public_records := _array(committed.get("records", []))
+	var canvas = PixelSceneCanvasScript.new()
+	canvas.size = BOARD_SIZE
+	canvas.render_environment_snapshot({
+		"id": str(environment.get("id", "scenario_refresh_fixture")),
+		"archetype_id": str(environment.get("archetype_id", "bar")),
+		"interactable_objects": public_records,
+		"scenario_layout_audit": environment.get("scenario_layout_audit", {}),
+		"scenario_layout_authority_digest": authority_digest,
+	})
 	for object_id_value in expected_ids:
 		var object_id := str(object_id_value)
-		var binding := _dict(bindings.get(object_id, {}))
-		if str(binding.get("presentation_mode", "")) != "room" \
-				or str(binding.get("slot_family", "")) != "scenario" \
-				or not str(binding.get("slot_id", "")).begins_with("scenario.") \
-				or not object_rects.has(object_id):
-			failures.append("Proof-ready scenario refresh left %s without immediate scenario-family room geometry." % object_id)
+		var sealed := _dict(authority.get(object_id, {}))
+		var sealed_rect := _snapshot_rect(sealed.get("normalized_hit_rect", {}))
+		var sealed_small_rect := _snapshot_rect(sealed.get("small_screen_rect", {}))
+		if str(sealed.get("presentation_object_id", "")) != object_id \
+				or str(sealed.get("presentation_mode", "")) != "room" \
+				or str(sealed.get("slot_family", "")) != "scenario" \
+				or not str(sealed.get("slot_id", "")).begins_with("scenario.") \
+				or not sealed_rect.has_area() or not sealed_small_rect.has_area():
+			failures.append("Proof-ready scenario refresh left %s without immediate sealed scenario-family room geometry." % object_id)
+		if bindings.has(object_id) or object_rects.has(object_id) or _array(layout.get("slot_overflow_ids", [])).has(object_id):
+			failures.append("Proof-ready scenario refresh duplicated sealed scenario occupant %s in the base layout." % object_id)
+		var public_record := _record(public_records, object_id)
+		if public_record.is_empty() or str(public_record.get("presentation_mode", "")) != "room" \
+				or str(public_record.get("slot_family", "")) != "scenario" \
+				or str(public_record.get("slot_id", "")) != str(sealed.get("slot_id", "")) \
+				or str(public_record.get("scenario_layout_authority_identity", "")) != object_id \
+				or str(public_record.get("scenario_layout_authority_digest", "")) != authority_digest \
+				or not _snapshot_rect(public_record.get("normalized_rect", {})).is_equal_approx(sealed_rect) \
+				or not _snapshot_rect(public_record.get("small_screen_rect", {})).is_equal_approx(sealed_small_rect):
+			failures.append("Proof-ready scenario refresh did not expose %s through its committed sealed public record." % object_id)
+		var draw_rect := _canvas_object_rect(canvas, object_id)
+		var expected_draw_rect := Rect2(sealed_rect.position * BOARD_SIZE, sealed_rect.size * BOARD_SIZE)
+		if not draw_rect.has_area() or not draw_rect.is_equal_approx(expected_draw_rect) \
+				or canvas.object_id_at_local_position(draw_rect.get_center()) != object_id:
+			failures.append("Proof-ready scenario refresh did not draw/hit %s at its sealed scenario geometry." % object_id)
+	canvas.free()
 
 	var stable_manifest := JSON.stringify(manifest)
 	var stable_layout := JSON.stringify(layout)
@@ -1298,6 +1357,15 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	records.append(room_detail)
 	var canvas = PixelSceneCanvasScript.new()
 	canvas.size = BOARD_SIZE
+	# Reserved slots and cabinet model/hit geometry have distinct owners.
+	# Compare public base geometry before/after projection on the same canvas.
+	canvas.render_environment_snapshot({"id": "single_plane_fixture", "archetype_id": "bar", "interactable_objects": [machine, merchandise]})
+	var base_machine_rect := _canvas_object_rect(canvas, "game:slot")
+	var base_merchandise_rect := _canvas_object_rect(canvas, "service:house_drink")
+	if not base_machine_rect.has_area() or not base_merchandise_rect.has_area():
+		failures.append("Single-plane fixture did not render its pristine generated base controls.")
+		canvas.free()
+		return
 	canvas.render_environment_snapshot({
 		"id": "single_plane_fixture",
 		"archetype_id": "bar",
@@ -1318,10 +1386,10 @@ static func _check_single_environment_plane(library: Variant, failures: Array) -
 	var objects := _array(view.get("objects", []))
 	var canvas_machine := _canvas_object_rect(canvas, "game:slot")
 	var canvas_merchandise := _canvas_object_rect(canvas, "service:house_drink")
-	var machine_rect := _snapshot_rect(machine.get("focus_rect", {}))
-	var merchandise_rect := _snapshot_rect(merchandise.get("focus_rect", {}))
-	if not canvas_machine.is_equal_approx(Rect2(machine_rect.position * BOARD_SIZE, machine_rect.size * BOARD_SIZE)) \
-			or not canvas_merchandise.is_equal_approx(Rect2(merchandise_rect.position * BOARD_SIZE, merchandise_rect.size * BOARD_SIZE)):
+	var machine_rect := base_machine_rect
+	var merchandise_rect := base_merchandise_rect
+	if not canvas_machine.is_equal_approx(machine_rect) \
+			or not canvas_merchandise.is_equal_approx(merchandise_rect):
 		failures.append("Canvas composition moved generated room objects after scenario projection.")
 	if _object(objects, "scenario::wall_scratches").is_empty() or canvas.object_id_at_local_position(_canvas_object_rect(canvas, "scenario::wall_scratches").get_center()) != "scenario::wall_scratches":
 		failures.append("A read-only exploratory room detail was not selectable on the unified environment plane.")
