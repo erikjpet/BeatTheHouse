@@ -1892,13 +1892,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			next_state["selected_stake"] = min_bet
 			next_state["blackjack_side_bets"] = []
 			next_state.erase("table_social_alignment")
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": next_state,
-				"set_stake": min_bet,
-				"selected_index": index,
-				"message": "Bet cleared to the table minimum.",
-			})
+			return _wager_edit_command(next_state, index, min_bet, "Bet cleared to the table minimum.")
 		"blackjack_max_bet":
 			if _has_dealt_hand(next_state):
 				return _message_command(next_state, "Main bets are locked until the hand settles.")
@@ -1906,13 +1900,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			var max_bet := _max_table_stake_for_blackjack(next_state, table, run_state, environment)
 			next_state["selected_stake"] = max_bet
 			next_state.erase("table_social_alignment")
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": next_state,
-				"set_stake": max_bet,
-				"selected_index": index,
-				"message": "Chips pushed to the edge of your bankroll.",
-			})
+			return _wager_edit_command(next_state, index, max_bet, "Chips pushed to the edge of your bankroll.")
 		"blackjack_deal":
 			if _has_dealt_hand(next_state):
 				if not _all_hands_complete(next_state) and not _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
@@ -6521,6 +6509,19 @@ func _message_command(ui_state: Dictionary, message: String) -> Dictionary:
 	})
 
 
+func _wager_edit_command(ui_state: Dictionary, index: int, stake: int, message: String) -> Dictionary:
+	# A successful draft edit replaces any notice about the preceding wager.
+	# Keep the raw session and existing stake payload, including edit history.
+	ui_state["table_notice"] = message
+	return GameModule.surface_command({
+		"handled": true,
+		"ui_state": ui_state,
+		"set_stake": stake,
+		"selected_index": index,
+		"message": message,
+	})
+
+
 func _settle_completed_round_command(ui_state: Dictionary, index: int, message: String, table: Dictionary, run_state: RunState) -> Dictionary:
 	if bool(ui_state.get("presentation_timing_enforced", false)) and _deal_presentation_active(ui_state):
 		ui_state["round_terminal"] = true
@@ -7061,13 +7062,7 @@ func _chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_
 	_blackjack_push_wager_edit(ui_state)
 	ui_state["selected_stake"] = next_stake
 	ui_state.erase("table_social_alignment")
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": next_stake,
-		"selected_index": index,
-		"message": "You slide a $%d chip forward. Bet $%d." % [chip_value, next_stake],
-	})
+	return _wager_edit_command(ui_state, index, next_stake, "You slide a $%d chip forward. Bet $%d." % [chip_value, next_stake])
 
 
 func _correct_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -7084,13 +7079,7 @@ func _correct_chip_bet_command(index: int, ui_state: Dictionary, table: Dictiona
 	_blackjack_push_wager_edit(ui_state)
 	ui_state["selected_stake"] = corrected_stake
 	ui_state.erase("table_social_alignment")
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": corrected_stake,
-		"selected_index": index,
-		"message": "Main wager corrected to one $%d stack." % corrected_stake,
-	})
+	return _wager_edit_command(ui_state, index, corrected_stake, "Main wager corrected to one $%d stack." % corrected_stake)
 
 
 func _remove_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, selected_stake: int) -> Dictionary:
@@ -7107,13 +7096,7 @@ func _remove_chip_bet_command(index: int, ui_state: Dictionary, table: Dictionar
 	_blackjack_push_wager_edit(ui_state)
 	ui_state["selected_stake"] = next_stake
 	ui_state.erase("table_social_alignment")
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": next_stake,
-		"selected_index": index,
-		"message": "You pull one $%d chip back. Bet $%d." % [chip_value, next_stake],
-	})
+	return _wager_edit_command(ui_state, index, next_stake, "You pull one $%d chip back. Bet $%d." % [chip_value, next_stake])
 
 
 func _blackjack_push_wager_edit(ui_state: Dictionary) -> void:
@@ -7141,13 +7124,7 @@ func _undo_blackjack_wager_command(index: int, ui_state: Dictionary, table: Dict
 	ui_state["blackjack_side_bets"] = _valid_side_bet_ids_for_session(_string_array(previous.get("side_bets", [])), table, ui_state)
 	ui_state["blackjack_wager_history"] = history
 	ui_state.erase("table_social_alignment")
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": restored_stake,
-		"selected_index": index,
-		"message": "Last pending edit undone. Bet $%d." % restored_stake,
-	})
+	return _wager_edit_command(ui_state, index, restored_stake, "Last pending edit undone. Bet $%d." % restored_stake)
 
 
 func _repeat_blackjack_wager_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary, rebet: bool) -> Dictionary:
@@ -7170,13 +7147,7 @@ func _repeat_blackjack_wager_command(index: int, ui_state: Dictionary, table: Di
 	if repeated_cost > capacity:
 		return _undo_blackjack_wager_command(index, ui_state, table, run_state, environment)
 	ui_state.erase("table_social_alignment")
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": repeated_stake,
-		"selected_index": index,
-		"message": "%s wager staged: $%d total risk. Press Deal to confirm." % ["Resolved" if rebet else "Previous", repeated_cost],
-	})
+	return _wager_edit_command(ui_state, index, repeated_stake, "%s wager staged: $%d total risk. Press Deal to confirm." % ["Resolved" if rebet else "Previous", repeated_cost])
 
 
 func _patron_bet_command(index: int, ui_state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -7234,13 +7205,7 @@ func _patron_bet_command(index: int, ui_state: Dictionary, table: Dictionary, ru
 		"stake": target_stake,
 		"side_bets": ui_state["blackjack_side_bets"],
 	}
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": ui_state,
-		"set_stake": target_stake,
-		"selected_index": patron_index,
-		"message": "%s %s's blackjack posture. Main $%d, total risk $%d." % ["Fading" if fade else "Following", str(patron.get("name", "Patron")), target_stake, total_cost],
-	})
+	return _wager_edit_command(ui_state, patron_index, target_stake, "%s %s's blackjack posture. Main $%d, total risk $%d." % ["Fading" if fade else "Following", str(patron.get("name", "Patron")), target_stake, total_cost])
 
 
 func _blackjack_patron_wager(patron: Dictionary, table: Dictionary) -> Dictionary:

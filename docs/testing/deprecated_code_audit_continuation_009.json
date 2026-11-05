@@ -3817,6 +3817,48 @@
         "active_processes": 0
       },
       "test_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c"
+    },
+    {
+      "name": "content009-blackjack-integration-r1",
+      "task": "BTH061-AUDIT-PUBLISH-NEXT-009",
+      "head": "ba8d6bc61fa2cefb9552893dd048432bd88d3277",
+      "wall_seconds": 8.722419,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 1,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "5c74232c7c5fa4e8cbf825f5ecf05e4bea7e32d7519676c5211a9dc433065c42"
+    },
+    {
+      "name": "content009-blackjack-integration-r2",
+      "task": "BTH061-AUDIT-PUBLISH-NEXT-009",
+      "head": "ba8d6bc61fa2cefb9552893dd048432bd88d3277",
+      "wall_seconds": 15.11231,
+      "limit_seconds": 180,
+      "timed_out": false,
+      "script_error": false,
+      "exit": 0,
+      "closed_active_zero": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "test_sha256": "5c74232c7c5fa4e8cbf825f5ecf05e4bea7e32d7519676c5211a9dc433065c42"
     }
   ],
   "next": {
@@ -4296,5 +4338,105 @@
     "scope": "Exact canonical loaded original/current selected contracts under180s/caps; new no-class-name fixture remains unreferenced in old graph. Nonregression, not full-green static acceptance."
   },
   "all_tasks_complete": false,
-  "whole_codebase_complete": false
+  "whole_codebase_complete": false,
+  "integration": {
+    "observed_at": "2026-11-05T02:07:51.535050+00:00",
+    "concurrent_main": "0e93f761f864a3bb844fabda48efe05f63792a98",
+    "audit_sources_preserved": {
+      "scripts/ui/foundation_main.gd": true,
+      "scripts/ui/environment_interaction_controller.gd": true,
+      "scripts/ui/scenario_semantic_view_model.gd": true,
+      "scripts/ui/pixel_scene_canvas.gd": true,
+      "scripts/tests/foundation/scenario_sequence_contract.gd": true,
+      "scripts/tests/foundation/env06_8_environment_readability_contract.gd": true,
+      "scripts/tests/foundation/scenario_presentation_contract.gd": true,
+      "scripts/tests/foundation/scenario_semantic_presentation_contract.gd": true,
+      "scripts/tests/fixtures/current_projection_fixture.gd": true,
+      "scripts/tests/actor_route_physical_distance_check.gd": true,
+      "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd": true
+    },
+    "peer_sources_preserved": {
+      "scripts/games/blackjack.gd": true,
+      "scripts/tests/blackjack_draft_risk_notice_check.gd": true
+    },
+    "semantic_merge": {
+      "base": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+      "audit_head": "ba8d6bc61fa2cefb9552893dd048432bd88d3277",
+      "concurrent_main": "0e93f761f864a3bb844fabda48efe05f63792a98",
+      "files": [
+        {
+          "path": "docs/todo/bth_task_ledger.json",
+          "ours_entities_preserved": true,
+          "theirs_entities_preserved": true
+        },
+        {
+          "path": "docs/todo/bth_runtime_inventory_20261104.json",
+          "ours_entities_preserved": true,
+          "theirs_entities_preserved": true
+        },
+        {
+          "path": "docs/todo/bth_task_owner_snapshot.json",
+          "ours_entities_preserved": true,
+          "theirs_entities_preserved": true
+        }
+      ],
+      "timestamp_resolutions": [
+        {
+          "path": "docs/todo/bth_task_ledger.json.updated_at",
+          "rule": "latest actual observation timestamp",
+          "ours": "2026-11-05T01:59:16.819058+00:00",
+          "theirs": "2026-11-05T01:25:17.856925+00:00",
+          "chosen": "2026-11-05T01:59:16.819058+00:00"
+        },
+        {
+          "path": "docs/todo/bth_runtime_inventory_20261104.json.observed_at",
+          "rule": "latest actual observation timestamp",
+          "ours": "2026-11-05T01:59:17.128352+00:00",
+          "theirs": "2026-11-05T01:13:13.122615+00:00",
+          "chosen": "2026-11-05T01:59:17.128352+00:00"
+        },
+        {
+          "path": "docs/todo/bth_task_owner_snapshot.json.observed_at",
+          "rule": "latest actual observation timestamp",
+          "ours": "2026-11-05T01:59:17.128352+00:00",
+          "theirs": "2026-11-05T01:25:17.856925+00:00",
+          "chosen": "2026-11-05T01:59:17.128352+00:00"
+        }
+      ],
+      "rule": "Three-way identity merge; no blanket ours/theirs checkout. Audit entities retained, concurrent non-audit entities retained, both runtime sets exact, policy unchanged."
+    },
+    "integration_checks": 107,
+    "integration_failures": [],
+    "private_root_contract": "Required BTH_WORLD_REENTRY_ROOT explicitly supplied as the same owned private parent as APPDATA/save/profile/settings paths. First omission fails closed before practice launch; receipt preserved.",
+    "job_closed_active_zero": true,
+    "no_new_funded_or_resolving_action": true
+  },
+  "manual_reconciliation": [
+    {
+      "group": "current",
+      "checked_at": "2026-11-05T02:08:17.315784Z",
+      "scoped_audit_findings": 0,
+      "outside_error_count": 71,
+      "runtime_summary": {
+        "instances_checked": 111,
+        "errors": 54,
+        "warnings": 0,
+        "candidate_orphans": 0,
+        "historical_cleanup_verified": 0
+      }
+    },
+    {
+      "group": "all",
+      "checked_at": "2026-11-05T02:08:17.876531Z",
+      "scoped_audit_findings": 0,
+      "outside_error_count": 537,
+      "runtime_summary": {
+        "instances_checked": 111,
+        "errors": 54,
+        "warnings": 0,
+        "candidate_orphans": 0,
+        "historical_cleanup_verified": 0
+      }
+    }
+  ]
 }

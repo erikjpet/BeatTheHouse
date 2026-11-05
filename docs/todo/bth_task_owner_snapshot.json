@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T01:59:17.128352+00:00",
+  "observed_at": "2026-11-05T02:07:52.588036+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T01:59:17.128352+00:00",
-      "source": "Actual phase009 root continuing native-qualified obsolete fixture removal and production presentation rollback fixes. Whole audit, complete catalog180 observation, UI adapter migration and separate baseline findings remain Open. Existing watcher retains NEXT0c095259 behind shared disk reserve; no machinery or guards changed."
+      "observed_at": "2026-11-05T02:07:52.588036+00:00",
+      "source": "Actual phase009 root integrating/publishing three qualified audit source commits and preserved concurrent main work. Sequence, static/restore, hidden partitions, route regressions and liveness pass;18UI methods removed. Whole audit/original180flow/duel followup and exact NEXT delivery remain Open. Served metadata retains0c095259; current watcher is enabled but owned donor release qualification fails. No machinery or guards changed."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-04T18:12:12.227039+00:00",
-      "source": "Current task6 parent confirmed normal main publication after merged-source native qualification and is following the existing reserve-blocked NEXT watcher; actual active execution."
+      "observed_at": "2026-11-05T01:25:17.856925+00:00",
+      "source": "Actual task6 release follow-through: Blackjack notice fix published, watcher source observed; new stopped-service and current capacity blockers recorded read-only. No machinery or other-owner updates."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",

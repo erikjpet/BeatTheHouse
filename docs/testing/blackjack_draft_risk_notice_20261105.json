@@ -1,0 +1,212 @@
+{
+  "task_id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+  "alias": "OBS-R12-BJ-STALE-DRAFT-NOTICE-1005",
+  "recorded_at": "2026-11-05T01:13:13.122615+00:00",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+  "implementation_commit": "af2609246170978782e1b2b19f83cff544196976",
+  "base_commit": "50ae45824d79fdefb13b0c0ce1cd814c9108db37",
+  "scope": "Refresh persistent notice only for eight successful unfunded Blackjack draft-edit paths. Preserve raw command payloads, guard refusals, notice composition/priority, finance/authority, cards/shoe, RNG, clocks, history, viewport, scheduling and paused item/scenario work.",
+  "source_sha256": {
+    "game": {
+      "path": "scripts/games/blackjack.gd",
+      "sha256": "9a0f572821cd3565b12ed2edfa24d6f4379968179c7f879866e0735b6199aa3e"
+    },
+    "driver": {
+      "path": "scripts/tests/foundation/blackjack_authority_test_driver.gd",
+      "sha256": "b4c65189a6fa42109eae565634114fd2610b41327463dd9fbbeaae4af48f3f43"
+    },
+    "test": {
+      "path": "scripts/tests/blackjack_draft_risk_notice_check.gd",
+      "sha256": "14b621cc806050bdcf8616e0d9cc33bc2e78e56de275df32effd12067a25ea75"
+    }
+  },
+  "original_observations": [
+    {
+      "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1005.json",
+      "sha256": "98262536921591b30ff8f6d080d239dea88bcd9bfa0e3ffad48981b50ad48dc3",
+      "tested_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e"
+    },
+    {
+      "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json",
+      "sha256": "3ddf66dbeddc848afe314ed57afeba1137d1558ebfe69c721c62ae71efa52ce2"
+    }
+  ],
+  "baseline": {
+    "checks": 43,
+    "failures": [
+      "blackjack_undo_bet persistent public banner matches latest command rather than stale Buster risk"
+    ],
+    "result": "evidence/blackjack-draft-risk-baseline-result.json",
+    "sequence": [
+      {
+        "action": "blackjack_side_bet",
+        "command_message": "Perfect Pairs added. Total risk $2.",
+        "main": 1,
+        "notice": "Perfect Pairs added. Total risk $2.",
+        "risk": 2,
+        "side_bets": [
+          "perfect_pairs"
+        ]
+      },
+      {
+        "action": "blackjack_side_bet",
+        "command_message": "Buster added. Total risk $3.",
+        "main": 1,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 3,
+        "side_bets": [
+          "perfect_pairs",
+          "buster"
+        ]
+      },
+      {
+        "action": "blackjack_clear_bet",
+        "command_message": "Bet cleared to the table minimum.",
+        "main": 1,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 1,
+        "side_bets": []
+      },
+      {
+        "action": "blackjack_undo_bet",
+        "command_message": "Last pending edit undone. Bet $1.",
+        "main": 1,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 3,
+        "side_bets": [
+          "perfect_pairs",
+          "buster"
+        ]
+      },
+      {
+        "action": "blackjack_clear_bet",
+        "command_message": "Bet cleared to the table minimum.",
+        "main": 1,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 1,
+        "side_bets": []
+      },
+      {
+        "action": "blackjack_max_bet",
+        "command_message": "Chips pushed to the edge of your bankroll.",
+        "main": 200,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 200,
+        "side_bets": []
+      },
+      {
+        "action": "blackjack_undo_bet",
+        "command_message": "Last pending edit undone. Bet $1.",
+        "main": 1,
+        "notice": "Buster added. Total risk $3.",
+        "risk": 1,
+        "side_bets": []
+      }
+    ],
+    "limit": "Expected stale-notice failure. Late asynchronous prewarm freed-object error after the result is preserved in raw baseline log; a test-only lifecycle override suppresses optional background prewarm for final qualification."
+  },
+  "diagnostics": [
+    {
+      "label": "blackjack-draft-risk-baseline",
+      "description": "43 checks retain one expected stale-notice failure and full unfunded sequence. A late optional background-prewarm freed-object error after the report is preserved in the raw log. Final test overrides only optional background prewarm for deterministic fixture lifecycle; historical failing product baseline was not re-run or overwritten.",
+      "evidence": [
+        "evidence/blackjack-draft-risk-baseline-result.json",
+        "evidence/blackjack-draft-risk-baseline.log",
+        "evidence/blackjack-draft-risk-baseline.json"
+      ]
+    },
+    {
+      "label": "blackjack-draft-risk-final",
+      "checks": 106,
+      "failures": [
+        "synthetic dealer-Ace presentation retains existing Insurance offer"
+      ],
+      "description": "Detached Insurance fixture used rank1 instead of the actual Ace rank14. Final test corrects only that fixture and uses actual boolean flags; no additional product change. All original diagnostic artifacts retained.",
+      "evidence": [
+        "evidence/blackjack-draft-risk-final-result.json",
+        "evidence/blackjack-draft-risk-final.log",
+        "evidence/blackjack-draft-risk-final.json"
+      ]
+    }
+  ],
+  "qualification": {
+    "checks": 133,
+    "jobs": [
+      {
+        "label": "blackjack-draft-risk-baseline",
+        "checks": 43,
+        "qualification": false,
+        "result": "blackjack-draft-risk-baseline-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-baseline.json",
+        "nonce": "790689280764443db270dcb2fdb73aa6",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "blackjack-draft-risk-final",
+        "checks": 106,
+        "qualification": false,
+        "result": "blackjack-draft-risk-final-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final.json",
+        "nonce": "c49734ba93aa4fecb7144a9639cbd3bd",
+        "exit_code": 1,
+        "active_at_release": 0
+      },
+      {
+        "label": "blackjack-draft-risk-qualified",
+        "checks": 107,
+        "qualification": true,
+        "result": "blackjack-draft-risk-qualified-result.json",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-qualified.json",
+        "nonce": "b583c32e3a43412fae6c1f4ae207b050",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "blackjack-draft-risk-affordability",
+        "checks": 14,
+        "qualification": true,
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-affordability.json",
+        "nonce": "5c4796ad48764568aece25d353bf8cb8",
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "label": "blackjack-draft-risk-reveal",
+        "checks": 12,
+        "qualification": true,
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-reveal.json",
+        "nonce": "7e2869cd761742d59e48958dc16edcbb",
+        "exit_code": 0,
+        "active_at_release": 0
+      }
+    ]
+  },
+  "independent_review": {
+    "approved": true,
+    "reviewer": "loan_room_review",
+    "summary": "Parent-confirmed independent source and final runtime review approved133 qualified checks, exact physical source hashes and all three qualified owned-zero Job closures; no further checks or blockers."
+  },
+  "fidelity": "The current-source native check uses an owned ordinary Foundation practice launcher and the unchanged maintained Driver.surface_intent API. Parent verified the pre-fix Blackjack source blob is identical at fresh upstream 50ae45824d79fdefb13b0c0ce1cd814c9108db37, served0c and historical f305; this is source equivalence, not a fresh Web reproduction. Extra Repeat/Rebet/live/Insurance/count cases are detached command/presentation fixtures only. The ordinary unfunded sequence checks exact cash, chips, shoe, RNG, clocks, history, hands played and last result; no Deal, resolving or funding command is issued. Payment logic is unchanged by source review; paid/at-risk state is not directly asserted by these runtime checks. No payment, outcome, original save or Web input; no fabricated sealed record is supplied.",
+  "limits": [
+    "Current native API/model evidence and labeled detached adjacent fixtures; no fresh Web input or rendered changed-behavior acceptance.",
+    "No original R12 profile/save access, replay, funded Deal, payout, Save/cold matrix or deployment claim.",
+    "Unrelated R11 denied Spin and older denied publication6f are untouched."
+  ],
+  "deployment": {
+    "required": false,
+    "state": "not_applicable",
+    "commit": null,
+    "evidence": [],
+    "scope": "Local investigation/fix/test/commit request only; publication and NEXT are outside this objective."
+  },
+  "release_followthrough": {
+    "recorded_at": "2026-11-05T01:18:16.839752+00:00",
+    "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+    "references": [
+      "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+      "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
+    ],
+    "scope": "New authorization expands the parent objective; all local qualification facts above remain historical and unchanged."
+  }
+}

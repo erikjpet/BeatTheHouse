@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T01:59:16.819058+00:00",
+  "updated_at": "2026-11-05T02:07:51.535050+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13731,6 +13731,11 @@
           "kind": "current_next_donor_guard_block",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Continuation007 finishedreviewrecords publishednormally; newNEXT sourceadmission blocked bycurrentdonorlifecycleproof, notstoppedwatcher/capacity. Namedfollowup BTH061-AUDIT-PUBLISH-NEXT-007; otheraudit remainsactive."
+        },
+        {
+          "kind": "combined_main_integration009",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Concurrentmain0e93f761f864a3bb844fabda48efe05f63792a98 preservedbyidentitymerge;all11auditsourcesand2peerfilesexact. Peerordinaryownedpractice107checksPASS;initialprivate-rootguardreceiptretained;allownedJobs0. Publication/qualifiedNEXTstillpending."
         }
       ],
       "implementation_batches": [
@@ -13746,7 +13751,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:07:51.535050+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -21728,7 +21733,7 @@
         }
       },
       "state": "open",
-      "status": "THREE_QUALIFIED_SOURCE_COMMITS_NEXT_OWNED_RELEASE_PENDING",
+      "status": "MERGED_CURRENT_MAIN_QUALIFIED_READY_TO_PUSH_NEXT_GUARD_PENDING",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -21768,10 +21773,15 @@
           "kind": "phase009_canonical_repair",
           "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
           "summary": "All19inheritedcanonicalsequencefailuresfixed;575originalfailureappendlinesexact. FocusedoldUI/newvalidfixture2fails, r7newUI0; exactimmediateandcallbackstate/tweens/oneerrorpass. Hiddenpartition3exact8originalfailuresnow0;remainingpartitionstatusreportedseparately. Source41c6384f; NEXTpending."
+        },
+        {
+          "kind": "combined_main_integration009",
+          "reference": "docs/testing/deprecated_code_audit_continuation_009.md",
+          "summary": "Concurrentmain0e93f761f864a3bb844fabda48efe05f63792a98 preservedbyidentitymerge;all11auditsourcesand2peerfilesexact. Peerordinaryownedpractice107checksPASS;initialprivate-rootguardreceiptretained;allownedJobs0. Publication/qualifiedNEXTstillpending."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified source commits and preserved concurrent main work, then verify exact NEXT source/tree/assets/launch through the existing release owner when status permits. Do not restart or bypass the separately owned pipeline.",
+      "next_action": "Publish the merged qualified source without replacing concurrent work, then follow exact NEXT delivery when the separately owned donor qualification succeeds. Retain original180catalog and fullauditOpen.",
       "blocker": {
         "state": "active",
         "kind": "next_owned_release_qualification",
@@ -21783,7 +21793,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:59:16.819058+00:00"
+      "updated_at": "2026-11-05T02:07:51.535050+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEMANTIC-BASELINE-009",
@@ -21955,6 +21965,175 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-05T01:59:16.819058+00:00"
+    },
+    {
+      "id": "BTH-BLACKJACK-DRAFT-RISK-NOTICE-001",
+      "name": "Refresh Blackjack risk notice after unfunded draft changes",
+      "aliases": [
+        "OBS-R12-BJ-STALE-DRAFT-NOTICE-1005"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the historical R12 Blackjack stale risk banner after unfunded draft changes, reproduce or disposition it on current source, and fix the underlying notice lifecycle if confirmed. Qualify Clear, Max, Undo and relevant sidebet/adjacent notice behavior with focused tests, unfunded-state invariants and independent review, then associate an exact tested local implementation commit. Preserve original profiles and prior outcomes, wallet and wager authority, rules, RNG, clocks, the fixed 16:9 viewport and touch/focus behavior. Keep item and scenario work paused. The initial local objective did not include publication or NEXT delivery.\n\nNew authorized follow-through: publish the separately tested fix to main and verify normal NEXT delivery through the existing guarded watcher, including exact promoted/served source/tree, matching assets and basic startup. Preserve the completed local acceptance and keep the expanded objective Open until both delivery criteria pass. Do not bypass the export reserve or change audience, stable/itch scope, source authority or paused work.",
+        "source": "Trusted parent local-only delegation2026-11-05; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json and qa-continuation-1005.json. Fresh source branch fix/blackjack-draft-risk-20261105 starts at public upstream50ae45824d79fdefb13b0c0ce1cd814c9108db37. Older denied publication6f remains separate and is not included or retried.\n\nTrusted parent delegation2026-11-05 explicitly authorizes publishing tested fix af2609246170978782e1b2b19f83cff544196976 to main and normal guarded NEXT verification, under the trusted user instruction: Yes push all finished work to next. Preserve the existing export reserve and keep the task Open until required publication and NEXT acceptance are evidenced. Older denied publication6f is separate and is neither included nor retried.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_reproduce",
+            "description": "Reproduce or precisely disposition the historical R12 unfunded draft sequence on current source using labeled fixtures; distinguish pinned f305 observation from current native evidence and any untested Web build.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_20261105.json",
+              "commit:af2609246170978782e1b2b19f83cff544196976"
+            ]
+          },
+          {
+            "id": "notice_correctness",
+            "description": "Clear or refresh stale draft-risk notices after Clear, Max and Undo, while preserving relevant sidebet and adjacent notice behavior and fixed 16:9 touch/focus presentation.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_20261105.json",
+              "commit:af2609246170978782e1b2b19f83cff544196976"
+            ]
+          },
+          {
+            "id": "unfunded_invariants",
+            "description": "Verify unfunded draft changes preserve wallets, paid/at-risk state, cards/shoe, RNG, clocks, history and funding/settlement authority; no paid action or original profile replay is inferred.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_20261105.json",
+              "commit:af2609246170978782e1b2b19f83cff544196976"
+            ]
+          },
+          {
+            "id": "review_test_commit",
+            "description": "Pass focused regression checks and independent scoped review, associate the exact tested implementation commit, and reconcile both task views with the evidence and its limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_20261105.json",
+              "commit:af2609246170978782e1b2b19f83cff544196976"
+            ]
+          },
+          {
+            "id": "publication",
+            "description": "Publish the exact tested scoped fix to main under the new explicit authorization; record resulting main SHA/tree and included fix ancestry, excluding the older denied6f branch.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+              "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+              "commit:e5f4f624233e6495d33019c908bc6ca5d867482d",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-main-push.json"
+            ]
+          },
+          {
+            "id": "next_delivery",
+            "description": "Through the existing guarded watcher, verify exact promoted/served source/tree, matching asset evidence and basic startup after the export reserve permits progress; distinguish native changed-behavior evidence and any feasible deployed behavior check from unobserved Web claims.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PUBLISHED_MAIN_NATIVE133_PASS_NEXT_STOPPED_RESERVE_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Blackjack draft risk notice",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "af2609246170978782e1b2b19f83cff544196976",
+          "evidence": [
+            "docs/testing/blackjack_draft_risk_notice_20261105.md",
+            "docs/testing/blackjack_draft_risk_notice_20261105.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "e5f4f624233e6495d33019c908bc6ca5d867482d",
+        "evidence": [
+          "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+          "docs/testing/blackjack_draft_risk_notice_release_20261105.json"
+        ],
+        "scope": "Published and observed source; existing watcher now stopped and current capacity below required reserve. Exact target NEXT identity/assets/startup remain pending."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1005.json",
+          "summary": "Pinned f305 practice: displayed cash100000, chips0, shoe312; PP/Buster draft3 then Clear1, Undo3, Clear1, Max200, Undo1 while banner retained Buster added. Total risk $3. No Deal, funding, cards or paid action; current source/Web reproduction remains unqualified."
+        },
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1006.json",
+          "summary": "Same-profile cold title continuation retains the distinct notice observation and reports no current R12 custody blocker. No profile/save-key access, no campaign or wager; unrelated R11 denied Spin remains untouched."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/blackjack_draft_risk_notice_20261105.json",
+          "summary": "133 qualified current native checks; expected baseline and test diagnostics retained; all owned jobs closed."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/blackjack_draft_risk_notice_20261105.md",
+          "summary": "Parent-confirmed independent source and final runtime review approved133 qualified checks, exact physical source hashes and all three qualified owned-zero Job closures; no further checks or blockers."
+        },
+        {
+          "kind": "authorization",
+          "reference": "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "summary": "Trusted parent delegation2026-11-05 explicitly authorizes publishing tested fix af2609246170978782e1b2b19f83cff544196976 to main and normal guarded NEXT verification, under the trusted user instruction: Yes push all finished work to next. Preserve the existing export reserve and keep the task Open until required publication and NEXT acceptance are evidenced. Older denied publication6f is separate and is neither included nor retried."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "summary": "Read-only watcher status: prior NEXT retained behind unchanged export reserve; new publication/identity/assets/startup acceptance remains open."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "summary": "Actual normal main push PASS at e5f4f624233e6495d33019c908bc6ca5d867482d/tree064aa9427155417ace65f0ff710aa4f096ec4ba0; watcher available matches. Prior0c served; new target NEXT acceptance remains reserve-blocked and unverified."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Reconcile the existing stop request with its resource owner/operator and restore only the normal guarded watcher when authorized and capacity is admitted; then verify exact promoted/served source containing af260924, matching assets and startup. Preserve the stop evidence, resource gates and last good NEXT; no manual substitute build.",
+      "blocker": {
+        "state": "active",
+        "kind": "pipeline_stopped_and_disk_reserve",
+        "description": "Existing watcher stopped cleanly2026-11-05T01:21:53Z after stop-request01:21:21Z (operator/reason unconfirmed); guardian exit0/owned0. Current D free12958261248 bytes is also below unchanged13958643712 required. Fix is published; NEXT remains0c095259 and target delivery is unverified.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-05T01:25:17.856925+00:00",
+        "evidence": [
+          "docs/testing/blackjack_draft_risk_notice_release_20261105.md",
+          "docs/testing/blackjack_draft_risk_notice_release_20261105.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\blackjack-draft-risk-final-pipeline-blockers.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "blackjack_draft_notice_presentation",
+          "description": "If reproduced, narrow the notice lifecycle for unfunded draft edits; preserve financial rules/state, RNG, clocks, scheduling, geometry, fixed 16:9 layout and touch/focus behavior."
+        }
+      ],
+      "updated_at": "2026-11-05T01:25:17.856925+00:00"
     }
   ],
   "batches": [
