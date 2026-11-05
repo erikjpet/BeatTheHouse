@@ -1,0 +1,184 @@
+{
+  "schema": "bth.audit_continuation020/v1",
+  "observed_at": "2026-11-05T20:20:09.821707+00:00",
+  "base_main": "7f0f60b1ac217b27ff444bd883becdde7a0a2fa8",
+  "scope": "Four source-supported stale test fixture repairs, exact complete Crew save attribution and one-line current fresh reputation initialization. Whole audit remains Open.",
+  "fixture_commit": "e772560f4249313e1a9bea0652af605bb3f8e57d",
+  "production_initializer_commit": "363ece78f55ba4bbccf78a67ad6f54c75e521e13",
+  "completed_ids_with_fixture_commit": [
+    "BTH061-AUDIT-ACTION-RESULT-BASELINE-004",
+    "BTH061-AUDIT-BLACKJACK-BASELINE-004",
+    "BTH061-AUDIT-CRAPS-BASELINE-004",
+    "BTH061-AUDIT-PULLTABS-DELTA-020"
+  ],
+  "open_ids_with_source_commit": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-CREW-BASELINE-004",
+    "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020"
+  ],
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "NEXT_assigned_separately": true,
+  "source_epochs": {
+    "files": 1247,
+    "baseline_C17": "c17d937d8dad5626ac259b27623eccaf64c4e9fea1923234f45147df98153c5a",
+    "test_fixtures_C20": "5253988dfa7b76c87ad5b22467af3c8201d4c4786673f8ad5dd79102956ef7e1",
+    "fresh_initializer": "fd2c64d5c05813d68648706b9ba4779aa9a79a9724c41039422ba21e0b593dec",
+    "RunState_before": "262b559c7105c285fbba0d6910da959cae53a4ca6b0e8aba27c85e86a9f6138b",
+    "RunState_after": "712b1f3a9170aff04501e55747bec27dd63bd0fd1cc819357ac92e6d87b715ac",
+    "other_RunState_functions_byte_exact": 1010,
+    "from_C20_only_RunState_changes": true,
+    "unpublished_test_in_local_native_epoch": {
+      "path": "scripts/tests/scenario_validation_memo_type_safety_check.gd",
+      "sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+      "included_by_original_game_composer": false,
+      "published": false
+    }
+  },
+  "failures": {
+    "original_complete_gamegroups_before": 10,
+    "after_four_fixture_repairs": 2,
+    "after_fresh_initializer": 0,
+    "complete_VP_contract_before": 1,
+    "complete_VP_contract_after_fixture_repairs": 0,
+    "VP_after_initializer_rerun": false,
+    "legacy_reputation_hourly_before": {
+      "checks": 40,
+      "failures": 0
+    },
+    "legacy_reputation_hourly_after": {
+      "checks": 40,
+      "failures": 0
+    }
+  },
+  "causal_capture": {
+    "root_checks": 1659,
+    "independent_checks": 71,
+    "complete_JSONs": 4,
+    "opaque_input_binaries": 2,
+    "input_binaries_unchanged": true,
+    "fresh_nodes": 798,
+    "minimal_nodes": 791,
+    "sole_difference_in_both": {
+      "path": "/narrative_flags/crew_reputation",
+      "kind": "added",
+      "after_type": "int",
+      "after": 0
+    },
+    "exact_added_JSON_bytes": ",\"crew_reputation\":0",
+    "added_bytes_each": 20,
+    "all_original_bytes_and_complete_Crew_projection_unchanged": true,
+    "binary_or_capsule_decoding": false
+  },
+  "initializer_qualification": {
+    "qualified": true,
+    "checks": 98,
+    "whole_game_groups_passed": true,
+    "original_Crew_assertions_changed": false,
+    "legacy_reputation_hourly_before_and_after_passed": true,
+    "records": [
+      {
+        "name": "crew-delivery020-baseline-r1",
+        "passed": true,
+        "native_wall_seconds": 28.28254747390747,
+        "cpu_seconds": 28.25,
+        "started_utc": 1793909305.1056151,
+        "finished_utc": 1793909333.3881626,
+        "guarded_assigned_closed0": true,
+        "job_sha256": "eb4772d7990924c5737b1801573c7bb9684bb2458f80da8379f439c1240a669a",
+        "checks": 40,
+        "failures": [],
+        "script_sha256": "29d764dfde2f9b3b01c8301b678ce44dd7d949d936d86b05844370cc082bffce"
+      },
+      {
+        "name": "catalog020-crew-initializer-games-r1",
+        "passed": true,
+        "native_wall_seconds": 56.9315710067749,
+        "cpu_seconds": 56.640625,
+        "started_utc": 1793909424.1435947,
+        "finished_utc": 1793909481.0751657,
+        "guarded_assigned_closed0": true,
+        "job_sha256": "491a4745294f7a5c4e9bbb6ee68df61e452d770d710f6b72a91606e31d2572e8",
+        "requested_check_ids": [
+          "game_surface_contracts",
+          "all_game_module_contracts"
+        ],
+        "failure_count": 0,
+        "actual_runner_sha256": "b3cc384d32f2bcd8f9a540844201bcb35bd2d26cb1cf1ff55369636820ff98dc"
+      },
+      {
+        "name": "crew-delivery020-candidate-r1",
+        "passed": true,
+        "native_wall_seconds": 26.789652824401855,
+        "cpu_seconds": 26.734375,
+        "started_utc": 1793909646.5043297,
+        "finished_utc": 1793909673.2939825,
+        "guarded_assigned_closed0": true,
+        "job_sha256": "dc3f36d49e090d401f8b74f70502fbe43ff035bfcb26d1fe4ff64c50b79b4bb8",
+        "checks": 40,
+        "failures": [],
+        "script_sha256": "29d764dfde2f9b3b01c8301b678ce44dd7d949d936d86b05844370cc082bffce"
+      }
+    ],
+    "independent_native_checks": 86
+  },
+  "active_legacy_authority_retained": "Missing shared reputation deliberately derives highest member trust, then restore freezes/clamps it. Fresh current standing is explicitly0. Getter/setter/restore and supported trust-write order remain byte-identical; raw direct dictionary mutation is not universal behavior parity.",
+  "publication": {
+    "observed_at": "2026-11-05T20:20:09.739535+00:00",
+    "source_commit": "363ece78f55ba4bbccf78a67ad6f54c75e521e13",
+    "normal_push_confirmed": true,
+    "remote_main_ls_remote_exact": "363ece78f55ba4bbccf78a67ad6f54c75e521e13",
+    "scope": "Exactlyone RunState.start_new initializer line; original gamegroups0fail, complete originallegacy/hourly40before+afterpass; independent native86. Allother1010functions/legacyrestorebyteexact.",
+    "source_raw_sha256": "712b1f3a9170aff04501e55747bec27dd63bd0fd1cc819357ac92e6d87b715ac",
+    "root_qualification_checks": 98,
+    "independent_native_review_sha256": "a567bf9fbe566a6b04d1a099991256d06a2a3eec85bf89944fba7517cac83c64",
+    "NEXT_verified": false,
+    "NEXT_scope": "Required exactdelivery assignedseparately; worker didnot operate/bypass pipeline/guards.",
+    "Crew_tasks_remain_open": true,
+    "whole_audit_open": true
+  },
+  "runtime_inventory": {
+    "before_phase": 192,
+    "after_phase": 200,
+    "prior192_prefix_preserved": true,
+    "owned_new_Jobs_closed0": 8,
+    "global_process_census": false
+  },
+  "remaining_scope": "Whole-codebase coverage and original content180, Systems300/comparator43.712/outer330 and shard55/all220 acceptance remain Open. No excluded diagnostic retry/reroute or paused implementation resumed; no NEXT operation.",
+  "corrections_preserved": [
+    "First current game baseline assumption9 rejected by actual10; additional PullTabs failure tracked before implementation.",
+    "Draft mergeR1 list-manifest parsing error retained; corrected R2 before any canonical application.",
+    "Default-only standalone bootstrapR1 failed inherited PSModulePath casing; R2 used exact case-insensitive run_stage006 environment removal. No packet/source change or native rerun.",
+    "Historical registration pathwalk draft typo corrected in three own summaries to798+791=1589; original registration artifact retained."
+  ],
+  "evidence_sha256": {
+    "evidence/catalog020-candidate-root-postcheck-r1.json": "9f958c2339e89d81dfee9dffc01f3a66367069ffb53f4a5757caa492356d2d23",
+    "evidence/catalog020-candidate-independent-native-review-r1.json": "faa612468d18512e80d2c0e4f0ee20a6ad81a7a503e4b61bfc31fe1507fe594f",
+    "evidence/catalog020-fixture-main-publication-r1.json": "eeace12510c4493cf3d2c7f6762a91cdfed95ee3bfa8a732bd2c34cb5ee0d88b",
+    "evidence/catalog020-crew-capture-root-postcheck-r1.json": "db7ad32a46cb3cabfd5246179b11866ba66dc3a5ee8a5576056a9e5afa7a2f46",
+    "evidence/catalog020-crew-save-capture-independent-native-review-r1.json": "d778e7bdd6ac03d2691706e0a2ee9e80c999c3dc99f3928b91b6e6a1c1bf7826",
+    "evidence/catalog020-crew-initializer-independent-static-review-r1.json": "baff3626b972262aad475b6b86cf9a1313283ae38db941927c2979f2971a4153",
+    "evidence/catalog020-crew-initializer-application-r1.json": "6f7c63d73d32089223ef82fa60da6d5357a0690bcf389cf0b0f7b52cbff70906",
+    "evidence/catalog020-crew-initializer-root-postcheck-r1.json": "728a8acd12a64dc2a09924d8f935e99e65c92d0cc3916faed2e779d19ced2bc8",
+    "evidence/catalog020-crew-initializer-independent-native-review-r1.json": "a567bf9fbe566a6b04d1a099991256d06a2a3eec85bf89944fba7517cac83c64",
+    "evidence/catalog020-crew-initializer-main-publication-r1.json": "1bd4676c46a02677a3fced2a67f4c1e77fdf7ca7669224a0c65bb636129f3dd6",
+    "evidence/crew-delivery020-baseline-independent-static-review-r1.json": "01d85537399c69b78680c9fbeb0586574f9f00b63827e148b69b19a3ba159040",
+    "evidence/crew-delivery020-candidate-independent-static-review-r1.json": "ddba4d2f12e993e62e470672e9b4380ba97b0f26bd8215d86c07e042138c72f0"
+  },
+  "prepublication_manual_reconciliation": {
+    "current": {
+      "findings": 180,
+      "own_findings": 0,
+      "outside_runtime_errors": 125,
+      "runtime_instances": 200,
+      "receipt_sha256": "698d3712a868c3f5b4cf26f419a4227e9b8ebcbb1456c23e3914f0869b580f57"
+    },
+    "all": {
+      "findings": 796,
+      "own_findings": 0,
+      "outside_runtime_errors": 125,
+      "runtime_instances": 200,
+      "receipt_sha256": "fb22dc6a2cdc7ace18cf3d871608e94629f3f487f2da031fde0e229d2d2751fa"
+    }
+  }
+}

@@ -1695,6 +1695,34 @@
       "retained88_ui_method_blocks_exact": true,
       "canonical_static_baseline_before": 5,
       "canonical_static_final": 0
+    },
+    {
+      "phase": "020",
+      "observed_at": "2026-11-05T20:20:09.821707+00:00",
+      "parent_id": "BTH061-AUDIT-001",
+      "scope": "Four source-supported stale test fixture repairs, exact complete Crew save attribution and one-line current fresh reputation initialization. Whole audit remains Open.",
+      "fixture_commit": "e772560f4249313e1a9bea0652af605bb3f8e57d",
+      "production_initializer_commit": "363ece78f55ba4bbccf78a67ad6f54c75e521e13",
+      "completed_fixture_ids": [
+        "BTH061-AUDIT-ACTION-RESULT-BASELINE-004",
+        "BTH061-AUDIT-BLACKJACK-BASELINE-004",
+        "BTH061-AUDIT-CRAPS-BASELINE-004",
+        "BTH061-AUDIT-PULLTABS-DELTA-020"
+      ],
+      "open_production_ids": [
+        "BTH061-AUDIT-CREW-BASELINE-004",
+        "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020"
+      ],
+      "current_complete_games_failures": 0,
+      "legacy_reputation_hourly_checks_before_after": [
+        40,
+        40
+      ],
+      "confirmed_obsolete_production_removals": [],
+      "retained_active_legacy": "Highest-member-trust shared-reputation restore recovery; byte-identical authority.",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_020.md",
+      "full_objective_complete": false,
+      "NEXT_verified": false
     }
   ]
 }
