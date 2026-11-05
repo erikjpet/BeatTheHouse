@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T01:13:13.122615+00:00",
+  "observed_at": "2026-11-05T02:00:55.665517+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -17,7 +17,8 @@
       "docs/testing/roulette_journal_currency_20261104.json",
       "docs/testing/quarter_roulette_publication_20261104.json",
       "docs/testing/roulette_sealed_pending_r08.json",
-      "docs/testing/blackjack_draft_risk_notice_20261105.json"
+      "docs/testing/blackjack_draft_risk_notice_20261105.json",
+      "docs/testing/pulltabs_journal_currency_20261105.json"
     ]
   },
   "instances": [
@@ -6016,6 +6017,338 @@
           "docs/testing/blackjack_draft_risk_notice_20261105.json"
         ],
         "limit": "Owned-process closure only; functional baseline and diagnostic failures retained, no other runtime re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-journal-baseline:9cfb9edbfb71430d82effd569b525fda",
+      "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "9cfb9edbfb71430d82effd569b525fda",
+        "key": "owned-native-job:9cfb9edbfb71430d82effd569b525fda:pid:5556",
+        "started_at": "2026-11-05T01:48:19.836671+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:48:38.337660+00:00",
+        "key": "owned-native-job:9cfb9edbfb71430d82effd569b525fda:pid:5556",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:48:38.337660+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:48:38.337660+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "9cfb9edbfb71430d82effd569b525fda",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:48:38.337660+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-baseline.json",
+          "docs/testing/pulltabs_journal_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Expected baseline and diagnostic test failures retained; no other runtime was re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-journal-producer:83470908f1894161a3b76c154573ac2d",
+      "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "83470908f1894161a3b76c154573ac2d",
+        "key": "owned-native-job:83470908f1894161a3b76c154573ac2d:pid:23584",
+        "started_at": "2026-11-05T01:51:20.809256+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:51:38.936872+00:00",
+        "key": "owned-native-job:83470908f1894161a3b76c154573ac2d:pid:23584",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:51:38.936872+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:51:38.936872+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "83470908f1894161a3b76c154573ac2d",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:51:38.936872+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer.json",
+          "docs/testing/pulltabs_journal_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Expected baseline and diagnostic test failures retained; no other runtime was re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-journal-producer-qualified:d4240b5a377b44308988a11f850ab971",
+      "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d4240b5a377b44308988a11f850ab971",
+        "key": "owned-native-job:d4240b5a377b44308988a11f850ab971:pid:25400",
+        "started_at": "2026-11-05T01:54:41.390167+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:54:59.351296+00:00",
+        "key": "owned-native-job:d4240b5a377b44308988a11f850ab971:pid:25400",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:54:59.351296+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:54:59.351296+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d4240b5a377b44308988a11f850ab971",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:54:59.351296+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-producer-qualified.json",
+          "docs/testing/pulltabs_journal_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Expected baseline and diagnostic test failures retained; no other runtime was re-observed."
+      }
+    },
+    {
+      "instance_id": "task6:pulltabs-journal-cold-qualified:eaa42cf107e148ce8afd8fc08b66d206",
+      "task_id": "BTH-JOURNAL-PULLTABS-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "eaa42cf107e148ce8afd8fc08b66d206",
+        "key": "owned-native-job:eaa42cf107e148ce8afd8fc08b66d206:pid:21604",
+        "started_at": "2026-11-05T01:56:14.229926+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+          "Private Windows Job assigned before execution; nonce-bound receipt."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T01:56:26.620318+00:00",
+        "key": "owned-native-job:eaa42cf107e148ce8afd8fc08b66d206:pid:21604",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+          "Owned Job active_at_release=0; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T01:56:26.620318+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T01:56:26.620318+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "eaa42cf107e148ce8afd8fc08b66d206",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+            "docs/testing/pulltabs_journal_currency_20261105.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T01:56:26.620318+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pulltabs-journal-cold-qualified.json",
+          "docs/testing/pulltabs_journal_currency_20261105.json"
+        ],
+        "limit": "Actual owned-process closure only. Expected baseline and diagnostic test failures retained; no other runtime was re-observed."
       }
     }
   ],
