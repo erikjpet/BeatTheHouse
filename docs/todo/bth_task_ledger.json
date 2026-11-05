@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T02:00:55.665517+00:00",
+  "updated_at": "2026-11-05T02:04:55.187085+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21357,8 +21357,8 @@
       "parent_ids": [],
       "group": "current",
       "objective": {
-        "text": "Investigate the distinct R13 Pull Tabs journal-currency omission on newly produced history. Trace current purchase, buy-set, redeem, zero-sort and scan rows as appropriate, and fix typed action-time currency/current-row delta if confirmed. Qualify focused cash and Grand-chip cases plus official Save/fresh-process cold and exactly-once accounting, independent review and an exact tested local commit. Preserve wallets, game rules, RNG, authority/security, tickets, piles, stock and legacy unknown-currency rows. Keep original R13/R11/R12 profiles untouched and item/scenario work paused; do not implement item effects. This task is independent producer coverage and does not close BTH061-PULLTABS-SAVE-001 or related family objectives. Current scope is local investigation/fix/test/commit only.",
-        "source": "Trusted parent local-only delegation2026-11-05 after parent deduplication found no existing Pull Tabs currency ID; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1016.json. Fresh branch fix/pulltabs-journal-currency-20261105 starts from public0e93f761f864a3bb844fabda48efe05f63792a98. Pinned f305 observation is historical; no current NEXT reproduction or publication authorization is inferred.",
+        "text": "Investigate the distinct R13 Pull Tabs journal-currency omission on newly produced history. Trace current purchase, buy-set, redeem, zero-sort and scan rows as appropriate, and fix typed action-time currency/current-row delta if confirmed. Qualify focused cash and Grand-chip cases plus official Save/fresh-process cold and exactly-once accounting, independent review and an exact tested local commit. Preserve wallets, game rules, RNG, authority/security, tickets, piles, stock and legacy unknown-currency rows. Keep original R13/R11/R12 profiles untouched and item/scenario work paused; do not implement item effects. This task is independent producer coverage and does not close BTH061-PULLTABS-SAVE-001 or related family objectives. Current scope is local investigation/fix/test/commit only.\n\nNew authorized release follow-through: publish the tested scoped journal fix to main and verify exact NEXT promoted/served source/tree, matching assets, startup and changed receipt behavior where feasible through the existing guarded watcher. Preserve the four accepted local checks and their explicit scope; keep this expanded objective Open until delivery is qualified.",
+        "source": "Trusted parent local-only delegation2026-11-05 after parent deduplication found no existing Pull Tabs currency ID; E:/CodexQA/BTH/Broad/r10-20261104/evidence/qa-continuation-1016.json. Fresh branch fix/pulltabs-journal-currency-20261105 starts from public0e93f761f864a3bb844fabda48efe05f63792a98. Pinned f305 observation is historical; no current NEXT reproduction or publication authorization is inferred.\n\nTrusted parent delegation2026-11-05 newly authorizes publication of tested Pull Tabs journal fix 2e33f54fbfb9b70141e0bc775231b43aa2a653f5 and normal guarded NEXT delivery under the trusted user instruction Yes push all finished work to next. Preserve completed local qualification, exact fix association and bounded acceptance_scope. Keep the full task Open until actual publication and exact deployed acceptance are evidenced; do not bypass the existing export reserve.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -21404,6 +21404,13 @@
               "docs/testing/pulltabs_journal_currency_20261105.json",
               "commit:2e33f54fbfb9b70141e0bc775231b43aa2a653f5"
             ]
+          },
+          {
+            "id": "publication_next_delivery",
+            "description": "Publish the exact tested journal fix to main and record resulting commit/tree and fix ancestry; then verify the exact promoted/served NEXT source/tree, matching assets and basic startup, plus scoped changed receipt behavior where feasible. Preserve the existing export reserve and distinguish bounded native qualification from any unobserved Web behavior.",
+            "required": true,
+            "state": "open",
+            "evidence": []
           }
         ],
         "coverage": {
@@ -21426,8 +21433,8 @@
           ]
         }
       },
-      "state": "complete",
-      "status": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+      "state": "open",
+      "status": "LOCAL_COMPLETE_PUBLICATION_NEXT_ACCEPTANCE_REQUESTED",
       "owner": {
         "name": "Fix Back Alley travel / Pull Tabs journal currency",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -21443,11 +21450,11 @@
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Local investigation/fix/test/commit only; no publication or NEXT delivery is authorized or claimed."
+        "scope": "Newly authorized normal main/NEXT delivery; exact publication/deployed target and acceptance are pending, without bypassing the existing export reserve."
       },
       "evidence": [
         {
@@ -21464,20 +21471,22 @@
           "kind": "review",
           "reference": "docs/testing/pulltabs_journal_currency_20261105.md",
           "summary": "Parent-confirmed independent source/final receipt approval: exact product/test/Journal hashes match,198 producer plus26 cold checks pass, all four actual nonce-bound Jobs ended with owned0, and source-only scanner/practice-redemption limits are accurate."
+        },
+        {
+          "kind": "authorization",
+          "reference": "Trusted parent delegation2026-11-05",
+          "summary": "Trusted parent delegation2026-11-05 newly authorizes publication of tested Pull Tabs journal fix 2e33f54fbfb9b70141e0bc775231b43aa2a653f5 and normal guarded NEXT delivery under the trusted user instruction Yes push all finished work to next. Preserve completed local qualification, exact fix association and bounded acceptance_scope. Keep the full task Open until actual publication and exact deployed acceptance are evidenced; do not bypass the existing export reserve."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Local producer-currency objective complete with exact tested commit and qualified receipt; no publication/NEXT action requested. Original save-rollback objective and other family work remain independently open.",
+      "next_action": "Parent reconciles fresh main and independently reviews the scoped release, publishes tested journal fix normally, then follows the existing guarded NEXT watcher and records exact delivery acceptance.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-05T02:00:55.665517+00:00",
-        "evidence": [
-          "docs/testing/pulltabs_journal_currency_20261105.md",
-          "docs/testing/pulltabs_journal_currency_20261105.json"
-        ]
+        "observed_at": "2026-11-05T02:04:55.187085+00:00",
+        "evidence": []
       },
       "planned_app_changes": [
         {
@@ -21485,7 +21494,7 @@
           "description": "If confirmed, narrowly add typed currency and current-row delta to applicable new receipt producers; preserve financial/gameplay state and rules, RNG, authority/security, tickets/piles/stock, legacy unknown rows, scheduling, fixed 16:9/touch/focus and paused item/scenario effects."
         }
       ],
-      "updated_at": "2026-11-05T02:00:55.665517+00:00"
+      "updated_at": "2026-11-05T02:04:55.187085+00:00"
     },
     {
       "id": "BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001",
@@ -21496,7 +21505,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate the distinct source-supported Pull Tabs Grand-default practice redemption route: practice environment id practice_pull_tabs may fail existing id-only Grand routing when the redemption result omits archetype, causing a cash credit instead of chips. Reproduce the actual context, fix correct currency routing if confirmed under a separate assignment without double application, qualify wallets/tickets/piles/exactly-once official Save/fresh-cold custody, review and associate a tested commit. Registering the finding and completing the journal metadata task do not establish runtime reproduction or authorize an accounting change in that task. Preserve original profiles, game rules/RNG/authority/security and paused item/scenario work.",
-        "source": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation.",
+        "source": "Trusted parent source-supported finding2026-11-05 during BTH-JOURNAL-PULLTABS-CURRENCY-001 fixture correction. Real public practice uses Grand default but environment id practice_pull_tabs; redemption result lacks archetype, and existing id-only apply routing can credit cash rather than chips. This is not runtime-reproduced. Current journal qualification uses canonical grand_casino_1 for redemption; native Host Grand coverage is purchase only. No accounting-change implementation is authorized in the current journal delegation.\n\nTrusted parent delegation2026-11-05 now assigns the active task6 parent to reproduce the distinct actual practice-redemption context and fix the route if confirmed. This is separate from the journal metadata fix; no prior source-only observation is relabeled as runtime reproduction.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -21535,11 +21544,11 @@
         }
       },
       "state": "open",
-      "status": "OPEN_SOURCE_SUPPORTED_RUNTIME_UNREPRODUCED_NEEDS_OWNER",
+      "status": "OPEN_ACTUAL_PRACTICE_REPRODUCTION_IN_PROGRESS",
       "owner": {
-        "name": "Unassigned / coordinator follow-up needed",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "name": "Fix Back Alley travel / Pull Tabs practice redemption",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
       },
       "commits": [],
       "deployment": {
@@ -21557,17 +21566,22 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Coordinator assigns an actual follow-up owner, then reproduce the real Grand-default practice context and trace redemption result application before any separate route fix; preserve canonical Grand journal qualification and record runtime evidence separately from this source-supported lead.",
+      "next_action": "Active parent reproduces actual public Grand-default practice_pull_tabs redemption using a new owned context, then isolates and fixes currency application if confirmed without duplicate credit; qualify wallets, official Save/fresh-cold and independent reviewed commit.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-05T01:57:40.697250+00:00",
+        "observed_at": "2026-11-05T02:04:55.187085+00:00",
         "evidence": []
       },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-05T01:57:40.697250+00:00"
+      "planned_app_changes": [
+        {
+          "scope": "pulltabs_practice_redemption_currency_route",
+          "description": "If confirmed, narrowly correct actual Grand-default practice redemption currency routing while preserving one normal result application, cash/canonical-Grand behavior, security, wallets/ticket custody, RNG/rules, fixed16:9/touch/focus and paused item/scenario effects."
+        }
+      ],
+      "updated_at": "2026-11-05T02:04:55.187085+00:00"
     }
   ],
   "batches": [
