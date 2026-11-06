@@ -1959,6 +1959,32 @@
       "bounded_body_review_state": "complete",
       "scoped_publication_retention_state": "complete",
       "corrective_tasks_state": "open_required_NEXT"
+    },
+    {
+      "phase": "027",
+      "observed_at": "2026-11-06T03:22:31.595316+00:00",
+      "base_local_HEAD": "5995a6de5244bdf28355e7fa710bcdb96279f1a3",
+      "body_task": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
+      "persistence_task": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "source_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+      "source_count": 1248,
+      "source_changes": 0,
+      "new_whole_body_area_count": 2,
+      "recorded_core_reviewed": 81,
+      "recorded_core_remaining": 14,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "native_checks": 26,
+      "native_failures": 0,
+      "persistence_scope": "Detached publicmodule actualfilesystem writefailure/skip/later-save recovery; fullhost/checkpoint/serialized-run/Continue unqualified, leadOpen.",
+      "native_jobs": 1,
+      "runtime_inventory": 219,
+      "prior218_runtime_records_exact": true,
+      "denied_publication_retried": false,
+      "required_NEXT_verified": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_027.json",
+      "evidence_commit": null,
+      "full_objective_complete": false
     }
   ]
 }

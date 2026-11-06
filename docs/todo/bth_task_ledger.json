@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T02:54:48.043844+00:00",
+  "updated_at": "2026-11-06T03:22:31.595316+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12799,13 +12799,11 @@
             },
             {
               "id": "scripts/core/crew_recruitment_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body and every declaration independently reviewed with current callers, dispatch/history and compatibility evidence. All source retained; no runtime bug, cleanup or whole-audit acceptance."
             },
             {
               "id": "scripts/core/crew_run_facade.gd",
@@ -12849,13 +12847,11 @@
             },
             {
               "id": "scripts/core/delivery_run_facade.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body and every declaration independently reviewed with current callers, dispatch/history and compatibility evidence. All source retained; no runtime bug, cleanup or whole-audit acceptance."
             },
             {
               "id": "scripts/core/delivery_run_model.gd",
@@ -13635,7 +13631,7 @@
         }
       },
       "state": "open",
-      "status": "TWO_QUALIFIED_RITUAL_FIXES_LOCAL_PUBLICATION_HYPOTHESIS_FALSIFIED_CORE_COVERAGE_79_OF_95_026",
+      "status": "DETACHED_META_RETRY_GAP_REPRODUCED_TWO_MORE_CORE_BODIES_QUALIFIED_81_OF_95_027",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14045,7 +14041,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue the remaining16core and three broader review areas and qualify the conditional terminal meta persistence lead. RequiredNEXT verification for grammar025/anchor025 remains Open. Preserve cleanup stop, denied publication without retry, original commits, paused/excluded/numericNEXT work.",
+      "next_action": "Associate phase027 evidence; then qualify full terminal host/checkpoint/Continue persistence and review remaining14core plus three broader areas. Keep whole audit and requiredNEXT source fixes Open; preserve all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14057,7 +14053,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:54:48.043844+00:00"
+      "updated_at": "2026-11-06T03:22:31.595316+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26316,7 +26312,10 @@
             "description": "Ordinary actual production storage failure controls qualify actual persistence/Continue scope without injectedcallbacks, capturedsaves/keys, guardweakening or speculative bugclaims.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-root-postcheck-r2.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json"
+            ]
           },
           {
             "id": "actual-associated-evidence-commit",
@@ -26333,7 +26332,7 @@
         }
       },
       "state": "open",
-      "status": "CONDITIONAL_CROSS_STORE_PERSISTENCE_LEAD_SOURCE_REVIEWED_RUNTIME_OPEN_026",
+      "status": "DETACHED_REAL_STORAGE_FAILURE_RETRY_GAP_REPRODUCED_HOST_CONTINUE_OPEN_027",
       "owner": {
         "name": "Audit phase026 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -26360,10 +26359,20 @@
           "kind": "conditional_terminal_meta_persistence_source_lead026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json",
           "summary": "Independent trace retains crossstore retrylead; latermeta save canpersistdirtymemory, no current loss/dup/restore bug demonstrated."
+        },
+        {
+          "kind": "detached_public_module_real_filesystem_failure027",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-root-postcheck-r2.json",
+          "summary": "Unchanged native guard26healthychecks0failures; actual temp-directory obstruction gives saveerror12, preservesprimary, live destroyedcard0/processedflags true, repeat skips; freshMeta oldcard1 and sameprocessedliveRun skips. Later explicitsave persists0. Full host/checkpoint/serializedrun/Continue/player scope remains unqualified; all generatedfiles preserved."
+        },
+        {
+          "kind": "independent_detached_storage_fault_results027",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json",
+          "summary": "Independent originalfooter/26healthycontrols/raw2observations/custody/guard review confirms bounded retry-suppression gap and later-save recovery. Actual terminal UI/checkpoint/serializedRun/Continue remains unqualified; no production correction."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace and qualify ordinary generated terminal outcome with actual owned storage failure, alternative successfulmeta-save/terminalcheckpoint paths and Continue semantics. Preserve source until evidence supports a scoped correction; no private callbacks or pausedfeature work.",
+      "next_action": "Qualify the complete ordinary terminal host flow and original processed-run checkpoint/Continue boundary with supported generated state before selecting a cross-store correction. Detached module evidence proves retry suppression and later-save recovery only; do not weaken exactly-once, authority or guarded execution.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -26373,7 +26382,98 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:54:48.043844+00:00"
+      "updated_at": "2026-11-06T03:22:31.595316+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
+      "name": "Review remaining Crew recruitment and delivery facade bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Complete pinned current full-body review of CrewRecruitmentModel and DeliveryRunFacade with current callers, dispatch, historical deltas and compatibility evidence. Retain all source under the cleanup stop; no paused item/scenario implementation or publication retry.",
+        "source": "Parent continuation instruction: qualify persistence lead and remaining audit coverage independently, preserving local fixes/evidence and denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact current source, supported inputs and actual outcomes qualify the bounded source or DTO scope with explicit authority/runtime limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-two-body-root-byte-check-r1.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/crew_recruitment_model.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-peer-review-r1.json"
+              ],
+              "scope": "Complete pinned current body and every declaration independently reviewed with current callers, dispatch/history and compatibility evidence. All source retained; no runtime bug, cleanup or whole-audit acceptance."
+            },
+            {
+              "id": "scripts/core/delivery_run_facade.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-peer-review-r1.json"
+              ],
+              "scope": "Complete pinned current body and every declaration independently reviewed with current callers, dispatch/history and compatibility evidence. All source retained; no runtime bug, cleanup or whole-audit acceptance."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "TWO_CURRENT_CORE_BODIES_INDEPENDENTLY_QUALIFIED_EVIDENCE_COMMIT_PENDING_027",
+      "owner": {
+        "name": "Audit phase027 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage027",
+          "reference": "docs/testing/deprecated_code_audit_continuation_027.json",
+          "summary": "Two independently qualified current bodies1568lines80methods13constants5fields,98functional declarations+4identitycards allretained; exact current callers/dispatch/history/compatibility addressed. Delivery authorR1 metadataerrata corrected in preserved R2. Evidencecommit associationpending; no sourcechange/runtimebug/removal claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual evidence commit before completing this bounded two-body review. Preserve current Crew recruitment/save migration, delivery authentication/rollback/public wrappers, all source and the open whole-codebase audit.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent source review open; no user/save/scheduler hold. Prior main publication denial and cleanup stop remain separate.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T03:02:14.312460+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T03:22:31.595316+00:00"
     }
   ],
   "batches": [

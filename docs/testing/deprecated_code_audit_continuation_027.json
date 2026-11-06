@@ -1,0 +1,199 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/027",
+  "phase": "027",
+  "observed_at": "2026-11-06T03:22:31.595316+00:00",
+  "status": "DETACHED_STORAGE_GAP_QUALIFIED_TWO_BODY_REVIEW_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING",
+  "base_local_HEAD": "5995a6de5244bdf28355e7fa710bcdb96279f1a3",
+  "associated_evidence_commit": null,
+  "parent_task": "BTH061-AUDIT-001",
+  "body_task": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
+  "persistence_task": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+  "source_count": 1248,
+  "source_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+  "production_or_test_source_changes": 0,
+  "production_removals": [],
+  "prior_local_ritual_fix_commit_preserved": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+  "full_source_map": "evidence/meta027-proposal-r2/source-basis.json",
+  "new_body_coverage": {
+    "files": {
+      "scripts/core/crew_recruitment_model.gd": {
+        "sha256": "fee232ab373bfb50a9c20a0cbc90d2af0d8f0edef1ae01d1335f83dbc0539b23",
+        "lines": 723,
+        "methods": 41,
+        "constants": 10,
+        "fields": 1
+      },
+      "scripts/core/delivery_run_facade.gd": {
+        "sha256": "555390bf2a6cdd5df04c96dc17e47668d31b90db22a4c90e0a9cc45104f104f5",
+        "lines": 845,
+        "methods": 39,
+        "constants": 3,
+        "fields": 4
+      }
+    },
+    "lines": 1568,
+    "methods": 80,
+    "constants": 13,
+    "fields": 5,
+    "functional_declaration_raw_hashes_checked": 98,
+    "additional_identity_cards": 4,
+    "all_retained": true,
+    "independent_reciprocal_review": true,
+    "core_reviewed_before": 79,
+    "core_reviewed": 81,
+    "core_total": 95,
+    "core_remaining": 14,
+    "broader_remaining": 3,
+    "whole_audit_complete": false
+  },
+  "persistence_qualification": {
+    "fidelity": "Detached actual production modules with fresh generated Meta data and RunState.start_new/fail_run; no environment/game/player action or terminal UI host route. Same live processed RunState reused with a new Meta service; no serialized RunState or cold Continue.",
+    "public_APIs": [
+      "MetaCollectionService.load/mint_players_card/save/normal_run_start_modifiers/owned_instances",
+      "RunState.start_new/challenge_modifiers/fail_run/is_terminal",
+      "CollectionDropService.apply_terminal_special_outcome"
+    ],
+    "fault": "Actual directory, checked as directory/nonfile, obstructs temporary meta write after healthy baseline save/reload. Nonrecursive same-private-root rename preserves blocker and sentinel; no deletion. No debugfault or injected validator/handler.",
+    "original_native_exit": 0,
+    "checks": 26,
+    "failures": [],
+    "original_observations": [
+      {
+        "case": "failed_write_then_repeat_and_module_restart",
+        "decay_flag_after_apply": true,
+        "first_mutated": true,
+        "first_owned_count": 0,
+        "live_owned_after_repeat": 0,
+        "primary_unchanged": true,
+        "processed_flag_after_apply": true,
+        "repeat_mutated": false,
+        "restarted_owned_after_repeat": 1,
+        "restarted_owned_before_repeat": 1,
+        "same_processed_live_run_on_restarted_meta_mutated": false,
+        "save_error": 12
+      },
+      {
+        "case": "explicit_later_save_recovery_control",
+        "durable_owned_count": 0,
+        "original_live_owned_count": 0,
+        "primary_changed_from_baseline": true,
+        "repeat_mutated": false
+      }
+    ],
+    "adjudication": "Actual save error12 preserves baseline primary, but processed+decay flags remain true. Same live terminal retry returns mutatedfalse; a fresh Meta service loads the prior one-card state and sameprocessedRun skips. Explicit later save of original in-memory zero-card state succeeds and a fresh Meta.load sees zero. This confirms the module retry boundary and a recovery control, not a player loss or run Continue failure.",
+    "source_caller_boundary": "foundation_main21681-21687 saves only when mutated; routes21535-21610 process meta before independent terminal checkpoint21613-21635. Later normal meta saves can recover in-memory effects; terminal host/checkpoint/serialized-run/Continue must be qualified before a cross-store correction.",
+    "state": "Open",
+    "production_fix": false,
+    "healthy_check_count_does_not_close_lead": true,
+    "next_supported_candidate_route": [
+      "Normal FoundationMain attached to SceneTree, start_foundation_run(seed, standard config, true) succeeds with natural valid room and meta modifiers.",
+      "After baseline healthy storage, same-owned temp-directory fault and public run_state.fail_run; save_run_from_menu uses actual Save callback.",
+      "Fresh normal host uses load_foundation_run or start_or_continue_primary; inspect save_status_snapshot and terminal flags plus freshly loaded Meta."
+    ],
+    "next_route_status": "Source-identified only; needs separately admitted guarded generated-host qualification. No user-input hold."
+  },
+  "native_execution": {
+    "actual_command": "python -X utf8 run_stage006.py evidence/meta027-proposal-r2/baseline-spec.json",
+    "spec_sha256": "c002b7ce599bbbf7fbfdb872a9d1641088cefb498f6886e77582e59739911e50",
+    "actual_script_sha256": "9bb15007ef9567bf3e6d1fa51a13890f88c4110c3b5a839edd7880d94b9f9e1a",
+    "actual_script_resource": "res://.tmp/generated_tests/terminal_meta_storage_boundary027_check.gd",
+    "job_name": "meta027-terminal-storage-r2",
+    "unchanged_deadline_seconds": 180,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "assigned_before_execution": true,
+    "exit": 0,
+    "script_error": false,
+    "timed_out": false,
+    "active_at_release": 0,
+    "runtime_inventory_before": 218,
+    "runtime_inventory_after": 219,
+    "prior218_exact": true,
+    "new_actual_jobs": 1,
+    "original_failures_and_footer_unfiltered": true
+  },
+  "preserved_errata": {
+    "meta_R1": "Never executed; preserved immutable R1. Peer added explicit directory/nonfile check in fresh R2 before the single actual run.",
+    "delivery_author_R1": "Preserved unchanged. Corrected R2 fixes Crew upstream source file path and distinguishes13 current-path from14 --follow commits. All source/declaration raw hashes and retention dispositions unchanged."
+  },
+  "preservation": {
+    "all_source_and_prior_local_fixes_preserved": true,
+    "prototype_untracked_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "paused8_and_old_numeric022023_and_publication024_rows_unchanged": true,
+    "restricted_diagnostics_untouched": true,
+    "all_original_evidence_and_generated_storage_preserved": true,
+    "cleanup_or_file_removal": false,
+    "publication_retry": false,
+    "imports_builds_exports": false
+  },
+  "remaining_acceptance": {
+    "whole_audit": "Open;14 core and3 broader areas remain. This bounded source review is not full codebase acceptance.",
+    "persistence": "Open; actual terminal host/checkpoint and serialized-run Continue not executed. No missing user save or invented hold.",
+    "publication": "Prior shared-main push automatic-review denial remains unchanged, approval pending; no retry/network operation. Required NEXT verification for existing source fixes remains Open."
+  },
+  "manual_reconciliation": {
+    "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "checked_at": "2026-11-06T03:24:07.424050Z",
+        "total_findings": 360,
+        "own_findings": 109,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 108,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 299,
+        "phase027_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r1.json"
+      },
+      "all": {
+        "checked_at": "2026-11-06T03:24:06.845751Z",
+        "total_findings": 976,
+        "own_findings": 109,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 108,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 299,
+        "phase027_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r1.json"
+      }
+    },
+    "note": "Current/all checks return1 for existing findings. Own109 are108 historical runtime age flags and the preexisting005stale blocker, unchanged. No phase027 task/runtime consistency finding. No original observation restamped or guard weakened."
+  },
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "evidence_sha256": {
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-registration-r1.json": "ae2ccb7650706e52ea7c6867720ef3cd21e9ee8ed10db873ce73c908d56a7ca9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-body-review-r1.json": "4ccab5e9cf16a60fd5ee27bce3f72ae85649fc5ef37a5ef30096bc35773e1730",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-peer-review-r1.json": "a7da25e02b0cb1a69dd4625dc8d7614a8596cbb951ad03f01be953648d5d1d7a",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-body-review-r1.json": "e11faac6d3ac90ee7cb8bde0b3918e0fbdeab414a46905e92c4a0378c9f82450",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-body-review-r2.json": "70d2994ccba4ceb88d104c460c498287937d10de885f70b04e1daae41443144b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-peer-review-r1.json": "47c41348218868620cae9ea1580884c8e0df95b66a26c18ec2fcea8e5bd08299",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-two-body-root-byte-check-r1.json": "694938603b31572ebef195a64dd79ecb6f2306d7bb9d466d290f39ab2b52da55",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-R1-held-before-execution.json": "e22192c538ea43ac83bd19a3784fd5fcfc2f62159e27d1d778422da637158f21",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-admission-peer-r2.json": "de275fb63c3dd3fcef799032191a9e5198b4ef779517e37cb9cc8063562b1b74",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-default-read-only-r2.json": "2b0b6240c431faa53b6cfaa6f210761a36db07a9e601cb2257b8478b2dcc8e14",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-source-order-root-r1.json": "dc14b020fda23877b01eec7759983a16762deea21866b9b088092d84d5115018",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-root-postcheck-r2.json": "26a1f1d326ae4bcded3966664fd3d9841b3ae90fcf7fe68fef24b63f5f2ebfc6",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json": "81d20a124d9fab3cb0330f4d05c467751d8080377b37f3ecf5cb87b411892141",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-proposal-r1\\immutable-sha256.json": "540c9962a9df433fd29a1c03f7341a6e5ff82b45c356be21f5387bced2699e96",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-proposal-r2\\immutable-sha256.json": "fbddb035bbfb0dac5b7faa0d2e9fe239649e8a809005b6537793d57e4c838e1c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-proposal-r2\\baseline-spec.json": "c002b7ce599bbbf7fbfdb872a9d1641088cefb498f6886e77582e59739911e50",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-proposal-r2\\source-basis.json": "f3d9e47e387312bb890f528d486b9aa5e7c00ea4b574de2c1a92289ebed8d428",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-terminal-storage-r2\\job.json": "5fc12cd0ab1f07f88a2b64a6050e5f5c9767e1d99980df47d118db26db3ec796",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-terminal-storage-r2\\baseline\\dto-receipt.json": "ed36293ff364190fc54304533cf2a3edf157009198a8af2e6059de73770781a6",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta027-terminal-storage-r2\\baseline\\script-custody.json": "693342190041f780ab3ebbbef86fcb871de3eafecdc819ebf68b3654141f5d2c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-public-host-next-step-source-r1.json": "39947be1c25883ca2720813551980521c4b77703fc3e3c7971dd75aa42bf5a5f",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r1.json": "7a990a77ac1a5df829f12a64709e19bf9f440c6b7db2e974156ecce439a3d7d9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r1.json": "ea8770951699fa32034bf85829fd69f1b02e8590e1843235ed30a8556356def9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-pre-evidence-commit-custody-r1.json": "6ab265c2df4855822bc8ec9b8437667f7be457dfa63398219e12b1a9dadb5046"
+  }
+}

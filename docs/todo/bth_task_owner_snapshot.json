@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T02:56:40.725496+00:00",
+  "observed_at": "2026-11-06T03:22:31.595316+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T02:56:40.725496+00:00",
-      "source": "Phase026 local sourcefbd95aae and evidence711c3b7d associated. Grammar025/Anchor025 Open requiredNEXT,181checks44to0. BoundedDTO026 Complete sourcecommit; Publication025 scopedfalsepositive retention Complete38+5 checks evidencecommit; Collection026 Complete2bodies1174lines58methods35constants9fields core79of95remaining16+3. MetaPersistence026 sourceconditional Open. Five Jobs closed0/runtime218original213exact; no cleanup, publicationretry, restricteddiagnostic or pausedfeature change."
+      "observed_at": "2026-11-06T03:22:31.595316+00:00",
+      "source": "Phase027 actual publicmodule realfilesystem gap26healthychecks0fail; flags suppressretry, freshMeta loads oldcard, later explicitsave recovers. LeadOpen fullhost/checkpoint/Continue unqualified; no sourcefix. Recruitment/delivery2body1568/80/13/5 reciprocalreviewqualified, core81of95remaining14+3; bodyevidencecommitassociationpending. One assigned ownedJobclosed0/runtime219original218exact. Allpriorlocalcommits/source/prototype/paused/numericNEXT preserved; no cleanup, restricteddiagnostic or deniedpublicationretry."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
