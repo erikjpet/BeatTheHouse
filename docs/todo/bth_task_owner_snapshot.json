@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T01:09:34.265819+00:00",
+  "observed_at": "2026-11-06T01:12:08.756308+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T01:09:34.265819+00:00",
-      "source": "Phase025 complete4body source audit qualified:1752lines113methods25constants19fields, all retained;77/95core reviewed18remaining+3broader. Three static/conditional findings registeredOpen. Source1247d69d/runtime213 unchanged; no native or deniedpublicationretry; prior3local024commits/taskstatus, paused8/numericNEXT/excluded/prototype preserved. Local evidence commit association active. Metadata-only4139path inventory independently qualified; currentUI/game129 vsold127, source-looking1031/outsideoldareas809; no semantic/deletion inference. Local evidence association pending."
+      "observed_at": "2026-11-06T01:12:08.756308+00:00",
+      "source": "Phase025 actual local evidencecommitf99792e9 associated: bounded4bodyreview and4139pathmetadata snapshot Complete. Currenttree4141 only2newreportdocs; sourceall1247d69d unchanged/runtime213/no newnative. Core77/95reviewed18remaining+3broader; three static/conditional findingsOpen. Prior3local024commits/taskstatus and deniedpublication preserved,0retry; cleanup/paused8/numericNEXT/excluded/prototype unchanged. Final manual association check active."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

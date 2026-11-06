@@ -1,10 +1,10 @@
 {
   "schema": "bth.deprecated_audit_continuation/v1",
   "phase": "025",
-  "observed_at": "2026-11-06T01:04:05.470290+00:00",
-  "status": "FOUR_COMPLETE_BODY_REVIEWS_AND_THREE_BOUNDED_FINDINGS_QUALIFIED_COMMIT_ASSOCIATION_PENDING",
+  "observed_at": "2026-11-06T01:12:08.756308+00:00",
+  "status": "BOUNDED_BODY_AND_PATH_INVENTORY_COMPLETE_ASSOCIATED_LOCAL_EVIDENCE_COMMIT_FINDINGS_OPEN",
   "base_local_HEAD": "104da4254c5f422fae01711b77ed6747f571543a",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005",
   "task": "BTH061-AUDIT-DELIVERY-CYCLE-PUBLICATION-RITUAL-COVERAGE-025",
   "followups": [
     "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
@@ -123,7 +123,8 @@
     "network_operation": false,
     "existing_local024_commits_preserved": true,
     "existing_publication_task_exact_unchanged": true,
-    "source": "Latest parent expressly prohibits retrying denied publication; only local evidence commits are planned."
+    "source": "Latest parent expressly prohibits retrying denied publication; only local evidence commits are planned.",
+    "new_local_evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005"
   },
   "preservation": {
     "paused8_exact_unchanged": true,
@@ -139,29 +140,29 @@
     "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
     "views": {
       "current": {
-        "checked_at": "2026-11-06T01:09:57.345807Z",
-        "total_findings": 295,
-        "own_findings": 69,
+        "checked_at": "2026-11-06T01:12:34.556661Z",
+        "total_findings": 305,
+        "own_findings": 73,
         "own_codes": {
-          "RUNTIME_STALE_OBSERVATION": 68,
+          "RUNTIME_STALE_OBSERVATION": 72,
           "BLOCKER_STALE": 1
         },
-        "runtime_errors": 235,
+        "runtime_errors": 245,
         "new_phase025_findings": 0
       },
       "all": {
-        "checked_at": "2026-11-06T01:09:57.984870Z",
-        "total_findings": 911,
-        "own_findings": 69,
+        "checked_at": "2026-11-06T01:12:32.507960Z",
+        "total_findings": 921,
+        "own_findings": 73,
         "own_codes": {
-          "RUNTIME_STALE_OBSERVATION": 68,
+          "RUNTIME_STALE_OBSERVATION": 72,
           "BLOCKER_STALE": 1
         },
-        "runtime_errors": 235,
+        "runtime_errors": 245,
         "new_phase025_findings": 0
       }
     },
-    "note": "No newphase025consistencyfinding; original historical observations retained without restamping, weakenedguards or currentliveprocess claim."
+    "note": "R2 after actual local evidence association; only historical own findings retained and zero phase025 consistency findings. Old runtime observations were not restamped. All guards and original failures preserved."
   },
   "NEXT_verified": false,
   "whole_audit_complete": false,
@@ -179,7 +180,9 @@
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-root-metadata-r1.json": "327e1a318cc7cfc11195d2c59a5cf07f6ab91230734d4d69a4e7d8340a356637",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-independent-root-review-r1.json": "043b61bfc41eb264fede2585acc0ff58bbbc021b156dc85e98e1f9e0a32c8752",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-current-r1.json": "ab72f4d322b13a361712517d840ef7fb0e94d386063bd23004005de86bdaeb6d",
-    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-all-r1.json": "ea9f22aced6c5cd474228d9f908d1814e03621744183e97d299169f8cf6ce26c"
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-all-r1.json": "ea9f22aced6c5cd474228d9f908d1814e03621744183e97d299169f8cf6ce26c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-current-r2.json": "86542d22fe4d98507303e46563c1af6ddc2b2816ba5d08854fefeb3b79ae1913",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-all-r2.json": "f2a123693158b9b0cbc1e1b8100fb56bdec43bd5b653cc331cc64ed430176633"
   },
   "tracked_path_inventory": {
     "task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
@@ -198,6 +201,13 @@
     "interpretation": "Complete tracked path/blob metadata snapshot only; lexical source-looking/outside-reference is not shipped/unused/never-reviewed/obsolete or safe-removal classification. Existing semantic history still needs reconciliation.",
     "exclusions": "Untracked025reportdocs, preservedprototype, ignored/generated/outside-repository paths are separate and not silently included. Phase025 commit adds two report-doc paths after snapshot.",
     "semantic_acceptance": false,
-    "state": "metadata_qualified_actual_evidence_commit_association_pending"
-  }
+    "state": "bounded_metadata_snapshot_complete_actual_evidence_commit_associated",
+    "evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+    "post_evidence_commit_tracked_path_count": 4141,
+    "post_snapshot_added_paths": [
+      "docs/testing/deprecated_code_audit_continuation_025.json",
+      "docs/testing/deprecated_code_audit_continuation_025.md"
+    ]
+  },
+  "body_review_complete": true
 }

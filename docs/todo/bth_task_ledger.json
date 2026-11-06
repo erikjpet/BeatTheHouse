@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T01:09:34.265819+00:00",
+  "updated_at": "2026-11-06T01:12:08.756308+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13637,7 +13637,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_QUALIFIED_THREE_FINDINGS_OPEN_DENIED_PUBLICATION_PRESERVED_025",
+      "status": "FOUR_MORE_CORE_BODIES_AND_TRACKED_PATH_INVENTORY_COMPLETE_THREE_FINDINGS_OPEN_025",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13819,6 +13819,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_024.md",
             "docs/testing/deprecated_code_audit_continuation_024.json"
+          ]
+        },
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
           ]
         }
       ],
@@ -14033,7 +14040,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:09:34.265819+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25557,8 +25564,11 @@
             "id": "independent-review-and-commit",
             "description": "Independent review qualifies bounded evidence; actual evidence commit is associated before completing this child. Whole audit, cleanup and denied publication remain distinct.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json",
+              "f99792e9dc35c28db3f378a095eb4f4196c25005"
+            ]
           }
         ],
         "coverage": {
@@ -25600,14 +25610,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "FOUR_CURRENT_BODIES_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING_025",
+      "state": "complete",
+      "status": "BOUNDED_SOURCE_OR_METADATA_REVIEW_COMPLETE_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_025",
       "owner": {
         "name": "Audit delivery cycle publication ritual coverage",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25623,17 +25641,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual local evidence commit before completing this bounded source-review child; preserve all sources, existing denied-publication status and separately open findings.",
+      "next_action": "Bounded evidence task complete with actual local commit. Continue parent semantic/compatibility scope and separately open findings; preserve cleanup stop and denied publication without retry.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent evidence audit is permitted. Denied main publication remains a separate unchanged blocker; cleanup/removal and named feature pauses are respected.",
+        "description": "Bounded source/metadata acceptance and actual local evidence commit associated. No publication, runtime or NEXT acceptance inferred. Parent and findings remain Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:50:02.789211+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T01:12:08.756308+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_025.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     },
     {
       "id": "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
@@ -25686,7 +25706,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25712,7 +25740,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     },
     {
       "id": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
@@ -25765,7 +25793,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25791,7 +25827,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
@@ -25844,7 +25880,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25870,7 +25914,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     },
     {
       "id": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
@@ -25900,8 +25944,11 @@
             "id": "bounded-independent-review-and-commit",
             "description": "Independent metadata reconciliation and actual evidence commit associated; no semantic coverage, deletion or external scope completeness inferred.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json",
+              "f99792e9dc35c28db3f378a095eb4f4196c25005"
+            ]
           }
         ],
         "coverage": {
@@ -25910,14 +25957,22 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "TRACKED_PATH_METADATA_AND_INDEPENDENT_RECONCILIATION_QUALIFIED_COMMIT_ASSOCIATION_PENDING_025",
+      "state": "complete",
+      "status": "BOUNDED_SOURCE_OR_METADATA_REVIEW_COMPLETE_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_025",
       "owner": {
         "name": "Audit remaining path inventory",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_025.json",
+            "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25933,17 +25988,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual local evidence commit before completing this metadata-only snapshot child. Reconcile semantic history for all remaining code/data/tool/native/other areas; no deletion, source review or external completeness follows from path classification.",
+      "next_action": "Bounded evidence task complete with actual local commit. Continue parent semantic/compatibility scope and separately open findings; preserve cleanup stop and denied publication without retry.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent evidence audit is permitted. Denied main publication remains a separate unchanged blocker; cleanup/removal and named feature pauses are respected.",
+        "description": "Bounded source/metadata acceptance and actual local evidence commit associated. No publication, runtime or NEXT acceptance inferred. Parent and findings remain Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:50:02.789211+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T01:12:08.756308+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_025.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:09:34.265819+00:00"
+      "updated_at": "2026-11-06T01:12:08.756308+00:00"
     }
   ],
   "batches": [

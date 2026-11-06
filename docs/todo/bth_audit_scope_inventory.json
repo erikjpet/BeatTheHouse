@@ -1900,7 +1900,7 @@
       "runtime_inventory": 213,
       "denied_publication_retried": false,
       "required_NEXT_verified": false,
-      "objective_states": "BodyreviewOpenuntilactualevidencecommit;threefindingsOpen;priorpublication/cleanup/numericNEXTstatusesexactunchanged;wholeauditOpen",
+      "objective_states": "BoundedfourbodyreviewandpathinventoryCompletewithactualevidencecommit;threefindingsOpen;priorpublication/cleanup/numericNEXTstatusesexactunchanged;wholeauditOpen",
       "evidence": "docs/testing/deprecated_code_audit_continuation_025.json",
       "full_objective_complete": false,
       "tracked_path_inventory": {
@@ -1918,9 +1918,11 @@
         ],
         "independent_classification_checks": 16556,
         "semantic_acceptance": false,
-        "state": "metadata_qualified_actual_evidence_commit_association_pending"
+        "state": "bounded_metadata_snapshot_complete_actual_evidence_commit_associated",
+        "evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005"
       },
-      "metadata_inventory_task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025"
+      "metadata_inventory_task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
+      "evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005"
     }
   ]
 }
