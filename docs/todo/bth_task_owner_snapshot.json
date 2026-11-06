@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T22:34:41.652841+00:00",
+  "observed_at": "2026-11-06T00:06:16.507507+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T22:34:41.652841+00:00",
-      "source": "Phase022 bounded four-file body reviewComplete with actual evidencecommit5f9ba172;69core reviewed/26remaining plus3broader gaps, umbrellaOpen. Duel sourcec944 published in main40d4 after finalmerged119/0 and independent46; NEXT remains separately required/pending. Codec C1/C2 public synthetic DTO identity losses reproduced; external compatible repair/control/cost proposal under review, no adoption. Runtime206 unchanged, all6 Jobs closed0, prior200prefix retained and parse failure separate. Existing005 historical census evidence stale/notreobserved; all paused/excluded work preserved."
+      "observed_at": "2026-11-06T00:06:16.507507+00:00",
+      "source": "Numericstorage/cache source88efa6e4 publishedmain afterindependent337/0+normal33write12coldread acceptance; bothfullnormalreportsbyte-identicalbaseline. Cost+2.436-2.620msmedian/12rooms explicitlyacceptedcorrectnessoverhead; no speedup/globalperf/transientpeakclaim. Runtime213/all7newJobsclosed0; prior206prefix preserved. BothsourceobjectivesOpenrequiredNEXTpending; wholeaudit69core reviewed26remaining+3broader unchanged. Manual35ownhistoricalage/blockerfindings preserved; no newnumeric-task/phase023Jobconsistencyerrors. Paused/excluded/prototype unchanged; no fileclearing."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

@@ -1,0 +1,466 @@
+{
+  "schema": "bth.audit_continuation023.report_draft/v1",
+  "draft_snapshot_at": "2026-11-06T00:01:48.423935+00:00",
+  "status": "SCOPED_NUMERIC_REPAIR_QUALIFIED_COMMITTED_MAIN_PUBLISHED_REQUIRED_NEXT_OPEN",
+  "author": "/root/codec023_report_draft",
+  "base_main": "ae4ace8364e5a166779caf70087d7c387dd732eb",
+  "associated_source_commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+  "tasks": [
+    {
+      "id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "state": "open",
+      "associated_source_commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+      "required_NEXT": true,
+      "NEXT_state": "pending"
+    },
+    {
+      "id": "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+      "state": "open",
+      "associated_source_commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+      "required_NEXT": true,
+      "NEXT_state": "pending"
+    }
+  ],
+  "source_before_manifest": "0dc22a1212d68899f1ed41df2a0bc14a95b61730d8dae989fa730a62a999949b",
+  "tested_candidate_source_manifest": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+  "source_count": 1247,
+  "changed_source_files": [
+    {
+      "path": "scripts/core/run_save_codec.gd",
+      "before_lines": 673,
+      "after_lines": 725,
+      "before_raw_sha256": "2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca",
+      "after_raw_sha256": "4c4e44f8dae2a9b259b9eb48481dfcc94e9d494560e61676c7f445b71f0ee3d3",
+      "change": "Keep native equality first at the existing environment-reference reuse and dictionary-patch acceptance sites, then refine integer/float kinds and zero bits through a bounded, iterative container walk. Wire/schema/signing/defaults and nonnumeric native equivalence remain unchanged."
+    },
+    {
+      "path": "scripts/core/persistent_environment_projection.gd",
+      "before_lines": 103,
+      "after_lines": 106,
+      "before_raw_sha256": "22b3679f371734508e6b7851fd2ace4199ef4af77e68e62f01efbde0a4b3afed",
+      "after_raw_sha256": "9087cddc6f5580a5101241f805d4667dc9991ea29a2e87643aab2fa1ae26856b",
+      "change": "Only matches changes: reject native inequality first, lazily load canonical Codec and apply the same numeric refinement before reusing an inactive projection. Six sibling methods, ownership, cache accounting and budget are unchanged."
+    },
+    {
+      "path": "scripts/tests/save_float_precision_codec_check.gd",
+      "before_lines": 138,
+      "after_lines": 441,
+      "before_raw_sha256": "a1442eab61dec6f17c425a25a08fc7e73953ee55686749f1cdf5c14f22e8aa65",
+      "after_raw_sha256": "68e12f2acef9b648801d6ef85f35493b5902bce84fbce7c1fa761684ed18eb7c",
+      "change": "Preserve all original assertions and footer, with additive public Codec, seeded-definition and actual RunState default/compiled-cache controls plus disclosed cost/allocation observations. Exact raw inverses preserve original138 and prior344/R2 revisions."
+    }
+  ],
+  "other_source_files_unchanged": 1244,
+  "findings": [
+    {
+      "id": "C1",
+      "task": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "defect": "Same-identity environment references/deltas can merge positive and negative float zero before exact storage formatting. Expanded public cases reproduce both signs, registration order, nested/readonly/packed values and last supported comparison depth."
+    },
+    {
+      "id": "C2",
+      "task": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "defect": "A seeded definition supplied as int1 can be collapsed to the numerically equal catalog float1.0 by scalar dictionary-patch equality before exact integer encoding."
+    },
+    {
+      "id": "C3",
+      "task": "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+      "defect": "Actual RunState inactive-projection cache reuses stale scalar Float/PackedFloat64 signed zero on ordinary replacement in both directions, before Codec comparisons run. Four replacements each fail invalidation/default snapshot/public decoded sign on old source.",
+      "negative_scope": "Integer/float cache replacements already invalidate correctly on original code; they are positive controls, not confirmed C3 numeric-kind defects."
+    }
+  ],
+  "reproduction_fidelity": "Finite synthetic DTO public Codec APIs and actual production RunState default/compiled cache paths, plus normal newly generated RunState/SaveService persistence. No UI Continue, observed player incident, paid outcome or full arbitrary-input/save-shape claim.",
+  "native_jobs": [
+    {
+      "name": "codec023-expanded-baseline-r1",
+      "checks": 145,
+      "failures": 12,
+      "native_exit": 1,
+      "wall_seconds": 12.577085733413696,
+      "cpu_seconds": 12.46875,
+      "owned_closed0": true,
+      "scope": "Qualified unchanged-source public matrix capture; original24 pass.",
+      "job_sha256": "4d20b6a748cfccc93c559bdd5f82400e83370c3c2da4531180a73cd1735d7b80"
+    },
+    {
+      "name": "codec023-persistence-baseline-write-r1",
+      "checks": 33,
+      "failures": 0,
+      "native_exit": 0,
+      "wall_seconds": 12.343180179595947,
+      "cpu_seconds": 12.203125,
+      "owned_closed0": true,
+      "scope": "Original maintained5007 ordinary generated-run write/warm restore/rollback/history/financial controls.",
+      "job_sha256": "40c40a7f66e6a3e919994a844013d7d9513c2a74d2403e60450d89ea8f24fac1"
+    },
+    {
+      "name": "codec023-persistence-baseline-read-r1",
+      "checks": 12,
+      "failures": 0,
+      "native_exit": 0,
+      "wall_seconds": 11.85255241394043,
+      "cpu_seconds": 11.765625,
+      "owned_closed0": true,
+      "scope": "Original maintained5007 separate-process restore, reporting, next eviction and durable save.",
+      "job_sha256": "5867c22b61edd12b13d76f3e04e50e436992b0832bb7d90b0c80cff4a3e1c48d"
+    },
+    {
+      "name": "codec023-expanded-baseline-r3",
+      "checks": 337,
+      "failures": 24,
+      "native_exit": 1,
+      "wall_seconds": 11.034404277801514,
+      "cpu_seconds": 10.984375,
+      "owned_closed0": true,
+      "scope": "Same68e baseline: prior public12 plus signed-zero projection-cache12; all fresh/unchanged and numeric-kind cache controls pass.",
+      "job_sha256": "15aecd1a7cdeb2718c82628dbbe7a3b92e3d3047be5008a2bc7f997f342c6366"
+    },
+    {
+      "name": "codec023-joint-candidate-r2",
+      "checks": 337,
+      "failures": 0,
+      "native_exit": 0,
+      "wall_seconds": 12.462626218795776,
+      "cpu_seconds": 12.4375,
+      "owned_closed0": true,
+      "scope": "Same68e actual joint d69d three-file candidate; all16 compiled stages and public/default/strict numeric controls pass.",
+      "job_sha256": "aef28f239d425070168e2c572c3dced1e9e4d85fa9fd986db819b6344d849b86"
+    },
+    {
+      "name": "codec023-persistence-candidate-write-r1",
+      "checks": 33,
+      "failures": 0,
+      "native_exit": 0,
+      "wall_seconds": 12.441513061523438,
+      "cpu_seconds": 12.375,
+      "owned_closed0": true,
+      "scope": "Same5007 ordinary candidate write passes; full original report SHA is identical to baseline.",
+      "job_sha256": "591a1270bd6c9c972a99d6a2382d1a0878c8a9724583cec3cf952e1dd9e5ef6a"
+    },
+    {
+      "name": "codec023-persistence-candidate-read-r1",
+      "checks": 12,
+      "failures": 0,
+      "native_exit": 0,
+      "wall_seconds": 12.231289386749268,
+      "cpu_seconds": 11.984375,
+      "owned_closed0": true,
+      "scope": "Original maintained5007 separate-process candidate restore, financial/RNG/history/report/next saved update. Full original report raw SHA is identical to baseline.",
+      "job_sha256": "04ac5e3dcd5f1bb93dd2b56a5e9058efa178a8692fd647914fdb0a1bbb00417a"
+    }
+  ],
+  "candidate_cold_read": {
+    "status": "INDEPENDENT100_QUALIFIED_PASS",
+    "checks": 12,
+    "failures": 0,
+    "native_exit": 0,
+    "owned_closed0": true,
+    "original_report_raw_sha256": "b07a2a478204403c56839061b84d450477a07a3177fb47f01b93b929d859eec0",
+    "original_report_identical_to_baseline": true,
+    "expectation_metadata_unchanged": true,
+    "wall_seconds": 12.231289386749268,
+    "cpu_seconds": 11.984375,
+    "baseline_wall_seconds": 11.85255241394043,
+    "baseline_cpu_seconds": 11.765625,
+    "timing_scope": "Whole maintained Job includes startup/model/I/O/checks, not isolated save or frame latency.",
+    "independent_review": "evidence/codec023-persistence-candidate-read-independent-native-review-r1.json"
+  },
+  "native_guards": {
+    "launcher": "Unchanged run_stage006.py and pinned support4",
+    "seconds": 180,
+    "aggregate_CPU_percent": 12,
+    "memory_limit_bytes": 2147483648,
+    "assigned_before_resume": true,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "native_jobs_serial": true,
+    "all_seven_recorded_phase023_jobs_owned_closed0": true
+  },
+  "runtime_inventory": {
+    "phase023_before": 206,
+    "new_recorded_jobs": 7,
+    "prefix_preservation": "Prior records remain unchanged; original failures and closure evidence are retained.",
+    "candidate_cold_read_append": "ACTUAL_APPENDED_BY_ROOT",
+    "checkpoint": "evidence/codec023-seven-jobs-checkpoint-r1.json",
+    "current": 213
+  },
+  "cost_comparison": [
+    {
+      "population": "identical_positive_rooms",
+      "old_samples_usec": [
+        4548,
+        4448,
+        4286,
+        4302,
+        4413
+      ],
+      "new_samples_usec": [
+        7033,
+        12208,
+        9818,
+        7011,
+        7007
+      ],
+      "old_median_usec": 4413,
+      "new_median_usec": 7033,
+      "added_median_usec": 2620,
+      "median_ratio": 1.5937004305461138,
+      "full_decoded_storage_hashes_and_source_sizes_exact": true,
+      "old_engine_static_deltas": [
+        125464,
+        125464,
+        125464,
+        125464,
+        125464
+      ],
+      "new_engine_static_deltas": [
+        125464,
+        125464,
+        125464,
+        125464,
+        125464
+      ],
+      "old_lifetime_static_max": 361919737,
+      "new_lifetime_static_max": 362080572
+    },
+    {
+      "population": "identical_negative_rooms",
+      "old_samples_usec": [
+        4615,
+        4718,
+        4779,
+        4752,
+        4612
+      ],
+      "new_samples_usec": [
+        7149,
+        7311,
+        7233,
+        7247,
+        7197
+      ],
+      "old_median_usec": 4718,
+      "new_median_usec": 7233,
+      "added_median_usec": 2515,
+      "median_ratio": 1.533064857990674,
+      "full_decoded_storage_hashes_and_source_sizes_exact": true,
+      "old_engine_static_deltas": [
+        125484,
+        125484,
+        125484,
+        125484,
+        125484
+      ],
+      "new_engine_static_deltas": [
+        125484,
+        125484,
+        125484,
+        125484,
+        125484
+      ],
+      "old_lifetime_static_max": 361919737,
+      "new_lifetime_static_max": 362080572
+    },
+    {
+      "population": "changed_rooms",
+      "old_samples_usec": [
+        6695,
+        6680,
+        6840,
+        6711,
+        6902
+      ],
+      "new_samples_usec": [
+        9147,
+        9439,
+        9136,
+        9137,
+        9227
+      ],
+      "old_median_usec": 6711,
+      "new_median_usec": 9147,
+      "added_median_usec": 2436,
+      "median_ratio": 1.3629861421546714,
+      "full_decoded_storage_hashes_and_source_sizes_exact": true,
+      "old_engine_static_deltas": [
+        244564,
+        244564,
+        244564,
+        244564,
+        244564
+      ],
+      "new_engine_static_deltas": [
+        244564,
+        244564,
+        244564,
+        244564,
+        244564
+      ],
+      "old_lifetime_static_max": 361919737,
+      "new_lifetime_static_max": 362080572
+    }
+  ],
+  "cost_assessment": "Accepted scoped correctness overhead: same337 controls clear24 reproduced failures and actualnormal generated-run SaveService33/12 reports are byte-identicalbeforeafter. Warm12room/128leaf medians add2.436-2.620ms (36-59%); no speedup/unchanged-performance/universal latency or transient-memory claim. Existing hard resource guards remain unchanged and alltestedJobs passwithin them. Broader aggregate/performance/wholeaudit acceptance remains Open.",
+  "memory_scope": "Engine tracked current allocation deltas match for held public outputs. STATIC_MAX is cumulative process-lifetime debug highwater, not comparator/per-pipeline transient peak; no zero-transient-allocation claim. Actual Job remained within2GiB guard.",
+  "candidate_persistence_write_original_report_sha256": "cded7d4a0b622757111b9159e2a650cfda4064dbe810e1007cd0b5264cb3cf67",
+  "baseline_persistence_write_original_report_sha256": "cded7d4a0b622757111b9159e2a650cfda4064dbe810e1007cd0b5264cb3cf67",
+  "independent_review_checks": {
+    "Codec_source": 72,
+    "joint_source": 83,
+    "R3_test": 77,
+    "candidate_runner": 165,
+    "baseline_R3_actual_native": 98,
+    "baseline_persistence_write": 76,
+    "baseline_persistence_read": 88,
+    "candidate_persistence_static": 109,
+    "candidate_actual_native_and_cost": 96,
+    "candidate_persistence_write_actual": 87,
+    "candidate_persistence_read_actual": 100
+  },
+  "preserved_errata": [
+    {
+      "case": "R2 test fixture",
+      "disposition": "Blocked before native launch: generic integer fixture conflicted with existing JSON normalization. R3 changes exactly two field/path literals into the documented scenario_ exact-integer namespace; strict assertions remain unchanged. This was not a product runtime failure."
+    },
+    {
+      "case": "Candidate R1 runner provenance",
+      "disposition": "Held unexecuted because retained predecessor metadata omitted a later peer-lineage pin. Fresh candidate R2 uses byte-exact frozen baseline metadata originals; production source/test candidate is unchanged. R1 and its review are preserved."
+    }
+  ],
+  "preservation_scope": [
+    "No obsolete removal is justified by these active storage paths.",
+    "All eight paused item/scenario objectives, excluded diagnostics/partials, portraits and the untracked1f24 prototype remain outside changed scope. No personal save, root key, captured capsule or historical alias was inspected or reconstructed.",
+    "No file cleanup, peer process termination, guard relaxation or NEXT machinery operation.",
+    "Known Windows certificate-store startup ERROR is preserved and matches earlier outputs; no ScriptError/timeout or error-free-startup claim."
+  ],
+  "audit_coverage": {
+    "new_full_body_areas_claimed": 0,
+    "recorded_core_reviewed": 69,
+    "recorded_core_remaining": 26,
+    "broader_remaining": 3,
+    "whole_audit_complete": false,
+    "aggregate_acceptance": "OPEN; existing Content180/Systems300/comparator43.712/outer330 and shard55/all220 guards unchanged."
+  },
+  "manual_reconciliation": {
+    "status": "MANUAL_CHECKED_REMAINING_HISTORICAL_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "total_findings": 257,
+        "own_findings": 35,
+        "own_historical_runtime_stale": 34,
+        "own_older_stale_blocker": 1,
+        "own_historical_runtime_instances": 17,
+        "all_runtime_errors": 197,
+        "outside_runtime_errors": 163
+      },
+      "all": {
+        "total_findings": 873,
+        "own_findings": 35,
+        "own_historical_runtime_stale": 34,
+        "own_older_stale_blocker": 1,
+        "own_historical_runtime_instances": 17,
+        "all_runtime_errors": 197,
+        "outside_runtime_errors": 163
+      }
+    },
+    "note": "34current/activity age flags on17 unchanged historical runtime records crossed24hours, plus preexisting005blockerstale. No newphase023Job or numeric-task consistency errors. No historical timestamps refreshed, no liveOS/browser/globalcensus claim and no guard changed."
+  },
+  "remaining_before_publication": [],
+  "NEXT_verified": false,
+  "whole_audit_complete": false,
+  "evidence_sha256": {
+    "evidence/codec023-source-independent-review-r1.json": "cd972ab70f8a37fd23817caf4d47cfd9f962c1c8cd51ae87b0dd64eb4070cb90",
+    "evidence/codec023-joint-source-independent-review-r1.json": "bb0fd21065e766726b43c1e2f4befa16c7f3676679bd47378f8f72b0016d5490",
+    "evidence/codec023-r3-test-independent-review-r1.json": "9cf8ce7b0715f54e9715fcfea484fa81133a453af83440e99b5e99fd7f82a8c9",
+    "evidence/codec023-r3-baseline-runner-independent-static-review-r1.json": "8612df6a1ad55eb29a6df21bcd4466a4e1620e5420a706ae7102cff2a13f8673",
+    "evidence/codec023-joint-candidate-runner-independent-static-review-r2.json": "8f059857e2585b7284cfeac0753eb5ff1d92df0d934c991621c3e8a08858a780",
+    "evidence/codec023-expanded-root-postcheck-r1.json": "1d53448930d4ee36e2a5863452bd5824ad7ce9c0e007831c7114afa8b346801b",
+    "evidence/codec023-expanded-independent-native-review-r1.json": "e2b5339f190919e025182223882cdf1947b727179503bf9dbd4ba4621b54a812",
+    "evidence/codec023-expanded-root-postcheck-r3.json": "e64591f2174d3bbcfeae18c85be3625dd6358d5b696fb0d950abe03d77a40367",
+    "evidence/codec023-expanded-independent-native-review-r3.json": "092b3d53f049743f94dc8871be4030aaac071fc99f94229ba82ceb83b6511f00",
+    "evidence/codec023-joint-application-r2.json": "7986a86b52c5631b0c720631db607e98125f7f2b1c77d04a5ea513da315910d4",
+    "evidence/codec023-candidate-root-postcheck-r2.json": "213a422ebede83474ca4c3c4f8117faff6226b8c7ca605ca391f3d9cc8f7ecec",
+    "evidence/codec023-persistence-root-write-postcheck-r1.json": "dbd91c9c9cd7638be2811e3ad769d1dbcaa3f11b120deff41ce59fb0d975250f",
+    "evidence/codec023-persistence-write-independent-native-review-r1.json": "d1611f3336b6408b04f0a86b007f022515ac26ebac0674b4b89260f528f09ac6",
+    "evidence/codec023-persistence-root-read-postcheck-r1.json": "f9294dc155240bba8e96a847eb26dd65b8f5ccedccba76199037753b1c7d7380",
+    "evidence/codec023-persistence-read-independent-native-review-r1.json": "e8da34d65b7a644fd20f13302e7d649477434c75b6da06014680ede2ff840dea",
+    "evidence/codec023-persistence-candidate-root-write-postcheck-r1.json": "a64702451fb1e0704ec35c75b959ac56d331621a3048eb3eeb5f54bfdff070f1",
+    "evidence/codec023-persistence-candidate-independent-static-review-r1.json": "f29a8464a0ab3926fc59854cdfc1be8648e473fa5d77a89554246a7306d6ab71",
+    "evidence/codec023-r2-test-independent-review-r1.json": "bd5bb99e12a029b1f91a9d43f789db83fcb93d0c059e6b600a481d380e4c2007",
+    "evidence/codec023-joint-candidate-runner-independent-static-review-r1.json": "c19cfc5e3f1227f356eb0fe91b56049d550bee162b957df7b51f22d799f18fcf",
+    "evidence/codec023-candidate-runner-persistence-map-crosscheck-r2.json": "1d1cd00d8d9d6d34ac3bb6bf8d5119a444445f54ff21c819565dac560939398a",
+    "evidence/codec023-candidate-two-jobs-checkpoint-r1.json": "d293797b7573538820a4419cff820900c945c0d263c143a9c2c2c6abcfe90615",
+    "evidence/codec023-persistence-candidate-root-read-postcheck-r1.json": "2fecb9d4ddb4712cfac36424b7f41953969ac40d5029e6de51935fd5d1abe0e7",
+    "evidence/codec023-persistence-candidate-read-r1/job.json": "04ac5e3dcd5f1bb93dd2b56a5e9058efa178a8692fd647914fdb0a1bbb00417a",
+    "evidence/codec023-persistence-candidate-read-r1/candidate/standalone-result.json": "3f61a27189ec5260cf7c65313bf2ebd53a874cf95e28f7c6a1c028bf01f180c6",
+    "evidence/codec023-persistence-candidate-read-r1/candidate/original-report.json": "b07a2a478204403c56839061b84d450477a07a3177fb47f01b93b929d859eec0",
+    "evidence/codec023-seven-jobs-checkpoint-r1.json": "672d13620ed242290f6d2bfec3b8f170fe50ed6c0ab45812c68d679990021854",
+    "evidence/codec023-precommit-current-r1.json": "88fc386455b2cd9ddeed4066d51a53728b8f64678b6168db28b9750ec9abf55f",
+    "evidence/codec023-precommit-all-r1.json": "0b61e7586bd52ab20ed45bf041cac8973cf87cbbfd491ccd91e7bd2b0e2686eb",
+    "evidence/codec023-candidate-independent-native-review-r2.json": "12346ea3dccd82e714650ce6d73511b86dc4a9329c7829dd8182d6d396f85033",
+    "evidence/codec023-persistence-candidate-write-independent-native-review-r1.json": "7388bb0188e1f4bd5f10613f39f54859e8d8005504768fe90ee4f8d3a120ce14",
+    "evidence/codec023-persistence-candidate-read-independent-native-review-r1.json": "dcbaef1df410c4566324eec32a304033f2c5e8f1504a2f19fe92cf96c327a88d",
+    "evidence/codec023-root-adoption-decision-r1.json": "3db6187905214dc263779ca73d9ddbc1b7785cfcbcbe3cc6c6c78608ff755264",
+    "evidence/codec023-source-commit-r1.json": "6600d62deeb0709bed330ffd8e476d2e41f59ea52c05891f53f67704ee1319f6",
+    "evidence/codec023-source-main-publication-r1.json": "4e780b0506397338862968345f2eb0a5a9083881660afd766fda66f96c7484a8",
+    "evidence/codec023-precommit-current-r2.json": "164279081ddeaa74e7f85f99f9e37b511bd99cd627c3893535b764150d8d1a76",
+    "evidence/codec023-precommit-all-r2.json": "a59d942e54b94df9cecd2c2ae0529f05151b6118c1e34f260da422747a7af3eb"
+  },
+  "revision": "r2",
+  "preserved_R1_draft_sha256": {
+    "report.md": "ceb0a71be94c4955e2b65ea13cf8635d64219c11c0e439ebb958268693f58472",
+    "report.json": "b19a6f06a6189e667a608a2def8c8d495589d603f93aaa62c289e8d4458826fc",
+    "draft-custody.json": "650095ca7304932e607d10fb1cc717aad3ed520cb4f7ab96abea621891255eb3"
+  },
+  "candidate_persistence_read_original_report_sha256": "b07a2a478204403c56839061b84d450477a07a3177fb47f01b93b929d859eec0",
+  "baseline_persistence_read_original_report_sha256": "b07a2a478204403c56839061b84d450477a07a3177fb47f01b93b929d859eec0",
+  "persistence_whole_job_timing": {
+    "write": {
+      "baseline_wall_seconds": 12.343180179595947,
+      "baseline_cpu_seconds": 12.203125,
+      "candidate_wall_seconds": 12.441513061523438,
+      "candidate_cpu_seconds": 12.375
+    },
+    "read": {
+      "baseline_wall_seconds": 11.85255241394043,
+      "baseline_cpu_seconds": 11.765625,
+      "candidate_wall_seconds": 12.231289386749268,
+      "candidate_cpu_seconds": 11.984375
+    },
+    "scope": "Whole maintained native Jobs include startup, model/generation, I/O and checks; not isolated save or frame latency and not an independent performance acceptance."
+  },
+  "intended_canonical_files": {
+    "markdown": "docs/testing/deprecated_code_audit_continuation_023.md",
+    "json": "docs/testing/deprecated_code_audit_continuation_023.json"
+  },
+  "observed_at": "2026-11-06T00:06:16.507507+00:00",
+  "source_main_publication": {
+    "observed_at": "2026-11-06T00:04:52.640121+00:00",
+    "source_commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+    "task_ids": [
+      "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023"
+    ],
+    "before_main": "ae4ace8364e5a166779caf70087d7c387dd732eb",
+    "after_main": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+    "normal_nonforce_push": true,
+    "qualified_native_checks": [
+      337,
+      33,
+      12
+    ],
+    "failure_counts": [
+      0,
+      0,
+      0
+    ],
+    "measured_correctness_overhead_disclosed": true,
+    "NEXT_verified": false,
+    "delivery_owner": "Separately assigned existing NEXT qualification; audit operated no machinery."
+  },
+  "remaining_work": [
+    "Separately owned exact NEXT source/served-asset/changed-behavior qualification for both production tasks.",
+    "Continue26recordedcore gaps and3broader audit gaps; no wholeaudit/aggregate completion.",
+    "Revalidate permitted historical runtime lifecycle observations and005 census qualification without changing old timestamps, excluded diagnostics or guards."
+  ]
+}

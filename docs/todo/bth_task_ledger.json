@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T22:34:41.652841+00:00",
+  "updated_at": "2026-11-06T00:06:16.507507+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13189,9 +13189,10 @@
               "state": "reviewed",
               "evidence": [
                 "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/deprecated_code_audit_continuation_023.json"
               ],
-              "scope": "Fresh full current103line/7method body/history/delta review plus actual RunState/facade/SaveService/exact-Script codec receiver boundaries. Packed/budget/snapshot fallbacks remain active; no removal."
+              "scope": "Fresh full current103line/7method body/history/delta review plus actual RunState/facade/SaveService/exact-Script codec receiver boundaries. Packed/budget/snapshot fallbacks remain active; no removal. Phase023 scopedcurrentdelta independentlyqualified at source88efa6e419872007a8ba446bbcdf5f65ae39178f: Codec4c4e refines2comparisons/addshelper; Projection9087changesmatchesonly. Originalbody/siblingcontracts retained;337/33/12nativepass withmeasuredcostlimits. No wholeaudit/NEXTacceptance."
             },
             {
               "id": "scripts/core/platform_services.gd",
@@ -13279,9 +13280,10 @@
               "state": "reviewed",
               "evidence": [
                 "docs/testing/deprecated_code_audit_continuation_022.md",
-                "docs/testing/deprecated_code_audit_continuation_022.json"
+                "docs/testing/deprecated_code_audit_continuation_022.json",
+                "docs/testing/deprecated_code_audit_continuation_023.json"
               ],
-              "scope": "Complete current body and active/compatibility consumers retained at raw 2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca. Retain all33 methods/32 constants/3 static fields as active or compatibility. Same-ID signed zero and seeded int/float numeric identity loss reproduced through public Codec APIs; separately tracked compatible repair remains Open. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance."
+              "scope": "Complete current body and active/compatibility consumers retained at raw 2dba8edba957e3d0a1979f9a11fc9bd613aa9b55a3f552428948b966a546c4ca. Retain all33 methods/32 constants/3 static fields as active or compatibility. Same-ID signed zero and seeded int/float numeric identity loss reproduced through public Codec APIs; separately tracked compatible repair remains Open. This bounded source disposition does not grant universal functional, aggregate or NEXT acceptance. Phase023 scopedcurrentdelta independentlyqualified at source88efa6e419872007a8ba446bbcdf5f65ae39178f: Codec4c4e refines2comparisons/addshelper; Projection9087changesmatchesonly. Originalbody/siblingcontracts retained;337/33/12nativepass withmeasuredcostlimits. No wholeaudit/NEXTacceptance."
             },
             {
               "id": "scripts/core/run_state.gd",
@@ -13639,7 +13641,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_QUALIFIED_DUEL_MAIN_PUBLISHED_CODEC_REPAIR_OPEN_022",
+      "status": "NUMERIC_STORAGE_AND_CACHE_REPAIR_MAIN_PUBLISHED_WHOLE_AUDIT_AND_NEXT_OPEN_023",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13806,6 +13808,14 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_022.md",
             "docs/testing/deprecated_code_audit_continuation_022.json"
+          ]
+        },
+        {
+          "sha": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_023.md",
+            "docs/testing/deprecated_code_audit_continuation_023.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
           ]
         }
       ],
@@ -13993,7 +14003,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue26 recorded core body gaps,3 broader gaps, qualified Codec numeric identity repair/control/cost work and remaining aggregate acceptance. Preserve005 stale census evidence pending a fresh unchanged invocation; do not retry excluded diagnostics. Required production NEXT remains separately assigned.",
+      "next_action": "Continue26 recorded core review gaps and3 broader areas; retain required numeric-fix NEXT delivery, aggregate qualification and historical lifecycle freshness findings as Open. Do not retry excluded diagnostics or change paused objectives.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -14005,7 +14015,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T22:34:41.652841+00:00"
+      "updated_at": "2026-11-06T00:06:16.507507+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25008,8 +25018,12 @@
             "id": "scoped-compatible-repair",
             "description": "Any adopted code repair preserves existing semantics apart from the proven defect, has meaningful regression/parity evidence and an associated tested commit. No unsupported optimization or guard change.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_023.md",
+              "docs/testing/deprecated_code_audit_continuation_023.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -25019,19 +25033,32 @@
         }
       },
       "state": "open",
-      "status": "BOTH_PUBLIC_NUMERIC_IDENTITY_LOSSES_REPRODUCED_COMPATIBLE_REPAIR_REVIEW_ACTIVE_022",
+      "status": "QUALIFIED_NUMERIC_REPAIR_COMMIT_PUBLISHED_MAIN_REQUIRED_NEXT_OPEN_023",
       "owner": {
         "name": "Audit source-supported codec numeric identity",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_023.md",
+            "docs/testing/deprecated_code_audit_continuation_023.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          ]
+        }
+      ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": [],
-        "scope": "Investigation only so far. Any adopted production repair must gain its exact associated source commit and separately owned NEXT verification before this objective closes."
+        "required": true,
+        "state": "pending",
+        "commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_023.md",
+          "docs/testing/deprecated_code_audit_continuation_023.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+        ],
+        "scope": "Actualtested3file numericcorrectness commit publishedmain; separately owned required NEXT source/asset/behavior acceptance stillunverified."
       },
       "evidence": [
         {
@@ -25043,20 +25070,153 @@
           "kind": "C2_R2_functional_public_numeric_kind_loss",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-scalar-type-root-postcheck-r2.json",
           "summary": "Corrected explicit-bool private test executed29 checks/1 new supplied-int1 becomes float1.0 failure. All24 maintained checks pass; valid envelope/content and unchanged synthetic DTO. R1 parse failure preserved. No player or mounted-state incidence and no complete fix acceptance."
+        },
+        {
+          "kind": "frozen_source_and_regression_proposals_unqualified",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog022-codec-next-checkpoint-r1.json",
+          "summary": "Frozen15pin source proposal cf52b2a2 and7pin expanded test b923e2ec on current1247_0dc22. Candidate Codec4c4e and private testef10 only; independent review and qualified native/cost/current-state parity pending. Current Codec2dba and maintained testa144 unchanged."
+        },
+        {
+          "kind": "expanded_145_old_source_baseline",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json",
+          "summary": "Full original24 pass;145 total/12 targeted failures across signs, order, mixed deltas, nested/readonly/packed/deep-supported leaves and seeded supplied-int1. All18 matrix rows admitted with input custody. Complete cost outputs available for later exact-source comparison. Source unchanged and owned Job closed0; no adoption."
+        },
+        {
+          "kind": "joint_candidate337_and_normal_write33_pass",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json",
+          "summary": "Same68e337checks24baselinefail->0 onactual3filed69d source; originalnormalSaveServicewrite33/0/fullreporthashidenticalbaseline. Warmhealthy12roomcostmedians+2.4-2.6ms withdecoded/storagehashesandbytesexact; memorylifetime/retainedlimitsdisclosed. Coldcandidate/currentcostreviewandtestedcommitpending; noNEXTacceptance."
+        },
+        {
+          "kind": "scoped_source_qualified_committed_main_published",
+          "reference": "docs/testing/deprecated_code_audit_continuation_023.json",
+          "summary": "Source88efa6e4; same337 old24fail->0, normal33write12coldreadfullreportsbyte-identicalbaseline. Actualcost+2.436-2.620ms/12rooms disclosed andacceptedcorrectnessoverheadwithscope/memorylimits. Guarded213inventory/7newclosedJobs, noNEXTorwholeauditcompletion."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review exact numeric identity repair and expanded forward/reverse/nested/packed/dictionary/seeded controls plus bounded cost before any adoption; preserve native equality semantics, wire compatibility, all guards and excluded diagnostics.",
+      "next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "New source-supported candidate under active independent investigation; not yet a proven player defect or accepted source change. No external approval/save/scheduler hold.",
+        "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T21:21:43.135230+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T00:06:16.507507+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_023.md",
+          "docs/testing/deprecated_code_audit_continuation_023.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T22:19:35.629432+00:00"
+      "updated_at": "2026-11-06T00:06:16.507507+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+      "name": "Qualify numeric identity in inactive room projection reuse",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify whether ordinary inactive-room DTO replacements differing only in signed zero or integer/float kind reuse stale compiled projections before Codec encoding. Reproduce through actual RunState cache and canonical Codec forwarding without injected callbacks, opaque inputs, alias experiments or excluded diagnostics. Repair only proven numeric identity acceptance, preserving cache ownership/budget, normal fallback, projection authority and all existing guards.",
+        "source": "Independent current compiled-storage scope review found matches() native equality at persistent_environment_projection.gd:69-72 and RunState early cache reuse at16466-16469. Register this finding before any new regression or implementation.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "ordinary_dto_production_cache_reproduction",
+            "description": "Actual RunState inactive-cache path with ordinary finite DTOs reproduces a stale numeric result, with controls separating upstream reuse from Codec reference/patch bugs and preserving input/RNG/compiled path identity.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-independent-native-review-r3.json"
+            ]
+          },
+          {
+            "id": "scoped_compatible_repair",
+            "description": "Any adopted repair has independent semantic review, focused before/after regression/cost/ownership/budget evidence, exact source commit and required separate NEXT acceptance.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_023.md",
+              "docs/testing/deprecated_code_audit_continuation_023.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFIED_NUMERIC_REPAIR_COMMIT_PUBLISHED_MAIN_REQUIRED_NEXT_OPEN_023",
+      "owner": {
+        "name": "Audit inactive projection numeric identity",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_023.md",
+            "docs/testing/deprecated_code_audit_continuation_023.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_023.md",
+          "docs/testing/deprecated_code_audit_continuation_023.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+        ],
+        "scope": "Actualtested3file numericcorrectness commit publishedmain; separately owned required NEXT source/asset/behavior acceptance stillunverified."
+      },
+      "evidence": [
+        {
+          "kind": "source_supported_numeric_cache_reuse_candidate",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-maintained-parity-scope-r1.json",
+          "summary": "PersistentEnvironmentProjection.matches uses environment == _source; RunState returns matching cached projection before Codec comparisons. Ordinary signed-zero/numeric-kind replacements require isolated actual-path reproduction; no runtime defect or source change is accepted yet."
+        },
+        {
+          "kind": "actual_ordinary_dto_production_cache_capture",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json",
+          "summary": "Single-environment actual RunState compiled/default storage reproduces stale scalar/Packed64 signed zero in both directions:4replacementcases x invalidation/default/publicdecode=12 failures beyond priorCodec12. All16compiled stages admitted, freshcontrols and unchangedreusepass. Integer/floatkind changes alreadyinvalidatecorrectly; no C3kind-loss productclaim. Original24pass, unchangedsource/guards/ownedclosure0. Independentnativepending."
+        },
+        {
+          "kind": "joint_candidate337_and_normal_write33_pass",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json",
+          "summary": "Same68e337checks24baselinefail->0 onactual3filed69d source; originalnormalSaveServicewrite33/0/fullreporthashidenticalbaseline. Warmhealthy12roomcostmedians+2.4-2.6ms withdecoded/storagehashesandbytesexact; memorylifetime/retainedlimitsdisclosed. Coldcandidate/currentcostreviewandtestedcommitpending; noNEXTacceptance."
+        },
+        {
+          "kind": "scoped_source_qualified_committed_main_published",
+          "reference": "docs/testing/deprecated_code_audit_continuation_023.json",
+          "summary": "Source88efa6e4; same337 old24fail->0, normal33write12coldreadfullreportsbyte-identicalbaseline. Actualcost+2.436-2.620ms/12rooms disclosed andacceptedcorrectnessoverheadwithscope/memorylimits. Guarded213inventory/7newclosedJobs, noNEXTorwholeauditcompletion."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:06:16.507507+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_023.md",
+          "docs/testing/deprecated_code_audit_continuation_023.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T00:06:16.507507+00:00"
     }
   ],
   "batches": [

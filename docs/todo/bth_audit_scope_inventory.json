@@ -1804,6 +1804,43 @@
       "evidence": "docs/testing/deprecated_code_audit_continuation_022.md",
       "full_objective_complete": false,
       "bounded_task_state": "complete"
+    },
+    {
+      "phase": "023",
+      "tasks": [
+        "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+        "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023"
+      ],
+      "observed_at": "2026-11-06T00:06:16.507507+00:00",
+      "source_commit": "88efa6e419872007a8ba446bbcdf5f65ae39178f",
+      "source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+      "bounded_source_repair_qualified": true,
+      "native_checks": [
+        337,
+        33,
+        12
+      ],
+      "failures": [
+        0,
+        0,
+        0
+      ],
+      "confirmed_obsolete_candidates": [],
+      "new_production_removals": [],
+      "new_whole_body_area_count": 0,
+      "recorded_core_reviewed": 69,
+      "recorded_core_remaining": 26,
+      "broader_remaining": 3,
+      "source_fields_changed": [
+        "Codec2equalitydecisions+numericrefiner",
+        "Projectionmatches"
+      ],
+      "native_jobs": 7,
+      "runtime_inventory": 213,
+      "required_NEXT_verified": false,
+      "objective_states": "BothOpenforrequiredNEXT;wholeauditOpen",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_023.json",
+      "full_objective_complete": false
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-05T22:27:39.044547+00:00",
+  "observed_at": "2026-11-06T00:00:34.468383+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -16992,6 +16992,601 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-root-postcheck-r3.json"
         ],
         "limit": "Unchanged180sec/12percent/2GiB/assigned/kill-on-close/no-breakaway; exact owned Job closure0. Final merged-main40d4/source0dc22 same119 checks0 failures, exit0/noScriptError/timeout. Coin Pusher2 incoming paths preserved. Scoped receipt fix only, no NEXT/broaderUI/aggregate claim or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-expanded-baseline-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-expanded-baseline-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json:pid:33672",
+        "started_at": "2026-11-05T22:51:38.695439+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T22:51:51.272525+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json:pid:33672",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T22:51:51.272525+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T22:51:51.272525+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-expanded-baseline-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T22:51:51.272525+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; actual owned closure0. Complete145checks/12 targeted numeric-identity failures, all original24 pass; source1247_0dc22/Codec2dba unchanged. Existing certificate-store startup diagnostic retained, no ScriptError/timeout. Original failure exit1 preserved. No source adoption, C3 current-cache coverage, aggregate or NEXT claim; no file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-persistence-baseline-write-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-persistence-baseline-write-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json:pid:21088",
+        "started_at": "2026-11-05T23:14:45.685784+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:14:58.028965+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json:pid:21088",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:14:58.028965+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:14:58.028965+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-persistence-baseline-write-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:14:58.028965+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-write-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; actual owned closure0. Original maintained5007 ordinary write branch completed33 checks/0 failures through normal generated RunState and actual SaveService. Sameisolatedcase write/read, no legacy/captured fixture. Existing certificate-store diagnostic retained, no ScriptError/timeout. Source1247_0dc22 unchanged; no source adoption/whole-audit/NEXT or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-persistence-baseline-read-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-persistence-baseline-read-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json:pid:29708",
+        "started_at": "2026-11-05T23:19:53.967834+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:20:05.820386+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json:pid:29708",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:20:05.820386+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:20:05.820386+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-persistence-baseline-read-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:20:05.820386+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-baseline-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-root-read-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; actual owned closure0. Original maintained5007 ordinary read branch completed12 checks/0 failures through normal generated RunState and actual SaveService. Sameisolatedcase write/read, no legacy/captured fixture. Existing certificate-store diagnostic retained, no ScriptError/timeout. Source1247_0dc22 unchanged; no source adoption/whole-audit/NEXT or file clearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-expanded-baseline-r3",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-expanded-baseline-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json:pid:28256",
+        "started_at": "2026-11-05T23:38:56.680363+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:39:07.714767+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json:pid:28256",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:39:07.714767+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:39:07.714767+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-expanded-baseline-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:39:07.714767+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-baseline-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-expanded-root-postcheck-r3.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned/kill-on-close/no-breakaway; ownedclosure0. Actual337checks/24 targeted failures, alloriginal24 pass: priorpublic12 +scalar/packed signedzeroC3cache4casesx3. All16compiled stages admitted; int/float-kind changes alreadyinvalidatecorrectly onoriginalsource and remainpositive controls. R2fixture neverexecuted; R3protectedfieldcorrected beforelaunch. Source1247_0dc22 unchanged, memorydebugmonitors observed with lifetime-maxlimits. No sourceadoption/wholeaudit/NEXT/fileclearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-joint-candidate-r2",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-joint-candidate-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json:pid:5240",
+        "started_at": "2026-11-05T23:47:02.428871+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:47:14.891497+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json:pid:5240",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:47:14.891497+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:47:14.891497+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-joint-candidate-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:47:14.891497+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-joint-candidate-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-candidate-root-postcheck-r2.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; ownedclosure0. Actual same337 checks0fail afterreviewed3file repair; oldbaseline24fail. All16compiled/default/publicnumeric controls pass; healthycosthashes/bytesexact, +2.4-2.6ms medians disclosed, transientmemorynotinferred. Currentstatecoldpersist/costreviewpending. Source1247_d69d actual3filecandidate; nocommit/NEXT/wholeaudit claim. Knowncertificate startupdiagnostic retained; noScriptError/timeout. No fileclearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-persistence-candidate-write-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-persistence-candidate-write-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json:pid:38536",
+        "started_at": "2026-11-05T23:51:15.340228+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:51:27.781741+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json:pid:38536",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:51:27.781741+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:51:27.781741+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-persistence-candidate-write-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:51:27.781741+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-write-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-write-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; ownedclosure0. Originalmaintained5007 write33/0 actualgeneratedRunState warmSaveService/rollback/history/financialchecks. Fulloriginalreporthashmatchesbaseline. Distinctownedcandidateprivatecase, nolegacy/capturedmode. Candidatecoldreadstillpending. Source1247_d69d actual3filecandidate; nocommit/NEXT/wholeaudit claim. Knowncertificate startupdiagnostic retained; noScriptError/timeout. No fileclearing."
+      }
+    },
+    {
+      "instance_id": "task9:codec023-persistence-candidate-read-r1",
+      "task_id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "codec023-persistence-candidate-read-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json:pid:1188",
+        "started_at": "2026-11-05T23:58:18.219153+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-05T23:58:30.450442+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json:pid:1188",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-05T23:58:30.450442+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-05T23:58:30.450442+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "codec023-persistence-candidate-read-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-05T23:58:30.450442+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-read-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-persistence-candidate-root-read-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; ownedclosure0. Originalmaintained5007 candidatecoldread12/0, fulloriginalreporthashidenticalbaseline; actualfreshprocessSaveService financial/RNG/history/readonlyreport/nextsavepass. Candidateprivatecase bridgeonly; expectationunchanged andsyntheticprimary/backupadvanceviatest. Source1247_d69d, nolegacy/capturedmode. Knowncertificate startupdiagnosticretained; noScriptError/timeout. Nocommit/NEXT/wholeaudit/fileclearingclaim."
       }
     }
   ],
