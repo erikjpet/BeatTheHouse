@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T06:07:21.202382+00:00",
+  "updated_at": "2026-11-06T08:44:42.036719+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -34,6 +34,36 @@
         "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
         "publication_retry_authorization": "Later explicit user instruction: Yes push all finished work to next",
         "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action."
+      },
+      {
+        "schema": "bth.user_work_pause/v1",
+        "recorded_at": "2026-11-06T08:44:42.036719+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "Trusted parent delegation with explicit transcript_evidence; parent also directs Do not start new testing.",
+        "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+        "requested_by": "user",
+        "state": "active",
+        "task_ids": [
+          "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+          "BTH061-BAR-DICE-COVER-DISPLAY-001",
+          "BTH061-BAR-DICE-SHUTDOWN-001"
+        ],
+        "resume_only_on_user_instruction": true,
+        "scope_limit": "Testing pause for these existing task14 Bar Dice objectives/batch only. Finish preservation, commit/main publication and existing NEXT follow-through; no new gameplay/native/browser test runs. Other owners reconcile their own work. Does not erase remaining acceptance or authorize pipeline/infrastructure/audience changes.",
+        "finish_publication_authorized": true,
+        "owned_jobs_ended": 41,
+        "owned_remaining": 0,
+        "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+        "published_main_before_finish": "cbc90bd417c862fa4fc8ce2f586a40185b93d4a7",
+        "preserved_local_checkpoint": "99b497765cb8b95c41d7e55f55c37c59581ecc0b",
+        "next_observation": {
+          "observed_at": "2026-11-06T08:42:50Z",
+          "phase": "failed",
+          "available_commit": "cbc90bd417c862fa4fc8ce2f586a40185b93d4a7",
+          "deployed_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+          "error": "refusing to replace an existing immutable build"
+        },
+        "remaining": "All3Open; associated753 alreadyonmain. Publish remaining preservation/tracking checkpoint and observe existing watcher. Exact NEXT acceptance remains required; launch not newly tested duringpause. Prior originalac877/direct1ad read denials untouched."
       }
     ],
     "no_intentional_holds_scope": "No agent-imposed or invented holds. Current explicit user pauses override the earlier zero-holds direction only for their named scope."
@@ -25291,7 +25321,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+      "status": "TESTING_PAUSED_PRESERVED_FIX_MAIN_FINISHING_NEXT",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25330,7 +25360,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
         ],
-        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
+        "scope": "Codefix753 already published in mainCBC; local99 preserves exact blocker. Finish the authorized preservation/pause metadata publication and observe existing NEXT; currently7d remains deployed. No new startup/gameplay tests duringuserpause."
       },
       "evidence": [
         {
@@ -25372,26 +25402,54 @@
           "kind": "repeated_existing_publisher_block",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
+        },
+        {
+          "kind": "explicit_user_finish_then_testing_pause",
+          "reference": "docs/todo/bth_task14_testing_pause_20261106.json",
+          "summary": "Userrequests preserveprogress, finishlastinprogressmain/NEXT andpausetesting. All41ownedJobsalreadyended/0; no new native/browserjobs. Keep3IDsOpen/associated753; publishremainingtrackingandreportactualpublisheroutcome."
         }
       ],
       "implementation_batches": [
         "BTH061-BAR-DICE-SHUTDOWN-001"
       ],
-      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
+      "next_action": "Finish publishing preserved source/tracking checkpoint through main and observe existing NEXT machinery without new tests; record actual result, then pause. Keep Open until exact required acceptance is supported. Preserve immutable builds/provenance/denied-read boundaries; no pipeline restart or substitute export.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+        "description": "Existing publisher still retains7d. Latest observed automatic retry ofCBC reports refusing to replace an existing immutable build, following the retained initial automated grant failure. No new testing under explicit userpause; remaining existing publication/preservation checkpoint is authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:07:21.202382+00:00",
+        "observed_at": "2026-11-06T08:44:42.036719+00:00",
         "evidence": [
+          "docs/todo/bth_task14_testing_pause_20261106.json",
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:07:21.202382+00:00"
+      "updated_at": "2026-11-06T08:44:42.036719+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:44:42.036719+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/todo/bth_task14_testing_pause_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+        "scope_limit": "No new testing. Preservation and already-authorized main/NEXT publication follow-through continue as final in-progress work.",
+        "resume_next_action": "After user resumes testing and the existing publisher is recovered, verify actual qualified descendant NEXT identity/basic launch if not already independently qualified; complete required acceptance and reconciliation before closing all3.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "next_promotion",
+          "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T06:07:21.202382+00:00",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
@@ -25458,7 +25516,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+      "status": "TESTING_PAUSED_PRESERVED_FIX_MAIN_FINISHING_NEXT",
       "owner": {
         "name": "Bar Dice cover/risk display investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25482,7 +25540,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
+        "scope": "Codefix753 already published in mainCBC; local99 preserves exact blocker. Finish the authorized preservation/pause metadata publication and observe existing NEXT; currently7d remains deployed. No new startup/gameplay tests duringuserpause."
       },
       "evidence": [
         {
@@ -25509,24 +25567,52 @@
           "kind": "repeated_existing_publisher_block",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
+        },
+        {
+          "kind": "explicit_user_finish_then_testing_pause",
+          "reference": "docs/todo/bth_task14_testing_pause_20261106.json",
+          "summary": "Userrequests preserveprogress, finishlastinprogressmain/NEXT andpausetesting. All41ownedJobsalreadyended/0; no new native/browserjobs. Keep3IDsOpen/associated753; publishremainingtrackingandreportactualpublisheroutcome."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
+      "next_action": "Finish publishing preserved source/tracking checkpoint through main and observe existing NEXT machinery without new tests; record actual result, then pause. Keep Open until exact required acceptance is supported. Preserve immutable builds/provenance/denied-read boundaries; no pipeline restart or substitute export.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+        "description": "Existing publisher still retains7d. Latest observed automatic retry ofCBC reports refusing to replace an existing immutable build, following the retained initial automated grant failure. No new testing under explicit userpause; remaining existing publication/preservation checkpoint is authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:07:21.202382+00:00",
+        "observed_at": "2026-11-06T08:44:42.036719+00:00",
         "evidence": [
+          "docs/todo/bth_task14_testing_pause_20261106.json",
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:07:21.202382+00:00"
+      "updated_at": "2026-11-06T08:44:42.036719+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:44:42.036719+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/todo/bth_task14_testing_pause_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+        "scope_limit": "No new testing. Preservation and already-authorized main/NEXT publication follow-through continue as final in-progress work.",
+        "resume_next_action": "After user resumes testing and the existing publisher is recovered, verify actual qualified descendant NEXT identity/basic launch if not already independently qualified; complete required acceptance and reconciliation before closing all3.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "next_promotion",
+          "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T06:07:21.202382+00:00",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          ]
+        }
+      }
     }
   ],
   "batches": [
@@ -26025,7 +26111,7 @@
       "aliases": [],
       "group": "current",
       "state": "open",
-      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+      "status": "TESTING_PAUSED_PRESERVED_FIX_MAIN_FINISHING_NEXT",
       "owner": {
         "name": "Bar Dice shutdown ownership fix (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -26049,7 +26135,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
+        "scope": "Codefix753 already published in mainCBC; local99 preserves exact blocker. Finish the authorized preservation/pause metadata publication and observe existing NEXT; currently7d remains deployed. No new startup/gameplay tests duringuserpause."
       },
       "evidence": [
         {
@@ -26066,29 +26152,57 @@
           "kind": "repeated_existing_publisher_block",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
+        },
+        {
+          "kind": "explicit_user_finish_then_testing_pause",
+          "reference": "docs/todo/bth_task14_testing_pause_20261106.json",
+          "summary": "Userrequests preserveprogress, finishlastinprogressmain/NEXT andpausetesting. All41ownedJobsalreadyended/0; no new native/browserjobs. Keep3IDsOpen/associated753; publishremainingtrackingandreportactualpublisheroutcome."
         }
       ],
-      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
+      "next_action": "Finish publishing preserved source/tracking checkpoint through main and observe existing NEXT machinery without new tests; record actual result, then pause. Keep Open until exact required acceptance is supported. Preserve immutable builds/provenance/denied-read boundaries; no pipeline restart or substitute export.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+        "description": "Existing publisher still retains7d. Latest observed automatic retry ofCBC reports refusing to replace an existing immutable build, following the retained initial automated grant failure. No new testing under explicit userpause; remaining existing publication/preservation checkpoint is authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:07:21.202382+00:00",
+        "observed_at": "2026-11-06T08:44:42.036719+00:00",
         "evidence": [
+          "docs/todo/bth_task14_testing_pause_20261106.json",
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
-      "updated_at": "2026-11-06T06:07:21.202382+00:00",
+      "updated_at": "2026-11-06T08:44:42.036719+00:00",
       "parent_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
       "scope": [
         "Join only the current Host SaveService task at _exit_tree, including a coalesced task started in the final queued-deletion frame.",
         "Preserve native/Web Save result validation, prior good data and reported failures; no forced new Save, global task sweep, process disabling or forced exit.",
         "Focused successful/failed Save teardown evidence, actual native exit code and authorized commit/main/NEXT association."
       ],
-      "acceptance_scope": "Bounded ownership correction only; parent still requires all its accepted-cup and Save/Continue acceptance and retains original attribution limits."
+      "acceptance_scope": "Bounded ownership correction only; parent still requires all its accepted-cup and Save/Continue acceptance and retains original attribution limits.",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:44:42.036719+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/todo/bth_task14_testing_pause_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+        "scope_limit": "No new testing. Preservation and already-authorized main/NEXT publication follow-through continue as final in-progress work.",
+        "resume_next_action": "After user resumes testing and the existing publisher is recovered, verify actual qualified descendant NEXT identity/basic launch if not already independently qualified; complete required acceptance and reconciliation before closing all3.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "next_promotion",
+          "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T06:07:21.202382+00:00",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+          ]
+        }
+      }
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T06:07:21.202382+00:00",
+  "observed_at": "2026-11-06T08:44:42.036719+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -55,8 +55,8 @@
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
       "state": "active",
-      "observed_at": "2026-11-06T06:07:21.202382+00:00",
-      "source": "Actual active task14 checkpoint: focused acceptance and main code publication finished; exact existing NEXT publisher grant failure recorded, all3Open, no further native/browser jobs."
+      "observed_at": "2026-11-06T08:44:42.036719+00:00",
+      "source": "Actual active final preservation/publication under explicit user testing pause; all41 owned jobs ended/0 and no new testing."
     },
     {
       "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",

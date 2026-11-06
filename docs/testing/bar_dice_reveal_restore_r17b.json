@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "open",
-  "updated_at": "2026-11-06T06:07:21.202382+00:00",
+  "updated_at": "2026-11-06T08:44:42.036719+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -5547,6 +5547,48 @@
         "owned_jobs_ended": 41,
         "git_verification": true,
         "scope": "Present-time manual check; all outside findings preserved without assignment or state changes."
+      }
+    },
+    "finish_then_testing_pause": {
+      "schema": "bth.user_work_pause/v1",
+      "recorded_at": "2026-11-06T08:44:42.036719+00:00",
+      "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+      "source": "Trusted parent delegation with explicit transcript_evidence; parent also directs Do not start new testing.",
+      "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+      "requested_by": "user",
+      "state": "testing_paused_finish_publication_in_progress",
+      "task_ids": [
+        "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+        "BTH061-BAR-DICE-COVER-DISPLAY-001",
+        "BTH061-BAR-DICE-SHUTDOWN-001"
+      ],
+      "resume_only_on_user_instruction": true,
+      "scope_limit": "Testing pause for these existing task14 Bar Dice objectives/batch only. Finish preservation, commit/main publication and existing NEXT follow-through; no new gameplay/native/browser test runs. Other owners reconcile their own work. Does not erase remaining acceptance or authorize pipeline/infrastructure/audience changes.",
+      "finish_publication_authorized": true,
+      "owned_jobs_ended": 41,
+      "owned_remaining": 0,
+      "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+      "published_main_before_finish": "cbc90bd417c862fa4fc8ce2f586a40185b93d4a7",
+      "preserved_local_checkpoint": "99b497765cb8b95c41d7e55f55c37c59581ecc0b",
+      "next_observation": {
+        "observed_at": "2026-11-06T08:42:50Z",
+        "phase": "failed",
+        "available_commit": "cbc90bd417c862fa4fc8ce2f586a40185b93d4a7",
+        "deployed_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+        "error": "refusing to replace an existing immutable build"
+      },
+      "remaining": "All3Open; associated753 alreadyonmain. Publish remaining preservation/tracking checkpoint and observe existing watcher. Exact NEXT acceptance remains required; launch not newly tested duringpause. Prior originalac877/direct1ad read denials untouched.",
+      "manual_reconciliation": {
+        "checked_at": "2026-11-06T08:44:52.902718Z",
+        "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-finish-pause-reconciliation.json",
+        "sha256": "20f1509ddce346778c0e767779438e98c56965f1882bb620630af34bb23d6f28",
+        "own_findings": 0,
+        "outside_findings": 447,
+        "outside_tasks": 49,
+        "all_unique_ids": 283,
+        "owned_jobs_ended": 41,
+        "new_tests_started": 0,
+        "scope": "Bookkeeping reconciliation only, no native/browser/gameplay testing; unrelated findings preserved."
       }
     }
   }

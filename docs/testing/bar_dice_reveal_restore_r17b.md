@@ -139,6 +139,10 @@ Exact current served identity/startup was not qualified; no Job42 was launched. 
 
 Final manual reconciliation at 2026-11-06T06:07:35.107467Z: **0 findings for these3 IDs**, **413 findings across 47 other IDs** preserved. Local Git association verification enabled.
 
+### Finish and pause instruction
+
+At2026-11-06T08:44:42.036719+00:00 the trusted user instruction is: "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next". Testing is paused; all41 owned native/browser Jobs are already ended with0remaining, and no new tests are started. All283 stable IDs and all3 Open Bar Dice tasks retain their commits and evidence. Codefix753 is already on mainCBC; local99 preserves the final blocker. The remaining preservation/pause checkpoint will be committed and published under the renewed explicit main/NEXT direction, followed only through the existing publisher. Latest observed NEXT still serves7d and the automatic CBC retry reports refusing to replace an existing immutable build. No completion, new launch check, denied document retry, manual substitute build, pipeline restart or audience change is implied. After recording the actual publication outcome, this task pauses.
+
 ## Historical checkpoint through 7d
 
 The following preserved narrative describes the earlier checkpoint and its
