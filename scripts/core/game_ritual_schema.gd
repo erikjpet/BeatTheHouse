@@ -572,7 +572,7 @@ static func _local_id(value: String) -> bool:
 static func _qualified_id(value: String) -> bool:
 	if value.is_empty() or value.length() > 192:
 		return false
-	var atoms := value.split(".", false)
+	var atoms := value.split(".", true)
 	if atoms.size() < 2:
 		return false
 	for atom in atoms:
