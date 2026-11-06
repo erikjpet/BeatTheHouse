@@ -45,3 +45,9 @@ Evidence: companion `bar_dice_reveal_restore_r17b.json`; task-local `evidence/ba
 All **20** task-owned Bar Dice Jobs ended with `active_at_release=0`: 17 native and 3 Web. Actual limits were 3% CPU/2 GiB for native and 12%/2 GiB for Web, assigned before execution with kill-on-close and no breakaway. Job closure does not turn failed native exits into clean passes. Both named task lists preserve all 281 existing unique IDs; this item retains the fix commit and Open acceptance gaps.
 
 Manual task reconciliation at 2026-11-06T03:55:38.423861Z: **0 findings for this task**; **332 findings across 43 other task IDs** remain visible in the referenced output. No other task state or ownership was changed.
+
+## Open cover/risk display follow-up
+
+**BTH061-BAR-DICE-COVER-DISPLAY-001** is registered Open in both task lists, with no fix commit. Both Web Reveal PNGs also show **COV $0 / RISK $0 / RET $0**. Read-only source review at `dff23f66e6ecf60a31b5b4c65b7509dc8e0df883` expects cover6/risk6/returned0 for ante6 in Reveal; this is not intentional unfunded normalization in the reviewed producer/projection code. The actual field-loss boundary is not established. No speculative patch, lost-custody claim, debit claim or further gameplay input is justified. The next action is a narrow independent nonfinancial surface-field reconstruction. The parent remains Open.
+
+The documentation-only checkpoint `dff23f66e6ecf60a31b5b4c65b7509dc8e0df883` deployed at 04:02:27Z; exact source/tree, navigation and fresh title startup passed with zero inputs/imports. Its final startup Job exited0/owned0, bringing this investigation to **21 ended Jobs (17 native, 4 Web)**. The earlier twenty-job checkpoint remains historical. Exact final receipts are in the task-local outcome/served files referenced in JSON. All **282 unique IDs** now retain the prior281 plus this named follow-up.

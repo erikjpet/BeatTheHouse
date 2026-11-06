@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "open",
-  "updated_at": "2026-11-06T03:55:21.185870+00:00",
+  "updated_at": "2026-11-06T04:06:14.209994+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -1587,5 +1587,42 @@
     "outside_assigned_scope_tasks": 43,
     "all_ids_preserved": 281,
     "scope": "Manual checkpoint only; other owners/tasks are not reassigned, refreshed or resolved. All original findings are retained in the referenced output."
+  },
+  "cover_display_followup": {
+    "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+    "state": "open",
+    "observed_build": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+    "source_review_build": "dff23f66e6ecf60a31b5b4c65b7509dc8e0df883",
+    "observation": "Both root-reviewed create and cold Reveal PNGs show ANTE $6, wallet $94, POT $24, same cup dice, but upper COV $0 / RISK $0 / RET $0. No Call/wager/choice occurred.",
+    "expected_source": "bar_dice.gd ritual authority assigns covered_total=at_risk_total=active_stake6 at Reveal; returned0 expected. Ritual projection clamps nonnegative without zeroing unfunded cover; surface_spec and ActionViewModel reviewed copies retain fields. Draw label reads flat fields and defaults missing values to0.",
+    "disposition": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks.",
+    "evidence": [
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json",
+      "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/create/reveal.png",
+      "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/cold/reveal.png"
+    ],
+    "next_action": "Narrow independent nonfinancial reproduction to capture the first surface-field/projection boundary; compare warm/cold expected6 labels. Never replay a prior Call or touch original profile/denied documents."
+  },
+  "final_metadata_checkpoint": {
+    "commit": "dff23f66e6ecf60a31b5b4c65b7509dc8e0df883",
+    "source_tree": "65b28b1c9866fc594492def33a362f2e23989c23",
+    "deployed_at": "2026-11-06T04:02:27Z",
+    "startup": "passed; exact title version dff23f66e6ec, no inputs/import, closed exit0/owned0",
+    "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-checkpoint-served.json",
+    "outcome_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\outcome-bar-dice-reveal.json"
+  },
+  "manual_reconciliation_with_cover_followup": {
+    "checked_at": "2026-11-06T04:06:23.986531Z",
+    "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-cover-queue-check.json",
+    "sha256": "b5e3dc0969f61f35a9896f2fd563efe605e55984361bba644de9f7beabf41e02",
+    "assigned_task_ids": [
+      "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "BTH061-BAR-DICE-COVER-DISPLAY-001"
+    ],
+    "assigned_task_findings": 0,
+    "other_findings": 332,
+    "other_tasks": 43,
+    "all_ids_preserved": 282,
+    "owned_jobs_ended": 21
   }
 }

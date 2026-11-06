@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T03:55:21.185870+00:00",
+  "updated_at": "2026-11-06T04:06:14.209994+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25347,6 +25347,11 @@
           "kind": "exact_next_isolated_web_cold_restore",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Exact 1adcf4f9 manifest/tree/PCK/native WASM verified. Independent fixture at Reveal6/cash94 saved through normal Web Menu; cold same profile without import shows same visible dice/Reveal6/cash94. Both browser Jobs exit0/owned0; zero paid inputs. Engineering import and full native/post-Call limits retained."
+        },
+        {
+          "kind": "named_open_followup",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "BTH061-BAR-DICE-COVER-DISPLAY-001: COV0/RISK0 in both Web Reveal PNGs retained as an unattributed display discrepancy; no custody/debit claim."
         }
       ],
       "implementation_batches": [],
@@ -25363,7 +25368,116 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:55:21.185870+00:00"
+      "updated_at": "2026-11-06T04:06:14.209994+00:00"
+    },
+    {
+      "id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "name": "Resolve Bar Dice Reveal cover and risk labels showing zero",
+      "aliases": [
+        "QA-BAR-DICE-COVER-DISPLAY-1AD"
+      ],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-BAR-DICE-REVEAL-RESTORE-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the independent deployed Bar Dice Reveal screenshots showing ante6/wallet94/pot24/same dice but COV0/RISK0/RET0. Establish the expected pre-Call label amounts and identify the actual surface-field boundary before changing code. If confirmed, fix the narrow display defect without changing money/custody/RNG or replaying any prior Call; qualify ordinary warm/cold views, commit and publish exact main/NEXT. Preserve original tester profile and denied reads. Do not interpret label zeros as a proven lost cup or debit.",
+        "source": "Task14 operator-reviewed independent Web create/cold Reveal PNGs on exact1adcf4f9; final read-only source review atdff23f66 expects covered6/risk6/returned0 but no proven losing boundary. Derived directly from delegated R17-B Reveal restore investigation.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "preserve-observation",
+            "description": "Retain both exact-build PNG references and engineering-import/cold-no-import limits; no original data or financial replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "causal-display-reproduction",
+            "description": "Identify the first actual source/runtime boundary making cover/risk0 despite acceptedante6; preserve custody and money facts separately.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "focused-display-fix",
+            "description": "Evidence-backed narrow label repair with normal warm/cold acceptedcup and unfunded/fresh/settled guards; no authority or financial weakening.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "commit-main-next",
+            "description": "Associated fix commit, main publication and exact NEXT acceptance before Complete.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OBSERVED_DISPLAY_DISCREPANCY_NO_FIX_COMMIT",
+      "owner": {
+        "name": "Bar Dice cover/risk display investigation (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ],
+        "scope": "Observation/source review only; no fix commit or changed-behavior deployment."
+      },
+      "evidence": [
+        {
+          "kind": "public_web_display_observation",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Both root-reviewed create and cold Reveal PNGs show ANTE $6, wallet $94, POT $24, same cup dice, but upper COV $0 / RISK $0 / RET $0. No Call/wager/choice occurred."
+        },
+        {
+          "kind": "source_expectation_not_causal_proof",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.md",
+          "summary": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Narrow independent nonfinancial reproduction to capture the first surface-field/projection boundary; compare warm/cold expected6 labels. Never replay a prior Call or touch original profile/denied documents.",
+      "blocker": {
+        "state": "active",
+        "kind": "unattributed_surface_field_discrepancy",
+        "description": "Producer source expects6/6/0; two reviewed public PNGs show0/0/0. No demonstrated field-loss boundary or justified patch yet. Independent investigation is available; not waiting for user save/permission.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T04:06:14.209994+00:00",
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T04:06:14.209994+00:00"
     }
   ],
   "batches": [
