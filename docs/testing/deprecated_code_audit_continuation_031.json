@@ -1,10 +1,10 @@
 {
   "schema": "bth.deprecated_code_audit_continuation/031",
   "phase": "031",
-  "observed_at": "2026-11-06T07:34:18.932393+00:00",
-  "status": "THREE_BODY_REVIEWS_AND_BOUNDED_MODEL_QUALIFICATION_PASS_CORRECTION_OPEN_COMMIT_PENDING",
+  "observed_at": "2026-11-06T07:40:02.542236+00:00",
+  "status": "THREE_BODY_AND_BOUNDED_WALK_QUALIFICATION_COMPLETE_CORRECTION_AND_REMAINDER_OPEN",
   "base_local_HEAD": "1f7ef8572539008559e4aedd05ec374dc101bf4f",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "62e1989e5f921b6418f70876a1d3010f10266156",
   "tasks": {
     "body": "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
     "walk_qualification": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
@@ -183,7 +183,7 @@
     ],
     "current_ui_game_inventory129_historical127_preserved": true,
     "full_objective_complete": false,
-    "body_and_walk_qualification_children_complete": false
+    "body_and_walk_qualification_children_complete": true
   },
   "custody": {
     "changed_existing_rows": [
@@ -238,7 +238,30 @@
         "sha256": "a5bcb3a69b27d6e19570e7841d207ed93876612b3c1edbe17b4fac313336da71"
       }
     },
-    "limit": "Older observations crossed unchanged24hour freshness policy; no new scope errors. New owned Job closure0 is freshly observed, original227 records unchanged. Final rerun after actual evidence commit association follows."
+    "limit": "Final R2 after association reports439/1055 historical findings. Two more unchanged old observations crossed the24hour limit during this turn; own134runtimeage plus005/009blockerage only, no new consistency errors. All prior227 records preserved, no restamping.",
+    "final_after_actual_evidence_association": {
+      "current": 439,
+      "all": 1055,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 134,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-current-r2.json",
+          "sha256": "c61376b1b3024f591a90227261936da467af0e9f6bc9469d3f0400cd0b5edefb"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-all-r2.json",
+          "sha256": "ccf885f7070283e5978373db8dc65835feeb4ef35b99460b5426e7e21d12727a"
+        }
+      }
+    }
   },
   "evidence": {
     "catalog031-registration-r1.json": {

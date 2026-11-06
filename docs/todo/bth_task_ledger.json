@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T07:34:18.932393+00:00",
+  "updated_at": "2026-11-06T07:40:02.542236+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -27169,8 +27169,7 @@
             "state": "pass",
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_031.json",
-              "docs/testing/deprecated_code_audit_continuation_031.md",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json"
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           },
           {
@@ -27180,8 +27179,7 @@
             "state": "pass",
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_031.json",
-              "docs/testing/deprecated_code_audit_continuation_031.md",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json"
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           },
           {
@@ -27190,8 +27188,8 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           }
         ],
@@ -27201,8 +27199,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "NORMAL_META_PRODUCER_AND_PUBLIC_MODEL_REJECTION_QUALIFIED_EVIDENCE_COMMIT_PENDING_031",
+      "state": "complete",
+      "status": "BOUNDED_BODY_OR_MODEL_QUALIFICATION_COMPLETE_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_031",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27214,6 +27212,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_030.json",
             "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        },
+        {
+          "sha": "62e1989e5f921b6418f70876a1d3010f10266156",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_031.json",
+            "docs/testing/deprecated_code_audit_continuation_031.md"
           ]
         }
       ],
@@ -27247,20 +27252,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual phase031 evidence commit before bounded qualification completion. Continue the separate Open corrective task BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031; no item implementation or full journey/UI correction is implied.",
+      "next_action": "Bounded body/model qualification Complete with actual evidence commit. Whole audit and the separate Meta-choice correction, conditional rollback question and stopped classifier cleanup remain Open; no source fix or NEXT acceptance implied.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Bounded normal-producer/public-model qualification is complete; actual evidence association pending. Correction is separately Open under item implementation restrictions.",
+        "description": "Bounded qualification and actual evidence commit association complete. Correction/remaining audit/cleanup and deployment gates remain separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T07:34:18.932393+00:00",
+        "observed_at": "2026-11-06T07:40:02.542236+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_031.json",
-          "docs/testing/deprecated_code_audit_continuation_031.md"
+          "docs/testing/deprecated_code_audit_continuation_031.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T07:40:02.542236+00:00"
     },
     {
       "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
@@ -27299,8 +27303,8 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           }
         ],
@@ -27323,6 +27327,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_030.json",
             "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        },
+        {
+          "sha": "62e1989e5f921b6418f70876a1d3010f10266156",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_031.json",
+            "docs/testing/deprecated_code_audit_continuation_031.md"
           ]
         }
       ],
@@ -27363,7 +27374,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T07:40:02.542236+00:00"
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -27402,8 +27413,8 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           }
         ],
@@ -27426,6 +27437,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_030.json",
             "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        },
+        {
+          "sha": "62e1989e5f921b6418f70876a1d3010f10266156",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_031.json",
+            "docs/testing/deprecated_code_audit_continuation_031.md"
           ]
         }
       ],
@@ -27466,7 +27484,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T07:40:02.542236+00:00"
     },
     {
       "id": "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
@@ -27496,8 +27514,11 @@
             "id": "independent-review-and-commit",
             "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
+            ]
           }
         ],
         "coverage": {
@@ -27534,14 +27555,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "THREE_COMPLETE_BODIES_AND_RECIPROCAL_PEERS_PASS_EVIDENCE_COMMIT_PENDING_031",
+      "state": "complete",
+      "status": "BOUNDED_BODY_OR_MODEL_QUALIFICATION_COMPLETE_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_031",
       "owner": {
         "name": "Audit phase031 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "62e1989e5f921b6418f70876a1d3010f10266156",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_031.json",
+            "docs/testing/deprecated_code_audit_continuation_031.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27557,17 +27586,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual phase031 evidence commit before completing this bounded three-body child. Whole audit, three remaining core bodies and broader areas remain Open.",
+      "next_action": "Bounded body/model qualification Complete with actual evidence commit. Whole audit and the separate Meta-choice correction, conditional rollback question and stopped classifier cleanup remain Open; no source fix or NEXT acceptance implied.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Permitted independent source review and qualification are active. No new pause or missing-original-save hold; cleanup, implementation and access restrictions remain in effect.",
+        "description": "Bounded qualification and actual evidence commit association complete. Correction/remaining audit/cleanup and deployment gates remain separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:52:20.768694+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T07:40:02.542236+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_031.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T07:40:02.542236+00:00"
     },
     {
       "id": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
@@ -27628,7 +27659,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "62e1989e5f921b6418f70876a1d3010f10266156",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_031.json",
+            "docs/testing/deprecated_code_audit_continuation_031.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -27662,7 +27701,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T07:40:02.542236+00:00"
     }
   ],
   "batches": [

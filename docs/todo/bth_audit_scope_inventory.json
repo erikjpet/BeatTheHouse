@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T07:34:18.932393+00:00",
+  "observed_at": "2026-11-06T07:40:02.542236+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2125,7 +2125,8 @@
       "denied_publication_retried": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_031.json",
       "full_objective_complete": false,
-      "evidence_commit_association": "pending"
+      "evidence_commit_association": "Actual commit associated; body and bounded walk qualification Complete; correction/conditional rollback/classifier cleanup/umbrella Open.",
+      "associated_evidence_commit": "62e1989e5f921b6418f70876a1d3010f10266156"
     }
   ],
   "current_code_universe030": {
