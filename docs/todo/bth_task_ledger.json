@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T03:12:22.488729+00:00",
+  "updated_at": "2026-11-06T03:55:21.185870+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25266,10 +25266,11 @@
             "id": "commit-main-next",
             "description": "Associated tested scopedcommit and authorizedmain publication/exactNEXTidentity/basiclaunch/changedbehavior where feasible; record factualblockers and do notmarkcomplete before requiredacceptance.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
-              "docs/testing/bar_dice_reveal_restore_r17b.md"
+              "docs/testing/bar_dice_reveal_restore_r17b.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
             ]
           },
           {
@@ -25290,7 +25291,7 @@
         }
       },
       "state": "open",
-      "status": "FIX_COMMITTED_FULL_ACCEPTANCE_OPEN",
+      "status": "FIX_DEPLOYED_REVEAL_WEB_VERIFIED_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25301,20 +25302,30 @@
           "sha": "eba4663b52b6152eff814231c76ce093bf7d4afa",
           "evidence": [
             "docs/testing/bar_dice_reveal_restore_r17b.json",
-            "docs/testing/bar_dice_reveal_restore_r17b.md",
-            "Boundedreviewedacceptedantefix+focused21/26/14/17cleanpasses; exactcausalnativeandallfailedruntime/setupreceipts retained. Not fulltaskclosure or deployedWebacceptance."
+            "docs/testing/bar_dice_reveal_restore_r17b.md"
+          ]
+        },
+        {
+          "sha": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md"
           ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "eba4663b52b6152eff814231c76ce093bf7d4afa",
+        "state": "verified",
+        "commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+        "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
+        "deployed_at": "2026-11-06T03:17:02Z",
+        "observed_at": "2026-11-06T03:55:21.185870+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md"
+          "docs/testing/bar_dice_reveal_restore_r17b.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
         ],
-        "scope": "Scopedfix committed; mainpublication/exactNEXTpending. Fullnativeflow/postCallSave/shutdowndisposition remainsOpen; deniedac877manifest/originalstorage untouched."
+        "scope": "Fix eba4663b and association descendant 1adcf4f9 reached existing main/NEXT. Exact served manifest/PCK/native WASM match pipeline receipt; title and isolated engineering-fixture Menu Save/cold Reveal behavior verified. Original-player forensic attribution, native shutdown and post-Call final-save acceptance remain open."
       },
       "evidence": [
         {
@@ -25331,23 +25342,28 @@
           "kind": "clean_focused_regressions_with_limits",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Clean21acceptedante,26surfaceRestore,14pendingRecovery,17unaffordableGuard. Old/newcupcoldactualReveal6andoneCall/replaypass; sourcewarmshutdownfailedbothversions andpostCallHealthInspectorpreventedSave. Allfailedfixtures/processstatuses preserved; no fullacceptanceclaim."
+        },
+        {
+          "kind": "exact_next_isolated_web_cold_restore",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Exact 1adcf4f9 manifest/tree/PCK/native WASM verified. Independent fixture at Reveal6/cash94 saved through normal Web Menu; cold same profile without import shows same visible dice/Reveal6/cash94. Both browser Jobs exit0/owned0; zero paid inputs. Engineering import and full native/post-Call limits retained."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publishscopedtestedfix understandingauthorization aftercurrentmainintegration; followexistingNEXT andverifynewexactruntime. KeepfulltaskOpen fornative0xC0000005disposition andnormalpostCallprompt/Save/freshContinue. No oldoriginal/manifestaccess orfinancialreplay.",
+      "next_action": "Keep objective Open. Use a new independent legitimate case to complete the ordinary post-Call event choice, Menu Save and fresh Continue without replaying either prior unsaved Call. Obtain a supported native shutdown disposition (baseline and candidate both 0xC0000005 after 83/0); no speculative native/engine fix or suppressed exits. Preserve original profile and both denied document reads.",
       "blocker": {
         "state": "active",
-        "kind": "native_shutdown_and_final_save_acceptance_open",
-        "description": "Changedcontract/freshguards/restoration/pending/affordability allcleanpass21/26/14/17. Bothbaseline/candidatecatalogwarm reach83/0 thennative0xC0000005 atshutdown, causeunattributed. Candidateold/newRevealrestoreandsingleCall6/replaypass; HealthInspector promptpausespostCall andpreventsMenuSave; readonlyconfirmsonlyprior94RevealSave, no acceptedpostCallSave. Nativewhole-flowacceptance remainsOpen. Commit/publication ofboundedreviewedfix proceeds separately understandingauthorization; originalac877manifestdenial untouched.",
+        "kind": "native_shutdown_and_post_call_save_acceptance_open",
+        "description": "Scoped fix is on main and exact NEXT 1adcf4f9, with clean focused 21/26/14/17 and isolated deployed Web Menu Save/cold Reveal acceptance. Full objective remains open: both baseline/candidate catalog warm Jobs crash 0xC0000005 at final shutdown after 83/0 assertions; cause unattributed. Normal Health Inspector after the single native Call paused animation and prevented final Menu Save; retained storage is the prior accepted $94 Reveal, not the unsaved $88 outcome. No financial replay or original storage access. Neither unresolved path is awaiting a user save or permission.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T03:11:08.473219+00:00",
+        "observed_at": "2026-11-06T03:55:21.185870+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:12:22.488729+00:00"
+      "updated_at": "2026-11-06T03:55:21.185870+00:00"
     }
   ],
   "batches": [

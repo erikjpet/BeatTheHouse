@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
-  "state": "Open",
-  "updated_at": "2026-11-06T03:12:22.488729+00:00",
+  "state": "open",
+  "updated_at": "2026-11-06T03:55:21.185870+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -74,7 +74,11 @@
   "commits": [
     {
       "sha": "eba4663b52b6152eff814231c76ce093bf7d4afa",
-      "scope": "Scopedagreedantefix andtrackedfocusedtests/evidence; fullacceptanceOpen."
+      "scope": "Scoped accepted-ante production fix and focused tests; full objective remains Open."
+    },
+    {
+      "sha": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+      "scope": "Fix association/evidence descendant deployed and verified on NEXT."
     }
   ],
   "native_cases": [
@@ -1194,12 +1198,72 @@
           "Automatic Save retains observed wallet and exactly one round/story action"
         ]
       }
+    },
+    {
+      "label": "dice-default-slot-convert-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\dice_default_slot.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_fixture_preparation_only",
+      "result_marker": "DICE_DEFAULT_SLOT_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T03:38:28.761830+00:00",
+        "finished_utc": "2026-11-06T03:38:41.811501+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 6.21875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-default-slot-convert-1.log",
+      "result": {
+        "checks": 36,
+        "failures": [],
+        "facts": {
+          "completed": true,
+          "game_inputs": 0,
+          "original_campaign_accessed": false,
+          "source_untouched": true,
+          "preparation": {
+            "independent_fixture": true,
+            "original_campaign_accessed": false,
+            "native_official_reload_validated": true,
+            "native_host_continue_in_this_job": false
+          }
+        },
+        "details_reference": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-default-slot-convert-1.log"
+      }
     }
   ],
   "deployment": {
-    "state": "pending",
-    "commit": "eba4663b52b6152eff814231c76ce093bf7d4afa",
-    "evidence": []
+    "required": true,
+    "state": "verified",
+    "commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+    "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
+    "deployed_at": "2026-11-06T03:17:02Z",
+    "observed_at": "2026-11-06T03:55:21.185870+00:00",
+    "evidence": [
+      "docs/testing/bar_dice_reveal_restore_r17b.json",
+      "docs/testing/bar_dice_reveal_restore_r17b.md",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
+    ],
+    "scope": "Fix eba4663b and association descendant 1adcf4f9 reached existing main/NEXT. Exact served manifest/PCK/native WASM match pipeline receipt; title and isolated engineering-fixture Menu Save/cold Reveal behavior verified. Original-player forensic attribution, native shutdown and post-Call final-save acceptance remain open."
   },
   "causal_finding": {
     "classification": "Confirmed independent equivalent-state production defect; original scenario/branch uninspected",
@@ -1253,5 +1317,275 @@
       "Sentinel_eea9436f41b0819191f9f7fceb3121da"
     ],
     "scope": "Onlythisnew independentlytested BarDice scopedfix/currentbranch fromac877. No prior deniedR08history, native/toolchain/audience/stable/itch/manifest/originalprofile changes. Fulltask remainsOpen."
+  },
+  "web_cases": [
+    {
+      "label": "dice-next-startup-1ad-1",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\dice_next_startup.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "web_startup_only_no_gameplay_acceptance",
+      "result_marker": "DICE_NEXT_STARTUP_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T03:22:03.360882+00:00",
+        "finished_utc": "2026-11-06T03:22:17.465902+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 13.0625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-1ad-1.log",
+      "result": {
+        "completed": true,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-1ad-1\\startup.json",
+        "closed": true
+      }
+    },
+    {
+      "label": "dice-web-reveal-create-1",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\dice_reveal_web.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "isolated_web_operator_review_required",
+      "result_marker": "DICE_REVEAL_WEB_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T03:47:43.671623+00:00",
+        "finished_utc": "2026-11-06T03:49:28.396731+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 108.375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-web-reveal-create-1.log",
+      "result": {
+        "completed": true,
+        "mode": "create",
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-reveal-1ad-1\\create\\state.json",
+        "closed": true
+      }
+    },
+    {
+      "label": "dice-web-reveal-cold-1",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\dice_reveal_web.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "isolated_web_operator_review_required",
+      "result_marker": "DICE_REVEAL_WEB_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T03:49:53.370770+00:00",
+        "finished_utc": "2026-11-06T03:51:39.082738+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 121.828125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-web-reveal-cold-1.log",
+      "result": {
+        "completed": true,
+        "mode": "cold",
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-reveal-1ad-1\\cold\\state.json",
+        "closed": true
+      }
+    }
+  ],
+  "release_verification": {
+    "observed_at": "2026-11-06T03:55:21.185870+00:00",
+    "served_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json",
+    "source_commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+    "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
+    "source_dirty": false,
+    "deployed_at": "2026-11-06T03:17:02Z",
+    "files": [
+      {
+        "path": "build_manifest.json",
+        "bytes": 773,
+        "sha256": "15dcf644590003e9a0e92371b06bbc861f09f8aa8ce1cb80772b7a9cf38421bb",
+        "expected_bytes": 773,
+        "expected_sha256": "15dcf644590003e9a0e92371b06bbc861f09f8aa8ce1cb80772b7a9cf38421bb",
+        "status": 200,
+        "pass": true
+      },
+      {
+        "path": "index.pck",
+        "bytes": 47193896,
+        "sha256": "5ab5fc649dceea6e3aa877f6ad43be82020a0473e6a8160275f6172f7f1d2503",
+        "expected_bytes": 47193896,
+        "expected_sha256": "5ab5fc649dceea6e3aa877f6ad43be82020a0473e6a8160275f6172f7f1d2503",
+        "status": 200,
+        "pass": true
+      },
+      {
+        "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "bytes": 340415,
+        "sha256": "2f758ab699ef9f63cc6041cdf69f8cfe614952f7310dd3b06b2fb954df235635",
+        "expected_bytes": 340415,
+        "expected_sha256": "2f758ab699ef9f63cc6041cdf69f8cfe614952f7310dd3b06b2fb954df235635",
+        "status": 200,
+        "pass": true
+      }
+    ],
+    "basic_startup_receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-1ad-1\\startup.json",
+    "title_png_sha256": "b54be7028e41d9401d692192121bad9512ae9cf4a0a7ae1a6f583655ff768c33",
+    "title_review": "Root viewed title: Version 0.6.0-dev+1adcf4f9980f. Startup alone is not changed-behavior acceptance.",
+    "web_behavior": [
+      {
+        "mode": "create",
+        "label": "dice-web-reveal-create-1",
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-reveal-1ad-1\\create\\state.json",
+        "receipt_sha256": "23f828d8965a9cbbccf03fba9b839c85f1d543c115c0b42e995d4d8c32ae5c0e",
+        "job_receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-web-reveal-create-1.json",
+        "fixture_import": true,
+        "new_paid_inputs": 0,
+        "public_errors": false,
+        "completed": true,
+        "context_closed": true,
+        "screenshots": [
+          {
+            "name": "startup.png",
+            "sha256": "33944dcf21e35dc67d99618d9bdb0103b61c80395ef1d686307297ed1a1363dc",
+            "bytes": 275725,
+            "at_ms": 1793936877460
+          },
+          {
+            "name": "floor.png",
+            "sha256": "e7301f445dcaa3115af31a994604ef43acf6c0a78c844fcff772295d95cc7ae8",
+            "bytes": 56441,
+            "at_ms": 1793936901546
+          },
+          {
+            "name": "card.png",
+            "sha256": "fa0d9ae41dfc3f065c02c1d2dbf48f715c3e3c24aabe68c8506d366967319021",
+            "bytes": 58545,
+            "at_ms": 1793936913517
+          },
+          {
+            "name": "reveal.png",
+            "sha256": "8452670d40f6c2a6d51bd7b8a8303cfaa4802aa83eed943f847184d79440e526",
+            "bytes": 81014,
+            "at_ms": 1793936937934
+          },
+          {
+            "name": "menu.png",
+            "sha256": "dc3332d40278dbf8baf98f81bac22529d4162e9d35cd7a1968643397491108e7",
+            "bytes": 68179,
+            "at_ms": 1793936956643
+          },
+          {
+            "name": "save-pending.png",
+            "sha256": "fa47968d0cb8cac4a4e33703ad9c25833b4bb0fad17effcacc8ec87d1290d192",
+            "bytes": 61019,
+            "at_ms": 1793936967560
+          },
+          {
+            "name": "save-ack.png",
+            "sha256": "735484e4b4b64a615bc9ddbf6172a73fc6423ccb303769fdeabccc29291359d8",
+            "bytes": 79570,
+            "at_ms": 1793936967746
+          }
+        ],
+        "operator_review": {
+          "reviewer": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+          "observed_at": "2026-11-06T03:55:21.185870+00:00",
+          "card": "Bar Dice card visible; normal Enter selected once.",
+          "reveal": "Bar Dice Reveal, ante $6, wallet $94, pot $24 and same visible cup dice 6,4,2,5,2. No Lift/Call/wager/choice.",
+          "save": "Create normal Run Menu Save returned to Reveal at 06:45; full acknowledgement PNG reviewed."
+        }
+      },
+      {
+        "mode": "cold",
+        "label": "dice-web-reveal-cold-1",
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-reveal-1ad-1\\cold\\state.json",
+        "receipt_sha256": "acb83ee0af96120985f1fa195591adac83467a4524eb85f2d7165726af5bff0f",
+        "job_receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-web-reveal-cold-1.json",
+        "fixture_import": false,
+        "new_paid_inputs": 0,
+        "public_errors": false,
+        "completed": true,
+        "context_closed": true,
+        "screenshots": [
+          {
+            "name": "startup.png",
+            "sha256": "b3e3fb7a8311f5e71a635533bfb371c4d6925d980606ffaabbd5a17dd3849d1f",
+            "bytes": 406180,
+            "at_ms": 1793937003182
+          },
+          {
+            "name": "floor.png",
+            "sha256": "7d2e4959d2ea88f59f18d81fb92432ebd2e55957439ae6550db3a243246150c0",
+            "bytes": 56565,
+            "at_ms": 1793937021057
+          },
+          {
+            "name": "card.png",
+            "sha256": "c880ebfeffa8a960af5b3d08c62f4148fa7bd1d1808850442c656a8f472c8a03",
+            "bytes": 60070,
+            "at_ms": 1793937059205
+          },
+          {
+            "name": "reveal.png",
+            "sha256": "056f43e14322bc846903fcf7b5aa5dc91b84edd1d31507d23d322c5b69c7aa79",
+            "bytes": 80123,
+            "at_ms": 1793937081092
+          }
+        ],
+        "operator_review": {
+          "reviewer": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+          "observed_at": "2026-11-06T03:55:21.185870+00:00",
+          "card": "Bar Dice card visible; normal Enter selected once.",
+          "reveal": "Bar Dice Reveal, ante $6, wallet $94, pot $24 and same visible cup dice 6,4,2,5,2. No Lift/Call/wager/choice.",
+          "save": "Cold normal Continue loaded 06:45; cabinet entry showed Reveal at 08:15, with no fixture URL/import in this launch."
+        }
+      }
+    ],
+    "engineering_import_limit": "Only the independent catalog fixture and its own authority companion were converted by official SaveService from custom slot to foundation_ui_autosave (36/0), then preloaded in a fresh Web profile before engine start. Official JS/PCK/WASM remained unchanged. Create-only HTML adapter imports five integrity-checked own files; cold launch uses the official HTML and no import. This is not the original player profile or a natural elapsed-time route.",
+    "runtime_cleanup": "All twenty task-owned Bar Dice Jobs ended with active_at_release=0: seventeen native (including 36/0 preparation) and three Web. Failed native exit codes remain failures, not clean passes.",
+    "access_limits": [
+      "Original ac877 manifest denial remains untouched: no retry/elevation/HTTP/alias or original resident launcher/profile access.",
+      "A direct new-build BUILD.json read also returned OS AccessDenied. It was not retried or fetched via HTTP/alias. Independently prepared normal game build_manifest.json requests concern a different public game asset and match the staged receipt.",
+      "Original raw scenario/day type and rejection branch remain uninspected; equivalent responsible mechanism is confirmed, not direct forensic attribution."
+    ]
+  },
+  "manual_reconciliation": {
+    "checked_at": "2026-11-06T03:55:38.423861Z",
+    "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-reveal-next-check.json",
+    "sha256": "fb103aaa73ac9aa9e54a09529c39e3ed8309580ba15b09a05705b11368b70be4",
+    "assigned_task_findings": 0,
+    "outside_assigned_scope_findings": 332,
+    "outside_assigned_scope_tasks": 43,
+    "all_ids_preserved": 281,
+    "scope": "Manual checkpoint only; other owners/tasks are not reassigned, refreshed or resolved. All original findings are retained in the referenced output."
   }
 }

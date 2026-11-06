@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T03:12:22.488729+00:00",
+  "observed_at": "2026-11-06T03:55:21.185870+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -55,8 +55,8 @@
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
       "state": "active",
-      "observed_at": "2026-11-06T03:12:22.488729+00:00",
-      "source": "Actualtask14 associating/publishing scopedBarDicefixeba4663b; fulltaskOpenfornativefailures+endtoend/NEXT; all16newJobsended. Noorigstorage/deniedmanifestaccess."
+      "observed_at": "2026-11-06T03:55:21.185870+00:00",
+      "source": "Actual task14 recording exact deployed 1adcf4f9 assets/startup and reviewed isolated Web Menu Save/cold Reveal6/$94 acceptance. All twenty own Bar Dice Jobs ended/0. Full objective remains Open for native shutdown/post-Call final-save acceptance; no original storage/denied read access."
     },
     {
       "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
