@@ -16,6 +16,8 @@ const FLUSHED_FLAG := "_meta_bag_grants_flushed"
 const GRANTS_FLAG := "_meta_bag_grants"
 const SELECTED_FLAG := "_meta_bag_selected"
 const SPECIAL_OUTCOME_PROCESSED_FLAG := "_meta_special_outcome_processed"
+const SPECIAL_OUTCOME_RECORD_FLAG := "_meta_special_outcome_record"
+const SPECIAL_OUTCOME_ACK_FLAG := "_meta_special_outcome_ack_saved"
 const PLAYERS_CARD_REWARD_FLAG := "_meta_players_card_reward"
 const TUTORIAL_BRONZE_ROUTE := "tutorial_bronze_card"
 const PLAYERS_CARD_DESTROYED_FLAG := "_meta_players_card_destroyed"
@@ -72,119 +74,135 @@ func stock_sal_after_success(run_state: RunState, meta_collection_service: Varia
 	return result
 
 
+func terminal_special_outcome_eligible(run_state: RunState) -> bool:
+	if run_state == null or not run_state.is_terminal():
+		return false
+	return run_state.meta_collection_enabled_for_run() or (run_state.is_tutorial_run() \
+		and run_state.run_status == RunState.RUN_STATUS_ENDED \
+		and [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, TUTORIAL_BRONZE_ROUTE].has(str(run_state.narrative_flags.get("demo_victory_route", ""))))
+
+
+func terminal_special_outcome_pending(run_state: RunState) -> bool:
+	if not terminal_special_outcome_eligible(run_state):
+		return false
+	if run_state.narrative_flags.has(SPECIAL_OUTCOME_RECORD_FLAG):
+		var record := JsonCoerceScript._copy_dict(run_state.narrative_flags[SPECIAL_OUTCOME_RECORD_FLAG])
+		return not _terminal_special_record_valid(record) or not bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)) or not bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_ACK_FLAG, false))
+	# Old processed outcomes have no verifiable receipt. Reapplying would also
+	# repeat correctly saved rewards or durability loss, so preserve that state.
+	return not bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false))
+
+
+func _terminal_special_record_valid(record: Dictionary) -> bool:
+	if int(record.get("schema_version", 0)) != 1 or typeof(record.get("receipt")) != TYPE_STRING or typeof(record.get("intent_json")) != TYPE_STRING:
+		return false
+	var receipt := str(record["receipt"])
+	var suffix := receipt.trim_prefix("terminal-outcome:")
+	if not receipt.begins_with("terminal-outcome:") or not suffix.is_valid_int() or int(suffix) < 1 or str(int(suffix)) != suffix:
+		return false
+	var plan: Variant = JSON.parse_string(str(record["intent_json"]))
+	return typeof(plan) == TYPE_DICTIONARY and int(plan.get("schema_version", 0)) == 1
+
+
+func prepare_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
+	if not terminal_special_outcome_eligible(run_state) or meta_collection_service == null:
+		return {"ok": false, "message": "No terminal collection outcome is available."}
+	if run_state.narrative_flags.has(SPECIAL_OUTCOME_RECORD_FLAG):
+		var record := JsonCoerceScript._copy_dict(run_state.narrative_flags[SPECIAL_OUTCOME_RECORD_FLAG])
+		if not _terminal_special_record_valid(record):
+			return {"ok": false, "message": "The pending collection outcome could not be verified."}
+		return {"ok": true, "record": record}
+	if bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
+		return {"ok": true, "legacy_processed": true}
+	var record := {
+		"schema_version": 1,
+		"receipt": meta_collection_service.allocate_terminal_special_receipt(),
+		"intent_json": JSON.stringify(_terminal_special_plan(run_state)),
+	}
+	run_state.narrative_flags[SPECIAL_OUTCOME_RECORD_FLAG] = record
+	run_state.narrative_flags[SPECIAL_OUTCOME_ACK_FLAG] = false
+	return {"ok": true, "record": record}
+
+
+func commit_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
+	var prepared := prepare_terminal_special_outcome(run_state, meta_collection_service)
+	if not bool(prepared.get("ok", false)) or bool(prepared.get("legacy_processed", false)):
+		return prepared
+	var record := JsonCoerceScript._copy_dict(prepared.get("record", {}))
+	var result: Dictionary = meta_collection_service.commit_terminal_special_outcome(str(record.get("receipt", "")), str(record.get("intent_json", "")))
+	if bool(result.get("ok", false)) and not bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
+		_acknowledge_terminal_special_outcome(run_state, result)
+	return result
+
+
 func apply_terminal_special_outcome(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
 	if run_state == null or meta_collection_service == null or not run_state.is_terminal():
 		return {"ok": false, "mutated": false}
-	var tutorial_card_victory := run_state.is_tutorial_run() \
-		and run_state.run_status == RunState.RUN_STATUS_ENDED \
-		and [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, TUTORIAL_BRONZE_ROUTE].has(str(run_state.narrative_flags.get("demo_victory_route", "")))
-	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
+	if not terminal_special_outcome_eligible(run_state):
 		return {"ok": true, "mutated": false}
 	if bool(run_state.narrative_flags.get(SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
 		return {
-			"ok": true,
-			"mutated": false,
+			"ok": true, "mutated": false,
 			"card_reward": JsonCoerceScript._copy_dict(run_state.narrative_flags.get(PLAYERS_CARD_REWARD_FLAG, {})),
 			"chips_reward": JsonCoerceScript._copy_dict(run_state.narrative_flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {})),
 			"destroyed_cards": JsonCoerceScript._copy_array(run_state.narrative_flags.get(PLAYERS_CARD_DESTROYED_FLAG, [])),
 		}
-	var result := {"ok": true, "mutated": false, "card_reward": {}, "chips_reward": {}, "destroyed_cards": []}
+	var result: Dictionary = meta_collection_service.stage_terminal_special_outcome(_terminal_special_plan(run_state))
+	if bool(result.get("ok", false)):
+		_acknowledge_terminal_special_outcome(run_state, result)
+	return result
+
+
+func _terminal_special_plan(run_state: RunState) -> Dictionary:
 	var modifiers := run_state.challenge_modifiers()
-	var prestige := bool(modifiers.get("grand_casino_prestige", false))
-	if run_state.run_status == RunState.RUN_STATUS_FAILED:
-		if bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
-			run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
-			return result
-		var carried_ids := JsonCoerceScript._copy_array(modifiers.get("meta_collection_carried_instance_ids", []))
-		var consequences: Array = meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
-		var destroyed_cards: Array = []
-		for consequence_value in consequences:
-			var consequence := JsonCoerceScript._copy_dict(consequence_value)
-			if str(consequence.get("item_class", "")) != CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD or not bool(consequence.get("destroyed_forever", false)):
-				continue
-			var stamp := JsonCoerceScript._copy_dict(consequence.get("instance_data", {}))
-			destroyed_cards.append({
-				"instance_id": int(consequence.get("instance_id", 0)),
-				"display_name": "Grand Casino Players Card",
-				"earned_route": str(stamp.get("route", "")),
-			})
-		if not destroyed_cards.is_empty():
-			run_state.narrative_flags[PLAYERS_CARD_DESTROYED_FLAG] = destroyed_cards
-			run_state.log_story({
-				"type": "meta_players_card_destroyed",
-				"count": destroyed_cards.size(),
-				"message": "The Grand Casino Players Card carried into this run is gone forever.",
-			})
-		result["destroyed_cards"] = destroyed_cards
-		result["mutated"] = not consequences.is_empty()
+	var failed := run_state.run_status == RunState.RUN_STATUS_FAILED
+	var route := str(run_state.narrative_flags.get("demo_victory_route", ""))
+	var card_victory := not failed and (route == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID or (run_state.is_tutorial_run() and route == TUTORIAL_BRONZE_ROUTE))
+	var plan := {
+		"schema_version": 1, "failed": failed,
+		"skip_failure_decay": bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)),
+		"carried_ids": JsonCoerceScript._copy_array(modifiers.get("meta_collection_carried_instance_ids", [])),
+		"failure_seed": "%s|failure" % run_state.seed_text if failed else "",
+		"card_stamp": _players_card_stamp(run_state) if card_victory else {},
+		"chip_amount": maxi(0, int(run_state.narrative_flags.get("grand_casino_uncashed_chip_amount", 0))) if not failed and _shown_door_has_uncashed_chips(run_state) else 0,
+		"chip_stamp": {}, "prestige": bool(modifiers.get("grand_casino_prestige", false)), "prestige_result": {},
+	}
+	if int(plan["chip_amount"]) > 0:
+		plan["chip_stamp"] = {
+			"seed": "Hidden challenge" if run_state.seed_is_hidden() else run_state.seed_text,
+			"seed_hidden": run_state.seed_is_hidden(), "route": RunState.GRAND_CASINO_SHOWDOWN_ROUTE,
+			"ending": GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR, "chip_amount": plan["chip_amount"],
+		}
+	if not failed and bool(plan["prestige"]):
+		plan["prestige_result"] = {
+			"active": true, "status": "retained",
+			"card_count": JsonCoerceScript._copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", [])).size(),
+			"drop_tier_bonus_steps": maxi(0, int(modifiers.get("meta_collection_drop_tier_bonus_steps", 0))),
+		}
+	return plan
+
+
+func _acknowledge_terminal_special_outcome(run_state: RunState, result: Dictionary) -> void:
+	var destroyed_cards := JsonCoerceScript._copy_array(result.get("destroyed_cards", []))
+	if not destroyed_cards.is_empty():
+		run_state.narrative_flags[PLAYERS_CARD_DESTROYED_FLAG] = destroyed_cards
+		run_state.log_story({"type": "meta_players_card_destroyed", "count": destroyed_cards.size(), "message": "The Grand Casino Players Card carried into this run is gone forever."})
+	var reward := JsonCoerceScript._copy_dict(result.get("card_reward", {}))
+	if not reward.is_empty():
+		run_state.narrative_flags[PLAYERS_CARD_REWARD_FLAG] = reward
+		var stamp := JsonCoerceScript._copy_dict(reward.get("instance_data", {}))
+		run_state.log_story({"type": "meta_players_card_minted", "instance_id": int(reward.get("instance_id", 0)), "route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "message": "Linda's %s Players Card was added to the collection." % str(stamp.get("tier_reached", "Gold")).capitalize()})
+	var chips := JsonCoerceScript._copy_dict(result.get("chips_reward", {}))
+	if not chips.is_empty():
+		run_state.narrative_flags[GRAND_CASINO_CHIPS_REWARD_FLAG] = chips
+		run_state.log_story({"type": "meta_grand_casino_chips_granted", "instance_id": int(chips.get("instance_id", 0)), "chip_amount": int(chips.get("stack_amount", 0)), "message": "%d uncashed Grand Casino chips were stored for Sal's Pawn Shop." % int(chips.get("stack_amount", 0))})
+	var prestige_result := JsonCoerceScript._copy_dict(result.get("prestige_result", {}))
+	if not prestige_result.is_empty():
+		run_state.narrative_flags[PRESTIGE_RESULT_FLAG] = prestige_result
+	if run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
 		run_state.narrative_flags[MetaCollectionServiceScript.FAILURE_DECAY_FLAG] = true
 		run_state.clear_pending_bag_markers()
-	elif run_state.run_status == RunState.RUN_STATUS_ENDED:
-		if str(run_state.narrative_flags.get("demo_victory_route", "")) == RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID or tutorial_card_victory:
-			var stamp := _players_card_stamp(run_state)
-			var card: Dictionary = meta_collection_service.mint_players_card(stamp)
-			if not card.is_empty():
-				var reward := {
-					"instance_id": int(card.get("instance_id", 0)),
-					"itemdef_id": int(card.get("itemdef_id", -1)),
-					"item_class": str(card.get("item_class", "")),
-					"display_name": "Grand Casino Players Card",
-					"condition": float(card.get("condition", 0.0)),
-					"instance_data": stamp,
-				}
-				run_state.narrative_flags[PLAYERS_CARD_REWARD_FLAG] = reward
-				run_state.log_story({
-					"type": "meta_players_card_minted",
-					"instance_id": int(card.get("instance_id", 0)),
-					"route": RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID,
-					"message": "Linda's %s Players Card was added to the collection." % str(stamp.get("tier_reached", "Gold")).capitalize(),
-				})
-				result["card_reward"] = reward
-				result["mutated"] = true
-		if _shown_door_has_uncashed_chips(run_state):
-			var chip_amount := maxi(0, int(run_state.narrative_flags.get("grand_casino_uncashed_chip_amount", 0)))
-			var chip_stamp := {
-				"seed": "Hidden challenge" if run_state.seed_is_hidden() else run_state.seed_text,
-				"seed_hidden": run_state.seed_is_hidden(),
-				"route": RunState.GRAND_CASINO_SHOWDOWN_ROUTE,
-				"ending": GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR,
-				"chip_amount": chip_amount,
-			}
-			var chip_stack: Dictionary = meta_collection_service.mint_grand_casino_chip_stack(chip_amount, chip_stamp)
-			if not chip_stack.is_empty():
-				var sale_quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, int(chip_stack.get("instance_id", 0)))
-				var chip_reward := {
-					"instance_id": int(chip_stack.get("instance_id", 0)),
-					"itemdef_id": int(chip_stack.get("itemdef_id", -1)),
-					"item_class": str(chip_stack.get("item_class", "")),
-					"display_name": "Grand Casino Chips",
-					"stack_amount": chip_amount,
-					"face_value": chip_amount,
-					"fenced_gold_value": maxi(0, int(sale_quote.get("price", 0))),
-					"fenced_gold_rate": float(sale_quote.get("gold_rate", 0.0)),
-					"instance_data": chip_stamp,
-				}
-				run_state.narrative_flags[GRAND_CASINO_CHIPS_REWARD_FLAG] = chip_reward
-				run_state.log_story({
-					"type": "meta_grand_casino_chips_granted",
-					"instance_id": int(chip_stack.get("instance_id", 0)),
-					"chip_amount": chip_amount,
-					"message": "%d uncashed Grand Casino chips were stored for Sal's Pawn Shop." % chip_amount,
-				})
-				result["chips_reward"] = chip_reward
-				result["mutated"] = true
-		if prestige:
-			var card_ids := JsonCoerceScript._copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
-			var prestige_result := {
-				"active": true,
-				"status": "retained",
-				"card_count": card_ids.size(),
-				"drop_tier_bonus_steps": maxi(0, int(modifiers.get("meta_collection_drop_tier_bonus_steps", 0))),
-			}
-			run_state.narrative_flags[PRESTIGE_RESULT_FLAG] = prestige_result
-	result["prestige"] = prestige
 	run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
-	return result
 
 
 func _shown_door_has_uncashed_chips(run_state: RunState) -> bool:
