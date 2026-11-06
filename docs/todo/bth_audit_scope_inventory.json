@@ -1878,6 +1878,49 @@
         "remote_main": "ac877121d68561c818f39fe3c81b892e8a13b932",
         "retry_count": 0
       }
+    },
+    {
+      "phase": "025",
+      "task": "BTH061-AUDIT-DELIVERY-CYCLE-PUBLICATION-RITUAL-COVERAGE-025",
+      "followups": [
+        "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+        "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+        "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025"
+      ],
+      "observed_at": "2026-11-06T01:04:05.470290+00:00",
+      "base_local_HEAD": "104da4254c5f422fae01711b77ed6747f571543a",
+      "source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+      "new_whole_body_area_count": 4,
+      "recorded_core_reviewed": 77,
+      "recorded_core_remaining": 18,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "source_changes": 0,
+      "native_jobs": 0,
+      "runtime_inventory": 213,
+      "denied_publication_retried": false,
+      "required_NEXT_verified": false,
+      "objective_states": "BodyreviewOpenuntilactualevidencecommit;threefindingsOpen;priorpublication/cleanup/numericNEXTstatusesexactunchanged;wholeauditOpen",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_025.json",
+      "full_objective_complete": false,
+      "tracked_path_inventory": {
+        "task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
+        "snapshot_local_HEAD": "104da4254c5f422fae01711b77ed6747f571543a",
+        "tracked_paths": 4139,
+        "paths_modes_blobIDs_index_equal_HEAD": true,
+        "source_looking_paths": 1031,
+        "source_looking_outside_initial95core_plus127UIgame": 809,
+        "current_UI_game": 129,
+        "original_UI_game_scan": 127,
+        "current_added_UI_game_paths": [
+          "scripts/games/slots/slot_bonus_recovery.gd",
+          "scripts/ui/web_save_durability_bridge.gd"
+        ],
+        "independent_classification_checks": 16556,
+        "semantic_acceptance": false,
+        "state": "metadata_qualified_actual_evidence_commit_association_pending"
+      },
+      "metadata_inventory_task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025"
     }
   ]
 }

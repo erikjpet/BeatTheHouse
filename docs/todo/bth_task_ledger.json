@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T00:46:25.366143+00:00",
+  "updated_at": "2026-11-06T01:09:34.265819+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12764,13 +12764,12 @@
             },
             {
               "id": "scripts/core/crew_delivery_schedule.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_025.md",
+                "docs/testing/deprecated_code_audit_continuation_025.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete exact current body, callers/dispatch, historical/compatibility and every declaration independently reviewed. All source retained; static discrepancies and conditional leads have explicit follow-ups. No runtime/NEXT/whole-audit acceptance."
             },
             {
               "id": "scripts/core/crew_heist_model.gd",
@@ -13042,13 +13041,12 @@
             },
             {
               "id": "scripts/core/game_ritual_runtime.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_025.md",
+                "docs/testing/deprecated_code_audit_continuation_025.json"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "Complete exact current body, callers/dispatch, historical/compatibility and every declaration independently reviewed. All source retained; static discrepancies and conditional leads have explicit follow-ups. No runtime/NEXT/whole-audit acceptance."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
@@ -13232,13 +13230,12 @@
             },
             {
               "id": "scripts/core/room_presentation_publication.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_025.md",
+                "docs/testing/deprecated_code_audit_continuation_025.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete exact current body, callers/dispatch, historical/compatibility and every declaration independently reviewed. All source retained; static discrepancies and conditional leads have explicit follow-ups. No runtime/NEXT/whole-audit acceptance."
             },
             {
               "id": "scripts/core/run_action_service.gd",
@@ -13471,13 +13468,12 @@
             },
             {
               "id": "scripts/core/scenario_venue_cycle.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_025.md",
+                "docs/testing/deprecated_code_audit_continuation_025.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete exact current body, callers/dispatch, historical/compatibility and every declaration independently reviewed. All source retained; static discrepancies and conditional leads have explicit follow-ups. No runtime/NEXT/whole-audit acceptance."
             },
             {
               "id": "scripts/core/static_data_cache.gd",
@@ -13574,15 +13570,19 @@
               "id": "ui_game_semantic_review_127_files",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
-              ]
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_025.json"
+              ],
+              "scope": "Stable area ID preserves original127-file graph. Current tree has129UI/game .gd paths: slot_bonus_recovery.gd and web_save_durability_bridge.gd were absent from that old graph. Reconcile current whole-area consumer/history/compatibility evidence, reusing exact prior qualifications where supported. Metadata absence from old graph does not imply never reviewed; full semantic acceptance remains Open."
             },
             {
               "id": "remaining_data_tools_generators_native_and_other_code_inventory",
-              "state": "unknown",
+              "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
-              ]
+                "docs/testing/deprecated_code_audit_continuation_025.json",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-inventory-r1.json"
+              ],
+              "scope": "Complete tracked path/blob snapshot4139 at104da425 is explicit, including1031lexical source paths and non-source data/scene/metadata. Semantic/historical disposition remains open for data/tools/generators/native/other; ignored/generated/untracked/external scope is explicitly excluded rather than certified. Inventory alone is not semantic review or safe deletion."
             },
             {
               "id": "external_parity_callers_and_inherited_failures",
@@ -13637,7 +13637,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_COMPLETE_EVIDENCE_MAIN_PUBLICATION_DENIED_NUMERIC_NEXT_OPEN_024",
+      "status": "FOUR_MORE_CORE_BODIES_QUALIFIED_THREE_FINDINGS_OPEN_DENIED_PUBLICATION_PRESERVED_025",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14011,12 +14011,17 @@
           "kind": "automatic_review_main_publication_denial",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json",
           "summary": "Exact main push rejected before process creation; remote remainsac877. No retry or reroute. Concrete finished local commits exist; explicit main approval pending."
+        },
+        {
+          "kind": "bounded_complete_body_coverage025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue permitted remaining22core and three broader coverage/compatibility areas and bug investigations under unchanged guards. Evidence-only main push requires explicit approval after auto-review rejection; do not retry or reroute. Preserve cleanup/removal stop, named pauses and excluded diagnostics; numeric022/023 remain Open pending NEXT.",
+      "next_action": "Continue remaining18core and three broader semantic/compatibility areas, including current129UI/game paths and inventoried residuals, and qualify three bounded025findings. Reuse exact prior evidence where supported. Preserve stoppedcleanup and denied024publication/task/commits, numericNEXT/paused/restricted work; no push retry or reroute.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14028,7 +14033,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:46:25.366143+00:00"
+      "updated_at": "2026-11-06T01:09:34.265819+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25524,6 +25529,421 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T00:46:25.366143+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-DELIVERY-CYCLE-PUBLICATION-RITUAL-COVERAGE-025",
+      "name": "Review remaining delivery cycle publication and ritual core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review complete current CrewDeliverySchedule, ScenarioVenueCycle, RoomPresentationPublication and GameRitualRuntime bodies with current consumers, history and compatibility. Record all declaration dispositions and substantive defects. Preserve cleanup/removal stop: do not delete confirmed obsolete code; preserve any qualified candidate unapplied. No runtime, whole-codebase or NEXT acceptance is inferred.",
+        "source": "Latest parent instruction: Continue independent audit work without retrying denied publication or performing paused cleanup. These four bodies remain recorded unreviewed after phase024.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "complete-current-source-disposition",
+            "description": "Each declaration in four exact current source bodies is fully reviewed against current consumers, dispatch and historical/compatibility authority; findings and limits are explicit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review qualifies bounded evidence; actual evidence commit is associated before completing this child. Whole audit, cleanup and denied publication remain distinct.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/crew_delivery_schedule.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_025.json"
+              ],
+              "scope": "Complete current body and each declaration disposition independently reviewed; all retained, source-only limits explicit."
+            },
+            {
+              "id": "scripts/core/scenario_venue_cycle.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_025.json"
+              ],
+              "scope": "Complete current body and each declaration disposition independently reviewed; all retained, source-only limits explicit."
+            },
+            {
+              "id": "scripts/core/room_presentation_publication.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_025.json"
+              ],
+              "scope": "Complete current body and each declaration disposition independently reviewed; all retained, source-only limits explicit."
+            },
+            {
+              "id": "scripts/core/game_ritual_runtime.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_025.json"
+              ],
+              "scope": "Complete current body and each declaration disposition independently reviewed; all retained, source-only limits explicit."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "FOUR_CURRENT_BODIES_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING_025",
+      "owner": {
+        "name": "Audit delivery cycle publication ritual coverage",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Evidence-only source review; no source edit, deployment operation, denied-publication retry or NEXT acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual local evidence commit before completing this bounded source-review child; preserve all sources, existing denied-publication status and separately open findings.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent evidence audit is permitted. Denied main publication remains a separate unchanged blocker; cleanup/removal and named feature pauses are respected.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:50:02.789211+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+      "name": "Qualify ritual identifier grammar discrepancy",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Current GameRitualRuntime._qualified_id and GameRitualSchema._qualified_id drop empty dot atoms using split with allow_empty=false; frozen documented grammar and PowerShell validator reject empty atoms. This is an independently confirmed source-contract discrepancy; current gameplay/runtime impact remains unqualified. Qualify exact admissible identifier boundary and runtime/host reachability against frozen contracts. Preserve every existing accepted healthy case, canonical hash and authority boundary; implement a minimal correction only after focused compatibility evidence supports it.",
+        "source": "Phase025 complete body audit and independent peer source/caller/contract review. No code changes or runtime experiments were performed.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-evidence",
+            "description": "Exact current source, authority contracts and relevant callers independently establish the bounded discrepancy or conditional lead with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json"
+            ]
+          },
+          {
+            "id": "runtime-compatibility-disposition",
+            "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "associated-corrective-or-retention-evidence",
+            "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "owner": {
+        "name": "Audit source discrepancy qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Investigation finding only; no source change. Any later corrective implementation must register required commit/delivery acceptance. Denied publication remains untouched."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Qualify exact admissible identifier boundary and runtime/host reachability against frozen contracts. Preserve every existing accepted healthy case, canonical hash and authority boundary; implement a minimal correction only after focused compatibility evidence supports it.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:57:17.461114+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+      "name": "Qualify ritual position operation argument discrepancy",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Current instance executor move/set_position branches read arguments.anchor; frozen operation contract and PowerShell validation require anchor_id. Runtime schema admits the argument envelope without validating this key. Three current ritual definitions contain no move/set_position operation, so no current authored failure is demonstrated. Qualify the frozen move/set_position argument contract with supported ordinary DTO controls and exact host scope before selecting a correction. Preserve active static production hash helpers and host authority; do not infer the instance executor is obsolete from absent production instantiation.",
+        "source": "Phase025 complete body audit and independent peer source/caller/contract review. No code changes or runtime experiments were performed.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-evidence",
+            "description": "Exact current source, authority contracts and relevant callers independently establish the bounded discrepancy or conditional lead with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json"
+            ]
+          },
+          {
+            "id": "runtime-compatibility-disposition",
+            "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "associated-corrective-or-retention-evidence",
+            "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "owner": {
+        "name": "Audit source discrepancy qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Investigation finding only; no source change. Any later corrective implementation must register required commit/delivery acceptance. Denied publication remains untouched."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Qualify the frozen move/set_position argument contract with supported ordinary DTO controls and exact host scope before selecting a correction. Preserve active static production hash helpers and host authority; do not infer the instance executor is obsolete from absent production instantiation.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:57:17.461114+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+      "name": "Qualify room publication numeric identity reuse discrepancy",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Current room-publication matches_environment and advanced_turn_counter use value Dictionary equality while full manifest validation requires native integer schema_version and revision. Proof reuse is reachable in RunState, but the hypothesized same-value int-to-float change requires a retained nested live alias after acceptance; present canonical producers normalize integer fields and root assignment invalidates publication. Conditional source lead; no native/current gameplay failure demonstrated. Use a normal generated room/publication and ordinary DTO type-change controls to qualify whether accepted proof can survive a manifest type change. Preserve original authority validation, ordinary producers, causal boundaries and guards; record results before any correction or broader claim.",
+        "source": "Phase025 complete body audit and independent peer source/caller/contract review. No code changes or runtime experiments were performed.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-evidence",
+            "description": "Exact current source, authority contracts and relevant callers independently establish the bounded discrepancy or conditional lead with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json"
+            ]
+          },
+          {
+            "id": "runtime-compatibility-disposition",
+            "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "associated-corrective-or-retention-evidence",
+            "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "owner": {
+        "name": "Audit source discrepancy qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Investigation finding only; no source change. Any later corrective implementation must register required commit/delivery acceptance. Denied publication remains untouched."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Use a normal generated room/publication and ordinary DTO type-change controls to qualify whether accepted proof can survive a manifest type change. Preserve original authority validation, ordinary producers, causal boundaries and guards; record results before any correction or broader claim.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:57:17.461114+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T01:04:05.470290+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
+      "name": "Inventory remaining tracked audit paths without content access",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Inventory all current Git-tracked paths and blob identities plus the explicitly preserved untracked prototype. Classify path/extension metadata into transparent audit buckets, identify files outside existing core/UI scan areas, and preserve exact limits. Inventory alone never establishes unused code, safe deletion or semantic review. Do not open private/captured fixtures or excluded diagnostics.",
+        "source": "Whole-audit remaining broader area explicitly requires inventory of data/tools/generators/native/other code rather than assuming core/UI scans exhaustive. Latest parent permits independent audit and forbids cleanup/publication retries.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "complete-tracked-paths",
+            "description": "Exact local Git tree/index path+blob inventory and all grouping totals reconcile; prototype is explicitly preserved and separate, no ignored/private/excluded content accessed.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_025.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-independent-root-review-r1.json"
+            ]
+          },
+          {
+            "id": "bounded-independent-review-and-commit",
+            "description": "Independent metadata reconciliation and actual evidence commit associated; no semantic coverage, deletion or external scope completeness inferred.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "TRACKED_PATH_METADATA_AND_INDEPENDENT_RECONCILIATION_QUALIFIED_COMMIT_ASSOCIATION_PENDING_025",
+      "owner": {
+        "name": "Audit remaining path inventory",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Evidence-only source review; no source edit, deployment operation, denied-publication retry or NEXT acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "exhaustive_tracked_path_metadata025",
+          "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
+          "summary": "Snapshot104 contains4139unique trackedpaths/index=HEAD. Independent16556classification checks pass. CurrentUI/game129 vsold127; source-looking1031/outsideoldareas809 are lexical metadata only, not unreviewed/unused/deletion conclusions."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual local evidence commit before completing this metadata-only snapshot child. Reconcile semantic history for all remaining code/data/tool/native/other areas; no deletion, source review or external completeness follows from path classification.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent evidence audit is permitted. Denied main publication remains a separate unchanged blocker; cleanup/removal and named feature pauses are respected.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:50:02.789211+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T01:09:34.265819+00:00"
     }
   ],
   "batches": [
