@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T00:06:16.507507+00:00",
+  "updated_at": "2026-11-06T03:11:08.473219+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25217,6 +25217,128 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T00:06:16.507507+00:00"
+    },
+    {
+      "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "name": "Preserve saved Bar Dice Reveal cup across cold Continue and closing",
+      "aliases": [
+        "QA-BAR-DICE-REVEAL-COLD-1330"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate R17-B savedBarDiceReveal resetting on coldContinue toAgreeWager/defaultante20/cover0 aftercrossing03:00closing. Establish expectedpreservation of acceptedfundable6cup/exactdice/callsequence, reproduce using freshindependentnativefixture without originalprofile/save/keyaccess, fix only confirmedresponsiblecontract and test warm/cold/closing/once-onlysettlement and relevanttrustrejections. Trackassociatedcommit, publish testedfix toauthorizedmain/NEXT and verifyexactdelivery beforeclosure. Preserve originalobservations and anycausallimit; no fundedlossclaim whenwallet94unchanged and noCall. Never retry/bypass separatelydeniedac877manifestread or launch a runner thatreadsit.",
+        "source": "Trustedparentdelegation2026-11-06: newBarDiceReveal/coldContinueissue qa-r17b-1330; exactobservedac877 source. StandingtestedBTHmain/NEXTauthorization retained; afterdenial inspecttrusteduserhistory and retryonly materiallynewappropriateevidence once, thenstop.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "preserve-original-evidence",
+            "description": "Hash/retain permittedreport and publicimages; originalresidentprofile/save/key/pendingactions and deniedmanifest untouched; distinguish unfundedcover frompaidloss.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "causal-reproduction",
+            "description": "Fresh independent actualhostactions exercise ante6/wallet94, ShakeSave/cold control, RevealSave/cold and closingboundary; capture responsible rejected/stripped state beforemoreinput, nooutcomefiltering.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "focused-fix-and-regressions",
+            "description": "Narrowcausal fix preserves exactacceptedcup/dice/ante through officialSave/freshContinue, closingdeferral and oneCallsettlement; no duplicatefunding/payout/history/RNG, relevantinvalidledger/tamperrejections intact.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "commit-main-next",
+            "description": "Associated tested scopedcommit and authorizedmain publication/exactNEXTidentity/basiclaunch/changedbehavior where feasible; record factualblockers and do notmarkcomplete before requiredacceptance.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          },
+          {
+            "id": "native-shutdown-disposition",
+            "description": "Resolve or explicitly dispose the identical baseline/candidate native0xC0000005 after83/0 assertions; retainexactfailedreceipts and never substituteassertioncompletion forcleanruntimepass. No speculativeforce-exit/native/enginechanges.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SCOPED_FIX_TESTED_END_TO_END_OPEN",
+      "owner": {
+        "name": "Bar Dice Reveal restoration (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ],
+        "scope": "Boundedreviewedagreedantefix readytocommit/publish; fullparentOpen fornativewhole-flow/shutdown andexactNEXTacceptance. ExistingNEXTcurrentac877; deniedac877manifest untouched."
+      },
+      "evidence": [
+        {
+          "kind": "public_web_observation",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Shakecoldpassed; Revealante6cover6saved05:30 then colddefault20cover0cash94. Crossing03closing correlated, causeunconfirmed. AlloriginalbrowserJobsclosed0; deniedmanifest notread."
+        },
+        {
+          "kind": "independent_causal_reproduction",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Generatedcatalogfloor6cup savedReveal; productionretirement raisesfloor10 preservingvalidledger; freshcoldactualUIAgreeWager despitecanonicalReveal/cash/RNGsame. Nativecold30/1 red; candidateunit21/0 +legacyrestoration/exactsingleCallcoreguardspass, finalSavepending. Originalscenario notattributed."
+        },
+        {
+          "kind": "clean_focused_regressions_with_limits",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Clean21acceptedante,26surfaceRestore,14pendingRecovery,17unaffordableGuard. Old/newcupcoldactualReveal6andoneCall/replaypass; sourcewarmshutdownfailedbothversions andpostCallHealthInspectorpreventedSave. Allfailedfixtures/processstatuses preserved; no fullacceptanceclaim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit scoped reviewedagreedantefix andassociate actualSHA; publish withinverifiedstandingmain/NEXTauthorization andfollowexistingwatcher. KeepfulltaskOpen: resolve/disposition nativewarmshutdownfailure andqualify normalpostCallprompt/Save/freshContinue withoutoriginalreplay, deniedmanifestread orspeculativeenginechanges.",
+      "blocker": {
+        "state": "active",
+        "kind": "native_shutdown_and_final_save_acceptance_open",
+        "description": "Changedcontract/freshguards/restoration/pending/affordability allcleanpass21/26/14/17. Bothbaseline/candidatecatalogwarm reach83/0 thennative0xC0000005 atshutdown, causeunattributed. Candidateold/newRevealrestoreandsingleCall6/replaypass; HealthInspector promptpausespostCall andpreventsMenuSave; readonlyconfirmsonlyprior94RevealSave, no acceptedpostCallSave. Nativewhole-flowacceptance remainsOpen. Commit/publication ofboundedreviewedfix proceeds separately understandingauthorization; originalac877manifestdenial untouched.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T03:11:08.473219+00:00",
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T03:11:08.473219+00:00"
     }
   ],
   "batches": [

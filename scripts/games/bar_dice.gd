@@ -24,6 +24,7 @@ const C_SOFT := VisualStyleScript.SOFT
 const DICE_COUNT := 5
 const DIE_FACES := 6
 const MAX_SHAKES := 3
+const AGREED_ANTE_KEY := "bar_dice_agreed_ante"
 const STATE_SCHEMA := "bar_dice_table_state"
 const STATE_VERSION := 3
 const TUMBLE_CHANNEL := "bar_dice_tumble"
@@ -225,6 +226,7 @@ func _bar_dice_restore_recovery_session(candidate: RunState, session: Dictionary
 	session["rolled"] = false
 	session["shake_number"] = 0
 	session["bar_dice_ritual_phase"] = "agree_wager"
+	session.erase(AGREED_ANTE_KEY)
 	for key in ["dice", "reroll", "last_rerolled", "tumble_id", "tumble_started_msec", "tumble_indices", "bar_dice_pending_action_id", "loaded_armed", "palm_armed", "loaded_value", "controlled_roll", "palmed_swap_challenge", "selected_action_id", "selected_action_kind"]:
 		session.erase(key)
 
@@ -664,6 +666,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			var ladder := _int_array(state.get("stake_ladder", []))
 			if index >= 0 and index < ladder.size():
 				next["selected_stake_index"] = index
+				next.erase(AGREED_ANTE_KEY)
 				next.erase("table_social_alignment")
 				return GameModule.surface_command({
 					"handled": true,
@@ -677,6 +680,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if ritual_phase not in ["agree_wager", "settle"] or bool(next.get("rolled", false)):
 				return _message_command(next, "The cup is already open.")
 			next["bar_dice_ritual_phase"] = "cover"
+			next[AGREED_ANTE_KEY] = _active_stake_from_context(0, state, next, run_state, environment)
 			next["bar_dice_pending_action_id"] = "roll"
 			next["rolled"] = false
 			next["loaded_armed"] = false
@@ -758,6 +762,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		"bar_dice_resolve":
 			if ritual_phase in ["agree_wager", "settle"]:
 				next["bar_dice_ritual_phase"] = "cover"
+				next[AGREED_ANTE_KEY] = _active_stake_from_context(0, state, next, run_state, environment)
 				next["bar_dice_pending_action_id"] = "roll"
 				return GameModule.surface_command({"handled":true,"ui_state":next,"selected_index":index,"preserve_surface_ui_state":true,"message":"Cash down. The other hand covers it."})
 			if ritual_phase != "shake":
@@ -1250,6 +1255,7 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 	var settled_ui := ui_state.duplicate(true)
 	settled_ui["bar_dice_ritual_phase"] = "settle"
 	settled_ui["rolled"] = false
+	settled_ui.erase(AGREED_ANTE_KEY)
 	settled_ui["reroll"] = []
 	settled_ui["last_rerolled"] = []
 	settled_ui.erase("bar_dice_pending_action_id")
@@ -2431,13 +2437,90 @@ func _sealed_bar_dice_stake(stake: int, state: Dictionary, ui_state: Dictionary,
 	var stake_ceiling := maxi(stake_floor, int(economic_profile.get("stake_ceiling", int(ladder[ladder.size() - 1]))))
 	if run_state != null:
 		stake_ceiling = run_state.wager_stake_ceiling(stake_ceiling)
-	if stake < stake_floor or stake > stake_ceiling:
-		return 0
 	if ui_state.has("selected_stake_index"):
 		var selected := clampi(int(ui_state.get("selected_stake_index", 0)), 0, ladder.size() - 1)
 		if int(ladder[selected]) != stake:
 			return 0
+	if stake < stake_floor or stake > stake_ceiling:
+		# Venue situations may retire while a covered cup is still open. Its
+		# already agreed ante belongs to the sealed cup, not the next room limits.
+		# Caller UI alone cannot create this exception to the current limits.
+		if _accepted_cup_ante(state, ui_state, run_state, environment) != stake:
+			return 0
 	return stake
+
+
+func _accepted_cup_ante(state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> int:
+	if run_state == null:
+		return 0
+	var state_key := transient_state_key_context()
+	if state_key != get_id() and not state_key.begins_with("%s:" % get_id()):
+		state_key = get_id()
+	var binding := RunState.action_authority_table_binding(state_key, environment)
+	var canonical_environment := run_state.current_environment
+	if canonical_environment.is_empty() or binding != RunState.action_authority_table_binding(state_key, canonical_environment):
+		return 0
+	var states: Dictionary = canonical_environment.get("game_states", {}) if typeof(canonical_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table_value: Variant = states.get(state_key, states.get(get_id(), {}))
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return 0
+	var table: Dictionary = table_value
+	# Cold restore already validates the account checkpoint. Funding also owns
+	# its checkpoint update; this read verifies the canonical cup and binding,
+	# including authenticated pending Call state, without inventing a session.
+	var ledger := ActionAuthorityScript.validate_persisted_ledger_cow(table.get(ActionAuthorityScript.LEDGER_KEY, {}), binding)
+	if ledger.is_empty():
+		return 0
+	var session: Dictionary = ledger.get("session", {})
+	var phase := str(session.get("bar_dice_ritual_phase", ""))
+	var rolled_value: Variant = session.get("rolled")
+	if typeof(rolled_value) != TYPE_BOOL or str(ui_state.get("bar_dice_ritual_phase", "")) != phase or ui_state.get("rolled") != rolled_value:
+		return 0
+	if phase == "cover":
+		if bool(rolled_value):
+			return 0
+	elif phase in ["shake", "throw", "reveal", "call"]:
+		if not bool(rolled_value):
+			return 0
+		var dice_value: Variant = session.get("dice")
+		var caller_dice: Variant = ui_state.get("dice")
+		if typeof(dice_value) != TYPE_ARRAY or typeof(caller_dice) != TYPE_ARRAY or dice_value.size() != DICE_COUNT or caller_dice.size() != DICE_COUNT:
+			return 0
+		for index in range(DICE_COUNT):
+			var face: Variant = dice_value[index]
+			var caller_face: Variant = caller_dice[index]
+			if typeof(face) not in [TYPE_INT, TYPE_FLOAT] or typeof(caller_face) not in [TYPE_INT, TYPE_FLOAT]:
+				return 0
+			if float(face) != float(int(face)) or int(face) < 1 or int(face) > DIE_FACES or float(caller_face) != float(int(face)) or int(caller_face) != int(face):
+				return 0
+		var shake_value: Variant = session.get("shake_number")
+		if typeof(shake_value) not in [TYPE_INT, TYPE_FLOAT] or float(shake_value) != float(int(shake_value)) or int(shake_value) < 1 or int(shake_value) > MAX_SHAKES or int(ui_state.get("shake_number", 0)) != int(shake_value):
+			return 0
+	else:
+		return 0
+	var ladder := _int_array(table.get("stake_ladder", []))
+	if ladder != _int_array(state.get("stake_ladder", [])):
+		return 0
+	var selected_value: Variant = session.get("selected_stake_index")
+	if typeof(selected_value) not in [TYPE_INT, TYPE_FLOAT] or float(selected_value) != float(int(selected_value)):
+		return 0
+	var selected := int(selected_value)
+	if selected < 0 or selected >= ladder.size() or not ui_state.has("selected_stake_index") or int(ui_state.selected_stake_index) != selected:
+		return 0
+	var ante := int(ladder[selected])
+	if ante <= 0 or session.has(AGREED_ANTE_KEY) != ui_state.has(AGREED_ANTE_KEY):
+		return 0
+	if session.has(AGREED_ANTE_KEY):
+		var agreed: Variant = session[AGREED_ANTE_KEY]
+		var caller_agreed: Variant = ui_state[AGREED_ANTE_KEY]
+		if typeof(agreed) not in [TYPE_INT, TYPE_FLOAT] or typeof(caller_agreed) not in [TYPE_INT, TYPE_FLOAT]:
+			return 0
+		if float(agreed) != float(int(agreed)) or int(agreed) != ante or float(caller_agreed) != float(int(caller_agreed)) or int(caller_agreed) != ante:
+			return 0
+	# Older accepted cups predate the explicit ante field. Their validated raw
+	# phase, index, dice and retained authored rung supply the same exact ante.
+	# A malformed present field never falls back to this legacy case.
+	return ante
 
 
 func _nearest_chip_index(ladder: Array, stake: int) -> int:

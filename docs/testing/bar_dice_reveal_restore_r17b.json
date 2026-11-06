@@ -1,0 +1,1251 @@
+{
+  "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+  "state": "Open",
+  "updated_at": "2026-11-06T03:11:08.473219+00:00",
+  "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
+  "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
+  "original_evidence": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\qa-r17b-1330-result.json",
+    "sha256": "5da6a64292481211104a0faf93a4277490947da413df6cb7960ecab826e64654",
+    "observation": {
+      "id": "QA-BAR-DICE-REVEAL-COLD-1330",
+      "status": "OBSERVED_SAVE_RESUME_RESET_ROOT_CAUSE_UNCONFIRMED",
+      "tested_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
+      "tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
+      "run": "R17-B",
+      "seed": "RUN-20261105-192080-002",
+      "reproduction_fidelity": "Genuine ordinary Web controls on unchanged resident profile; no debug/state edits or outcome rewind",
+      "sequence": [
+        "1328 cold Bar94/Heat0Day1 23:00. Select normal6 ante; Roll Cup once -> Cover/COV6, wallet94. Take Cover -> Shake, wallet94.",
+        "Save1328 atDay2 02:15; visible Save completion; full process close. Cold1329 re-entry restores Shake/COV6, selected6, dice5,4,3,2,3 and2shakes remaining.",
+        "Use the two remaining normal shakes of same cup; final No Ship/0remaining; normal Settle -> Throw; Slam Cup -> Reveal. No loaded/palmed/Auto inputs.",
+        "Save1329 atDay2 05:30 while Reveal/selected6/COV6/wallet94; wait5000ms, Menu dismissed then Ready; full process close.",
+        "Cold1330 normal Continue and Dice cabinet entry -> Agree Wager/default20/COV0, wallet94/Heat0/Day2 05:30. No final Call, new hand or explicit Save after reset."
+      ],
+      "expected": "The accepted covered cup and normal call sequence resume, as exact-source restoration contract describes.",
+      "actual": "Pending Reveal cup disappeared; same wallet/seed/clock but new Agree Wager table and default ante20.",
+      "accounting": {
+        "cash_before": 94,
+        "cash_after": 94,
+        "new_cash_debit_observed": 0,
+        "final_Call_executed": false,
+        "refund_or_reward": false,
+        "covered_amount": 6,
+        "displayed_BET_before_reset": 0,
+        "funded_money_loss_claimed": false
+      },
+      "clock": {
+        "bar_source_hours": "11:00–03:00",
+        "source": "ac877 data/environments/archetypes.json bar.open_hours 660/180",
+        "boundary": "Closing crossed during existing cup; no forced clock; not proof of every closure branch"
+      },
+      "source_contract": [
+        "scripts/games/bar_dice.gd:232 restored_surface_ui_state restores valid rolled5-dice/fundable sessions; comment says interrupted fundable cups retain exact dice/call sequence.",
+        "scripts/games/bar_dice.gd:restored_surface_ui_state returns empty for invalid/absent ledger, pending delivery, invalid dice or failed ante check; actual branch not captured.",
+        "scripts/core/run_state.gd:6627 checkpoint binds balances and RNG; restore reconciles and strips mismatched ledgers at6677.",
+        "scripts/ui/foundation_main.gd:closing boundary defers for wager_activity_incomplete; BarDice reports rolled state incomplete.",
+        "The ordinary SHAKE cold control passed before closing; late REVEAL cold reset followed closing. No causal assertion from this correlation."
+      ],
+      "attribution": "Observed player-visible failure, source-supported expectation; no raw save/generation or rejection code capture, so root not proven.",
+      "raw_capture": "No save/key/profile contents inspected, copied, hashed or exported. Profile retained in place.",
+      "after_failure": "No explicit Save or new table action; automatic storage writes were not inspected.",
+      "acceptance_plan": "After exact candidate/access clearance: use existing resident profile if eligible, verify expected phase/dice/ante/cash before any Call. If old ledger is unavailable, use clearly labeled fresh-key-local engineering reproduction crossing03:00, not forged actual state. Settle only once through normal Call, accounting at most6 once, then cold exactly-once history.",
+      "source_artifacts": {
+        "qa-source-ac877-bar-dice.gd": "bbe7c052cf13b085ba050f011056746a5aba1b69ac1639a15bc2dd4ff7c1fa15",
+        "qa-source-ac877-foundation.gd": "403b4e673049ea15353585d530e2b9ebb8e4a5ca68c14bd8b64a80eac5a03c4f",
+        "qa-source-ac877-game-module.gd": "45fff382aface1998da84b4b90490990b34a08886c46ab622568b96287cdf966",
+        "qa-source-ac877-authority.gd": "ec56da4e10f79341414468b52ce7631357b7847c4004e73efbd31299b3c80769",
+        "qa-source-ac877-run-state.gd": "c67daa6e9b75f0087ded48decb315e68f9d9884b1e621e53345819163fb5780e",
+        "qa-source-ac877-sealed-host.gd": "806f39c81b790b0efc1df5a82733e6b11889663d4748e48bb9f6a40d5bf93afb"
+      },
+      "source_provenance": "Read permitted exact ac877 game-source Git objects from site-owned bare repository; tree42aa matches recorded tested tree. No denied manifest alias/read.",
+      "evidence": {
+        "shake_saved": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1328-r17b-dice-six\\dice-after-save.png",
+        "shake_cold_pass": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1329-r17b-dice-cold\\cold-existing-dice-round.png",
+        "reveal_before_save": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1329-r17b-dice-cold\\dice-reveal-phase.png",
+        "reveal_save_ready": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1329-r17b-dice-cold\\reveal-save-ready.png",
+        "cold_reset": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1330-r17b-final-call\\cold-existing-reveal.png",
+        "cold_menu_no_save": "E:\\CodexQA\\BTH\\Broad\\r10-20261104\\evidence\\qa-batch-1330-r17b-final-call\\cold-reset-before-any-save.png"
+      }
+    },
+    "custody": "Original resident profile/saves/keys not read, copied, changed or replayed. Permitted report/screenshots only."
+  },
+  "scope": "Independent fresh native reconstruction and permitted source. Never retry/bypass ac877manifest denial; no existingresidentlauncher that reads it. No fundedloss claim: wallet94 before/after, no finalCall. Expected acceptedcup/ante6/dice/callsequence persistence through closing.",
+  "commits": [],
+  "native_cases": [
+    {
+      "label": "dice-reveal-baseline-warm-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:21:58.723365+00:00",
+        "finished_utc": "2026-11-06T02:22:22.435742+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 11.25
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-reveal-baseline-warm-1.log",
+      "result": null
+    },
+    {
+      "label": "dice-reveal-baseline-warm-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:23:51.839805+00:00",
+        "finished_utc": "2026-11-06T02:24:25.376073+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 16.203125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-reveal-baseline-warm-2.log",
+      "result": {
+        "checks": 22,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [],
+          "first_loss": "",
+          "fixture": {
+            "ante": 6,
+            "cash": 94,
+            "clock_input": "unchanged default; no root-clock override supported by Practice JSON",
+            "clock_minutes": 720,
+            "continuous_clock": false,
+            "practice": true,
+            "seed": "BTH061-BAR-DICE-REVEAL-RESTORE-001"
+          },
+          "original_state_used": false,
+          "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+          "stage": "warm"
+        },
+        "failures": [
+          "Declared cash94 and authored Practice ante6 are active"
+        ]
+      }
+    },
+    {
+      "label": "dice-reveal-baseline-warm-3",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:28:06.205680+00:00",
+        "finished_utc": "2026-11-06T02:28:48.350597+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 19.75
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-reveal-baseline-warm-3.log",
+      "result": {
+        "checks": 72,
+        "facts": {
+          "Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 6,
+              "clock_minutes": 720,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": ""
+            },
+            "phase": "shake"
+          },
+          "actions": [
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 6,
+                "clock_minutes": 720,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 6,
+                "clock_minutes": 720,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "completed": true,
+          "first_loss": "",
+          "fixture": {
+            "ante": 6,
+            "cash": 94,
+            "clock_input": "unchanged default; no root-clock override supported by Practice JSON",
+            "clock_minutes": 720,
+            "continuous_clock": false,
+            "practice": true,
+            "raw_ladder": [
+              6.0
+            ],
+            "seed": "BTH061-BAR-DICE-REVEAL-RESTORE-001"
+          },
+          "original_state_used": false,
+          "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-reveal-baseline-cold-3",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:30:33.546022+00:00",
+        "finished_utc": "2026-11-06T02:30:59.052900+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 12.0625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-reveal-baseline-cold-3.log",
+      "result": {
+        "checks": 22,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [
+            {
+              "economy": {
+                "state": "before_normal_Continue"
+              },
+              "first_failed_stage": "saved_raw_shape_differs_from_live",
+              "label": "cold_reveal",
+              "raw_account_and_root_rng_equal": false,
+              "raw_cup_equal": false,
+              "raw_ledger_present": true
+            }
+          ],
+          "first_loss": "cold_reveal:saved_raw_shape_differs_from_live",
+          "original_state_used": false,
+          "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+          "stage": "cold"
+        },
+        "failures": [
+          "cold_reveal:saved_raw_shape_differs_from_live"
+        ]
+      }
+    },
+    {
+      "label": "dice-reveal-baseline-cold-4",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:32:49.227325+00:00",
+        "finished_utc": "2026-11-06T02:33:17.357165+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 13.484375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-reveal-baseline-cold-4.log",
+      "result": {
+        "checks": 22,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [
+            {
+              "economy": {
+                "state": "before_normal_Continue"
+              },
+              "first_failed_stage": "saved_raw_shape_differs_from_live",
+              "label": "cold_reveal",
+              "raw_account_and_root_rng_equal": false,
+              "raw_cup_equal": false,
+              "raw_ledger_present": true
+            }
+          ],
+          "first_loss": "cold_reveal:saved_raw_shape_differs_from_live",
+          "original_state_used": false,
+          "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+          "stage": "cold"
+        },
+        "failures": [
+          "cold_reveal:saved_raw_shape_differs_from_live"
+        ]
+      }
+    },
+    {
+      "label": "dice-venue-baseline-warm-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:35:14.620951+00:00",
+        "finished_utc": "2026-11-06T02:36:16.623141+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 27.890625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-baseline-warm-1.log",
+      "result": {
+        "checks": 83,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "Choose an ante within the table limits.",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "Choose an ante within the table limits.",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-baseline-cold-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:38:02.136133+00:00",
+        "finished_utc": "2026-11-06T02:38:50.316287+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 22.46875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-baseline-cold-1.log",
+      "result": {
+        "checks": 30,
+        "facts": {
+          "Cold Reveal Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "Choose an ante within the table limits.",
+              "ceiling": 60,
+              "clock_minutes": 1770,
+              "floor": 10,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": ""
+            },
+            "phase": "reveal",
+            "rendered_phase": "agree_wager",
+            "ui_dice_equal": false,
+            "ui_phase": ""
+          },
+          "actions": [],
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "not_in_game",
+                "state": "before_Continue"
+              },
+              "first_failed_stage": "",
+              "label": "cold_reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "first_loss": "Cold Reveal Continue:rendered_or_restored_UI_lost_accepted_cup",
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "90f7f8995c89097b616fae927f15515bc982ad4a5e17f95932bf4594a5328e99",
+            "fixture": "9532ea1bdfc166f10b6ba4e46418f274ef2253a2b5eb87b22c864cb30449b6cc",
+            "game": "0ef17740ef9a066ad3e7e9f146eeb64117dbc865f136cc48105edb2c34ae3bce"
+          },
+          "stage": "cold"
+        },
+        "failures": [
+          "Cold Reveal Continue retains actual restored UI/rendered phase and exact dice, not only its canonical ledger"
+        ]
+      }
+    },
+    {
+      "label": "dice-accepted-ante-unit-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_accepted_ante_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:42:36.777530+00:00",
+        "finished_utc": "2026-11-06T02:43:06.499493+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 14.140625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-accepted-ante-unit-1.log",
+      "result": {
+        "checks": 20,
+        "failures": [
+          "Controlled floor10 cover restoration keeps exact dice, six-unit cost and unchanged account/root RNG.",
+          "Controlled floor10 shake restoration keeps exact dice, six-unit cost and unchanged account/root RNG.",
+          "Controlled floor10 throw restoration keeps exact dice, six-unit cost and unchanged account/root RNG.",
+          "Controlled floor10 reveal restoration keeps exact dice, six-unit cost and unchanged account/root RNG.",
+          "A fresh authored ten-unit wager at floor10 is accepted without early funding.",
+          "A valid legacy canonical cup without the new field retains exact dice and its six-unit cost."
+        ],
+        "scope": "Synthetic module/sealed-host contract; controlled current floor6-to10; no economic resolution, disk save or original-state access"
+      }
+    },
+    {
+      "label": "dice-accepted-ante-unit-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_accepted_ante_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:46:20.599193+00:00",
+        "finished_utc": "2026-11-06T02:46:50.919748+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 14.4375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-accepted-ante-unit-2.log",
+      "result": {
+        "checks": 21,
+        "failures": [],
+        "scope": "Synthetic module/sealed-host contract; controlled current floor6-to10; no economic resolution, disk save or original-state access"
+      }
+    },
+    {
+      "label": "dice-venue-legacy-candidate-cold-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:46:51.134044+00:00",
+        "finished_utc": "2026-11-06T02:47:38.102241+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 21.625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-legacy-candidate-cold-1.log",
+      "result": {
+        "checks": 45,
+        "facts": {
+          "Cold Reveal Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 60,
+              "clock_minutes": 1770,
+              "floor": 10,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": ""
+            },
+            "phase": "reveal",
+            "rendered_phase": "reveal",
+            "ui_dice_equal": true,
+            "ui_phase": "reveal"
+          },
+          "actions": [
+            "bar_dice_reveal",
+            "bar_dice_ack_call"
+          ],
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "not_in_game",
+                "state": "before_Continue"
+              },
+              "first_failed_stage": "",
+              "label": "cold_reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "first_loss": "",
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "debad999ce67dc2e9534c327a7419df750229c38629879774c80b974e5e8b52f",
+            "fixture": "9532ea1bdfc166f10b6ba4e46418f274ef2253a2b5eb87b22c864cb30449b6cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "cold"
+        },
+        "failures": [
+          "Normal Menu opens"
+        ]
+      }
+    },
+    {
+      "label": "dice-venue-candidate-warm-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:50:50.609898+00:00",
+        "finished_utc": "2026-11-06T02:51:59.018564+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 31.3125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-candidate-warm-2.log",
+      "result": {
+        "checks": 83,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "b409ce393b02d4cd334f39721845687501df3aee4f9adca5dcd581243e883b7d",
+            "fixture": "9532ea1bdfc166f10b6ba4e46418f274ef2253a2b5eb87b22c864cb30449b6cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-candidate-cold-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T02:59:39.211976+00:00",
+        "finished_utc": "2026-11-06T03:00:11.507776+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 14.953125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-candidate-cold-2.log",
+      "result": {
+        "checks": 45,
+        "facts": {
+          "Cold Reveal Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 60,
+              "clock_minutes": 1770,
+              "floor": 10,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": ""
+            },
+            "phase": "reveal",
+            "rendered_phase": "reveal",
+            "ui_dice_equal": true,
+            "ui_phase": "reveal"
+          },
+          "actions": [
+            "bar_dice_reveal",
+            "bar_dice_ack_call"
+          ],
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "not_in_game",
+                "state": "before_Continue"
+              },
+              "first_failed_stage": "",
+              "label": "cold_reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "cold": {
+            "final_cash": 88,
+            "paid_call_count": 1,
+            "rounds": 1,
+            "stake": 6
+          },
+          "first_loss": "",
+          "original_state_used": false,
+          "post_call_ui": {
+            "closing_active": true,
+            "popup_event_id": "health_inspector",
+            "popup_visible": true,
+            "screen": "GAME",
+            "transition_active": true
+          },
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "b409ce393b02d4cd334f39721845687501df3aee4f9adca5dcd581243e883b7d",
+            "fixture": "9532ea1bdfc166f10b6ba4e46418f274ef2253a2b5eb87b22c864cb30449b6cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "cold"
+        },
+        "failures": [
+          "Passive tumble ends without funding or rootRNG change"
+        ]
+      }
+    },
+    {
+      "label": "dice-compat-surface-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_surface_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T03:03:40.527004+00:00",
+        "finished_utc": "2026-11-06T03:03:51.966899+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 5.421875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-compat-surface-1.log",
+      "result": {
+        "checks": 26,
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-compat-pending-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_pending_recovery_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T03:03:52.067606+00:00",
+        "finished_utc": "2026-11-06T03:04:10.340852+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 8.875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-compat-pending-1.log",
+      "result": {
+        "checks": 14,
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-compat-unaffordable-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_unaffordable_ante_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T03:04:10.440726+00:00",
+        "finished_utc": "2026-11-06T03:04:28.701960+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 8.71875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-compat-unaffordable-1.log",
+      "result": {
+        "checks": 17,
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-readonly-settled-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "receipt": {
+        "started_utc": "2026-11-06T03:04:28.801715+00:00",
+        "finished_utc": "2026-11-06T03:04:49.673592+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 10.09375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-readonly-settled-2.log",
+      "result": {
+        "checks": 19,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [],
+          "first_loss": "",
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "settled": {
+            "cash": 94,
+            "expected_cash_from_prior_observation": 88,
+            "game_action_rows": 0,
+            "new_inputs": 0,
+            "phase": "reveal",
+            "request_count": 0,
+            "rounds": 0.0
+          },
+          "source_sha256": {
+            "base": "18507a255910d0e2c019480700e809ce97164d59885c88b9da690a3d81aaddf0",
+            "fixture": "9532ea1bdfc166f10b6ba4e46418f274ef2253a2b5eb87b22c864cb30449b6cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "settled"
+        },
+        "failures": [
+          "Automatic Save retains observed wallet and exactly one round/story action"
+        ]
+      }
+    }
+  ],
+  "deployment": {
+    "state": "pending",
+    "commit": null,
+    "evidence": []
+  },
+  "causal_finding": {
+    "classification": "Confirmed independent equivalent-state production defect; original scenario/branch uninspected",
+    "fixture": "One predeclared catalog BarWake/Payday/clear/no-happenings generated94cash/floor6/ladder6,10,20,40,46; noPractice flag. Explicit ordinary coreclock advances23:00→Day205:30; actualMainScene renderer inputs/MenuSave/Continue. Not natural elapsed original route.",
+    "before_close": "ShakeSave and ordinaryContinue preserve exactphase/dice/cash/RNG, actualUIShake. Two remainingnormalshakes→Throw→Reveal preserve unfundedcup.",
+    "after_close_save": "NormalSave retiresbarWake via normalvenuecycleowner; economicfloor6→10/ceiling46→60. Ledger remainsvalid/bound/checkpointmatching with exactaccepted6Revealcup,94cash/rootRNG unchanged. Warm83checks0assertionfailures followed native signal11 atshutdown; processfailure retained, not passingruntimeacceptance.",
+    "red_cold": "30checks/1failure: actualrenderedAgreeWager/UIempty while canonicalphaseReveal/cup/account/rootRNGequal andfullledger/checkpointvalid. NoLift/Call/newhand. _ante_block_reason reportsChooseanantewithinlimits.",
+    "root_cause": "BarDice revalidates an already accepted cup against the room new-situation limits. Persistent physical game state survives retirement, but restoration returns empty because agreed6 is below newfloor10; finalfunding/resolve shared same rule.",
+    "attribution_limit": "OriginalWebobservation retained. Equivalent catalog mechanismmatches visiblefailure, but originalscenario/daytype/rawsave/rejectionbranch were neverinspected and are not asserted. BackgroundRNGdrift is conditional only; this causalcase provesno drift and needs no genericcheckpointrebase."
+  },
+  "candidate": {
+    "game_sha256": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+    "change": "Record agreedante in canonicalsealedcup onlyaftercurrentfresh admission; sharedacceptedcup predicate honors exactante acrosslimit changes, validates actualRunStatecanonicalledger/binding/rawphase/index/dice/pin, supports validlegacyabsence, rejects malformedpresentpin/forgedUI/borrowedledger; clear onnewselection/settlement/unfundablereset. Currentfreshlimits, affordability, coldcheckpoint and delivery/replay unchanged.",
+    "reviews": "Two independent read-onlysource reviews; finalcanonicalenvironmenthardening reviewed; no materialproduction/privacyblocker.",
+    "unit": "21checks0failures includingactualsealedproviderpricing andborrowed-envrejection. Earlierunit usedintentionallyzero publiclegacycostAPI; its6falsefailures are retained/classified testsetup, correctedactualprovider assertions.",
+    "legacy_integration": "RetainedprefixedowncatalogRevealsave resumed undercandidate atnewfloor10: actualRevealUI6/exactdice/cash/RNG preserved. Lift+oneCall, exactly6funding/oneRound/exactdicereplayconservation/no agreedanteaftersettle checks pass. Run45checks/1failure onlyfinalMenuopen attemptedbeforeordinaryresultanimationexpiry; record retained, freshcandidatefinalSave qualification pending.",
+    "clean_focused_passes": {
+      "dice-accepted-ante-unit-2": 21,
+      "dice-compat-surface-1": 26,
+      "dice-compat-pending-1": 14,
+      "dice-compat-unaffordable-1": 17
+    },
+    "new_format_integration": {
+      "warm": "83checks0assertionfailures; agreedcup saved at1770 after floor6to10 withno anteblock; finalnativeprocesscrashes0xC0000005 exactlyasbaseline. No cleanwholejobpass.",
+      "cold": "NewformatactualReveal6/exactdice restored atfloor10; oneLift/Call charges6 to88, oneRound, exactdeliveryreplayunchanged, pinremoved. NormalHealthInspector eventopens, pausesanimation andblocksMenu; onepassivewait doesnotclear it. NochoiceornewSaveperformed.45checks/1failureatpassiveanimationexpiry; thatfailureisnot falselyreportedfixed.",
+      "readonly_followup": "19checks/1failure: oldexpectedautomaticoutcomeSave wasnotpresent. Freshread showslastacceptedmanualRevealSave94/0rounds/0gameactions, notpostCall88. This doesnot establisha newSave defect because no postCallSave completed. No financialreplay/input inread-onlyjob.",
+      "remaining": "A legitimate ordinarypostCallprompt/Save/freshContinue case is stillrequired; no more genericfixture repair or outcome replay. Originalprofile and deniedmanifest untouched."
+    },
+    "shutdown_limit": {
+      "baseline_exit": 3221225477,
+      "candidate_exit": 3221225477,
+      "same_assertions": 83,
+      "assertion_failures": 0,
+      "stage": "aftercompletedresultprint/finalprocessshutdown",
+      "cause": "unattributed; identicalbeforeandafterfix, unsymbolized28-frame traces containnoaddresses/functions; read-onlyreview foundno demonstratedfixtureownership correction",
+      "review": "Do not suppress/replace nativeexitstatus or claimcleanpass; no speculativeprewarm/engine/nativepatch."
+    }
+  },
+  "fixture_limits": [
+    "Pre-game parser failure retained; no gameplay occurred.",
+    "RawJSON float/int chip and expectationguard equality failures retained; nofinancialinput in failedcoldguards. Checks now normalize ordinaryJSON representations while exactrootRNG decimalstrings are fingerprinted before normalization.",
+    "Catalogwarm shutdown crash retained; no whole-job pass claimed. Fixture now uses normal prewarm-join before actualruntime, with no game/canvasprocessing suppression.",
+    "Sourcegame Gitblob isLF; physicalnativefilehash may differ by checkoutCRLF. Fullsourcecommit/tree and actualruntimehashes retained.",
+    "Denied ac877manifest and originalresidentprofile/save/key remain untouched. No legacyoriginal action replay or newQA dialogue action."
+  ],
+  "publication_authorization": {
+    "source": "TrustedparentnewBarDiceassignment and suppliedstandingmain/NEXTinstruction; actualuser_message_read verified generalmainpublication2026-11-02 andallfinishedBTHworktoNEXT2026-11-04.",
+    "messages": [
+      "Sentinel_f12f9e0a661c81919154843ed93710fd",
+      "Sentinel_eea9436f41b0819191f9f7fceb3121da"
+    ],
+    "scope": "Onlythisnew independentlytested BarDice scopedfix/currentbranch fromac877. No prior deniedR08history, native/toolchain/audience/stable/itch/manifest/originalprofile changes. Fulltask remainsOpen."
+  }
+}
