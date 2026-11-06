@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "open",
-  "updated_at": "2026-11-06T05:37:44.066563+00:00",
+  "updated_at": "2026-11-06T05:58:42.838325+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -5452,6 +5452,39 @@
       "all_unique_ids": 283,
       "owned_jobs_ended": 41,
       "scope": "Manual present-time check only; other items not reassigned or refreshed. Growth from earlier outside counts reflects newly stale external observations, not loss or closure of their work."
+    },
+    "publisher_recovery": {
+      "observed_at": "2026-11-06T05:58:42.838325+00:00",
+      "built_main": "44ea53510d2d282b35089f6b2bf0482822b7bd2a",
+      "tested_fix": "753d6eb5d832695901fad640af3c6b557efbdc48",
+      "phase_at_checkpoint": "failed",
+      "deployed_at_checkpoint": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+      "initial_error": "Command '['powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'D:\\\\Projects\\\\site\\\\scripts\\\\grant-bth-published-read.ps1', '-BuildDirectory', 'D:\\\\Projects\\\\site\\\\projects\\\\beat-the-house\\\\public\\\\play\\\\dev\\\\44ea53510d2d282b35089f6b2bf0482822b7bd2a', '-Apply']' returned non-zero exit status 1.",
+      "build_log": "state\\bth-next\\logs\\44ea53510d2d282b35089f6b2bf0482822b7bd2a-1793943826943625400.log",
+      "build_and_pck_audit": "Export and 1166-file PCK audit passed; installer failed before pointer promotion at the existing local QA read-grant call. The watcher did not preserve the helper stderr; precise original cause remains unknown.",
+      "existing_grant_retry": {
+        "observed_at": "2026-11-06T05:55:25.4069115Z",
+        "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json",
+        "sha256": "b6cc306a5cd877d637251b15c225f3e37feef5ceff1512dc8adba3c0bc914388",
+        "exit_code": 0,
+        "verified": true,
+        "items": 18,
+        "rights": "ReadAndExecute",
+        "owner_protection_and_other_rules_preserved": true,
+        "scope": "Exact existing unmodified publisher helper and fixed local QA account only; no audience, watcher, installer or ACL-policy change."
+      },
+      "recovery_route": "Preserve installed immutable44ea and its provenance. Its original ephemeral ZIP was already removed. Normal retry creates a timestamped ZIP and cannot replace the installed archive hash. This evidence-only BTH checkpoint supplies a new SHA to the existing watcher; no substitute build, pointer write or watcher restart. Verify the actual resulting main SHA/tree/assets/startup before closure.",
+      "status": "new_checkpoint_publication_pending",
+      "manual_reconciliation": {
+        "checked_at": "2026-11-06T05:59:26.832803Z",
+        "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-publisher-recovery-check.json",
+        "sha256": "cc936448813c4398f1607906fcf990d71359771c87717a4c74477853302847f9",
+        "own_findings": 0,
+        "outside_findings": 406,
+        "outside_tasks": 46,
+        "all_unique_ids": 283,
+        "owned_jobs_ended": 41
+      }
     }
   }
 }

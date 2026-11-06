@@ -125,6 +125,12 @@ private audience, stable and itch channels were not changed.
 
 Manual reconciliation at 2026-11-06T05:39:12.182449Z: **0 findings for these three items**, with **357 findings across 45 other IDs** retained. Their aging observations and work states were not changed.
 
+### Publication recovery checkpoint
+
+Main `44ea53510d2d282b35089f6b2bf0482822b7bd2a` contains the qualified fix. Its export and1166-file PCK audit passed, but the existing installer failed at its local QA read grant before promotion; NEXT retained7d. The original helper stderr was not retained, so its precise cause is unknown.
+
+One exact retry of the existing unmodified helper succeeded: exit0, Verifiedtrue,18items, fixed QA ReadAndExecute only, owner/protection/other rules preserved. This did not promote NEXT. The installed immutable44ea/provenance remain preserved; the original ephemeral ZIP was already removed, and a normal timestamped rebuild cannot replace that archive hash. This evidence-only checkpoint gives the existing watcher a fresh main SHA. No manual export, pointer write, pipeline edit or watcher restart was used. All3 IDs remain Open until actual descendant identity/assets/startup and final reconciliation pass.
+
 ## Historical checkpoint through 7d
 
 The following preserved narrative describes the earlier checkpoint and its

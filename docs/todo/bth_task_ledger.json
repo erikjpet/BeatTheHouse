@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T05:37:44.066563+00:00",
+  "updated_at": "2026-11-06T05:58:42.838325+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25291,7 +25291,7 @@
         }
       },
       "state": "open",
-      "status": "FIXES_COMMITTED_ALL_FOCUSED_ACCEPTANCE_NEXT_PENDING",
+      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25330,7 +25330,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
         ],
-        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
+        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
       },
       "evidence": [
         {
@@ -25362,25 +25362,31 @@
           "kind": "continuation_qualified_native_and_public_web",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "NewpostCall60/0+freshContinue30/0/candidate30/0 at88/oneRound/onegameaction; causalqueued-save race fixed, require-drain86/0 andplain83/0 cleannativeexit, failure28/0 preservesactualerror/primary. ActualDPR2Webclearly6/6/0; wrong-valuepredicate not reproduced. Commit/delivery pending."
+        },
+        {
+          "kind": "publisher_recovery_checkpoint",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
         }
       ],
       "implementation_batches": [
         "BTH061-BAR-DICE-SHUTDOWN-001"
       ],
-      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
+      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_promotion",
+        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:32:13.288233+00:00",
+        "observed_at": "2026-11-06T05:58:42.838325+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md"
+          "docs/testing/bar_dice_reveal_restore_r17b.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:37:44.066563+00:00"
+      "updated_at": "2026-11-06T05:58:42.838325+00:00"
     },
     {
       "id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
@@ -25447,7 +25453,7 @@
         }
       },
       "state": "open",
-      "status": "NO_VALUE_DEFECT_DIAGNOSTIC_COMMITTED_NEXT_PENDING",
+      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
       "owner": {
         "name": "Bar Dice cover/risk display investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25471,7 +25477,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
+        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
       },
       "evidence": [
         {
@@ -25488,23 +25494,29 @@
           "kind": "actual_dpr2_public_web_and_native_trace",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Nativeactualdraw6/6/0 atallunfundedphases andcatalogcoldfloor10; actual2560x1440-backedWebDPR2clearlyCOV6/RISK6/RET0,94cash/ante6/samedice, noimport/paidinputs. Earlier1280PNGreadingunreliable, notcategoricallyreinterpreted."
+        },
+        {
+          "kind": "publisher_recovery_checkpoint",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
+      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_promotion",
+        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:32:13.288233+00:00",
+        "observed_at": "2026-11-06T05:58:42.838325+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md"
+          "docs/testing/bar_dice_reveal_restore_r17b.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:37:44.066563+00:00"
+      "updated_at": "2026-11-06T05:58:42.838325+00:00"
     }
   ],
   "batches": [
@@ -26003,7 +26015,7 @@
       "aliases": [],
       "group": "current",
       "state": "open",
-      "status": "EXIT_BARRIER_COMMITTED_NEXT_PENDING",
+      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
       "owner": {
         "name": "Bar Dice shutdown ownership fix (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -26027,28 +26039,34 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
+        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
       },
       "evidence": [
         {
           "kind": "owned_task_id_causal_reproduction",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Unchanged native warm84/0 thenC000: afterwaitid-1 butsameframe queuedHost startstask2; task2/inflight survivesHostfree. Freshidenticalcase joinsONLYthatknownserviceTaskafterfree, preserving84/0andcleanexit0. Full22framefaulttraceWorkerPoollatecallablerelease/GDScriptInstance afterLanguage destruction retained."
+        },
+        {
+          "kind": "publisher_recovery_checkpoint",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
         }
       ],
-      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
+      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_promotion",
+        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:32:13.288233+00:00",
+        "observed_at": "2026-11-06T05:58:42.838325+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "docs/testing/bar_dice_reveal_restore_r17b.md"
+          "docs/testing/bar_dice_reveal_restore_r17b.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
         ]
       },
-      "updated_at": "2026-11-06T05:37:44.066563+00:00",
+      "updated_at": "2026-11-06T05:58:42.838325+00:00",
       "parent_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
       "scope": [
         "Join only the current Host SaveService task at _exit_tree, including a coalesced task started in the final queued-deletion frame.",
