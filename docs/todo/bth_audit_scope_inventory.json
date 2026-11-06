@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T07:40:02.542236+00:00",
+  "observed_at": "2026-11-06T08:27:19.266644+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2127,6 +2127,37 @@
       "full_objective_complete": false,
       "evidence_commit_association": "Actual commit associated; body and bounded walk qualification Complete; correction/conditional rollback/classifier cleanup/umbrella Open.",
       "associated_evidence_commit": "62e1989e5f921b6418f70876a1d3010f10266156"
+    },
+    {
+      "phase": "032",
+      "observed_at": "2026-11-06T08:27:19.266644+00:00",
+      "tasks": [
+        "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
+        "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+        "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
+      ],
+      "source_count": 1250,
+      "source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+      "source_changes": 0,
+      "new_whole_body_area_count": 3,
+      "body_lines": 21938,
+      "declarations": 1535,
+      "methods": 1164,
+      "recorded_core_reviewed": 95,
+      "recorded_core_remaining": 0,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "native_jobs": 0,
+      "runtime_inventory": 228,
+      "whole_prior228_runtime_inventory_exact": true,
+      "scope_lapses_disclosed_and_ungated_censuses_excluded": true,
+      "body_status": "Complete body/reciprocal-peer source evidence; actual commit pending before child completion.",
+      "home_finding_status": "Local cleanup contradiction source-qualified, no runtime/source correction/NEXT.",
+      "delivery_finding_status": "Conditional precommit-owner gap; ordinary valid rejecting producer/exclusion remains Open.",
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_032.json",
+      "full_objective_complete": false,
+      "associated_evidence_commit": null
     }
   ],
   "current_code_universe030": {

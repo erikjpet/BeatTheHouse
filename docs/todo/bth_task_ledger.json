@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T07:40:02.542236+00:00",
+  "updated_at": "2026-11-06T08:27:19.266644+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13261,13 +13261,12 @@
             },
             {
               "id": "scripts/core/run_state.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete current source-body/reciprocal peer review through032, all declarations retained. Supported permitted caller/history witnesses only; initial ungated scans excluded. No runtime/source correction/NEXT or full-codebase acceptance."
             },
             {
               "id": "scripts/core/run_state_schema.gd",
@@ -13300,13 +13299,12 @@
             },
             {
               "id": "scripts/core/scenario_engine.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete current source-body/reciprocal peer review through032, all declarations retained. Supported permitted caller/history witnesses only; initial ungated scans excluded. No runtime/source correction/NEXT or full-codebase acceptance."
             },
             {
               "id": "scripts/core/scenario_extension_dispatch.gd",
@@ -13390,13 +13388,12 @@
             },
             {
               "id": "scripts/core/scenario_layout_resolver.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete current source-body/reciprocal peer review through032, all declarations retained. Supported permitted caller/history witnesses only; initial ungated scans excluded. No runtime/source correction/NEXT or full-codebase acceptance."
             },
             {
               "id": "scripts/core/scenario_operation_registry.gd",
@@ -13622,7 +13619,7 @@
         }
       },
       "state": "open",
-      "status": "THREE_MORE_BODIES_92_OF_95_META_WALK_MODEL_MISMATCH_QUALIFIED_CORRECTION_OPEN_031",
+      "status": "ALL95_CORE_BODIES_RECORDED_THREE_BROADER_AREAS_AND_FINDINGS_OPEN_032",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14063,12 +14060,17 @@
           "kind": "three_orchestration_bodies_and_three_finding_qualification031",
           "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
           "summary": "Three complete bodies9268lines/596cards retained with reciprocal peers;92/95 core. One native normal Meta producer/base-room public model12 controls0fail reproduces offered Dictionary/canonical rejection, String control succeeds; correction separately Open under item scope. Placement exact dominance proved/no deletion; all observed generator production owners restore/isolate, no ordinary unprotected failure producer. No source changes or denied retry."
+        },
+        {
+          "kind": "phase032_final_three_core_source_bodies",
+          "reference": "docs/testing/deprecated_code_audit_continuation_032.json",
+          "summary": "Recorded core-body source dispositions95/95; broader three areas and qualified/conditional findings stayOpen. All product source unchanged and no native jobs; scope lapses disclosed, ungated scans excluded."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Review remaining RunState/ScenarioEngine/ScenarioLayoutResolver bodies and broader semantic areas within existing scope. Preserve the reproduced model mismatch in the separate Open corrective task; no paused item/scenario implementation or cleanup. Retain conditional rollback question until ordinary evidence warrants disposition; do not retry denied access, diagnostic or publication actions.",
+      "next_action": "Continue the three broader semantic/caller/inherited-failure areas and separately tracked open findings; core-body source dispositions are95/95, not the full audit. Preserve item/scenario implementation pause, stopped cleanup, all local work and excluded diagnostics; do not retry denied publication.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14080,7 +14082,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+      "updated_at": "2026-11-06T08:27:19.266644+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -27702,6 +27704,274 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T07:40:02.542236+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
+      "name": "Review remaining state and scenario core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Full current source-body audit of the remaining RunState, ScenarioEngine and ScenarioLayoutResolver core files, including every declaration and current consumers, dispatch, save/ownership compatibility and supported history. Source review does not authorize item/scenario implementation or cleanup. Retain qualified findings separately from correction/runtime/NEXT and whole-codebase acceptance.",
+        "source": "Parent asks continue remaining audit coverage and independent qualification within item/scenario pause and prior access restrictions, preserve pending local commits and do not retry denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Every current declaration and complete body has exact source/caller/dispatch/history dispositions with evidence and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_032.json",
+              "docs/testing/deprecated_code_audit_continuation_032.md"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/run_state.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
+              ],
+              "scope": "Complete exact current body with reciprocal independent review, supported permitted named callers and selected history. Initial ungated census conclusions are excluded; broader all-caller/runtime/removal qualification remains separate."
+            },
+            {
+              "id": "scripts/core/scenario_engine.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
+              ],
+              "scope": "Complete exact current body with reciprocal independent review, supported permitted named callers and selected history. Initial ungated census conclusions are excluded; broader all-caller/runtime/removal qualification remains separate."
+            },
+            {
+              "id": "scripts/core/scenario_layout_resolver.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_032.json",
+                "docs/testing/deprecated_code_audit_continuation_032.md"
+              ],
+              "scope": "Complete exact current body with reciprocal independent review, supported permitted named callers and selected history. Initial ungated census conclusions are excluded; broader all-caller/runtime/removal qualification remains separate."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "THREE_COMPLETE_CORE_BODIES_AND_RECIPROCAL_PEERS_PASS_EVIDENCE_COMMIT_PENDING_032",
+      "owner": {
+        "name": "Audit phase032 source review",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Source review only; any permitted correction would require a separately registered scope and appropriate evidence."
+      },
+      "evidence": [
+        {
+          "kind": "phase032_independent_source_body_qualification",
+          "reference": "docs/testing/deprecated_code_audit_continuation_032.json",
+          "summary": "Complete source bodies and reciprocal independent peers retained; exact scope lapses disclosed and broad caller closure excluded. Source observations are separate from runtime/correction/NEXT."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual phase032 evidence commit before completing this bounded source-review child. Full audit, broader three areas, home correction and delivery producer qualification remain Open; no code/native/NEXT acceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Permitted independent read-only source audit is active. Existing item/scenario implementation pause, cleanup stop, excluded diagnostics and publication denial remain separate and unaltered.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T07:54:24.739584+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+      "name": "Qualify and resolve skipped home-loss room cleanup",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resolve the RunState lose_home ordering contradiction: it disables home_state before calling is_current_home_environment, whose active-home gate prevents the intended current-room container/home_lost/layout update. Qualify the ordinary producer and actual projection/storage/save/reentry consequences before claiming player impact. Preserve intended lost-item semantics and room authority; no source correction is implemented or authorized by this read-only review.",
+        "source": "Phase032 remaining-core source audit: root and Part1 author independently read RunState1097-1108/1488-1540. Local false predicate is proven; ordinary sleep/day-rollover and WorldMap/environment projection owners are under source qualification. Parent says continue independent qualification within item/scenario pause and access/publication restrictions.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "qualified-source-and-ordinary-owner",
+            "description": "Independently reviewed exact source contradiction and natural producer/owner evidence, with actual runtime and rendered limitations explicit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_032.json",
+              "docs/testing/deprecated_code_audit_continuation_032.md"
+            ]
+          },
+          {
+            "id": "qualified-corrective-behavior",
+            "description": "When permitted, establish intended home-loss room projection and preserve item ownership, authority, save/reentry and normal non-loss behavior with focused regressions.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-fix-commit",
+            "description": "Actual product correction commit; registration/source qualification commits are not a fix.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Verify actual correction in exact NEXT identity and changed behavior before completion; no denied publication retry without new specific approval.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "LOCAL_HOME_LOSS_CLEANUP_CONTRADICTION_FOUND_RUNTIME_AND_CORRECTION_OPEN_032",
+      "owner": {
+        "name": "Audit phase032 source review",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No correction or NEXT delivery exists; source qualification and pending local documentation are separate from a product fix."
+      },
+      "evidence": [
+        {
+          "kind": "phase032_independent_source_body_qualification",
+          "reference": "docs/testing/deprecated_code_audit_continuation_032.json",
+          "summary": "Complete source bodies and reciprocal independent peers retained; exact scope lapses disclosed and broad caller closure excluded. Source observations are separate from runtime/correction/NEXT."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Independently qualify the normal home expiry/sleep/day-rollover owner and current-room projection, distinguishing blocked storage mutations from stale physical data. Preserve the item/scenario implementation pause; do not remove or repair code in this source-review phase. Any permitted correction needs focused ownership/save/reentry regressions, an actual fix commit and exact NEXT acceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Source qualification is active. This task adds no user-pause policy; existing item/scenario implementation restrictions and prior publication/access denials remain unchanged.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:07:38.118874+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032",
+      "name": "Qualify delivery precommit rejection ownership",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify the delivery precommit ownership question identified in RunState: cargo removal precedes preview/local snapshot, while global-boundary and sweep call sites ignore the resolver return. Establish an ordinary valid rejection plus owner consequence, or a supported invariant/outer restoration that excludes it. Post-checkpoint failures deliberately retaining durable state are distinct. Conditional source ordering alone does not prove a player bug.",
+        "source": "Phase032 Part3 and Part4 source review cross-check: RunState11714/11727-11733,13988,14214,13505 and sweep rollback14131-14132, contrasted with checked/restoring DeliveryRunFacade owners and checkpoint15600. Parent permits independent qualification while preserving paused work and access/publication restrictions.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "exact-source-owner-qualification",
+            "description": "Independent exact source/caller/commit-stage evidence distinguishes resolver failure stages and observed owner rollback.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_032.json",
+              "docs/testing/deprecated_code_audit_continuation_032.md"
+            ]
+          },
+          {
+            "id": "ordinary-producer-or-exclusion",
+            "description": "Qualify a normal valid precommit rejection and its actual consequence, or supported invariant/restoration excluding it; no forcedfault/invalid authority/denied diagnostic.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-evidence-commit",
+            "description": "Associate actual bounded qualification evidence commit before completion; any confirmed correction/delivery must be separately tracked and qualified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_ONLY_DELIVERY_PRECOMMIT_OWNER_GAP_NO_ORDINARY_REJECTING_PRODUCER_032",
+      "owner": {
+        "name": "Audit phase032 source review",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Qualification-only question; no confirmed ordinary player bug, correction or NEXT acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "phase032_independent_source_body_qualification",
+          "reference": "docs/testing/deprecated_code_audit_continuation_032.json",
+          "summary": "Complete source bodies and reciprocal independent peers retained; exact scope lapses disclosed and broad caller closure excluded. Source observations are separate from runtime/correction/NEXT."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Find a naturally rejecting valid mounted-delivery precommit preview under the global-boundary or sweep owners, or prove those states excluded/fully restored. Distinguish precommit rejection from intentionally durable post-checkpoint confirmation failure. No forced authority, callbacks/faults, excluded diagnostic or paused implementation; no runtime bug or fix claim yet.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Ordinary rejecting producer or exclusion proof is not yet established. Permitted source qualification continues; no invented user decision or missing-original-save dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:07:38.118874+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T08:27:19.266644+00:00"
     }
   ],
   "batches": [

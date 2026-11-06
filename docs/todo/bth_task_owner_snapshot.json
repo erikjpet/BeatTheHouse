@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T07:40:02.542236+00:00",
+  "observed_at": "2026-11-06T08:27:19.266644+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T07:40:02.542236+00:00",
-      "source": "Actual phase031 root active finalizing handoff: evidence62e1989e associated. Three-body review and bounded native walk qualification Complete; separate corrective item task, conditional rollback, stopped classifier cleanup and umbrella Open. All1250 source pins/priorfixes/227old runtime records preserved; one new native Job closed0, total228. No implementation or denied access/publication retry."
+      "observed_at": "2026-11-06T08:27:19.266644+00:00",
+      "source": "Actual phase032 root active finalizing: remaining3core complete source/reciprocal peer evidence,95/95bodydispositions; actual commit association pending. Broader3/newfindings remainOpen. No source/native/census/publication retry; entire runtime228/priorfixes preserved; two initial caller-scan scope lapses disclosed and excluded from closure."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
