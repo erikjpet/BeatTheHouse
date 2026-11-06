@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T00:06:16.507507+00:00",
+  "updated_at": "2026-11-06T00:35:29.517065+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12636,13 +12636,12 @@
             },
             {
               "id": "scripts/core/attribute_badges.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_024.md",
+                "docs/testing/deprecated_code_audit_continuation_024.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body reviewed with current consumers, dispatch/compatibility and historical deltas. All source retained; empty stub candidate preserved under cleanup/removal stop. No native/NEXT or whole-audit acceptance."
             },
             {
               "id": "scripts/core/bar_dice_ritual_projection.gd",
@@ -12706,13 +12705,12 @@
             },
             {
               "id": "scripts/core/character_offer_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_024.md",
+                "docs/testing/deprecated_code_audit_continuation_024.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body reviewed with current consumers, dispatch/compatibility and historical deltas. All source retained; empty stub candidate preserved under cleanup/removal stop. No native/NEXT or whole-audit acceptance."
             },
             {
               "id": "scripts/core/character_roster.gd",
@@ -12916,23 +12914,21 @@
             },
             {
               "id": "scripts/core/environment_hours.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_024.md",
+                "docs/testing/deprecated_code_audit_continuation_024.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body reviewed with current consumers, dispatch/compatibility and historical deltas. All source retained; empty stub candidate preserved under cleanup/removal stop. No native/NEXT or whole-audit acceptance."
             },
             {
               "id": "scripts/core/environment_instance.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_024.md",
+                "docs/testing/deprecated_code_audit_continuation_024.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete pinned current body reviewed with current consumers, dispatch/compatibility and historical deltas. All source retained; empty stub candidate preserved under cleanup/removal stop. No native/NEXT or whole-audit acceptance."
             },
             {
               "id": "scripts/core/environment_object_manifest.gd",
@@ -13641,7 +13637,7 @@
         }
       },
       "state": "open",
-      "status": "NUMERIC_STORAGE_AND_CACHE_REPAIR_MAIN_PUBLISHED_WHOLE_AUDIT_AND_NEXT_OPEN_023",
+      "status": "FOUR_MORE_CORE_BODIES_REVIEWED_CLEANUP_STOP_PRESERVED_WHOLE_AUDIT_AND_NUMERIC_NEXT_OPEN_024",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13998,24 +13994,30 @@
           "kind": "current_four_core_body_gap_closure021",
           "reference": "docs/testing/deprecated_code_audit_continuation_021.md",
           "summary": "Four full current bodies reviewed, all active/compatibility retained; no production removals. Recorded reviewed61 to65; unreviewed34 (33remaining+1unknown) to30 (30remaining+0unknown). Prior61 not requalified here. Parent full coverage/candidates/compatibility/aggregate acceptance remain Open."
+        },
+        {
+          "kind": "bounded_source_review_and_noop_removal024",
+          "reference": "docs/testing/deprecated_code_audit_continuation_024.json",
+          "summary": "Four complete bodies independently reviewed; empty Numbers stub candidate qualified and preserved, NOT applied. Original source1247 restored exactly; no new native/NEXT claim. Evidence commit association pending."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue26 recorded core review gaps and3 broader areas; retain required numeric-fix NEXT delivery, aggregate qualification and historical lifecycle freshness findings as Open. Do not retry excluded diagnostics or change paused objectives.",
+      "next_action": "Continue remaining 22 core bodies and three broader coverage/compatibility areas and bug investigations under unchanged guards. Preserve cleanup/removal stop, named feature pauses and excluded diagnostics. Numeric022/023 remain Open for separately assigned exact NEXT verification.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active scoped validation/commit or exact Crew data attribution; no user/save/scheduler hold. Existing excluded diagnostic and paused work remain untouched.",
+        "description": "Permitted evidence and bug investigations continue. Cleanup/removal remains stopped under recorded user direction; candidate is preserved, not applied. Numeric NEXT verification separately assigned.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T19:16:23.423474+00:00",
+        "observed_at": "2026-11-06T00:35:29.517065+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-candidate-root-postcheck-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "docs/testing/deprecated_code_audit_continuation_024.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:06:16.507507+00:00"
+      "updated_at": "2026-11-06T00:35:29.517065+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25217,6 +25219,196 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T00:06:16.507507+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024",
+      "name": "Review remaining venue and character core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review complete current AttributeBadges, CharacterOfferModel, EnvironmentHours and EnvironmentInstance bodies and historical deltas. Classify every declaration and consumer as active/required compatibility or confirmed obsolete with evidence, including reflective/data dispatch and source authority boundaries. Remove only confirmed obsolete code under a separately tracked implementation; preserve active saves, RNG, clocks, cache/placement/scenario authority and the scoped pause. This bounded source review does not close whole-codebase or functional acceptance.",
+        "source": "Trusted parent instruction to continue remaining audit coverage. These four files remain recorded as unreviewed after phase023; full current bodies require explicit dispositions.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "complete-current-source-disposition",
+            "description": "Every declaration in the four pinned current files has complete body, consumer, dispatch/compatibility and historical disposition with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_024.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review qualifies the bounded evidence and an actual evidence commit is associated before completion. Any source repair/removal requires separate tests/commit/delivery acceptance.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/attribute_badges.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_024.json"
+              ],
+              "scope": "Complete original/current body, consumers and history independently reviewed. Candidate no-op finding separately qualified but not applied; current source exact original."
+            },
+            {
+              "id": "scripts/core/character_offer_model.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_024.json"
+              ],
+              "scope": "Complete original/current body, consumers and history independently reviewed. Candidate no-op finding separately qualified but not applied; current source exact original."
+            },
+            {
+              "id": "scripts/core/environment_hours.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_024.json"
+              ],
+              "scope": "Complete original/current body, consumers and history independently reviewed. Candidate no-op finding separately qualified but not applied; current source exact original."
+            },
+            {
+              "id": "scripts/core/environment_instance.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_024.json"
+              ],
+              "scope": "Complete original/current body, consumers and history independently reviewed. Candidate no-op finding separately qualified but not applied; current source exact original."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "FOUR_CURRENT_BODIES_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING_024",
+      "owner": {
+        "name": "Audit venue and character core coverage",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Evidence-only bounded audit. No production patch or NEXT claim; justified implementation must be separately registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_source_review_and_noop_removal024",
+          "reference": "docs/testing/deprecated_code_audit_continuation_024.json",
+          "summary": "Four complete bodies independently reviewed; empty Numbers stub candidate qualified and preserved, NOT applied. Original source1247 restored exactly; no new native/NEXT claim. Evidence commit association pending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual evidence commit before completing this bounded four-body source review. Continue whole audit separately and preserve cleanup/removal stop.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Permitted evidence and bug investigations continue. Cleanup/removal remains stopped under recorded user direction; candidate is preserved, not applied. Numeric NEXT verification separately assigned.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T00:35:29.517065+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "docs/testing/deprecated_code_audit_continuation_024.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T00:35:29.517065+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
+      "name": "Qualify retired Numbers layout stub finding",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Record and independently qualify the retired empty Numbers helper finding; preserve reviewed patch and original source while cleanup/removal is stopped. Application/publication is not authorized by evidence-only continuation. Preserve active conditional runtime membership and serialization.",
+        "source": "Phase024 full EnvironmentInstance body review, separate independent consumer closure and peer source review; a6e3e2de explicitly superseded old authored-capacity constructor.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-candidate-disposition",
+            "description": "Complete body/history/consumer closure and independent exact inverse/source-preservation proof support the minimal no-op candidate, retained without application.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_024.json"
+            ]
+          },
+          {
+            "id": "authorized-application-and-commit",
+            "description": "Only after cleanup/removal is explicitly resumed, apply minimal qualified removal and associate actual tested source commit.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "next-delivery",
+            "description": "If removal is authorized and committed, independently verify required exact NEXT delivery.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "RETIRED_EMPTY_STUB_CANDIDATE_QUALIFIED_PRESERVED_NOT_APPLIED_CLEANUP_STOP_024",
+      "owner": {
+        "name": "Audit Numbers no-op removal",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No source change applied or committed; potential future delivery only after explicit cleanup/removal resumption. Numeric NEXT verification is separate."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_source_review_and_noop_removal024",
+          "reference": "docs/testing/deprecated_code_audit_continuation_024.json",
+          "summary": "Four complete bodies independently reviewed; empty Numbers stub candidate qualified and preserved, NOT applied. Original source1247 restored exactly; no new native/NEXT claim. Evidence commit association pending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Preserve reviewed candidate and original source under recorded cleanup/removal stop; do not apply or publish the candidate without explicit resumption. Continue independently permitted evidence audit and bug work.",
+      "blocker": {
+        "state": "active",
+        "kind": "user_scope_restriction",
+        "description": "Cleanup/removal is explicitly stopped in current audit scope. Candidate is qualified and preserved, original source restored. Applying/publishing requires an explicit resumption; no auto-review denial or uncertain action.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-06T00:35:29.517065+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_010.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-cleanup-scope-preservation-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T00:35:29.517065+00:00"
     }
   ],
   "batches": [

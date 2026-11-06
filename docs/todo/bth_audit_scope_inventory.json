@@ -1841,6 +1841,32 @@
       "objective_states": "BothOpenforrequiredNEXT;wholeauditOpen",
       "evidence": "docs/testing/deprecated_code_audit_continuation_023.json",
       "full_objective_complete": false
+    },
+    {
+      "phase": "024",
+      "tasks": [
+        "BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024",
+        "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024"
+      ],
+      "observed_at": "2026-11-06T00:35:29.517065+00:00",
+      "source_commit": null,
+      "source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+      "new_whole_body_area_count": 4,
+      "recorded_core_reviewed": 73,
+      "recorded_core_remaining": 22,
+      "broader_remaining": 3,
+      "confirmed_obsolete_candidates": [
+        "_numbers_layout_entries unconditional empty helper and sole append"
+      ],
+      "new_production_removals": [],
+      "native_jobs": 0,
+      "runtime_inventory": 213,
+      "required_NEXT_verified": false,
+      "objective_states": "BodyreviewOpenuntilactualevidencecommit;stubcandidateOpenunderrecordedcleanupstop;numeric022/023OpenrequiredNEXT;wholeauditOpen",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_024.json",
+      "full_objective_complete": false,
+      "preserved_candidate_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef",
+      "cleanup_stopped": true
     }
   ]
 }

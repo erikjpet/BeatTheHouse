@@ -1,0 +1,179 @@
+{
+  "schema": "bth.deprecated_audit_continuation/v1",
+  "phase": "024",
+  "observed_at": "2026-11-06T00:35:29.517065+00:00",
+  "status": "FOUR_BODY_STATIC_REVIEW_QUALIFIED_NO_SOURCE_CHANGE_COMMIT_ASSOCIATION_PENDING",
+  "base_main": "ac877121d68561c818f39fe3c81b892e8a13b932",
+  "associated_source_commit": null,
+  "tasks": [
+    "BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024",
+    "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024"
+  ],
+  "coverage": {
+    "new_complete_core_bodies": 4,
+    "pre_edit_lines": 2884,
+    "pre_edit_methods": 143,
+    "constants": 26,
+    "recorded_core_reviewed_before": 69,
+    "recorded_core_reviewed": 73,
+    "recorded_core_remaining": 22,
+    "broader_remaining": 3,
+    "total_remaining": 25,
+    "previous69_requalified": false,
+    "whole_audit_complete": false
+  },
+  "reviewed_files": {
+    "scripts/core/attribute_badges.gd": {
+      "lines": 622,
+      "methods": 43,
+      "constants": 3,
+      "disposition": "retain all active/compatibility; world-map helper is a live warmup dependency"
+    },
+    "scripts/core/character_offer_model.gd": {
+      "lines": 452,
+      "methods": 29,
+      "constants": 5,
+      "disposition": "retain all active/compatibility; public convenience and prepared APIs remain supported"
+    },
+    "scripts/core/environment_hours.gd": {
+      "lines": 144,
+      "methods": 8,
+      "constants": 3,
+      "disposition": "retain active access, offer-session and scenario-lifetime APIs with distinct semantics"
+    },
+    "scripts/core/environment_instance.gd": {
+      "pre_edit_lines": 1666,
+      "candidate_lines": 1655,
+      "pre_edit_methods": 63,
+      "candidate_methods": 62,
+      "constants": 15,
+      "disposition": "All current declarations retained. Separate empty retired helper candidate is qualified/preserved, not applied because cleanup/removal is stopped."
+    }
+  },
+  "source_before_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+  "source_count": 1247,
+  "changed_source_files": [],
+  "other_source_files_unchanged": 1247,
+  "removal": {
+    "function": "EnvironmentInstance._numbers_layout_entries",
+    "removed_lines": 11,
+    "removed_bytes": 605,
+    "history_authority": "a6e3e2de8f76d789f2fe5cab4fcf898d8a9ac65f",
+    "reason": "Former authored-capacity constructor was explicitly retired to return[] unconditionally; its sole caller only appends the empty array.",
+    "replacement": "RunState._sync_numbers_runtime_object_manifest_entries conditionally emits book/Silas rows; EnvironmentInstance consumes runtime_object_manifest_entries.",
+    "inverse_restores_original_raw_bytes": true,
+    "original_raw_sha256": "a48089f462bc9da433530b479f6be294f345ae3404b6cadf09445acafb2a626a",
+    "candidate_raw_sha256": "7c24b2f7a67915d1f2b30da7e8d078052096b61e5be816878dd11e34766fe62b",
+    "unchanged_methods": 61,
+    "changed_active_method": "_active_object_layout_entries loses only append of[]",
+    "serialization_and_RunState_unchanged": true,
+    "reflective_or_inherited_requirement_found": false,
+    "applied": false,
+    "source_change_published": false,
+    "scope_disposition": "Candidate preserved; original source restored exactly under recorded cleanup/removal stop. No actual removal or production commit."
+  },
+  "checks": {
+    "existing_command": "python tools/environment_fixed_slot_static_check.py <repo> <external-report>",
+    "baseline_exit": 0,
+    "candidate_exit": 0,
+    "schema": "v2",
+    "maps": 21,
+    "archetypes": 18,
+    "scenarios": 55,
+    "families": 4,
+    "active_snapshots": 767,
+    "full_original_reports_byte_identical": true,
+    "report_sha256": "e7b441efb721c84e2e0ee0321f4758d45cbcb55c0d774a4ca1e75d699568baef",
+    "scope": "Existing full engine-free authored-data slot contract before and on temporary candidate. Both original reports retained. main_v2 does not read/interpret target GDScript; no native or current changed-source claim.",
+    "behavioral_equivalence_evidence": "Complete unconditional-empty body, sole caller, replacement authority, consumer/history closure and exact inverse/all-other-source proof; no new runtime claim.",
+    "body_peer_checks": 1248,
+    "body_peer_status": "APPROVED_BOUNDED_STATIC_BODY_COVERAGE",
+    "native_jobs": 0
+  },
+  "retained_leads": [
+    "Three transient instance fields have no established safe removal; dynamic property/dictionary-key identity remains unproven.",
+    "Repeated durable layer copies are unmeasured and retained.",
+    "Hours raw0/1440 discrepancy is outside validated0..1439 authored domain; all18 current archetypes satisfy domain."
+  ],
+  "preserved_errata": [
+    "Hours r1 supporting test span1..87 was corrected in fresh r2 to actual1..35; r1 preserved.",
+    "Historical inventory line-count labels differ from actual Git object bodies; peer records correct epochs without rewriting historical evidence.",
+    "Unpublished checkpoint default Windows decoding recoded preexisting nonASCII prose; ledger/owner/scope rebuilt from exact UTF8-decoded base with only intended phase024 deltas. Final custody verifies original rows/history exact."
+  ],
+  "runtime_inventory": {
+    "entries": 213,
+    "new_entries": 0,
+    "modified": false
+  },
+  "preserved_scope": {
+    "paused_named_rows": 8,
+    "numeric_NEXT_rows_exact_unchanged": 2,
+    "prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "prototype_untracked": true,
+    "excluded_diagnostics_untouched": true,
+    "files_cleared": 0,
+    "portrait_changes": 0,
+    "personal_save_access": false,
+    "all1247_source_files_restored_exactly": true
+  },
+  "limits": [
+    "Static bounded audit and mathematical no-op removal; no player-save attribution, native, UI/visual or NEXT behavior acceptance.",
+    "No canvas scheduling or intended performance change; no speedup claim.",
+    "Numeric signed-zero/storage-cache tasks remain Open for separately assigned exact NEXT verification.",
+    "Whole audit and original Content180/Systems300/comparator43.712/outer330/shard55/all220 aggregate acceptance remain Open.",
+    "Recorded current cleanup/removal stop applies to the qualified stub candidate; only evidence is being published. Current source remains d69d, candidate911e815b is preserved, not applied."
+  ],
+  "manual_reconciliation": {
+    "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "total_findings": 261,
+        "own_findings": 39,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 38,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 201,
+        "new_phase024_findings": 0,
+        "checked_at": "2026-11-06T00:36:45.519301Z"
+      },
+      "all": {
+        "total_findings": 877,
+        "own_findings": 39,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 38,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 201,
+        "new_phase024_findings": 0,
+        "checked_at": "2026-11-06T00:36:44.954394Z"
+      }
+    },
+    "note": "Original observations retained; no timestamp refresh of historical runtimes, guard change or new phase024 consistency finding. R1 schema enum and R2 named-parent index mismatch corrected, preserved in original evidence."
+  },
+  "NEXT_verified": false,
+  "whole_audit_complete": false,
+  "evidence_sha256": {
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-registration-r1.json": "0029185869a7150d8d8590a1a982c1b5d71abab92bf3e7bb70da7e05f25cfa4b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-removal-registration-r1.json": "468278faeb577254f1d7751a9501538f5155d839fcaddd2a0119af29e183fc9d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-badges-offers-review-r1.json": "ca6302089c3fb0319f9815c4b8e3c5af619fdeb3de0d34c6233bce3cb4dab044",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-hours-review-r2.json": "96cde7403dfc5c9e1f1a60d3bc7073beb92c14d23c36fb10e2356f8c20a863cd",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-instance-review-r1.json": "8c727902133c2708656fcba1ca0121717ef3edac2cd12281910e61171356f54a",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-four-file-independent-peer-review-r1.json": "ec570ac4c63ff4dc022d8dea1470671e4415ab4d75439d7fc35b9f1f588e9752",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-candidate-custody-r1.json": "19524c22ca95cbdd198fd2e5c2e82514a10cbb01a9b6c23c46deb6e999b96e5b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-precheckpoint-custody-r1.json": "a80969a1e97b9a8a0785d4cd12a1bc745597cdb03a4213f826940fcb1e632c1f",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-slot-baseline-r1.json": "e7b441efb721c84e2e0ee0321f4758d45cbcb55c0d774a4ca1e75d699568baef",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-slot-baseline-r1.meta.json": "37a95eb67c303f70785fc36e298903ccb07acf8cd09eec06ac35fea208eba8cd",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-slot-candidate-r1.json": "e7b441efb721c84e2e0ee0321f4758d45cbcb55c0d774a4ca1e75d699568baef",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-slot-candidate-r1.meta.json": "f436701a3e2c629156ae0f52aa06ab90291176cf263d03bc731782428d111cdf",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-removal-independent-review-r1.json": "dd1a3e5ea329f7a54a501d935346234e45c029b37f21963f41a3c169935d9ae9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-cleanup-scope-preservation-r1.json": "fb6076bfdfb3cfea41c2ed98c474f8154796ce28e710f539b866cec89478fead",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-numbers-reviewed-removal.patch": "eb34d2ba6918606707d1736438682a4182e7a2b258328e12f913bbbd63d69976",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-environment-instance-reviewed-candidate.gd": "7c24b2f7a67915d1f2b30da7e8d078052096b61e5be816878dd11e34766fe62b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-final-precommit-custody-r1.json": "b44a73c5fa0bd77804b65430f14a2d4383d099f40f9ba59ddb17a6d94879eefa",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-checkpoint-encoding-correction-r1.json": "bc16ff33ae4b4e0b24f92796ddf4543baa7ae1d1995b74c72352b967fcff11bd",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-r1-schema-correction.json": "e56c42573d2d6acf9980fef706a91555cefaa4e105160b6b5c35be61d795826d"
+  },
+  "current_source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+  "preserved_candidate_source_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef"
+}
