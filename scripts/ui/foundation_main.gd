@@ -20873,7 +20873,7 @@ func save_status_snapshot() -> Dictionary:
 		"visible_objective": _objective_hud_text() if run_state != null else "",
 		"visible_bankroll": _presented_bankroll() if run_state != null else 0,
 		"visible_run_status": run_state.run_status if run_state != null else "",
-		"visible_pressure": _pressure_status_text(pressure),
+		"visible_pressure": _pressure_status_text(pressure) if run_state != null else "",
 		"visible_environment": str(run_state.current_environment.get("display_name", "")) if run_state != null else "",
 		"visible_suspicion": run_state.suspicion_level() if run_state != null else 0,
 		"visible_risk": _risk_cue_text() if run_state != null else "",
