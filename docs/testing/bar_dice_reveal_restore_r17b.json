@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "Open",
-  "updated_at": "2026-11-06T03:11:08.473219+00:00",
+  "updated_at": "2026-11-06T03:12:22.488729+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -71,7 +71,12 @@
     "custody": "Original resident profile/saves/keys not read, copied, changed or replayed. Permitted report/screenshots only."
   },
   "scope": "Independent fresh native reconstruction and permitted source. Never retry/bypass ac877manifest denial; no existingresidentlauncher that reads it. No fundedloss claim: wallet94 before/after, no finalCall. Expected acceptedcup/ante6/dice/callsequence persistence through closing.",
-  "commits": [],
+  "commits": [
+    {
+      "sha": "eba4663b52b6152eff814231c76ce093bf7d4afa",
+      "scope": "Scopedagreedantefix andtrackedfocusedtests/evidence; fullacceptanceOpen."
+    }
+  ],
   "native_cases": [
     {
       "label": "dice-reveal-baseline-warm-1",
@@ -1193,7 +1198,7 @@
   ],
   "deployment": {
     "state": "pending",
-    "commit": null,
+    "commit": "eba4663b52b6152eff814231c76ce093bf7d4afa",
     "evidence": []
   },
   "causal_finding": {
@@ -1231,7 +1236,8 @@
       "stage": "aftercompletedresultprint/finalprocessshutdown",
       "cause": "unattributed; identicalbeforeandafterfix, unsymbolized28-frame traces containnoaddresses/functions; read-onlyreview foundno demonstratedfixtureownership correction",
       "review": "Do not suppress/replace nativeexitstatus or claimcleanpass; no speculativeprewarm/engine/nativepatch."
-    }
+    },
+    "fix_commit": "eba4663b52b6152eff814231c76ce093bf7d4afa"
   },
   "fixture_limits": [
     "Pre-game parser failure retained; no gameplay occurred.",

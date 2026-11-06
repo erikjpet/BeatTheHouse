@@ -91,3 +91,7 @@ The boundedreviewedfix is readyforcommit/main/NEXT underverifiedstandinguser
 authorization. FulltaskstaysOpen through actualcommitassociation and required
 delivery/runtimeacceptance; publication alone will not closeit. All sixteen
 newtask-ownedJobs are ended/owned0; every setup/assertion/nativefailure remains.
+
+Scoped fix commit: `eba4663b52b6152eff814231c76ce093bf7d4afa`. Both ledger views associate it.
+Task remains Open; no deployment, fullnativeprocess or final-save acceptance
+is inferred from the commit.

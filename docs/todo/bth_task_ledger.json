@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T03:11:08.473219+00:00",
+  "updated_at": "2026-11-06T03:12:22.488729+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25290,22 +25290,31 @@
         }
       },
       "state": "open",
-      "status": "SCOPED_FIX_TESTED_END_TO_END_OPEN",
+      "status": "FIX_COMMITTED_FULL_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "eba4663b52b6152eff814231c76ce093bf7d4afa",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "Boundedreviewedacceptedantefix+focused21/26/14/17cleanpasses; exactcausalnativeandallfailedruntime/setupreceipts retained. Not fulltaskclosure or deployedWebacceptance."
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "eba4663b52b6152eff814231c76ce093bf7d4afa",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Boundedreviewedagreedantefix readytocommit/publish; fullparentOpen fornativewhole-flow/shutdown andexactNEXTacceptance. ExistingNEXTcurrentac877; deniedac877manifest untouched."
+        "scope": "Scopedfix committed; mainpublication/exactNEXTpending. Fullnativeflow/postCallSave/shutdowndisposition remainsOpen; deniedac877manifest/originalstorage untouched."
       },
       "evidence": [
         {
@@ -25325,7 +25334,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit scoped reviewedagreedantefix andassociate actualSHA; publish withinverifiedstandingmain/NEXTauthorization andfollowexistingwatcher. KeepfulltaskOpen: resolve/disposition nativewarmshutdownfailure andqualify normalpostCallprompt/Save/freshContinue withoutoriginalreplay, deniedmanifestread orspeculativeenginechanges.",
+      "next_action": "Publishscopedtestedfix understandingauthorization aftercurrentmainintegration; followexistingNEXT andverifynewexactruntime. KeepfulltaskOpen fornative0xC0000005disposition andnormalpostCallprompt/Save/freshContinue. No oldoriginal/manifestaccess orfinancialreplay.",
       "blocker": {
         "state": "active",
         "kind": "native_shutdown_and_final_save_acceptance_open",
@@ -25338,7 +25347,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:11:08.473219+00:00"
+      "updated_at": "2026-11-06T03:12:22.488729+00:00"
     }
   ],
   "batches": [
