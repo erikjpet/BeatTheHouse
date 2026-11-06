@@ -24,6 +24,8 @@ const STORAGE_HASH_KEY := "sha256"
 const STORAGE_SIZE_KEY := "uncompressed_bytes"
 const STORAGE_FORMAT := "json-zstd-z85-v1"
 const MAX_STORAGE_BYTES := 32 * 1024 * 1024
+# Godot4.6 core/typedefs.h MAX_RECURSION; equality remains the first gate.
+const NATIVE_EQUALITY_MAX_RECURSION := 100
 const PACK_ERROR_EMPTY := "empty_input"
 const PACK_ERROR_TOO_LARGE := "storage_limit_exceeded"
 const PACK_ERROR_COMPRESSION := "compression_failed"
@@ -473,7 +475,7 @@ static func _register_encoded_environment_reference(encoded: Dictionary, registr
 	var candidate_refs: Array = fingerprints.get(fingerprint, []) if typeof(fingerprints.get(fingerprint, [])) == TYPE_ARRAY else []
 	for candidate_ref_value in candidate_refs:
 		var candidate_ref := str(candidate_ref_value)
-		if registry.get(candidate_ref, {}) == encoded:
+		if registry.get(candidate_ref, {}) == encoded and _storage_numeric_refinement(registry.get(candidate_ref, {}), encoded):
 			return {ENVIRONMENT_REF_KEY: candidate_ref}
 	var base_ref := environment_id.strip_edges()
 	if base_ref.is_empty():
@@ -602,7 +604,7 @@ static func _catalog_scenario_definition(scenario_id: String) -> Dictionary:
 # only by small trusted validation markers. Persist those deltas instead of a
 # second copy of every authored sequence in the town snapshot.
 static func _dictionary_patch(source: Variant, base: Variant) -> Variant:
-	if source == base:
+	if source == base and _storage_numeric_refinement(source, base):
 		return null
 	if typeof(source) != TYPE_DICTIONARY or typeof(base) != TYPE_DICTIONARY:
 		return {PATCH_VALUE_KEY: source}
@@ -671,3 +673,53 @@ static func _encode_exact_integers(value: Variant) -> Variant:
 
 static func _looks_like_environment(value: Dictionary) -> bool:
 	return value.has("id") and value.has("game_states") and (value.has("archetype_id") or value.has("kind"))
+
+
+# Refine an ALREADY successful native equality for storage numeric identity.
+# Do not call as a standalone comparator: opaque/nonfinite/native equality stays
+# with the caller. Frame count mirrors Godot4.6 container comparison (+2 per
+# child container, neutral after its existing MAX_RECURSION error boundary).
+static func _storage_numeric_refinement(left: Variant, right: Variant) -> bool:
+	var pending: Array = [[left, right, 0, 0, null]]
+	while not pending.is_empty():
+		var frame: Array = pending[-1]
+		var left_value: Variant = frame[0]
+		var right_value: Variant = frame[1]
+		var left_type: int = typeof(left_value)
+		var right_type: int = typeof(right_value)
+		if left_type != right_type:
+			if left_type in [TYPE_INT, TYPE_FLOAT] and right_type in [TYPE_INT, TYPE_FLOAT]:
+				return false
+			pending.pop_back()
+			continue
+		if left_type == TYPE_FLOAT:
+			if left_value == 0.0 and right_value == 0.0 and StorageNumericJsonScript._bits(left_value) != StorageNumericJsonScript._bits(right_value):
+				return false
+		elif left_type in [TYPE_DICTIONARY, TYPE_ARRAY]:
+			if is_same(left_value, right_value) or int(frame[2]) > NATIVE_EQUALITY_MAX_RECURSION:
+				pending.pop_back()
+				continue
+			var index: int = int(frame[3])
+			if left_type == TYPE_DICTIONARY:
+				if frame[4] == null:
+					frame[4] = left_value.keys()
+				var keys: Array = frame[4]
+				if index >= keys.size():
+					pending.pop_back()
+					continue
+				var key: Variant = keys[index]
+				frame[3] = index + 1
+				pending.append([left_value.get(key), right_value.get(key), int(frame[2]) + 2, 0, null])
+			else:
+				if index >= left_value.size():
+					pending.pop_back()
+					continue
+				frame[3] = index + 1
+				pending.append([left_value[index], right_value[index], int(frame[2]) + 2, 0, null])
+			continue
+		elif left_type in [TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY]:
+			for index in range(left_value.size()):
+				if left_value[index] == 0.0 and right_value[index] == 0.0 and StorageNumericJsonScript._bits(left_value[index]) != StorageNumericJsonScript._bits(right_value[index]):
+					return false
+		pending.pop_back()
+	return true

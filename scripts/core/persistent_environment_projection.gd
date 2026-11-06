@@ -69,7 +69,10 @@ static func _contains_opaque_value(value: Variant) -> bool:
 func matches(environment: Dictionary) -> bool:
 	# All fields participate, including game buffers, layers, source digests and
 	# mutable aliases. A mismatch takes the original complete projection path.
-	return environment == _source
+	if not (environment == _source):
+		return false
+	var codec: Script = load("res://scripts/core/run_save_codec.gd")
+	return codec._storage_numeric_refinement(environment, _source)
 
 
 func snapshot() -> Dictionary:
