@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-06T00:00:34.468383+00:00",
+  "observed_at": "2026-11-06T02:39:24.063624+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -17588,6 +17588,431 @@
         ],
         "limit": "Unchanged180sec/12percent/2GiB assigned-before-resume kill-on-close/no-breakaway; ownedclosure0. Originalmaintained5007 candidatecoldread12/0, fulloriginalreporthashidenticalbaseline; actualfreshprocessSaveService financial/RNG/history/readonlyreport/nextsavepass. Candidateprivatecase bridgeonly; expectationunchanged andsyntheticprimary/backupadvanceviatest. Source1247_d69d, nolegacy/capturedmode. Knowncertificate startupdiagnosticretained; noScriptError/timeout. Nocommit/NEXT/wholeaudit/fileclearingclaim."
       }
+    },
+    {
+      "instance_id": "task9:ritual026-dto-baseline-r2",
+      "task_id": "BTH061-AUDIT-RITUAL-DTO-QUALIFICATION-026",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ritual026-dto-baseline-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json:pid:916",
+        "started_at": "2026-11-06T01:43:31.604744+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T01:43:43.174345+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json:pid:916",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T01:43:43.174345+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T01:43:43.174345+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ritual026-dto-baseline-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T01:43:43.174345+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiBassignedbeforeexecutionkilloncloseNoBreakawayserialownedJobclosure0. Original181/44publicDTOreproduction; allfailuresnativeexit1preserved, grammar32position12, othercontrolshealthy. ActualnormalRuntime.configure andSchemaDTOsonly; no callbacks/injectedhandlers/capsules/keys/excludeddiagnostic or cleanup/publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:ritual026-dto-candidate-r1",
+      "task_id": "BTH061-AUDIT-RITUAL-DTO-QUALIFICATION-026",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ritual026-dto-candidate-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json:pid:37732",
+        "started_at": "2026-11-06T01:53:57.696006+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T01:54:13.236205+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json:pid:37732",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T01:54:13.236205+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T01:54:13.236205+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ritual026-dto-candidate-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T01:54:13.236205+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiBassignedbeforeexecutionkilloncloseNoBreakawayserialownedJobclosure0. Same1843script181/0, originalfixturestate/projection andoldgameerrors identical;30recordsunchanged14targets corrected. No player/command/authority/NEXT/performance claim. ActualnormalRuntime.configure andSchemaDTOsonly; no callbacks/injectedhandlers/capsules/keys/excludeddiagnostic or cleanup/publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:publication026-numeric-dto-r3",
+      "task_id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "publication026-numeric-dto-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json:pid:38356",
+        "started_at": "2026-11-06T02:11:24.393453+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T02:11:36.064162+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json:pid:38356",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T02:11:36.064162+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T02:11:36.064162+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "publication026-numeric-dto-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T02:11:36.064162+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiBassignedbeforeexecutionkilloncloseNoBreakawayserialownedJobclosure0. Parseerrorbeforecaseexecution; noProductresult. OriginalScriptErrorguardclosedownedJob, exitnull; no timeout. Failedpacketpreserved. No forbiddencallbacks/opaque/cycle/capsulekey/excludeddiagnostic or cleanup/publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:publication026-numeric-dto-r4",
+      "task_id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "publication026-numeric-dto-r4",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json:pid:15352",
+        "started_at": "2026-11-06T02:17:54.791727+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T02:18:15.673882+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json:pid:15352",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T02:18:15.673882+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T02:18:15.673882+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "publication026-numeric-dto-r4",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T02:18:15.673882+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiBassignedbeforeexecutionkilloncloseNoBreakawayserialownedJobclosure0. Test-onlyboolannotation repair, publicordinarygeneratedroom38checks0failures, allfixturesvalid; no paritygap reproduced. No forbiddencallbacks/opaque/cycle/capsulekey/excludeddiagnostic or cleanup/publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:publication026-dictionary-equality-r1",
+      "task_id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "publication026-dictionary-equality-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json:pid:16056",
+        "started_at": "2026-11-06T02:35:30.114230+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T02:35:39.691869+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json:pid:16056",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T02:35:39.691869+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T02:35:39.691869+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "publication026-dictionary-equality-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T02:35:39.691869+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec/12percent/2GiBassignedbeforeexecutionkilloncloseNoBreakawayserialownedJobclosure0. PrimitiveDTO5healthycontrols0failures; Scalarintfloattruebutflat/nestedDictfalse. Specificsourcehypothesisfalsified; no allcounter/cache/player/NEXT claim. No forbiddencallbacks/opaque/cycle/capsulekey/excludeddiagnostic or cleanup/publicationretry."
+      }
     }
   ],
   "source_snapshot": {
@@ -17599,5 +18024,14 @@
     "prior_limit": "Historical known-task receipt inventory copied for reproducible manual reconciliation. No current desktop inventory, live cleanup or fresh original-save check was performed by integration.",
     "followup_commit": "dc800d1256a5c9337b85d43ec6f9bb521f9be553",
     "review_limit": "Follow-up review refreshed this explicit list only; original process/activity observation and uncertain cleanup receipt timestamps were preserved."
+  },
+  "phase026_append": {
+    "entries_before": 213,
+    "entries_after": 218,
+    "new_actual_Jobs": 5,
+    "prior213preserved": true,
+    "runtime_result_scope": "OnlytwoassignedownedJobobservations, no global/browser/processcensus.",
+    "original213preserved": true,
+    "original_R3_failure_preserved": true
   }
 }

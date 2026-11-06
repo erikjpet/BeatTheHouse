@@ -1923,6 +1923,38 @@
       },
       "metadata_inventory_task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
       "evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005"
+    },
+    {
+      "phase": "026",
+      "observed_at": "2026-11-06T02:44:04.013023+00:00",
+      "source_commit": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+      "source_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+      "source_count": 1248,
+      "changed_original_source_files": 2,
+      "new_source_test_files": 1,
+      "new_whole_body_area_count": 2,
+      "recorded_core_reviewed": 79,
+      "recorded_core_remaining": 16,
+      "broader_remaining": 3,
+      "body_review_task": "BTH061-AUDIT-COLLECTION-CORE-COVERAGE-026",
+      "ritual_public_DTO_before_after": {
+        "checks": 181,
+        "failures_before": 44,
+        "failures_after": 0
+      },
+      "publication_retention_checks": [
+        38,
+        5
+      ],
+      "publication_type_hypothesis": "FALSIFIED_SPECIFIC_MANIFEST_INT_FLOAT_FIELDS",
+      "conditional_new_meta_lead": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "native_jobs": 5,
+      "runtime_inventory": 218,
+      "new_production_removals": [],
+      "required_NEXT_verified": false,
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_026.json",
+      "full_objective_complete": false
     }
   ]
 }

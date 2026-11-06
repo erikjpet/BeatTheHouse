@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T01:12:08.756308+00:00",
+  "updated_at": "2026-11-06T02:44:04.013023+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12724,23 +12724,19 @@
             },
             {
               "id": "scripts/core/collection_drop_service.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Full currentbody and all declarations independentlyreviewed026, retained; conditional terminalmeta persistenceretry lead separatelytracked. Sourceunchanged in this area."
             },
             {
               "id": "scripts/core/collection_item_resolver.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Full currentbody and all declarations independentlyreviewed026, retained; conditional terminalmeta persistenceretry lead separatelytracked. Sourceunchanged in this area."
             },
             {
               "id": "scripts/core/content_library.gd",
@@ -13044,9 +13040,10 @@
               "state": "reviewed",
               "evidence": [
                 "docs/testing/deprecated_code_audit_continuation_025.md",
-                "docs/testing/deprecated_code_audit_continuation_025.json"
+                "docs/testing/deprecated_code_audit_continuation_025.json",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Complete exact current body, callers/dispatch, historical/compatibility and every declaration independently reviewed. All source retained; static discrepancies and conditional leads have explicit follow-ups. No runtime/NEXT/whole-audit acceptance."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
@@ -13054,9 +13051,10 @@
               "evidence": [
                 "docs/testing/deprecated_code_audit_continuation_007.md",
                 "docs/testing/deprecated_code_audit_core_coverage_007.csv",
-                "docs/testing/incremental_cleanup.md"
+                "docs/testing/incremental_cleanup.md",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
@@ -13637,7 +13635,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_AND_TRACKED_PATH_INVENTORY_COMPLETE_THREE_FINDINGS_OPEN_025",
+      "status": "TWO_RITUAL_CORRECTIONS_COMMITTED_181_PASS_TWO_MORE_CORE_BODIES_QUALIFIED_026",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13826,6 +13824,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_025.json",
             "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        },
+        {
+          "sha": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_026.json",
+            "scripts/tests/game_ritual_dto_contract_check.gd"
           ]
         }
       ],
@@ -14023,12 +14028,17 @@
           "kind": "bounded_complete_body_coverage025",
           "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
           "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        },
+        {
+          "kind": "native_qualified_ritual_corrections_and_two_more_body_reviews026",
+          "reference": "docs/testing/deprecated_code_audit_continuation_026.json",
+          "summary": "Localfbd95aae fourlinecontractrepair181checks44to0; requiredNEXTopen. PUB025falsepositivefalsified38+5nativecontrols, source retained. Twofullcollectionbodies1174/58/35/9 independentlyqualified, core79/95; conditionalterminalmeta retry leadOpen. No cleanup/pub retry."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remaining18core and three broader semantic/compatibility areas, including current129UI/game paths and inventoried residuals, and qualify three bounded025findings. Reuse exact prior evidence where supported. Preserve stoppedcleanup and denied024publication/task/commits, numericNEXT/paused/restricted work; no push retry or reroute.",
+      "next_action": "Finish roomproof equality adjudication and localcoverage/evidencecommit association; then continue remaining16core and threebroader areas plus conditionalterminalmeta lead. Preserve cleanupstop, deniedpublication/no retry, originalcommits, paused/excluded/numericNEXT work.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14040,7 +14050,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:12:08.756308+00:00"
+      "updated_at": "2026-11-06T02:44:04.013023+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25682,12 +25692,24 @@
             "id": "runtime-compatibility-disposition",
             "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+            ]
           },
           {
             "id": "associated-corrective-or-retention-evidence",
             "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+            ]
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Qualified corrective source commit is independently verified in exact NEXT delivery before completing this corrective task. Denied main publication must not be retried without new specific approval.",
             "required": true,
             "state": "open",
             "evidence": []
@@ -25700,7 +25722,7 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "status": "QUALIFIED_CORRECTION_COMMITTED_LOCAL_REQUIRED_NEXT_PENDING_026",
       "owner": {
         "name": "Audit source discrepancy qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -25713,24 +25735,42 @@
             "docs/testing/deprecated_code_audit_continuation_025.json",
             "docs/testing/deprecated_code_audit_continuation_025.md"
           ]
+        },
+        {
+          "sha": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+          "evidence": [
+            "scripts/tests/game_ritual_dto_contract_check.gd",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+          ]
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Investigation finding only; no source change. Any later corrective implementation must register required commit/delivery acceptance. Denied publication remains untouched."
+        "scope": "Corrective source changes are registered before editing; no source commit or NEXT acceptance exists yet. Publication remains denied and will not be retried."
       },
       "evidence": [
         {
           "kind": "bounded_complete_body_coverage025",
           "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
           "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        },
+        {
+          "kind": "public_ordinary_DTO_reproduction026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json",
+          "summary": "Actual publicfixture/configure baseline181checks44failures, grammar32/position12; no othercontrolfailure, no script/timeout; exactownedJobclosure0. Originalfailures/nativeexit retained, no player/authority/NEXT claim."
+        },
+        {
+          "kind": "qualified_ordinary_DTO_corrective_commit026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify exact admissible identifier boundary and runtime/host reachability against frozen contracts. Preserve every existing accepted healthy case, canonical hash and authority boundary; implement a minimal correction only after focused compatibility evidence supports it.",
+      "next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -25740,7 +25780,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:12:08.756308+00:00"
+      "updated_at": "2026-11-06T02:30:27.723819+00:00"
     },
     {
       "id": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
@@ -25769,12 +25809,24 @@
             "id": "runtime-compatibility-disposition",
             "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+            ]
           },
           {
             "id": "associated-corrective-or-retention-evidence",
             "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+            ]
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Qualified corrective source commit is independently verified in exact NEXT delivery before completing this corrective task. Denied main publication must not be retried without new specific approval.",
             "required": true,
             "state": "open",
             "evidence": []
@@ -25787,7 +25839,7 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "status": "QUALIFIED_CORRECTION_COMMITTED_LOCAL_REQUIRED_NEXT_PENDING_026",
       "owner": {
         "name": "Audit source discrepancy qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -25800,24 +25852,42 @@
             "docs/testing/deprecated_code_audit_continuation_025.json",
             "docs/testing/deprecated_code_audit_continuation_025.md"
           ]
+        },
+        {
+          "sha": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+          "evidence": [
+            "scripts/tests/game_ritual_dto_contract_check.gd",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+          ]
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Investigation finding only; no source change. Any later corrective implementation must register required commit/delivery acceptance. Denied publication remains untouched."
+        "scope": "Corrective source changes are registered before editing; no source commit or NEXT acceptance exists yet. Publication remains denied and will not be retried."
       },
       "evidence": [
         {
           "kind": "bounded_complete_body_coverage025",
           "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
           "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        },
+        {
+          "kind": "public_ordinary_DTO_reproduction026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json",
+          "summary": "Actual publicfixture/configure baseline181checks44failures, grammar32/position12; no othercontrolfailure, no script/timeout; exactownedJobclosure0. Originalfailures/nativeexit retained, no player/authority/NEXT claim."
+        },
+        {
+          "kind": "qualified_ordinary_DTO_corrective_commit026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify the frozen move/set_position argument contract with supported ordinary DTO controls and exact host scope before selecting a correction. Preserve active static production hash helpers and host authority; do not infer the instance executor is obsolete from absent production instantiation.",
+      "next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -25827,7 +25897,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:12:08.756308+00:00"
+      "updated_at": "2026-11-06T02:30:27.723819+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
@@ -25839,25 +25909,30 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Current room-publication matches_environment and advanced_turn_counter use value Dictionary equality while full manifest validation requires native integer schema_version and revision. Proof reuse is reachable in RunState, but the hypothesized same-value int-to-float change requires a retained nested live alias after acceptance; present canonical producers normalize integer fields and root assignment invalidates publication. Conditional source lead; no native/current gameplay failure demonstrated. Use a normal generated room/publication and ordinary DTO type-change controls to qualify whether accepted proof can survive a manifest type change. Preserve original authority validation, ordinary producers, causal boundaries and guards; record results before any correction or broader claim.",
+        "text": "Qualify the conditional int-to-float manifest reuse concern without assuming scalar and Dictionary comparison semantics match. Native ordinary-room38checks and primitive5controls now establish correctly rejecting dictionary guards, refuting the initial premise. Retain RoomPresentationPublication unchanged; no general cache/counter/player/NEXT certification.",
         "source": "Phase025 complete body audit and independent peer source/caller/contract review. No code changes or runtime experiments were performed.",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "source-evidence",
-            "description": "Exact current source, authority contracts and relevant callers independently establish the bounded discrepancy or conditional lead with explicit limits.",
+            "description": "Original conditional source concern and exact native operator/production-predicate adjudication are independently recorded; scalar coercion is distinguished from dictionary type-sensitive comparison.",
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_025.json"
+              "docs/testing/deprecated_code_audit_continuation_026.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json"
             ]
           },
           {
             "id": "runtime-compatibility-disposition",
             "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json"
+            ]
           },
           {
             "id": "associated-corrective-or-retention-evidence",
@@ -25874,7 +25949,7 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_SOURCE_FINDING_REGISTERED_RUNTIME_DISPOSITION_OPEN_025",
+      "status": "SCOPED_INT_FLOAT_REUSE_HYPOTHESIS_FALSIFIED_NO_CODE_FIX_EVIDENCE_ASSOCIATION_PENDING_026",
       "owner": {
         "name": "Audit source discrepancy qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -25901,20 +25976,27 @@
           "kind": "bounded_complete_body_coverage025",
           "reference": "docs/testing/deprecated_code_audit_continuation_025.json",
           "summary": "Four complete bodies retained and independently reviewed; two static ritual contract discrepancies and one conditional room-proof identity lead recorded. No source edits/runtime/publication retry; body commit association and follow-ups remain open."
+        },
+        {
+          "kind": "qualified_scoped_false_positive_retention026",
+          "reference": "docs/testing/deprecated_code_audit_continuation_026.json",
+          "summary": "Public38/0 +primitive5/0, scalarintfloattruebutflat/nestedDictfalse. NativeDictionaryguardsalreadyrejectthismanifesttypechange; no Roomcodefixwarranted. Initial025hypothesisandR3parserfailure preserved; broadercache/counter/player/NEXT notclaimed."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use a normal generated room/publication and ordinary DTO type-change controls to qualify whether accepted proof can survive a manifest type change. Preserve original authority validation, ordinary producers, causal boundaries and guards; record results before any correction or broader claim.",
+      "next_action": "Associate actual committed retention evidence before completing this scoped false-positive investigation. Keep RoomPresentationPublication unchanged; do not broaden result to unexercised counter/cache/player paths.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "description": "Scoped native/source retention is independently qualified; actual evidence commit association remains routine local work. No new user/save/scheduler hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:57:17.461114+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T02:44:04.013023+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_026.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T01:12:08.756308+00:00"
+      "updated_at": "2026-11-06T02:44:04.013023+00:00"
     },
     {
       "id": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
@@ -26001,6 +26083,255 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T01:12:08.756308+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-COLLECTION-CORE-COVERAGE-026",
+      "name": "Review remaining collection core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Complete read-only review of CollectionDropService and CollectionItemResolver current declarations, consumers/history and compatibility. Preserve all code and paused feature objectives; no collection/item feature rework or cleanup is authorized by this source review.",
+        "source": "Latest parent instruction to continue qualifying three new findings and remaining audit coverage while preserving local commits and prohibiting denied-publication retry.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact current source, supported inputs and actual outcomes qualify the bounded source or DTO scope with explicit authority/runtime limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/collection_drop_service.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-two-body-review-r1.json",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+              ],
+              "scope": "Complete currentbody/declaration/caller/history/compat review independentlyqualified, allretained; conditional persistencelead and otherretainedobservations notruntimebugacceptance."
+            },
+            {
+              "id": "scripts/core/collection_item_resolver.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-two-body-review-r1.json",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+              ],
+              "scope": "Complete currentbody/declaration/caller/history/compat review independentlyqualified, allretained; conditional persistencelead and otherretainedobservations notruntimebugacceptance."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "TWO_COMPLETE_COLLECTION_BODIES_SOURCE_QUALIFIED_EVIDENCE_COMMIT_ASSOCIATION_PENDING_026",
+      "owner": {
+        "name": "Audit phase026 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
+      },
+      "evidence": [],
+      "implementation_batches": [],
+      "next_action": "Associate actual committed coverageevidence before completing this boundedbody review; retainallsource and preserveconditionalmeta lead separately.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent audit/ordinary DTO qualification permitted. Existing main denial remains separate; no new user/save/scheduler hold.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T01:23:31.646457+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-RITUAL-DTO-QUALIFICATION-026",
+      "name": "Qualify ritual grammar and position DTO boundaries",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify existing grammar025 and anchorargument025 findings through ordinary authored definition DTOs and public actual Runtime.configure/Schema.validate_definition only. No commands, host checkpoint/authentication, callback/injectedhandler/opaqueObject/cyclic/capsule/key experiments or excluded diagnostics. Root sole native executor uses unchanged guard. Preserve all original tests/evidence and source before any scoped correction; no cleanup or publication retry.",
+        "source": "Latest parent instruction to continue qualifying three new findings and remaining audit coverage while preserving local commits and prohibiting denied-publication retry.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact current source, supported inputs and actual outcomes qualify the bounded source or DTO scope with explicit authority/runtime limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "BOUNDED_PUBLIC_DTO_QUALIFICATION_COMPLETE_ACTUAL_TESTED_COMMIT_ASSOCIATED_026",
+      "owner": {
+        "name": "Audit phase026 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+          "evidence": [
+            "scripts/tests/game_ritual_dto_contract_check.gd",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
+      },
+      "evidence": [
+        {
+          "kind": "qualified_ordinary_DTO_corrective_commit026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Bounded ordinaryDTO qualification complete at fbd95aae. Correctiveparenttasks remainOpenrequiredNEXT; currentplayer/command/authority/restore scope unqualified.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent audit/ordinary DTO qualification permitted. Existing main denial remains separate; no new user/save/scheduler hold.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T01:23:31.646457+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "name": "Qualify terminal meta persistence retry lead",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify conditional terminal special-outcome persistence retry behavior: processed flags are set before caller meta save; failure has no local rollback/retry, while independent terminal checkpoint and later meta saves can preserve different portions. Source evidence alone does not demonstrate loss, duplication or Continue failure. Preserve paused effects/features and do not force a callback/private failure seam.",
+        "source": "Phase026 completeCollectionDropService and ItemResolver reviews plus independent surroundingcaller/Meta.save/terminalcheckpointtrace, F026-1.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-source-disposition",
+            "description": "Exactsource/caller/persistence paths and alternatives independently establish conditional lead with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-two-body-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+            ]
+          },
+          {
+            "id": "supported-fault-runtime-qualification",
+            "description": "Ordinary actual production storage failure controls qualify actual persistence/Continue scope without injectedcallbacks, capturedsaves/keys, guardweakening or speculative bugclaims.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-evidence-commit",
+            "description": "Corrective or qualifiedretention evidence has actualassociatedcommit before completion; any future sourcefix registers requiredNEXT separately.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONDITIONAL_CROSS_STORE_PERSISTENCE_LEAD_SOURCE_REVIEWED_RUNTIME_OPEN_026",
+      "owner": {
+        "name": "Audit phase026 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Conditional investigation only; no sourcechange or demonstrated playerfailure. Future corrective implementation must register commit/delivery acceptance."
+      },
+      "evidence": [
+        {
+          "kind": "conditional_terminal_meta_persistence_source_lead026",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json",
+          "summary": "Independent trace retains crossstore retrylead; latermeta save canpersistdirtymemory, no current loss/dup/restore bug demonstrated."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace and qualify ordinary generated terminal outcome with actual owned storage failure, alternative successfulmeta-save/terminalcheckpoint paths and Continue semantics. Preserve source until evidence supports a scoped correction; no private callbacks or pausedfeature work.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Conditional evidence qualification remains open; no missingpersonal-save or user/schedulerhold. Existingmainpublicationdenial andcleanupstop remain separate.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T02:30:27.723819+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T02:30:27.723819+00:00"
     }
   ],
   "batches": [

@@ -1,0 +1,227 @@
+{
+  "schema": "bth.deprecated_audit_continuation/v1",
+  "phase": "026",
+  "observed_at": "2026-11-06T02:42:02.985836+00:00",
+  "status": "TWO_RITUAL_CORRECTIONS_COMMITTED_PUBLICATION_TYPE_HYPOTHESIS_FALSIFIED_BODY_EVIDENCE_ASSOCIATION_PENDING",
+  "base_local_HEAD": "3e9a9ab8ad8e03d09c20d0f60d5fd6a9c06bd037",
+  "source_commit": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+  "associated_evidence_commit": null,
+  "corrective_tasks": [
+    "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+    "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025"
+  ],
+  "bounded_native_task": "BTH061-AUDIT-RITUAL-DTO-QUALIFICATION-026",
+  "bounded_body_task": "BTH061-AUDIT-COLLECTION-CORE-COVERAGE-026",
+  "retention_task": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+  "new_open_meta_lead": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+  "source_count": 1248,
+  "source_before_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+  "baseline_with_new_test_manifest_sha256": "fdfd7f9f58c2397036409c36b417025aa4a5c495d0083afcd30baff4225109ef",
+  "tested_candidate_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+  "changed_original_source": [
+    "scripts/core/game_ritual_runtime.gd",
+    "scripts/core/game_ritual_schema.gd"
+  ],
+  "new_source": [
+    "scripts/tests/game_ritual_dto_contract_check.gd"
+  ],
+  "other_original_source_unchanged": 1245,
+  "corrections": {
+    "production_lines_changed": 4,
+    "grammar": "Two helpers preserveemptydotatoms so unchangedperatomguardsreject malformed IDs. Existingvalid64/192boundariespreserved.",
+    "position": "Actor/scene position uses anchor_id,then existinganchor,then priorstate. Legacy-only andmissing-keycontrols unchanged; canonicalwins both-key conflict.",
+    "no_code_removal": true,
+    "no_changed_API_wire_command_or_authority_issuance": true,
+    "intentional_narrowing": "Previouslyacceptedmalformed dot IDs nowreject per frozencontract. No oldpersonal-save orhost/command/restorequalification claimed."
+  },
+  "native_checks": {
+    "ritual_baseline": {
+      "checks": 181,
+      "failures": 44,
+      "failure_groups": {
+        "grammar": 32,
+        "position": 12
+      },
+      "native_exit": 1,
+      "complete_original_footer": true
+    },
+    "ritual_candidate": {
+      "checks": 181,
+      "failures": 0,
+      "native_exit": 0,
+      "same_actual_script_sha256": "1843d3ada9815e01c4e6d99845ebaaa9882589980ec37a1493eea4c2b5c1af0b",
+      "same_complete_observation_records": 30,
+      "changed_target_records": 14,
+      "original_fixture_state_and_projection_hashes_exact": true,
+      "existing_game_schema_errors_exact": true
+    },
+    "room_publication_public_DTO": {
+      "checks": 38,
+      "failures": 0,
+      "fresh_valid_fixtures": 7,
+      "alias_schema_and_revision_live_float_full_and_public_both_reject": true,
+      "root_assignment_and_changed_integer_reject": true,
+      "JSON_reload_normalizes_and_accepts": true,
+      "counter_route_exercised": false
+    },
+    "primitive_dictionary_observation": {
+      "checks": 5,
+      "failures": 0,
+      "observations": [
+        {
+          "case": "native_numeric_equality",
+          "engine_version": "4.6-stable (official)",
+          "flat_dictionary_int_float_equal": false,
+          "float_type": 3,
+          "integer_type": 2,
+          "nested_manifest_revision_int_float_equal": false,
+          "nested_manifest_schema_int_float_equal": false,
+          "scalar_int_float_equal": true
+        }
+      ]
+    },
+    "no_expected_failure_count_oracle_in_wrappers": true
+  },
+  "publication_adjudication": {
+    "classification": "INITIAL_CONDITIONAL_FINDING_FALSE_POSITIVE_FOR_SCOPED_INT_FLOAT_FIELDS",
+    "reason": "The initial inference conflated scalar numeric equality with Dictionary equality. Actual engine4.6 scalar1==1.0 istrue, but flat/nestedDictionary int-to-float comparisonsarefalse. CurrentDictionary==/!= predicates therefore rejectthese manifesttypechanges; directpublic/full38controls agree.",
+    "source_action": "RetainRoomPresentationPublicationunchanged; no unnecessarycorrection/performancechange.",
+    "original025conditional_record_preserved": true,
+    "limits": "Specificmanifestnativeintegerhypothesis only; notallcachefields/counter/gameplay/NEXTcertification.",
+    "independent_retention_peer": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json"
+  },
+  "new_body_coverage": {
+    "files": {
+      "scripts/core/collection_drop_service.gd": {
+        "sha256": "d1b22be116870581d6f402aac7b612f93204d712b789a579d0bdae0950ed129a",
+        "lines": 511,
+        "methods": 17,
+        "constants": 20,
+        "fields": 1
+      },
+      "scripts/core/collection_item_resolver.gd": {
+        "sha256": "4dd915f81e2304e58234f22eaa97d80314890737b6f2ae06ec044ba9d08ed180",
+        "lines": 663,
+        "methods": 41,
+        "constants": 15,
+        "fields": 8
+      }
+    },
+    "lines": 1174,
+    "methods": 58,
+    "constants": 35,
+    "fields": 9,
+    "declaration_hashes_independently_checked": 102,
+    "all_retained": true,
+    "core_reviewed_before": 77,
+    "core_reviewed": 79,
+    "core_remaining": 16,
+    "broader_remaining": 3,
+    "whole_audit_complete": false,
+    "Schema_Runtime_delta_not_counted_as_new_body_areas": true
+  },
+  "meta_lead": {
+    "classification": "CONDITIONAL_SOURCE_CROSS_STORE_RETRY_LEAD_RUNTIME_UNQUALIFIED",
+    "task": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+    "summary": "Processed flags precedeMeta.save and callerhasnolocalretry/rollback onfailure; terminalcheckpoint andlater successfulmeta saves canpersistdifferentportions. No demonstratedloss/duplication/Continuedefect.",
+    "implementation_performed": false
+  },
+  "native_jobs": {
+    "new_actual_jobs": 5,
+    "runtime_inventory_before": 213,
+    "runtime_inventory_after": 218,
+    "original213preserved": true,
+    "serial": true,
+    "owned_closure_each": 0,
+    "limits": "Unchanged180seconds12percentaggregateCPU2GiBassignedbeforeexecutionkilloncloseNoBreakaway",
+    "R3_parser_stop_preserved": "PublicationprobeR3failedatvalidtypeinferencebeforecases, exitnullScriptErrorguardclosed0; onlyR4explicitBoolannotationrepair then38pass. Notaproductfailure."
+  },
+  "preserved_errata": [
+    "RitualR1unexecutedheldforrequiredzone_id andinaccurateanchorlabel; R2fixedbeforebaseline, allnormativecasesretained.",
+    "CorrectionpacketR1preparationassertedwrongassumedlocalvariablename beforeanysourceedit; preserved, correctedfreshR2 exactatomsreplacement.",
+    "PublicationR1unexecutedheldsnapshotshape; R2heldinstanceidentitysignassumption; R3actualparserstop; R4soleexplicitBoolrepair. Allpackets/failurespreserved.",
+    "OneconsoleUTF8printingerrorafterruntimeappend didnotundo write; actual215andoriginal213prefixwere independentlyrereadverified."
+  ],
+  "publication": {
+    "attempts_this_phase": 0,
+    "denied_main_push_retries": 0,
+    "main_or_NEXT_verified": false,
+    "prior024_commits_and_denial_task_status_exact_preserved": true
+  },
+  "preservation": {
+    "paused8rows": true,
+    "numeric022_023rows_and_source_exact_unchanged_Open_NEXT": true,
+    "untracked_prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "excluded_diagnostics_untouched": true,
+    "files_cleared": 0,
+    "portrait_or_paused_feature_changes": 0,
+    "cleanup_performed": false,
+    "new_source_is_bug_correction_not_cleanup": true
+  },
+  "limits": [
+    "PublicordinaryauthoredDTOconfiguration andgenerated-roomvalidation only; no callback/injectedhandler/opaqueObject/cyclic/capsule/key/signingexperiment, command/host/checkpoint execution orpersonal-saveattribution.",
+    "No UI/physicalplayer/financialRNG/oldsave/NEXTacceptance fromthesechecks.",
+    "Fullaggregates remainOpen; Content180/Systems300/comparator43.712/outer330/shard55/all220guardsunchanged.",
+    "No speedup or isolatedruntimecostclaim; wholeJobtimingsinclude startup/cachecopy/hash/parse. No canvas scheduling/performanceoptimization codechanged."
+  ],
+  "manual_reconciliation": {
+    "state": "MANUAL_CHECKED_OLDER_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "checked_at": "2026-11-06T02:46:29.743082Z",
+        "total_findings": 360,
+        "own_findings": 109,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 108,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 299,
+        "phase026_consistency_findings": 0
+      },
+      "all": {
+        "checked_at": "2026-11-06T02:46:28.506485Z",
+        "total_findings": 976,
+        "own_findings": 109,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 108,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 299,
+        "phase026_consistency_findings": 0
+      }
+    },
+    "note": "Originalhistoricalobservationsnotrestamped. No newphase026task/runtimeconsistencyerror, no guardchanged; rawR3parserfailure remainsproduct-unqualified. SourcefixesOpenrequiredNEXT; evidence-onlyassociationroutinepending."
+  },
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "evidence_sha256": {
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-registration-r1.json": "aba8798f6545be612b2d6cc16f0c857884c3774dc33575dcef5205ee69895099",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-grammar-qualification-design-r1.json": "519f889bba90610798ec079b456c9d007f06522ade0a7b3b3a9f0ff0eebc65b5",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-anchor-qualification-design-r1.json": "b8b8a58fd405b1579f0aab8cc1f3418473f8fd8f5ea377952c59d369050411c9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-qualification-design-r1.json": "065199c1e21dcaabf815bae311d124303872ed2a5ec9d38f80270ff5d2b689c2",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-two-body-review-r1.json": "d9b28ec599579ea05cb09621a45d345200b4dac1ee6e95d0efc1da255f35d70c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json": "84ea66d7b30f1d8fd2cc5664e1fad5ef7d3d38f4337e3fe28491d8239f97766f",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-admission-peer-r2.json": "61882cb839874a3db97a30c2b7e4d6983f353bfb18e61eb46bae0ac449878436",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-dto-semantic-peer-r2.json": "25a6776ae5efba0597e024384062a3cffe72afde7210aab809a41cd3ab5d4247",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-baseline-root-postcheck-r2.json": "f6b0e3216a3d944c2daa8d73b63ee4812259d49abc62aa4bcdcf0bd1a68cbab3",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-corrective-registration-r1.json": "6842d5436dd3fa1a72e83d6fd8a66e018f58e6b9f6eb85394ebb8cec023868c9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json": "adbb5df2eb1d92449964c2587d97322e4b235bd999fcb2fdf5eb664821a274c4",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-application-r2.json": "2b5bdd4c57017a9c20b28e065022b5b228998849e454b3e0c0926a1301aa6ae3",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-admission-peer-r1.json": "02ac204576c69551406e2200ca3592d819c0e6a7e458ed1954e7b6629138281e",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json": "5577b7703390f26eece3aab7eea727e86d63576c06f9874bf061561a02cc7bbc",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-native-results-peer-r1.json": "dd1a2fb9683d856df05793856ff67b17cd0f5e579387d9368c78938e40f10b49",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-parser-stop-root-r3.json": "5685463ee26d077c18e7692db0ed7cb210e04567a200437530733e1c35cae933",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-dto-admission-peer-r4.json": "7e2253adf85f54d1fd3c41224f111219346ad703012f73e43915764ac9ce0516",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-root-postcheck-r4.json": "6a5aac17ede03bc9a3b4edcb6546fb7188b0f8d01fb4d31085bb2777fba97da3",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-admission-peer-r1.json": "3444c146aa2422a0bc86daa588f04baa4de31eb808b2fd0bb6c24aa9ccfe4c12",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-equality-root-postcheck-r1.json": "7232c2661f9539654097cf0b348306d0f01922565628313b892c57784642253c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-baseline-r2\\job.json": "125a834015de160d544c3928470aeded95caf670e9946b8fca16558630d7fcd9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\ritual026-dto-candidate-r1\\job.json": "26bee7ccd6d3815a001b6e2635c2fd2e268a7d8b2b2d865875c010ed520ad6eb",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r3\\job.json": "5ed09b585dfec4d08ef30d60c67cbb8a9fb852c5a8e9519ed4eb6f831eb87422",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-numeric-dto-r4\\job.json": "0ae7876ae5f715dcbdadf0c067c9cc92988d5200f4986f5560d54715c94610d6",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json": "e64020ab86621eed2c4d1b313212fb734048fbb365818a5b2e9172f9e9919c22",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json": "6e711884875a65eba1400e179aa11926d0152cb643822427968ec019270da06c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-current-r1.json": "675f31f2481f22e365fa177bcfa8cec8bd2aeac7db7facfba979220c43594b6d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-all-r1.json": "983717b0c0816961a854f0a578aa71ed3bebfa0d095b874e0f1ee96ea0b3fd13"
+  }
+}
