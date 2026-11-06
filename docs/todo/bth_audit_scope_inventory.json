@@ -1862,11 +1862,12 @@
       "native_jobs": 0,
       "runtime_inventory": 213,
       "required_NEXT_verified": false,
-      "objective_states": "BodyreviewOpenuntilactualevidencecommit;stubcandidateOpenunderrecordedcleanupstop;numeric022/023OpenrequiredNEXT;wholeauditOpen",
+      "objective_states": "BoundedbodyreviewCompletewithactualevidencecommit;stubcandidateOpenunderrecordedcleanupstop;numeric022/023OpenrequiredNEXT;wholeauditOpen",
       "evidence": "docs/testing/deprecated_code_audit_continuation_024.json",
       "full_objective_complete": false,
       "preserved_candidate_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef",
-      "cleanup_stopped": true
+      "cleanup_stopped": true,
+      "evidence_commit": "dd4ff350d31705fe1e91347cac21f27197968eb7"
     }
   ]
 }

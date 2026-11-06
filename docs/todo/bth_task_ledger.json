@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T00:35:29.517065+00:00",
+  "updated_at": "2026-11-06T00:42:40.556654+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13813,6 +13813,13 @@
             "docs/testing/deprecated_code_audit_continuation_023.json",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
           ]
+        },
+        {
+          "sha": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_024.md",
+            "docs/testing/deprecated_code_audit_continuation_024.json"
+          ]
         }
       ],
       "deployment": {
@@ -14017,7 +14024,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:35:29.517065+00:00"
+      "updated_at": "2026-11-06T00:42:40.556654+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25247,8 +25254,11 @@
             "id": "independent-review-and-commit",
             "description": "Independent review qualifies the bounded evidence and an actual evidence commit is associated before completion. Any source repair/removal requires separate tests/commit/delivery acceptance.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_024.json",
+              "dd4ff350d31705fe1e91347cac21f27197968eb7"
+            ]
           }
         ],
         "coverage": {
@@ -25290,14 +25300,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "FOUR_CURRENT_BODIES_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING_024",
+      "state": "complete",
+      "status": "BOUNDED_FOUR_BODY_SOURCE_REVIEW_COMPLETE_ASSOCIATED_EVIDENCE_COMMIT_024",
       "owner": {
         "name": "Audit venue and character core coverage",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_024.md",
+            "docs/testing/deprecated_code_audit_continuation_024.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -25313,20 +25331,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual evidence commit before completing this bounded four-body source review. Continue whole audit separately and preserve cleanup/removal stop.",
+      "next_action": "Bounded four-body review is complete at associated evidence commit. Continue whole-audit remaining22core and three broader areas; this child does not close parent or any required NEXT task.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Permitted evidence and bug investigations continue. Cleanup/removal remains stopped under recorded user direction; candidate is preserved, not applied. Numeric NEXT verification separately assigned.",
+        "description": "Bounded source-only acceptance and actual evidence commit associated. No deployment required for this evidence-only child. Parent audit and unrelated delivery acceptance remain Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:35:29.517065+00:00",
+        "observed_at": "2026-11-06T00:42:40.556654+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_010.md",
           "docs/testing/deprecated_code_audit_continuation_024.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:35:29.517065+00:00"
+      "updated_at": "2026-11-06T00:42:40.556654+00:00"
     },
     {
       "id": "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
@@ -25379,7 +25396,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_024.md",
+            "docs/testing/deprecated_code_audit_continuation_024.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -25408,7 +25433,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:35:29.517065+00:00"
+      "updated_at": "2026-11-06T00:42:40.556654+00:00"
     }
   ],
   "batches": [

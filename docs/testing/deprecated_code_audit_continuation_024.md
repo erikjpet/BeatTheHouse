@@ -10,7 +10,7 @@ The existing full engine-free slot-authority contract passes before and on the p
 
 All other reviewed code is retained. Venue access, offer sessions and scenario lifetime have distinct contracts. The badge world-map helper is a live warmup dependency; offer convenience/prepared APIs retain supported consumers. Three transient instance members and layer-copy cost remain unqualified leads.
 
-`BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024` remains Open until its actual evidence commit is associated. `BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024` records the preserved finding and scope restriction. Numeric tasks 022/023 stay exactly unchanged and Open pending separately assigned NEXT verification. Runtime inventory remains 213, with no new native jobs. Paused rows, portraits, excluded diagnostics, original files and the untracked prototype remain preserved. No files were cleared or deployment machinery operated.
+`BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024` is Complete with associated evidence commit `dd4ff350d31705fe1e91347cac21f27197968eb7`. `BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024` records the preserved finding and scope restriction. Numeric tasks 022/023 stay exactly unchanged and Open pending separately assigned NEXT verification. Runtime inventory remains 213, with no new native jobs. Paused rows, portraits, excluded diagnostics, original files and the untracked prototype remain preserved. No files were cleared or deployment machinery operated.
 
 Exact receipts, preserved candidate and limits are in [the machine-readable report](deprecated_code_audit_continuation_024.json). The whole audit and aggregate validation acceptance remain Open.
 

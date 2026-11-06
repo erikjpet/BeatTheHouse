@@ -1,8 +1,8 @@
 {
   "schema": "bth.deprecated_audit_continuation/v1",
   "phase": "024",
-  "observed_at": "2026-11-06T00:35:29.517065+00:00",
-  "status": "FOUR_BODY_STATIC_REVIEW_QUALIFIED_NO_SOURCE_CHANGE_COMMIT_ASSOCIATION_PENDING",
+  "observed_at": "2026-11-06T00:42:40.556654+00:00",
+  "status": "EVIDENCE_COMMIT_ASSOCIATED_BOUNDED_BODY_REVIEW_COMPLETE_NO_SOURCE_CHANGE",
   "base_main": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "associated_source_commit": null,
   "tasks": [
@@ -135,7 +135,7 @@
         },
         "runtime_errors": 201,
         "new_phase024_findings": 0,
-        "checked_at": "2026-11-06T00:36:45.519301Z"
+        "checked_at": "2026-11-06T00:42:54.489496Z"
       },
       "all": {
         "total_findings": 877,
@@ -146,10 +146,10 @@
         },
         "runtime_errors": 201,
         "new_phase024_findings": 0,
-        "checked_at": "2026-11-06T00:36:44.954394Z"
+        "checked_at": "2026-11-06T00:42:55.040800Z"
       }
     },
-    "note": "Original observations retained; no timestamp refresh of historical runtimes, guard change or new phase024 consistency finding. R1 schema enum and R2 named-parent index mismatch corrected, preserved in original evidence."
+    "note": "R4 after actual commit association and UTF8 preservation repair: only39historical own findings retained, no phase024 inconsistency. Original timestamps/guards retained. Prior schema/index failures and encoding correction preserved."
   },
   "NEXT_verified": false,
   "whole_audit_complete": false,
@@ -172,8 +172,15 @@
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-environment-instance-reviewed-candidate.gd": "7c24b2f7a67915d1f2b30da7e8d078052096b61e5be816878dd11e34766fe62b",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-final-precommit-custody-r1.json": "b44a73c5fa0bd77804b65430f14a2d4383d099f40f9ba59ddb17a6d94879eefa",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-checkpoint-encoding-correction-r1.json": "bc16ff33ae4b4e0b24f92796ddf4543baa7ae1d1995b74c72352b967fcff11bd",
-    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-r1-schema-correction.json": "e56c42573d2d6acf9980fef706a91555cefaa4e105160b6b5c35be61d795826d"
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-r1-schema-correction.json": "e56c42573d2d6acf9980fef706a91555cefaa4e105160b6b5c35be61d795826d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-current-r4.json": "e7b472b4276e90164ccefa18e97e4d112d30cd301d81cdb6e51c4d0bc6d443ad",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-all-r4.json": "4c0ac3e3e67198cec72abbf4a55930edac4b903f71bd373d13b9575c70a30a65"
   },
   "current_source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
-  "preserved_candidate_source_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef"
+  "preserved_candidate_source_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef",
+  "associated_evidence_commit": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+  "body_review_complete": true,
+  "stub_finding_state": "OPEN_CANDIDATE_PRESERVED_NOT_APPLIED_CLEANUP_STOP",
+  "source_change_applied": false,
+  "source_change_published": false
 }
