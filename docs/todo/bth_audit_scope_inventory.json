@@ -1962,7 +1962,7 @@
     },
     {
       "phase": "027",
-      "observed_at": "2026-11-06T03:22:31.595316+00:00",
+      "observed_at": "2026-11-06T03:27:04.556652+00:00",
       "base_local_HEAD": "5995a6de5244bdf28355e7fa710bcdb96279f1a3",
       "body_task": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
       "persistence_task": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
@@ -1983,8 +1983,10 @@
       "denied_publication_retried": false,
       "required_NEXT_verified": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_027.json",
-      "evidence_commit": null,
-      "full_objective_complete": false
+      "evidence_commit": "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
+      "full_objective_complete": false,
+      "body_review_state": "complete_actual_commit_associated",
+      "persistence_state": "open_detachedgapqualified_hostContinue_unqualified"
     }
   ]
 }

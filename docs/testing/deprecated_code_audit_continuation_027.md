@@ -6,7 +6,7 @@ The unchanged guarded run exits 0 with 26 passing setup, public API, storage and
 
 Two complete current core bodies are reviewed: CrewRecruitmentModel and DeliveryRunFacade, totaling 1,568 lines, 80 methods, 13 constants and five fields. All 98 functional declaration hashes and four identity cards are corroborated, with reciprocal full-body, caller, dispatch, history and compatibility review. Current save migration, room authentication, rollback, wrappers and maintained compatibility APIs are retained. Coverage reaches 81/95 core areas, with 14 core and three broader areas remaining.
 
-The bounded body task stays Open until its actual evidence commit is associated. The persistence lead and whole audit remain Open. Earlier local fixes and evidence commits, the untracked prototype, paused rows and numeric NEXT tasks remain preserved. No production or test source changed, and no cleanup, import, build, export or publication retry occurred.
+The bounded body task `BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027` is Complete with actual evidence commit `4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507` associated. The persistence lead and whole audit remain Open. Earlier local fixes and evidence commits, the untracked prototype, paused rows and numeric NEXT tasks remain preserved. No production or test source changed, and no cleanup, import, build, export or publication retry occurred.
 
 One owned native Job closed with zero processes remaining. The unchanged guard retains 180 seconds, 12% aggregate CPU, 2 GiB, assignment before execution, kill on close and no breakaway. Runtime inventory moves from 218 to 219 with the original 218 records unchanged. All 1,248 source hashes match manifest `0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d`.
 

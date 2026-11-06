@@ -1,10 +1,10 @@
 {
   "schema": "bth.deprecated_code_audit_continuation/027",
   "phase": "027",
-  "observed_at": "2026-11-06T03:22:31.595316+00:00",
-  "status": "DETACHED_STORAGE_GAP_QUALIFIED_TWO_BODY_REVIEW_QUALIFIED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATION_PENDING",
+  "observed_at": "2026-11-06T03:27:04.556652+00:00",
+  "status": "DETACHED_STORAGE_GAP_QUALIFIED_TWO_BODY_REVIEW_COMPLETE_EVIDENCE_COMMIT_ASSOCIATED_PARENT_AND_HOST_CONTINUE_OPEN",
   "base_local_HEAD": "5995a6de5244bdf28355e7fa710bcdb96279f1a3",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
   "parent_task": "BTH061-AUDIT-001",
   "body_task": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
   "persistence_task": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
@@ -142,7 +142,7 @@
     "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
     "views": {
       "current": {
-        "checked_at": "2026-11-06T03:24:07.424050Z",
+        "checked_at": "2026-11-06T03:27:28.386174Z",
         "total_findings": 360,
         "own_findings": 109,
         "own_codes": {
@@ -151,10 +151,10 @@
         },
         "runtime_errors": 299,
         "phase027_consistency_findings": 0,
-        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r1.json"
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r2.json"
       },
       "all": {
-        "checked_at": "2026-11-06T03:24:06.845751Z",
+        "checked_at": "2026-11-06T03:27:28.985175Z",
         "total_findings": 976,
         "own_findings": 109,
         "own_codes": {
@@ -163,7 +163,7 @@
         },
         "runtime_errors": 299,
         "phase027_consistency_findings": 0,
-        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r1.json"
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r2.json"
       }
     },
     "note": "Current/all checks return1 for existing findings. Own109 are108 historical runtime age flags and the preexisting005stale blocker, unchanged. No phase027 task/runtime consistency finding. No original observation restamped or guard weakened."
@@ -194,6 +194,8 @@
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-public-host-next-step-source-r1.json": "39947be1c25883ca2720813551980521c4b77703fc3e3c7971dd75aa42bf5a5f",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r1.json": "7a990a77ac1a5df829f12a64709e19bf9f440c6b7db2e974156ecce439a3d7d9",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r1.json": "ea8770951699fa32034bf85829fd69f1b02e8590e1843235ed30a8556356def9",
-    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-pre-evidence-commit-custody-r1.json": "6ab265c2df4855822bc8ec9b8437667f7be457dfa63398219e12b1a9dadb5046"
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-pre-evidence-commit-custody-r1.json": "6ab265c2df4855822bc8ec9b8437667f7be457dfa63398219e12b1a9dadb5046",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-current-r2.json": "9fc6f755e5f0b1a4fa3b046538ba53036690b57cd82d45406b735ab855841ebb",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-manual-all-r2.json": "8f86f1b3572dfad92a1e4f0ec293c0a18a06c43bdeb6f07eb409c96fe573e921"
   }
 }

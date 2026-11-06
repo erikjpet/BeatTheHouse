@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T03:22:31.595316+00:00",
+  "observed_at": "2026-11-06T03:27:04.556652+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T03:22:31.595316+00:00",
-      "source": "Phase027 actual publicmodule realfilesystem gap26healthychecks0fail; flags suppressretry, freshMeta loads oldcard, later explicitsave recovers. LeadOpen fullhost/checkpoint/Continue unqualified; no sourcefix. Recruitment/delivery2body1568/80/13/5 reciprocalreviewqualified, core81of95remaining14+3; bodyevidencecommitassociationpending. One assigned ownedJobclosed0/runtime219original218exact. Allpriorlocalcommits/source/prototype/paused/numericNEXT preserved; no cleanup, restricteddiagnostic or deniedpublicationretry."
+      "observed_at": "2026-11-06T03:27:04.556652+00:00",
+      "source": "Phase027 evidence actual local4c7ebff9 associated. Two current Crew recruitment/delivery bodies Complete1568lines80methods13constants5fields,98functional cards+4identity, core81of95remaining14+3. ExistingMetaPersistence026 staysOpen: actual detachedpublicmodule fault26healthychecks0fail confirmsflagskip/later-save recovery; no fullhost/checkpoint/Continue or productionfix. Public generated-host next route sourceidentified, unexecuted/unadmitted. One assigned ownedJobclosed0/runtime219original218exact. Priorlocalfixes/prototype/paused/numericNEXT preserved; no cleanup, restricteddiagnostic, network or deniedpublicationretry."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

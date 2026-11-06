@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T03:22:31.595316+00:00",
+  "updated_at": "2026-11-06T03:27:04.556652+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13835,6 +13835,13 @@
             "docs/testing/deprecated_code_audit_continuation_026.json",
             "docs/testing/deprecated_code_audit_continuation_026.md"
           ]
+        },
+        {
+          "sha": "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_027.json",
+            "docs/testing/deprecated_code_audit_continuation_027.md"
+          ]
         }
       ],
       "deployment": {
@@ -14041,7 +14048,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Associate phase027 evidence; then qualify full terminal host/checkpoint/Continue persistence and review remaining14core plus three broader areas. Keep whole audit and requiredNEXT source fixes Open; preserve all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
+      "next_action": "Qualify the ordinary public terminal host/save/checkpoint/Continue route identified in phase027, then review remaining14core and three broader areas. Keep whole audit and requiredNEXT source fixes Open; preserve all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14053,7 +14060,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:22:31.595316+00:00"
+      "updated_at": "2026-11-06T03:27:04.556652+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26345,6 +26352,13 @@
             "docs/testing/deprecated_code_audit_continuation_026.json",
             "docs/testing/deprecated_code_audit_continuation_026.md"
           ]
+        },
+        {
+          "sha": "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_027.json",
+            "docs/testing/deprecated_code_audit_continuation_027.md"
+          ]
         }
       ],
       "deployment": {
@@ -26372,7 +26386,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify the complete ordinary terminal host flow and original processed-run checkpoint/Continue boundary with supported generated state before selecting a cross-store correction. Detached module evidence proves retry suppression and later-save recovery only; do not weaken exactly-once, authority or guarded execution.",
+      "next_action": "Prepare independently admitted guarded generated-host qualification via public start_foundation_run, save_run_from_menu, then fresh-host load_foundation_run/start_or_continue_primary. Stop on natural room/publication/save failure without readiness repair. Preserve full checkpoint/Continue and exactly-once requirements before selecting a correction; no private authority manipulation.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -26382,7 +26396,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:22:31.595316+00:00"
+      "updated_at": "2026-11-06T03:27:04.556652+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26413,8 +26427,12 @@
             "id": "independent-review-and-commit",
             "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-recruitment-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-delivery-facade-peer-review-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -26440,14 +26458,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "TWO_CURRENT_CORE_BODIES_INDEPENDENTLY_QUALIFIED_EVIDENCE_COMMIT_PENDING_027",
+      "state": "complete",
+      "status": "TWO_CURRENT_CORE_BODIES_INDEPENDENTLY_REVIEWED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_027",
       "owner": {
         "name": "Audit phase027 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_027.json",
+            "docs/testing/deprecated_code_audit_continuation_027.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -26463,7 +26489,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual evidence commit before completing this bounded two-body review. Preserve current Crew recruitment/save migration, delivery authentication/rollback/public wrappers, all source and the open whole-codebase audit.",
+      "next_action": "Bounded two-body source review complete at 4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507. Retain all source and live compatibility. The terminal persistence lead, remaining14core/three broader areas and whole audit remain Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -26473,7 +26499,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:22:31.595316+00:00"
+      "updated_at": "2026-11-06T03:27:04.556652+00:00"
     }
   ],
   "batches": [
