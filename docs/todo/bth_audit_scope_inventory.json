@@ -1926,7 +1926,7 @@
     },
     {
       "phase": "026",
-      "observed_at": "2026-11-06T02:44:04.013023+00:00",
+      "observed_at": "2026-11-06T02:56:40.725496+00:00",
       "source_commit": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
       "source_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
       "source_count": 1248,
@@ -1954,7 +1954,11 @@
       "required_NEXT_verified": false,
       "denied_publication_retried": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_026.json",
-      "full_objective_complete": false
+      "full_objective_complete": false,
+      "evidence_commit": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+      "bounded_body_review_state": "complete",
+      "scoped_publication_retention_state": "complete",
+      "corrective_tasks_state": "open_required_NEXT"
     }
   ]
 }

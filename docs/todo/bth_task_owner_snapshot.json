@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T02:44:04.013023+00:00",
+  "observed_at": "2026-11-06T02:56:40.725496+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T02:44:04.013023+00:00",
-      "source": "Phase026 localfbd95aae fourproductionlinefixes plusnewtest,181checks44to0; Gram025/Anchor025OpenrequiredNEXT. Pub025specificintfloathypothesisfalsifiedby38public+5primitivecontrols; retentioncommitassociationpending. Collection2body1174/58/35/9 qualified, core79of95remaining16+3; conditionalterminalmeta leadOpen. Actual5ownedJobsclosed0, runtime213to218originalprefixpreserved; oneparserfailretained. Source12480407, no cleanup/mainretry, oldpaused/numericNEXT/prototype/excluded/pendingcommits preserved."
+      "observed_at": "2026-11-06T02:56:40.725496+00:00",
+      "source": "Phase026 local sourcefbd95aae and evidence711c3b7d associated. Grammar025/Anchor025 Open requiredNEXT,181checks44to0. BoundedDTO026 Complete sourcecommit; Publication025 scopedfalsepositive retention Complete38+5 checks evidencecommit; Collection026 Complete2bodies1174lines58methods35constants9fields core79of95remaining16+3. MetaPersistence026 sourceconditional Open. Five Jobs closed0/runtime218original213exact; no cleanup, publicationretry, restricteddiagnostic or pausedfeature change."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

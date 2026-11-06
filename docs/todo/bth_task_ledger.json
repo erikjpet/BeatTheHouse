@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T02:44:04.013023+00:00",
+  "updated_at": "2026-11-06T02:54:48.043844+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13635,7 +13635,7 @@
         }
       },
       "state": "open",
-      "status": "TWO_RITUAL_CORRECTIONS_COMMITTED_181_PASS_TWO_MORE_CORE_BODIES_QUALIFIED_026",
+      "status": "TWO_QUALIFIED_RITUAL_FIXES_LOCAL_PUBLICATION_HYPOTHESIS_FALSIFIED_CORE_COVERAGE_79_OF_95_026",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13831,6 +13831,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_026.json",
             "scripts/tests/game_ritual_dto_contract_check.gd"
+          ]
+        },
+        {
+          "sha": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_026.json",
+            "docs/testing/deprecated_code_audit_continuation_026.md"
           ]
         }
       ],
@@ -14038,7 +14045,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Finish roomproof equality adjudication and localcoverage/evidencecommit association; then continue remaining16core and threebroader areas plus conditionalterminalmeta lead. Preserve cleanupstop, deniedpublication/no retry, originalcommits, paused/excluded/numericNEXT work.",
+      "next_action": "Continue the remaining16core and three broader review areas and qualify the conditional terminal meta persistence lead. RequiredNEXT verification for grammar025/anchor025 remains Open. Preserve cleanup stop, denied publication without retry, original commits, paused/excluded/numericNEXT work.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14050,7 +14057,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:44:04.013023+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25750,7 +25757,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Corrective source changes are registered before editing; no source commit or NEXT acceptance exists yet. Publication remains denied and will not be retried."
+        "scope": "Qualified corrective source commit fbd95aae983f6e99c4431b31d830f550bd993e3d is local; exact required NEXT delivery remains pending. Denied main publication will not be retried without new specific approval."
       },
       "evidence": [
         {
@@ -25780,7 +25787,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     },
     {
       "id": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
@@ -25867,7 +25874,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Corrective source changes are registered before editing; no source commit or NEXT acceptance exists yet. Publication remains denied and will not be retried."
+        "scope": "Qualified corrective source commit fbd95aae983f6e99c4431b31d830f550bd993e3d is local; exact required NEXT delivery remains pending. Denied main publication will not be retried without new specific approval."
       },
       "evidence": [
         {
@@ -25897,7 +25904,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
@@ -25938,8 +25945,11 @@
             "id": "associated-corrective-or-retention-evidence",
             "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -25948,8 +25958,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "SCOPED_INT_FLOAT_REUSE_HYPOTHESIS_FALSIFIED_NO_CODE_FIX_EVIDENCE_ASSOCIATION_PENDING_026",
+      "state": "complete",
+      "status": "SCOPED_INT_FLOAT_REUSE_HYPOTHESIS_FALSIFIED_QUALIFIED_RETENTION_COMMIT_ASSOCIATED_026",
       "owner": {
         "name": "Audit source discrepancy qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -25961,6 +25971,13 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_025.json",
             "docs/testing/deprecated_code_audit_continuation_025.md"
+          ]
+        },
+        {
+          "sha": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_026.json",
+            "docs/testing/deprecated_code_audit_continuation_026.md"
           ]
         }
       ],
@@ -25984,7 +26001,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual committed retention evidence before completing this scoped false-positive investigation. Keep RoomPresentationPublication unchanged; do not broaden result to unexercised counter/cache/player paths.",
+      "next_action": "Scoped false-positive investigation complete at 711c3b7dea800d5efd5ec00ed80b323a2a784281. Retain RoomPresentationPublication unchanged; no broader cache/counter/player/NEXT conclusion.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -25996,7 +26013,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:44:04.013023+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     },
     {
       "id": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
@@ -26111,8 +26128,11 @@
             "id": "independent-review-and-commit",
             "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -26140,14 +26160,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "TWO_COMPLETE_COLLECTION_BODIES_SOURCE_QUALIFIED_EVIDENCE_COMMIT_ASSOCIATION_PENDING_026",
+      "state": "complete",
+      "status": "TWO_COMPLETE_CORE_BODIES_INDEPENDENTLY_REVIEWED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_026",
       "owner": {
         "name": "Audit phase026 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_026.json",
+            "docs/testing/deprecated_code_audit_continuation_026.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -26155,9 +26183,15 @@
         "evidence": [],
         "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage026",
+          "reference": "docs/testing/deprecated_code_audit_continuation_026.json",
+          "summary": "Two complete bodies1174lines58methods35constants9fields,102 declaration spans independently qualified and retained. Actual local evidence commit associated; source coverage is not runtime bug acceptance."
+        }
+      ],
       "implementation_batches": [],
-      "next_action": "Associate actual committed coverageevidence before completing this boundedbody review; retainallsource and preserveconditionalmeta lead separately.",
+      "next_action": "Bounded two-body source review complete at 711c3b7dea800d5efd5ec00ed80b323a2a784281. Retain all source; conditional terminal meta lead and whole audit remain Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -26167,7 +26201,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     },
     {
       "id": "BTH061-AUDIT-RITUAL-DTO-QUALIFICATION-026",
@@ -26305,7 +26339,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_026.json",
+            "docs/testing/deprecated_code_audit_continuation_026.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -26331,7 +26373,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:30:27.723819+00:00"
+      "updated_at": "2026-11-06T02:54:48.043844+00:00"
     }
   ],
   "batches": [

@@ -1,11 +1,11 @@
 {
   "schema": "bth.deprecated_audit_continuation/v1",
   "phase": "026",
-  "observed_at": "2026-11-06T02:42:02.985836+00:00",
-  "status": "TWO_RITUAL_CORRECTIONS_COMMITTED_PUBLICATION_TYPE_HYPOTHESIS_FALSIFIED_BODY_EVIDENCE_ASSOCIATION_PENDING",
+  "observed_at": "2026-11-06T02:56:40.725496+00:00",
+  "status": "TWO_QUALIFIED_RITUAL_FIXES_LOCAL_RETENTION_AND_BODY_REVIEW_COMPLETE_ACTUAL_COMMITS_ASSOCIATED_REQUIRED_NEXT_OPEN",
   "base_local_HEAD": "3e9a9ab8ad8e03d09c20d0f60d5fd6a9c06bd037",
   "source_commit": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "711c3b7dea800d5efd5ec00ed80b323a2a784281",
   "corrective_tasks": [
     "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
     "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025"
@@ -168,7 +168,7 @@
     "state": "MANUAL_CHECKED_OLDER_FINDINGS_PRESERVED",
     "views": {
       "current": {
-        "checked_at": "2026-11-06T02:46:29.743082Z",
+        "checked_at": "2026-11-06T02:56:59.951696Z",
         "total_findings": 360,
         "own_findings": 109,
         "own_codes": {
@@ -176,10 +176,11 @@
           "BLOCKER_STALE": 1
         },
         "runtime_errors": 299,
-        "phase026_consistency_findings": 0
+        "phase026_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-current-r2.json"
       },
       "all": {
-        "checked_at": "2026-11-06T02:46:28.506485Z",
+        "checked_at": "2026-11-06T02:57:01.098057Z",
         "total_findings": 976,
         "own_findings": 109,
         "own_codes": {
@@ -187,10 +188,11 @@
           "BLOCKER_STALE": 1
         },
         "runtime_errors": 299,
-        "phase026_consistency_findings": 0
+        "phase026_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-all-r2.json"
       }
     },
-    "note": "Originalhistoricalobservationsnotrestamped. No newphase026task/runtimeconsistencyerror, no guardchanged; rawR3parserfailure remainsproduct-unqualified. SourcefixesOpenrequiredNEXT; evidence-onlyassociationroutinepending."
+    "note": "Original historical observations not restamped. No new phase026 task/runtime consistency error or guard change; raw R3 parser failure remains product-unqualified. Corrective tasks Open for required NEXT; bounded retention/body/native evidence commits associated."
   },
   "whole_audit_complete": false,
   "NEXT_verified": false,
@@ -222,6 +224,10 @@
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\publication026-dictionary-equality-r1\\job.json": "e64020ab86621eed2c4d1b313212fb734048fbb365818a5b2e9172f9e9919c22",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-publication-retention-peer-r1.json": "6e711884875a65eba1400e179aa11926d0152cb643822427968ec019270da06c",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-current-r1.json": "675f31f2481f22e365fa177bcfa8cec8bd2aeac7db7facfba979220c43594b6d",
-    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-all-r1.json": "983717b0c0816961a854f0a578aa71ed3bebfa0d095b874e0f1ee96ea0b3fd13"
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-all-r1.json": "983717b0c0816961a854f0a578aa71ed3bebfa0d095b874e0f1ee96ea0b3fd13",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-pre-evidence-commit-custody-r1.json": "134b4fa336c4e9cd580379a66f3bc77541c74efbcd431d3c53598a90b0f1d426",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-current-r2.json": "13192200674ff1eae522ab02bcd50dea2789a489a55518188f51a54eaddbc796",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-manual-all-r2.json": "4777529f5e2ac721d27e8b9e01a6a2f9da067fb70879cb1e7c03208c27f41102",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-association-continuation-r1.json": "14cb87ac99a889548e0c6ca8ed4dd77b42db6aad3b4bf17488dcd4fdd95e9ea7"
   }
 }
