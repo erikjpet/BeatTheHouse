@@ -3,14 +3,14 @@
 ## Qualified continuation
 
 Current source and focused checks are committed as `753d6eb5d832695901fad640af3c6b557efbdc48`. All three named items remain
-Open until required main/NEXT delivery and final reconciliation are recorded. The original accepted-ante fix remains associated with
+Open: main publication succeeded, but the existing automated NEXT publisher failed before promotion on both44ea andCBC. The original accepted-ante fix remains associated with
 `eba4663b52b6152eff814231c76ce093bf7d4afa`; its earlier release receipts are retained.
 
 | ID | Current outcome |
 |---|---|
-| BTH061-BAR-DICE-REVEAL-RESTORE-001 | Accepted cup restored; one legitimate post-Call Menu Save/cold Continue qualified; fix/diagnostic commit associated; NEXT pending. |
-| BTH061-BAR-DICE-SHUTDOWN-001 | Causal final-frame autosave ownership defect corrected; successful/failed-write teardown checks clean; commit associated; NEXT pending. |
-| BTH061-BAR-DICE-COVER-DISPLAY-001 | Wrong values not reproduced. Actual native text and high-density Web capture show6/6/0. No display patch justified; diagnostic commit associated; NEXT pending. |
+| BTH061-BAR-DICE-REVEAL-RESTORE-001 | Accepted cup restored; one legitimate post-Call Menu Save/cold Continue qualified; fix/diagnostic commit associated; NEXT publisher blocked. |
+| BTH061-BAR-DICE-SHUTDOWN-001 | Causal final-frame autosave ownership defect corrected; successful/failed-write teardown checks clean; commit associated; NEXT publisher blocked. |
+| BTH061-BAR-DICE-COVER-DISPLAY-001 | Wrong values not reproduced. Actual native text and high-density Web capture show6/6/0. No display patch justified; diagnostic commit associated; NEXT publisher blocked. |
 
 The companion JSON preserves every command, source identity, original
 observation, failed process and closure. Its `continuation_20261106` records
@@ -130,6 +130,14 @@ Manual reconciliation at 2026-11-06T05:39:12.182449Z: **0 findings for these thr
 Main `44ea53510d2d282b35089f6b2bf0482822b7bd2a` contains the qualified fix. Its export and1166-file PCK audit passed, but the existing installer failed at its local QA read grant before promotion; NEXT retained7d. The original helper stderr was not retained, so its precise cause is unknown.
 
 One exact retry of the existing unmodified helper succeeded: exit0, Verifiedtrue,18items, fixed QA ReadAndExecute only, owner/protection/other rules preserved. This did not promote NEXT. The installed immutable44ea/provenance remain preserved; the original ephemeral ZIP was already removed, and a normal timestamped rebuild cannot replace that archive hash. This evidence-only checkpoint gives the existing watcher a fresh main SHA. No manual export, pointer write, pipeline edit or watcher restart was used. All3 IDs remain Open until actual descendant identity/assets/startup and final reconciliation pass.
+
+### Final publisher blocker
+
+Published main is `cbc90bd417c862fa4fc8ce2f586a40185b93d4a7`, tree `1232882f2ecf0acc829c9fc518f1b0990d6a262c`, containing tested fix `753d6eb5d832695901fad640af3c6b557efbdc48`. Its new export and1166-file PCK audit passed, then the same existing automated QA read-grant command returned1 at2026-11-06T06:04:09Z before promotion. NEXT still serves7d. The helper stderr was not retained, so the underlying reason remains unknown; the earlier exact44ea manual helper retry proved RX18items only and did not promote NEXT.
+
+Exact current served identity/startup was not qualified; no Job42 was launched. All41 task-owned Jobs remain ended with0owned processes. All283 task IDs and failed/runtime/old-pixel evidence remain preserved. No third immediate metadata push, manual substitute export, immutable replacement, pointer write or watcher/infrastructure change was attempted. This final evidence checkpoint is local; the tested code is already on main. Existing publisher owner must diagnose the automated grant failure and recover normal promotion, then exact identity/assets/startup and final reconciliation can close these3 items.
+
+Final manual reconciliation at 2026-11-06T06:07:35.107467Z: **0 findings for these3 IDs**, **413 findings across 47 other IDs** preserved. Local Git association verification enabled.
 
 ## Historical checkpoint through 7d
 

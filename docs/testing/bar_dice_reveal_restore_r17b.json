@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "open",
-  "updated_at": "2026-11-06T05:58:42.838325+00:00",
+  "updated_at": "2026-11-06T06:07:21.202382+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -4668,7 +4668,7 @@
       "docs/testing/bar_dice_reveal_restore_r17b.md",
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
     ],
-    "scope": "Current native teardown fix/diagnostics awaiting main/NEXT; previous accepted-ante release proofs retained in release_verification."
+    "scope": "Fix753 is on mainCBC/tree1232882f; both actual exports passed. Current exact NEXT remains unverified because existing automated QA-grant operation failed twice. See continuation final_publisher_block; prior1ad/7d release receipts remain historical."
   },
   "causal_finding": {
     "classification": "Confirmed independent equivalent-state production defect; original scenario/branch uninspected",
@@ -5147,15 +5147,24 @@
     "state": "open",
     "observed_build": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
     "source_review_build": "dff23f66e6ecf60a31b5b4c65b7509dc8e0df883",
-    "observation": "Both root-reviewed create and cold Reveal PNGs show ANTE $6, wallet $94, POT $24, same cup dice, but upper COV $0 / RISK $0 / RET $0. No Call/wager/choice occurred.",
+    "observation": "Initial DPR1 digits were read as zeros, but remain ambiguous on later image-only inspection. Actual native normal draw text and current isolated DPR2 Web show COV6/RISK6/RET0, wallet94/ante6/same cup.",
     "expected_source": "bar_dice.gd ritual authority assigns covered_total=at_risk_total=active_stake6 at Reveal; returned0 expected. Ritual projection clamps nonnegative without zeroing unfunded cover; surface_spec and ActionViewModel reviewed copies retain fields. Draw label reads flat fields and defaults missing values to0.",
-    "disposition": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks.",
+    "disposition": "No wrong-value defect reproduced; no production display patch justified. Own diagnostic commit753 associated. Investigation remains Open only for required exact publication/reconciliation, with old pixel ambiguity retained.",
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json",
       "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/create/reveal.png",
       "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/cold/reveal.png"
     ],
-    "next_action": "Narrow independent nonfinancial reproduction to capture the first surface-field/projection boundary; compare warm/cold expected6 labels. Never replay a prior Call or touch original profile/denied documents."
+    "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
+    "historical_initial_interpretation": {
+      "observation": "Both root-reviewed create and cold Reveal PNGs show ANTE $6, wallet $94, POT $24, same cup dice, but upper COV $0 / RISK $0 / RET $0. No Call/wager/choice occurred.",
+      "disposition": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks.",
+      "next_action": "Narrow independent nonfinancial reproduction to capture the first surface-field/projection boundary; compare warm/cold expected6 labels. Never replay a prior Call or touch original profile/denied documents.",
+      "scope": "Retained initial DPR1 interpretation before the qualified native and high-density Web checks; not a current confirmed zero-value finding."
+    },
+    "commits": [
+      "753d6eb5d832695901fad640af3c6b557efbdc48"
+    ]
   },
   "final_metadata_checkpoint": {
     "commit": "dff23f66e6ecf60a31b5b4c65b7509dc8e0df883",
@@ -5180,8 +5189,8 @@
     "owned_jobs_ended": 21
   },
   "continuation_20261106": {
-    "observed_at": "2026-11-06T05:32:13.288233+00:00",
-    "state": "committed_next_pending",
+    "observed_at": "2026-11-06T06:07:21.202382+00:00",
+    "state": "qualified_committed_main_publisher_blocked",
     "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
     "production_change": {
       "path": "scripts/ui/foundation_main.gd",
@@ -5484,6 +5493,60 @@
         "outside_tasks": 46,
         "all_unique_ids": 283,
         "owned_jobs_ended": 41
+      }
+    },
+    "final_publisher_block": {
+      "observed_at": "2026-11-06T06:07:21.202382+00:00",
+      "phase": "failed_before_next_promotion",
+      "published_main": "cbc90bd417c862fa4fc8ce2f586a40185b93d4a7",
+      "published_tree": "1232882f2ecf0acc829c9fc518f1b0990d6a262c",
+      "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+      "failed_at": "2026-11-06T06:04:09Z",
+      "status_reference": "D:\\Projects\\site\\state\\bth-next\\status.json",
+      "status_sha256_at_capture": "1ab9180aa4f5f956fa5e6c2ab8ee14ea62275b2cc9023484892b4f4d8a75b9f5",
+      "error": "Command '['powershell.exe', '-NoProfile', '-NonInteractive', '-File', 'D:\\\\Projects\\\\site\\\\scripts\\\\grant-bth-published-read.ps1', '-BuildDirectory', 'D:\\\\Projects\\\\site\\\\projects\\\\beat-the-house\\\\public\\\\play\\\\dev\\\\cbc90bd417c862fa4fc8ce2f586a40185b93d4a7', '-Apply']' returned non-zero exit status 1.",
+      "build_log": "state\\bth-next\\logs\\cbc90bd417c862fa4fc8ce2f586a40185b93d4a7-1793944917495950400.log",
+      "export_and_pck_audit": "passed; PCK AUDIT PASS files=1166",
+      "stage_receipt": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\staged\\cbc90bd417c862fa4fc8ce2f586a40185b93d4a7-7408418cacca17f11914556a1df4e4c785783518a5fc88b1966ab218ca6b23e1.json",
+      "stage_sha256": "99ceb4c5a239b2820f24972c596d1412a4cad62af7d98c54225cf685b567bee9",
+      "archive_sha256": "7408418cacca17f11914556a1df4e4c785783518a5fc88b1966ab218ca6b23e1",
+      "staged_file_count": 16,
+      "deployed_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+      "deployed_at": "2026-11-06T04:12:23Z",
+      "capacity": {
+        "schema": "bth.exact_promotion_capacity/v1",
+        "d_free_bytes": 38802292736,
+        "d_required_bytes": 12019111503,
+        "archive_bytes": 41656225,
+        "payload_bytes": 73733711,
+        "promotion_overhead_bytes": 134217728,
+        "archive_retained_on_d": false,
+        "service_reserve_bytes": 10737418240,
+        "safety_margin_bytes": 1073741824,
+        "admitted": true
+      },
+      "ephemeral_cleanup": {
+        "source": "E:\\CodexTaskStorage\\bth-next-build-cbc90bd417c862fa4fc8ce2f586a40185b93d4a7-1793944861845870600",
+        "removed": true,
+        "ignored_files_checked": 1643,
+        "owned_record": "D:\\Projects\\site\\state\\bth-next\\retention\\attempts\\bth-next-build-cbc90bd417c862fa4fc8ce2f586a40185b93d4a7-1793944861845870600.json",
+        "terminal_state": "failed"
+      },
+      "exact_startup": "NOT_ATTEMPTED: required exact NEXT promotion was not observed; no Job42 or public startup pass invented.",
+      "reason_and_limit": "The same existing automated local QA read-grant command returned1 on two independently built main commits. Original helper stderr is not retained by the installer/watcher, so its precise underlying reason remains unknown. Exact original44ea helper retry succeeded under approved execution with RX-only proof, but did not promote NEXT. No further rebuild loop, manual export, immutable replacement, pointer write, infrastructure edit or watcher restart was attempted.",
+      "next_trigger": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
+      "local_checkpoint_publication": "Local evidence checkpoint only; additional immediate push withheld because it would trigger another known-failing publication cycle. Tested code and prior association/recovery evidence are already on mainCBC.",
+      "manual_reconciliation": {
+        "checked_at": "2026-11-06T06:07:35.107467Z",
+        "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-block-reconciliation.json",
+        "sha256": "95ba10b0d9f6aa90d97a2ba5217a09242150105afefd42e14e5bcaf49076b6ee",
+        "own_findings": 0,
+        "outside_findings": 413,
+        "outside_tasks": 47,
+        "all_unique_ids": 283,
+        "owned_jobs_ended": 41,
+        "git_verification": true,
+        "scope": "Present-time manual check; all outside findings preserved without assignment or state changes."
       }
     }
   }

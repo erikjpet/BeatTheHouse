@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T05:58:42.838325+00:00",
+  "updated_at": "2026-11-06T06:07:21.202382+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25291,7 +25291,7 @@
         }
       },
       "state": "open",
-      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
+      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25330,7 +25330,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
         ],
-        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
+        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
       },
       "evidence": [
         {
@@ -25356,7 +25356,7 @@
         {
           "kind": "named_open_followup",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "summary": "BTH061-BAR-DICE-COVER-DISPLAY-001: COV0/RISK0 in both Web Reveal PNGs retained as an unattributed display discrepancy; no custody/debit claim."
+          "summary": "Cover-display task retains historical initial zero reading and later no-confirmed-value-defect disposition; its own diagnostic753 is associated. Still Open solely for required publication/reconciliation."
         },
         {
           "kind": "continuation_qualified_native_and_public_web",
@@ -25367,26 +25367,31 @@
           "kind": "publisher_recovery_checkpoint",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
+        },
+        {
+          "kind": "repeated_existing_publisher_block",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
         }
       ],
       "implementation_batches": [
         "BTH061-BAR-DICE-SHUTDOWN-001"
       ],
-      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
+      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
+        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:58:42.838325+00:00",
+        "observed_at": "2026-11-06T06:07:21.202382+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:58:42.838325+00:00"
+      "updated_at": "2026-11-06T06:07:21.202382+00:00"
     },
     {
       "id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
@@ -25453,7 +25458,7 @@
         }
       },
       "state": "open",
-      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
+      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
       "owner": {
         "name": "Bar Dice cover/risk display investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25477,18 +25482,18 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
+        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
       },
       "evidence": [
         {
           "kind": "public_web_display_observation",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
-          "summary": "Both root-reviewed create and cold Reveal PNGs show ANTE $6, wallet $94, POT $24, same cup dice, but upper COV $0 / RISK $0 / RET $0. No Call/wager/choice occurred."
+          "summary": "Historical initial DPR1 screenshot interpretation suggested zeros. Later image-only review leaves those tiny digits ambiguous; actual native text and isolated DPR2 Web show6/6/0. No paid inputs and no confirmed lost cup/debit/value defect."
         },
         {
           "kind": "source_expectation_not_causal_proof",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "summary": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks."
+          "summary": "Historical early source-only uncertainty superseded by recorded actual normal draw and high-density Web checks; no wrong-value defect supported. Original small-pixel ambiguity remains."
         },
         {
           "kind": "actual_dpr2_public_web_and_native_trace",
@@ -25499,24 +25504,29 @@
           "kind": "publisher_recovery_checkpoint",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
+        },
+        {
+          "kind": "repeated_existing_publisher_block",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
+      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
+        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:58:42.838325+00:00",
+        "observed_at": "2026-11-06T06:07:21.202382+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:58:42.838325+00:00"
+      "updated_at": "2026-11-06T06:07:21.202382+00:00"
     }
   ],
   "batches": [
@@ -26015,7 +26025,7 @@
       "aliases": [],
       "group": "current",
       "state": "open",
-      "status": "QUALIFIED_FIX_COMMITTED_PUBLICATION_RECOVERY_PENDING",
+      "status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
       "owner": {
         "name": "Bar Dice shutdown ownership fix (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -26039,7 +26049,7 @@
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Qualified fix is on main; initial44ea export passed but pre-promotion QA grant failed. Exact existing grant retry verified18items/RXonly. Evidence-only new main checkpoint will follow the unchanged watcher. Exact NEXT not yet verified."
+        "scope": "Fix753 is published in mainCBC/tree1232882f. Both44ea andCBC exports/PCK1166 passed, but existing automated read grant failed before promotion; NEXT retains7d. Current exact served assets/basic launch not verified."
       },
       "evidence": [
         {
@@ -26051,22 +26061,27 @@
           "kind": "publisher_recovery_checkpoint",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "Fix753 and association44ea pushed; build/PCK1166 passed. NEXT retained7d after existing QA-grant failure. Exact unmodified helper retry exit0/Verifiedtrue RX18items and preservedowner/protection/otherACE. New metadata checkpoint uses unchanged watcher; all3Open pending exact release."
+        },
+        {
+          "kind": "repeated_existing_publisher_block",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Both independent main44ea/CBC builds passed export/PCK1166 but automated read-grant returned1 before pointer promotion. CBC/tree1232882f is currentmain; NEXT7d, noJob42/newstartup. Precise originalstderr unavailable. All41ownedJobsended/0. All3Open; localfinalcheckpoint avoidsanotherknown-failingimmediatepush."
         }
       ],
-      "next_action": "Publish this evidence-only checkpoint through authorized main and observe the existing watcher; verify actual descendant SHA/tree, served assets and basic startup, then reconcile all3 IDs before Complete. Do not replace immutable44ea, replay a Call, retry denied documents or change pipeline/audience.",
+      "next_action": "Existing publisher/resource owner diagnoses the automated grant execution failure with retained stderr and recovers its normal promotion path while preserving immutable builds, stage hashes and disk/CPU guards. Then verify actual qualified descendant SHA/tree/assets/basic launch and reconcile all3 IDs before closure.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
-        "description": "Existing publisher has not promoted the qualified shutdown fix:44ea failed at local QA read grant before pointer change. Exact helper retry succeeded; fresh checkpoint publication through existing watcher remains pending. Original helper stderr unavailable.",
+        "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T05:58:42.838325+00:00",
+        "observed_at": "2026-11-06T06:07:21.202382+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-existing-publisher-grant.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
         ]
       },
-      "updated_at": "2026-11-06T05:58:42.838325+00:00",
+      "updated_at": "2026-11-06T06:07:21.202382+00:00",
       "parent_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
       "scope": [
         "Join only the current Host SaveService task at _exit_tree, including a coalesced task started in the final queued-deletion frame.",
