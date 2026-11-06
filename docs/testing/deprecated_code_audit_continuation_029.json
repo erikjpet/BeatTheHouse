@@ -1,11 +1,11 @@
 {
   "schema": "bth.deprecated_code_audit_continuation/029",
   "phase": "029",
-  "observed_at": "2026-11-06T05:57:20.454798+00:00",
-  "status": "LOCAL_TERMINAL_FIX_COMMITTED_FINAL343_PASS_TWO_BODY_REVIEWS_NEXT_PENDING",
+  "observed_at": "2026-11-06T06:01:15.668844+00:00",
+  "status": "LOCAL_FIX_COMMITTED_FINAL343_PASS_TWO_BODY_REVIEWS_COMPLETE_REQUIRED_NEXT_OPEN",
   "base_local_HEAD": "7b45be1422a7343edc021d830d5b0799dbae5ae7",
   "source_commit": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf",
   "tasks": {
     "parent": "BTH061-AUDIT-001",
     "fix": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
@@ -149,7 +149,8 @@
       "external_parity_callers_and_inherited_failures"
     ],
     "full_objective_complete": false,
-    "body_child_commit_association_pending": true
+    "body_child_commit_association_pending": false,
+    "body_child_state": "Complete with actual associated evidence commit"
   },
   "limits": [
     "No original personal incident saves, pointer/phone/Web or NEXT acceptance; native callback entrypoints are invoked synthetically.",
@@ -273,6 +274,29 @@
         "sha256": "c9f17f26fdf40d26bf18911ed3efd096b17122231ce7dba83c39f63257df75db"
       }
     },
-    "limit": "Age findings increased naturally since phase028 under unchanged24hour freshness policy. Historical missing/old evidence and unrelated owners remain factual findings. Final rerun follows evidence association; no guard weakened or original timestamp restamped."
+    "limit": "Final check after actual evidence association retains the same427/1043 historical findings; this owner has122runtimeage plus005/009blockerage only. No new consistency errors, original timestamps unchanged, no guard weakening.",
+    "final_after_actual_evidence_association": {
+      "current": 427,
+      "all": 1043,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 122,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-current-r3.json",
+          "sha256": "d1761f1059d39a6930464ec8e107da4a50414dc87eeafc905f0beb676b8323b4"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-all-r3.json",
+          "sha256": "b010f4a3fe74f26a2dde9f324b9eff114f14a39661387e54c1706d61169f89a2"
+        }
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T05:57:20.454798+00:00",
+  "updated_at": "2026-11-06T06:01:15.668844+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -26412,6 +26412,13 @@
             "scripts/tests/terminal_meta_durability_check.gd",
             "scripts/tests/terminal_meta_outcome_contract_check.gd"
           ]
+        },
+        {
+          "sha": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_029.json",
+            "docs/testing/deprecated_code_audit_continuation_029.md"
+          ]
         }
       ],
       "deployment": {
@@ -26484,7 +26491,7 @@
           "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
         }
       ],
-      "updated_at": "2026-11-06T05:57:20.454798+00:00"
+      "updated_at": "2026-11-06T06:01:15.668844+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26838,8 +26845,11 @@
             "id": "independent-review-and-commit",
             "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_029.json",
+              "docs/testing/deprecated_code_audit_continuation_029.md"
+            ]
           }
         ],
         "coverage": {
@@ -26867,14 +26877,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "TWO_COMPLETE_BODIES_AND_EXACT_META_DELTA_REVIEWED_EVIDENCE_COMMIT_ASSOCIATION_PENDING_029",
+      "state": "complete",
+      "status": "TWO_COMPLETE_BODIES_AND_EXACT_META_DELTA_REVIEWED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_029",
       "owner": {
         "name": "Audit phase029 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_029.json",
+            "docs/testing/deprecated_code_audit_continuation_029.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -26890,17 +26908,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate the actual phase029 evidence commit before completing this bounded body-review child; keep the whole audit and required NEXT fixes Open.",
+      "next_action": "Bounded two-body review is complete with actual evidence commit. Preserve parent audit Open with10 core and3 broader areas remaining; the separate terminal corrective task still requires NEXT.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent source review and scoped corrective work are active; no user/save/scheduler hold. Publication denial and cleanup stop remain separate.",
+        "description": "Bounded review and actual evidence commit association complete; no blocker for this child. Required NEXT and whole-audit remainder are separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T04:57:11.811627+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T06:01:15.668844+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_029.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:57:20.454798+00:00"
+      "updated_at": "2026-11-06T06:01:15.668844+00:00"
     }
   ],
   "batches": [

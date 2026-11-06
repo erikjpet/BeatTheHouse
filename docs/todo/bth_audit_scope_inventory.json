@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T05:57:20.454798+00:00",
+  "observed_at": "2026-11-06T06:01:15.668844+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2059,7 +2059,8 @@
       "denied_publication_retried": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_029.json",
       "full_objective_complete": false,
-      "body_state": "Independent reviews pass; evidence commit association pending"
+      "body_state": "Complete with actual evidence commit associated",
+      "associated_evidence_commit": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf"
     }
   ]
 }

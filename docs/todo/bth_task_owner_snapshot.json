@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T05:57:20.454798+00:00",
+  "observed_at": "2026-11-06T06:01:15.668844+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T05:57:20.454798+00:00",
-      "source": "Actualphase029 root active recording tested local a3a29fdb terminaldurability fix343 final checks; all five native Jobs closed0; two current bodies independentlyreviewed, evidencecommit association inprogress. Whole audit andrequiredNEXT Open; no cleanup or denied publicationretry."
+      "observed_at": "2026-11-06T06:01:15.668844+00:00",
+      "source": "Actualphase029 root active finalizing handoff: sourcea3a29fdb +evidencedc022052 committed;343finalchecks/227runtime records/all5newJobsclosed0; boundedMeta/Grand body029 complete withactualcommit. Fix026 andwholeauditOpen forrequiredNEXT/remainder. No cleanup or deniedpublicationretry."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
