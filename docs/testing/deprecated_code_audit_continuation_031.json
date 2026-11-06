@@ -1,0 +1,336 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/031",
+  "phase": "031",
+  "observed_at": "2026-11-06T07:40:02.542236+00:00",
+  "status": "THREE_BODY_AND_BOUNDED_WALK_QUALIFICATION_COMPLETE_CORRECTION_AND_REMAINDER_OPEN",
+  "base_local_HEAD": "1f7ef8572539008559e4aedd05ec374dc101bf4f",
+  "associated_evidence_commit": "62e1989e5f921b6418f70876a1d3010f10266156",
+  "tasks": {
+    "body": "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
+    "walk_qualification": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+    "conditional_rollback": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+    "classifier_cleanup": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+    "corrective": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+    "parent": "BTH061-AUDIT-001"
+  },
+  "source_count": 1250,
+  "source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "all1250_raw_source_pins_unchanged": true,
+  "product_source_changes": [],
+  "body_reviews": {
+    "lines": 9268,
+    "declarations": 596,
+    "methods": 429,
+    "files": [
+      {
+        "source": "scripts/core/content_library.gd",
+        "source_sha256": "74943e1ae863b2619e551e10355b85ec4d49c88e8f217dbe450054c3da8f35f8",
+        "lines": 4243,
+        "cards": 258,
+        "methods": 171,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-content-library-body-review-r1.json",
+        "author_sha256": "ddd90ff91c78ae7ef1356578de6d89e29e47c227e94fabe1602d61799c167bba"
+      },
+      {
+        "source": "scripts/core/crew_run_facade.gd",
+        "source_sha256": "f09e3f53588de820f9a213ace28e189deac7674eb86901479305000d34243b37",
+        "lines": 2472,
+        "cards": 178,
+        "methods": 135,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-crew-run-facade-body-review-r2.json",
+        "author_sha256": "3d8c8e31fe0acb75845eb2404087e10501adf42c1d776b2de4fe3c17f438246b"
+      },
+      {
+        "source": "scripts/core/run_action_service.gd",
+        "source_sha256": "a78487000372b5c58b7e2ee304d0ae2306733aca1d3c652e100ff7a43dff2575",
+        "lines": 2553,
+        "cards": 160,
+        "methods": 123,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-run-action-service-body-review-r1.json",
+        "author_sha256": "51531129d40d3b9eee4e2966740c4e9e8db6249fc7c4df9b4fe371800f85d6a3"
+      }
+    ],
+    "dispositions": {
+      "scripts/core/content_library.gd": "Complete4243-line/258-card body retained,171methods/39constants/46fields; reciprocal fullbody/rawLF/signature/blame/caller/history acceptance. Mutable same-ID lookup/canonical cache rebuild/Crew shortlist conditions are bounded without an ordinary player defect; production content immutability and alternate clock enqueue producer retained.",
+      "scripts/core/crew_run_facade.gd": "Complete2472-line/178-card body retained,135methods/5constants/36fields. Frozen authorR1 preserved; R2 corrects same-name bind receiver overreach; independent peer adds32 current-path versus34 follow-history complement. Live Crew owner/membership/restore interfaces remain active, not obsolete.",
+      "scripts/core/run_action_service.gd": "Complete2553-line/160-card body retained,123methods/31constants/4fields;254 direct calls/24files plus2 host property chains,14preloads,2literal dispatch and44/44history validated by reciprocal peer. Detached candidate/room/action validation and current typed contracts retained."
+    },
+    "source_conditions": "Content lookup same-size replacement/canonical cache rebuild/Crew shortlist conditions remain bounded without ordinary player failure; alternate clock producer and content immutability retained. Crew R1 and corrected R2 preserved; consume R2 with peer32current/34follow complement."
+  },
+  "walk_qualification": {
+    "native_exit": 0,
+    "healthy_controls": 12,
+    "failures": [],
+    "script_error": false,
+    "timed_out": false,
+    "owned_Job_remaining": 0,
+    "guard": "unchanged180sec/12percentaggregateCPU/2GiB assignedbeforeexecution/killonclose/noBreakaway; one root-only prepared-cache private-project attempt.",
+    "script_sha256": "037907b0b06af8c1155b8e71509ef232e9859002858895fedaa296cf999b537f",
+    "original_footer_sha256": "dc8f6e8ce0933aca90dc3b58726f7ba6bb5ba79fcb61058f54e8d4affd71be41",
+    "producer": {
+      "canonical_id": "meta_creased_luck_card_meta_2",
+      "canonical_string_present": false,
+      "entry": {
+        "class": "permanent",
+        "content_groups": [
+          "meta_collection"
+        ],
+        "description": "A bent house card that still lands face up.",
+        "display_name": "Creased Luck Card (Crisp)",
+        "domain": "global",
+        "effect": {
+          "baseline_luck_delta": 1.0,
+          "win_bonus": 1,
+          "win_chance": 1
+        },
+        "icon_key": "luck_card",
+        "id": "meta_creased_luck_card_meta_2",
+        "meta_collection": {
+          "collection_id": "roadside_luck",
+          "condition_band": "crisp",
+          "face_value": 0,
+          "floats": {
+            "condition": 0.896996212866389,
+            "potency": 0.192849721571628,
+            "resonance": 0.992113033307743,
+            "usage": 0.822050639987469
+          },
+          "instance_data": {},
+          "instance_id": 2,
+          "item_class": "collection",
+          "itemdef_id": 1000,
+          "loadout_eligible": true,
+          "players_card_tier": "",
+          "schema_version": 1,
+          "stack_amount": 0,
+          "tier": "blue"
+        },
+        "meta_value_multiplier": 0.92,
+        "price_max": 0,
+        "price_min": 0,
+        "sale_price": 0,
+        "sellable": false
+      },
+      "matches_normal_loadout": true,
+      "type": 27
+    },
+    "observed": {
+      "base_room_finalized": {
+        "errors": [],
+        "inactive": true,
+        "ok": true
+      },
+      "authority_ok": true,
+      "natural_heat_pending": true,
+      "dictionary_token_length": 857,
+      "dictionary_token_sha256": "2097f25c3c5e113fd290d4ff7bf269522b53a8182955009a287e420633875c23",
+      "canonical_id": "meta_creased_luck_card_meta_2",
+      "dictionary_result_ok": false,
+      "canonical_owner_result_ok": false,
+      "rejection_message": "That item is no longer in your pocket.",
+      "both_rejections_preserve_selected_observations": true,
+      "String_scratch_pad_result_ok": true,
+      "String_removed": true,
+      "Meta_Dictionary_retained": true,
+      "ditch_consumed": true,
+      "walk_to_pat_down": true
+    },
+    "fidelity": "Actual normal host Meta producer followed by explicit authored base-room public model integration; no full journey/scenario/UI/original-player or correction/NEXT acceptance.",
+    "limits": "Selected observation fields only, not a complete private state/RNG proof. Unchanged authored config; direct public room and heat inputs bypass journey/travel/town/game installation/scenario selection and leave original map cursor. No manual flags/authority edits or repair; no implementation/cleanup/retry.",
+    "meaning": "A real offered-choice/model-owner contract mismatch is reproduced at this bounded integration boundary.12 healthy setup controls passing are not a gameplay fix or proof of the full rendered journey.",
+    "no_source_correction": true,
+    "corrective_task": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031"
+  },
+  "placement_qualification": {
+    "scope": "Exact stable-local and earlier-return dominance of prop fragments149-152 anditem alternative165, with bounded shipping authored producer/caller witnesses.",
+    "qualified": true,
+    "implementation_removal_or_parity": false,
+    "task_stays_open": "Cleanup stopped; no alternate classifier or patch generated.",
+    "evidence": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-placement-shadowed-qualification-r1.json",
+      "sha256": "38377d3012e9bba58e402849f4a086b68dde5cc86f75f9b2de70fecfe806c4cd"
+    }
+  },
+  "rollback_qualification": {
+    "source_census": 224,
+    "direct_set_environment_sites": 2,
+    "observed_production_owner_chains_protected": true,
+    "Foundation_nested_travel_callers": 7,
+    "healthy_paired_unprotected_failure_producer_established": false,
+    "runtime_or_fix_attempted": false,
+    "task_stays_open": "Need naturally rejected valid Crew destination/cache plus an owner that neither restores nor discards. No invalid authority/callback/fault state or denied diagnostic used.",
+    "evidence": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-generator-rollback-qualification-r1.json",
+      "sha256": "c3eb1a691a4a39197c0db8d53f964eeec1fc3fde7dccc3a24ab89df236795c27"
+    }
+  },
+  "coverage": {
+    "core_before": 89,
+    "core_now": 92,
+    "core_total": 95,
+    "remaining_core": [
+      "scripts/core/run_state.gd",
+      "scripts/core/scenario_engine.gd",
+      "scripts/core/scenario_layout_resolver.gd"
+    ],
+    "broader_remaining": [
+      "ui_game_semantic_review_127_files",
+      "remaining_data_tools_generators_native_and_other_code_inventory",
+      "external_parity_callers_and_inherited_failures"
+    ],
+    "current_ui_game_inventory129_historical127_preserved": true,
+    "full_objective_complete": false,
+    "body_and_walk_qualification_children_complete": true
+  },
+  "custody": {
+    "changed_existing_rows": [
+      "BTH061-AUDIT-001",
+      "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+      "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030"
+    ],
+    "all_other296_old_rows_exact_types_values": true,
+    "new_rows": [
+      "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
+      "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031"
+    ],
+    "prior227_runtime_records_exact_types_values": true,
+    "runtime_records": 228,
+    "prior_local_fixes_and_required_NEXT_rows_preserved": true,
+    "prototype": "scripts/tests/scenario_validation_memo_type_safety_check.gd",
+    "prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "all_frozen_new_receipts_and_prior_work_preserved": true
+  },
+  "publication": {
+    "attempted": false,
+    "prior_denied_action": "git push origin HEAD:refs/heads/main",
+    "target": "erikjpet/BeatTheHouse refs/heads/main",
+    "state": "Specific new main authorization remains pending; available prior NEXT approval was insufficient. No retry or reroute; NEXT unverified."
+  },
+  "implementation_scope": "Item/scenario implementation remains paused, cleanup stopped. Qualification does not authorize source correction; new corrective task carries code-fix and exact NEXT criteria before completion. No new user pause policy added.",
+  "manual_reconciliation": {
+    "current": 437,
+    "all": 1053,
+    "exit_codes": [
+      1,
+      1
+    ],
+    "owned_findings": {
+      "RUNTIME_STALE_OBSERVATION": 132,
+      "BLOCKER_STALE": 2
+    },
+    "owned_stale_blockers": [
+      "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+      "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+    ],
+    "new_scope_consistency_errors": 0,
+    "prior_observations_restamped": false,
+    "reports": {
+      "current": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-current-r1.json",
+        "sha256": "95343b81c897f7cecd88598beafd2c41364d4474c5ae6e959219dd5f3c8adbb8"
+      },
+      "all": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-all-r1.json",
+        "sha256": "a5bcb3a69b27d6e19570e7841d207ed93876612b3c1edbe17b4fac313336da71"
+      }
+    },
+    "limit": "Final R2 after association reports439/1055 historical findings. Two more unchanged old observations crossed the24hour limit during this turn; own134runtimeage plus005/009blockerage only, no new consistency errors. All prior227 records preserved, no restamping.",
+    "final_after_actual_evidence_association": {
+      "current": 439,
+      "all": 1055,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 134,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-current-r2.json",
+          "sha256": "c61376b1b3024f591a90227261936da467af0e9f6bc9469d3f0400cd0b5edefb"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-manual-all-r2.json",
+          "sha256": "ccf885f7070283e5978373db8dc65835feeb4ef35b99460b5426e7e21d12727a"
+        }
+      }
+    }
+  },
+  "evidence": {
+    "catalog031-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json",
+      "sha256": "336169b503bedab1ccec5784bdcd033102e7c0a9346e9a32f3cc0b5bac8b1c41"
+    },
+    "catalog031-corrective-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-corrective-registration-r1.json",
+      "sha256": "749117b5e76b24af57356df4b5f8420d0167330c88aca41e0312ebadacfb56b3"
+    },
+    "catalog031-content-library-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-content-library-body-review-r1.json",
+      "sha256": "ddd90ff91c78ae7ef1356578de6d89e29e47c227e94fabe1602d61799c167bba"
+    },
+    "catalog031-content-library-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-content-library-peer-review-r1.json",
+      "sha256": "11bbc2faa07cf92561e89cfcbd21c7262418036eee3231c6f8bf8bdd40082c6e"
+    },
+    "catalog031-crew-run-facade-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-crew-run-facade-body-review-r1.json",
+      "sha256": "a7425d39dc4dfd4f230c43bb02eaf7b5c23b0bb3f6ba246a3fa23d886fc79342"
+    },
+    "catalog031-crew-run-facade-body-review-r2.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-crew-run-facade-body-review-r2.json",
+      "sha256": "3d8c8e31fe0acb75845eb2404087e10501adf42c1d776b2de4fe3c17f438246b"
+    },
+    "catalog031-crew-run-facade-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-crew-run-facade-peer-review-r1.json",
+      "sha256": "7a89b6680308b50bc7f2eb79c982c36424e66286518a94744823b4c3b541f65c"
+    },
+    "catalog031-run-action-service-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-run-action-service-body-review-r1.json",
+      "sha256": "51531129d40d3b9eee4e2966740c4e9e8db6249fc7c4df9b4fe371800f85d6a3"
+    },
+    "catalog031-run-action-service-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-run-action-service-peer-review-r1.json",
+      "sha256": "f53e19e249b4a94701be5aac2d83be0e5beb1c7320b2e4a0aa6f902490deed55"
+    },
+    "catalog031-three-body-root-bytecheck-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-three-body-root-bytecheck-r1.json",
+      "sha256": "b4cae60b82c0bb08425052e0df071f95fe90efa5d477f08255da25f49c54d02d"
+    },
+    "catalog031-placement-shadowed-qualification-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-placement-shadowed-qualification-r1.json",
+      "sha256": "38377d3012e9bba58e402849f4a086b68dde5cc86f75f9b2de70fecfe806c4cd"
+    },
+    "catalog031-generator-rollback-qualification-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-generator-rollback-qualification-r1.json",
+      "sha256": "c3eb1a691a4a39197c0db8d53f964eeec1fc3fde7dccc3a24ab89df236795c27"
+    },
+    "catalog031-walk-public-producer-design-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-public-producer-design-r1.json",
+      "sha256": "19f60adb9ab7aa2eaa24053abb0dd4cc2cd540d0a1575bb30beaea68f7e1932c"
+    },
+    "catalog031-walk-public-producer-proposal-r1.gd.txt": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-public-producer-proposal-r1.gd.txt",
+      "sha256": "3cb72452ef684b440e52e5c83d92ab5d8cf9861e078677b7d45a23aeac56f4d9"
+    },
+    "catalog031-walk-admission-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-admission-peer-r1.json",
+      "sha256": "0a40281dfda16ce816950b3bbc80e3bb30e6d03f45aeab3348d8b237ee9de3a8"
+    },
+    "catalog031-walk-native-results-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json",
+      "sha256": "0e631d398906ad11c5ef8b52d720373343c58efb7dfe9d79a0e0c8545dd9cea9"
+    },
+    "catalog031-walk-root-postcheck-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json",
+      "sha256": "3ecc3811626e08f6ee5a9e0b65fe6e0d68abdb0e29a097069c65aa4b27ec0f7d"
+    }
+  }
+}

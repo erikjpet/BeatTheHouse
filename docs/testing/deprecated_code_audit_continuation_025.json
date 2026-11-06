@@ -1,0 +1,213 @@
+{
+  "schema": "bth.deprecated_audit_continuation/v1",
+  "phase": "025",
+  "observed_at": "2026-11-06T01:12:08.756308+00:00",
+  "status": "BOUNDED_BODY_AND_PATH_INVENTORY_COMPLETE_ASSOCIATED_LOCAL_EVIDENCE_COMMIT_FINDINGS_OPEN",
+  "base_local_HEAD": "104da4254c5f422fae01711b77ed6747f571543a",
+  "associated_evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+  "task": "BTH061-AUDIT-DELIVERY-CYCLE-PUBLICATION-RITUAL-COVERAGE-025",
+  "followups": [
+    "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+    "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+    "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025"
+  ],
+  "source_count": 1247,
+  "source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
+  "changed_source_files": [],
+  "reviewed_files": {
+    "scripts/core/crew_delivery_schedule.gd": {
+      "sha256": "b0561f994d63aef738f04cbd65b408a9f5d67f42433e5983b22d19fef48aabff",
+      "lines": 107,
+      "methods": 9,
+      "constants": 5,
+      "fields": 1
+    },
+    "scripts/core/scenario_venue_cycle.gd": {
+      "sha256": "f2fb291b9fc48262d782bbabc25d882405bb86656cd98ffba4e14d4accace50a",
+      "lines": 118,
+      "methods": 6,
+      "constants": 4,
+      "fields": 0
+    },
+    "scripts/core/room_presentation_publication.gd": {
+      "sha256": "8c1e7fbcad9fba50fc217d8ce353a592d3a1b0c580e78720e86a1b0d602e8661",
+      "lines": 511,
+      "methods": 21,
+      "constants": 7,
+      "fields": 11
+    },
+    "scripts/core/game_ritual_runtime.gd": {
+      "sha256": "c8a770a11effc946c24d6f8bf6773ba9bc717bd96adba192fcc9ea4502f42f3d",
+      "lines": 1016,
+      "methods": 77,
+      "constants": 9,
+      "fields": 7
+    }
+  },
+  "body_totals": {
+    "lines": 1752,
+    "methods": 113,
+    "constants": 25,
+    "fields": 19
+  },
+  "coverage": {
+    "recorded_core_reviewed_before": 73,
+    "new_complete_core_bodies": 4,
+    "recorded_core_reviewed": 77,
+    "recorded_core_remaining": 18,
+    "broader_remaining": 3,
+    "total_remaining": 21,
+    "previous73_requalified": false,
+    "whole_audit_complete": false
+  },
+  "retention": {
+    "all_current_declarations_retained": true,
+    "cleanup_performed": false,
+    "source_edited": false,
+    "instance_runtime_distinction": "Production games and UI consume GameRitualRuntime static canonical helpers. Its instance executor/host is consumed by maintained contracts; fail-closed process_command/restore/snapshot wrappers do not constitute active mutation authority and are retained compatibility guards.",
+    "delivery_and_cycle": "Current appointment/earliest-deadline/shared-clock and one-time legacy migration remain live. Scenario retirement/attachment preserves paid machine state and unrelated owners; no obsolete fallback established."
+  },
+  "findings": [
+    {
+      "task": "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+      "classification": "confirmed_static_contract_discrepancy_runtime_impact_unqualified",
+      "description": "Runtime and schema qualified-id helpers discard empty dot atoms; frozen docs and PowerShell contract reject them. No current player/runtime failure demonstrated."
+    },
+    {
+      "task": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+      "classification": "confirmed_static_contract_discrepancy_runtime_impact_unqualified",
+      "description": "Instance move/set_position reads anchor, while frozen contract requires anchor_id. Current inspected three ritual definitions contain no move/set_position; no authored failure exhibited."
+    },
+    {
+      "task": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
+      "classification": "conditional_source_authority_reuse_lead_runtime_impact_unqualified",
+      "description": "Room proof reuse uses value Dictionary equality while full manifest validation requires native integer schema/revision. Reuse is reachable, but hypothesized type-only mutation requires a retained nested live alias after publication; canonical producers normalize integers and root assignment invalidates publication."
+    }
+  ],
+  "retained_unqualified_leads": [
+    "Publication _compilation_kind is written metadata with no current body read; no safe removal performed.",
+    "Publication global surface freshness and RunState publication-failure return need complete transaction attribution before bug claims.",
+    "Ritual malformed-container restore control flow remains unqualified; no runtime assertion.",
+    "Delivery endpoint-only interval scan assumes no sub30minute closure; all18 current venues satisfy it. Such shorter closures are not forbidden by general minute schema, but no current authored trigger exists."
+  ],
+  "independent_peer": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-four-file-peer-review-r1.json",
+    "sha256": "84e7fd2db4514815097b31eba47bfaad74c4ad2cc05b8cfc070119f3ead7af1c",
+    "status": "PASS bounded independent source/receipt agreement; all source retained",
+    "agreement": {
+      "lines": 1752,
+      "methods": 113,
+      "constants": 25,
+      "fields": 19,
+      "method_spans_and_raw_body_hashes_checked": 113,
+      "available_lf_method_hashes_checked": 36,
+      "constant_and_field_declaration_spans_checked": 44,
+      "publication_and_ritual_raw_declaration_hashes_checked": 34,
+      "supporting_current_raw_pins_checked": 84,
+      "explicit_historical_blob_sha256_pins_checked": 6,
+      "receipt_or_span_mismatches": [],
+      "all_four_body_retention_dispositions_supported": true
+    },
+    "receipt_blockers": []
+  },
+  "verification_scope": "Static complete-body/current-caller/history/contract review only; no test runtime, native, player-save, deployed or NEXT acceptance.",
+  "native_jobs": 0,
+  "runtime_inventory": {
+    "entries": 213,
+    "new_entries": 0,
+    "modified": false
+  },
+  "publication": {
+    "attempted": false,
+    "denied024_operation_retried": false,
+    "network_operation": false,
+    "existing_local024_commits_preserved": true,
+    "existing_publication_task_exact_unchanged": true,
+    "source": "Latest parent expressly prohibits retrying denied publication; only local evidence commits are planned.",
+    "new_local_evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005"
+  },
+  "preservation": {
+    "paused8_exact_unchanged": true,
+    "numeric022_023_exact_unchanged_Open_NEXT_pending": true,
+    "phase024_rows_exact_unchanged": true,
+    "excluded_diagnostics_untouched": true,
+    "original_files_cleared": 0,
+    "source_changes": 0,
+    "portraits_changed": false,
+    "prototype_raw_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b"
+  },
+  "manual_reconciliation": {
+    "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "checked_at": "2026-11-06T01:12:34.556661Z",
+        "total_findings": 305,
+        "own_findings": 73,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 72,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 245,
+        "new_phase025_findings": 0
+      },
+      "all": {
+        "checked_at": "2026-11-06T01:12:32.507960Z",
+        "total_findings": 921,
+        "own_findings": 73,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 72,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 245,
+        "new_phase025_findings": 0
+      }
+    },
+    "note": "R2 after actual local evidence association; only historical own findings retained and zero phase025 consistency findings. Old runtime observations were not restamped. All guards and original failures preserved."
+  },
+  "NEXT_verified": false,
+  "whole_audit_complete": false,
+  "aggregate_acceptance": "Open, original Content180/Systems300/comparator43.712/outer330/shard55/all220 guards unchanged.",
+  "evidence_sha256": {
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-registration-r1.json": "defab0442d34880ab481c0cb0bed45bfe713eaf4b07a20474d705a725e43b672",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-source-findings-registration-r1.json": "1b923b09dbf35e79bd32716fcfd1badc6b58083b3b106e73327d20a1027bbaa8",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-delivery-cycle-review-r1.json": "0cbdfec68d085f5cb5fd0f11e312aea029de0e4685a3e063e1fd2604c55b9c31",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-publication-review-r1.json": "8edfb44aa8e34d50681a443dea770724f78714e74b0ace5386c98c2f0ce90e9f",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-ritual-review-r1.json": "c3c16522cd4751ac256cd17f72ce8ba3cf687b65738bf82b257be9f7ac7e1ccf",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-four-file-peer-review-r1.json": "84e7fd2db4514815097b31eba47bfaad74c4ad2cc05b8cfc070119f3ead7af1c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-source-and-protected-row-custody-r1.json": "4b62e6f874e2be4fe7c8f19c3808589a8f9090ee8ad1adffb2b1115ad114516e",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-remainder-path-registration-r1.json": "9f4ed221b30e491ff9e611e3aa819d86bc028fcd358ffdb0fb84e96929f60a5b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-inventory-r1.json": "7d5f2735678667b89ee89f30326c81fb69017595be93fa707aa91ee00fad4f89",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-root-metadata-r1.json": "327e1a318cc7cfc11195d2c59a5cf07f6ab91230734d4d69a4e7d8340a356637",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-independent-root-review-r1.json": "043b61bfc41eb264fede2585acc0ff58bbbc021b156dc85e98e1f9e0a32c8752",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-current-r1.json": "ab72f4d322b13a361712517d840ef7fb0e94d386063bd23004005de86bdaeb6d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-all-r1.json": "ea9f22aced6c5cd474228d9f908d1814e03621744183e97d299169f8cf6ce26c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-current-r2.json": "86542d22fe4d98507303e46563c1af6ddc2b2816ba5d08854fefeb3b79ae1913",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-manual-all-r2.json": "f2a123693158b9b0cbc1e1b8100fb56bdec43bd5b653cc331cc64ed430176633"
+  },
+  "tracked_path_inventory": {
+    "task": "BTH061-AUDIT-REMAINDER-PATH-INVENTORY-025",
+    "snapshot_local_HEAD": "104da4254c5f422fae01711b77ed6747f571543a",
+    "tracked_paths": 4139,
+    "paths_modes_blobIDs_index_equal_HEAD": true,
+    "source_looking_paths": 1031,
+    "source_looking_outside_initial95core_plus127UIgame": 809,
+    "current_UI_game": 129,
+    "original_UI_game_scan": 127,
+    "current_added_UI_game_paths": [
+      "scripts/games/slots/slot_bonus_recovery.gd",
+      "scripts/ui/web_save_durability_bridge.gd"
+    ],
+    "independent_classification_checks": 16556,
+    "interpretation": "Complete tracked path/blob metadata snapshot only; lexical source-looking/outside-reference is not shipped/unused/never-reviewed/obsolete or safe-removal classification. Existing semantic history still needs reconciliation.",
+    "exclusions": "Untracked025reportdocs, preservedprototype, ignored/generated/outside-repository paths are separate and not silently included. Phase025 commit adds two report-doc paths after snapshot.",
+    "semantic_acceptance": false,
+    "state": "bounded_metadata_snapshot_complete_actual_evidence_commit_associated",
+    "evidence_commit": "f99792e9dc35c28db3f378a095eb4f4196c25005",
+    "post_evidence_commit_tracked_path_count": 4141,
+    "post_snapshot_added_paths": [
+      "docs/testing/deprecated_code_audit_continuation_025.json",
+      "docs/testing/deprecated_code_audit_continuation_025.md"
+    ]
+  },
+  "body_review_complete": true
+}

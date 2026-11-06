@@ -1,0 +1,392 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/030",
+  "phase": "030",
+  "observed_at": "2026-11-06T06:40:40.993334+00:00",
+  "status": "FOUR_BODY_AND_CODE_INVENTORY_CHILDREN_COMPLETE_THREE_SOURCE_FOLLOWUPS_AND_PARENT_OPEN",
+  "base_local_HEAD": "705cef676c021904679d7bcae578bf6b24429e88",
+  "associated_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+  "tasks": {
+    "body": "BTH061-AUDIT-MODULE-GENERATION-COVERAGE-030",
+    "inventory": "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
+    "source_followups": [
+      "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+      "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030"
+    ],
+    "parent": "BTH061-AUDIT-001"
+  },
+  "source_count": 1250,
+  "source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "all_current1250_raw_hashes_unchanged": true,
+  "production_source_changes": [],
+  "new_native_or_runtime_tests": 0,
+  "prior_native_evidence": "Phase029 exact unchanged source:171 native host+172 DTO checks. Not rerun or widened here. All source/paused/task/prototype custody remains separate from runtime acceptance.",
+  "body_scope": {
+    "lines": 6480,
+    "declarations": 397,
+    "methods": 313,
+    "files": [
+      {
+        "source": "scripts/core/environment_placement.gd",
+        "source_sha256": "b44e90a4f10f79a26a89b84baabb0493883416625a89467cd4ff56308211b20a",
+        "body_lines": 694,
+        "cards": 66,
+        "methods": 32,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json",
+        "author_sha256": "18d5944fddfcea4c86da16e97419ee06ae7bc5fc69ef00f043001fc18467c1b8",
+        "semantic_acceptance": "Independent full-body peer receipts/explicit errata required separately; byte hashes do not prove semantic disposition."
+      },
+      {
+        "source": "scripts/core/event_module.gd",
+        "source_sha256": "e49570b707bdf40f421b4ad87ad2575f43fe69f0ad156333d79b1def69544aa9",
+        "body_lines": 1759,
+        "cards": 77,
+        "methods": 67,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json",
+        "author_sha256": "270b4b099ed5a5e7814b89f341250ab60b4cc1fd76a3daedd584d9045c59962d",
+        "semantic_acceptance": "Independent full-body peer receipts/explicit errata required separately; byte hashes do not prove semantic disposition."
+      },
+      {
+        "source": "scripts/core/game_module.gd",
+        "source_sha256": "ad6eedc53cfd66b03bcca2b38e7f93fdc52f9a0d9f726f98269d8380169fbe42",
+        "body_lines": 1926,
+        "cards": 150,
+        "methods": 134,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-game-module-body-review-r1.json",
+        "author_sha256": "73069c2bef65fd731d4dd02eeabdc6e1887b867dfbbf5b91dd1217e6d0dad9cd",
+        "semantic_acceptance": "Independent full-body peer receipts/explicit errata required separately; byte hashes do not prove semantic disposition."
+      },
+      {
+        "source": "scripts/core/run_generator.gd",
+        "source_sha256": "ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd",
+        "body_lines": 2101,
+        "cards": 104,
+        "methods": 80,
+        "all_current_declaration_starts_and_raw_LF_card_hashes_exact": true,
+        "author_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json",
+        "author_sha256": "6fbcbc17cfbee92b272ce18640c97f006e8a9ff75f14f1decfa09eec3ecb9894",
+        "semantic_acceptance": "Independent full-body peer receipts/explicit errata required separately; byte hashes do not prove semantic disposition."
+      }
+    ],
+    "dispositions": {
+      "scripts/core/environment_placement.gd": "Full694-line/66-declaration body retained, all32methods/25constants/7staticfields and compatibility source independently reviewed. Public valid_rect/support_for_rect remain supported by tools consumer3605. Only local classifier condition fragments are source-proven redundant; cleanup stays stopped. Frozen final author18d plus peer152f and explicit transient-draft provenance note are accepted together.",
+      "scripts/core/event_module.gd": "Full1759-line/77-declaration body retained, all67methods/4constants/4fields with caller/history/dispatch peer review. Source-only showdown Dictionary/String mismatch separately tracked; no runtime/implementation acceptance. Three literal dynamic-load dispatch complements recorded.",
+      "scripts/core/game_module.gd": "Full1926-line/150-declaration body retained;134methods/11constants/3fields,814 bounded calls/65files,253 overrides/11subclasses and actual history/caller seams independently agree. Timerzero/base apply-result conditions lack an ordinary failing trigger; not claimed as confirmed bugs.",
+      "scripts/core/run_generator.gd": "Full2101-line/104-declaration body retained;80methods/11constants/11fields. Frozen author6fbc plus peerb638 seven exact witness/history/container-description corrections form accepted evidence. Conditional inner rollback edge separately tracked; outer restoration and isolated practice caller scopes preserved, no ordinary triggering state proven."
+    },
+    "whole_declarations_removed": 0,
+    "reciprocal_reviews": "All four complete bodies have independent reciprocal peers. Consume RunGenerator author with seven explicit metadata/semantic errata and Environment author with exact tools caller complement/version note. Event peer adds three bounded literal dynamic-load calls; Game peer agrees without author errata."
+  },
+  "inventory": {
+    "baseline_tracked_paths": 4152,
+    "disclosed_code_files": 1033,
+    "roles": {
+      "native-build-source": 7,
+      "review-artifact-producer": 1,
+      "core": 95,
+      "ui-games": 129,
+      "tests": 428,
+      "active-location-tools": 302,
+      "archived-tools": 71
+    },
+    "records_csv": "docs/testing/deprecated_code_audit_code_universe_030.csv",
+    "csv_sha256": "e0d36d786a36594af152cb5f8b7b13334d44e3054c02a49b13ee13f2190acb65",
+    "independent_checks": 19,
+    "current_core_files": 95,
+    "historical_ui_game": 127,
+    "current_ui_game": 129,
+    "current_ui_files": 81,
+    "current_game_files": 48,
+    "two_added_ui_game_paths": [
+      "scripts/games/slots/slot_bonus_recovery.gd",
+      "scripts/ui/web_save_durability_bridge.gd"
+    ],
+    "selected_map_exclusions": {
+      "selected_map_count": 1250,
+      "selected_map_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+      "all_current1250_hashes_exact": true,
+      "tracked_code_covered_by_selected_map": 1032,
+      "tracked_code_outside_map": [
+        "review_artifacts/art_rework_test_10/build_geometry_locked_day.py"
+      ],
+      "untracked_prototype_inside_map": [
+        "scripts/tests/scenario_validation_memo_type_safety_check.gd"
+      ],
+      "interpretation": "The1250 envelope is exact selected qualification custody, not the entire tracked source/config universe. No prior runtime conclusion is widened or invalidated by this inventory."
+    },
+    "additional_config_outside_map": [
+      {
+        "path": "export_presets.cfg",
+        "sha256": "ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad",
+        "in_selected1250_custody_map": false,
+        "role": "Export packaging inputs"
+      },
+      {
+        "path": "default_bus_layout.tres",
+        "sha256": "80213e7b4f08420735ffdba6c5b86c60bba0b8bd6a30cb3bdbdd99005c9d476e",
+        "in_selected1250_custody_map": false,
+        "role": "Godot default audio resource"
+      },
+      {
+        "path": ".gdlintrc",
+        "sha256": "2b8f865e80837c80e5dc5c7a163a02600fa0e97dc1a60f3446e0e3389dcfbcb1",
+        "in_selected1250_custody_map": false,
+        "role": "Lint policy"
+      },
+      {
+        "path": ".gitattributes",
+        "sha256": "2cdf66f481d31812cb2eb3b650f6c0b7d012aca1e2b55214953385fe68e1812b",
+        "in_selected1250_custody_map": false,
+        "role": "Git text/merge policy"
+      },
+      {
+        "path": ".gitignore",
+        "sha256": "6943607511f867f5b8d5f08020a040d4083a7285b3f2141bbdfe76c866637b6d",
+        "in_selected1250_custody_map": false,
+        "role": "Local generated artifacts boundary"
+      }
+    ],
+    "source_export_presets": 4,
+    "archive_code_files": 71,
+    "outside_archive_literal_references": 39,
+    "outside_archive_source_files": 13,
+    "limit": "Full inventory of disclosed structural code definition only; not exhaustive embedded executable-content detection, shipped PCK/assets, native binary/import/export or semantic closure."
+  },
+  "findings": [
+    {
+      "id": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "state": "Open",
+      "status": "SOURCE_SUPPORTED_DICTIONARY_STRING_CHOICE_LEAD_RUNTIME_OPEN_030",
+      "objective": "Trace normal Meta Dictionary inventory through the authored House Calls trash/Crew walk choices and owner membership validation; qualify an ordinary public producer path before correction. Current source stringifies the entire Dictionary for choice identity and checks String membership against Dictionary inventory. Correcting only the displayed token would leave the owner mismatch. Item implementation remains outside this paused implementation scope.",
+      "blocker": {
+        "state": "active",
+        "kind": "acceptance_evidence",
+        "description": "Source producer/consumer types and authored choices are supported; no ordinary host/runtime reproduction or correction exists.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json"
+        ]
+      },
+      "next_action": "Qualify the ordinary public producer and item-identity boundary using permitted evidence, without forced private authority/callback state. Preserve current item/scenario implementation pause; do not infer a gameplay fix from this source-only finding.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
+    },
+    {
+      "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+      "state": "Open",
+      "status": "CONDITIONAL_SOURCE_ROLLBACK_CONTRACT_EDGE_ORDINARY_TRIGGER_UNPROVED_030",
+      "objective": "Investigate the inner set_environment rejection return before restore_on_failure restoration. Preserve explicit world/Grand/legacy outer rollback and isolated practice host restoration. No legitimate ordinary production state reaching the late Crew reconciliation rejection is established; this is a bounded contract question, not a confirmed player bug or an authorized patch.",
+      "blocker": {
+        "state": "active",
+        "kind": "acceptance_evidence",
+        "description": "Supported conditional source edge exists, but ordinary triggering prerequisites and uncovered production impact are unproved.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json"
+        ]
+      },
+      "next_action": "Establish legitimate ordinary caller prerequisites and whether outer rollback already covers them through permitted source/producer evidence. Do not force invalid Crew authority, callbacks or denied diagnostics; no speculative source change.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
+    },
+    {
+      "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+      "state": "Open",
+      "status": "SOURCE_PROVEN_LOCAL_CONDITION_REDUNDANCY_CLEANUP_STOPPED_030",
+      "objective": "Track only the classifier PERSON_EVENT_PROPS/clerk residual arms149-152 dominated by86/89-98 and item alternative165 dominated by61-62. Preserve live event-token/counter-token/drink/numbers/service paths, the whole classifier and public compatibility methods. No whole declaration obsoletion is proved. Source fragments are retained under the existing cleanup stop.",
+      "blocker": {
+        "state": "active",
+        "kind": "scope_restriction",
+        "description": "Cleanup/removal is explicitly stopped; the source-only audit does not authorize applying a deletion.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json"
+        ]
+      },
+      "next_action": "Retain the exact source candidate while cleanup remains stopped and continue other permitted audit work. If cleanup and the relevant implementation scope are explicitly resumed, independently review the narrow classifier delta and parity before removal; no action is requested now.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
+    }
+  ],
+  "other_game_conditions": "Timerzero sentinel and base discarded apply_result return are unqualified source conditions without established ordinary failing trigger; no extra bug/fix claim.",
+  "coverage": {
+    "core_reviewed_before": 85,
+    "core_reviewed_now": 89,
+    "core_total": 95,
+    "remaining_core": [
+      "scripts/core/content_library.gd",
+      "scripts/core/crew_run_facade.gd",
+      "scripts/core/run_action_service.gd",
+      "scripts/core/run_state.gd",
+      "scripts/core/scenario_engine.gd",
+      "scripts/core/scenario_layout_resolver.gd"
+    ],
+    "broader_remaining": [
+      "ui_game_semantic_review_127_files",
+      "remaining_data_tools_generators_native_and_other_code_inventory",
+      "external_parity_callers_and_inherited_failures"
+    ],
+    "full_objective_complete": false,
+    "body_and_inventory_children_complete": true
+  },
+  "custody": {
+    "changed_existing_rows": [
+      "BTH061-AUDIT-001"
+    ],
+    "all_other294_existing_rows_exact_native_types_values": true,
+    "new_rows": [
+      "BTH061-AUDIT-MODULE-GENERATION-COVERAGE-030",
+      "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
+      "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+      "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030"
+    ],
+    "all227_prior_runtime_records_and_whole_inventory_exact": true,
+    "all_prior_local_fix_commits_preserved": true,
+    "prototype_path": "scripts/tests/scenario_validation_memo_type_safety_check.gd",
+    "prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "new_environment_receipt_drafts": "Two transient new draft bytes66276/13a861 were overwritten before freeze and are not separately recoverable. Final18d plus version-note47581 and independentpeer152f are preserved and accepted; no preservation claim for draft bytes. No prior-turn source/evidence or user work was changed."
+  },
+  "optional_denied_read": {
+    "action": "Get-CimInstance Win32_Process",
+    "target": "Win32_Process optional source-census status inventory",
+    "outcome": "denied",
+    "reason": "Access denied",
+    "retry": false,
+    "impact": "None; source review completed independently. No global process census, mutation or native qualification."
+  },
+  "publication": {
+    "attempted": false,
+    "denied_operation": "git push origin HEAD:refs/heads/main",
+    "target": "erikjpet/BeatTheHouse refs/heads/main",
+    "known_outcome": "Previously denied before process creation; approval was for NEXT rather than specific main publication. No retry or reroute, new relevant approval still pending.",
+    "NEXT_verified": false
+  },
+  "manual_reconciliation": {
+    "initial_reports_preserved": {
+      "current": 434,
+      "all": 1050,
+      "correction": "Five newly appended readable rows initially fell after the named-ledger section. Existing IDs/content moved into the actual section; no checker weakened."
+    },
+    "current": 429,
+    "all": 1045,
+    "exit_codes": [
+      1,
+      1
+    ],
+    "owned_findings": {
+      "RUNTIME_STALE_OBSERVATION": 124,
+      "BLOCKER_STALE": 2
+    },
+    "stale_owned_blockers": [
+      "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+      "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+    ],
+    "new_scope_consistency_errors": 0,
+    "old_observations_restamped": false,
+    "reports": {
+      "current": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-current-r2.json",
+        "sha256": "1a48a1455359101d8f6378ef6fd322e98eb65e34c63639f8c726def2f4888606"
+      },
+      "all": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-all-r2.json",
+        "sha256": "00231324f180263bd3e02214288e38e523986bf62fa97fb0a9c2a194979221bf"
+      }
+    },
+    "limit": "Final after-association R3 retains429/1045 historical findings; own124runtimeage plus005/009blockerage only, no new consistency errors. Original observations and runtime JSON types/values unchanged.",
+    "final_after_actual_commit_association": {
+      "current": 429,
+      "all": 1045,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 124,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-current-r3.json",
+          "sha256": "3a36837be5683d156a3f2447860d2b4e163ac6bdac928c142dcf8804c28694ad"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-all-r3.json",
+          "sha256": "a3ec88cd4b7c40cc74dc21aa9ce91f845b5f7aaa2b7488e3e3e9b1999a8fcbd3"
+        }
+      }
+    }
+  },
+  "evidence": {
+    "catalog030-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-registration-r1.json",
+      "sha256": "bb43740eef0e3f2ff8586fe21f4da6b2e3d353e447db3c58b2889d9d751cd432"
+    },
+    "catalog030-universe-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-universe-registration-r1.json",
+      "sha256": "7ee96d67b7511222ab91c088f0a3d7d736a4a768c1e506b63241666fc9dc7b42"
+    },
+    "catalog030-findings-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-findings-registration-r1.json",
+      "sha256": "907d70361abf1626692ad188cf419dcd9d6042fa23f030ac216e31b4bea60ed6"
+    },
+    "catalog030-environment-placement-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json",
+      "sha256": "18d5944fddfcea4c86da16e97419ee06ae7bc5fc69ef00f043001fc18467c1b8"
+    },
+    "catalog030-environment-placement-receipt-version-note-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-receipt-version-note-r1.json",
+      "sha256": "47581c31f6237351d265bd759b6abb3498affda4d3f6890e6d602238a938af19"
+    },
+    "catalog030-environment-placement-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-peer-review-r1.json",
+      "sha256": "152fb0ec1cfa66f50cb0783cfa69074cc2b6c6a11f24d843b82a3f2ed4647739"
+    },
+    "catalog030-event-module-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json",
+      "sha256": "270b4b099ed5a5e7814b89f341250ab60b4cc1fd76a3daedd584d9045c59962d"
+    },
+    "catalog030-event-module-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-peer-review-r1.json",
+      "sha256": "2511dde865733e4d8fd24a37032f8eab3eb4fd47ccebe51abbb192cfcc9b0b32"
+    },
+    "catalog030-game-module-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-game-module-body-review-r1.json",
+      "sha256": "73069c2bef65fd731d4dd02eeabdc6e1887b867dfbbf5b91dd1217e6d0dad9cd"
+    },
+    "catalog030-game-module-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-game-module-peer-review-r1.json",
+      "sha256": "97ace3334eab3e06b8e6d949360af4cd1254625a14ab0406f9198f27db072b52"
+    },
+    "catalog030-run-generator-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json",
+      "sha256": "6fbcbc17cfbee92b272ce18640c97f006e8a9ff75f14f1decfa09eec3ecb9894"
+    },
+    "catalog030-run-generator-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-peer-review-r1.json",
+      "sha256": "b638d68fe22e86fd0228be4b6b1a4e8175820045c7e6a82314c0403c05c4e21e"
+    },
+    "catalog030-four-body-root-bytecheck-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-four-body-root-bytecheck-r1.json",
+      "sha256": "6df0e48664d50071b7261b732f93ee1e9cfa8e95c9ca9fd0dbf9c3301fd8eb9b"
+    },
+    "catalog030-code-universe-inventory-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-code-universe-inventory-r1.json",
+      "sha256": "fc016e0f64b613e56cd4b2544b3195e8d016b0ffeb0ae35e4453520665eca694"
+    },
+    "catalog030-code-universe-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-code-universe-peer-r1.json",
+      "sha256": "65720757f5c4dd831f571938ab3af85384b38ad5deeee005b040bf5f522c7f93"
+    }
+  },
+  "limits": [
+    "No source implementation/removal, item/scenario changes, new tests/native experiments, build/import/export/network or publication.",
+    "No runtime, ordinary-player reproduction, original personal save, pointer/phone/Web/NEXT or wider semantic acceptance follows from body reading/hash/history/reference counts.",
+    "All source/caller inventories are bounded as disclosed; comments/literal matches do not prove execution. All active/compatibility paths retained."
+  ]
+}

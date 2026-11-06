@@ -51,6 +51,7 @@ const STORE_STORAGE_KEYS := [
 	"starter_card_home_grant_applied", "meta_home", "trade_up_history",
 	"sale_history", "pending_sale", "pending_trade_up", "meta_rng",
 	"next_instance_id", "sal_resale", "terminal_bag_claims",
+	"terminal_special_outcomes", "next_terminal_special_receipt_id",
 ]
 
 const FIXTURE_PROVENANCE_TOKENS := [
@@ -744,6 +745,141 @@ func sal_resale_rng_snapshot() -> Dictionary:
 	return JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_store.get("sal_resale", {})).get("rng_streams", {}))
 
 
+# A separate counter keeps terminal recovery independent of Sal's stock RNG.
+func allocate_terminal_special_receipt() -> String:
+	var next_id := maxi(1, int(_store.get("next_terminal_special_receipt_id", 1)))
+	_store["next_terminal_special_receipt_id"] = next_id + 1
+	_state_revision += 1
+	return "terminal-outcome:%d" % next_id
+
+
+func commit_terminal_special_outcome(receipt: String, intent_json: String) -> Dictionary:
+	var suffix := receipt.trim_prefix("terminal-outcome:")
+	if not receipt.begins_with("terminal-outcome:") or not suffix.is_valid_int() or int(suffix) < 1 or str(int(suffix)) != suffix:
+		return {"ok": false, "message": "The terminal collection receipt is invalid."}
+	var plan_value: Variant = JSON.parse_string(intent_json)
+	if typeof(plan_value) != TYPE_DICTIONARY or int(plan_value.get("schema_version", 0)) != 1:
+		return {"ok": false, "message": "The terminal collection intent is invalid."}
+	var plan: Dictionary = plan_value
+	if typeof(plan.get("failed")) != TYPE_BOOL or typeof(plan.get("skip_failure_decay")) != TYPE_BOOL or typeof(plan.get("carried_ids")) != TYPE_ARRAY or typeof(plan.get("card_stamp")) != TYPE_DICTIONARY or typeof(plan.get("chip_stamp")) != TYPE_DICTIONARY or typeof(plan.get("prestige_result")) != TYPE_DICTIONARY or typeof(plan.get("prestige")) != TYPE_BOOL:
+		return {"ok": false, "message": "The terminal collection intent is incomplete."}
+	var receipts := JsonCoerceScript._copy_dict(_store.get("terminal_special_outcomes", {}))
+	if receipts.has(receipt):
+		var recorded := JsonCoerceScript._copy_dict(receipts[receipt])
+		if str(recorded.get("intent_json", "")) != intent_json or typeof(recorded.get("result")) != TYPE_DICTIONARY or not bool(recorded["result"].get("ok", false)):
+			return {"ok": false, "message": "The terminal collection receipt does not match its outcome."}
+		var reused := _terminal_special_result(JsonCoerceScript._copy_dict(recorded["result"]))
+		reused["reused"] = true
+		return reused
+	var before := snapshot()
+	_store["next_terminal_special_receipt_id"] = maxi(int(_store.get("next_terminal_special_receipt_id", 1)), int(suffix) + 1)
+	var result := _terminal_special_result(stage_terminal_special_outcome(plan))
+	receipts[receipt] = {"intent_json": intent_json, "result": result.duplicate(true)}
+	_store["terminal_special_outcomes"] = receipts
+	var save_error := save()
+	if save_error != OK:
+		_store = before
+		_rebuild_owned_instance_index()
+		_state_revision += 1
+		return {"ok": false, "save_error": save_error, "message": "Collection changes could not be saved. Choose Save to retry."}
+	return result
+
+
+func stage_terminal_special_outcome(plan: Dictionary) -> Dictionary:
+	var result := {"ok": true, "mutated": false, "card_reward": {}, "chips_reward": {}, "destroyed_cards": []}
+	var prestige := bool(plan.get("prestige", false))
+	if bool(plan.get("failed", false)):
+		if bool(plan.get("skip_failure_decay", false)):
+			return result
+		var carried_ids := JsonCoerceScript._copy_array(plan.get("carried_ids", []))
+		var consequences: Array = apply_failure_decay(carried_ids, str(plan.get("failure_seed", "")))
+		var destroyed_cards: Array = []
+		for consequence_value in consequences:
+			var consequence := JsonCoerceScript._copy_dict(consequence_value)
+			if str(consequence.get("item_class", "")) != CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD or not bool(consequence.get("destroyed_forever", false)):
+				continue
+			var stamp := JsonCoerceScript._copy_dict(consequence.get("instance_data", {}))
+			destroyed_cards.append({
+				"instance_id": int(consequence.get("instance_id", 0)),
+				"display_name": "Grand Casino Players Card",
+				"earned_route": str(stamp.get("route", "")),
+			})
+		result["destroyed_cards"] = destroyed_cards
+		result["mutated"] = not consequences.is_empty()
+	else:
+		if not JsonCoerceScript._copy_dict(plan.get("card_stamp", {})).is_empty():
+			var stamp := _terminal_special_stamp(JsonCoerceScript._copy_dict(plan.get("card_stamp", {})))
+			var card: Dictionary = mint_players_card(stamp)
+			if not card.is_empty():
+				var reward := {
+					"instance_id": int(card.get("instance_id", 0)),
+					"itemdef_id": int(card.get("itemdef_id", -1)),
+					"item_class": str(card.get("item_class", "")),
+					"display_name": "Grand Casino Players Card",
+					"condition": float(card.get("condition", 0.0)),
+					"instance_data": stamp,
+				}
+				result["card_reward"] = reward
+				result["mutated"] = true
+		if int(plan.get("chip_amount", 0)) > 0:
+			var chip_amount := maxi(0, int(plan.get("chip_amount", 0)))
+			var chip_stamp := _terminal_special_stamp(JsonCoerceScript._copy_dict(plan.get("chip_stamp", {})))
+			var chip_stack: Dictionary = mint_grand_casino_chip_stack(chip_amount, chip_stamp)
+			if not chip_stack.is_empty():
+				var quote: Dictionary = sale_quote(SALE_KIND_ITEM, int(chip_stack.get("instance_id", 0)))
+				var chip_reward := {
+					"instance_id": int(chip_stack.get("instance_id", 0)),
+					"itemdef_id": int(chip_stack.get("itemdef_id", -1)),
+					"item_class": str(chip_stack.get("item_class", "")),
+					"display_name": "Grand Casino Chips",
+					"stack_amount": chip_amount,
+					"face_value": chip_amount,
+					"fenced_gold_value": maxi(0, int(quote.get("price", 0))),
+					"fenced_gold_rate": float(quote.get("gold_rate", 0.0)),
+					"instance_data": chip_stamp,
+				}
+				result["chips_reward"] = chip_reward
+				result["mutated"] = true
+		if prestige:
+			result["prestige_result"] = JsonCoerceScript._copy_dict(plan.get("prestige_result", {}))
+	result["prestige"] = prestige
+	return result
+
+
+func _terminal_special_stamp(stamp: Dictionary) -> Dictionary:
+	for key in ["final_score", "days_survived", "chip_amount"]:
+		if stamp.has(key):
+			stamp[key] = int(stamp[key])
+	if stamp.has("tier_timeline"):
+		var timeline := JsonCoerceScript._copy_array(stamp["tier_timeline"])
+		for index in range(timeline.size()):
+			var entry := JsonCoerceScript._copy_dict(timeline[index])
+			entry["games_played"] = int(entry.get("games_played", 0))
+			entry["net_winnings"] = int(entry.get("net_winnings", 0))
+			timeline[index] = entry
+		stamp["tier_timeline"] = timeline
+	return stamp
+
+
+func _terminal_special_result(result: Dictionary) -> Dictionary:
+	for key in ["card_reward", "chips_reward", "prestige_result"]:
+		var reward := JsonCoerceScript._copy_dict(result.get(key, {}))
+		for integer_key in ["instance_id", "itemdef_id", "stack_amount", "face_value", "fenced_gold_value", "card_count", "drop_tier_bonus_steps"]:
+			if reward.has(integer_key):
+				reward[integer_key] = int(reward[integer_key])
+		if reward.has("instance_data"):
+			reward["instance_data"] = _terminal_special_stamp(JsonCoerceScript._copy_dict(reward["instance_data"]))
+		if result.has(key):
+			result[key] = reward
+	var destroyed := JsonCoerceScript._copy_array(result.get("destroyed_cards", []))
+	for index in range(destroyed.size()):
+		var card := JsonCoerceScript._copy_dict(destroyed[index])
+		card["instance_id"] = int(card.get("instance_id", 0))
+		destroyed[index] = card
+	result["destroyed_cards"] = destroyed
+	return result
+
+
 func allocate_sal_run_receipt(seed_text: String) -> String:
 	_ensure_store_ready()
 	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))
@@ -1341,6 +1477,15 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 	normalized["pending_sale"] = JsonCoerceScript._copy_dict(normalized.get("pending_sale", {}))
 	normalized["pending_trade_up"] = JsonCoerceScript._copy_dict(normalized.get("pending_trade_up", {}))
 	normalized["terminal_bag_claims"] = JsonCoerceScript._copy_dict(normalized.get("terminal_bag_claims", {}))
+	normalized["terminal_special_outcomes"] = JsonCoerceScript._copy_dict(normalized.get("terminal_special_outcomes", {}))
+	var next_receipt_id := maxi(1, int(normalized.get("next_terminal_special_receipt_id", 1)))
+	for receipt_value in normalized["terminal_special_outcomes"]:
+		var receipt := str(receipt_value)
+		if receipt.begins_with("terminal-outcome:"):
+			var suffix := receipt.trim_prefix("terminal-outcome:")
+			if suffix.is_valid_int():
+				next_receipt_id = maxi(next_receipt_id, int(suffix) + 1)
+	normalized["next_terminal_special_receipt_id"] = next_receipt_id
 	normalized["meta_rng"] = _normalize_meta_rng(normalized.get("meta_rng", {}))
 	normalized["next_instance_id"] = maxi(
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),

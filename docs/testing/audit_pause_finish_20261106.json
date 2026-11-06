@@ -1,0 +1,145 @@
+{
+  "schema": "bth.audit_pause_finish/v1",
+  "observed_at": "2026-11-06T09:06:32.056627+00:00",
+  "task": "BTH061-AUDIT-FINISH-PUBLISH-20261106",
+  "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+  "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+  "original_audit_HEAD": "9d7b360b3cd97a38bdbc171c675288e603fd5dd5",
+  "remote_main_before_integration": "6b43aa6ad8f951ae46c8a4732716201a3bbca421",
+  "outgoing_existing_commits": 22,
+  "new_audit_phase_started": false,
+  "new_tests_run": false,
+  "source_changes_made_during_closeout": false,
+  "paused_task_ids": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-INDEPENDENT-001",
+    "BTH061-AUDIT-CREW-BASELINE-004",
+    "BTH061-AUDIT-INTERRUPT-BASELINE-004",
+    "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+    "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+    "BTH061-AUDIT-LAYER-DEFINITION-013",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+    "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+    "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
+    "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+    "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020",
+    "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+    "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+    "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+    "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
+    "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+    "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+    "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+    "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+    "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+    "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+    "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+    "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+    "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
+  ],
+  "unfinished_acceptance_preserved": true,
+  "item_scenario_pause_and_excluded_diagnostics_unchanged": true,
+  "prior_push_denial_preserved_known_not_executed": true,
+  "new_specific_main_retry_permitted_once": true,
+  "retry_attempted": false,
+  "source_fix_commits": [
+    "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+    "1b2f12c1495159871432c87bffdd16b7f64a616b",
+    "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358"
+  ],
+  "source_basis": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "scope": "Publication/preservation of completed work only; no Phase033 registration/implementation/test. New user pause metadata retains previous statuses, blockers and next actions. No files cleared, branch reset or prototype staged.",
+  "main_published": false,
+  "NEXT_verified": false,
+  "documentation_reconciliation": {
+    "current": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-preserve-current-r1.json",
+      "sha256": "dfe0a750fc93c64c1e63f79385bb2a1b9b23898dd4c9cb01f42cd73e790b17e4",
+      "errors": 459,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no new owned ledger consistency errors. Existing old blocker-age findings are suppressed by the newly explicit user pause, not by changing the checker or observations."
+    },
+    "all": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-preserve-all-r1.json",
+      "sha256": "c92688d19a3627b19fa89a3be00cb8dbbc5c102f0adb478170851dbdfbaaa5dc",
+      "errors": 1075,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no new owned ledger consistency errors. Existing old blocker-age findings are suppressed by the newly explicit user pause, not by changing the checker or observations."
+    }
+  },
+  "existing_qualification_peer": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-publish-qualification-peer-r1.json",
+    "sha256": "f230bc295844226c47df2847a7f448242d5ed5c21efa20e3eb181b5d367c8778",
+    "results": {
+      "ritual_DTO": [
+        181,
+        0
+      ],
+      "no_run_snapshot": [
+        57,
+        0
+      ],
+      "terminal_durability": [
+        343,
+        0
+      ]
+    },
+    "limit": "Exact historical candidates; merged-main and NEXT not newly tested."
+  },
+  "finish_review_evidence": {
+    "audit-finish-publish-scope-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-publish-scope-peer-r1.json",
+      "sha256": "d9107e94d5d6d8294ea0a24d5f9b94e8703da15ff1c237e816a8171658c8f63e"
+    },
+    "audit-finish-publish-qualification-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-publish-qualification-peer-r1.json",
+      "sha256": "f230bc295844226c47df2847a7f448242d5ed5c21efa20e3eb181b5d367c8778"
+    },
+    "audit-finish-publish-merged-source-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-publish-merged-source-peer-r1.json",
+      "sha256": "4acd7e0b6cf7987f864b60dfe976dd7fc5f1f140a1d5816393fb2d7052b39e15"
+    },
+    "audit-finish-metadata-merge-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-metadata-merge-r1.json",
+      "sha256": "2555275e0e8e04ba70f81a9ced12fc4ec460b1689d5e768cba8a8dc35e73ee49"
+    }
+  },
+  "integration": {
+    "original_audit_HEAD": "9d7b360b3cd97a38bdbc171c675288e603fd5dd5",
+    "preservation_commit": "e5d11fecba939ffb7d89dc63115c1038d42a2c1c",
+    "main_parent": "6b43aa6ad8f951ae46c8a4732716201a3bbca421",
+    "common_base": "ac877121d68561c818f39fe3c81b892e8a13b932",
+    "existing_finished_commits": 22,
+    "additional_user_pause_preservation_commits": 1,
+    "source_merge": "Foundation exact audited source plus current main7-line shutdown join; other7outgoing sourcefiles and all8namedBarDice source/testfiles match their respective pinned parents.",
+    "metadata_merge": "Typed three-way union:309unique task rows; all254main and228audit runtime records retained exactly,269unique total;19owner records; three user-pause policies. No record observation restamped.",
+    "new_tests_or_source_fixes": false,
+    "scope_limit": "Historical core-body95/95 qualification refers to pinned audit9d7b snapshot, not a fresh whole merged-main audit or runtime pass. New main retains separately owned/tested BarDice changes; further audit work is paused."
+  },
+  "NEXT_blocker_before_push": {
+    "available_commit": "6b43aa6ad8f951ae46c8a4732716201a3bbca421",
+    "deployed_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+    "error": "Existing watcher published-directory read-permission step failed; no repair/bypass authorized or performed.",
+    "served_identity": "Only existing local pointer/status/next.json verified; immutable metadata filesystem ACL denied and normal HTTPS certificate verification failed. Those targets were not retried/rerouted; exact current served/launch unverified."
+  },
+  "merged_documentation_reconciliation": {
+    "current": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-merged-current-r1.json",
+      "sha256": "bcd2565fbcdcf5875c5db2c2ed18bf6128332d195db01b2d5573b6c1cea03bd4",
+      "errors": 438,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no owned ledger consistency errors or new merge drift. Full merged inventory269 preserves all original observations."
+    },
+    "all": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-merged-all-r1.json",
+      "sha256": "6f4c79d907798c4d04e433b1a0e03328f4cd55715442940ab325d091ef2e6467",
+      "errors": 1054,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no owned ledger consistency errors or new merge drift. Full merged inventory269 preserves all original observations."
+    }
+  },
+  "new_gameplay_native_browser_tests_run": false
+}

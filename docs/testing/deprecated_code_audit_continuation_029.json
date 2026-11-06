@@ -1,0 +1,302 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/029",
+  "phase": "029",
+  "observed_at": "2026-11-06T06:01:15.668844+00:00",
+  "status": "LOCAL_FIX_COMMITTED_FINAL343_PASS_TWO_BODY_REVIEWS_COMPLETE_REQUIRED_NEXT_OPEN",
+  "base_local_HEAD": "7b45be1422a7343edc021d830d5b0799dbae5ae7",
+  "source_commit": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
+  "associated_evidence_commit": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf",
+  "tasks": {
+    "parent": "BTH061-AUDIT-001",
+    "fix": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+    "body": "BTH061-AUDIT-META-GRAND-CORE-COVERAGE-029"
+  },
+  "original_source_count": 1248,
+  "source_count": 1250,
+  "original_manifest_sha256": "a4f50df9b6a880c61dfc8bff54bb8ccdb4ca67bf4426724f652c710668792fbf",
+  "candidate_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "changed_original_source": {
+    "scripts/core/collection_drop_service.gd": {
+      "original_sha256": "d1b22be116870581d6f402aac7b612f93204d712b789a579d0bdae0950ed129a",
+      "candidate_sha256": "8c123c2b0f612463b037855dfe7b57906ab7e180f371ac0cbcd88aab349726b0"
+    },
+    "scripts/core/meta_collection_service.gd": {
+      "original_sha256": "00600e749f4381fc95c7d712908c3b8df4bf3a31dae8bc650cabdba00d664e7b",
+      "candidate_sha256": "0ae6cbb7386c95dc7f7f3349b9241062bf50151131b6cd94b5d605adfe643676"
+    },
+    "scripts/ui/foundation_main.gd": {
+      "original_sha256": "7508bc2c17c2562267671c8d158c4da912f1e9a0633ef157bb4c7ddeacfc1a7d",
+      "candidate_sha256": "7eee37af5eb6cceb9a2fd7970de7923ca7d15bae9cdde71b47591b8c6f21cd33"
+    }
+  },
+  "other_original_sources_unchanged": 1245,
+  "new_source_files": [
+    "scripts/tests/terminal_meta_durability_check.gd",
+    "scripts/tests/terminal_meta_outcome_contract_check.gd"
+  ],
+  "new_production_removals": [],
+  "root_cause": "Old Drop eagerly mutated Meta plus terminal Run flags/story before Foundation attempted Meta.save. Failed save left a durable processed run checkpoint that suppressed later retries and resurrected a carried card on cold Continue.",
+  "correction": [
+    "Persist an immutable pending special-outcome receipt and intent in the run before collection effects. Independent terminal counter leaves Sal and game RNG untouched.",
+    "Meta stages existing card/chip/ordinary-decay operations and saves their result receipt in the same durable Meta generation. Pre-install failure restores owned/counter/loadout/RNG/index state and unrelated dirty work while revision stays monotonic; no disk reload rollback.",
+    "Apply Run flags/story only after durable Meta success. Always save Run acknowledgement separately; replay of the saved receipt retries a failed acknowledgement without repeating effects.",
+    "Guard live and cold Start/Home/Load/Delete/common leaving plus tutorial Skip; terminal tutorial completion/slot retirement/Home wait for durable outcome. Keep existing Sal stocking before card/chip allocation on every entry.",
+    "Retain eager public API as shared compatibility staging, with every production host caller on the durable path. Preserve processed legacy/no-record states without speculative reapplication; malformed modern receipts fail rather than becoming absent."
+  ],
+  "final_qualification": {
+    "host": {
+      "checks": 171,
+      "failures": 0,
+      "processes": 6,
+      "stages": {
+        "produce": {
+          "checks": 40,
+          "failures": [],
+          "pid": 27552
+        },
+        "pending-continue": {
+          "checks": 30,
+          "failures": [],
+          "pid": 28824
+        },
+        "continue": {
+          "checks": 27,
+          "failures": [],
+          "pid": 26136
+        },
+        "ack-produce": {
+          "checks": 26,
+          "failures": [],
+          "pid": 30576
+        },
+        "ack-continue": {
+          "checks": 18,
+          "failures": [],
+          "pid": 22576
+        },
+        "tutorial": {
+          "checks": 30,
+          "failures": [],
+          "pid": 27620
+        }
+      },
+      "fidelity": "Normal generated host/public Abandon/Save/navigation and fresh-process Continue; cold uncommitted Meta failure, restored Save, completed Continue. Ack-only window uses separately labelled public model preparation/commit boundaries with real run-temp fault. Tutorial uses actual authored queued dialogue choices, not complete earned Bronze or pointer play.",
+      "key_results": "Card1/live+disk while blocked and flags unprocessed; cold pending receipt/intent exact; after Save card0/one story; cold ack receipt replay one story/two receipts; tutorial failed grant keeps pending slot, retry card1/one story/Home, shared reward ID5 afterSal."
+    },
+    "domain": {
+      "checks": 172,
+      "failures": 0,
+      "fidelity": "Synthetic public RunState terminals and same-process fresh Meta.load, not host/player/coldprocess proof.",
+      "cases": [
+        "Hidden highroller card and entire receipt seed hiding",
+        "Tutorial starter card and upgraded-home loadout",
+        "37 uncashed chips with22 gold/60percent quote",
+        "Prestige-only integer counters first/replay",
+        "Warm/cold receipt reuse and exact-intent mismatch rejection",
+        "Real Meta .tmp failures restore ordinary condition/card/IDs/RNG/indexes/dirtygold17/bag1/item0.8",
+        "Ordinary carried condition0.75 to0.65 once",
+        "Legacy processed/no-record retained, unprocessed migrated, malformed modern run/store receipts rejected"
+      ]
+    },
+    "guard": "All native launches unchanged180sec/12percentaggregateCPU/2GiB, assignedbeforeexecution/killonclose/noBreakaway, exactownedJob0; prepared-cache privateprojects only.",
+    "final_source_exact": true,
+    "full_stage_footers_and_failures_preserved": true,
+    "PS_and_engine_UTF8_JSON_types_values_exact": true
+  },
+  "preserved_runs": {
+    "hostR3": "48checks1failed compound Dictionary pending-record equality, exit1/noScriptError/noTimeout/Job0; wrapper stopped cold stages.",
+    "hostR4": "119checks0fail, four processes, Job0. Actual public load proves schema int1 becomes float1, causing Dictionary inequality; exact String receipt/intent and terminal/unprocessed state survive.",
+    "domainR1": "172checks0fail, Job0; final R2 seven synthetic Meta files byte-identical.",
+    "no_execution_R1_R2_host_packets": "Preserved source-review revisions before native; R2 superseded by unused winning-seed removal; no native reruns of historical old source."
+  },
+  "body_reviews": {
+    "scripts/core/meta_collection_service.gd": {
+      "original_lines": 1998,
+      "original_declarations": 158,
+      "original_methods": 106,
+      "final_declarations": 163,
+      "retained_original_methods": 106,
+      "unchanged_original_method_bodies": 105,
+      "new_helpers": 5,
+      "result": "Retain full original body; exact correction adds terminal transaction helpers/storage keys and changes normalization. Original body plus independently reviewed final delta qualified. Original lexical alias inventory388 plus12 test-only complement=400;79 production unchanged."
+    },
+    "scripts/core/grand_casino_run_facade.gd": {
+      "lines": 1308,
+      "declarations": 95,
+      "methods": 67,
+      "result": "Retain complete current body and all active/compatibility paths. Corrected author R2 repairs44 prose descriptions from preserved R1; source/hash/caller/history/dispositions unchanged; reciprocal peer accepts corrected R2."
+    }
+  },
+  "coverage": {
+    "reviewed_before": 83,
+    "reviewed_now": 85,
+    "core_total": 95,
+    "core_remaining": [
+      "scripts/core/content_library.gd",
+      "scripts/core/crew_run_facade.gd",
+      "scripts/core/environment_placement.gd",
+      "scripts/core/event_module.gd",
+      "scripts/core/game_module.gd",
+      "scripts/core/run_action_service.gd",
+      "scripts/core/run_generator.gd",
+      "scripts/core/run_state.gd",
+      "scripts/core/scenario_engine.gd",
+      "scripts/core/scenario_layout_resolver.gd"
+    ],
+    "broader_remaining": [
+      "ui_game_semantic_review_127_files",
+      "remaining_data_tools_generators_native_and_other_code_inventory",
+      "external_parity_callers_and_inherited_failures"
+    ],
+    "full_objective_complete": false,
+    "body_child_commit_association_pending": false,
+    "body_child_state": "Complete with actual associated evidence commit"
+  },
+  "limits": [
+    "No original personal incident saves, pointer/phone/Web or NEXT acceptance; native callback entrypoints are invoked synthetically.",
+    "Legacy processed outcomes without receipts are ambiguous and deliberately retained; no speculative retroactive repair.",
+    "Receipt allocator assumes one host/profile slot with pending settlement before replacement; no new concurrent-service locking guarantee.",
+    "Live rollback uses the existing DurableStore transaction contract. The qualified physical faults are pre-install temp-directory failures; arbitrary compound install/restore failures are not proven universally disk-unchanged.",
+    "Stopped cleanup, paused item/scenario implementations, excluded diagnostics, prototype and every older failed packet remain preserved."
+  ],
+  "runtime_inventory": {
+    "before": 222,
+    "after": 227,
+    "new_jobs": 5,
+    "all_original222_exact_types_values_preserved": true,
+    "all_owned_remaining": 0
+  },
+  "evidence": {
+    "catalog029-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-registration-r1.json",
+      "sha256": "67a428f53a3d2cfe57eb9910af41a496588f023ee3bb30d00b47e206b52f9895"
+    },
+    "catalog029-meta-service-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-meta-service-body-review-r1.json",
+      "sha256": "83442fd668503f2f1870b7c51609b4aff110519dca829b0932935f7789e9a8b0"
+    },
+    "catalog029-meta-service-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-meta-service-peer-review-r1.json",
+      "sha256": "3a909c28ae5ad552d3e325b3c66afdd88737c1430d7e1ad2156e5835cec5b6f8"
+    },
+    "catalog029-grand-facade-body-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-grand-facade-body-review-r1.json",
+      "sha256": "0b0c6bd31723e94723886f941fde2675b918a3f841407e1694e7f69111c217b3"
+    },
+    "catalog029-grand-facade-body-review-r2.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-grand-facade-body-review-r2.json",
+      "sha256": "6f22867bfcae1cd5a92c93d6897ca363a0962d2edb04257ef7c30c82741a785c"
+    },
+    "catalog029-grand-facade-peer-review-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-grand-facade-peer-review-r1.json",
+      "sha256": "aa27a1264d83e962d2357cea6a382a78ae8443dd0a67019cb143471c901ec8a3"
+    },
+    "catalog029-meta-candidate-delta-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-meta-candidate-delta-peer-r1.json",
+      "sha256": "f95a4da2c23063b8d6f76dfc26b28a03fa4a119f4ffdea51b4b001bff3700ab4"
+    },
+    "catalog029-terminal-meta-design-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-terminal-meta-design-peer-r1.json",
+      "sha256": "3c7314a04e6e45bf8b64f0350ec3640de1f1e214f7f879838c522979c6ddc4a1"
+    },
+    "catalog029-terminal-navigation-peer-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-terminal-navigation-peer-r1.json",
+      "sha256": "523469d63360eb80b5259ef7e458fa6b3870116a25701110d397c31d0cbc2570"
+    },
+    "catalog029-host-admission-peer-r5.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-admission-peer-r5.json",
+      "sha256": "a7aade38d1127a4edc36d8d64f26ee6121d13dcd24d4abdb409ca09725716009"
+    },
+    "catalog029-host-native-results-peer-r5.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-native-results-peer-r5.json",
+      "sha256": "06c0800fbf4853efb9ef9b401e0f5ed2cfccebf43330f16a9bd3e18fa5a4189a"
+    },
+    "catalog029-domain-native-results-peer-r2.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-native-results-peer-r2.json",
+      "sha256": "ecc8d27964af67a25c6d38711a0355552534907df8de6dca6035baa5d356897c"
+    },
+    "catalog029-host-R3-root-postcheck.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-R3-root-postcheck.json",
+      "sha256": "62dc25d1620b303f615017b2b5a2c0a54d0b1593995d2841b9f3c4112c31144b"
+    },
+    "catalog029-host-R4-root-postcheck.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-R4-root-postcheck.json",
+      "sha256": "25ef632c4a91ca579b342d5707ee983d5c90bc120960674229a4a69787142167"
+    },
+    "catalog029-domain-R1-root-postcheck.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-R1-root-postcheck.json",
+      "sha256": "1fb525f87916ec5b5d1f85808f7678285b3d9e9ae1db0d2176cdf7517acf6062"
+    },
+    "catalog029-domain-R2-root-postcheck.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-R2-root-postcheck.json",
+      "sha256": "cd9ec5ca7184bb9518bbc8da22bf094546855b9ae9d941bee7d5267eaa67d6da"
+    },
+    "catalog029-host-R5-root-postcheck.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-R5-root-postcheck.json",
+      "sha256": "f2fab3653db9cb03f0013b6791159297067d6abbe26a9b3b8c2c75b48df652c5"
+    }
+  },
+  "publication": {
+    "attempted": false,
+    "denied_operation": "git push origin HEAD:refs/heads/main",
+    "target": "erikjpet/BeatTheHouse refs/heads/main",
+    "denial_reason": "Automatic review said NEXT authorization did not authorize this specific main-branch external commitment. Denied before process creation; no retry or reroute.",
+    "state": "new relevant approval pending",
+    "NEXT_verified": false
+  },
+  "manual_reconciliation": {
+    "initial_current": 428,
+    "initial_all": 1044,
+    "initial_exact_status_drift": "Parent exact status index was stale after new result; corrected before evidence commit, original R1 manual outputs preserved.",
+    "current": 427,
+    "all": 1043,
+    "exit_codes": [
+      1,
+      1
+    ],
+    "owned_findings": {
+      "RUNTIME_STALE_OBSERVATION": 122,
+      "BLOCKER_STALE": 2
+    },
+    "owned_stale_blockers": [
+      "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+      "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+    ],
+    "new_scope_consistency_errors": 0,
+    "original_runtime_and_blocker_observations_not_restamped": true,
+    "reports": {
+      "current": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-current-r2.json",
+        "sha256": "aaa4f5eecfa85f2e42d18882276f5ff4b8755841275ec05ee6cca32bcbd52056"
+      },
+      "all": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-all-r2.json",
+        "sha256": "c9f17f26fdf40d26bf18911ed3efd096b17122231ce7dba83c39f63257df75db"
+      }
+    },
+    "limit": "Final check after actual evidence association retains the same427/1043 historical findings; this owner has122runtimeage plus005/009blockerage only. No new consistency errors, original timestamps unchanged, no guard weakening.",
+    "final_after_actual_evidence_association": {
+      "current": 427,
+      "all": 1043,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 122,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-current-r3.json",
+          "sha256": "d1761f1059d39a6930464ec8e107da4a50414dc87eeafc905f0beb676b8323b4"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-manual-all-r3.json",
+          "sha256": "b010f4a3fe74f26a2dde9f324b9eff114f14a39661387e54c1706d61169f89a2"
+        }
+      }
+    }
+  }
+}

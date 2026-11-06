@@ -1,0 +1,410 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/032",
+  "phase": "032",
+  "observed_at": "2026-11-06T08:30:37.215638+00:00",
+  "status": "FINAL_THREE_CORE_SOURCE_BODY_REVIEWS_COMPLETE_FINDINGS_AND_BROADER_AUDIT_OPEN",
+  "base_local_HEAD": "4fc0e804bb0660ffce9b882530aa3b8ce2fff142",
+  "associated_evidence_commit": "c5c4a7467428af438d64b01c35abaa09b6ac06f9",
+  "tasks": {
+    "body": "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
+    "home_projection": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+    "delivery_precommit_owner": "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032",
+    "parent": "BTH061-AUDIT-001"
+  },
+  "source_count": 1250,
+  "source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "all1250_raw_source_pins_unchanged": true,
+  "product_source_changes": [],
+  "native_jobs": 0,
+  "runtime_records": 228,
+  "body_reviews": {
+    "lines": 21938,
+    "declarations": 1535,
+    "methods": 1164,
+    "run_state_lines": 18104,
+    "run_state_declarations": 1335,
+    "partitions": [
+      {
+        "section": "run-state-part1",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part1-body-review-r1.json",
+          "sha256": "91c22a5cd592745fb5b8728011caab8095ec3c20b78a5d7486338b10361324e4"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part1-peer-review-r1.json",
+          "sha256": "d32ef04e2a8b3b63a24209a56a9529afeace4bef0dab489d7cbf48e13ed219a7"
+        }
+      },
+      {
+        "section": "run-state-part2",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part2-body-review-r1.json",
+          "sha256": "b60253846de32b58a1d937b93dbab5abbfba503e588eb0ad502f7868a768563f"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part2-peer-review-r1.json",
+          "sha256": "4440f493106b3314b47a3c860b9748ad5bd4975ff1b87e9e00951ca13bce1735"
+        }
+      },
+      {
+        "section": "run-state-part3",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part3-body-review-r1.json",
+          "sha256": "657fedc993ae0a8baadd384dd623016f3b97aecce1205e488e456124a072d8a0"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part3-peer-review-r1.json",
+          "sha256": "170f19f09fef925c3ca1f2a98f4d3550e296b362c3d327198a92d68e74b45d50"
+        }
+      },
+      {
+        "section": "run-state-part4",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part4-body-review-r1.json",
+          "sha256": "75a68fa8416f6e736195beabba59eade1a8cbbf28ada5f61116b61851138b2bc"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part4-peer-review-r1.json",
+          "sha256": "6ec4ac8dc3a2c8fa9d45409260eb9f6884377f5e9abba925b0be626e4139a495"
+        }
+      },
+      {
+        "section": "scenario-engine",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-engine-body-review-r1.json",
+          "sha256": "dba1baf1308df77feb04c85af3cfb2d29f91ab8498fd40405955b034e0445e7d"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-engine-peer-review-r1.json",
+          "sha256": "c8e07f61c21182bfca6adca8fef99afca65c75f841459f46cdabef9a4f7fa77f"
+        }
+      },
+      {
+        "section": "scenario-layout-resolver",
+        "author": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-layout-resolver-body-review-r1.json",
+          "sha256": "dca7e8e96bf053908af619eef0df24aa35af58ec24db1376e2d7f09f85cbab02"
+        },
+        "peer": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-layout-resolver-peer-review-r1.json",
+          "sha256": "1db48db6e62a99228aaa833f831e99bc0ce60ac77dc235e8c431bcf161d75b5b"
+        }
+      }
+    ],
+    "bytecheck": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-six-part-root-bytecheck-r1.json",
+      "sha256": "7e972bc48f81f9bb2f9acd74ab7d50c0b6c86303b282ce9970cb325eb3c40613"
+    },
+    "disposition": "All declarations retained. Full current body retention is independently reviewed; bounded named caller/history evidence does not close all dynamic/external consumers or the whole codebase."
+  },
+  "coverage": {
+    "core_before": 92,
+    "core_now": 95,
+    "core_total": 95,
+    "remaining_core": [],
+    "broader_remaining": [
+      "ui_game_semantic_review_127_files",
+      "remaining_data_tools_generators_native_and_other_code_inventory",
+      "external_parity_callers_and_inherited_failures"
+    ],
+    "current_ui_game_inventory": 129,
+    "historical127_preserved": true,
+    "full_objective_complete": false,
+    "body_child_complete": true
+  },
+  "home_projection_finding": {
+    "task": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+    "source_supported_local_contradiction": true,
+    "ordinary_source_owner_chain": "Sleep -> advance_game_clock_minutes -> home day rollover -> lose_home; natural stay/rent expiry source chain, no generated native state qualified.",
+    "causal_contract": "lose_home sets active=false/lost=true before is_current_home_environment, whose active-home gate then makes room cleanup1502-1504 unreachable. Normal membership does not derive current_environment.home_lost from home_state; cached node loss and later current-room storage are distinct.",
+    "supported_consequence": "Intended current-room container clearing, home_lost stamp and layout refresh do not execute through this guard. A successful crossed-day source path can retain old room projection inputs alongside inactive/lost home state.",
+    "protections": "Storage mutation/pay/sleep/place actions remain gated by current active home; WorldMap lost-node travel eligibility remains protected. No usable lost storage, duplication, restored route or visible UI claim.",
+    "runtime_or_original_player_qualified": false,
+    "source_fix": false,
+    "NEXT_verified": false,
+    "state": "open"
+  },
+  "delivery_precommit_finding": {
+    "task": "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032",
+    "exact_source_and_observed_owner_difference_supported": true,
+    "spans": {
+      "precommit_cargo_removal": 11714,
+      "preview_before_local_snapshot": [
+        11727,
+        11733
+      ],
+      "unchecked_global_boundary": 13988,
+      "unchecked_sweep": 14214,
+      "checked_checkpoint": 15600
+    },
+    "ordinary_valid_rejecting_producer_established": false,
+    "stage_distinction": "Precommit preview rejection before local rollback ownership is separate from failure after commit_closed_checkpoint, which intentionally retains durable checkpoint for adapter retry.",
+    "guards": "Four read facade owners and clock path snapshot/check/restore; unchecked global/sweep owners remain a conditional source question. Detached execution is not alone proof of restoration when outward result remains ok.",
+    "runtime_bug_claim": false,
+    "state": "open"
+  },
+  "other_bounded_conditions": {
+    "stale_duel_comment": "RunState8346-8347 comment denies a current caller, but resolve_grand_casino_showdown_interrogation calls _begin_grand_casino_duel; retain actual code, comment is stale, no cleanup patch.",
+    "in_place_turn_rejection": "RunState13427 can choose in-place turn and late Crew membership finish13532 may reject. Ordinary valid rejecting producer remains unestablished; prior rollback question030 stays open, no forced qualification.",
+    "migration_envelope": "ScenarioEngine migration success envelope can ignore ensure result, but full RunState finalizer and refresh independently reject cleaned/empty states; no admitted harmful ordinary producer.",
+    "tutorial_timer_ordering": "Tutorial next pending talk and focused timer iteration order differ conditionally; normal tutorial cadence suppresses random talk and ordinary overlapping producer is unestablished.",
+    "resolver_fragments": "Parsed-empty conjunct and diagnostic residue are source-local notes only. No whole declaration obsolete, no parity/removal or runtime bug qualified."
+  },
+  "scope_disclosures": {
+    "part4": {
+      "initial_helper": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part4-mechanical-helper-r1.json",
+        "sha256": "ed28fad78bb70dc2afd135de1e7c352c866cb20fcb824acb89a43e342fdb288e"
+      },
+      "stricter_helper_already_finished_before_stop": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-run-state-part4-mechanical-helper-r2.json",
+        "sha256": "2e3fd62fdbb47c6748e85063470a603883bad1ac0ea5793b5c94a7ffbcb80186"
+      },
+      "scope_error": "Initial806-GD lexical source census missed the pre-read captured/personal filename boundary and read six captured-test sources plus the personality tool. The stricter R2 ten-path delta also conservatively excluded ordinary keys/profile source files; that does not make those .gd definitions private runtime payload. No captured save/profile payload file or private runtime key/capsule was loaded, constructed or executed. Exact initial filter and ten-path disclosure are preserved in author receipt.",
+      "qualification_disposition": "Neither R1 nor R2 broad census conclusions admitted for scoped external closure. Full assigned body/history and individually supported permitted witnesses are independently reviewed. R2 had completed when stop arrived; no further broad census or excluded reread."
+    },
+    "resolver": {
+      "note": {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-layout-resolver-caller-scope-note-r1.json",
+        "sha256": "2d38d0351a69d3e7ee7810a79fe83b915dd1ba5c4a9001a3032d0be713e286a9"
+      },
+      "scope_error": "Initial inline alias census lacked pre-read filename gate and loaded six captured-test source paths plus personality tool. No on-disk original helper existed; retained transcript and exact seven-path scope note preserved.",
+      "qualification_disposition": "Ungated109line/23file result is not accepted caller qualification. No fresh broad census; independent peer accepted complete body and18 individually qualified permitted witnesses only; broader caller closure remains open."
+    },
+    "no_original_artifact_rewritten_or_cleared": true,
+    "no_excluded_diagnostic_execution_or_reroute": true,
+    "source_access_perfection_claim": false
+  },
+  "custody": {
+    "changed_existing_rows": [
+      "BTH061-AUDIT-001"
+    ],
+    "all_other301_old_rows_exact_types_values": true,
+    "new_rows": [
+      "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
+      "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+      "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
+    ],
+    "whole_prior228_runtime_inventory_exact_types_values": true,
+    "prior_local_fixes_and_required_NEXT_rows_preserved": true,
+    "prototype": "scripts/tests/scenario_validation_memo_type_safety_check.gd",
+    "prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "cleanup_or_file_clearing": false
+  },
+  "implementation_scope": "Read-only source audit. Item/scenario implementation remains paused; cleanup stopped. No product/candidate patches, native qualification, process census, import/build/export/addons or denied access/diagnostic/publication retry. No new pause policy or missing-personal-save dependency introduced.",
+  "publication": {
+    "attempted": false,
+    "prior_denied_action": "git push origin HEAD:refs/heads/main",
+    "target": "erikjpet/BeatTheHouse refs/heads/main",
+    "state": "Auto-review denied before execution because prior NEXT approval did not cover specific main publication. New specific approval remains pending; no retry/reroute. NEXT unverified."
+  },
+  "evidence": {
+    "catalog032-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-registration-r1.json",
+      "sha256": "64dab4bfcdcea1951a488d22ac5bd95bb876b1479675923b46990051cc5818b7"
+    },
+    "catalog032-findings-registration-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-findings-registration-r1.json",
+      "sha256": "8b853a980eaffd3cc90e25b348f43ebba30acc153d4b5694dd8afc1664a7b136"
+    },
+    "catalog032-three-body-structural-index-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-three-body-structural-index-r1.json",
+      "sha256": "7623128be0b723cf595742fabca9b14a8bac69e6475a34da4da84bc0935d12ba"
+    },
+    "catalog032-history-root-index-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-history-root-index-r1.json",
+      "sha256": "7e33015e9fac86cb76e349e3a04321ac696c3028f6fa4de206692fc5b68670b0"
+    },
+    "catalog032-six-part-root-bytecheck-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-six-part-root-bytecheck-r1.json",
+      "sha256": "7e972bc48f81f9bb2f9acd74ab7d50c0b6c86303b282ce9970cb325eb3c40613"
+    },
+    "catalog032-scenario-layout-resolver-caller-scope-note-r1.json": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-layout-resolver-caller-scope-note-r1.json",
+      "sha256": "2d38d0351a69d3e7ee7810a79fe83b915dd1ba5c4a9001a3032d0be713e286a9"
+    }
+  },
+  "manual_reconciliation": {
+    "state": "Final actual-commit association reconciliation recorded.",
+    "initial_preflight_r1": {
+      "results": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-current-r1.json",
+          "sha256": "2e2cc79945f9a839878c3d611336fb1bfe4b162b8c8d244ac2d61e7b414b724c",
+          "errors": 458,
+          "parent_markdown_drift": [
+            {
+              "code": "MARKDOWN_STATUS_DRIFT",
+              "severity": "error",
+              "task_id": "BTH061-AUDIT-001",
+              "message": "Readable and structured exact status text differ.",
+              "evidence": [
+                "Markdown: THREE_MORE_BODIES_92_OF_95_META_WALK_MODEL_MISMATCH_QUALIFIED_CORRECTION_OPEN_031",
+                "JSON: ALL95_CORE_BODIES_RECORDED_THREE_BROADER_AREAS_AND_FINDINGS_OPEN_032",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\docs\\plans\\0.6.1_stability_release_plan.md"
+              ]
+            }
+          ]
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-all-r1.json",
+          "sha256": "4af0450713699b24be09cc327a46f3abf1b6e2dd4c56613dfef6e1b37c8bbc29",
+          "errors": 1074,
+          "parent_markdown_drift": [
+            {
+              "code": "MARKDOWN_STATUS_DRIFT",
+              "severity": "error",
+              "task_id": "BTH061-AUDIT-001",
+              "message": "Readable and structured exact status text differ.",
+              "evidence": [
+                "Markdown: THREE_MORE_BODIES_92_OF_95_META_WALK_MODEL_MISMATCH_QUALIFIED_CORRECTION_OPEN_031",
+                "JSON: ALL95_CORE_BODIES_RECORDED_THREE_BROADER_AREAS_AND_FINDINGS_OPEN_032",
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit-independent\\docs\\plans\\0.6.1_stability_release_plan.md"
+              ]
+            }
+          ]
+        }
+      },
+      "scope_error": "Root updated the plain parent table row but missed the existing aliased parent row. Required checker caught one MARKDOWN_STATUS_DRIFT; alias status/next-action repaired without changing ledger policy or checker. Original R1 reports preserved, corrected checkpoint uses new R1b paths.",
+      "corrected_alias_line": 808,
+      "corrected_checkpoint_delta": {
+        "current": {
+          "added_old_observations_crossing_24hour_guard": [
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Current identity is stale; revalidate through the permitted owner lifecycle."
+            ],
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Activity observation is stale; revalidate through the permitted owner lifecycle."
+            ]
+          ],
+          "removed_resolved_alias_drift": [
+            [
+              "MARKDOWN_STATUS_DRIFT",
+              "BTH061-AUDIT-001",
+              null,
+              "Readable and structured exact status text differ."
+            ]
+          ]
+        },
+        "all": {
+          "added_old_observations_crossing_24hour_guard": [
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Current identity is stale; revalidate through the permitted owner lifecycle."
+            ],
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Activity observation is stale; revalidate through the permitted owner lifecycle."
+            ]
+          ],
+          "removed_resolved_alias_drift": [
+            [
+              "MARKDOWN_STATUS_DRIFT",
+              "BTH061-AUDIT-001",
+              null,
+              "Readable and structured exact status text differ."
+            ]
+          ]
+        }
+      },
+      "count_explanation": "One actual parent alias status drift was resolved; two unchanged historical runtime observations crossed24hours between checks. Hence458/1074 initial findings became459/1075 after repair, with no new assigned consistency errors or restamping."
+    },
+    "r1b": {
+      "results": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-current-r1b.json",
+          "sha256": "475f99d75f2ea5e86a85a8692834d6a191b3de3a0856a3eef71e434e1ead8290",
+          "checked_at": "2026-11-06T08:28:57.441256Z",
+          "errors": 459,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-all-r1b.json",
+          "sha256": "81dd87a50ec8719623a75911b1a5a1126be1519fcf0ca8fc906be0e93b3f2fd2",
+          "checked_at": "2026-11-06T08:28:58.113978Z",
+          "errors": 1075,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        }
+      },
+      "exit_codes": [
+        1,
+        1
+      ],
+      "new_assigned_scope_consistency_errors": 0,
+      "old_runtime_records_or_blockers_restamped": false,
+      "limit": "Present-time unchanged24hour policy reports historical stale runtime/blocker evidence. Entire old228 runtime inventory and all301 unrelated rows remain exact; this source audit neither refreshes unobserved process states nor clears old findings."
+    },
+    "r2": {
+      "results": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-current-r2.json",
+          "sha256": "75d03dde062071c02cf552cb140d134ccb2cde93d546a81586d8d7642bc7dade",
+          "checked_at": "2026-11-06T08:30:48.285986Z",
+          "errors": 459,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-all-r2.json",
+          "sha256": "9a01a5eb4d64a858b9ef8215328a73ae0f9516fedf01ccc54e3635d325821848",
+          "checked_at": "2026-11-06T08:30:47.631986Z",
+          "errors": 1075,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        }
+      },
+      "exit_codes": [
+        1,
+        1
+      ],
+      "new_assigned_scope_consistency_errors": 0,
+      "old_runtime_records_or_blockers_restamped": false,
+      "limit": "Present-time unchanged24hour policy reports historical stale runtime/blocker evidence. Entire old228 runtime inventory and all301 unrelated rows remain exact; this source audit neither refreshes unobserved process states nor clears old findings."
+    }
+  },
+  "receipt_prose_count_correction": {
+    "artifact": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-scenario-engine-peer-review-r1.json",
+    "sha256": "c8e07f61c21182bfca6adca8fef99afca65c75f841459f46cdabef9a4f7fa77f",
+    "field": "consumer_peer.scope",
+    "original_prose_file_count": 11,
+    "correct_file_count": 9,
+    "explicit_span_records": 19,
+    "basis": "Root independently counted19 explicit spans and9support_pins; peer author confirmed prose-count correction. Body/raw hash checks are unaffected. Frozen peer R1 preserved; no source or author receipt erratum."
+  }
+}

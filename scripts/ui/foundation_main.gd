@@ -1253,6 +1253,8 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:
 	if not _ensure_run_ui_built():
 		return false
+	if not _settle_terminal_meta_before_replacement():
+		return false
 	_clear_run_audio_caches()
 	if library == null:
 		_initialize_foundation()
@@ -6983,6 +6985,8 @@ func save_foundation_run() -> void:
 func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = false) -> bool:
 	if run_state == null:
 		return false
+	if run_state.is_terminal() and not _settle_terminal_meta_outcome(run_state):
+		return false
 	if _is_meta_session():
 		return false
 	if dev_game_test_mode:
@@ -6996,6 +7000,8 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	# deliberately separate from JSON serialization/disk I/O: a later deferred
 	# flush must not mutate RunState during an unrelated hover/focus frame.
 	_prepare_foundation_run_save()
+	if run_state.is_terminal() and not _settle_terminal_meta_outcome(run_state):
+		return false
 	# Never make a player action wait for disk I/O. The pending slot coalesces
 	# rapid/repeating actions and the game-surface guard waits out animations.
 	# Always leave at least one draw boundary before serialization so a newly
@@ -7262,6 +7268,9 @@ func load_foundation_run() -> bool:
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	if _web_manual_save_pending:
+		return false
+	if run_state != null and run_state.is_terminal() and not _settle_terminal_meta_outcome(run_state):
+		_show_message(save_status_message)
 		return false
 	if not _ensure_run_ui_built():
 		return false
@@ -19052,6 +19061,8 @@ func request_delete_saved_run() -> void:
 func confirm_delete_saved_run() -> void:
 	if save_service == null:
 		return
+	if not _settle_terminal_meta_before_replacement():
+		return
 	var error := save_service.clear_run(autosave_slot_id)
 	if error != OK:
 		_show_message("Could not delete the saved run.")
@@ -19101,6 +19112,8 @@ func _confirm_skip_tutorial() -> void:
 	if _web_manual_save_pending:
 		return
 	if run_state == null or not run_state.is_tutorial_run():
+		return
+	if not _settle_terminal_meta_before_replacement():
 		return
 	if not _complete_tutorial_profile():
 		return
@@ -19239,6 +19252,8 @@ func _apply_meta_collection_loadout_to_run() -> void:
 
 func _save_foundation_run_before_leaving(status_text: String) -> bool:
 	_drain_rourke_resolution()
+	if not _settle_terminal_meta_before_replacement():
+		return false
 	if run_state == null or _is_meta_session() or dev_game_test_mode:
 		return true
 	if _room_recovery_active_for_current_room():
@@ -19974,6 +19989,8 @@ func open_meta_home() -> void:
 func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -> Dictionary:
 	if not _ensure_run_ui_built():
 		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
+	if not _settle_terminal_meta_before_replacement():
+		return {"ok": false, "errors": [save_status_message]}
 	var clean_location := location_id.strip_edges()
 	if clean_location == META_LOCATION_START_RUN:
 		if not start_meta_quick_run():
@@ -20880,7 +20897,7 @@ func save_status_snapshot() -> Dictionary:
 		"visible_objective": _objective_hud_text() if run_state != null else "",
 		"visible_bankroll": _presented_bankroll() if run_state != null else 0,
 		"visible_run_status": run_state.run_status if run_state != null else "",
-		"visible_pressure": _pressure_status_text(pressure),
+		"visible_pressure": _pressure_status_text(pressure) if run_state != null else "",
 		"visible_environment": str(run_state.current_environment.get("display_name", "")) if run_state != null else "",
 		"visible_suspicion": run_state.suspicion_level() if run_state != null else 0,
 		"visible_risk": _risk_cue_text() if run_state != null else "",
@@ -21543,8 +21560,8 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return false
 	var tutorial_exit := run_state.is_tutorial_run()
-	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
-	_process_terminal_meta_bag_drops()
+	var meta_outcome_saved := _process_terminal_meta_bag_drops()
+	var tutorial_exit_saved := not tutorial_exit or (meta_outcome_saved and _complete_tutorial_profile())
 	_record_profile_run_result_once(terminal_result)
 	if tutorial_exit and tutorial_exit_saved:
 		tutorial_exit_saved = _clear_tutorial_resume_slot()
@@ -21569,6 +21586,8 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 
 func _tutorial_bronze_home_handoff_ready() -> bool:
 	return run_state != null \
+		and collection_drop_service != null \
+		and not collection_drop_service.terminal_special_outcome_pending(run_state) \
 		and run_state.is_tutorial_run() \
 		and run_state.run_status == RunState.RUN_STATUS_ENDED \
 		and str(run_state.narrative_flags.get("demo_victory_route", "")) == "tutorial_bronze_card" \
@@ -21597,8 +21616,8 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		return false
 	var tutorial_exit := run_state.is_tutorial_run()
-	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
-	_process_terminal_meta_bag_drops()
+	var meta_outcome_saved := _process_terminal_meta_bag_drops()
+	var tutorial_exit_saved := not tutorial_exit or (meta_outcome_saved and _complete_tutorial_profile())
 	_record_profile_run_result_once(terminal_result)
 	if tutorial_exit and tutorial_exit_saved:
 		tutorial_exit_saved = _clear_tutorial_resume_slot()
@@ -21619,6 +21638,8 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 
 func _save_terminal_resume_checkpoint() -> bool:
 	if run_state == null or not run_state.is_terminal():
+		return false
+	if collection_drop_service != null and collection_drop_service.terminal_special_outcome_pending(run_state):
 		return false
 	# Tutorials intentionally clear their Resume Slot after awarding the starter
 	# profile state. Practice and meta sessions follow their existing no-save rule.
@@ -21667,37 +21688,92 @@ func _present_terminal_run_screen() -> void:
 	_render_run_report()
 
 
-func _process_terminal_meta_bag_drops() -> void:
-	if run_state == null or not run_state.is_terminal():
-		return
+# Pending special-outcome intent is saved before its collection effects. The collection then
+# saves the effects and receipt atomically; the last run save acknowledges it.
+# A failed acknowledgement can replay that receipt without repeating effects.
+func _settle_terminal_meta_outcome(target: RunState) -> bool:
+	if target == null or not target.is_terminal():
+		return true
 	if meta_collection_service == null or collection_drop_service == null:
 		_initialize_meta_collection()
-	var sal_stock: Dictionary = collection_drop_service.stock_sal_after_success(run_state, meta_collection_service)
+	# Stock keeps its original position before card/chip allocation on every
+	# entry, including direct Save and cold-menu replacement of a terminal run.
+	var sal_stock: Dictionary = collection_drop_service.stock_sal_after_success(target, meta_collection_service)
 	if bool(sal_stock.get("stocked", false)) or bool(sal_stock.get("recovered", false)):
 		run_report_model_key = ""
 		save_status_message = "Sal's shelf updated."
 		if save_service != null:
-			var receipt_save_error := save_service.save_run(run_state, autosave_slot_id)
+			var receipt_save_error := save_service.save_run(target, autosave_slot_id)
 			if receipt_save_error != OK:
 				save_status_message = "Sal stocked; terminal receipt save failed."
-	var tutorial_card_victory := run_state.is_tutorial_run() \
-		and run_state.run_status == RunState.RUN_STATUS_ENDED \
-		and [RunState.GRAND_CASINO_HIGH_ROLLER_EVENT_ID, "tutorial_bronze_card"].has(str(run_state.narrative_flags.get("demo_victory_route", "")))
-	if not run_state.meta_collection_enabled_for_run() and not tutorial_card_victory:
-		return
-	var special_outcome: Dictionary = collection_drop_service.apply_terminal_special_outcome(run_state, meta_collection_service)
-	if bool(special_outcome.get("mutated", false)):
-		var special_save_error := meta_collection_service.save()
-		if special_save_error == OK:
-			save_status_message = "Meta collection updated."
-			if tutorial_card_victory and not JsonCoerceScript._copy_dict(special_outcome.get("card_reward", {})).is_empty():
-				_complete_tutorial_profile()
+	if dev_game_test_mode or bool(target.narrative_flags.get("_meta_home_session", false)):
+		return true
+	if not collection_drop_service.terminal_special_outcome_pending(target):
+		return true
+	if save_service == null:
+		save_status_message = "Run storage is unavailable. Collection changes remain pending."
+		return false
+	var prepared: Dictionary = collection_drop_service.prepare_terminal_special_outcome(target, meta_collection_service)
+	if not bool(prepared.get("ok", false)):
+		save_status_message = str(prepared.get("message", "Collection changes remain pending."))
+		return false
+	if not bool(target.narrative_flags.get(CollectionDropServiceScript.SPECIAL_OUTCOME_PROCESSED_FLAG, false)):
+		# Always write this boundary, including retries of a preparation whose
+		# preceding run write failed. No in-memory flag proves that write durable.
+		var prepare_error := save_service.save_run(target, autosave_slot_id)
+		if prepare_error != OK:
+			save_status_message = "Could not save the pending collection outcome. Choose Save to retry."
+			return false
+	var result: Dictionary = collection_drop_service.commit_terminal_special_outcome(target, meta_collection_service)
+	if not bool(result.get("ok", false)):
+		save_status_message = str(result.get("message", "Collection changes could not be saved. Choose Save to retry."))
+		return false
+	target.narrative_flags[CollectionDropServiceScript.SPECIAL_OUTCOME_ACK_FLAG] = true
+	# The preparation checkpoint is not the outcome acknowledgement. Force its
+	# write even if a previous report refresh set the normal checkpoint flag.
+	target.narrative_flags[TERMINAL_RESUME_CHECKPOINT_FLAG] = true
+	var ack_error := save_service.save_run(target, autosave_slot_id)
+	if ack_error != OK:
+		target.narrative_flags[CollectionDropServiceScript.SPECIAL_OUTCOME_ACK_FLAG] = false
+		target.narrative_flags.erase(TERMINAL_RESUME_CHECKPOINT_FLAG)
+		save_status_message = "Collection saved; run acknowledgement could not be saved. Choose Save to retry."
+		return false
+	save_status_message = "Meta collection updated."
+	run_report_model_key = ""
+	return true
+
+
+func _settle_terminal_meta_before_replacement() -> bool:
+	if run_state != null and not _is_meta_session():
+		if _settle_terminal_meta_outcome(run_state):
+			return true
+		_show_message(save_status_message)
+		return false
+	# Home, New Run and Delete can be chosen directly from a cold menu. Settle
+	# only terminal pending saves; ordinary active Resume Slots remain untouched.
+	if save_service != null:
+		var saved: Variant = save_service.load_run(autosave_slot_id)
+		if saved is RunState and saved.is_terminal() and not _settle_terminal_meta_outcome(saved):
+			_show_message(save_status_message)
+			return false
+	return true
+
+
+func _process_terminal_meta_bag_drops() -> bool:
+	if run_state == null or not run_state.is_terminal():
+		return true
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	if not _settle_terminal_meta_outcome(run_state):
+		return false
 	if not run_state.meta_collection_enabled_for_run():
-		return
+		return true
 	if run_state.run_status == RunState.RUN_STATUS_FAILED:
-		return
+		return true
 	if run_state.run_status == RunState.RUN_STATUS_ENDED:
 		collection_drop_service.ensure_run_end_pending_bags(run_state, profile_inventory)
+
+	return true
 
 
 func claim_victory_collection_bag(marker_id: String) -> void:

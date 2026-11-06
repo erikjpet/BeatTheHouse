@@ -476,7 +476,7 @@ func _apply_operations(candidate: Dictionary, operations: Array) -> String:
 			var actor: Dictionary = actors[target]
 			if verb == "set_pose": actor["pose"] = str(arguments.get("pose", ""))
 			elif verb == "set_behavior": actor["behavior"] = str(arguments.get("behavior", ""))
-			elif verb == "set_position": actor["anchor"] = str(arguments.get("anchor", actor.get("anchor", "")))
+			elif verb == "set_position": actor["anchor"] = str(arguments.get("anchor_id", arguments.get("anchor", actor.get("anchor", ""))))
 			elif verb in ["despawn"]: actor["visible"] = false
 			elif verb in ["spawn"]: actor["visible"] = true
 			else: return "Actor operation verb is not projectable."
@@ -488,7 +488,7 @@ func _apply_operations(candidate: Dictionary, operations: Array) -> String:
 			if verb == "set_state": object[str(arguments.get("state_slot", "visual"))] = str(arguments.get("state", ""))
 			elif verb == "set_visibility": object["visible"] = bool(arguments.get("visible", true))
 			elif verb == "set_enabled": object["enabled"] = bool(arguments.get("enabled", true))
-			elif verb == "move" or verb == "set_position": object["anchor"] = str(arguments.get("anchor", object.get("anchor", "")))
+			elif verb == "move" or verb == "set_position": object["anchor"] = str(arguments.get("anchor_id", arguments.get("anchor", object.get("anchor", ""))))
 			elif verb == "remove": object["visible"] = false
 			elif verb == "spawn": object["visible"] = true
 			else: return "Scene operation verb is not projectable."
@@ -630,7 +630,7 @@ func _request_key(value: String) -> bool:
 
 
 func _qualified_id(value: String) -> bool:
-	var atoms := value.split(".", false)
+	var atoms := value.split(".", true)
 	if atoms.size() < 2 or value.length() > 192: return false
 	for atom in atoms:
 		if atom.is_empty() or atom.length() > 64: return false

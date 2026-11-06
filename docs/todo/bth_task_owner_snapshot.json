@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T08:44:42.036719+00:00",
+  "observed_at": "2026-11-06T08:56:17.463862+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T00:06:16.507507+00:00",
-      "source": "Numericstorage/cache source88efa6e4 publishedmain afterindependent337/0+normal33write12coldread acceptance; bothfullnormalreportsbyte-identicalbaseline. Cost+2.436-2.620msmedian/12rooms explicitlyacceptedcorrectnessoverhead; no speedup/globalperf/transientpeakclaim. Runtime213/all7newJobsclosed0; prior206prefix preserved. BothsourceobjectivesOpenrequiredNEXTpending; wholeaudit69core reviewed26remaining+3broader unchanged. Manual35ownhistoricalage/blockerfindings preserved; no newnumeric-task/phase023Jobconsistencyerrors. Paused/excluded/prototype unchanged; no fileclearing."
+      "observed_at": "2026-11-06T08:56:17.463862+00:00",
+      "source": "Actual root closing already-tested main/NEXT publication under explicit user pause. No new audit phase/test; preservation checkpoint and safe integration underway. All prior unfinished findings retained; original auditHEAD9d7b/prototype preserved."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
