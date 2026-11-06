@@ -1,10 +1,10 @@
 {
   "schema": "bth.deprecated_code_audit_continuation/032",
   "phase": "032",
-  "observed_at": "2026-11-06T08:27:19.266644+00:00",
-  "status": "FINAL_THREE_CORE_SOURCE_BODIES_AND_RECIPROCAL_PEERS_PASS_ACTUAL_COMMIT_PENDING",
+  "observed_at": "2026-11-06T08:30:37.215638+00:00",
+  "status": "FINAL_THREE_CORE_SOURCE_BODY_REVIEWS_COMPLETE_FINDINGS_AND_BROADER_AUDIT_OPEN",
   "base_local_HEAD": "4fc0e804bb0660ffce9b882530aa3b8ce2fff142",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "c5c4a7467428af438d64b01c35abaa09b6ac06f9",
   "tasks": {
     "body": "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
     "home_projection": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
@@ -110,7 +110,7 @@
     "current_ui_game_inventory": 129,
     "historical127_preserved": true,
     "full_objective_complete": false,
-    "body_child_complete": false
+    "body_child_complete": true
   },
   "home_projection_finding": {
     "task": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
@@ -225,7 +225,7 @@
     }
   },
   "manual_reconciliation": {
-    "state": "Initial pre-commit manual checkpoint recorded; final post-association follows.",
+    "state": "Final actual-commit association reconciliation recorded.",
     "initial_preflight_r1": {
       "results": {
         "current": {
@@ -266,7 +266,58 @@
         }
       },
       "scope_error": "Root updated the plain parent table row but missed the existing aliased parent row. Required checker caught one MARKDOWN_STATUS_DRIFT; alias status/next-action repaired without changing ledger policy or checker. Original R1 reports preserved, corrected checkpoint uses new R1b paths.",
-      "corrected_alias_line": 808
+      "corrected_alias_line": 808,
+      "corrected_checkpoint_delta": {
+        "current": {
+          "added_old_observations_crossing_24hour_guard": [
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Current identity is stale; revalidate through the permitted owner lifecycle."
+            ],
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Activity observation is stale; revalidate through the permitted owner lifecycle."
+            ]
+          ],
+          "removed_resolved_alias_drift": [
+            [
+              "MARKDOWN_STATUS_DRIFT",
+              "BTH061-AUDIT-001",
+              null,
+              "Readable and structured exact status text differ."
+            ]
+          ]
+        },
+        "all": {
+          "added_old_observations_crossing_24hour_guard": [
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Current identity is stale; revalidate through the permitted owner lifecycle."
+            ],
+            [
+              "RUNTIME_STALE_OBSERVATION",
+              "BTH061-AUDIT-LAYER-DEFINITION-013",
+              "task9:catalog013-sequence-candidate-r1",
+              "Activity observation is stale; revalidate through the permitted owner lifecycle."
+            ]
+          ],
+          "removed_resolved_alias_drift": [
+            [
+              "MARKDOWN_STATUS_DRIFT",
+              "BTH061-AUDIT-001",
+              null,
+              "Readable and structured exact status text differ."
+            ]
+          ]
+        }
+      },
+      "count_explanation": "One actual parent alias status drift was resolved; two unchanged historical runtime observations crossed24hours between checks. Hence458/1074 initial findings became459/1075 after repair, with no new assigned consistency errors or restamping."
     },
     "r1b": {
       "results": {
@@ -288,6 +339,45 @@
           "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-all-r1b.json",
           "sha256": "81dd87a50ec8719623a75911b1a5a1126be1519fcf0ca8fc906be0e93b3f2fd2",
           "checked_at": "2026-11-06T08:28:58.113978Z",
+          "errors": 1075,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        }
+      },
+      "exit_codes": [
+        1,
+        1
+      ],
+      "new_assigned_scope_consistency_errors": 0,
+      "old_runtime_records_or_blockers_restamped": false,
+      "limit": "Present-time unchanged24hour policy reports historical stale runtime/blocker evidence. Entire old228 runtime inventory and all301 unrelated rows remain exact; this source audit neither refreshes unobserved process states nor clears old findings."
+    },
+    "r2": {
+      "results": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-current-r2.json",
+          "sha256": "75d03dde062071c02cf552cb140d134ccb2cde93d546a81586d8d7642bc7dade",
+          "checked_at": "2026-11-06T08:30:48.285986Z",
+          "errors": 459,
+          "owned_findings": {
+            "RUNTIME_STALE_OBSERVATION": 154,
+            "BLOCKER_STALE": 2
+          },
+          "owned_stale_blockers": [
+            "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+            "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009"
+          ]
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog032-manual-all-r2.json",
+          "sha256": "9a01a5eb4d64a858b9ef8215328a73ae0f9516fedf01ccc54e3635d325821848",
+          "checked_at": "2026-11-06T08:30:47.631986Z",
           "errors": 1075,
           "owned_findings": {
             "RUNTIME_STALE_OBSERVATION": 154,

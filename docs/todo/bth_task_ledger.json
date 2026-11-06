@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T08:27:19.266644+00:00",
+  "updated_at": "2026-11-06T08:30:37.215638+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -27733,8 +27733,11 @@
             "id": "independent-review-and-commit",
             "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_032.json",
+              "docs/testing/deprecated_code_audit_continuation_032.md"
+            ]
           }
         ],
         "coverage": {
@@ -27771,14 +27774,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "THREE_COMPLETE_CORE_BODIES_AND_RECIPROCAL_PEERS_PASS_EVIDENCE_COMMIT_PENDING_032",
+      "state": "complete",
+      "status": "FINAL_THREE_CORE_BODY_REVIEWS_COMPLETE_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_032",
       "owner": {
         "name": "Audit phase032 source review",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c5c4a7467428af438d64b01c35abaa09b6ac06f9",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_032.json",
+            "docs/testing/deprecated_code_audit_continuation_032.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27794,17 +27805,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual phase032 evidence commit before completing this bounded source-review child. Full audit, broader three areas, home correction and delivery producer qualification remain Open; no code/native/NEXT acceptance.",
+      "next_action": "Bounded full source-body and reciprocal peer review Complete with actual evidence commit. Whole audit, broader three areas, home correction and delivery producer qualification remain Open; no source/native/NEXT acceptance implied.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Permitted independent read-only source audit is active. Existing item/scenario implementation pause, cleanup stop, excluded diagnostics and publication denial remain separate and unaltered.",
+        "description": "Bounded complete source-body/peer review and actual evidence commit association finished. Remaining audit/finding/correction/deployment gates are separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T07:54:24.739584+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:30:37.215638+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_032.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+      "updated_at": "2026-11-06T08:30:37.215638+00:00"
     },
     {
       "id": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
@@ -27865,7 +27878,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c5c4a7467428af438d64b01c35abaa09b6ac06f9",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_032.json",
+            "docs/testing/deprecated_code_audit_continuation_032.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -27891,7 +27912,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+      "updated_at": "2026-11-06T08:30:37.215638+00:00"
     },
     {
       "id": "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032",
@@ -27928,8 +27949,11 @@
             "id": "actual-associated-evidence-commit",
             "description": "Associate actual bounded qualification evidence commit before completion; any confirmed correction/delivery must be separately tracked and qualified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_032.json",
+              "docs/testing/deprecated_code_audit_continuation_032.md"
+            ]
           }
         ],
         "coverage": {
@@ -27945,7 +27969,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c5c4a7467428af438d64b01c35abaa09b6ac06f9",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_032.json",
+            "docs/testing/deprecated_code_audit_continuation_032.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27971,7 +28003,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+      "updated_at": "2026-11-06T08:30:37.215638+00:00"
     }
   ],
   "batches": [
