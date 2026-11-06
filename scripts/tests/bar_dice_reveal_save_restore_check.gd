@@ -36,6 +36,7 @@ func _run() -> void:
 	app.set("show_game_library_launcher", true)
 	app.set("continuous_environment_clock_enabled", false)
 	app.set("autosave_slot_id", SLOT)
+	_configure_fixture_host()
 	root.add_child(app)
 	await _frames(8)
 	app._settle_script_prewarm_before_runtime()
@@ -45,6 +46,10 @@ func _run() -> void:
 	elif stage == "cold": await _cold()
 	else: await _warm()
 	await _close()
+
+
+func _configure_fixture_host() -> void:
+	pass
 
 
 func _warm() -> void:

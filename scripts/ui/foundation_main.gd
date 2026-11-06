@@ -1018,6 +1018,13 @@ func _exit_tree() -> void:
 	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
 		modal_focus_scope.call("clear")
 	_drain_script_prewarm_requests_for_shutdown()
+	# A queued-for-deletion scene can process once more after an earlier save
+	# wait, starting its coalesced generation. Reclaim that owned worker before
+	# its bound snapshot can outlive the GDScript runtime during engine cleanup.
+	if save_service != null and save_service.async_save_in_flight():
+		var save_error := save_service.wait_for_async_save()
+		if save_error != OK:
+			push_error("Pending run save failed during scene exit: %s" % error_string(save_error))
 
 
 func _drain_script_prewarm_requests_for_shutdown() -> void:

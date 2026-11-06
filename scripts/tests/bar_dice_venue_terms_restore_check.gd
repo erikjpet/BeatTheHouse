@@ -9,6 +9,10 @@ const OPEN_CLOCK := 23 * 60
 const CLOSED_CLOCK := 1440 + 5 * 60 + 30
 
 
+func _fixture_seed() -> String:
+	return VENUE_SEED
+
+
 func _warm() -> void:
 	if not _check(not FileAccess.file_exists(app.save_service.run_save_path(SLOT)) and not FileAccess.file_exists(_expectation_path()), "Venue case requires unused private save/expectation paths"): return
 	if not await _prepare_venue(): return
@@ -63,7 +67,7 @@ func _prepare_venue() -> bool:
 	if not _check(bool(app._ensure_run_ui_built()), "Actual MainScene run UI builds"): return false
 	app.user_settings.coach_tips_enabled = false
 	var run: RunState = RunState.new()
-	run.start_new(VENUE_SEED)
+	run.start_new(_fixture_seed())
 	run.begin_act(1)
 	run.bankroll = 94
 	var clock: Dictionary = run.advance_game_clock_minutes(OPEN_CLOCK - run.game_clock_minutes)
@@ -93,7 +97,7 @@ func _prepare_venue() -> bool:
 	app._refresh()
 	await _frames(12)
 	var proof: Dictionary = run.validate_room_action_authority()
-	facts["fixture"] = {"seed": VENUE_SEED, "cash": run.bankroll, "clock_minutes": run.game_clock_minutes, "practice": bool(app.dev_game_test_mode), "environment_test": bool(app.dev_environment_test_mode), "authority_ok": bool(proof.get("ok", false)), "authority_errors": proof.get("errors", []), "economy": _economy(), "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route"}
+	facts["fixture"] = {"seed": _fixture_seed(), "cash": run.bankroll, "clock_minutes": run.game_clock_minutes, "practice": bool(app.dev_game_test_mode), "environment_test": bool(app.dev_environment_test_mode), "authority_ok": bool(proof.get("ok", false)), "authority_errors": proof.get("errors", []), "economy": _economy(), "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route"}
 	if not _check(not bool(app.dev_game_test_mode) and not bool(app.dev_environment_test_mode) and not app._is_environment_test_session() and not run.is_tutorial_run(), "Generated fixture uses real venue owner, no Practice/environment-test/tutorial bypass"): return false
 	if not _check(bool(proof.get("ok", false)) and run.bankroll == 94 and str(run.current_environment.get("scenario_id", "")) == "bar_wake", "Catalog identity, wallet94 and room authority survive actual Host publication"): return false
 	var economy: Dictionary = run.current_environment.get("economic_profile", {})
