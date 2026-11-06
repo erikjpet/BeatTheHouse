@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-04T16:59:53.130053+00:00",
+  "observed_at": "2026-11-06T05:57:20.454798+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2025,6 +2025,41 @@
       "evidence": "docs/testing/deprecated_code_audit_continuation_028.json",
       "full_objective_complete": false,
       "body_state": "Complete actualevidencecommitassociated"
+    },
+    {
+      "phase": "029",
+      "observed_at": "2026-11-06T05:57:20.454798+00:00",
+      "tasks": [
+        "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+        "BTH061-AUDIT-META-GRAND-CORE-COVERAGE-029"
+      ],
+      "source_commit": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
+      "source_count": 1250,
+      "candidate_source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+      "source_changes": 3,
+      "new_regression_scripts": 2,
+      "new_whole_body_area_count": 2,
+      "recorded_core_reviewed": 85,
+      "recorded_core_remaining": 10,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "final_native_checks": [
+        171,
+        172
+      ],
+      "final_native_failures": [
+        0,
+        0
+      ],
+      "original_failed_runs_preserved": 1,
+      "native_jobs": 5,
+      "runtime_inventory": 227,
+      "original222_runtime_records_preserved": true,
+      "persistence_state": "Local corrective source committed; required NEXT Open",
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_029.json",
+      "full_objective_complete": false,
+      "body_state": "Independent reviews pass; evidence commit association pending"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T04:49:43.784038+00:00",
+  "updated_at": "2026-11-06T05:57:20.454798+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13069,13 +13069,12 @@
             },
             {
               "id": "scripts/core/grand_casino_run_facade.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_029.json",
+                "docs/testing/deprecated_code_audit_continuation_029.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Retain complete current body and all active/compatibility paths. Corrected author R2 repairs44 prose descriptions from preserved R1; source/hash/caller/history/dispositions unchanged; reciprocal peer accepts corrected R2. Whole audit, consumer/compatibility closure, aggregates and required NEXT remain separate."
             },
             {
               "id": "scripts/core/grand_casino_showdown_model.gd",
@@ -13130,13 +13129,12 @@
             },
             {
               "id": "scripts/core/meta_collection_service.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_029.json",
+                "docs/testing/deprecated_code_audit_continuation_029.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Retain full original body; exact correction adds terminal transaction helpers/storage keys and changes normalization. Original body plus independently reviewed final delta qualified. Original lexical alias inventory388 plus12 test-only complement=400;79 production unchanged. Whole audit, consumer/compatibility closure, aggregates and required NEXT remain separate."
             },
             {
               "id": "scripts/core/music_delivery_index.gd",
@@ -13627,7 +13625,7 @@
         }
       },
       "state": "open",
-      "status": "COLD_TERMINAL_DURABILITY_BUG_CONFIRMED_SNAPSHOT_FIX_LOCAL_CORE83_OF95_028",
+      "status": "TERMINAL_DURABILITY_FIX_COMMITTED_343_FINAL_CHECKS_85_OF_95_CORE_REVIEWED_NEXT_APPROVAL_PENDING_029",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14053,12 +14051,17 @@
           "kind": "native_qualified_ritual_corrections_and_two_more_body_reviews026",
           "reference": "docs/testing/deprecated_code_audit_continuation_026.json",
           "summary": "Localfbd95aae fourlinecontractrepair181checks44to0; requiredNEXTopen. PUB025falsepositivefalsified38+5nativecontrols, source retained. Twofullcollectionbodies1174/58/35/9 independentlyqualified, core79/95; conditionalterminalmeta retry leadOpen. No cleanup/pub retry."
+        },
+        {
+          "kind": "terminal_durability_correction_and_two_core_bodies029",
+          "reference": "docs/testing/deprecated_code_audit_continuation_029.json",
+          "summary": "Locala3a29fdb atomic special-outcome/receipt + run preparation/ack fix; final native171 host +172 DTO checks pass with original guards and Job0, including cold uncommitted Meta, ack replay and authored tutorial handoff/Sal allocation. Two complete current bodies retained;85/95 core,10core+3broader remain. No cleanup or denied publication retry."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Correct the confirmed terminal special-outcome durability bug with durable idempotent acknowledgement, then continue remaining12core/three broader review areas. Preserve whole audit and requiredNEXT source tasks Open, all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
+      "next_action": "Keep the whole audit Open; continue the10 remaining core bodies and3 broader consumer/compatibility/data/tool/native/aggregate areas where permitted. Publish tested local fixes and verify exact NEXT only after relevant approval; do not retry the denied operation or perform stopped cleanup.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14070,7 +14073,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:49:43.784038+00:00"
+      "updated_at": "2026-11-06T05:57:20.454798+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26302,7 +26305,7 @@
     },
     {
       "id": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
-      "name": "Qualify terminal meta persistence retry lead",
+      "name": "Fix terminal meta outcome durability and exact-once recovery",
       "aliases": [],
       "kind": "acceptance_check",
       "parent_ids": [
@@ -26310,8 +26313,8 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Qualify conditional terminal special-outcome persistence retry behavior: processed flags are set before caller meta save; failure has no local rollback/retry, while independent terminal checkpoint and later meta saves can preserve different portions. Source evidence alone does not demonstrate loss, duplication or Continue failure. Preserve paused effects/features and do not force a callback/private failure seam. Phase028 actual public Abandon/checkpoint/Save and separate native-process Continue/Save confirms the carried-card durability defect; runtime qualification is bounded to that case. A safe corrective implementation and associated commit remain required before completion.",
-        "source": "Phase026 completeCollectionDropService and ItemResolver reviews plus independent surroundingcaller/Meta.save/terminalcheckpointtrace, F026-1.",
+        "text": "Qualify conditional terminal special-outcome persistence retry behavior: processed flags are set before caller meta save; failure has no local rollback/retry, while independent terminal checkpoint and later meta saves can preserve different portions. Source evidence alone does not demonstrate loss, duplication or Continue failure. Preserve paused effects/features and do not force a callback/private failure seam. Phase028 actual public Abandon/checkpoint/Save and separate native-process Continue/Save confirms the carried-card durability defect; runtime qualification is bounded to that case. A safe corrective implementation and associated commit remain required before completion. Parent phase029 explicitly requests the confirmed defect be fixed and tested. Commit terminal special outcomes durably and idempotently before run acknowledgement, restoring failed tentative changes and preserving old-save, reward, card, chip, ordinary decay and navigation/recovery behavior.",
+        "source": "Phase026 completeCollectionDropService and ItemResolver reviews plus independent surroundingcaller/Meta.save/terminalcheckpointtrace, F026-1. Parent continuation: fix and test the confirmed terminal metadata durability issue; no denied publication retry.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -26338,6 +26341,30 @@
             "id": "actual-associated-evidence-commit",
             "description": "Corrective or qualifiedretention evidence has actualassociatedcommit before completion; any future sourcefix registers requiredNEXT separately.",
             "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_029.json",
+              "docs/testing/deprecated_code_audit_continuation_029.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-native-results-peer-r5.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-native-results-peer-r2.json"
+            ]
+          },
+          {
+            "id": "focused-corrective-compatibility",
+            "description": "Actual owned-storage failures, successful retries and cold public Continue preserve the terminal effect exactly once, including applicable rewards/decay/chips and supported legacy shapes; no guard or authority weakening.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_029.json",
+              "docs/testing/deprecated_code_audit_continuation_029.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-native-results-peer-r5.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-native-results-peer-r2.json"
+            ]
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Actual tested corrective commit is verified in exact NEXT delivery before completing this corrective task; do not retry denied main publication without new relevant approval.",
+            "required": true,
             "state": "open",
             "evidence": []
           }
@@ -26349,7 +26376,7 @@
         }
       },
       "state": "open",
-      "status": "PUBLIC_ABANDON_CHECKPOINT_AND_COLD_CONTINUE_DURABILITY_BUG_CONFIRMED_CORRECTION_OPEN_028",
+      "status": "LOCAL_FIX_COMMITTED_343_FINAL_CHECKS_PASS_REQUIRED_NEXT_APPROVAL_PENDING_029",
       "owner": {
         "name": "Audit phase026 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -26376,14 +26403,23 @@
             "docs/testing/deprecated_code_audit_continuation_028.json",
             "docs/testing/deprecated_code_audit_continuation_028.md"
           ]
+        },
+        {
+          "sha": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_029.json",
+            "docs/testing/deprecated_code_audit_continuation_029.md",
+            "scripts/tests/terminal_meta_durability_check.gd",
+            "scripts/tests/terminal_meta_outcome_contract_check.gd"
+          ]
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
+        "required": true,
+        "state": "pending",
+        "commit": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
         "evidence": [],
-        "scope": "Confirmed persistence-defect investigation, no underlying Meta/CollectionDropService fix. Future corrective implementation must register required NEXT and source/delivery acceptance before editing. The separate snapshot fix is tracked under MenuSaveSnapshot028."
+        "scope": "Final source locally committed and tested. Exact NEXT delivery remains unverified behind the prior denied main publication; no retry made."
       },
       "evidence": [
         {
@@ -26415,20 +26451,40 @@
           "kind": "qualified_real_public_host_cold_continue_durability_failure028",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json",
           "summary": "ActualnativepublicStart/Abandon/terminalcheckpoint/Save thenseparatefreshprocessContinue/Save: livecard0 vsdiskcard1 beforeexit; savedprocessed/decay/checkpoint true andcard1reloads, retrySave leavescard1. 33+24=57healthychecks0fail. FullroutequalifiedforcarriedPlayersCardfailure only; underlyingpersistencebugNOTfixed. OriginalR1/R2failures and4PSstatusTextencodingdifferences preserved; exactrawengineUTF8 used."
+        },
+        {
+          "kind": "final_native_corrective_qualification029",
+          "reference": "docs/testing/deprecated_code_audit_continuation_029.json",
+          "summary": "Finalsource1250manifestc31125f; native sixprocess171 plusDTO172 allpass; actual physical faults/rollback/retry/coldContinue/ack/tutorial andSal-before-card order qualified. Legacy processed without receipt retained because prior application ambiguous; no speculative replay. Sourcea3a29fdb local; requiredNEXT Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review MetaCollectionService terminal transaction/receipt APIs and implement idempotent durable special-outcome acknowledgement before run processed flags can survive a failed meta commit. Preserve normal rewards, ordinary decay, chips, exact-once and old-save recovery; register required corrective NEXT acceptance before implementation. Native carried-card Abandon/coldContinue reproduction is qualified, source correction remains Open.",
+      "next_action": "Retain local a3a29fdb and independently qualified final evidence. Await new relevant publication approval before any main push, then integrate and verify exact NEXT identity/assets/changed behavior. Do not mark Complete before required NEXT acceptance.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Confirmed technical durability defect remains to be corrected; no missing personal save, user input or scheduler hold. Prior main publication denial and cleanup stop remain separate.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-06T04:42:54.014869+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "approval_review_rejection",
+        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-06T00:46:25.366143+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+        ]
       },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:49:43.784038+00:00"
+      "planned_app_changes": [
+        {
+          "path": "scripts/core/meta_collection_service.gd",
+          "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
+        },
+        {
+          "path": "scripts/core/collection_drop_service.gd",
+          "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
+        },
+        {
+          "path": "scripts/ui/foundation_main.gd",
+          "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
+        }
+      ],
+      "updated_at": "2026-11-06T05:57:20.454798+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26753,6 +26809,98 @@
         }
       ],
       "updated_at": "2026-11-06T04:49:43.784038+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-META-GRAND-CORE-COVERAGE-029",
+      "name": "Review current meta service and Grand Casino facade bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review complete current MetaCollectionService and GrandCasinoRunFacade bodies, every declaration/caller/dispatch/history/compatibility disposition. Coordinate exact scoped durability correction in Meta service without treating unrelated original body as unchanged. Retain all code under cleanup stop; no paused item/scenario feature changes.",
+        "source": "Parent asks fix/test confirmed terminal metadata durability issue and continue remaining audit coverage, preserving all local work and denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact current source, supported inputs and actual outcomes qualify the bounded source or DTO scope with explicit authority/runtime limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_029.json",
+              "docs/testing/deprecated_code_audit_continuation_029.md"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/meta_collection_service.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_029.json",
+                "docs/testing/deprecated_code_audit_continuation_029.md"
+              ],
+              "scope": "Retain full original body; exact correction adds terminal transaction helpers/storage keys and changes normalization. Original body plus independently reviewed final delta qualified. Original lexical alias inventory388 plus12 test-only complement=400;79 production unchanged."
+            },
+            {
+              "id": "scripts/core/grand_casino_run_facade.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_029.json",
+                "docs/testing/deprecated_code_audit_continuation_029.md"
+              ],
+              "scope": "Retain complete current body and all active/compatibility paths. Corrected author R2 repairs44 prose descriptions from preserved R1; source/hash/caller/history/dispositions unchanged; reciprocal peer accepts corrected R2."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "TWO_COMPLETE_BODIES_AND_EXACT_META_DELTA_REVIEWED_EVIDENCE_COMMIT_ASSOCIATION_PENDING_029",
+      "owner": {
+        "name": "Audit phase029 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
+      },
+      "evidence": [
+        {
+          "kind": "two_complete_body_reviews_and_current_meta_delta029",
+          "reference": "docs/testing/deprecated_code_audit_continuation_029.json",
+          "summary": "OriginalMeta1998/158decls plus exact5helper delta independently qualified; Grand1308/95decls corrected R2 reciprocalpeer. All retained, no obsolete removal or whole-audit claim. Actual evidence commit association remains required."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate the actual phase029 evidence commit before completing this bounded body-review child; keep the whole audit and required NEXT fixes Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent source review and scoped corrective work are active; no user/save/scheduler hold. Publication denial and cleanup stop remain separate.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T04:57:11.811627+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T05:57:20.454798+00:00"
     }
   ],
   "batches": [
