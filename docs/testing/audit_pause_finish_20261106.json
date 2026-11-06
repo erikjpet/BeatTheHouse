@@ -1,0 +1,92 @@
+{
+  "schema": "bth.audit_pause_finish/v1",
+  "observed_at": "2026-11-06T08:56:17.463862+00:00",
+  "task": "BTH061-AUDIT-FINISH-PUBLISH-20261106",
+  "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+  "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+  "original_audit_HEAD": "9d7b360b3cd97a38bdbc171c675288e603fd5dd5",
+  "remote_main_before_integration": "6b43aa6ad8f951ae46c8a4732716201a3bbca421",
+  "outgoing_existing_commits": 22,
+  "new_audit_phase_started": false,
+  "new_tests_run": false,
+  "source_changes_made_during_closeout": false,
+  "paused_task_ids": [
+    "BTH061-AUDIT-001",
+    "BTH061-AUDIT-INDEPENDENT-001",
+    "BTH061-AUDIT-CREW-BASELINE-004",
+    "BTH061-AUDIT-INTERRUPT-BASELINE-004",
+    "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+    "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+    "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+    "BTH061-AUDIT-LAYER-DEFINITION-013",
+    "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+    "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+    "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
+    "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+    "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020",
+    "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+    "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+    "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+    "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
+    "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+    "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+    "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+    "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+    "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+    "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+    "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+    "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+    "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
+  ],
+  "unfinished_acceptance_preserved": true,
+  "item_scenario_pause_and_excluded_diagnostics_unchanged": true,
+  "prior_push_denial_preserved_known_not_executed": true,
+  "new_specific_main_retry_permitted_once": true,
+  "retry_attempted": false,
+  "source_fix_commits": [
+    "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+    "1b2f12c1495159871432c87bffdd16b7f64a616b",
+    "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358"
+  ],
+  "source_basis": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+  "scope": "Publication/preservation of completed work only; no Phase033 registration/implementation/test. New user pause metadata retains previous statuses, blockers and next actions. No files cleared, branch reset or prototype staged.",
+  "main_published": false,
+  "NEXT_verified": false,
+  "documentation_reconciliation": {
+    "current": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-preserve-current-r1.json",
+      "sha256": "dfe0a750fc93c64c1e63f79385bb2a1b9b23898dd4c9cb01f42cd73e790b17e4",
+      "errors": 459,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no new owned ledger consistency errors. Existing old blocker-age findings are suppressed by the newly explicit user pause, not by changing the checker or observations."
+    },
+    "all": {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-preserve-all-r1.json",
+      "sha256": "c92688d19a3627b19fa89a3be00cb8dbbc5c102f0adb478170851dbdfbaaa5dc",
+      "errors": 1075,
+      "exit_code": 1,
+      "owned_findings": "156 historical runtime-age only; no new owned ledger consistency errors. Existing old blocker-age findings are suppressed by the newly explicit user pause, not by changing the checker or observations."
+    }
+  },
+  "existing_qualification_peer": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\audit-finish-publish-qualification-peer-r1.json",
+    "sha256": "f230bc295844226c47df2847a7f448242d5ed5c21efa20e3eb181b5d367c8778",
+    "results": {
+      "ritual_DTO": [
+        181,
+        0
+      ],
+      "no_run_snapshot": [
+        57,
+        0
+      ],
+      "terminal_durability": [
+        343,
+        0
+      ]
+    },
+    "limit": "Exact historical candidates; merged-main and NEXT not newly tested."
+  }
+}

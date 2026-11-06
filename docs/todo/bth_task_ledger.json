@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T08:30:37.215638+00:00",
+  "updated_at": "2026-11-06T08:56:17.463862+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -34,6 +34,50 @@
         "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
         "publication_retry_authorization": "Later explicit user instruction: Yes push all finished work to next",
         "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action."
+      },
+      {
+        "schema": "bth.user_work_pause/v1",
+        "recorded_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "Trusted parent delegation with transcript_evidence; finish only nearly complete work, no new audit phases.",
+        "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+        "requested_by": "user",
+        "state": "active",
+        "task_ids": [
+          "BTH061-AUDIT-001",
+          "BTH061-AUDIT-INDEPENDENT-001",
+          "BTH061-AUDIT-CREW-BASELINE-004",
+          "BTH061-AUDIT-INTERRUPT-BASELINE-004",
+          "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+          "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+          "BTH061-AUDIT-SEQUENCE-BASELINE-008",
+          "BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009",
+          "BTH061-AUDIT-LAYER-DEFINITION-013",
+          "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
+          "BTH061-AUDIT-SCHEMA-VALIDATION-014",
+          "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+          "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
+          "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
+          "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020",
+          "BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022",
+          "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
+          "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
+          "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
+          "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
+          "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
+          "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+          "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+          "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+          "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+          "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+          "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+          "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
+        ],
+        "resume_only_on_user_instruction": true,
+        "scope_limit": "This audit owner stops new testing and audit phases. Preserve unfinished findings/candidates and existing access restrictions. Already-tested nearly complete fixes and preservation work may finish main/NEXT publication without new gameplay/native/browser test runs, pipeline bypass, stable/itch/audience changes or cleanup. Other owners reconcile their own work.",
+        "finish_publication_authorized": true,
+        "prior_main_push_retry": "Specific new main/NEXT instruction addresses prior main rejection; at most one non-force retry if known not executed. A further denial must stop that action.",
+        "no_new_phase033_registered_or_tests": true
       }
     ],
     "no_intentional_holds_scope": "No agent-imposed or invented holds. Current explicit user pauses override the earlier zero-holds direction only for their named scope."
@@ -14070,19 +14114,39 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue the three broader semantic/caller/inherited-failure areas and separately tracked open findings; core-body source dispositions are95/95, not the full audit. Preserve item/scenario implementation pause, stopped cleanup, all local work and excluded diagnostics; do not retry denied publication.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "approval_review_rejection",
-        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-06T00:46:25.366143+00:00",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:27:19.266644+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "ALL95_CORE_BODIES_RECORDED_THREE_BROADER_AREAS_AND_FINDINGS_OPEN_032",
+        "resume_next_action": "Continue the three broader semantic/caller/inherited-failure areas and separately tracked open findings; core-body source dispositions are95/95, not the full audit. Preserve item/scenario implementation pause, stopped cleanup, all local work and excluded diagnostics; do not retry denied publication.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "approval_review_rejection",
+          "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+          "requires_user_input": true,
+          "observed_at": "2026-11-06T00:46:25.366143+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -17305,17 +17369,37 @@
         "BTH061-AUDIT-UI-LEGACY-002",
         "BTH061-AUDIT-TOOL-LEGACY-002"
       ],
-      "next_action": "Continue remaining nonpaused semantic audit and phase004 legacy-family/contract findings; preserve prior accepted delivery and keep current cleanup NEXT acceptance separate. Reuse the exact phase003 R9 aggregate only within its pinned scope.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No agent-imposed hold; the explicit user item/scenario pause applies only to its named scope. Remaining audit review/qualification is active work.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:58:26.799842+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "SCOPED_CLEANUPS_DEPLOYED_PARENT_REMAINDER_OPEN",
+        "resume_next_action": "Continue remaining nonpaused semantic audit and phase004 legacy-family/contract findings; preserve prior accepted delivery and keep current cleanup NEXT acceptance separate. Reuse the exact phase003 R9 aggregate only within its pinned scope.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "No agent-imposed hold; the explicit user item/scenario pause applies only to its named scope. Remaining audit review/qualification is active work.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T16:23:29.672223+00:00",
+          "evidence": []
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-002",
@@ -19887,21 +19971,41 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the separately assigned exact NEXT delivery for 363ece78f55ba4bbccf78a67ad6f54c75e521e13; retain Open until required delivery is qualified. Preserve active highest-trust legacy recovery and every original Crew save assertion.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Source/cause/original gamegroups/legacy40-before-and-after and independent native qualification are complete and published. Exact required NEXT delivery is assigned separately; this worker imposed no user/save/scheduler hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T20:20:09.821707+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-root-postcheck-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-main-publication-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T20:20:09.821707+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_FRESH_REPUTATION_FIX_ON_MAIN_EXACT_NEXT_PENDING_020",
+        "resume_next_action": "Follow the separately assigned exact NEXT delivery for 363ece78f55ba4bbccf78a67ad6f54c75e521e13; retain Open until required delivery is qualified. Preserve active highest-trust legacy recovery and every original Crew save assertion.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Source/cause/original gamegroups/legacy40-before-and-after and independent native qualification are complete and published. Exact required NEXT delivery is assigned separately; this worker imposed no user/save/scheduler hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T20:20:09.821707+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-root-postcheck-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-main-publication-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-INTERRUPT-BASELINE-004",
@@ -19988,19 +20092,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reproduce recovery_loss_pressure_foundation/_check_embedded_refresh_autosave_interrupt successful forced-reroute path with its original ownership assertions. Phase009 rejected-travel rollback coverage does not qualify this separate expected success, pending autosave, changed environment and result-screen boundary.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Original success-path qualification remains implementation/test work; the delivered phase009 reserve blocker does not apply to this separate unresolved expectation.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:53:40.303763+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:53:40.303763+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "ORIGINAL_FORCED_TRAVEL_SUCCESS_PATH_STILL_OPEN",
+        "resume_next_action": "Reproduce recovery_loss_pressure_foundation/_check_embedded_refresh_autosave_interrupt successful forced-reroute path with its original ownership assertions. Phase009 rejected-travel rollback coverage does not qualify this separate expected success, pending autosave, changed environment and result-screen boundary.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Original success-path qualification remains implementation/test work; the delivered phase009 reserve blocker does not apply to this separate unresolved expectation.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T04:53:40.303763+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
@@ -20084,20 +20208,40 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain completeentryacceptance Open until a fresh unchangedguard invocation can qualify without newglobalprocess identities; nopeerstop/filter/budgetchange. Continue independent nonpausedcoverage and separatelyprofilecontenttimeout. Sourcecensusfix alreadyqualified byexactoutput/edgecasecontracts andcommitted.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "external_process_census",
-        "description": "Both unchangedmaintained attempts finishvalidatorworkwithin402.018s (228.205/255.483), butmachine-globalcensus reportsnewexternalQA/exportprocesses. Prior3identitiesendedbeforefreshretry; secondattemptreportsdifferent6. No import/load/standalone stage ran; no peer stopped or guard filtered.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:28:34.938136+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_006.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-current-global-census-failure-r2.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:28:34.938136+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "TIME_BUDGET_FIXED_GLOBAL_CONCURRENCY_ACCEPTANCE_OPEN",
+        "resume_next_action": "Retain completeentryacceptance Open until a fresh unchangedguard invocation can qualify without newglobalprocess identities; nopeerstop/filter/budgetchange. Continue independent nonpausedcoverage and separatelyprofilecontenttimeout. Sourcecensusfix alreadyqualified byexactoutput/edgecasecontracts andcommitted.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "external_process_census",
+          "description": "Both unchangedmaintained attempts finishvalidatorworkwithin402.018s (228.205/255.483), butmachine-globalcensus reportsnewexternalQA/exportprocesses. Prior3identitiesendedbeforefreshretry; secondattemptreportsdifferent6. No import/load/standalone stage ran; no peer stopped or guard filtered.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T21:28:34.938136+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md",
+            "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-current-global-census-failure-r2.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH-COINPUSHER-DROP-PRICE-001",
@@ -21274,19 +21418,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain qualified canonical16 and complete48-parity/288-timed comparison evidence. Prioritize measured higher-cost Runtime journal/fingerprint or owned-record work with exact caller/default/ownership and capacity controls before any source patch. Do not repeat this minor-copy experiment or extrapolate isolated clocks to aggregate300/43.712/330 or55/all220 acceptance.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T18:06:08.880100+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_019.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:13:07.807956+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "SIXTEEN_RUNTIME_LEAVES_PASS_COPY_CANDIDATE_NO_CONSISTENT_GAIN_019",
+        "resume_next_action": "Retain qualified canonical16 and complete48-parity/288-timed comparison evidence. Prioritize measured higher-cost Runtime journal/fingerprint or owned-record work with exact caller/default/ownership and capacity controls before any source patch. Do not repeat this minor-copy experiment or extrapolate isolated clocks to aggregate300/43.712/330 or55/all220 acceptance.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T18:06:08.880100+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -21960,19 +22124,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Nineteen-assertion diagnosis and repair plus exact7ac delivery are verified; keep this parent Open while required late-duel child BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009 awaits its own NEXT delivery. Original full180/current Systems aggregate remain separately Open under CONTENT-TIMEOUT-006.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:53:40.303763+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_009.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:55:03.032640+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "SCOPED_19_REPAIRED_AND_NEXT_VERIFIED_REQUIRED_DUEL_CHILD_OPEN",
+        "resume_next_action": "Nineteen-assertion diagnosis and repair plus exact7ac delivery are verified; keep this parent Open while required late-duel child BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009 awaits its own NEXT delivery. Original full180/current Systems aggregate remain separately Open under CONTENT-TIMEOUT-006.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Scoped source and its required NEXT evidence are verified. Later9b native qualification is separately owned and does not block delivered7ac acceptance.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T04:53:40.303763+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_009.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-FIXTURE-AUTHORITY-009",
@@ -22444,20 +22628,40 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow existing NEXT owner after required cold-import qualification, then verify exact source/tree/provenance/assets and relevant launch acceptance. All four event and four wrapper cases pass with owned saves; no additional cleanup or paused feature work.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "external_validation_dependency",
-        "description": "Existing NEXT watcher for45af92d9: Asset/importer/settings inputs changed; cold-import qualification required. Qualification is separately owned; no bypass/restart authorized or attempted.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T04:59:11.338692+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_010.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation010-next-block-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T04:59:11.338692+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "PUBLISHED_MAIN_DUEL_FOCUSED_PASS_NEXT_COLD_IMPORT_OPEN",
+        "resume_next_action": "Follow existing NEXT owner after required cold-import qualification, then verify exact source/tree/provenance/assets and relevant launch acceptance. All four event and four wrapper cases pass with owned saves; no additional cleanup or paused feature work.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "external_validation_dependency",
+          "description": "Existing NEXT watcher for45af92d9: Asset/importer/settings inputs changed; cold-import qualification required. Qualification is separately owned; no bypass/restart authorized or attempted.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T04:59:11.338692+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation010-next-block-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-009",
@@ -23629,19 +23833,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow source3c0fd716 through separately assigned cold-import/NEXT qualification, verify exact delivered identity and relevant behavior, then reconcile this bounded child. Continue parent aggregate/storage work; no full-stage acceptance or cleanup is inferred.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Scoped source and focused qualification are committed. Required NEXT qualification is separately assigned; no external hold prevents remaining parent investigation.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T08:46:36.778153+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_013.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T09:00:08.311641+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "SCOPED_SOURCE_COMMITTED_FOCUSED_PASS_NEXT_OPEN",
+        "resume_next_action": "Follow source3c0fd716 through separately assigned cold-import/NEXT qualification, verify exact delivered identity and relevant behavior, then reconcile this bounded child. Continue parent aggregate/storage work; no full-stage acceptance or cleanup is inferred.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Scoped source and focused qualification are committed. Required NEXT qualification is separately assigned; no external hold prevents remaining parent investigation.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T08:46:36.778153+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_013.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
@@ -23812,19 +24036,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve complete canonical16 return/input, live flag and named ownership evidence. The244129us isolated normalization total does not establish an original inline/API share or redundant authority check. No state authority or persistence ownership removal is accepted; investigate substantive owners under Content006.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T18:06:08.880100+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_019.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:13:07.807956+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "CANONICAL_RUNTIME_LEAF_VALUES_FLAGS_AND_NAMED_OWNERSHIP_QUALIFIED_019",
+        "resume_next_action": "Preserve complete canonical16 return/input, live flag and named ownership evidence. The244129us isolated normalization total does not establish an original inline/API share or redundant authority check. No state authority or persistence ownership removal is accepted; investigate substantive owners under Content006.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T18:06:08.880100+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-SCHEMA-VALIDATION-014",
@@ -23939,19 +24183,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow final69bd through separately assigned exact NEXT qualification, retaining focused596/1133/38-step/liveness evidence. Continue parent aggregate and storage/layout work; the unchanged owning Systems recipe still fails300s/43.712. No failed-result memo or cleanup.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Bounded source/focused qualification committed; separately assigned NEXT and parent aggregate/storage investigation remain active engineering work without user approval or original-save dependencies.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T11:51:09.812310+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_015.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T11:58:44.344088+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "BOUNDED_SOURCE_COMMITTED_FOCUSED_PASS_SYSTEMS300_FAIL_NEXT_OPEN_015",
+        "resume_next_action": "Follow final69bd through separately assigned exact NEXT qualification, retaining focused596/1133/38-step/liveness evidence. Continue parent aggregate and storage/layout work; the unchanged owning Systems recipe still fails300s/43.712. No failed-result memo or cleanup.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Bounded source/focused qualification committed; separately assigned NEXT and parent aggregate/storage investigation remain active engineering work without user approval or original-save dependencies.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T11:51:09.812310+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_015.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014",
@@ -24206,19 +24470,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Evaluate mutation-safe producer composition and default-factory ownership using the current111-row census, then require exact budgets/callback fallback/FIFO and matched actual-hit cost before a repair. Mutable definitions remain majority of observed nodes. Continue independent work; callback-check child records its actual platform restriction and remains unexecuted.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T16:49:41.619476+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_018.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T17:01:29.883849+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FIXED_SUBTREE_CENSUS_PASS_PRODUCTION_REPAIR_UNACCEPTED_018",
+        "resume_next_action": "Evaluate mutation-safe producer composition and default-factory ownership using the current111-row census, then require exact budgets/callback fallback/FIFO and matched actual-hit cost before a repair. Mutable definitions remain majority of observed nodes. Continue independent work; callback-check child records its actual platform restriction and remains unexecuted.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Independent measured continuation remains active. Separate callback-check child records its factual platform restriction; no broad user/save/scheduler hold or source/guard change.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T16:49:41.619476+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_018.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-CONTENT-AUTHORITY-FIXTURE-017",
@@ -24389,19 +24673,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve the exact platform-block receipt, source-only hypothesis and partial files. Do not retry, rephrase or reroute the blocked executable task while the platform restriction remains unresolved. Continue independent Memo014 subtree/cost and audit work.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "platform_content_screening",
-        "description": "Diagnostic authoring in /root/semantic009_profile terminated with: This content was flagged for possible cybersecurity risk. No completed diagnostic result or native execution followed. The platform restriction blocks only this branch; independent parent census and capacity work continues.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T16:40:00.817762+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo018-callback-unexecuted-platform-block-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T17:01:29.883849+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "AUTHORING_STOPPED_BY_PLATFORM_SCREENING_NO_NATIVE_RESULT",
+        "resume_next_action": "Preserve the exact platform-block receipt, source-only hypothesis and partial files. Do not retry, rephrase or reroute the blocked executable task while the platform restriction remains unresolved. Continue independent Memo014 subtree/cost and audit work.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "platform_content_screening",
+          "description": "Diagnostic authoring in /root/semantic009_profile terminated with: This content was flagged for possible cybersecurity risk. No completed diagnostic result or native execution followed. The platform restriction blocks only this branch; independent parent census and capacity work continues.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T16:40:00.817762+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\memo018-callback-unexecuted-platform-block-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
@@ -24480,19 +24784,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve the exact one-line candidate unapplied and retain all raw samples: candidate96 timed calls total1444774us versus original1441781us, with3of6 orders faster and3slower. General typed/read-only/script-constraint and nested alias/output-mutation isolation remain unqualified. Any reconsideration needs new substantive evidence and maintained full-capacity benefit; continue higher-cost investigation under Content006.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T18:06:08.880100+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_019.md"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T18:13:07.807956+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "CAPTURED_PARITY_PASS_NO_CONSISTENT_COST_BENEFIT_CANDIDATE_UNACCEPTED_019",
+        "resume_next_action": "Preserve the exact one-line candidate unapplied and retain all raw samples: candidate96 timed calls total1444774us versus original1441781us, with3of6 orders faster and3slower. General typed/read-only/script-constraint and nested alias/output-mutation isolation remain unqualified. Any reconsideration needs new substantive evidence and maintained full-capacity benefit; continue higher-cost investigation under Content006.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "No external user/save/scheduler hold. This minor-copy candidate has no consistent measured benefit and remains unapplied. Independent higher-cost work may continue; all original guards, paused work and the excluded screened branch are preserved.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T18:06:08.880100+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_019.md"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PULLTABS-DELTA-020",
@@ -24686,21 +25010,41 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the separately assigned exact NEXT delivery for 363ece78f55ba4bbccf78a67ad6f54c75e521e13; retain Open until required delivery is qualified. Preserve active highest-trust legacy recovery and every original Crew save assertion.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Source/cause/original gamegroups/legacy40-before-and-after and independent native qualification are complete and published. Exact required NEXT delivery is assigned separately; this worker imposed no user/save/scheduler hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T20:20:09.821707+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-root-postcheck-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-main-publication-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T20:20:09.821707+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_FRESH_REPUTATION_FIX_ON_MAIN_EXACT_NEXT_PENDING_020",
+        "resume_next_action": "Follow the separately assigned exact NEXT delivery for 363ece78f55ba4bbccf78a67ad6f54c75e521e13; retain Open until required delivery is qualified. Preserve active highest-trust legacy recovery and every original Crew save assertion.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Source/cause/original gamegroups/legacy40-before-and-after and independent native qualification are complete and published. Exact required NEXT delivery is assigned separately; this worker imposed no user/save/scheduler hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T20:20:09.821707+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-root-postcheck-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-independent-native-review-r1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog020-crew-initializer-main-publication-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-CORE-DELTA-COVERAGE-021",
@@ -25040,20 +25384,40 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify source c944 contained in published main merge40d4 through separately owned ordinary NEXT identity, served assets and changed-behavior acceptance. Keep task Open until required delivery is qualified.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "The scoped two-line receipt repair is tested, independently qualified and published to main; separately assigned NEXT acceptance remains required. No new external approval, save or scheduler hold is established.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T22:29:42.614178+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T22:29:42.614178+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "TESTED_SOURCE_COMMIT_PUBLISHED_MAIN_FINAL119_PASS_NEXT_PENDING_022",
+        "resume_next_action": "Verify source c944 contained in published main merge40d4 through separately owned ordinary NEXT identity, served assets and changed-behavior acceptance. Keep task Open until required delivery is qualified.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "The scoped two-line receipt repair is tested, independently qualified and published to main; separately assigned NEXT acceptance remains required. No new external approval, save or scheduler hold is established.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-05T22:29:42.614178+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-candidate-independent-native-review-r3.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\duel-callout022-main-publication-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-CODEC-SIGNED-ZERO-022",
@@ -25160,21 +25524,41 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:06:16.507507+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_023.md",
-          "docs/testing/deprecated_code_audit_continuation_023.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:06:16.507507+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_NUMERIC_REPAIR_COMMIT_PUBLISHED_MAIN_REQUIRED_NEXT_OPEN_023",
+        "resume_next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T00:06:16.507507+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_023.md",
+            "docs/testing/deprecated_code_audit_continuation_023.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023",
@@ -25269,21 +25653,41 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:06:16.507507+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_023.md",
-          "docs/testing/deprecated_code_audit_continuation_023.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:06:16.507507+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_NUMERIC_REPAIR_COMMIT_PUBLISHED_MAIN_REQUIRED_NEXT_OPEN_023",
+        "resume_next_action": "Verify tested source88efa6e4 through separately assigned ordinary NEXT identity, served assets and changed behavior. Source/337precision/current33write12coldread acceptance is qualified; keep objective Open until required delivery.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Scoped source repair is tested, independently qualified and published; required NEXT remains separately assigned. No new user/save/approval/scheduler hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T00:06:16.507507+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_023.md",
+            "docs/testing/deprecated_code_audit_continuation_023.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\codec023-source-main-publication-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-VENUE-CHARACTER-COVERAGE-024",
@@ -25478,20 +25882,40 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve reviewed candidate and original source under recorded cleanup/removal stop; do not apply or publish the candidate without explicit resumption. Continue independently permitted evidence audit and bug work.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "user_scope_restriction",
-        "description": "Cleanup/removal is explicitly stopped in current audit scope. Candidate is qualified and preserved, original source restored. Applying/publishing requires an explicit resumption; no auto-review denial or uncertain action.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-06T00:35:29.517065+00:00",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_010.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-cleanup-scope-preservation-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:42:40.556654+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "RETIRED_EMPTY_STUB_CANDIDATE_QUALIFIED_PRESERVED_NOT_APPLIED_CLEANUP_STOP_024",
+        "resume_next_action": "Preserve reviewed candidate and original source under recorded cleanup/removal stop; do not apply or publish the candidate without explicit resumption. Continue independently permitted evidence audit and bug work.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "user_scope_restriction",
+          "description": "Cleanup/removal is explicitly stopped in current audit scope. Candidate is qualified and preserved, original source restored. Applying/publishing requires an explicit resumption; no auto-review denial or uncertain action.",
+          "requires_user_input": true,
+          "observed_at": "2026-11-06T00:35:29.517065+00:00",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_010.md",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-cleanup-scope-preservation-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-COVERAGE-PUBLICATION-024",
@@ -25535,7 +25959,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_MAIN_PUSH_AUTO_REVIEW_DENIED_EXPLICIT_MAIN_APPROVAL_PENDING_024",
+      "status": "SPECIFIC_MAIN_FINISH_AUTHORIZATION_RECEIVED_REVIEWED_RETRY_PENDING_20261106",
       "owner": {
         "name": "Audit evidence publication",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -25562,22 +25986,27 @@
           "kind": "automatic_review_main_publication_denial",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json",
           "summary": "Exact main push rejected before process creation; remote remainsac877. No retry or reroute. Concrete finished local commits exist; explicit main approval pending."
+        },
+        {
+          "kind": "specific_main_and_NEXT_finish_authorization",
+          "reference": "docs/testing/audit_pause_finish_20261106.json",
+          "summary": "New trusted user direction explicitly names main and NEXT. Prior main denial was before process creation and did not execute; one reviewed ordinary retry is now authorized."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Await explicit main-branch publication approval; do not retry or reroute denied push without materially new relevant evidence. Continue independent permitted audit work.",
+      "next_action": "Finish safe integration of the preserved completed evidence and tested local fixes, then make at most one ordinary main-push retry under the new explicit main/NEXT instruction. Preserve historical denial; stop a further denial. No new testing/audit phases.",
       "blocker": {
-        "state": "active",
-        "kind": "approval_review_rejection",
-        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-06T00:46:25.366143+00:00",
+        "state": "none",
+        "kind": "none",
+        "description": "Specific new main/NEXT finish instruction supplied; concrete safe integration and one ordinary retry pending. Historical denial remains preserved; no retry has occurred.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:46:25.366143+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00"
     },
     {
       "id": "BTH061-AUDIT-DELIVERY-CYCLE-PUBLICATION-RITUAL-COVERAGE-025",
@@ -25802,17 +26231,37 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:57:17.461114+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:54:48.043844+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_CORRECTION_COMMITTED_LOCAL_REQUIRED_NEXT_PENDING_026",
+        "resume_next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T00:57:17.461114+00:00",
+          "evidence": []
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
@@ -25919,17 +26368,37 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T00:57:17.461114+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T02:54:48.043844+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "QUALIFIED_CORRECTION_COMMITTED_LOCAL_REQUIRED_NEXT_PENDING_026",
+        "resume_next_action": "KeepOpen until separately assigned exactNEXT verification contains localqualifiedsourcefbd95aae. Do not retry denied mainpublication absentnew specificapproval; preserve original publicDTO results and allscope limits.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Open evidence qualification, not an invented user/save/scheduler hold. Independent source audit continues; no cleanup, publication retry or restricted diagnostic is authorized.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T00:57:17.461114+00:00",
+          "evidence": []
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PUBLICATION-NUMERIC-IDENTITY-025",
@@ -26475,15 +26944,15 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain local a3a29fdb and independently qualified final evidence. Await new relevant publication approval before any main push, then integrate and verify exact NEXT identity/assets/changed behavior. Do not mark Complete before required NEXT acceptance.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "approval_review_rejection",
-        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-06T00:46:25.366143+00:00",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [
@@ -26500,7 +26969,27 @@
           "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
         }
       ],
-      "updated_at": "2026-11-06T06:01:15.668844+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "LOCAL_FIX_COMMITTED_343_FINAL_CHECKS_PASS_REQUIRED_NEXT_APPROVAL_PENDING_029",
+        "resume_next_action": "Retain local a3a29fdb and independently qualified final evidence. Await new relevant publication approval before any main push, then integrate and verify exact NEXT identity/assets/changed behavior. Do not mark Complete before required NEXT acceptance.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "approval_review_rejection",
+          "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+          "requires_user_input": true,
+          "observed_at": "2026-11-06T00:46:25.366143+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26809,14 +27298,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact required NEXT delivery contains tested source 1b2f12c1495159871432c87bffdd16b7f64a616b before completing this corrective task. Preserve actual old Nil reproduction and full native cold regression; do not retry denied main publication without new specific approval.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Narrow local public API fix and regression are authorized independent work. Prior main publication denial and required NEXT remain separate; no missing personal save/user hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T04:20:45.475254+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [
         {
@@ -26824,7 +27315,25 @@
           "scope": "One visible_pressure conditional for noRun state; no deferred collaborator initialized or other field/helper/authoritative save/runtime behavior changed."
         }
       ],
-      "updated_at": "2026-11-06T04:49:43.784038+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "ONE_FIELD_NO_RUN_SNAPSHOT_FIX_COMMITTED_NATIVE57_PASS_REQUIRED_NEXT_OPEN_028",
+        "resume_next_action": "Verify exact required NEXT delivery contains tested source 1b2f12c1495159871432c87bffdd16b7f64a616b before completing this corrective task. Preserve actual old Nil reproduction and full native cold regression; do not retry denied main publication without new specific approval.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Narrow local public API fix and regression are authorized independent work. Prior main publication denial and required NEXT remain separate; no missing personal save/user hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T04:20:45.475254+00:00",
+          "evidence": []
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-META-GRAND-CORE-COVERAGE-029",
@@ -27364,19 +27873,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain the conditional helper question. Use permitted remaining RunState/ordinary-producer evidence to establish a naturally rejected healthy destination/cache plus an owner that neither restores nor discards. No such paired producer is known; do not force authority/callback/fault states or retry excluded diagnostics.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "acceptance_evidence",
-        "description": "The helper return asymmetry is real source evidence, but all observed production owners restore externally or discard an isolated candidate. No paired healthy Crew late-rejection producer and unprotected production owner is established; no ordinary bug or speculative fix is claimed.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T07:34:18.932393+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-generator-rollback-qualification-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:40:02.542236+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "PRODUCTION_OWNER_RESTORATION_QUALIFIED_NO_ORDINARY_UNPROTECTED_FAILURE_031",
+        "resume_next_action": "Retain the conditional helper question. Use permitted remaining RunState/ordinary-producer evidence to establish a naturally rejected healthy destination/cache plus an owner that neither restores nor discards. No such paired producer is known; do not force authority/callback/fault states or retry excluded diagnostics.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "acceptance_evidence",
+          "description": "The helper return asymmetry is real source evidence, but all observed production owners restore externally or discard an isolated candidate. No paired healthy Crew late-rejection producer and unprotected production owner is established; no ordinary bug or speculative fix is claimed.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T07:34:18.932393+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-generator-rollback-qualification-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -27474,19 +28003,39 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain only the precisely proved local prop/item condition fragments under the current cleanup stop. Earlier returns and stable locals establish source redundancy, not whole-method obsolescence. When cleanup/relevant scope resumes, independently qualify any narrow delta/parity and delivery before removal; no candidate patch now.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "scope_restriction",
-        "description": "Cleanup/removal is explicitly stopped; the source-only audit does not authorize applying a deletion.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:40:02.542236+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "EXACT_CLASSIFIER_DOMINANCE_QUALIFIED_CLEANUP_STOPPED_031",
+        "resume_next_action": "Retain only the precisely proved local prop/item condition fragments under the current cleanup stop. Earlier returns and stable locals establish source redundancy, not whole-method obsolescence. When cleanup/relevant scope resumes, independently qualify any narrow delta/parity and delivery before removal; no candidate patch now.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "scope_restriction",
+          "description": "Cleanup/removal is explicitly stopped; the source-only audit does not authorize applying a deletion.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T06:30:05.599695+00:00",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
@@ -27690,20 +28239,40 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve the reproduced public-model mismatch and define compatible Meta-item eligibility/instance identity, including Crew handoff/return and legacy String behavior. Do not change item/scenario implementation while paused. When the applicable implementation scope resumes, register the narrow fix, focused regressions and exact NEXT delivery; do not retry denied publication.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
         "state": "active",
-        "kind": "scope_restriction",
-        "description": "The user paused item/scenario implementation; this parent continuation authorized qualification, not item code changes. Qualification completed without a source fix. Specific main publication is separately denied and was not retried.",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T07:25:29.355599+00:00",
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
         "evidence": [
-          "docs/todo/bth_user_item_scenario_pause_20261104.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json"
+          "docs/testing/audit_pause_finish_20261106.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T07:40:02.542236+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "MODEL_REJECTION_CONFIRMED_CORRECTIVE_ITEM_SCOPE_NOT_AUTHORIZED_031",
+        "resume_next_action": "Preserve the reproduced public-model mismatch and define compatible Meta-item eligibility/instance identity, including Crew handoff/return and legacy String behavior. Do not change item/scenario implementation while paused. When the applicable implementation scope resumes, register the narrow fix, focused regressions and exact NEXT delivery; do not retry denied publication.",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "scope_restriction",
+          "description": "The user paused item/scenario implementation; this parent continuation authorized qualification, not item code changes. Qualification completed without a source fix. Specific main publication is separately denied and was not retried.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T07:25:29.355599+00:00",
+          "evidence": [
+            "docs/todo/bth_user_item_scenario_pause_20261104.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json"
+          ]
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-STATE-SCENARIO-CORE-COVERAGE-032",
@@ -27902,17 +28471,37 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Independently qualify the normal home expiry/sleep/day-rollover owner and current-room projection, distinguishing blocked storage mutations from stale physical data. Preserve the item/scenario implementation pause; do not remove or repair code in this source-review phase. Any permitted correction needs focused ownership/save/reentry regressions, an actual fix commit and exact NEXT acceptance.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Source qualification is active. This task adds no user-pause policy; existing item/scenario implementation restrictions and prior publication/access denials remain unchanged.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:07:38.118874+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:30:37.215638+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "LOCAL_HOME_LOSS_CLEANUP_CONTRADICTION_FOUND_RUNTIME_AND_CORRECTION_OPEN_032",
+        "resume_next_action": "Independently qualify the normal home expiry/sleep/day-rollover owner and current-room projection, distinguishing blocked storage mutations from stale physical data. Preserve the item/scenario implementation pause; do not remove or repair code in this source-review phase. Any permitted correction needs focused ownership/save/reentry regressions, an actual fix commit and exact NEXT acceptance.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Source qualification is active. This task adds no user-pause policy; existing item/scenario implementation restrictions and prior publication/access denials remain unchanged.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T08:07:38.118874+00:00",
+          "evidence": []
+        }
+      }
     },
     {
       "id": "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032",
@@ -27993,17 +28582,142 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Find a naturally rejecting valid mounted-delivery precommit preview under the global-boundary or sweep owners, or prove those states excluded/fully restored. Distinguish precommit rejection from intentionally durable post-checkpoint confirmation failure. No forced authority, callbacks/faults, excluded diagnostic or paused implementation; no runtime bug or fix claim yet.",
+      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
+      "blocker": {
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-06T08:56:17.463862+00:00",
+        "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "source": "docs/testing/audit_pause_finish_20261106.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "SOURCE_ONLY_DELIVERY_PRECOMMIT_OWNER_GAP_NO_ORDINARY_REJECTING_PRODUCER_032",
+        "resume_next_action": "Find a naturally rejecting valid mounted-delivery precommit preview under the global-boundary or sweep owners, or prove those states excluded/fully restored. Distinguish precommit rejection from intentionally durable post-checkpoint confirmation failure. No forced authority, callbacks/faults, excluded diagnostic or paused implementation; no runtime bug or fix claim yet.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": "none",
+          "description": "Ordinary rejecting producer or exclusion proof is not yet established. Permitted source qualification continues; no invented user decision or missing-original-save dependency.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-06T08:07:38.118874+00:00",
+          "evidence": []
+        }
+      }
+    },
+    {
+      "id": "BTH061-AUDIT-FINISH-PUBLISH-20261106",
+      "name": "Finish tested audit fixes on main and NEXT, then pause",
+      "aliases": [],
+      "kind": "operation",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Finish publication of already-tested pending ritual grammar/anchor, early save-status snapshot and terminal Meta durability fixes, plus completed audit evidence024-032. Safely integrate current main, preserve all unrelated/paused work and original commits, publish main once under the specific renewed authorization, and truthfully follow existing NEXT. Stop new testing/audit phases and preserve unfinished acceptance; no new application, pipeline, audience, cleanup or diagnostic changes.",
+        "source": "Trusted user instruction: please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scope-and-existing-qualification",
+            "description": "Independent outgoing/merge scope review and exact existing test receipts, with combined-source limitations explicit; no new tests.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "preserved-associated-commits",
+            "description": "Original completed work and unfinished findings/commits preserved; actual associated commits before completion.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "ordinary-main-publication",
+            "description": "Reviewed non-force main publication succeeds under the new specific instruction and exact remote identity/ancestry verified; no second denied-action retry.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "exact-NEXT-follow-through",
+            "description": "Observe existing watcher and exact served identity/basic-launch receipt where available; keep open if blocked/unverified, no pipeline or trust bypass.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_FINISH_EXISTING_TESTED_WORK_ONLY_SAFE_INTEGRATION_PENDING",
+      "owner": {
+        "name": "Audit finish publication",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fbd95aae983f6e99c4431b31d830f550bd993e3d",
+          "evidence": [
+            "docs/testing/audit_pause_finish_20261106.json"
+          ]
+        },
+        {
+          "sha": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+          "evidence": [
+            "docs/testing/audit_pause_finish_20261106.json"
+          ]
+        },
+        {
+          "sha": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
+          "evidence": [
+            "docs/testing/audit_pause_finish_20261106.json"
+          ]
+        },
+        {
+          "sha": "9d7b360b3cd97a38bdbc171c675288e603fd5dd5",
+          "evidence": [
+            "docs/testing/audit_pause_finish_20261106.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing NEXT watcher only; no new tests, build/restart/manual substitute, trust/ACL/audience changes or stable/itch publication."
+      },
+      "evidence": [],
+      "implementation_batches": [],
+      "next_action": "Integrate the22 existing finished commits without losing latest Bar Dice main work, record concrete source/test scope and preserved pause, then one ordinary main push and bounded observation of existing NEXT. No new tests/audit phases, source fixes, pipeline repair or guard bypass.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Ordinary rejecting producer or exclusion proof is not yet established. Permitted source qualification continues; no invented user decision or missing-original-save dependency.",
+        "description": "Specific main/NEXT finish publication authorized; safe integration/review pending. Current existing NEXT publisher permission failure is observed separately, without bypass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:07:38.118874+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "evidence": [
+          "docs/testing/audit_pause_finish_20261106.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:30:37.215638+00:00"
+      "updated_at": "2026-11-06T08:56:17.463862+00:00"
     }
   ],
   "batches": [
