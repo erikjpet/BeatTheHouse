@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T04:06:14.209994+00:00",
+  "updated_at": "2026-11-06T05:37:44.066563+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -25229,7 +25229,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate R17-B savedBarDiceReveal resetting on coldContinue toAgreeWager/defaultante20/cover0 aftercrossing03:00closing. Establish expectedpreservation of acceptedfundable6cup/exactdice/callsequence, reproduce using freshindependentnativefixture without originalprofile/save/keyaccess, fix only confirmedresponsiblecontract and test warm/cold/closing/once-onlysettlement and relevanttrustrejections. Trackassociatedcommit, publish testedfix toauthorizedmain/NEXT and verifyexactdelivery beforeclosure. Preserve originalobservations and anycausallimit; no fundedlossclaim whenwallet94unchanged and noCall. Never retry/bypass separatelydeniedac877manifestread or launch a runner thatreadsit.",
-        "source": "Trustedparentdelegation2026-11-06: newBarDiceReveal/coldContinueissue qa-r17b-1330; exactobservedac877 source. StandingtestedBTHmain/NEXTauthorization retained; afterdenial inspecttrusteduserhistory and retryonly materiallynewappropriateevidence once, thenstop.",
+        "source": "Trustedparentdelegation2026-11-06: newBarDiceReveal/coldContinueissue qa-r17b-1330; exactobservedac877 source. StandingtestedBTHmain/NEXTauthorization retained; afterdenial inspecttrusteduserhistory and retryonly materiallynewappropriateevidence once, thenstop. Parent continuation2026-11-06 explicitly requests remaining native shutdown/cover investigation and post-Call Save/Continue qualification.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -25256,7 +25256,7 @@
             "id": "focused-fix-and-regressions",
             "description": "Narrowcausal fix preserves exactacceptedcup/dice/ante through officialSave/freshContinue, closingdeferral and oneCallsettlement; no duplicatefunding/payout/history/RNG, relevantinvalidledger/tamperrejections intact.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
               "docs/testing/bar_dice_reveal_restore_r17b.md"
@@ -25266,7 +25266,7 @@
             "id": "commit-main-next",
             "description": "Associated tested scopedcommit and authorizedmain publication/exactNEXTidentity/basiclaunch/changedbehavior where feasible; record factualblockers and do notmarkcomplete before requiredacceptance.",
             "required": true,
-            "state": "pass",
+            "state": "open",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
               "docs/testing/bar_dice_reveal_restore_r17b.md",
@@ -25277,7 +25277,7 @@
             "id": "native-shutdown-disposition",
             "description": "Resolve or explicitly dispose the identical baseline/candidate native0xC0000005 after83/0 assertions; retainexactfailedreceipts and never substituteassertioncompletion forcleanruntimepass. No speculativeforce-exit/native/enginechanges.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
               "docs/testing/bar_dice_reveal_restore_r17b.md"
@@ -25291,7 +25291,7 @@
         }
       },
       "state": "open",
-      "status": "FIX_DEPLOYED_REVEAL_WEB_VERIFIED_ACCEPTANCE_OPEN",
+      "status": "FIXES_COMMITTED_ALL_FOCUSED_ACCEPTANCE_NEXT_PENDING",
       "owner": {
         "name": "Bar Dice Reveal restoration (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -25311,21 +25311,26 @@
             "docs/testing/bar_dice_reveal_restore_r17b.json",
             "docs/testing/bar_dice_reveal_restore_r17b.md"
           ]
+        },
+        {
+          "sha": "753d6eb5d832695901fad640af3c6b557efbdc48",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "Scoped seven-line owned-save exit fix plus qualified post-Call/cover/shutdown diagnostics. Cover association is diagnostic/no-defect evidence, not a display production-fix claim."
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
-        "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
-        "deployed_at": "2026-11-06T03:17:02Z",
-        "observed_at": "2026-11-06T03:55:21.185870+00:00",
+        "state": "pending",
+        "commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
         ],
-        "scope": "Fix eba4663b and association descendant 1adcf4f9 reached existing main/NEXT. Exact served manifest/PCK/native WASM match pipeline receipt; title and isolated engineering-fixture Menu Save/cold Reveal behavior verified. Original-player forensic attribution, native shutdown and post-Call final-save acceptance remain open."
+        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
       },
       "evidence": [
         {
@@ -25352,23 +25357,30 @@
           "kind": "named_open_followup",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
           "summary": "BTH061-BAR-DICE-COVER-DISPLAY-001: COV0/RISK0 in both Web Reveal PNGs retained as an unattributed display discrepancy; no custody/debit claim."
+        },
+        {
+          "kind": "continuation_qualified_native_and_public_web",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "NewpostCall60/0+freshContinue30/0/candidate30/0 at88/oneRound/onegameaction; causalqueued-save race fixed, require-drain86/0 andplain83/0 cleannativeexit, failure28/0 preservesactualerror/primary. ActualDPR2Webclearly6/6/0; wrong-valuepredicate not reproduced. Commit/delivery pending."
         }
       ],
-      "implementation_batches": [],
-      "next_action": "Keep objective Open. Use a new independent legitimate case to complete the ordinary post-Call event choice, Menu Save and fresh Continue without replaying either prior unsaved Call. Obtain a supported native shutdown disposition (baseline and candidate both 0xC0000005 after 83/0); no speculative native/engine fix or suppressed exits. Preserve original profile and both denied document reads.",
+      "implementation_batches": [
+        "BTH061-BAR-DICE-SHUTDOWN-001"
+      ],
+      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
       "blocker": {
-        "state": "active",
-        "kind": "native_shutdown_and_post_call_save_acceptance_open",
-        "description": "Scoped fix is on main and exact NEXT 1adcf4f9, with clean focused 21/26/14/17 and isolated deployed Web Menu Save/cold Reveal acceptance. Full objective remains open: both baseline/candidate catalog warm Jobs crash 0xC0000005 at final shutdown after 83/0 assertions; cause unattributed. Normal Health Inspector after the single native Call paused animation and prevented final Menu Save; retained storage is the prior accepted $94 Reveal, not the unsaved $88 outcome. No financial replay or original storage access. Neither unresolved path is awaiting a user save or permission.",
+        "state": "none",
+        "kind": null,
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-06T03:55:21.185870+00:00",
+        "observed_at": "2026-11-06T05:32:13.288233+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:06:14.209994+00:00"
+      "updated_at": "2026-11-06T05:37:44.066563+00:00"
     },
     {
       "id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
@@ -25398,9 +25410,9 @@
           },
           {
             "id": "causal-display-reproduction",
-            "description": "Identify the first actual source/runtime boundary making cover/risk0 despite acceptedante6; preserve custody and money facts separately.",
+            "description": "Trace actual cover/risk values and qualify the observed Web state; either identify a causal error or record supported not-reproduced/readability limits.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
               "docs/testing/bar_dice_reveal_restore_r17b.md"
@@ -25408,13 +25420,14 @@
           },
           {
             "id": "focused-display-fix",
-            "description": "Evidence-backed narrow label repair with normal warm/cold acceptedcup and unfunded/fresh/settled guards; no authority or financial weakening.",
+            "description": "If a value defect is confirmed, repair it narrowly; otherwise retain evidence-supported no-patch disposition without changing custody, money, RNG or authority.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/bar_dice_reveal_restore_r17b.json",
               "docs/testing/bar_dice_reveal_restore_r17b.md"
-            ]
+            ],
+            "disposition": "no_confirmed_value_defect_no_product_patch"
           },
           {
             "id": "commit-main-next",
@@ -25434,22 +25447,31 @@
         }
       },
       "state": "open",
-      "status": "OBSERVED_DISPLAY_DISCREPANCY_NO_FIX_COMMIT",
+      "status": "NO_VALUE_DEFECT_DIAGNOSTIC_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Bar Dice cover/risk display investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "753d6eb5d832695901fad640af3c6b557efbdc48",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "Scoped seven-line owned-save exit fix plus qualified post-Call/cover/shutdown diagnostics. Cover association is diagnostic/no-defect evidence, not a display production-fix claim."
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ],
-        "scope": "Observation/source review only; no fix commit or changed-behavior deployment."
+        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
       },
       "evidence": [
         {
@@ -25461,23 +25483,28 @@
           "kind": "source_expectation_not_causal_proof",
           "reference": "docs/testing/bar_dice_reveal_restore_r17b.md",
           "summary": "Unattributed cover/risk display discrepancy; source inspection did not demonstrate where retained flat fields were lost/overwritten. No claim of lost cup, debit or restore failure. No speculative fix. Preserve normal money/custody checks."
+        },
+        {
+          "kind": "actual_dpr2_public_web_and_native_trace",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Nativeactualdraw6/6/0 atallunfundedphases andcatalogcoldfloor10; actual2560x1440-backedWebDPR2clearlyCOV6/RISK6/RET0,94cash/ante6/samedice, noimport/paidinputs. Earlier1280PNGreadingunreliable, notcategoricallyreinterpreted."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Narrow independent nonfinancial reproduction to capture the first surface-field/projection boundary; compare warm/cold expected6 labels. Never replay a prior Call or touch original profile/denied documents.",
+      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
       "blocker": {
-        "state": "active",
-        "kind": "unattributed_surface_field_discrepancy",
-        "description": "Producer source expects6/6/0; two reviewed public PNGs show0/0/0. No demonstrated field-loss boundary or justified patch yet. Independent investigation is available; not waiting for user save/permission.",
+        "state": "none",
+        "kind": null,
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-06T04:06:14.209994+00:00",
+        "observed_at": "2026-11-06T05:32:13.288233+00:00",
         "evidence": [
           "docs/testing/bar_dice_reveal_restore_r17b.json",
           "docs/testing/bar_dice_reveal_restore_r17b.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:06:14.209994+00:00"
+      "updated_at": "2026-11-06T05:37:44.066563+00:00"
     }
   ],
   "batches": [
@@ -25969,6 +25996,66 @@
         "Finish exact main/NEXT source, public receipt and patched-JS identity plus external consumer enforcement. Preserve context-loss/multiple-context and broader native/campaign limitations as explicit follow-ups."
       ],
       "acceptance_scope": "Bounded GL mitigation and its exact release qualification only. Full-game audit remains Open; old local comparison sourcef876/PCK is diagnostic, and Windows release/real audio/loaded campaign/context coverage limits remain explicit."
+    },
+    {
+      "id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "name": "Drain the final owned autosave before FoundationMain exits",
+      "aliases": [],
+      "group": "current",
+      "state": "open",
+      "status": "EXIT_BARRIER_COMMITTED_NEXT_PENDING",
+      "owner": {
+        "name": "Bar Dice shutdown ownership fix (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "753d6eb5d832695901fad640af3c6b557efbdc48",
+          "evidence": [
+            "docs/testing/bar_dice_reveal_restore_r17b.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.md",
+            "Scoped seven-line owned-save exit fix plus qualified post-Call/cover/shutdown diagnostics. Cover association is diagnostic/no-defect evidence, not a display production-fix claim."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ],
+        "scope": "Qualified fix/diagnostic commit associated; authorized main publication and exact NEXT delivery pending. Historical exact-build evidence retains original identities."
+      },
+      "evidence": [
+        {
+          "kind": "owned_task_id_causal_reproduction",
+          "reference": "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "summary": "Unchanged native warm84/0 thenC000: afterwaitid-1 butsameframe queuedHost startstask2; task2/inflight survivesHostfree. Freshidenticalcase joinsONLYthatknownserviceTaskafterfree, preserving84/0andcleanexit0. Full22framefaulttraceWorkerPoollatecallablerelease/GDScriptInstance afterLanguage destruction retained."
+        }
+      ],
+      "next_action": "Publish associated qualified commit 753d6eb5d832695901fad640af3c6b557efbdc48 through current main/NEXT; verify exact descendant identity/assets/basic launch and reconcile before closing this item. Preserve original failures, old-DPR1 uncertainty and original-state/browser-unload scope limits.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T05:32:13.288233+00:00",
+        "evidence": [
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.md"
+        ]
+      },
+      "updated_at": "2026-11-06T05:37:44.066563+00:00",
+      "parent_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "scope": [
+        "Join only the current Host SaveService task at _exit_tree, including a coalesced task started in the final queued-deletion frame.",
+        "Preserve native/Web Save result validation, prior good data and reported failures; no forced new Save, global task sweep, process disabling or forced exit.",
+        "Focused successful/failed Save teardown evidence, actual native exit code and authorized commit/main/NEXT association."
+      ],
+      "acceptance_scope": "Bounded ownership correction only; parent still requires all its accepted-cup and Save/Continue acceptance and retains original attribution limits."
     }
   ]
 }

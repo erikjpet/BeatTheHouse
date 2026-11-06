@@ -1,7 +1,7 @@
 {
   "id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
   "state": "open",
-  "updated_at": "2026-11-06T04:06:14.209994+00:00",
+  "updated_at": "2026-11-06T05:37:44.066563+00:00",
   "source_commit": "ac877121d68561c818f39fe3c81b892e8a13b932",
   "source_tree": "42aa5865e8e64e32d6c2cdf22440a76a3ae5334d",
   "original_evidence": {
@@ -79,6 +79,10 @@
     {
       "sha": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
       "scope": "Fix association/evidence descendant deployed and verified on NEXT."
+    },
+    {
+      "sha": "753d6eb5d832695901fad640af3c6b557efbdc48",
+      "scope": "Owned SaveService teardown correction plus focused post-Call/cover/no-defect and shutdown regression diagnostics."
     }
   ],
   "native_cases": [
@@ -1249,21 +1253,3422 @@
         },
         "details_reference": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-default-slot-convert-1.log"
       }
+    },
+    {
+      "label": "dice-postcall-shutdown-debug-warm-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_post_call_save_check.gd"
+      ],
+      "worker_kind": "private-native-debug",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": null,
+      "receipt": {
+        "started_utc": "2026-11-06T04:30:01.000756+00:00",
+        "finished_utc": "2026-11-06T04:30:01.224620+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 0.0
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.log",
+      "result": null
+    },
+    {
+      "label": "dice-postcall-warm-regular-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_post_call_save_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_POST_CALL_SAVE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:31:38.181997+00:00",
+        "finished_utc": "2026-11-06T04:32:26.596561+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 22.46875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.log",
+      "result": {
+        "checks": 86,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "cover_boundaries": [
+            {
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 325,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "reveal",
+                "process_frame": 594,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "host": [
+                6,
+                6,
+                0
+              ],
+              "label": "warm_saved_reveal",
+              "menu_visible": false,
+              "module": [
+                6,
+                6,
+                0
+              ],
+              "ui_phase": "reveal"
+            }
+          ],
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002"
+          },
+          "fixture_seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002",
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              25
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "One new catalog BarWake/Payday fixture with explicit engineering clock23:00/Day205:30, normal renderer actions and Menu Save/Continue. Never a prior unsaved Call or original profile. At most one new Call and one naturally displayed Health Inspector finish_one button; other prompts stop. Settled stage has zero game/event/financial inputs.",
+          "source_sha256": {
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+            "test": "4306430bcec50470666de3f0c0430a1543883120d4aad8324ddb6b09b05b389e",
+            "venue": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-postcall-cold-regular-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_post_call_save_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_POST_CALL_SAVE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:33:10.963750+00:00",
+        "finished_utc": "2026-11-06T04:33:46.120974+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 16.65625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.log",
+      "result": {
+        "checks": 60,
+        "facts": {
+          "New case cold Reveal": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 60,
+              "clock_minutes": 1770,
+              "floor": 10,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": ""
+            },
+            "phase": "reveal",
+            "rendered_phase": "reveal",
+            "ui_dice_equal": true,
+            "ui_phase": "reveal"
+          },
+          "actions": [
+            "bar_dice_reveal",
+            "bar_dice_ack_call"
+          ],
+          "after_response_ui": {
+            "cash": 88,
+            "closing_active": true,
+            "popup_event_id": "",
+            "popup_visible": false,
+            "screen": "GAME",
+            "transition_active": true
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "not_in_game",
+                "state": "before_Continue"
+              },
+              "first_failed_stage": "",
+              "label": "fresh_post_call_input",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "completed_ledger_disposition": "retained_valid",
+              "first_failed_stage": "",
+              "label": "post_call_manual_save",
+              "loaded_ledger_present": true,
+              "raw_ledger_present": true,
+              "scope": "Completed result only; initial unfunded Reveal uses the strict inherited ledger validator."
+            }
+          ],
+          "completed": true,
+          "cover_boundaries": [
+            {
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "reveal",
+                "process_frame": 13,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60,
+                "clock_minutes": 1770,
+                "floor": 10,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "host": [
+                6,
+                6,
+                0
+              ],
+              "label": "cold_reveal_before_only_call",
+              "menu_visible": false,
+              "module": [
+                6,
+                6,
+                0
+              ],
+              "ui_phase": "reveal"
+            }
+          ],
+          "event_response": {
+            "choices_made": 0,
+            "forced_event_enqueue": false,
+            "state": "no_natural_popup"
+          },
+          "first_loss": "",
+          "fixture_seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002",
+          "new_paid_call_count": 1,
+          "original_state_used": false,
+          "post_call_ui": {
+            "cash": 88,
+            "closing_active": true,
+            "popup_event_id": "",
+            "popup_visible": false,
+            "screen": "GAME",
+            "transition_active": true
+          },
+          "saved_outcome": {
+            "cash": 88,
+            "game_action_rows": 1,
+            "new_paid_calls": 1,
+            "original_or_prior_case_used": false,
+            "rounds": 1,
+            "screen": "GAME"
+          },
+          "scope": "One new catalog BarWake/Payday fixture with explicit engineering clock23:00/Day205:30, normal renderer actions and Menu Save/Continue. Never a prior unsaved Call or original profile. At most one new Call and one naturally displayed Health Inspector finish_one button; other prompts stop. Settled stage has zero game/event/financial inputs.",
+          "source_sha256": {
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+            "test": "4306430bcec50470666de3f0c0430a1543883120d4aad8324ddb6b09b05b389e",
+            "venue": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26"
+          },
+          "stage": "cold"
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-postcall-settled-readonly-1",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_post_call_save_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_POST_CALL_SAVE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:35:02.214512+00:00",
+        "finished_utc": "2026-11-06T04:35:34.355697+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 15.359375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.log",
+      "result": {
+        "checks": 30,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [
+            {
+              "completed_ledger_disposition": "retained_valid",
+              "first_failed_stage": "",
+              "label": "read_only_post_call",
+              "loaded_ledger_present": true,
+              "raw_ledger_present": true,
+              "scope": "Completed result only; initial unfunded Reveal uses the strict inherited ledger validator."
+            }
+          ],
+          "cold_outcome": {
+            "cash": 88,
+            "game_rows": 1,
+            "new_inputs": 0,
+            "projection_equal": true,
+            "rounds": 1.0
+          },
+          "completed": true,
+          "first_loss": "",
+          "fixture_seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002",
+          "original_state_used": false,
+          "scope": "One new catalog BarWake/Payday fixture with explicit engineering clock23:00/Day205:30, normal renderer actions and Menu Save/Continue. Never a prior unsaved Call or original profile. At most one new Call and one naturally displayed Health Inspector finish_one button; other prompts stop. Settled stage has zero game/event/financial inputs.",
+          "source_sha256": {
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+            "test": "4306430bcec50470666de3f0c0430a1543883120d4aad8324ddb6b09b05b389e",
+            "venue": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26"
+          },
+          "stage": "settled"
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-shutdown-debug-warm-2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "worker_kind": "private-native-debug",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": null,
+      "receipt": {
+        "started_utc": "2026-11-06T04:36:13.769100+00:00",
+        "finished_utc": "2026-11-06T04:39:15.334215+00:00",
+        "exit_code": 1,
+        "timed_out": true,
+        "active_at_release": 0,
+        "cpu_seconds": 85.828125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.log",
+      "result": null
+    },
+    {
+      "label": "dice-cover-trace-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_cover_display_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_COVER_DISPLAY_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:23:47.197280+00:00",
+        "finished_utc": "2026-11-06T04:24:18.133912+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 14.671875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.log",
+      "result": {
+        "checks": 94,
+        "facts": {
+          "actions": [
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "blocked": [],
+          "boundaries": [
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 7,
+                "flat": [
+                  0,
+                  0,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "agree_wager",
+                "process_frame": 17,
+                "projection": [
+                  0,
+                  0,
+                  0
+                ],
+                "text_argument": "COV $0  ·  RISK $0  ·  RET $0"
+              },
+              "authority": {
+                "cover": 0,
+                "phase_input": "",
+                "returned": 0,
+                "risk": 0
+              },
+              "canvas_processing": true,
+              "expected_phase": "agree_wager",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  0,
+                  0,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "agree_wager",
+                "pot": 30,
+                "projection": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "label": "initial",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  0,
+                  0,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "agree_wager",
+                "pot": 30,
+                "projection": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  0,
+                  0,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "agree_wager",
+                "pot": 30,
+                "projection": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 11,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "cover",
+                "process_frame": 24,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "cover",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "cover",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "cover",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_roll",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "cover",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "cover",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 15,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "shake",
+                "process_frame": 31,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "shake",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "shake",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_ack_cover",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 94,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "shake",
+                "process_frame": 168,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "shake",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "shake",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_shake",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 189,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "shake",
+                "process_frame": 318,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "shake",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "shake",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_shake",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "shake",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 281,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "throw",
+                "process_frame": 468,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "throw",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "throw",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "throw",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_resolve",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "throw",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "throw",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            },
+            {
+              "account_and_root_rng_equal": true,
+              "actual_draw": {
+                "ante": 6,
+                "draw_count": 285,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "font_size": 7,
+                "phase": "reveal",
+                "process_frame": 475,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ],
+                "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+              },
+              "authority": {
+                "cover": 6,
+                "phase_input": "reveal",
+                "returned": 0,
+                "risk": 6
+              },
+              "canvas_processing": true,
+              "expected_phase": "reveal",
+              "host_snapshot": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "reveal",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "label": "bar_dice_throw",
+              "module": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "reveal",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              },
+              "new_actual_draw": true,
+              "retained_canvas": {
+                "ante": 6,
+                "flat": [
+                  6,
+                  6,
+                  0
+                ],
+                "flat_present": [
+                  true,
+                  true,
+                  true
+                ],
+                "phase": "reveal",
+                "pot": 30,
+                "projection": [
+                  6,
+                  6,
+                  0
+                ]
+              }
+            }
+          ],
+          "completed": true,
+          "display_server": "headless",
+          "financial_calls": 0,
+          "first_loss": "",
+          "original_state_used": false,
+          "save_inputs": 0,
+          "scope": "Fresh supported Practice cash94/ante6; actual MainScene screen-builder Canvas factory with surface_label-only observation, real renderer hit-region callbacks, no Call/Save/Continue or financial settlement. Authority/module/host snapshot/retained Canvas/actual draw-text trace. No original state, cold/closing/Web or raster-pixel interpretation claim. Native shutdown outcome remains separately recorded by owned runner.",
+          "source_sha256": {
+            "bar_dice.gd": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+            "bar_dice_cover_display_check.gd": "9af5876a6963f7beb1c7457a79034bbafd4d4997de46c02c71a182de3f82af47",
+            "bar_dice_ritual_projection.gd": "aeffef19fef32cf762e5788b7ff4a918345e9c81632a4831ce9333b194da1721",
+            "foundation_action_view_model.gd": "b49018d54bed650b9ae1c8e795777d7e782d82196653a93984f3e54ff5de9471",
+            "game_surface_canvas.gd": "a645374efc424371decf9134ead748b80c17009768ca71e79819f5280a3c5fe7"
+          }
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-shutdown-debug-noheap-3",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "worker_kind": "private-native-debug",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:43:24.008403+00:00",
+        "finished_utc": "2026-11-06T04:44:10.962773+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 20.84375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.log",
+      "result": {
+        "checks": 83,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-shutdown-debug-stack-4",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "worker_kind": "private-native-debug",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:49:00.494604+00:00",
+        "finished_utc": "2026-11-06T04:49:45.318544+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 20.296875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.log",
+      "result": {
+        "checks": 83,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-shutdown-observe-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_shutdown_save_task_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:03:57.474481+00:00",
+        "finished_utc": "2026-11-06T05:04:44.503459+00:00",
+        "exit_code": 3221225477,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 21.828125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.log",
+      "result": {
+        "checks": 84,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "shutdown_probe": {
+            "additional_game_inputs": 0,
+            "base_wait_error": 0,
+            "extra_drain_attempted": false,
+            "mode": "observe",
+            "observations": [
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "before_base_wait",
+                "pending_after_frame": 604,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43152,
+                "process_frame": 605,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44008
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "after_base_wait",
+                "pending_after_frame": 604,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43152,
+                "process_frame": 605,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44008
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "after_queue_free",
+                "pending_after_frame": 604,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43152,
+                "process_frame": 605,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44009
+              },
+              {
+                "async_save_in_flight": true,
+                "async_slot_id": "bar_dice_reveal_restore",
+                "async_task_id": 2,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "known_owned_task_completed": false,
+                "label": "tree_exiting_after_host_exit_tree",
+                "pending_after_frame": -1,
+                "pending_autosave": false,
+                "pending_not_before_msec": 0,
+                "process_frame": 605,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44049
+              },
+              {
+                "async_save_in_flight": true,
+                "async_slot_id": "bar_dice_reveal_restore",
+                "async_task_id": 2,
+                "host_alive": false,
+                "known_owned_task_completed": false,
+                "label": "after_two_frames",
+                "process_frame": 607,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44084
+              }
+            ],
+            "save_service_source_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "scope": "Weak observation of the exact Host-owned SaveService only; same wait/queue_free/two-frame ordering as the base test. Inherited warm inputs remain separately recorded."
+          },
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "b38a7cff7ae8a89088cbe79ca08c4efc78c5e8c72300a6bc9b740db5aea940cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-shutdown-owned-drain-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_shutdown_save_task_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:06:23.638119+00:00",
+        "finished_utc": "2026-11-06T05:07:10.656898+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 21.75
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.log",
+      "result": {
+        "checks": 84,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "shutdown_probe": {
+            "additional_game_inputs": 0,
+            "base_wait_error": 0,
+            "extra_drain_attempted": true,
+            "mode": "drain_owned_save",
+            "observations": [
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "before_base_wait",
+                "pending_after_frame": 629,
+                "pending_autosave": true,
+                "pending_not_before_msec": 42784,
+                "process_frame": 630,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 43986
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "after_base_wait",
+                "pending_after_frame": 629,
+                "pending_autosave": true,
+                "pending_not_before_msec": 42784,
+                "process_frame": 630,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 43986
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "after_queue_free",
+                "pending_after_frame": 629,
+                "pending_autosave": true,
+                "pending_not_before_msec": 42784,
+                "process_frame": 630,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 43987
+              },
+              {
+                "async_save_in_flight": true,
+                "async_slot_id": "bar_dice_reveal_restore",
+                "async_task_id": 2,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "known_owned_task_completed": false,
+                "label": "tree_exiting_after_host_exit_tree",
+                "pending_after_frame": -1,
+                "pending_autosave": false,
+                "pending_not_before_msec": 0,
+                "process_frame": 630,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44030
+              },
+              {
+                "async_save_in_flight": true,
+                "async_slot_id": "bar_dice_reveal_restore",
+                "async_task_id": 2,
+                "host_alive": false,
+                "known_owned_task_completed": false,
+                "label": "after_two_frames",
+                "process_frame": 632,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44074
+              },
+              {
+                "async_save_in_flight": true,
+                "async_slot_id": "bar_dice_reveal_restore",
+                "async_task_id": 2,
+                "host_alive": false,
+                "known_owned_task_completed": false,
+                "label": "before_owned_extra_drain",
+                "process_frame": 632,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44074
+              },
+              {
+                "async_task_id": -1,
+                "host_alive": false,
+                "label": "after_owned_extra_drain",
+                "process_frame": 632,
+                "service_alive": false,
+                "ticks_msec": 44100
+              }
+            ],
+            "owned_extra_drain_error": 0,
+            "save_service_source_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "scope": "Weak observation of the exact Host-owned SaveService only; same wait/queue_free/two-frame ordering as the base test. Inherited warm inputs remain separately recorded."
+          },
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "b38a7cff7ae8a89088cbe79ca08c4efc78c5e8c72300a6bc9b740db5aea940cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-shutdown-exit-candidate-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_shutdown_save_task_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:10:40.349615+00:00",
+        "finished_utc": "2026-11-06T05:11:27.780254+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 22.21875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.log",
+      "result": {
+        "checks": 84,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "shutdown_probe": {
+            "additional_game_inputs": 0,
+            "base_wait_error": 0,
+            "extra_drain_attempted": false,
+            "mode": "observe",
+            "observations": [
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "before_base_wait",
+                "pending_after_frame": 585,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43838,
+                "process_frame": 586,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44714
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "after_base_wait",
+                "pending_after_frame": 585,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43838,
+                "process_frame": 586,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44714
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "after_queue_free",
+                "pending_after_frame": 585,
+                "pending_autosave": true,
+                "pending_not_before_msec": 43838,
+                "process_frame": 586,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 44714
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "tree_exiting_after_host_exit_tree",
+                "pending_after_frame": -1,
+                "pending_autosave": false,
+                "pending_not_before_msec": 0,
+                "process_frame": 586,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 45108
+              },
+              {
+                "async_task_id": -1,
+                "host_alive": false,
+                "label": "after_two_frames",
+                "process_frame": 588,
+                "service_alive": false,
+                "ticks_msec": 45145
+              }
+            ],
+            "save_service_source_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "scope": "Weak observation of the exact Host-owned SaveService only; same wait/queue_free/two-frame ordering as the base test. Inherited warm inputs remain separately recorded."
+          },
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "b38a7cff7ae8a89088cbe79ca08c4efc78c5e8c72300a6bc9b740db5aea940cc",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-venue-exit-plain-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_venue_terms_restore_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:11:12.999976+00:00",
+        "finished_utc": "2026-11-06T05:11:57.608719+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 20.890625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.log",
+      "result": {
+        "checks": 83,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-postcall-settled-candidate-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_post_call_save_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_POST_CALL_SAVE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:13:00.930244+00:00",
+        "finished_utc": "2026-11-06T05:13:33.688198+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 15.640625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.log",
+      "result": {
+        "checks": 30,
+        "facts": {
+          "actions": [],
+          "blocked": [],
+          "boundaries": [
+            {
+              "completed_ledger_disposition": "retained_valid",
+              "first_failed_stage": "",
+              "label": "read_only_post_call",
+              "loaded_ledger_present": true,
+              "raw_ledger_present": true,
+              "scope": "Completed result only; initial unfunded Reveal uses the strict inherited ledger validator."
+            }
+          ],
+          "cold_outcome": {
+            "cash": 88,
+            "game_rows": 1,
+            "new_inputs": 0,
+            "projection_equal": true,
+            "rounds": 1.0
+          },
+          "completed": true,
+          "first_loss": "",
+          "fixture_seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002",
+          "original_state_used": false,
+          "scope": "One new catalog BarWake/Payday fixture with explicit engineering clock23:00/Day205:30, normal renderer actions and Menu Save/Continue. Never a prior unsaved Call or original profile. At most one new Call and one naturally displayed Health Inspector finish_one button; other prompts stop. Settled stage has zero game/event/financial inputs.",
+          "source_sha256": {
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add",
+            "test": "4306430bcec50470666de3f0c0430a1543883120d4aad8324ddb6b09b05b389e",
+            "venue": "ae1d8a475e0a8911056542a332f6f91635a780cf2c9ee9cd9da69efaef79de26"
+          },
+          "stage": "settled"
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-exit-write-failure-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/save_scene_exit_failure_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "SAVE_SCENE_EXIT_FAILURE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:21:18.557335+00:00",
+        "finished_utc": "2026-11-06T05:21:38.641791+00:00",
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 9.453125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.log",
+      "result": {
+        "checks": 26,
+        "facts": {
+          "after_normal_free": {
+            "async_task_id": -1,
+            "error": 20,
+            "error_code": "",
+            "in_flight": false,
+            "outcome_ok": false,
+            "process_frame": 7
+          },
+          "begin_error": 0,
+          "cleanup_join_attempted": false,
+          "exit_assertions_completed": true,
+          "failure_flag_restored": true,
+          "game_inputs": 0,
+          "normal_node_free_returned": true,
+          "prior_primary_exists": true,
+          "prior_primary_unchanged_before_cleanup": true,
+          "prior_save_ok": true,
+          "registered_task_before_free": 1,
+          "scope": "One new native MainScene-owned real asynchronous save, forced DurableStore failure and immediate normal Node.free with no intervening await/poll. No process forced exit, UI Save/game/financial inputs, outcome fixtures or original profiles. Exit assertions precede optional own-service cleanup, hook restoration and reference release. Expected production push_error reports the injected IO failure.",
+          "source_sha256": {
+            "host": "b043774574980bf2535324ff46b42e0f483c630e7992967036a08d5d0b8a8072",
+            "service": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "test": "a90238ffc08ff2a1bf62d4d0920bddf049cdfd45547a35e15fec6807bfc7a74a"
+          },
+          "test_join_before_exit_assertions": false,
+          "tree_exiting_after_host_exit": {
+            "async_task_id": -1,
+            "error": 20,
+            "error_code": "",
+            "in_flight": false,
+            "outcome_ok": false,
+            "process_frame": 7
+          },
+          "ui_save_callbacks": 0
+        },
+        "failures": [
+          "Outcome is the actual injected write failure"
+        ]
+      }
+    },
+    {
+      "label": "dice-shutdown-required-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/bar_dice_shutdown_save_task_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "BAR_DICE_VENUE_TERMS_RESTORE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:22:09.882147+00:00",
+        "finished_utc": "2026-11-06T05:23:00.050741+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 23.453125
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.log",
+      "result": {
+        "checks": 86,
+        "facts": {
+          "Venue Shake Continue": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true,
+            "economy": {
+              "ante_block_reason": "",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "phase": "shake",
+            "rendered_phase": "shake",
+            "ui_dice_equal": true,
+            "ui_phase": "shake"
+          },
+          "actions": [
+            "bar_dice_stake",
+            "bar_dice_roll",
+            "bar_dice_ack_cover",
+            "bar_dice_shake",
+            "bar_dice_shake",
+            "bar_dice_resolve",
+            "bar_dice_throw"
+          ],
+          "after_clock_before_save": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1770,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "after_closed_reveal_save": {
+            "ante_block_reason": "",
+            "ceiling": 60.0,
+            "clock_minutes": 1770,
+            "floor": 10.0,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": ""
+          },
+          "before_closed_clock": {
+            "ante_block_reason": "",
+            "ceiling": 46,
+            "clock_minutes": 1380,
+            "floor": 6,
+            "game_ceiling": -1,
+            "game_floor": -1,
+            "scenario_id": "bar_wake"
+          },
+          "blocked": [],
+          "boundaries": [
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 46,
+                "clock_minutes": 1380,
+                "floor": 6,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": "bar_wake"
+              },
+              "first_failed_stage": "",
+              "label": "venue_shake_control",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            },
+            {
+              "checkpoint_matches_raw_root": true,
+              "economy": {
+                "ante_block_reason": "",
+                "ceiling": 60.0,
+                "clock_minutes": 1770,
+                "floor": 10.0,
+                "game_ceiling": -1,
+                "game_floor": -1,
+                "scenario_id": ""
+              },
+              "first_failed_stage": "",
+              "label": "reveal",
+              "load_outcome": "loaded-primary",
+              "loaded_account_and_root_rng_equal": true,
+              "loaded_cup_equal": true,
+              "loaded_ledger_exact": true,
+              "loaded_ledger_present": true,
+              "raw_account_and_root_rng_equal": true,
+              "raw_cup_equal": true,
+              "raw_ledger_present": true,
+              "valid_shape_and_binding": true,
+              "valid_with_checkpoint": true
+            }
+          ],
+          "clock_preservation": {
+            "account_and_root_rng_equal": true,
+            "cup_equal": true
+          },
+          "completed": true,
+          "controlled_clock": {
+            "errors": [],
+            "from": 1380,
+            "ok": true,
+            "to": 1770
+          },
+          "first_loss": "",
+          "fixture": {
+            "authority_errors": [],
+            "authority_ok": true,
+            "cash": 94,
+            "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+            "clock_minutes": 1380,
+            "economy": {
+              "ante_block_reason": "not_in_game",
+              "ceiling": 46,
+              "clock_minutes": 1380,
+              "floor": 6,
+              "game_ceiling": -1,
+              "game_floor": -1,
+              "scenario_id": "bar_wake"
+            },
+            "environment_test": false,
+            "practice": false,
+            "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+          },
+          "generated_terms": {
+            "ceiling": 46,
+            "day_type": "payday",
+            "floor": 6,
+            "ladder": [
+              6,
+              10,
+              20,
+              40,
+              46
+            ]
+          },
+          "generation": {
+            "errors": [],
+            "generation_attempts": 1,
+            "initial_clock": 1380,
+            "install_ok": true,
+            "requested_conditions": {
+              "day_type": "payday",
+              "happenings": [],
+              "weather": "clear"
+            },
+            "requested_scenario": "bar_wake"
+          },
+          "original_state_used": false,
+          "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+          "shutdown_probe": {
+            "additional_game_inputs": 0,
+            "base_wait_error": 0,
+            "extra_drain_attempted": false,
+            "mode": "require_host_drain",
+            "observations": [
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "before_base_wait",
+                "last_outcome_error": 0,
+                "last_outcome_ok": true,
+                "pending_after_frame": 615,
+                "pending_autosave": true,
+                "pending_not_before_msec": 46128,
+                "process_frame": 616,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 47050
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": false,
+                "label": "after_base_wait",
+                "last_outcome_error": 0,
+                "last_outcome_ok": true,
+                "pending_after_frame": 615,
+                "pending_autosave": true,
+                "pending_not_before_msec": 46128,
+                "process_frame": 616,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 47050
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "after_queue_free",
+                "last_outcome_error": 0,
+                "last_outcome_ok": true,
+                "pending_after_frame": 615,
+                "pending_autosave": true,
+                "pending_not_before_msec": 46128,
+                "process_frame": 616,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 47051
+              },
+              {
+                "async_save_in_flight": false,
+                "async_slot_id": "",
+                "async_task_id": -1,
+                "completed_generation": 4,
+                "dirty_generation": 5,
+                "host_alive": true,
+                "host_processing": true,
+                "host_queued_for_deletion": true,
+                "label": "tree_exiting_after_host_exit_tree",
+                "last_outcome_error": 0,
+                "last_outcome_ok": true,
+                "pending_after_frame": -1,
+                "pending_autosave": false,
+                "pending_not_before_msec": 0,
+                "process_frame": 616,
+                "service_alive": true,
+                "service_instance_id": -9223371927534434814,
+                "ticks_msec": 47161
+              },
+              {
+                "async_task_id": -1,
+                "host_alive": false,
+                "label": "after_two_frames",
+                "process_frame": 618,
+                "service_alive": false,
+                "ticks_msec": 47507
+              }
+            ],
+            "save_service_source_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "scope": "Weak observation of the exact Host-owned SaveService only; same wait/queue_free/two-frame ordering as the base test. Inherited warm inputs remain separately recorded.",
+            "service_released_after_host": true
+          },
+          "source_sha256": {
+            "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+            "fixture": "75cac088380bf3847063c638f82fa4f38a4cee32cfeb645787af24dfd2b3dc27",
+            "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+          },
+          "stage": "warm",
+          "warm_paid_calls": 0
+        },
+        "failures": []
+      }
+    },
+    {
+      "label": "dice-exit-write-failure-2",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/save_scene_exit_failure_check.gd"
+      ],
+      "worker_kind": "private-native",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 300,
+        "aggregate_job_cpu_percent": 3.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "native_diagnostic",
+      "result_marker": "SAVE_SCENE_EXIT_FAILURE_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T05:26:06.558899+00:00",
+        "finished_utc": "2026-11-06T05:26:32.686578+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 12.484375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.log",
+      "result": {
+        "checks": 28,
+        "facts": {
+          "after_normal_free": {
+            "async_task_id": -1,
+            "error": 20,
+            "error_code": "",
+            "in_flight": false,
+            "outcome_ok": false,
+            "process_frame": 9
+          },
+          "begin_error": 0,
+          "cleanup_join_attempted": false,
+          "exit_assertions_completed": true,
+          "failure_flag_restored": true,
+          "failure_hook_enabled_before_begin": true,
+          "game_inputs": 0,
+          "normal_node_free_returned": true,
+          "prior_primary_exists": true,
+          "prior_primary_unchanged_before_cleanup": true,
+          "prior_save_ok": true,
+          "registered_task_before_free": 1,
+          "run_ui_build_in_progress_before_save": false,
+          "run_ui_built_before_save": true,
+          "scope": "One new native MainScene-owned real asynchronous save, forced DurableStore failure and immediate normal Node.free with no intervening await/poll. No process forced exit, UI Save/game/financial inputs, outcome fixtures or original profiles. Exit assertions precede optional own-service cleanup, hook restoration and reference release. Expected production push_error reports the injected IO failure.",
+          "source_sha256": {
+            "host": "b043774574980bf2535324ff46b42e0f483c630e7992967036a08d5d0b8a8072",
+            "service": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+            "test": "42bbd8271319d6c1acfdb27d1c010719c2e23647bcb9f294c0275d8d750d2339"
+          },
+          "test_join_before_exit_assertions": false,
+          "tree_exiting_after_host_exit": {
+            "async_task_id": -1,
+            "error": 20,
+            "error_code": "",
+            "in_flight": false,
+            "outcome_ok": false,
+            "process_frame": 9
+          },
+          "ui_save_callbacks": 0
+        },
+        "failures": []
+      }
     }
   ],
   "deployment": {
     "required": true,
-    "state": "verified",
-    "commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
-    "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
-    "deployed_at": "2026-11-06T03:17:02Z",
-    "observed_at": "2026-11-06T03:55:21.185870+00:00",
+    "state": "pending",
+    "commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
     "evidence": [
       "docs/testing/bar_dice_reveal_restore_r17b.json",
       "docs/testing/bar_dice_reveal_restore_r17b.md",
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-served-1ad.json"
     ],
-    "scope": "Fix eba4663b and association descendant 1adcf4f9 reached existing main/NEXT. Exact served manifest/PCK/native WASM match pipeline receipt; title and isolated engineering-fixture Menu Save/cold Reveal behavior verified. Original-player forensic attribution, native shutdown and post-Call final-save acceptance remain open."
+    "scope": "Current native teardown fix/diagnostics awaiting main/NEXT; previous accepted-ante release proofs retained in release_verification."
   },
   "causal_finding": {
     "classification": "Confirmed independent equivalent-state production defect; original scenario/branch uninspected",
@@ -1299,7 +4704,13 @@
       "assertion_failures": 0,
       "stage": "aftercompletedresultprint/finalprocessshutdown",
       "cause": "unattributed; identicalbeforeandafterfix, unsymbolized28-frame traces containnoaddresses/functions; read-onlyreview foundno demonstratedfixtureownership correction",
-      "review": "Do not suppress/replace nativeexitstatus or claimcleanpass; no speculativeprewarm/engine/nativepatch."
+      "review": "Do not suppress/replace nativeexitstatus or claimcleanpass; no speculativeprewarm/engine/nativepatch.",
+      "qualified_disposition": {
+        "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+        "cause": "Final queued-deletion frame starts a coalesced owned autosave after the earlier wait; _exit_tree now reclaims it.",
+        "evidence": "continuation_20261106.causal_shutdown",
+        "state": "native source qualified; exact NEXT pending"
+      }
     },
     "fix_commit": "eba4663b52b6152eff814231c76ce093bf7d4afa"
   },
@@ -1417,6 +4828,149 @@
         "completed": true,
         "mode": "cold",
         "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-reveal-1ad-1\\cold\\state.json",
+        "closed": true
+      }
+    },
+    {
+      "label": "dice-label-image-view-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\view_dice_label_pngs.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "read_only_static_png_view_no_game_or_profile_launch",
+      "result_marker": "DICE_IMAGE_VIEW_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:37:28.240111+00:00",
+        "finished_utc": "2026-11-06T04:37:33.722108+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 1.984375
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.log",
+      "result": {
+        "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+        "scope": "Viewing two pre-existing task-owned Web PNGs at 3x with normal HTML image layout. No original PNG edit, game engine/profile launch, model/storage probe or game input.",
+        "views": [
+          {
+            "mode": "create",
+            "source": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/create/reveal.png",
+            "source_sha256": "8452670d40f6c2a6d51bd7b8a8303cfaa4802aa83eed943f847184d79440e526",
+            "source_unchanged": true,
+            "view": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/image-label-inspection-1/create-view.png",
+            "view_sha256": "6447a2fdd9f85f27b6a764b39d2af4f2d6d373ce5ddef6cb5708f66267681a55"
+          },
+          {
+            "mode": "cold",
+            "source": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/cold/reveal.png",
+            "source_sha256": "056f43e14322bc846903fcf7b5aa5dc91b84edd1d31507d23d322c5b69c7aa79",
+            "source_unchanged": true,
+            "view": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/image-label-inspection-1/cold-view.png",
+            "view_sha256": "d37c7be1749e78ca96a84df6694a63a89a14fc4d6854bf42d89d102506bcc3a0"
+          }
+        ],
+        "requests": [],
+        "closed": true,
+        "completed": true
+      }
+    },
+    {
+      "label": "dice-label-image-view-2",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\view_dice_label_pngs_8x.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "read_only_static_png_view_no_game_or_profile_launch",
+      "result_marker": "DICE_IMAGE_VIEW_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:39:29.242550+00:00",
+        "finished_utc": "2026-11-06T04:39:35.106448+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 1.796875
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.log",
+      "result": {
+        "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+        "scope": "Viewing two pre-existing task-owned Web PNGs at 8x with normal HTML image layout. No original PNG edit, game engine/profile launch, model/storage probe or game input.",
+        "views": [
+          {
+            "mode": "create",
+            "source": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/create/reveal.png",
+            "source_sha256": "8452670d40f6c2a6d51bd7b8a8303cfaa4802aa83eed943f847184d79440e526",
+            "source_unchanged": true,
+            "view": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/image-label-inspection-2/create-view.png",
+            "view_sha256": "f2375e59e95b104b196d0abbff1f6cd52d4103aed4ff96abba79079a135f5650"
+          },
+          {
+            "mode": "cold",
+            "source": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/web-reveal-1ad-1/cold/reveal.png",
+            "source_sha256": "056f43e14322bc846903fcf7b5aa5dc91b84edd1d31507d23d322c5b69c7aa79",
+            "source_unchanged": true,
+            "view": "E:/CodexQA/BTH/Task14Independent/20261106/bar-dice-reveal/image-label-inspection-2/cold-view.png",
+            "view_sha256": "55fb4692e5a7ffee817beb9072f8149a7f225aa30f0cf47348dd1be859bc9d94"
+          }
+        ],
+        "requests": [],
+        "closed": true,
+        "completed": true
+      }
+    },
+    {
+      "label": "dice-cover-dpr2-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\dice_cover_label_dpr2.cjs"
+      ],
+      "worker_kind": "disposable-web",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "evidence_scope": "fixed_css_viewport_high_density_web_observation_no_paid_inputs",
+      "result_marker": "DICE_COVER_DPR2_WEB_RESULT",
+      "receipt": {
+        "started_utc": "2026-11-06T04:59:25.969389+00:00",
+        "finished_utc": "2026-11-06T05:00:48.492925+00:00",
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cpu_seconds": 94.015625
+      },
+      "log": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.log",
+      "result": {
+        "completed": true,
+        "mode": "cold",
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-label-dpr2-1\\state.json",
         "closed": true
       }
     }
@@ -1624,5 +5178,280 @@
     "other_tasks": 43,
     "all_ids_preserved": 282,
     "owned_jobs_ended": 21
+  },
+  "continuation_20261106": {
+    "observed_at": "2026-11-06T05:32:13.288233+00:00",
+    "state": "committed_next_pending",
+    "fix_commit": "753d6eb5d832695901fad640af3c6b557efbdc48",
+    "production_change": {
+      "path": "scripts/ui/foundation_main.gd",
+      "function": "_exit_tree",
+      "physical_sha256": "b043774574980bf2535324ff46b42e0f483c630e7992967036a08d5d0b8a8072",
+      "scope": "Seven-line owned-save teardown barrier: wait on the current in-flight SaveService generation after existing exit cleanup; retain/report real errors. No new Save, global task sweep, canvas scheduling, generation-counter change, authority/RNG/payout change or engine/toolchain patch.",
+      "commit": "753d6eb5d832695901fad640af3c6b557efbdc48"
+    },
+    "causal_shutdown": {
+      "batch_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "red_label": "dice-shutdown-observe-1",
+      "red_checks": 84,
+      "red_assertion_failures": 0,
+      "red_exit": 3221225477,
+      "before_wait_completed_generation": 4,
+      "pending_dirty_generation": 5,
+      "same_process_frame": 605,
+      "task_after_early_wait": -1,
+      "new_task_at_tree_exit": 2,
+      "host_dead_service_and_task_survived": true,
+      "root_cause": "A queued-for-deletion Host still processes once in that frame. Its coalesced generation starts AFTER the earlier wait. Without an exit-tree drain, the unreclaimed WorkerThreadPool Task retains bound snapshot/script instances until late engine cleanup, after the GDScript language singleton is gone.",
+      "trace_reference": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+      "trace_frames": 22,
+      "fault": "main-thread write0x1b0 at ntdll RtlEnterCriticalSection+0xD; RTTI/instruction/source correlation identifies GDScriptInstance destruction via WorkerThreadPool::finish. No addon frame/owner attribution.",
+      "source_references": [
+        "https://raw.githubusercontent.com/godotengine/godot/4.6-stable/modules/gdscript/gdscript.cpp",
+        "https://raw.githubusercontent.com/godotengine/godot/4.6-stable/core/object/worker_thread_pool.cpp",
+        "https://raw.githubusercontent.com/godotengine/godot/4.6-stable/scene/main/scene_tree.cpp"
+      ],
+      "control": {
+        "label": "dice-shutdown-owned-drain-1",
+        "checks": 84,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+      },
+      "candidate": {
+        "label": "dice-shutdown-required-1",
+        "checks": 86,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+      },
+      "uninstrumented": {
+        "label": "dice-venue-exit-plain-1",
+        "checks": 83,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+      },
+      "failure_path": {
+        "label": "dice-exit-write-failure-2",
+        "checks": 28,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+      }
+    },
+    "post_call": {
+      "seed": "BTH061-BAR-DICE-POSTCALL-QUAL-002",
+      "warm_label": "dice-postcall-warm-regular-1",
+      "warm_assertions": 86,
+      "warm_assertion_failures": 0,
+      "warm_native_exit": 3221225477,
+      "warm_limit": "This pre-exit-fix warm process failed at shutdown and is never relabeled a clean pass.",
+      "cold": {
+        "label": "dice-postcall-cold-regular-1",
+        "checks": 60,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+      },
+      "fresh_continue": {
+        "label": "dice-postcall-settled-readonly-1",
+        "checks": 30,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+      },
+      "candidate_fresh_continue": {
+        "label": "dice-postcall-settled-candidate-1",
+        "checks": 30,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+      },
+      "new_paid_calls": 1,
+      "final_cash": 88,
+      "rounds": 1,
+      "game_action_rows": 1,
+      "save_screen": "GAME",
+      "money_root_rng_table_result_dice_and_story_exact": true,
+      "natural_popup": "none; no forced event enqueue, event choice or prior unsaved Call replay. The prior HealthInspector-blocked cases remain failed historical cases. This qualifies one legitimate no-event post-Call Menu Save/Continue path, not all event branches.",
+      "completed_ledger_contract": "Initial Reveal remains strict. Post-settlement checks compare exact account/root RNG/table-minus-ledger/result/dice/clock/story and permit only valid completed/delivery-free ledger retirement after an ordinary root checkpoint change. Any retained ledger still validates its current checkpoint."
+    },
+    "cover_display": {
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "disposition": "wrong_values_not_reproduced_no_product_patch_justified",
+      "native": {
+        "label": "dice-cover-trace-1",
+        "checks": 94,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+      },
+      "catalog": "New002 warm saved Reveal and fresh cold floor10 both trace actual draw text COV$6/RISK$6/RET$0 through module/host/retained Canvas. Warm witness is retained actual draw; cold is a fresh-process actual draw.",
+      "web_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
+      "web_tree": "bdb4a230e520ed29b67cc54a9decd9781c079fb1",
+      "web_receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-label-dpr2-1\\state.json",
+      "web_receipt_sha256": "96dfcff7fbdb380853ed606a031630507fd6cbfac36708000eacccd327cc2b9a",
+      "web_geometry": {
+        "name": "reveal.png",
+        "at_ms": 1793941223652,
+        "dpr": 2,
+        "inner_width": 1280,
+        "inner_height": 720,
+        "canvas": {
+          "backing_width": 2560,
+          "backing_height": 1440,
+          "css_width": 1280,
+          "css_height": 720
+        }
+      },
+      "web_png": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-label-dpr2-1\\reveal.png",
+      "web_png_sha256": "1faa76075b6b08ae350ca6315872efae6273ee37ba7a3ce8860f4e92eb84f3bf",
+      "operator_review": "Root and two independent reviewers clearly read COV$6/RISK$6/RET$0 in the actual DPR2 capture, with wallet94/ante6/same dice. No import/Save/Lift/Call/wager/event choice.",
+      "prior_dpr1_limit": "The earlier tiny blended PNGs remain ambiguous even at viewing zoom. The old zero interpretation was not established; do not retroactively assert their pixels were categorically six. Read-only viewing verified original PNG bytes unchanged.",
+      "fix_condition": "Original objective requires a fix only if confirmed. No wrong-value defect is supported; diagnostic/evidence commit plus required release association will close this investigation, not a borrowed restoration-fix claim."
+    },
+    "retained_failed_diagnostics": [
+      {
+        "label": "dice-postcall-shutdown-debug-warm-1",
+        "classification": "setup-before-fixture",
+        "reason": "Debugger attachment changed suspend count; CPU0/stdout0/noSave, own worker closed0remaining."
+      },
+      {
+        "label": "dice-venue-shutdown-debug-warm-2",
+        "classification": "bounded-inconclusive-timeout",
+        "reason": "Real-engine debug setup worked, but180s/85.8CPU produced no fixture result or AV; no deadlock/heap cause asserted."
+      },
+      {
+        "label": "dice-venue-shutdown-debug-noheap-3",
+        "classification": "real-failed-runtime",
+        "reason": "Child-only _NO_DEBUG_HEAP=1 gave83/0 then C0000005. First collector stopped at its initial seed frame; actual failed exit preserved."
+      },
+      {
+        "label": "dice-venue-shutdown-debug-stack-4",
+        "classification": "real-failed-runtime-with-callers",
+        "reason": "Corrected bounded call-first stack walk captured22frames;83/0 then C0000005 unchanged."
+      },
+      {
+        "label": "dice-exit-write-failure-1",
+        "classification": "fixture-expectation-and-startup-readiness",
+        "reason": "26/1: actual worker reclaimed, lastOutcome false/error20 and primary unchanged; test incorrectly expected untranslated DurableStore text code. Early synthetic Node.free also cut an unfinished UI prewarm await. New ready fixture checks actual async numeric API; production prewarm/error transport unchanged."
+      }
+    ],
+    "clean_focused_checks": {
+      "dice-cover-trace-1": {
+        "label": "dice-cover-trace-1",
+        "checks": 94,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+      },
+      "dice-postcall-cold-regular-1": {
+        "label": "dice-postcall-cold-regular-1",
+        "checks": 60,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+      },
+      "dice-postcall-settled-readonly-1": {
+        "label": "dice-postcall-settled-readonly-1",
+        "checks": 30,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+      },
+      "dice-shutdown-owned-drain-1": {
+        "label": "dice-shutdown-owned-drain-1",
+        "checks": 84,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+      },
+      "dice-shutdown-exit-candidate-1": {
+        "label": "dice-shutdown-exit-candidate-1",
+        "checks": 84,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json"
+      },
+      "dice-venue-exit-plain-1": {
+        "label": "dice-venue-exit-plain-1",
+        "checks": 83,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+      },
+      "dice-postcall-settled-candidate-1": {
+        "label": "dice-postcall-settled-candidate-1",
+        "checks": 30,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+      },
+      "dice-shutdown-required-1": {
+        "label": "dice-shutdown-required-1",
+        "checks": 86,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+      },
+      "dice-exit-write-failure-2": {
+        "label": "dice-exit-write-failure-2",
+        "checks": 28,
+        "failures": 0,
+        "exit_code": 0,
+        "owned_remaining": 0,
+        "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+      }
+    },
+    "owned_jobs_ended": 41,
+    "owned_remaining": 0,
+    "all_unique_ids": 283,
+    "limits": [
+      "Original R17 exact scenario/raw rejection remains uninspected; matching mechanism was independently reconstructed.",
+      "No original tester profile/save/key or either denied document read was retried/accessed.",
+      "Native tests use actual MainScene/renderer callbacks in explicitly staged engineering fixtures, not OS-pointer or original-player proof.",
+      "DPR2 is a fixed CSS1280x720 display-density check, not a portrait/layout app update.",
+      "The exit barrier does not by itself prove browser unload/IndexedDB durability; earlier actual Menu Save/cold Continue evidence remains separately scoped."
+    ],
+    "previous_verified_accepted_ante_deployment": {
+      "commit": "1adcf4f9980f0f14c2d46d4c31b30a024c688982",
+      "source_tree": "6c47a4721f222e2b1cc3020fa7982983906229ec",
+      "deployed_at": "2026-11-06T03:17:02Z",
+      "state": "verified",
+      "evidence": "release_verification; historical artifact identity, startup and own-fixture Web behavior, not the new shutdown fix."
+    },
+    "manual_reconciliation": {
+      "checked_at": "2026-11-06T05:39:12.182449Z",
+      "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-publication-check.json",
+      "sha256": "c19fa60891bea69603e7ff2f5476ea2c040562cb01cccb9a6ea0ec230d4eeef9",
+      "task_ids": [
+        "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+        "BTH061-BAR-DICE-COVER-DISPLAY-001",
+        "BTH061-BAR-DICE-SHUTDOWN-001"
+      ],
+      "own_findings": 0,
+      "outside_findings": 357,
+      "outside_tasks": 45,
+      "all_unique_ids": 283,
+      "owned_jobs_ended": 41,
+      "scope": "Manual present-time check only; other items not reassigned or refreshed. Growth from earlier outside counts reflects newly stale external observations, not loss or closure of their work."
+    }
   }
 }

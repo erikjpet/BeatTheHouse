@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-06T04:03:51.819744+00:00",
+  "observed_at": "2026-11-06T05:30:13.803844+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -19393,6 +19393,1726 @@
           "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-dff-1\\startup.json"
         ],
         "limit": "Only this fresh own Web Job closed; no original profile/denied document access or game action."
+      }
+    },
+    {
+      "instance_id": "task14:dice-next-startup-queue-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-next-startup-queue-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json:pid:9928",
+        "started_at": "2026-11-06T04:12:50.601426+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-queue-1\\startup.json",
+          "Fresh exact evidence-only descendant startup, sandboxed Web, 12% CPU/2GiB, no inputs/imports; pre-execution Job assignment."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:13:05.303410+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json:pid:9928",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-queue-1\\startup.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:13:05.303410+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-queue-1\\startup.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:13:05.303410+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-next-startup-queue-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-queue-1\\startup.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:13:05.303410+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-next-startup-queue-1.start.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\web-startup-queue-1\\startup.json"
+        ],
+        "limit": "Only this fresh own Web Job closed; no original profile/denied document access or game action."
+      }
+    },
+    {
+      "instance_id": "task14:dice-postcall-shutdown-debug-warm-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-postcall-shutdown-debug-warm-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json:pid:17332",
+        "started_at": "2026-11-06T04:30:01.000756+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native-debug; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:30:01.224620+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json:pid:17332",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:30:01.224620+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:30:01.224620+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-postcall-shutdown-debug-warm-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:30:01.224620+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-shutdown-debug-warm-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native-debug Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-postcall-warm-regular-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-postcall-warm-regular-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json:pid:32224",
+        "started_at": "2026-11-06T04:31:38.181997+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:32:26.596561+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json:pid:32224",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:32:26.596561+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:32:26.596561+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-postcall-warm-regular-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:32:26.596561+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-warm-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-postcall-cold-regular-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-postcall-cold-regular-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json:pid:36580",
+        "started_at": "2026-11-06T04:33:10.963750+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:33:46.120974+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json:pid:36580",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:33:46.120974+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:33:46.120974+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-postcall-cold-regular-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:33:46.120974+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-cold-regular-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-postcall-settled-readonly-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-postcall-settled-readonly-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json:pid:22724",
+        "started_at": "2026-11-06T04:35:02.214512+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:35:34.355697+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json:pid:22724",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:35:34.355697+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:35:34.355697+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-postcall-settled-readonly-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:35:34.355697+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-readonly-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-venue-shutdown-debug-warm-2",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-venue-shutdown-debug-warm-2",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json:pid:38940",
+        "started_at": "2026-11-06T04:36:13.769100+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native-debug; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:39:15.334215+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json:pid:38940",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:39:15.334215+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:39:15.334215+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-venue-shutdown-debug-warm-2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:39:15.334215+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-warm-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native-debug Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-cover-trace-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-cover-trace-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json:pid:13760",
+        "started_at": "2026-11-06T04:23:47.197280+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:24:18.133912+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json:pid:13760",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:24:18.133912+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:24:18.133912+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-cover-trace-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:24:18.133912+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-trace-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-label-image-view-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-label-image-view-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json:pid:6364",
+        "started_at": "2026-11-06T04:37:28.240111+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=disposable-web; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 12.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:37:33.722108+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json:pid:6364",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:37:33.722108+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:37:33.722108+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-label-image-view-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:37:33.722108+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own disposable-web Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-label-image-view-2",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-label-image-view-2",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json:pid:25220",
+        "started_at": "2026-11-06T04:39:29.242550+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=disposable-web; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 12.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:39:35.106448+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json:pid:25220",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:39:35.106448+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:39:35.106448+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-label-image-view-2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:39:35.106448+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-label-image-view-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own disposable-web Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-venue-shutdown-debug-noheap-3",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-venue-shutdown-debug-noheap-3",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json:pid:18068",
+        "started_at": "2026-11-06T04:43:24.008403+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native-debug; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:44:10.962773+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json:pid:18068",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:44:10.962773+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:44:10.962773+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-venue-shutdown-debug-noheap-3",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:44:10.962773+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-noheap-3.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native-debug Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-venue-shutdown-debug-stack-4",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-venue-shutdown-debug-stack-4",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json:pid:7428",
+        "started_at": "2026-11-06T04:49:00.494604+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native-debug; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:49:45.318544+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json:pid:7428",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:49:45.318544+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:49:45.318544+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-venue-shutdown-debug-stack-4",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:49:45.318544+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-shutdown-debug-stack-4.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native-debug Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-shutdown-observe-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-shutdown-observe-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json:pid:35200",
+        "started_at": "2026-11-06T05:03:57.474481+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:04:44.503459+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json:pid:35200",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:04:44.503459+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:04:44.503459+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-shutdown-observe-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:04:44.503459+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-observe-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-shutdown-owned-drain-1",
+      "task_id": "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-shutdown-owned-drain-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json:pid:14680",
+        "started_at": "2026-11-06T05:06:23.638119+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:07:10.656898+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json:pid:14680",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:07:10.656898+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:07:10.656898+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-shutdown-owned-drain-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:07:10.656898+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-owned-drain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-cover-dpr2-1",
+      "task_id": "BTH061-BAR-DICE-COVER-DISPLAY-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-cover-dpr2-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json:pid:36656",
+        "started_at": "2026-11-06T04:59:25.969389+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=disposable-web; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 12.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:00:48.492925+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json:pid:36656",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:00:48.492925+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:00:48.492925+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-cover-dpr2-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:00:48.492925+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-cover-dpr2-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own disposable-web Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-shutdown-exit-candidate-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-shutdown-exit-candidate-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json:pid:13676",
+        "started_at": "2026-11-06T05:10:40.349615+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:11:27.780254+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json:pid:13676",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:11:27.780254+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:11:27.780254+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-shutdown-exit-candidate-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:11:27.780254+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-exit-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-venue-exit-plain-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-venue-exit-plain-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json:pid:3408",
+        "started_at": "2026-11-06T05:11:12.999976+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:11:57.608719+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json:pid:3408",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:11:57.608719+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:11:57.608719+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-venue-exit-plain-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:11:57.608719+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-venue-exit-plain-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-postcall-settled-candidate-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-postcall-settled-candidate-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json:pid:39244",
+        "started_at": "2026-11-06T05:13:00.930244+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:13:33.688198+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json:pid:39244",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:13:33.688198+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:13:33.688198+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-postcall-settled-candidate-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:13:33.688198+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-postcall-settled-candidate-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-exit-write-failure-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-exit-write-failure-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json:pid:21756",
+        "started_at": "2026-11-06T05:21:18.557335+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:21:38.641791+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json:pid:21756",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:21:38.641791+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:21:38.641791+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-exit-write-failure-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:21:38.641791+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-shutdown-required-1",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-shutdown-required-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json:pid:6972",
+        "started_at": "2026-11-06T05:22:09.882147+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:23:00.050741+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json:pid:6972",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:23:00.050741+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:23:00.050741+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-shutdown-required-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:23:00.050741+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-shutdown-required-1.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
+      }
+    },
+    {
+      "instance_id": "task14:dice-exit-write-failure-2",
+      "task_id": "BTH061-BAR-DICE-SHUTDOWN-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "dice-exit-write-failure-2",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json:pid:21172",
+        "started_at": "2026-11-06T05:26:06.558899+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json",
+          "Actual no-reuse pre-execution launch label; worker_kind=private-native; private E root; receipt limits: {\"aggregate_job_cpu_percent\": 3.0, \"breakaway_allowed\": false, \"job_memory_limit_bytes\": 2147483648, \"kill_on_close\": true}."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T05:26:32.686578+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json:pid:21172",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T05:26:32.686578+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T05:26:32.686578+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "dice-exit-write-failure-2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json",
+            "docs/testing/bar_dice_reveal_restore_r17b.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T05:26:32.686578+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261106\\bar-dice-reveal\\evidence\\dice-exit-write-failure-2.start.json",
+          "docs/testing/bar_dice_reveal_restore_r17b.json"
+        ],
+        "limit": "Only this fresh own private-native Job closed; closure does not establish product acceptance or a clean engine exit. Original resident and denied manifest untouched; all failed setup/product/process evidence retained."
       }
     }
   ],

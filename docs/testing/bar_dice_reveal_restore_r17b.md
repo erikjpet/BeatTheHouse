@@ -1,4 +1,136 @@
-# Bar Dice Reveal cold restoration — R17-B1330
+# Bar Dice Reveal restoration, post-Call save and shutdown
+
+## Qualified continuation
+
+Current source and focused checks are committed as `753d6eb5d832695901fad640af3c6b557efbdc48`. All three named items remain
+Open until required main/NEXT delivery and final reconciliation are recorded. The original accepted-ante fix remains associated with
+`eba4663b52b6152eff814231c76ce093bf7d4afa`; its earlier release receipts are retained.
+
+| ID | Current outcome |
+|---|---|
+| BTH061-BAR-DICE-REVEAL-RESTORE-001 | Accepted cup restored; one legitimate post-Call Menu Save/cold Continue qualified; fix/diagnostic commit associated; NEXT pending. |
+| BTH061-BAR-DICE-SHUTDOWN-001 | Causal final-frame autosave ownership defect corrected; successful/failed-write teardown checks clean; commit associated; NEXT pending. |
+| BTH061-BAR-DICE-COVER-DISPLAY-001 | Wrong values not reproduced. Actual native text and high-density Web capture show6/6/0. No display patch justified; diagnostic commit associated; NEXT pending. |
+
+The companion JSON preserves every command, source identity, original
+observation, failed process and closure. Its `continuation_20261106` records
+the current findings; the older narrative below is explicitly historical.
+
+### Post-Call Save/Continue
+
+The single new seed `BTH061-BAR-DICE-POSTCALL-QUAL-002` used a fresh private
+catalog fixture. Warm86/0 assertions saved an unfunded Reveal, then the pre-fix
+process suffered the retained shutdown crash. It did not Call and is not a clean
+runtime pass. Fresh cold60/0 restored Reveal6 under floor10 with exact dice/cash/RNG.
+Its one Lift/Call charged6 once, naturally settled to88, recorded one round and
+one game-action row, cleared the pin/delivery and used normal Menu Save from GAME.
+No natural event appeared; no event was forced or answered.
+
+Separate read-only cold Continue30/0 preserved exact account/root RNG,
+table/result/dice/clock/story and one round/action. Another read-only Continue
+on the new exit barrier also passed30/0. No prior unsaved Call was replayed.
+Initial Reveal ledger validation stays strict. Post-settlement checks permit
+only valid completed/delivery-free ledger retirement after a normal checkpoint
+change; they cannot excuse an open cup, pin or pending delivery.
+
+### Native shutdown cause and correction
+
+A bounded address-only debugger captured22 frames. Local PE/RTTI/instruction
+mapping and exact Godot4.6 source identify late WorkerThreadPool task cleanup
+releasing a GDScriptInstance after the language singleton was deleted. The
+main-thread fault is `ntdll!RtlEnterCriticalSection+0xD`, writing0x1b0. No addon
+ownership is inferred from this stack. See the private receipt indexed in JSON,
+the [instance destructor](https://raw.githubusercontent.com/godotengine/godot/4.6-stable/modules/gdscript/gdscript.cpp)
+and [worker cleanup](https://raw.githubusercontent.com/godotengine/godot/4.6-stable/core/object/worker_thread_pool.cpp).
+
+The weak-reference probe established ownership: in frame605 the early wait saw
+taskID-1, completed generation4 and pending dirty generation5. After `queue_free`,
+the Host still processed and started task2. At `tree_exiting`, after its old exit
+hook, task2 was in flight. Two frames later the Host was gone while service/task
+survived. That run passed84 assertions then crashed. A fresh unchanged-product
+control joining only that same known service preserved84/0 and exited cleanly.
+
+The seven-line production fix in `FoundationMain._exit_tree` waits on its current
+owned SaveService generation after existing cleanup and reports a real failure
+through generic error logging. The immutable snapshot is released while the
+script runtime exists. It starts no new Save, sweeps no global tasks, changes no
+counters and disables no processing. No engine/toolchain change was made.
+
+Candidate checks all have actual native exit0/owned0:
+
+- Observational race84/0: no test-side extra drain, tree-exit taskID-1 and no
+  surviving service after Host destruction.
+- Explicit `require_host_drain` regression86/0 asserts reclamation, success and
+  release. Historical observe/drain modes remain available.
+- Original uninstrumented warm83/0 now exits cleanly on the former crash route.
+- Failed-write lifecycle28/0 retains `ERR_CANT_CREATE`/false outcome, clears the
+  task and preserves exact prior primary bytes, before any test-cleanup join.
+  Its generic production error log is expected fault-injection evidence.
+- Existing newly paid outcome read-only Continue30/0 remains exact on the barrier.
+
+Host physical source SHA256:
+`b043774574980bf2535324ff46b42e0f483c630e7992967036a08d5d0b8a8072`.
+The Bar Dice implementation and its funding/payout/authority rules are unchanged.
+
+Failed diagnostic attempts remain failed: initial debug setup stopped before
+fixture execution (CPU0/stdout0); a later real-engine control timed out180s with
+no result or AV; a child-only heap setting reproduced83/0 plus the actual crash;
+the bounded collector's priming correction exposed the callers. No exit was
+suppressed. Failed-write fixture26/1 incorrectly required a text error field the
+async API does not propagate and freed before normal UI readiness; corrected
+fixture28/0 uses the ready UI and actual numeric error contract. Production
+prewarm/error transport were not altered.
+
+### Cover/risk disposition
+
+Fresh Practice94/0 traces authority, module, host, retained Canvas and actual
+normal draw text6/6/0 in unfunded phases. The new catalog warm saved Reveal and
+fresh cold floor10 case also record actual6/6/0. The warm witness is a retained
+actual draw; the cold witness is a fresh-process draw before its only Call.
+
+The original1280×720 PNG digits remain ambiguous even at image-viewer zoom;
+their apparent zeros did not establish a wrong-value error. Those originals
+were not edited. A cold Web check reopened only the task-owned never-called
+profile on exact `7d4b121fe8448d9a66ce6366218b470533424ed7`, without import,
+Save, Lift/Call, wager or event choice. Fixed CSS1280×720/DPR2 produced an actual
+2560×1440 canvas backing and PNG. Root and two independent reviewers clearly read
+**COV $6 / RISK $6 / RET $0**, wallet94/ante6 and the same visible cup dice.
+The browser closed cleanly without a public error. This is a fresh high-density
+capture, not an upscale of the old PNG and not a portrait/layout application change.
+
+The conditional investigation therefore needs no product display patch. Closure
+will associate its own diagnostic/evidence commit and required delivery, retain
+the old readability limit and avoid categorical reinterpretation of old pixels.
+No legibility redesign is included.
+
+### Delivery and limits
+
+Both task views preserve283 unique IDs: all prior282 plus the named shutdown
+batch. All41 completed owned jobs ended with zero remaining processes, using
+actual3% native/12% Web CPU and2GiB limits assigned before execution, kill-on-close
+and no breakaway. Resource closure never converts failed runtimes into passes.
+
+The qualified source is committed as `753d6eb5d832695901fad640af3c6b557efbdc48`; authorized main publication and exact NEXT remain pending at this checkpoint. Earlier
+exact build/asset/startup and Web Menu Save/cold Continue receipts retain their
+original identities. The exit barrier alone does not establish browser unload
+or IndexedDB durability. Native fixtures use explicit engineering clocks and
+renderer callback inputs, not OS-pointer or original-player proof. The new
+post-Call qualification is one no-event route; the earlier Health Inspector
+blocked cases and unsaved88 outcomes remain historical failures, not replayed.
+
+Original tester profiles/saves/keys/actions and both denied document reads
+remain untouched. Original forensic attribution remains limited. Raw saves,
+authority contents, bundles and dumps are not committed. The existing watcher,
+private audience, stable and itch channels were not changed.
+
+Manual reconciliation at 2026-11-06T05:39:12.182449Z: **0 findings for these three items**, with **357 findings across 45 other IDs** retained. Their aging observations and work states were not changed.
+
+## Historical checkpoint through 7d
+
+The following preserved narrative describes the earlier checkpoint and its
+then-open limitations. The qualified continuation above supersedes its current
+status statements without deleting the observations or failed results.
+
 
 **BTH061-BAR-DICE-REVEAL-RESTORE-001 remains Open.** The confirmed accepted-ante defect is fixed in `eba4663b52b6152eff814231c76ce093bf7d4afa` and deployed through `1adcf4f9980f0f14c2d46d4c31b30a024c688982` to NEXT. Exact served assets, startup and an isolated browser Menu Save/cold Reveal check passed. Full native process and post-Call final-save acceptance remain open.
 
