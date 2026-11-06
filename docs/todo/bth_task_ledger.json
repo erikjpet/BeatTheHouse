@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T06:01:15.668844+00:00",
+  "updated_at": "2026-11-06T06:36:56.337196+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12929,13 +12929,12 @@
             },
             {
               "id": "scripts/core/environment_placement.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Full694-line/66-declaration body retained, all32methods/25constants/7staticfields and compatibility source independently reviewed. Public valid_rect/support_for_rect remain supported by tools consumer3605. Only local classifier condition fragments are source-proven redundant; cleanup stays stopped. Frozen final author18d plus peer152f and explicit transient-draft provenance note are accepted together. No source removal or runtime claim."
             },
             {
               "id": "scripts/core/environment_runtime_scheduler.gd",
@@ -12969,13 +12968,12 @@
             },
             {
               "id": "scripts/core/event_module.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Full1759-line/77-declaration body retained, all67methods/4constants/4fields with caller/history/dispatch peer review. Source-only showdown Dictionary/String mismatch separately tracked; no runtime/implementation acceptance. Three literal dynamic-load dispatch complements recorded. No source removal or runtime claim."
             },
             {
               "id": "scripts/core/function_options.gd",
@@ -12989,13 +12987,12 @@
             },
             {
               "id": "scripts/core/game_module.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
               ],
-              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
+              "scope": "Full1926-line/150-declaration body retained;134methods/11constants/3fields,814 bounded calls/65files,253 overrides/11subclasses and actual history/caller seams independently agree. Timerzero/base apply-result conditions lack an ordinary failing trigger; not claimed as confirmed bugs. No source removal or runtime claim."
             },
             {
               "id": "scripts/core/game_module_registry.gd",
@@ -13237,13 +13234,12 @@
             },
             {
               "id": "scripts/core/run_generator.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Full2101-line/104-declaration body retained;80methods/11constants/11fields. Frozen author6fbc plus peerb638 seven exact witness/history/container-description corrections form accepted evidence. Conditional inner rollback edge separately tracked; outer restoration and isolated practice caller scopes preserved, no ordinary triggering state proven. No source removal or runtime claim."
             },
             {
               "id": "scripts/core/run_money_flow_archive.gd",
@@ -13559,18 +13555,22 @@
               "state": "remaining",
               "evidence": [
                 "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_025.json"
+                "docs/testing/deprecated_code_audit_continuation_025.json",
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_code_universe_030.csv"
               ],
-              "scope": "Stable area ID preserves original127-file graph. Current tree has129UI/game .gd paths: slot_bonus_recovery.gd and web_save_durability_bridge.gd were absent from that old graph. Reconcile current whole-area consumer/history/compatibility evidence, reusing exact prior qualifications where supported. Metadata absence from old graph does not imply never reviewed; full semantic acceptance remains Open."
+              "scope": "Stable area ID preserves original127-file graph. Current tree has129UI/game .gd paths: slot_bonus_recovery.gd and web_save_durability_bridge.gd were absent from that old graph. Reconcile current whole-area consumer/history/compatibility evidence, reusing exact prior qualifications where supported. Metadata absence from old graph does not imply never reviewed; full semantic acceptance remains Open. Phase030 inventory separately establishes current129 files (81UI/48game) versus historical127, exactly slot_bonus_recovery.gd and web_save_durability_bridge.gd added since ecdccee4. Stable area ID and historical127 scan retained; current semantic closure remains Open."
             },
             {
               "id": "remaining_data_tools_generators_native_and_other_code_inventory",
               "state": "remaining",
               "evidence": [
                 "docs/testing/deprecated_code_audit_continuation_025.json",
-                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-inventory-r1.json"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog025-tracked-path-inventory-r1.json",
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_code_universe_030.csv"
               ],
-              "scope": "Complete tracked path/blob snapshot4139 at104da425 is explicit, including1031lexical source paths and non-source data/scene/metadata. Semantic/historical disposition remains open for data/tools/generators/native/other; ignored/generated/untracked/external scope is explicitly excluded rather than certified. Inventory alone is not semantic review or safe deletion."
+              "scope": "Complete tracked path/blob snapshot4139 at104da425 is explicit, including1031lexical source paths and non-source data/scene/metadata. Semantic/historical disposition remains open for data/tools/generators/native/other; ignored/generated/untracked/external scope is explicitly excluded rather than certified. Inventory alone is not semantic review or safe deletion. Phase030 provides disclosed1033 tracked-code inventory and four export source boundaries; only inventory completed, semantic/caller/runtime coverage remains Open."
             },
             {
               "id": "external_parity_callers_and_inherited_failures",
@@ -13625,7 +13625,7 @@
         }
       },
       "state": "open",
-      "status": "TERMINAL_DURABILITY_FIX_COMMITTED_343_FINAL_CHECKS_85_OF_95_CORE_REVIEWED_NEXT_APPROVAL_PENDING_029",
+      "status": "FOUR_MORE_BODIES_REVIEWED_89_OF_95_CURRENT_UI129_INVENTORY_SOURCE_FOLLOWUPS_OPEN_030",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14056,12 +14056,17 @@
           "kind": "terminal_durability_correction_and_two_core_bodies029",
           "reference": "docs/testing/deprecated_code_audit_continuation_029.json",
           "summary": "Locala3a29fdb atomic special-outcome/receipt + run preparation/ack fix; final native171 host +172 DTO checks pass with original guards and Job0, including cold uncommitted Meta, ack replay and authored tutorial handoff/Sal allocation. Two complete current bodies retained;85/95 core,10core+3broader remain. No cleanup or denied publication retry."
+        },
+        {
+          "kind": "four_current_bodies_and_disclosed_code_universe030",
+          "reference": "docs/testing/deprecated_code_audit_continuation_030.json",
+          "summary": "Four complete bodies6480lines/397decls retained with reciprocal peers and explicit source-receipt corrections; core85->89/95. Current1033 trackedcode inventory, historical127->current129 UI/game and exact selected1250 map boundary independently qualified19checks. Three source-only followups remainOpen. No source/native/removal/publication."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Keep the whole audit Open; continue the10 remaining core bodies and3 broader consumer/compatibility/data/tool/native/aggregate areas where permitted. Publish tested local fixes and verify exact NEXT only after relevant approval; do not retry the denied operation or perform stopped cleanup.",
+      "next_action": "Continue six remaining core bodies and the broader current129 UI/game, data/tool/native and caller/aggregate semantic areas. Qualify the three named source-only follow-ups within existing scope restrictions. Preserve tested local fixes, cleanup stop, paused implementation and denied publication; no scheduler or original-save dependency.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14073,7 +14078,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T05:57:20.454798+00:00"
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26921,6 +26926,445 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T06:01:15.668844+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-MODULE-GENERATION-COVERAGE-030",
+      "name": "Review event, game, placement and generation core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Complete current body review of EnvironmentPlacement, EventModule, GameModule and RunGenerator, including every declaration, consumers, dispatch, compatibility and historical supersession evidence. No source removal or implementation changes under cleanup stop. Any substantive defect becomes separately tracked and qualified before correction; no inferred unused deletion. The whole-codebase parent remains Open.",
+        "source": "Parent continuation: continue remaining audit coverage independently; preserve tested local fixes and tracked tasks; do not retry denied publication without specific new approval.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Every current declaration and complete body has exact source/caller/dispatch/history dispositions with evidence and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/environment_placement.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
+              ],
+              "scope": "Full694-line/66-declaration body retained, all32methods/25constants/7staticfields and compatibility source independently reviewed. Public valid_rect/support_for_rect remain supported by tools consumer3605. Only local classifier condition fragments are source-proven redundant; cleanup stays stopped. Frozen final author18d plus peer152f and explicit transient-draft provenance note are accepted together."
+            },
+            {
+              "id": "scripts/core/event_module.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
+              ],
+              "scope": "Full1759-line/77-declaration body retained, all67methods/4constants/4fields with caller/history/dispatch peer review. Source-only showdown Dictionary/String mismatch separately tracked; no runtime/implementation acceptance. Three literal dynamic-load dispatch complements recorded."
+            },
+            {
+              "id": "scripts/core/game_module.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
+              ],
+              "scope": "Full1926-line/150-declaration body retained;134methods/11constants/3fields,814 bounded calls/65files,253 overrides/11subclasses and actual history/caller seams independently agree. Timerzero/base apply-result conditions lack an ordinary failing trigger; not claimed as confirmed bugs."
+            },
+            {
+              "id": "scripts/core/run_generator.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
+              ],
+              "scope": "Full2101-line/104-declaration body retained;80methods/11constants/11fields. Frozen author6fbc plus peerb638 seven exact witness/history/container-description corrections form accepted evidence. Conditional inner rollback edge separately tracked; outer restoration and isolated practice caller scopes preserved, no ordinary triggering state proven."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_EVIDENCE_AND_INDEPENDENT_PEER_PASS_ACTUAL_COMMIT_ASSOCIATION_PENDING_030",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Source audit evidence only; no new product source or delivery claim. Any correction requires a separate tracked scope and qualification."
+      },
+      "evidence": [
+        {
+          "kind": "qualified_source_body_or_inventory030",
+          "reference": "docs/testing/deprecated_code_audit_continuation_030.json",
+          "summary": "Source-only evidence and independent peer accepted with explicit limits; actual evidence commit association remains required."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual phase030 evidence commit before bounded completion; retain whole audit and separately tracked source findings Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent source audit is active. Cleanup stop, paused implementation areas and excluded diagnostics are preserved. Denied publication does not block permitted read-only audit.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:09:29.264840+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
+      "name": "Inventory current tracked code and export packaging boundaries",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Inventory all currently tracked code, executable configuration/build entrypoints and export/archive boundaries as a bounded contribution to the remaining data/tools/native/other-code scope. Compare the retained1250 source-map custody envelope with the full tracked code universe; retain missing/unknown coverage explicitly rather than treating that map as exhaustive. No cleanup, source or packaging changes, no export/build/import/runtime or publication.",
+        "source": "Parent continuation asks remaining audit coverage independently. Structural counts show the retained qualification map is a selected custody envelope, including807 GDScripts vs806 tracked plus one preserved prototype and43 Python versus44 tracked; quantify and classify scope before claiming coverage.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact tracked-file inventory and retained map comparison identify every source/config omission and current source packaging/entrypoint evidence, with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "tracked_code_universe_and_export_archive_entrypoints",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_030.json",
+                "docs/testing/deprecated_code_audit_continuation_030.md"
+              ],
+              "scope": "Bounded current tracked-code/source packaging inventory accepted by independent19 checks; no runtime/export or wider semantic closure."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_EVIDENCE_AND_INDEPENDENT_PEER_PASS_ACTUAL_COMMIT_ASSOCIATION_PENDING_030",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Source audit evidence only; no new product source or delivery claim. Any correction requires a separate tracked scope and qualification."
+      },
+      "evidence": [
+        {
+          "kind": "qualified_source_body_or_inventory030",
+          "reference": "docs/testing/deprecated_code_audit_continuation_030.json",
+          "summary": "Source-only evidence and independent peer accepted with explicit limits; actual evidence commit association remains required."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual phase030 evidence commit before bounded completion; retain whole audit and separately tracked source findings Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent source audit is active. Cleanup stop, paused implementation areas and excluded diagnostics are preserved. Denied publication does not block permitted read-only audit.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:09:29.264840+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "name": "Qualify dictionary-backed showdown walk choices",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Trace normal Meta Dictionary inventory through the authored House Calls trash/Crew walk choices and owner membership validation; qualify an ordinary public producer path before correction. Current source stringifies the entire Dictionary for choice identity and checks String membership against Dictionary inventory. Correcting only the displayed token would leave the owner mismatch. Item implementation remains outside this paused implementation scope.",
+        "source": "Phase030 registered full current body audit and independent source peer; parent asks independent coverage, preserving paused work/cleanup stop and denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "exact-source-disposition",
+            "description": "Exact current source and independent peer qualify only the stated conditional/pure-source finding and its exclusions.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
+          },
+          {
+            "id": "ordinary-producer-or-authorized-removal-qualification",
+            "description": "Ordinary supported producer/runtime qualification or explicitly authorized narrow removal/parity, as applicable, is required before completion; no invalid state or restricted diagnostic experiment.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-evidence-commit",
+            "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_SUPPORTED_DICTIONARY_STRING_CHOICE_LEAD_RUNTIME_OPEN_030",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "No source correction or delivery in this source-only finding. Register any warranted implementation and NEXT requirement separately before changing product code."
+      },
+      "evidence": [
+        {
+          "kind": "source_only_audit_finding030",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json",
+          "summary": "Trace normal Meta Dictionary inventory through the authored House Calls trash/Crew walk choices and owner membership validation; qualify an ordinary public producer path before correction. Current source stringifies the entire Dictionary for choice identity and checks String membership against Dictionary inventory. Correcting only the displayed token would leave the owner mismatch. Item implementation remains outside this paused implementation scope."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Qualify the ordinary public producer and item-identity boundary using permitted evidence, without forced private authority/callback state. Preserve current item/scenario implementation pause; do not infer a gameplay fix from this source-only finding.",
+      "blocker": {
+        "state": "active",
+        "kind": "acceptance_evidence",
+        "description": "Source producer/consumer types and authored choices are supported; no ordinary host/runtime reproduction or correction exists.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+      "name": "Qualify inner generator rollback contract boundary",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the inner set_environment rejection return before restore_on_failure restoration. Preserve explicit world/Grand/legacy outer rollback and isolated practice host restoration. No legitimate ordinary production state reaching the late Crew reconciliation rejection is established; this is a bounded contract question, not a confirmed player bug or an authorized patch.",
+        "source": "Phase030 registered full current body audit and independent source peer; parent asks independent coverage, preserving paused work/cleanup stop and denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "exact-source-disposition",
+            "description": "Exact current source and independent peer qualify only the stated conditional/pure-source finding and its exclusions.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
+          },
+          {
+            "id": "ordinary-producer-or-authorized-removal-qualification",
+            "description": "Ordinary supported producer/runtime qualification or explicitly authorized narrow removal/parity, as applicable, is required before completion; no invalid state or restricted diagnostic experiment.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-evidence-commit",
+            "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONDITIONAL_SOURCE_ROLLBACK_CONTRACT_EDGE_ORDINARY_TRIGGER_UNPROVED_030",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "No source correction or delivery in this source-only finding. Register any warranted implementation and NEXT requirement separately before changing product code."
+      },
+      "evidence": [
+        {
+          "kind": "source_only_audit_finding030",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json",
+          "summary": "Investigate the inner set_environment rejection return before restore_on_failure restoration. Preserve explicit world/Grand/legacy outer rollback and isolated practice host restoration. No legitimate ordinary production state reaching the late Crew reconciliation rejection is established; this is a bounded contract question, not a confirmed player bug or an authorized patch."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Establish legitimate ordinary caller prerequisites and whether outer rollback already covers them through permitted source/producer evidence. Do not force invalid Crew authority, callbacks or denied diagnostics; no speculative source change.",
+      "blocker": {
+        "state": "active",
+        "kind": "acceptance_evidence",
+        "description": "Supported conditional source edge exists, but ordinary triggering prerequisites and uncovered production impact are unproved.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+      "name": "Retain proven shadowed placement classifier fragments",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Track only the classifier PERSON_EVENT_PROPS/clerk residual arms149-152 dominated by86/89-98 and item alternative165 dominated by61-62. Preserve live event-token/counter-token/drink/numbers/service paths, the whole classifier and public compatibility methods. No whole declaration obsoletion is proved. Source fragments are retained under the existing cleanup stop.",
+        "source": "Phase030 registered full current body audit and independent source peer; parent asks independent coverage, preserving paused work/cleanup stop and denied publication.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "exact-source-disposition",
+            "description": "Exact current source and independent peer qualify only the stated conditional/pure-source finding and its exclusions.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
+          },
+          {
+            "id": "ordinary-producer-or-authorized-removal-qualification",
+            "description": "Ordinary supported producer/runtime qualification or explicitly authorized narrow removal/parity, as applicable, is required before completion; no invalid state or restricted diagnostic experiment.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-evidence-commit",
+            "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "SOURCE_PROVEN_LOCAL_CONDITION_REDUNDANCY_CLEANUP_STOPPED_030",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "No source correction or delivery in this source-only finding. Register any warranted implementation and NEXT requirement separately before changing product code."
+      },
+      "evidence": [
+        {
+          "kind": "source_only_audit_finding030",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json",
+          "summary": "Track only the classifier PERSON_EVENT_PROPS/clerk residual arms149-152 dominated by86/89-98 and item alternative165 dominated by61-62. Preserve live event-token/counter-token/drink/numbers/service paths, the whole classifier and public compatibility methods. No whole declaration obsoletion is proved. Source fragments are retained under the existing cleanup stop."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Retain the exact source candidate while cleanup remains stopped and continue other permitted audit work. If cleanup and the relevant implementation scope are explicitly resumed, independently review the narrow classifier delta and parity before removal; no action is requested now.",
+      "blocker": {
+        "state": "active",
+        "kind": "scope_restriction",
+        "description": "Cleanup/removal is explicitly stopped; the source-only audit does not authorize applying a deletion.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T06:36:56.337196+00:00"
     }
   ],
   "batches": [

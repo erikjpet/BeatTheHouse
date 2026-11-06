@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T06:01:15.668844+00:00",
+  "observed_at": "2026-11-06T06:36:56.337196+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2061,6 +2061,63 @@
       "full_objective_complete": false,
       "body_state": "Complete with actual evidence commit associated",
       "associated_evidence_commit": "dc022052f10bcd9e5686012b19f95a0f4ebdd3bf"
+    },
+    {
+      "phase": "030",
+      "observed_at": "2026-11-06T06:36:56.337196+00:00",
+      "tasks": [
+        "BTH061-AUDIT-MODULE-GENERATION-COVERAGE-030",
+        "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
+        "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+        "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+        "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030"
+      ],
+      "source_count": 1250,
+      "candidate_source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+      "source_changes": 0,
+      "new_whole_body_area_count": 4,
+      "full_body_lines": 6480,
+      "declarations": 397,
+      "recorded_core_reviewed": 89,
+      "recorded_core_remaining": 6,
+      "broader_remaining": 3,
+      "current_ui_game_inventory": 129,
+      "new_production_removals": [],
+      "native_jobs": 0,
+      "runtime_inventory": 227,
+      "all_prior227_runtime_records_unchanged": true,
+      "selected_inventory_structural_checks": 19,
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_030.json",
+      "full_objective_complete": false,
+      "body_inventory_state": "Independent source evidence pass; actual evidence commit association pending",
+      "followups_state": "Three named source-only findings Open, no runtime or fix acceptance."
     }
-  ]
+  ],
+  "current_code_universe030": {
+    "observed_at": "2026-11-06T06:36:56.337196+00:00",
+    "base_commit": "705cef676c021904679d7bcae578bf6b24429e88",
+    "tracked_paths_at_base": 4152,
+    "disclosed_tracked_code_files": 1033,
+    "roles": {
+      "native-build-source": 7,
+      "review-artifact-producer": 1,
+      "core": 95,
+      "ui-games": 129,
+      "tests": 428,
+      "active-location-tools": 302,
+      "archived-tools": 71
+    },
+    "records": "docs/testing/deprecated_code_audit_code_universe_030.csv",
+    "selected_map_scope": "1250 exact selected custody inputs;1032 of1033 tracked code included plus preserved untracked prototype. Review producer and separate packaging/config boundaries explicitly accounted, not deletion evidence.",
+    "current_ui_game_files": 129,
+    "current_ui_files": 81,
+    "current_game_files": 48,
+    "historical_scan127_preserved": true,
+    "added_since_historical_scan": [
+      "scripts/games/slots/slot_bonus_recovery.gd",
+      "scripts/ui/web_save_durability_bridge.gd"
+    ],
+    "semantic_closure": false
+  }
 }
