@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-06T05:52:43.028641+00:00",
+  "observed_at": "2026-11-06T07:22:34.661932+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -18778,6 +18778,91 @@
         ],
         "limit": "Unchanged180sec12percent2GiB assignedbeforeexecution killonclose noBreakaway Job0. meta029-terminal-host-r5 exit0/171checks0fail; originalfooters/receipts/types exact. Scope bounded by rootpostcheck. All storage and obstruction originals preserved; no pointer/Web/phone/originalsave acceptance, cleanup or publicationretry."
       }
+    },
+    {
+      "instance_id": "task9:walk031-public-model-r1",
+      "task_id": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "walk031-public-model-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json:pid:21620",
+        "started_at": "2026-11-06T07:15:10.912108+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T07:15:34.505545+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json:pid:21620",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T07:15:34.505545+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T07:15:34.505545+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "walk031-public-model-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T07:15:34.505545+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\walk031-public-model-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
+        ],
+        "limit": "Unchanged180sec12percent2GiB assigned-before-execution kill-on-close noBreakaway ownedJob0. One native public-model qualification:12controls0fail, actual normal Meta Dictionary offered/rejected, canonical owner also rejected; public String control succeeds. No full journey/UI/original-save, implementation or NEXT claim. All original files/logs retained; no cleanup or denied operation retry."
+      }
     }
   ],
   "source_snapshot": {
@@ -18822,5 +18907,12 @@
     "new_actual_Jobs": 5,
     "owned_Job_remaining": 0,
     "all_owned_Jobs_remaining": 0
+  },
+  "phase031_append": {
+    "entries_before": 227,
+    "entries_after": 228,
+    "new_actual_Jobs": 1,
+    "owned_remaining": 0,
+    "prior227_exact_types_values": true
   }
 }

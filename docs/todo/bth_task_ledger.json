@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T06:40:40.993334+00:00",
+  "updated_at": "2026-11-06T07:34:18.932393+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12740,13 +12740,12 @@
             },
             {
               "id": "scripts/core/content_library.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete4243-line/258-card body retained,171methods/39constants/46fields; reciprocal fullbody/rawLF/signature/blame/caller/history acceptance. Mutable same-ID lookup/canonical cache rebuild/Crew shortlist conditions are bounded without an ordinary player defect; production content immutability and alternate clock enqueue producer retained. No source change or runtime inference from body review."
             },
             {
               "id": "scripts/core/craps06_3_environment_binding.gd",
@@ -12807,13 +12806,12 @@
             },
             {
               "id": "scripts/core/crew_run_facade.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete2472-line/178-card body retained,135methods/5constants/36fields. Frozen authorR1 preserved; R2 corrects same-name bind receiver overreach; independent peer adds32 current-path versus34 follow-history complement. Live Crew owner/membership/restore interfaces remain active, not obsolete. No source change or runtime inference from body review."
             },
             {
               "id": "scripts/core/crew_state_model.gd",
@@ -13224,13 +13222,12 @@
             },
             {
               "id": "scripts/core/run_action_service.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete2553-line/160-card body retained,123methods/31constants/4fields;254 direct calls/24files plus2 host property chains,14preloads,2literal dispatch and44/44history validated by reciprocal peer. Detached candidate/room/action validation and current typed contracts retained. No source change or runtime inference from body review."
             },
             {
               "id": "scripts/core/run_generator.gd",
@@ -13625,7 +13622,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_BODIES_REVIEWED_89_OF_95_CURRENT_UI129_INVENTORY_SOURCE_FOLLOWUPS_OPEN_030",
+      "status": "THREE_MORE_BODIES_92_OF_95_META_WALK_MODEL_MISMATCH_QUALIFIED_CORRECTION_OPEN_031",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14061,12 +14058,17 @@
           "kind": "four_current_bodies_and_disclosed_code_universe030",
           "reference": "docs/testing/deprecated_code_audit_continuation_030.json",
           "summary": "Four complete bodies6480lines/397decls retained with reciprocal peers and explicit source-receipt corrections; core85->89/95. Current1033 trackedcode inventory, historical127->current129 UI/game and exact selected1250 map boundary independently qualified19checks. Three source-only followups remainOpen. No source/native/removal/publication."
+        },
+        {
+          "kind": "three_orchestration_bodies_and_three_finding_qualification031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "Three complete bodies9268lines/596cards retained with reciprocal peers;92/95 core. One native normal Meta producer/base-room public model12 controls0fail reproduces offered Dictionary/canonical rejection, String control succeeds; correction separately Open under item scope. Placement exact dominance proved/no deletion; all observed generator production owners restore/isolate, no ordinary unprotected failure producer. No source changes or denied retry."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue six remaining core bodies and the broader current129 UI/game, data/tool/native and caller/aggregate semantic areas. Qualify the three named source-only follow-ups within existing scope restrictions. Preserve tested local fixes, cleanup stop, paused implementation and denied publication; no scheduler or original-save dependency.",
+      "next_action": "Review remaining RunState/ScenarioEngine/ScenarioLayoutResolver bodies and broader semantic areas within existing scope. Preserve the reproduced model mismatch in the separate Open corrective task; no paused item/scenario implementation or cleanup. Retain conditional rollback question until ordinary evidence warrants disposition; do not retry denied access, diagnostic or publication actions.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14078,7 +14080,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -27166,16 +27168,21 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json"
             ]
           },
           {
             "id": "ordinary-producer-or-authorized-removal-qualification",
             "description": "Ordinary supported producer/runtime qualification or explicitly authorized narrow removal/parity, as applicable, is required before completion; no invalid state or restricted diagnostic experiment.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json"
+            ]
           },
           {
             "id": "actual-associated-evidence-commit",
@@ -27195,7 +27202,7 @@
         }
       },
       "state": "open",
-      "status": "SOURCE_SUPPORTED_DICTIONARY_STRING_CHOICE_LEAD_RUNTIME_OPEN_030",
+      "status": "NORMAL_META_PRODUCER_AND_PUBLIC_MODEL_REJECTION_QUALIFIED_EVIDENCE_COMMIT_PENDING_031",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27222,22 +27229,38 @@
           "kind": "source_only_audit_finding030",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json",
           "summary": "Trace normal Meta Dictionary inventory through the authored House Calls trash/Crew walk choices and owner membership validation; qualify an ordinary public producer path before correction. Current source stringifies the entire Dictionary for choice identity and checks String membership against Dictionary inventory. Correcting only the displayed token would leave the owner mismatch. Item implementation remains outside this paused implementation scope."
+        },
+        {
+          "kind": "phase031_qualification_continuation",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json",
+          "summary": "Parent explicitly requests qualification of this recorded finding. Permitted source/public-API evidence only; no implementation/removal or invalid authority/callback/denied diagnostic experiments."
+        },
+        {
+          "kind": "separate-corrective-scope-registration031",
+          "reference": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+          "summary": "Confirmed bounded model mismatch retained as a separate Open corrective objective with actual fix and required NEXT criteria; qualification does not close or imply the correction."
+        },
+        {
+          "kind": "native_public_model_identity_rejection031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "Actual normal host imports one Dictionary Meta entry; public unchanged base-room install/finalize/authority plus natural heat and actual EventModule offers857-char serialized Dict token; both module and canonical owner reject before selected effects; scratch_pad String resolves/removes and advances.12 healthy controls0fail/ownedJob0. Bounded model integration, no full journey/UI/original-player/fix/NEXT proof."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify the ordinary public producer and item-identity boundary using permitted evidence, without forced private authority/callback state. Preserve current item/scenario implementation pause; do not infer a gameplay fix from this source-only finding.",
+      "next_action": "Associate actual phase031 evidence commit before bounded qualification completion. Continue the separate Open corrective task BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031; no item implementation or full journey/UI correction is implied.",
       "blocker": {
-        "state": "active",
-        "kind": "acceptance_evidence",
-        "description": "Source producer/consumer types and authored choices are supported; no ordinary host/runtime reproduction or correction exists.",
+        "state": "none",
+        "kind": "none",
+        "description": "Bounded normal-producer/public-model qualification is complete; actual evidence association pending. Correction is separately Open under item implementation restrictions.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "observed_at": "2026-11-06T07:34:18.932393+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_031.json",
+          "docs/testing/deprecated_code_audit_continuation_031.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:40:40.993334+00:00"
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
     },
     {
       "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
@@ -27259,8 +27282,8 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           },
           {
@@ -27288,7 +27311,7 @@
         }
       },
       "state": "open",
-      "status": "CONDITIONAL_SOURCE_ROLLBACK_CONTRACT_EDGE_ORDINARY_TRIGGER_UNPROVED_030",
+      "status": "PRODUCTION_OWNER_RESTORATION_QUALIFIED_NO_ORDINARY_UNPROTECTED_FAILURE_031",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27315,22 +27338,32 @@
           "kind": "source_only_audit_finding030",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json",
           "summary": "Investigate the inner set_environment rejection return before restore_on_failure restoration. Preserve explicit world/Grand/legacy outer rollback and isolated practice host restoration. No legitimate ordinary production state reaching the late Crew reconciliation rejection is established; this is a bounded contract question, not a confirmed player bug or an authorized patch."
+        },
+        {
+          "kind": "phase031_qualification_continuation",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json",
+          "summary": "Parent explicitly requests qualification of this recorded finding. Permitted source/public-API evidence only; no implementation/removal or invalid authority/callback/denied diagnostic experiments."
+        },
+        {
+          "kind": "bounded_generator_owner_protection_qualification031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "224 ordinary production scripts yield exactly2 direct set_environment sites; world/Grand/legacy, all7 Foundation caller-owned transitions, Meta/game lifecycle and isolated environment practice protect state. Healthy Crew PLAY/INTERVIEW/registered prerequisites traced; no ordinary failing destination/cache and unprotected owner established. Source-only, no forced runtime."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Establish legitimate ordinary caller prerequisites and whether outer rollback already covers them through permitted source/producer evidence. Do not force invalid Crew authority, callbacks or denied diagnostics; no speculative source change.",
+      "next_action": "Retain the conditional helper question. Use permitted remaining RunState/ordinary-producer evidence to establish a naturally rejected healthy destination/cache plus an owner that neither restores nor discards. No such paired producer is known; do not force authority/callback/fault states or retry excluded diagnostics.",
       "blocker": {
         "state": "active",
         "kind": "acceptance_evidence",
-        "description": "Supported conditional source edge exists, but ordinary triggering prerequisites and uncovered production impact are unproved.",
+        "description": "The helper return asymmetry is real source evidence, but all observed production owners restore externally or discard an isolated candidate. No paired healthy Crew late-rejection producer and unprotected production owner is established; no ordinary bug or speculative fix is claimed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:30:05.599695+00:00",
+        "observed_at": "2026-11-06T07:34:18.932393+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-generator-rollback-qualification-r1.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:40:40.993334+00:00"
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -27352,8 +27385,8 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_030.json",
-              "docs/testing/deprecated_code_audit_continuation_030.md"
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
             ]
           },
           {
@@ -27381,7 +27414,7 @@
         }
       },
       "state": "open",
-      "status": "SOURCE_PROVEN_LOCAL_CONDITION_REDUNDANCY_CLEANUP_STOPPED_030",
+      "status": "EXACT_CLASSIFIER_DOMINANCE_QUALIFIED_CLEANUP_STOPPED_031",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27408,10 +27441,20 @@
           "kind": "source_only_audit_finding030",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json",
           "summary": "Track only the classifier PERSON_EVENT_PROPS/clerk residual arms149-152 dominated by86/89-98 and item alternative165 dominated by61-62. Preserve live event-token/counter-token/drink/numbers/service paths, the whole classifier and public compatibility methods. No whole declaration obsoletion is proved. Source fragments are retained under the existing cleanup stop."
+        },
+        {
+          "kind": "phase031_qualification_continuation",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json",
+          "summary": "Parent explicitly requests qualification of this recorded finding. Permitted source/public-API evidence only; no implementation/removal or invalid authority/callback/denied diagnostic experiments."
+        },
+        {
+          "kind": "precise_current_source_dominance_proof031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint→entry→classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain the exact source candidate while cleanup remains stopped and continue other permitted audit work. If cleanup and the relevant implementation scope are explicitly resumed, independently review the narrow classifier delta and parity before removal; no action is requested now.",
+      "next_action": "Retain only the precisely proved local prop/item condition fragments under the current cleanup stop. Earlier returns and stable locals establish source redundancy, not whole-method obsolescence. When cleanup/relevant scope resumes, independently qualify any narrow delta/parity and delivery before removal; no candidate patch now.",
       "blocker": {
         "state": "active",
         "kind": "scope_restriction",
@@ -27423,7 +27466,203 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:40:40.993334+00:00"
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
+      "name": "Review content, Crew and action orchestration core bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Full current body review of ContentLibrary, CrewRunFacade and RunActionService: every declaration, caller/dispatch, current ownership and historical compatibility/supersession. Retain all code under cleanup stop and paused implementation restrictions. Qualified findings and source-body completion remain separate from runtime/whole-codebase or delivery acceptance.",
+        "source": "Parent asks continue remaining audit coverage and qualify the three recorded findings, respecting prior access/publication denials and paused work.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Every current declaration and complete body has exact source/caller/dispatch/history dispositions with evidence and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_031.json",
+              "docs/testing/deprecated_code_audit_continuation_031.md"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/content_library.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
+              ],
+              "scope": "Complete4243-line/258-card body retained,171methods/39constants/46fields; reciprocal fullbody/rawLF/signature/blame/caller/history acceptance. Mutable same-ID lookup/canonical cache rebuild/Crew shortlist conditions are bounded without an ordinary player defect; production content immutability and alternate clock enqueue producer retained."
+            },
+            {
+              "id": "scripts/core/crew_run_facade.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
+              ],
+              "scope": "Complete2472-line/178-card body retained,135methods/5constants/36fields. Frozen authorR1 preserved; R2 corrects same-name bind receiver overreach; independent peer adds32 current-path versus34 follow-history complement. Live Crew owner/membership/restore interfaces remain active, not obsolete."
+            },
+            {
+              "id": "scripts/core/run_action_service.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_031.json",
+                "docs/testing/deprecated_code_audit_continuation_031.md"
+              ],
+              "scope": "Complete2553-line/160-card body retained,123methods/31constants/4fields;254 direct calls/24files plus2 host property chains,14preloads,2literal dispatch and44/44history validated by reciprocal peer. Detached candidate/room/action validation and current typed contracts retained."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "THREE_COMPLETE_BODIES_AND_RECIPROCAL_PEERS_PASS_EVIDENCE_COMMIT_PENDING_031",
+      "owner": {
+        "name": "Audit phase031 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded source review only. Any warranted source fix/delivery requires separately registered scope before implementation."
+      },
+      "evidence": [
+        {
+          "kind": "three_current_full_body_reviews031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "All9268lines/596cards/429methods retained; every current declaration raw/LF hash and reciprocal semantic/caller/history review qualified. Actual evidence commit association remains required."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual phase031 evidence commit before completing this bounded three-body child. Whole audit, three remaining core bodies and broader areas remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Permitted independent source review and qualification are active. No new pause or missing-original-save hold; cleanup, implementation and access restrictions remain in effect.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T06:52:20.768694+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+      "name": "Resolve unusable Meta item showdown choices",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Correct the offered Meta Dictionary item versus String owner-membership contract at House Calls walk without silently losing instance identity/effects or altering collection ownership. Decide supported item eligibility from existing intended behavior before implementation; a token-only fix is insufficient because direct canonical owner control also rejects. Preserve legitimate String items, serialized walk/return behavior and applicable paired Crew handling. No corrective item/scenario code change is authorized by qualification alone.",
+        "source": "Phase031 one independently reviewed native public-model qualification: normal host Meta Dictionary offered as trash choice rejects; canonical ID owner also rejects; authored scratch_pad String control succeeds. Parent requested qualification and preservation of paused implementation/access/publication restrictions.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-model-reproduction",
+            "description": "Actual normal Meta producer plus public authored base-room model/EventModule mismatch and String control independently qualified; not full journey/UI/original-save proof.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json"
+            ]
+          },
+          {
+            "id": "qualified-corrective-behavior",
+            "description": "When implementation is authorized, resolve the offered-choice contract and preserve instance identity/eligibility, ownership, String controls and applicable save/handoff/return behavior with focused regressions.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "actual-associated-fix-commit",
+            "description": "Actual product correction commit before completion; source-qualification or registration evidence commits are not a code fix.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Verify the actual correction in exact NEXT identity/changed behavior before completion; no denied main publication retry without new specific approval.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "MODEL_REJECTION_CONFIRMED_CORRECTIVE_ITEM_SCOPE_NOT_AUTHORIZED_031",
+      "owner": {
+        "name": "Audit phase030 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No correction commit or NEXT delivery exists. Standing item/scenario implementation pause and separate publication denial are preserved."
+      },
+      "evidence": [
+        {
+          "kind": "confirmed-public-model-offered-choice-mismatch031",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-native-results-peer-r1.json",
+          "summary": "12 healthy controls pass; normal imported Dictionary choice and canonical owner String reject before selected effects, actual String scratch_pad resolves and advances. No whole journey/UI or implementation claim."
+        },
+        {
+          "kind": "paired_qualified_native_model_results031",
+          "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
+          "summary": "Qualification is concrete and separately tracked; no product correction commit exists. Item/scenario implementation pause and required future correction/NEXT criteria remain."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Preserve the reproduced public-model mismatch and define compatible Meta-item eligibility/instance identity, including Crew handoff/return and legacy String behavior. Do not change item/scenario implementation while paused. When the applicable implementation scope resumes, register the narrow fix, focused regressions and exact NEXT delivery; do not retry denied publication.",
+      "blocker": {
+        "state": "active",
+        "kind": "scope_restriction",
+        "description": "The user paused item/scenario implementation; this parent continuation authorized qualification, not item code changes. Qualification completed without a source fix. Specific main publication is separately denied and was not retried.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T07:25:29.355599+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T07:34:18.932393+00:00"
     }
   ],
   "batches": [

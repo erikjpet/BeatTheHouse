@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T06:40:40.993334+00:00",
+  "observed_at": "2026-11-06T07:34:18.932393+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2093,6 +2093,39 @@
       "body_inventory_state": "Two bounded source tasks Complete with actual evidence commit; three findings Open.",
       "followups_state": "Three named source-only findings Open, no runtime or fix acceptance.",
       "associated_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
+    },
+    {
+      "phase": "031",
+      "observed_at": "2026-11-06T07:34:18.932393+00:00",
+      "tasks": [
+        "BTH061-AUDIT-ORCHESTRATION-CORE-COVERAGE-031",
+        "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
+        "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
+        "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
+        "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031"
+      ],
+      "source_count": 1250,
+      "source_manifest_sha256": "c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda",
+      "source_changes": 0,
+      "new_whole_body_area_count": 3,
+      "body_lines": 9268,
+      "declarations": 596,
+      "recorded_core_reviewed": 92,
+      "recorded_core_remaining": 3,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "native_jobs": 1,
+      "native_checks": 12,
+      "native_failures": 0,
+      "runtime_inventory": 228,
+      "prior227_runtime_records_exact_types_values": true,
+      "walk_status": "Bounded native normal producer/public base-room model mismatch qualified; separate corrective task Open, no implementation.",
+      "rollback_status": "Protected owner chains established; no healthy paired unprotected failure producer.",
+      "placement_status": "Precise source dominance qualified; cleanup remains stopped, no patch.",
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_031.json",
+      "full_objective_complete": false,
+      "evidence_commit_association": "pending"
     }
   ],
   "current_code_universe030": {

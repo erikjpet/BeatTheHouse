@@ -1,0 +1,21 @@
+Phase031 reviews three more complete orchestration bodies:9,268 lines,596 declarations and429 methods, all retained with reciprocal peers. Core coverage is now92 of95; RunState, ScenarioEngine and ScenarioLayoutResolver remain, together with three broader semantic areas. Whole audit Open.
+
+| Body | Lines | Declarations | Disposition |
+| --- | ---: | ---: | --- |
+| ContentLibrary |4243 |258 | Retain loaded-data/index/cache and lookup contracts; bounded mutable-content questions lack an ordinary player failure |
+| CrewRunFacade |2472 |178 | Retain ownership/reconciliation/session/restore interfaces; corrected R2 plus peer32current/34follow history complement |
+| RunActionService |2553 |160 | Retain detached candidate, action/room checks and current typed results |
+
+`BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030` now has native evidence: actual normal host Meta loadout import followed by an explicit authored base-room public model constructor, normal owner finalization/authority and public heat/event APIs. All12 healthy controls pass, native exit0, no ScriptError or timeout, owned Job0 under unchanged180-second/12-percent/2GiB limits. The offered Dictionary token is857 characters; both it and the canonical ID reject as “That item is no longer in your pocket.” Selected observations remain unchanged. The authored String `scratch_pad` control succeeds, removes only that String, keeps the Meta Dictionary and advances to `pat_down`.
+
+This is a bounded normal-producer/public-model result. It bypasses journey, route availability, travel costs, town/game generation and scenario selection, leaves the start map cursor, and uses direct public heat. It is not full journey/rendered UI/original-player or correction/NEXT proof. No expected bug/failure-count oracle filtered the result. The original footer matches receipts and all source/guard/copied-script hashes remain exact.
+
+The source-qualified mismatch is tracked through a separate Open corrective task, `BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031`. A token-only correction is insufficient; the direct canonical owner control also rejects. Future work must preserve intended eligibility, instance/effect identity, collection ownership, legacy String and applicable Crew handoff/return behavior. No item/scenario implementation or candidate patch was made while that work remains paused.
+
+`BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030` has a precise source dominance proof for the recorded prop fragments149–152 and item alternative165. Live event/token paths and the whole classifier remain. Cleanup stays stopped; no deletion, alternate implementation or runtime parity claimed.
+
+`BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030` is narrowed:224 production scripts have two direct environment setters; all observed world/Grand/legacy, seven nested Foundation travel, lifecycle and isolated practice owners restore or discard on failure. No naturally failing healthy Crew destination/cache plus an unprotected owner was established. The helper asymmetry remains a conditional question, not a confirmed ordinary player bug; no forced authority/callback/fault state or denied diagnostic was used.
+
+All1,250 selected source hashes remain `c31125f765ac2f5af6ee32f82ff01253b35beac54cb68ae8c45e3054505fcdda`. No product source changed. One new owned native Job is recorded (228 total); the prior227 entries are type-exact. All296 unrelated existing task rows, prior local fixes, paused policies and the prototype remain unchanged. Frozen design R1 records LF source hashes; actual runtime custody uses raw hashes, with the corrected dynamic Meta ID precondition explicitly documented in the admitted packet.
+
+Exact evidence hashes/results/limits are in [the JSON report](deprecated_code_audit_continuation_031.json). The body review and bounded walk qualification await actual evidence-commit association; corrective work, conditional rollback, classifier cleanup and the umbrella remain Open. Specific main publication is still denied/pending new approval, not retried; NEXT unverified. Manual reconciliation gives437 current/1053 all findings (exit1), with no new scope consistency errors; this owner has132 historical runtime age findings and old005/009 blocker age. Old observations were not restamped. Final after-association reconciliation follows before handoff.

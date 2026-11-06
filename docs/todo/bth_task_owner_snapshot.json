@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T06:40:40.993334+00:00",
+  "observed_at": "2026-11-06T07:34:18.932393+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T06:40:40.993334+00:00",
-      "source": "Actualphase030 root active finalizing handoff: actualab84de42 evidence commit associated; two bounded fourbody/inventory tasksComplete, three sourcefindings andwholeauditOpen. Source1250c311/priorfixes/227runtimeinventory unchanged; no native/cleanup/deniedpublicationretry."
+      "observed_at": "2026-11-06T07:34:18.932393+00:00",
+      "source": "Actual phase031 root active finalizing source and qualification evidence: three orchestration bodies9268/596 fully reviewed; native public-model walk12controls0fail/ownedJob0 confirms mismatch without correction. One new runtime record228, prior227 exact. Corrective item task Open, classifier cleanup stopped, rollback paired ordinary producer absent. Source1250/priorfixes/paused work preserved; no denied action retry."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
