@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T06:36:56.337196+00:00",
+  "updated_at": "2026-11-06T06:40:40.993334+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -26955,8 +26955,11 @@
             "id": "independent-review-and-commit",
             "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
           }
         ],
         "coverage": {
@@ -27002,14 +27005,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "SOURCE_EVIDENCE_AND_INDEPENDENT_PEER_PASS_ACTUAL_COMMIT_ASSOCIATION_PENDING_030",
+      "state": "complete",
+      "status": "BOUNDED_SOURCE_EVIDENCE_AND_INDEPENDENT_REVIEW_ACTUAL_COMMIT_ASSOCIATED_030",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_030.json",
+            "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27025,17 +27036,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual phase030 evidence commit before bounded completion; retain whole audit and separately tracked source findings Open.",
+      "next_action": "Bounded source review/inventory Complete with actual evidence commit. Keep whole audit, current wider semantic closure, three source follow-ups and required NEXT fixes Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent source audit is active. Cleanup stop, paused implementation areas and excluded diagnostics are preserved. Denied publication does not block permitted read-only audit.",
+        "description": "Bounded source qualification and actual evidence commit association complete; no blocker for this child.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:09:29.264840+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T06:40:40.993334+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_030.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T06:40:40.993334+00:00"
     },
     {
       "id": "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
@@ -27065,8 +27078,11 @@
             "id": "independent-review-and-commit",
             "description": "Reciprocal independent review and actual associated evidence commit before completing this bounded child. Source/runtime/cleanup/publication permissions remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
           }
         ],
         "coverage": {
@@ -27085,14 +27101,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "SOURCE_EVIDENCE_AND_INDEPENDENT_PEER_PASS_ACTUAL_COMMIT_ASSOCIATION_PENDING_030",
+      "state": "complete",
+      "status": "BOUNDED_SOURCE_EVIDENCE_AND_INDEPENDENT_REVIEW_ACTUAL_COMMIT_ASSOCIATED_030",
       "owner": {
         "name": "Audit phase030 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_030.json",
+            "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27108,17 +27132,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual phase030 evidence commit before bounded completion; retain whole audit and separately tracked source findings Open.",
+      "next_action": "Bounded source review/inventory Complete with actual evidence commit. Keep whole audit, current wider semantic closure, three source follow-ups and required NEXT fixes Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Independent source audit is active. Cleanup stop, paused implementation areas and excluded diagnostics are preserved. Denied publication does not block permitted read-only audit.",
+        "description": "Bounded source qualification and actual evidence commit association complete; no blocker for this child.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T06:09:29.264840+00:00",
-        "evidence": []
+        "observed_at": "2026-11-06T06:40:40.993334+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_030.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T06:40:40.993334+00:00"
     },
     {
       "id": "BTH061-AUDIT-SHOWDOWN-INVENTORY-IDENTITY-030",
@@ -27155,8 +27181,11 @@
             "id": "actual-associated-evidence-commit",
             "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
           }
         ],
         "coverage": {
@@ -27172,7 +27201,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_030.json",
+            "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27200,7 +27237,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T06:40:40.993334+00:00"
     },
     {
       "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
@@ -27237,8 +27274,11 @@
             "id": "actual-associated-evidence-commit",
             "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
           }
         ],
         "coverage": {
@@ -27254,7 +27294,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_030.json",
+            "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27282,7 +27330,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T06:40:40.993334+00:00"
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -27319,8 +27367,11 @@
             "id": "actual-associated-evidence-commit",
             "description": "Actual associated local commit and appropriate acceptance before marking this separate follow-up Complete.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_030.json",
+              "docs/testing/deprecated_code_audit_continuation_030.md"
+            ]
           }
         ],
         "coverage": {
@@ -27336,7 +27387,15 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_030.json",
+            "docs/testing/deprecated_code_audit_continuation_030.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -27364,7 +27423,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T06:36:56.337196+00:00"
+      "updated_at": "2026-11-06T06:40:40.993334+00:00"
     }
   ],
   "batches": [

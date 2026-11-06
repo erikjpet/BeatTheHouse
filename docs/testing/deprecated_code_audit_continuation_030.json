@@ -1,10 +1,10 @@
 {
   "schema": "bth.deprecated_code_audit_continuation/030",
   "phase": "030",
-  "observed_at": "2026-11-06T06:36:56.337196+00:00",
-  "status": "FOUR_BODY_AND_INVENTORY_SOURCE_QUALIFICATION_PASS_ACTUAL_EVIDENCE_COMMIT_PENDING",
+  "observed_at": "2026-11-06T06:40:40.993334+00:00",
+  "status": "FOUR_BODY_AND_CODE_INVENTORY_CHILDREN_COMPLETE_THREE_SOURCE_FOLLOWUPS_AND_PARENT_OPEN",
   "base_local_HEAD": "705cef676c021904679d7bcae578bf6b24429e88",
-  "associated_evidence_commit": null,
+  "associated_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6",
   "tasks": {
     "body": "BTH061-AUDIT-MODULE-GENERATION-COVERAGE-030",
     "inventory": "BTH061-AUDIT-CODE-UNIVERSE-PACKAGING-030",
@@ -171,7 +171,8 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-event-module-body-review-r1.json"
         ]
       },
-      "next_action": "Qualify the ordinary public producer and item-identity boundary using permitted evidence, without forced private authority/callback state. Preserve current item/scenario implementation pause; do not infer a gameplay fix from this source-only finding."
+      "next_action": "Qualify the ordinary public producer and item-identity boundary using permitted evidence, without forced private authority/callback state. Preserve current item/scenario implementation pause; do not infer a gameplay fix from this source-only finding.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
     },
     {
       "id": "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
@@ -188,7 +189,8 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-run-generator-body-review-r1.json"
         ]
       },
-      "next_action": "Establish legitimate ordinary caller prerequisites and whether outer rollback already covers them through permitted source/producer evidence. Do not force invalid Crew authority, callbacks or denied diagnostics; no speculative source change."
+      "next_action": "Establish legitimate ordinary caller prerequisites and whether outer rollback already covers them through permitted source/producer evidence. Do not force invalid Crew authority, callbacks or denied diagnostics; no speculative source change.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -205,7 +207,8 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-environment-placement-body-review-r1.json"
         ]
       },
-      "next_action": "Retain the exact source candidate while cleanup remains stopped and continue other permitted audit work. If cleanup and the relevant implementation scope are explicitly resumed, independently review the narrow classifier delta and parity before removal; no action is requested now."
+      "next_action": "Retain the exact source candidate while cleanup remains stopped and continue other permitted audit work. If cleanup and the relevant implementation scope are explicitly resumed, independently review the narrow classifier delta and parity before removal; no action is requested now.",
+      "associated_source_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
     }
   ],
   "other_game_conditions": "Timerzero sentinel and base discarded apply_result return are unqualified source conditions without established ordinary failing trigger; no extra bug/fix claim.",
@@ -227,7 +230,7 @@
       "external_parity_callers_and_inherited_failures"
     ],
     "full_objective_complete": false,
-    "body_and_inventory_children_complete": false
+    "body_and_inventory_children_complete": true
   },
   "custody": {
     "changed_existing_rows": [
@@ -294,7 +297,30 @@
         "sha256": "00231324f180263bd3e02214288e38e523986bf62fa97fb0a9c2a194979221bf"
       }
     },
-    "limit": "Whole runtime inventory unchanged. Two more existing runtime observations crossed the unchanged24hour limit since phase029; no freshness evidence invented. Final rerun after actual commit association follows."
+    "limit": "Final after-association R3 retains429/1045 historical findings; own124runtimeage plus005/009blockerage only, no new consistency errors. Original observations and runtime JSON types/values unchanged.",
+    "final_after_actual_commit_association": {
+      "current": 429,
+      "all": 1045,
+      "exit_codes": [
+        1,
+        1
+      ],
+      "owned_findings": {
+        "RUNTIME_STALE_OBSERVATION": 124,
+        "BLOCKER_STALE": 2
+      },
+      "new_scope_consistency_errors": 0,
+      "reports": {
+        "current": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-current-r3.json",
+          "sha256": "3a36837be5683d156a3f2447860d2b4e163ac6bdac928c142dcf8804c28694ad"
+        },
+        "all": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog030-manual-all-r3.json",
+          "sha256": "a3ec88cd4b7c40cc74dc21aa9ce91f845b5f7aaa2b7488e3e3e9b1999a8fcbd3"
+        }
+      }
+    }
   },
   "evidence": {
     "catalog030-registration-r1.json": {

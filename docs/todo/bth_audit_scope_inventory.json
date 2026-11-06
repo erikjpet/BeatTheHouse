@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-06T06:36:56.337196+00:00",
+  "observed_at": "2026-11-06T06:40:40.993334+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -2090,8 +2090,9 @@
       "denied_publication_retried": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_030.json",
       "full_objective_complete": false,
-      "body_inventory_state": "Independent source evidence pass; actual evidence commit association pending",
-      "followups_state": "Three named source-only findings Open, no runtime or fix acceptance."
+      "body_inventory_state": "Two bounded source tasks Complete with actual evidence commit; three findings Open.",
+      "followups_state": "Three named source-only findings Open, no runtime or fix acceptance.",
+      "associated_evidence_commit": "ab84de42e65f051e3c92e6ebc3387a79b4b660a6"
     }
   ],
   "current_code_universe030": {

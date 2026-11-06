@@ -1,4 +1,4 @@
-Phase030 completes the source evidence for four more core bodies:6,480 lines and397 declarations, all retained. Coverage is now89 of95 core files; six core and three broader semantic areas remain. The two bounded source-review tasks await their actual evidence-commit association. The whole audit remains Open.
+Phase030 completes the source evidence for four more core bodies:6,480 lines and397 declarations, all retained. Coverage is now89 of95 core files; six core and three broader semantic areas remain. The two bounded source-review tasks are Complete with actual evidence commit `ab84de42e65f051e3c92e6ebc3387a79b4b660a6`. The whole audit remains Open.
 
 | Current body | Lines | Declarations | Disposition |
 | --- | ---: | ---: | --- |
@@ -21,4 +21,4 @@ Receipt provenance limit: two newly authored Environment draft versions were ove
 
 An optional `Get-CimInstance Win32_Process` read was denied with `Access denied`; it was not retried and source review completed independently. The prior main push to `erikjpet/BeatTheHouse` also remains denied/pending specific approval, without retry or workaround. NEXT remains unverified.
 
-Exact evidence hashes, supported source findings and limits are in [the JSON report](deprecated_code_audit_continuation_030.json). Manual reconciliation now reports429 current and1045 all findings (exit1), with no new scope consistency errors after moving the five new rows into the actual named-ledger section. This owner retains124 historical runtime age findings plus old005/009 blocker age; observations were not restamped. Actual evidence-commit association and the final rerun follow before handoff.
+Exact evidence hashes, supported source findings and limits are in [the JSON report](deprecated_code_audit_continuation_030.json). Manual reconciliation now reports429 current and1045 all findings (exit1), with no new scope consistency errors after moving the five new rows into the actual named-ledger section. This owner retains124 historical runtime age findings plus old005/009 blocker age; observations were not restamped. Actual evidence commit `ab84de42e65f051e3c92e6ebc3387a79b4b660a6` is associated with all five new IDs; only the two bounded review/inventory tasks are Complete. Final after-association reconciliation retains429 current/1045 all historical findings, with no new scope consistency errors.
