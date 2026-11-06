@@ -1987,6 +1987,43 @@
       "full_objective_complete": false,
       "body_review_state": "complete_actual_commit_associated",
       "persistence_state": "open_detachedgapqualified_hostContinue_unqualified"
+    },
+    {
+      "phase": "028",
+      "observed_at": "2026-11-06T04:42:54.014869+00:00",
+      "base_local_HEAD": "c2654696e47adc25001853ddcfc178b298af57cf",
+      "source_commit": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+      "evidence_commit": null,
+      "tasks": [
+        "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+        "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+        "BTH061-AUDIT-CREW-DELIVERY-MODEL-COVERAGE-028"
+      ],
+      "source_count": 1248,
+      "candidate_source_manifest_sha256": "a4f50df9b6a880c61dfc8bff54bb8ccdb4ca67bf4426724f652c710668792fbf",
+      "source_changes": 1,
+      "new_whole_body_area_count": 2,
+      "recorded_core_reviewed": 83,
+      "recorded_core_remaining": 12,
+      "broader_remaining": 3,
+      "new_production_removals": [],
+      "native_checks": [
+        33,
+        24
+      ],
+      "native_failures": [
+        0,
+        0
+      ],
+      "original_failed_runs_preserved": 2,
+      "native_jobs": 3,
+      "runtime_inventory": 222,
+      "original219_runtime_records_preserved": true,
+      "persistence_state": "Confirmed actualpublicAbandon/checkpoint/coldContinue defect; correction Open",
+      "snapshot_state": "Onefieldfix locallycommitted; requiredNEXT Open",
+      "denied_publication_retried": false,
+      "evidence": "docs/testing/deprecated_code_audit_continuation_028.json",
+      "full_objective_complete": false
     }
   ]
 }

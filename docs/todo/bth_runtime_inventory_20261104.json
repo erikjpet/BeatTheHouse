@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-06T03:14:05.196356+00:00",
+  "observed_at": "2026-11-06T04:38:33.212634+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure.",
     "complete": false,
@@ -18098,6 +18098,261 @@
         ],
         "limit": "Unchanged180sec/12percent/2GiB assigned-before-execution kill-on-close no-breakaway ownedJob0. Detached public Meta/RunState terminal-module realfilesystem obstruction26healthychecks0failures; original two observations preserved and root-adjudicated. Full host/checkpoint/serialized-run/Continue/player/NEXT remains unqualified. No source edit, restricted experiment, cleanup or publication retry."
       }
+    },
+    {
+      "instance_id": "task9:meta028-terminal-host-r1",
+      "task_id": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "meta028-terminal-host-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json:pid:12632",
+        "started_at": "2026-11-06T04:05:54.639766+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:06:15.479295+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json:pid:12632",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:06:15.479295+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:06:15.479295+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "meta028-terminal-host-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:06:15.479295+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json"
+        ],
+        "limit": "Unchanged180sec12percent2GiB assignedbeforeexecution killonclose noBreakaway ownedJob0. R1publichostgeneration/publication/initialSave healthy;21checks1testpath-containment failure, originalexit1 retained. ActualdistributionRoot/data/saves differs fromtestexpectedRoot/saves. No fault/coldContinue executed, noScriptError/timeout. NecessarytestonlyR2 correction separatelypinned; no source/readiness repair, cleanup, privateauthority experiment or publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:meta028-terminal-host-r2",
+      "task_id": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "meta028-terminal-host-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json:pid:20220",
+        "started_at": "2026-11-06T04:13:04.535427+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:13:33.739854+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json:pid:20220",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:13:33.739854+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:13:33.739854+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "meta028-terminal-host-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:13:33.739854+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json"
+        ],
+        "limit": "Unchanged180sec12percent2GiB assignedbeforeexecution killonclose noBreakaway ownedJob0. Producer33checks0fail actualAbandon/checkpoint preservedflags whileMetaCard remainsdisk1/live0. Coldfreshprocess stopped on publicsave_status_snapshot Nil pressure_status_text beforeContinue; originalScriptError/nativeexitnull/4ownedpids guardedclose retained. No cold/overallpass. Distinct narrow snapshotbug registeredbeforefix; no source/readiness mutation during this run, cleanup or publicationretry."
+      }
+    },
+    {
+      "instance_id": "task9:meta028-terminal-host-r3",
+      "task_id": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "meta028-terminal-host-r3",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json:pid:6304",
+        "started_at": "2026-11-06T04:32:01.666535+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-06T04:32:35.538640+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json:pid:6304",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
+          "Exact assigned owned Job active0; no global process census"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-06T04:32:35.538640+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-06T04:32:35.538640+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "meta028-terminal-host-r3",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-06T04:32:35.538640+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json"
+        ],
+        "limit": "Unchanged180sec12percent2GiB assignedbeforeexecution killonclose noBreakaway Job0. Two fresh native host stages33+24=57checks0fail; normal start/Abandon/checkpoint/Save/Continue/Save confirms durableCard1 despite processedflags/livecard0. Onefield noRun snapshot guard qualified; producer observations unchanged. Four PSUnicode statusText differences retained and adjudicated from rawUTF8 Godotlogs; all other fields exact. Persistencebug remains Open; no Web/phone/originalplayercause/oldsave acceptance, cleanup or publication retry."
+      }
     }
   ],
   "source_snapshot": {
@@ -18125,5 +18380,15 @@
     "new_actual_Jobs": 1,
     "prior218preserved": true,
     "scope": "Single exact assigned owned native Job; closure0 verified, no global process/browser census. All generated storage/obstruction and prior evidence preserved."
+  },
+  "phase028_append": {
+    "entries_before": 219,
+    "entries_after": 222,
+    "new_actual_Jobs": 3,
+    "prior219preserved": true,
+    "R1_failure_preserved": true,
+    "scope": "Only exact assigned ownedJob observations; no globalprocess/browser census.",
+    "R2_failure_preserved": true,
+    "R3_two_processes_exit0_57_checks": true
   }
 }

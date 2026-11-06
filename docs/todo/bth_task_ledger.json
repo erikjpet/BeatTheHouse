@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T03:27:04.556652+00:00",
+  "updated_at": "2026-11-06T04:42:54.014869+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12837,13 +12837,11 @@
             },
             {
               "id": "scripts/core/crew_world_sequence_adapter.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete exact current body/declarations/callers/dispatch/history/compatibility independently reviewed. All source retained; no runtime bug, source fix, removal or whole-audit acceptance."
             },
             {
               "id": "scripts/core/delivery_run_facade.gd",
@@ -12855,13 +12853,11 @@
             },
             {
               "id": "scripts/core/delivery_run_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json",
-                "docs/testing/deprecated_code_audit_continuation_007.md",
-                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-peer-review-r1.json"
               ],
-              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
+              "scope": "Complete exact current body/declarations/callers/dispatch/history/compatibility independently reviewed. All source retained; no runtime bug, source fix, removal or whole-audit acceptance."
             },
             {
               "id": "scripts/core/developer_placement_store.gd",
@@ -13631,7 +13627,7 @@
         }
       },
       "state": "open",
-      "status": "DETACHED_META_RETRY_GAP_REPRODUCED_TWO_MORE_CORE_BODIES_QUALIFIED_81_OF_95_027",
+      "status": "COLD_TERMINAL_DURABILITY_BUG_CONFIRMED_SNAPSHOT_FIX_LOCAL_CORE83_OF95_028",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13842,6 +13838,13 @@
             "docs/testing/deprecated_code_audit_continuation_027.json",
             "docs/testing/deprecated_code_audit_continuation_027.md"
           ]
+        },
+        {
+          "sha": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_028.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
+          ]
         }
       ],
       "deployment": {
@@ -14048,7 +14051,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Qualify the ordinary public terminal host/save/checkpoint/Continue route identified in phase027, then review remaining14core and three broader areas. Keep whole audit and requiredNEXT source fixes Open; preserve all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
+      "next_action": "Associate phase028 evidence, then correct the confirmed terminal special-outcome durability bug and review remaining12core/three broader areas. Keep whole audit and prior requiredNEXT source tasks Open; preserve local commits, cleanup stop, paused/excluded work and denied publication without retry.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14060,7 +14063,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:27:04.556652+00:00"
+      "updated_at": "2026-11-06T04:42:54.014869+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26318,10 +26321,10 @@
             "id": "supported-fault-runtime-qualification",
             "description": "Ordinary actual production storage failure controls qualify actual persistence/Continue scope without injectedcallbacks, capturedsaves/keys, guardweakening or speculative bugclaims.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-root-postcheck-r2.json",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json"
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
             ]
           },
           {
@@ -26339,7 +26342,7 @@
         }
       },
       "state": "open",
-      "status": "DETACHED_REAL_STORAGE_FAILURE_RETRY_GAP_REPRODUCED_HOST_CONTINUE_OPEN_027",
+      "status": "PUBLIC_ABANDON_CHECKPOINT_AND_COLD_CONTINUE_DURABILITY_BUG_CONFIRMED_CORRECTION_OPEN_028",
       "owner": {
         "name": "Audit phase026 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -26383,20 +26386,35 @@
           "kind": "independent_detached_storage_fault_results027",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json",
           "summary": "Independent originalfooter/26healthycontrols/raw2observations/custody/guard review confirms bounded retry-suppression gap and later-save recovery. Actual terminal UI/checkpoint/serializedRun/Continue remains unqualified; no production correction."
+        },
+        {
+          "kind": "public_host_baseline_and_necessary_path_test_correction028",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json",
+          "summary": "R1normalgeneratedroom/publication/initialSave succeeded;21checks then sole testcontainment failure beforefault/Continue because actualdata/saves vs expected/saves. Exit1/Job0 and originalfailedfooter preserved. Independent R2 corrects onlyowned distributionpath test, same code/seed/publicactions/guard; no readiness repair."
+        },
+        {
+          "kind": "actual_host_checkpoint_gap_and_cold_observer_failure028",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json",
+          "summary": "ActualnativepublicAbandon/Save producer33checks0fail withprocessed/decay/checkpoint true anddiskcard1/live0. Freshprocess beforeContinue hitseparateNoRun snapshotNil. NewSnapshot028 onefieldguard independentlyreviewed/applied; no originaldomain/save/authority/gameplay code altered; R3fullcold qualificationpending."
+        },
+        {
+          "kind": "qualified_real_public_host_cold_continue_durability_failure028",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json",
+          "summary": "ActualnativepublicStart/Abandon/terminalcheckpoint/Save thenseparatefreshprocessContinue/Save: livecard0 vsdiskcard1 beforeexit; savedprocessed/decay/checkpoint true andcard1reloads, retrySave leavescard1. 33+24=57healthychecks0fail. FullroutequalifiedforcarriedPlayersCardfailure only; underlyingpersistencebugNOTfixed. OriginalR1/R2failures and4PSstatusTextencodingdifferences preserved; exactrawengineUTF8 used."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Prepare independently admitted guarded generated-host qualification via public start_foundation_run, save_run_from_menu, then fresh-host load_foundation_run/start_or_continue_primary. Stop on natural room/publication/save failure without readiness repair. Preserve full checkpoint/Continue and exactly-once requirements before selecting a correction; no private authority manipulation.",
+      "next_action": "Review MetaCollectionService terminal transaction/receipt APIs and implement idempotent durable special-outcome acknowledgement before run processed flags can survive a failed meta commit. Preserve normal rewards, ordinary decay, chips, exact-once and old-save recovery; register required corrective NEXT acceptance before implementation. Native carried-card Abandon/coldContinue reproduction is qualified, source correction remains Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Conditional evidence qualification remains open; no missingpersonal-save or user/schedulerhold. Existingmainpublicationdenial andcleanupstop remain separate.",
+        "description": "Confirmed technical durability defect remains to be corrected; no missing personal save, user input or scheduler hold. Prior main publication denial and cleanup stop remain separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T02:30:27.723819+00:00",
+        "observed_at": "2026-11-06T04:42:54.014869+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T03:27:04.556652+00:00"
+      "updated_at": "2026-11-06T04:42:54.014869+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26500,6 +26518,208 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T03:27:04.556652+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CREW-DELIVERY-MODEL-COVERAGE-028",
+      "name": "Review current Crew sequence adapter and delivery model bodies",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review complete current CrewWorldSequenceAdapter and DeliveryRunModel bodies with every declaration, current callers/dispatch/history and compatibility evidence. Preserve all code and paused implementations; cleanup and denied publication retry remain stopped.",
+        "source": "Parent continuation instruction to qualify full terminal checkpoint/Continue and remaining coverage independently, respecting prior denial and preserving local work.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-evidence",
+            "description": "Exact current source, supported inputs and actual outcomes qualify the bounded source or DTO scope with explicit authority/runtime limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-two-body-root-byte-check-r1.json"
+            ]
+          },
+          {
+            "id": "independent-review-and-commit",
+            "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "id": "scripts/core/crew_world_sequence_adapter.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-peer-review-r1.json"
+              ],
+              "scope": "Complete exact current body/declarations/callers/dispatch/history/compatibility independently reviewed. All source retained; no runtime bug, source fix, removal or whole-audit acceptance."
+            },
+            {
+              "id": "scripts/core/delivery_run_model.gd",
+              "state": "reviewed",
+              "evidence": [
+                "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-peer-review-r1.json"
+              ],
+              "scope": "Complete exact current body/declarations/callers/dispatch/history/compatibility independently reviewed. All source retained; no runtime bug, source fix, removal or whole-audit acceptance."
+            }
+          ]
+        }
+      },
+      "state": "open",
+      "status": "TWO_CURRENT_MODEL_BODIES_INDEPENDENTLY_QUALIFIED_COMMIT_ASSOCIATION_PENDING_028",
+      "owner": {
+        "name": "Audit phase028 qualification",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Bounded qualification only; no publication or NEXT acceptance. Any corrective source change requires separate required commit/delivery tracking before implementation."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_complete_body_coverage028",
+          "reference": "docs/testing/deprecated_code_audit_continuation_028.json",
+          "summary": "Two pinned current bodies1966lines99methods42constants0fields,141functional declarations+4headers and inlineclosures/comparator independently retained. No source edit or runtime/removal claim; actual evidencecommit associationpending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate actual evidence commit before completing this bounded two-model review; retain all compatibility/authority code and preserve whole audit Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Independent technical review open; no user/save/scheduler hold. Cleanup stop and earlier denied publication remain separate.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T03:48:03.212395+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T04:14:28.444799+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+      "name": "Handle public save-status snapshots before run UI exists",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Normal fresh MainScene public save_status_snapshot must handle no active RunState without dereferencing deferred TerminalConsequenceViewModelScript. Actual R2 coldstage raised Nil.pressure_status_text before Continue. Guard only visible_pressure when noRun, preserving existing empty-pressure text and active-run behavior, lazy UI loading and all authoritative state. Qualify through the same public cold-host regression; required exactNEXT remains separate.",
+        "source": "Phase028 original R2 native cold main-menu API stack at foundation_main20857/21871 and unchanged TerminalConsequenceViewModel.pressure_status_text296-301 empty-input contract. Parent authorizes full terminal checkpoint/Continue qualification and related fixes without denied publication retry.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "source-evidence",
+            "description": "Exact current source, authority contracts and relevant callers independently establish the bounded discrepancy or conditional lead with explicit limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-menu-snapshot-source-peer-r1.json"
+            ]
+          },
+          {
+            "id": "runtime-compatibility-disposition",
+            "description": "Focused supported-path evidence resolves actual runtime/compatibility scope without prohibited diagnostics, weakened guards or current-gameplay claims from static reasoning alone.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
+            ]
+          },
+          {
+            "id": "associated-corrective-or-retention-evidence",
+            "description": "Actual tested corrective commit or independently qualified retention evidence is associated before completing this child; required delivery remains separate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "1b2f12c1495159871432c87bffdd16b7f64a616b",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-menu-snapshot-source-peer-r1.json"
+            ]
+          },
+          {
+            "id": "required-next-delivery",
+            "description": "Qualified corrective source commit is independently verified in exact NEXT delivery before completing this corrective task. Denied main publication must not be retried without new specific approval.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ONE_FIELD_NO_RUN_SNAPSHOT_FIX_COMMITTED_NATIVE57_PASS_REQUIRED_NEXT_OPEN_028",
+      "owner": {
+        "name": "Audit public snapshot boundary fix",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Tested one-field source correction committed locally at 1b2f12c1495159871432c87bffdd16b7f64a616b; exact NEXT remains pending under prior main publication denial. No deployment acceptance claimed."
+      },
+      "evidence": [
+        {
+          "kind": "actual_public_fresh_menu_snapshot_crash028",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json",
+          "summary": "Producer33checks0fail actualAbandon/checkpoint proven; secondfreshnative normalMenu snapshot throwsNil because viewmodelScript stilldeferred before anyContinue. OriginalScriptError/exitnull/ownedJob0 preserved. No private/readiness injection; newfixscope singleviewfield."
+        },
+        {
+          "kind": "qualified_public_cold_host_snapshot_correction028",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json",
+          "summary": "Actualtwo-process57checks0fail includes originalfreshMenuAPI returningemptyNoRun fields andloadavailable beforeContinue. SameR2/R3producer33 observations exact exceptPID; onlysourcefield20876guard. Local1b2f12c1, no requiredNEXT yet."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Verify exact required NEXT delivery contains tested source 1b2f12c1495159871432c87bffdd16b7f64a616b before completing this corrective task. Preserve actual old Nil reproduction and full native cold regression; do not retry denied main publication without new specific approval.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Narrow local public API fix and regression are authorized independent work. Prior main publication denial and required NEXT remain separate; no missing personal save/user hold.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-06T04:20:45.475254+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        {
+          "path": "scripts/ui/foundation_main.gd",
+          "scope": "One visible_pressure conditional for noRun state; no deferred collaborator initialized or other field/helper/authoritative save/runtime behavior changed."
+        }
+      ],
+      "updated_at": "2026-11-06T04:42:54.014869+00:00"
     }
   ],
   "batches": [

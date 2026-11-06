@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-06T03:27:04.556652+00:00",
+  "observed_at": "2026-11-06T04:42:54.014869+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-06T03:27:04.556652+00:00",
-      "source": "Phase027 evidence actual local4c7ebff9 associated. Two current Crew recruitment/delivery bodies Complete1568lines80methods13constants5fields,98functional cards+4identity, core81of95remaining14+3. ExistingMetaPersistence026 staysOpen: actual detachedpublicmodule fault26healthychecks0fail confirmsflagskip/later-save recovery; no fullhost/checkpoint/Continue or productionfix. Public generated-host next route sourceidentified, unexecuted/unadmitted. One assigned ownedJobclosed0/runtime219original218exact. Priorlocalfixes/prototype/paused/numericNEXT preserved; no cleanup, restricteddiagnostic, network or deniedpublicationretry."
+      "observed_at": "2026-11-06T04:42:54.014869+00:00",
+      "source": "Phase028 actualtwo-process57checks0fail confirms terminaldurabilitybug throughpublicAbandon/checkpoint/Save/coldContinue/Save; Meta026Openforcorrection. SeparateonefieldNoRunSnapshotAPI fixcommittedlocal1b2f12c1/OpenrequiredNEXT. Core83of95remaining12+3, twofullmodelbodies1966/99/42 retained; bodyevidencecommitassociationpending. Actual3ownedJobsclosed0/runtime222original219exact; R1testpathfailure/R2snapshotScriptError/fourPStextencodingdifferences preserved. Source1248a4f other1247exact; no cleanup/paused/restricted/network/publicationretry."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

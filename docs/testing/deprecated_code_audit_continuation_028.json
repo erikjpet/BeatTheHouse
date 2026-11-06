@@ -1,0 +1,346 @@
+{
+  "schema": "bth.deprecated_code_audit_continuation/028",
+  "phase": "028",
+  "observed_at": "2026-11-06T04:42:54.014869+00:00",
+  "status": "PUBLIC_COLD_DURABILITY_BUG_CONFIRMED_SNAPSHOT_FIX_COMMITTED_BODY_EVIDENCE_COMMIT_PENDING",
+  "base_local_HEAD": "c2654696e47adc25001853ddcfc178b298af57cf",
+  "source_commit": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+  "associated_evidence_commit": null,
+  "tasks": {
+    "parent": "BTH061-AUDIT-001",
+    "persistence": "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
+    "snapshot_fix": "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
+    "body": "BTH061-AUDIT-CREW-DELIVERY-MODEL-COVERAGE-028"
+  },
+  "source_count": 1248,
+  "original_manifest_sha256": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+  "candidate_manifest_sha256": "a4f50df9b6a880c61dfc8bff54bb8ccdb4ca67bf4426724f652c710668792fbf",
+  "changed_original_source": {
+    "scripts/ui/foundation_main.gd": {
+      "original_sha256": "8c0fbb3cd7958900f36c54f35f1891057a604c128d3d3db66e3b2fcc2b47d1e4",
+      "candidate_sha256": "7508bc2c17c2562267671c8d158c4da912f1e9a0633ef157bb4c7ddeacfc1a7d",
+      "scope": "Exactly one visible_pressure field conditional at20876: return existing empty-pressure text when run_state is null, without dereferencing deferred Script alias. Live-run helper/argument unchanged, no collaborator initialization, state/readiness/authority/performance change.",
+      "source_lines_unchanged": 24677
+    }
+  },
+  "other_original_source_files_unchanged": 1247,
+  "new_source_files": [],
+  "production_removals": [],
+  "snapshot_correction": {
+    "original_failure": "R2freshnative mainMenu publicsave_status_snapshot invoked deferredTerminalConsequenceViewModelScript.pressure_status_text through20857/21871 beforeContinue; originalScriptError preserved.",
+    "contract": "Purepressure_status_text296-301 returns emptystring for emptyDictionary; adjacentNoRun snapshotfields alreadyreturnempty/0. Conditional preserves priorloadedempty behavior andlive-run formatting.",
+    "actual_regression": "R3freshnative menu snapshot returns emptypressure/runstatus andloadavailabletrue before actualContinue; producerR2/R3rawobservations identical apartPID.",
+    "source_commit": "1b2f12c1495159871432c87bffdd16b7f64a616b",
+    "state": "Open for required NEXT",
+    "maintained_test_decision": "Focused full public-host/cold-process regression exercises the actual failing API; no separate implementation-mirroring unit added."
+  },
+  "terminal_persistence": {
+    "fidelity": "Actual main.tscn/normal production public start, Save, Abandon, terminal checkpoint and Save. A separate native process uses normal public Continue then Save against actual generated disk storage. Callback entrypoints are invoked synthetically; no pointer/phone/Web/originalreportedplayercause claim.",
+    "fault": "Real checked owned meta temporary-path DIRECTORY plus sentinel. Nonrecursive same-root rename preserves obstruction/restorespath. Normal persistence owns its disposable generation rotation.",
+    "original_raw_UTF8_footers": {
+      "produce": {
+        "checks": 33,
+        "failures": [],
+        "observations": [
+          {
+            "case": "actual_abandon_with_meta_write_obstructed",
+            "decay_flag": true,
+            "durable_meta_count": 1,
+            "live_meta_count": 0,
+            "meta_primary_unchanged": true,
+            "processed_flag": true,
+            "run_file_changed": true,
+            "save_status": {
+              "autosave_last_error": 0,
+              "autosave_last_error_code": "",
+              "has_save": true,
+              "load_available": true,
+              "pending_autosave": false,
+              "status_text": "Autosave On · Completed run saved.",
+              "visible_run_status": "failed"
+            },
+            "screen": "FAILURE",
+            "terminal_checkpoint_flag": true
+          },
+          {
+            "case": "actual_terminal_save_after_fault_restored",
+            "decay_flag": true,
+            "durable_meta_count": 1,
+            "live_meta_count": 0,
+            "processed_flag": true,
+            "save_status": {
+              "autosave_last_error": 0,
+              "autosave_last_error_code": "",
+              "has_save": true,
+              "load_available": true,
+              "pending_autosave": false,
+              "status_text": "Autosave On · Saved to Resume Slot.",
+              "visible_run_status": "failed"
+            },
+            "screen": "FAILURE",
+            "terminal_checkpoint_flag": true
+          }
+        ],
+        "pid": 14680,
+        "stage": "produce"
+      },
+      "continue": {
+        "checks": 24,
+        "failures": [],
+        "observations": [
+          {
+            "case": "fresh_menu_save_snapshot_after_guard",
+            "load_available": true,
+            "visible_pressure": "",
+            "visible_run_status": ""
+          },
+          {
+            "case": "cold_process_public_continue",
+            "decay_flag": true,
+            "durable_meta_after_continue": 1,
+            "durable_meta_before_continue": 1,
+            "host_meta_after_continue": 1,
+            "processed_flag": true,
+            "save_status": {
+              "autosave_last_error": 0,
+              "autosave_last_error_code": "",
+              "has_save": true,
+              "load_available": true,
+              "pending_autosave": false,
+              "status_text": "Autosave On · Loaded completed run.",
+              "visible_run_status": "failed"
+            },
+            "screen": "FAILURE",
+            "terminal_checkpoint_flag": true
+          },
+          {
+            "case": "cold_host_public_terminal_save_retry",
+            "decay_flag": true,
+            "durable_meta_count": 1,
+            "live_meta_count": 1,
+            "processed_flag": true,
+            "save_status": {
+              "autosave_last_error": 0,
+              "autosave_last_error_code": "",
+              "has_save": true,
+              "load_available": true,
+              "pending_autosave": false,
+              "status_text": "Autosave On · Saved to Resume Slot.",
+              "visible_run_status": "failed"
+            },
+            "screen": "FAILURE",
+            "terminal_checkpoint_flag": true
+          }
+        ],
+        "pid": 28772,
+        "stage": "continue"
+      }
+    },
+    "producer_checks": 33,
+    "cold_checks": 24,
+    "total_checks": 57,
+    "failures": [],
+    "confirmed_bug": "Abandon removes carriedPlayersCard in memory but failedmeta commit preservesCard1 on disk. The run still durably records processed/decay/checkpoint true andreports completed save. Afterrestoringwritepath, publicSave retries do notcommit thedirtymeta. Separate freshprocess publicContinue restoresflags andCard1; anotherSave leavesCard1.",
+    "state": "Open confirmed defect; no underlying Meta/CollectionDropService correction",
+    "qualified_case_only": "Standard generated run with one carried Grand Casino Players Card and Abandon under temporary-open failure. Rewards/chips/ordinaryitems/otherendings/Web/old-saveexactonce notcertified.",
+    "next_action": "Review MetaCollectionService terminal transaction/receipt APIs and implement idempotent durable special-outcome acknowledgement before run processed flags can survive a failed meta commit. Preserve normal rewards, ordinary decay, chips, exact-once and old-save recovery; register required corrective NEXT acceptance before implementation. Native carried-card Abandon/coldContinue reproduction is qualified, source correction remains Open."
+  },
+  "new_body_coverage": {
+    "files": [
+      "scripts/core/crew_world_sequence_adapter.gd",
+      "scripts/core/delivery_run_model.gd"
+    ],
+    "lines": 1966,
+    "methods": 99,
+    "constants": 42,
+    "fields": 0,
+    "functional_declaration_raw_and_LF_hashes": 141,
+    "identity_headers": 4,
+    "inline_subspans": 11,
+    "all_retained": true,
+    "independent_reciprocal_review": true,
+    "core_reviewed_before": 81,
+    "core_reviewed": 83,
+    "core_total": 95,
+    "core_remaining": 12,
+    "broader_remaining": 3,
+    "whole_audit_complete": false
+  },
+  "native_jobs": [
+    {
+      "name": "meta028-terminal-host-r1",
+      "source_manifest": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+      "exit": 1,
+      "checks": 21,
+      "failures": [
+        "Public save path is a real owned run file"
+      ],
+      "classification": "TestexpectedRoot/saves whileproductionisolateddistributionRoot/data/saves. Actualnormalgeneration/publication/Savehealthy; fault/coldstage notexecuted. NecessaryR2harnesspathcorrection only.",
+      "Job_remaining": 0
+    },
+    {
+      "name": "meta028-terminal-host-r2",
+      "source_manifest": "0407d40006a4e2ddff84a461814d717a7798e95d9facb2bc03fd95796c1e794d",
+      "producer_exit": 0,
+      "producer_checks": 33,
+      "producer_failures": [],
+      "cold": "ScriptError on publicNoRun snapshot beforeContinue; no coldfooter/overallresult. ActualsourceNil bug separatelyregisteredbeforefix.",
+      "exit": null,
+      "script_error": true,
+      "timed_out": false,
+      "before_guard_close_owned_pids": [
+        20220,
+        25816,
+        39420,
+        35860
+      ],
+      "Job_remaining": 0
+    },
+    {
+      "name": "meta028-terminal-host-r3",
+      "source_manifest": "a4f50df9b6a880c61dfc8bff54bb8ccdb4ca67bf4426724f652c710668792fbf",
+      "exit": 0,
+      "producer_checks": 33,
+      "cold_checks": 24,
+      "total_checks": 57,
+      "failures": [],
+      "script_error": false,
+      "timed_out": false,
+      "Job_remaining": 0
+    }
+  ],
+  "runtime_inventory": {
+    "before": 219,
+    "after": 222,
+    "new_actual_Jobs": 3,
+    "original219_records_preserved": true,
+    "all3_ownedJobs_closed0": true,
+    "no_global_census": true
+  },
+  "guards": {
+    "source": "unchanged run_stage006.py andsupport4 hashes",
+    "deadline_seconds": 180,
+    "aggregate_CPU_percent": 12,
+    "job_memory_bytes": 2147483648,
+    "assigned_before_execution": true,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "source_restoration": "No temporary source instrumentation. Originalsourcepair preserved; actualtested onefieldcorrection intentionallycommitted."
+  },
+  "evidence_encoding_limit": {
+    "original_PS_receipts_unchanged": true,
+    "original_UTF8_Godot_logs_preserved": true,
+    "exact_four_text_field_differences": [
+      {
+        "path": "produce.observations[0].save_status.status_text",
+        "engine_UTF8": "Autosave On · Completed run saved.",
+        "PS_decoded": "Autosave On ┬╖ Completed run saved."
+      },
+      {
+        "path": "produce.observations[1].save_status.status_text",
+        "engine_UTF8": "Autosave On · Saved to Resume Slot.",
+        "PS_decoded": "Autosave On ┬╖ Saved to Resume Slot."
+      },
+      {
+        "path": "continue.observations[1].save_status.status_text",
+        "engine_UTF8": "Autosave On · Loaded completed run.",
+        "PS_decoded": "Autosave On ┬╖ Loaded completed run."
+      },
+      {
+        "path": "continue.observations[2].save_status.status_text",
+        "engine_UTF8": "Autosave On · Saved to Resume Slot.",
+        "PS_decoded": "Autosave On ┬╖ Saved to Resume Slot."
+      }
+    ],
+    "all_other_fields_identical_native_JSON_types_and_values": true,
+    "adjudication_uses_raw_engine_footer": true,
+    "no_rerun_or_posthoc_receipt_recode": true
+  },
+  "preserved_errata": {
+    "R1": "Original21checkonefailure/pathscope assumptions unchanged. R2fixesonlypathcontract, globalizesrealpublicpath andenforcesexactdataRoot.",
+    "R2": "Originalproducer33/0, coldScriptError beforeContinue, rawlogs/partialreceipt/nooverallresult andguardclose4ownedPIDs preserved. Sourcefixseparatelyregistered/reviewedandonefieldonly.",
+    "PS_status_strings": "Raw UTF8 Godotengine logs retain originalmiddleDot; PowerShelldecodedreceipts have CP437 mojibake inexactly4status_textstrings. Originals areunmodified, allotherfields type-exact. Reportadjudicationusesrawenginefooters, no additionalnative rerun orposthocrecode."
+  },
+  "preservation": {
+    "prior_local_source_and_evidence_commits_ancestors": true,
+    "untracked_prototype_sha256": "1f24f2f4d6dfab1049b0f13395fc55596c59d7564bd07f5937110775f485f46b",
+    "paused8_oldnumeric022023_ritual025_publication024_rows_preserved": true,
+    "excluded_diagnostic_and_partials_untouched": true,
+    "no_private_callback_opaque_cycle_capsule_key_signing_or_captured_save_experiments": true,
+    "only_ordinary_public_host_persistence_internals": true,
+    "cleanup_or_file_clearing": false,
+    "imports_builds_exports": false,
+    "publication_attempts_or_denial_retries": 0
+  },
+  "publication": {
+    "prior_shared_main_push_auto_review_denial": "Preserved unchanged; specificmainapprovalpending, no retry.",
+    "required_NEXT_for_snapshot_and_prior_source_tasks": "Open, unverified",
+    "network_this_phase": false
+  },
+  "manual_reconciliation": {
+    "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
+    "views": {
+      "current": {
+        "checked_at": "2026-11-06T04:43:40.657534Z",
+        "total_findings": 364,
+        "own_findings": 113,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 112,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 303,
+        "phase028_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-manual-current-r1.json"
+      },
+      "all": {
+        "checked_at": "2026-11-06T04:43:41.251534Z",
+        "total_findings": 980,
+        "own_findings": 113,
+        "own_codes": {
+          "RUNTIME_STALE_OBSERVATION": 112,
+          "BLOCKER_STALE": 1
+        },
+        "runtime_errors": 303,
+        "phase028_consistency_findings": 0,
+        "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-manual-all-r1.json"
+      }
+    },
+    "note": "Current/all return1 for preserved findings: own113 comprise112runtime ageflags andpreexisting005stale blocker. Fourageflags(twohistoricalrecords) newlycrossed unchangedfreshnesslimit sincephase027; no phase028 consistencyfinding, originalobservationsnotrestamped andguardsnotweakened."
+  },
+  "whole_audit_complete": false,
+  "NEXT_verified": false,
+  "evidence_sha256": {
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-registration-r1.json": "5a5aff6d1d521860bd8eaaf195bb9367375a366dd010ad3e9bf9c268ee1b80b2",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-body-review-r1.json": "184ffe9cd706546a9fc23c67dd8f1056a5df950de5cf4ddba0795c106c734bed",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-peer-review-r1.json": "2b187c8180da50b85375df3bd6b11725748e210f3e81e6268443745a419e66ee",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-body-review-r1.json": "0de6f0c781b34eb8e548e6288c374aa2383677c6a64ee6ae3e20bc180e11ddaf",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-peer-review-r1.json": "2517c960d05ceb1d70c4f177ef4951f4b52431f9ff1364706bafa575e940e381",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-two-body-root-byte-check-r1.json": "6e52a743e54e09e2b59a1b68233a7ccd211e2834600adadb9ce291583b88ba9b",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-public-host-source-design-r1.json": "84531e9183591b5ea839dd4de47c7fe88cd3581142d28d2840b6c75cd1d6912f",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-admission-peer-r1.json": "77dd87c35d8f234866656a5438bab66537cb6908fedfd3398d78c64bbde880ac",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-path-contract-peer-r1.json": "a94bc9b31b6f6f87b5e6021305246155d81d58cab370827647b62520a25ec8ce",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-admission-peer-r2.json": "ca3270672a1716f753fd1226e4e954611eb9d8b027c3b403f1635913eef295de",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-admission-peer-r3.json": "1b954a66334e56f464a1dd6eb375b4f33711cf2777af36612293752afcbfedb5",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-default-read-only-r1.json": "f03bc3a97da3ba998b32d893419a896fca6ecd1f54f10fe6a8b84e358a079b1d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-default-read-only-r2.json": "b112204802feff38ca7647f84193d2cc4ab7b49a9b039cf5f45a26c1fe14457e",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-default-read-only-r3.json": "937ebd5c3d0727cc293ea7569f555c9fefcf5e9b57591a24788a3d9eb5c6bac8",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-R2-test-path-correction-r1.json": "4505a13c8e3991287a3136e9e60f2bb46be7b4b27c0cc5b3bee9469b7e478580",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json": "3d6d50d6c0287306655329ca969c2cbfbee30069d4bb36a7bc89f9955b8b88ba",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json": "fd13f04824c21ce774679de518774d0780f8a568d322cdcfba8b1d2f3828e8fa",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-menu-snapshot-fix-registration-r1.json": "6ec7b2ea4a4a6d51e9c8de72efd77ce57db7aaddae9c0d3dc8f4b390bda34568",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-menu-snapshot-source-peer-r1.json": "73199befe4140db56b1bd9370148980328df61eb58ee67f1ea8fda691edd8eb9",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-menu-snapshot-correction-application-r1.json": "63bd71cd5b1c8f737897d3f380653e5b1617fd7a68f353b0b038b81ddac63d35",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json": "6acfd7bbbe9d954e9ce7d19bbbbdf768bacd38a0e6ee2cc2d2214001f5367d9d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json": "2ebcfacdc69c4dc41db1c96767c3bbfa803d24c4bbded55383c96ebef7d5bb8d",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-host-proposal-r1\\immutable-sha256.json": "048d003d39d6e20de504793f142a32b39c8a6bff5d771fe654bb3a682f7b980c",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-host-proposal-r2\\immutable-sha256.json": "f7f1888a884167a7e345c23f4db3515ef612302e4b0dfb706a99414884ffdceb",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-host-proposal-r3\\immutable-sha256.json": "827858a4d24e4b8988c8788d65df4359f91f4ab0fd1b56fa74a0d01c485d1b47",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-host-proposal-r3\\source-basis.json": "d7f4260f7eafd175c448c7fbffa8fbc26c34c29f1fdab09c43121687baadb5a6",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r1\\job.json": "27886cb6d8e5dbde95f711a3514082e9bddfb8dbf394223f81510a830c672a5e",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r2\\job.json": "73ca98b8930c5c455af25bcc88342eb2bb9c92225a5692fb21a7e3a83127b697",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\meta028-terminal-host-r3\\job.json": "e6816cb6664d168a52ea04d23097b74b7efcf8d58acdf24d714087bec2c0e4cc",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-manual-current-r1.json": "af9d250ca519607cdf1cf3a4ef3bd8989aea6734909ec9d3fb38e67b5d1898da",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-manual-all-r1.json": "cbf694caeda772fabaeea86590bb4d693953ff4b530377a84581d659f00da9c3",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-pre-evidence-commit-custody-r1.json": "a9667b7b95421ad3c6da3c0908059f93d31781b18e5579bd517f84819b658ccb"
+  }
+}
