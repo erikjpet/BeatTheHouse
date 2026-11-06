@@ -1990,10 +1990,10 @@
     },
     {
       "phase": "028",
-      "observed_at": "2026-11-06T04:42:54.014869+00:00",
+      "observed_at": "2026-11-06T04:49:43.784038+00:00",
       "base_local_HEAD": "c2654696e47adc25001853ddcfc178b298af57cf",
       "source_commit": "1b2f12c1495159871432c87bffdd16b7f64a616b",
-      "evidence_commit": null,
+      "evidence_commit": "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
       "tasks": [
         "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
         "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
@@ -2023,7 +2023,8 @@
       "snapshot_state": "Onefieldfix locallycommitted; requiredNEXT Open",
       "denied_publication_retried": false,
       "evidence": "docs/testing/deprecated_code_audit_continuation_028.json",
-      "full_objective_complete": false
+      "full_objective_complete": false,
+      "body_state": "Complete actualevidencecommitassociated"
     }
   ]
 }

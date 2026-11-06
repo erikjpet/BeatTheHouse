@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T04:42:54.014869+00:00",
+  "updated_at": "2026-11-06T04:49:43.784038+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13845,6 +13845,13 @@
             "docs/testing/deprecated_code_audit_continuation_028.json",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
           ]
+        },
+        {
+          "sha": "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_028.json",
+            "docs/testing/deprecated_code_audit_continuation_028.md"
+          ]
         }
       ],
       "deployment": {
@@ -14051,7 +14058,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Associate phase028 evidence, then correct the confirmed terminal special-outcome durability bug and review remaining12core/three broader areas. Keep whole audit and prior requiredNEXT source tasks Open; preserve local commits, cleanup stop, paused/excluded work and denied publication without retry.",
+      "next_action": "Correct the confirmed terminal special-outcome durability bug with durable idempotent acknowledgement, then continue remaining12core/three broader review areas. Preserve whole audit and requiredNEXT source tasks Open, all local commits, cleanup stop, paused/excluded work and denied publication without retry.",
       "blocker": {
         "state": "active",
         "kind": "approval_review_rejection",
@@ -14063,7 +14070,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:42:54.014869+00:00"
+      "updated_at": "2026-11-06T04:49:43.784038+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -26303,7 +26310,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Qualify conditional terminal special-outcome persistence retry behavior: processed flags are set before caller meta save; failure has no local rollback/retry, while independent terminal checkpoint and later meta saves can preserve different portions. Source evidence alone does not demonstrate loss, duplication or Continue failure. Preserve paused effects/features and do not force a callback/private failure seam.",
+        "text": "Qualify conditional terminal special-outcome persistence retry behavior: processed flags are set before caller meta save; failure has no local rollback/retry, while independent terminal checkpoint and later meta saves can preserve different portions. Source evidence alone does not demonstrate loss, duplication or Continue failure. Preserve paused effects/features and do not force a callback/private failure seam. Phase028 actual public Abandon/checkpoint/Save and separate native-process Continue/Save confirms the carried-card durability defect; runtime qualification is bounded to that case. A safe corrective implementation and associated commit remain required before completion.",
         "source": "Phase026 completeCollectionDropService and ItemResolver reviews plus independent surroundingcaller/Meta.save/terminalcheckpointtrace, F026-1.",
         "scope_confirmed": true,
         "acceptance": [
@@ -26362,6 +26369,13 @@
             "docs/testing/deprecated_code_audit_continuation_027.json",
             "docs/testing/deprecated_code_audit_continuation_027.md"
           ]
+        },
+        {
+          "sha": "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_028.json",
+            "docs/testing/deprecated_code_audit_continuation_028.md"
+          ]
         }
       ],
       "deployment": {
@@ -26369,7 +26383,7 @@
         "state": "not_applicable",
         "commit": null,
         "evidence": [],
-        "scope": "Conditional investigation only; no sourcechange or demonstrated playerfailure. Future corrective implementation must register commit/delivery acceptance."
+        "scope": "Confirmed persistence-defect investigation, no underlying Meta/CollectionDropService fix. Future corrective implementation must register required NEXT and source/delivery acceptance before editing. The separate snapshot fix is tracked under MenuSaveSnapshot028."
       },
       "evidence": [
         {
@@ -26414,7 +26428,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:42:54.014869+00:00"
+      "updated_at": "2026-11-06T04:49:43.784038+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-DELIVERY-CORE-COVERAGE-027",
@@ -26548,8 +26562,12 @@
             "id": "independent-review-and-commit",
             "description": "Independent review and actual local commit association before completing this child; corrective source/delivery acceptance and whole audit remain separate.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-crew-sequence-adapter-peer-review-r1.json",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-delivery-model-peer-review-r1.json"
+            ]
           }
         ],
         "coverage": {
@@ -26575,14 +26593,22 @@
           ]
         }
       },
-      "state": "open",
-      "status": "TWO_CURRENT_MODEL_BODIES_INDEPENDENTLY_QUALIFIED_COMMIT_ASSOCIATION_PENDING_028",
+      "state": "complete",
+      "status": "TWO_CURRENT_MODELS_INDEPENDENTLY_REVIEWED_ACTUAL_EVIDENCE_COMMIT_ASSOCIATED_028",
       "owner": {
         "name": "Audit phase028 qualification",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_028.json",
+            "docs/testing/deprecated_code_audit_continuation_028.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -26598,7 +26624,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate actual evidence commit before completing this bounded two-model review; retain all compatibility/authority code and preserve whole audit Open.",
+      "next_action": "Bounded two-model source review complete at 6e3ba05f0cfe033ecf656fd7418c9daefd22fca5. Retain all current compatibility/authority code. Whole audit, remaining12core/threebroader areas and confirmed terminal durability correction remain Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -26608,7 +26634,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T04:14:28.444799+00:00"
+      "updated_at": "2026-11-06T04:49:43.784038+00:00"
     },
     {
       "id": "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
@@ -26682,6 +26708,13 @@
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
           ]
+        },
+        {
+          "sha": "6e3ba05f0cfe033ecf656fd7418c9daefd22fca5",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_028.json",
+            "docs/testing/deprecated_code_audit_continuation_028.md"
+          ]
         }
       ],
       "deployment": {
@@ -26719,7 +26752,7 @@
           "scope": "One visible_pressure conditional for noRun state; no deferred collaborator initialized or other field/helper/authoritative save/runtime behavior changed."
         }
       ],
-      "updated_at": "2026-11-06T04:42:54.014869+00:00"
+      "updated_at": "2026-11-06T04:49:43.784038+00:00"
     }
   ],
   "batches": [
