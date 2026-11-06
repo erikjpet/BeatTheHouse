@@ -14,4 +14,6 @@ All other reviewed code is retained. Venue access, offer sessions and scenario l
 
 Exact receipts, preserved candidate and limits are in [the machine-readable report](deprecated_code_audit_continuation_024.json). The whole audit and aggregate validation acceptance remain Open.
 
-Manual reconciliation reports 39 historical findings in this audit scope: 38 age flags on 19 old runtime records and the preexisting 005 stale blocker. No phase024 consistency finding remains; broader backlog findings are preserved.
+Manual R5 reconciliation reports 43 historical findings in this audit scope: 42 age flags on 21 old runtime records and the preexisting 005 stale blocker. Original timestamps were retained as more records crossed the 24-hour age threshold. No phase024 consistency finding remains; broader backlog findings are preserved.
+
+Main publication was rejected by automatic approval review: the existing NEXT approval did not establish specific approval to update shared main. Local evidence commits dd4ff350 and 89e58b37 remain unpushed; remote main is ac877121. No retry or workaround occurred. `BTH061-AUDIT-COVERAGE-PUBLICATION-024` remains Open pending explicit main approval.

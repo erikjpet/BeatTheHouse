@@ -1867,7 +1867,17 @@
       "full_objective_complete": false,
       "preserved_candidate_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef",
       "cleanup_stopped": true,
-      "evidence_commit": "dd4ff350d31705fe1e91347cac21f27197968eb7"
+      "evidence_commit": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+      "publication": {
+        "task": "BTH061-AUDIT-COVERAGE-PUBLICATION-024",
+        "state": "AUTO_REVIEW_DENIED_APPROVAL_PENDING",
+        "local_commits": [
+          "dd4ff350d31705fe1e91347cac21f27197968eb7",
+          "89e58b376573e7cfc53bc337ad57a6c8edad3e8d"
+        ],
+        "remote_main": "ac877121d68561c818f39fe3c81b892e8a13b932",
+        "retry_count": 0
+      }
     }
   ]
 }

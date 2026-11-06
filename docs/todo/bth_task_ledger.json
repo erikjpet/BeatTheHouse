@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T00:42:40.556654+00:00",
+  "updated_at": "2026-11-06T00:46:25.366143+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13637,7 +13637,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_MORE_CORE_BODIES_REVIEWED_CLEANUP_STOP_PRESERVED_WHOLE_AUDIT_AND_NUMERIC_NEXT_OPEN_024",
+      "status": "FOUR_MORE_CORE_BODIES_COMPLETE_EVIDENCE_MAIN_PUBLICATION_DENIED_NUMERIC_NEXT_OPEN_024",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14006,25 +14006,29 @@
           "kind": "bounded_source_review_and_noop_removal024",
           "reference": "docs/testing/deprecated_code_audit_continuation_024.json",
           "summary": "Four complete bodies independently reviewed; empty Numbers stub candidate qualified and preserved, NOT applied. Original source1247 restored exactly; no new native/NEXT claim. Evidence commit association pending."
+        },
+        {
+          "kind": "automatic_review_main_publication_denial",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json",
+          "summary": "Exact main push rejected before process creation; remote remainsac877. No retry or reroute. Concrete finished local commits exist; explicit main approval pending."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remaining 22 core bodies and three broader coverage/compatibility areas and bug investigations under unchanged guards. Preserve cleanup/removal stop, named feature pauses and excluded diagnostics. Numeric022/023 remain Open for separately assigned exact NEXT verification.",
+      "next_action": "Continue permitted remaining22core and three broader coverage/compatibility areas and bug investigations under unchanged guards. Evidence-only main push requires explicit approval after auto-review rejection; do not retry or reroute. Preserve cleanup/removal stop, named pauses and excluded diagnostics; numeric022/023 remain Open pending NEXT.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Permitted evidence and bug investigations continue. Cleanup/removal remains stopped under recorded user direction; candidate is preserved, not applied. Numeric NEXT verification separately assigned.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-06T00:35:29.517065+00:00",
+        "state": "active",
+        "kind": "approval_review_rejection",
+        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-06T00:46:25.366143+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_010.md",
-          "docs/testing/deprecated_code_audit_continuation_024.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T00:42:40.556654+00:00"
+      "updated_at": "2026-11-06T00:46:25.366143+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -25434,6 +25438,92 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T00:42:40.556654+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-COVERAGE-PUBLICATION-024",
+      "name": "Publish completed phase024 audit evidence to main",
+      "aliases": [],
+      "kind": "operation",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Publish only completed phase024 evidence/tracking work to erikjpet/BeatTheHouse main using an ordinary non-force push after explicit authorization addresses the main-branch auto-review denial. Preserve unchanged production source, cleanup stop, paused rows and numeric NEXT acceptance.",
+        "source": "Parent instruction to continue audit plus earlier authorization to push finished work to NEXT; exact main push was rejected by automatic review because this did not establish specific main-branch publication approval.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "finished-local-evidence",
+            "description": "Four-body coverage evidence is independently qualified and associated with actual local commits; original source and protected rows are preserved.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_024.json",
+              "dd4ff350d31705fe1e91347cac21f27197968eb7",
+              "89e58b376573e7cfc53bc337ad57a6c8edad3e8d"
+            ]
+          },
+          {
+            "id": "authorized-main-push",
+            "description": "Explicit approval addresses rejected main publication; at most one retry per materially new relevant evidence and no bypass. Ordinary main push succeeds and exact remote identity is verified.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "EXACT_MAIN_PUSH_AUTO_REVIEW_DENIED_EXPLICIT_MAIN_APPROVAL_PENDING_024",
+      "owner": {
+        "name": "Audit evidence publication",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_024.md",
+            "docs/testing/deprecated_code_audit_continuation_024.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Documentation-only main publication. No application deploy, watcher restart or NEXT acceptance; numeric delivery tasks remain Open separately."
+      },
+      "evidence": [
+        {
+          "kind": "automatic_review_main_publication_denial",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json",
+          "summary": "Exact main push rejected before process creation; remote remainsac877. No retry or reroute. Concrete finished local commits exist; explicit main approval pending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Await explicit main-branch publication approval; do not retry or reroute denied push without materially new relevant evidence. Continue independent permitted audit work.",
+      "blocker": {
+        "state": "active",
+        "kind": "approval_review_rejection",
+        "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-06T00:46:25.366143+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-06T00:46:25.366143+00:00"
     }
   ],
   "batches": [

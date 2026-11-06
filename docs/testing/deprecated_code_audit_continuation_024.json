@@ -127,29 +127,29 @@
     "state": "MANUAL_CHECKED_HISTORICAL_FINDINGS_PRESERVED",
     "views": {
       "current": {
-        "total_findings": 261,
-        "own_findings": 39,
+        "total_findings": 265,
+        "own_findings": 43,
         "own_codes": {
-          "RUNTIME_STALE_OBSERVATION": 38,
+          "RUNTIME_STALE_OBSERVATION": 42,
           "BLOCKER_STALE": 1
         },
-        "runtime_errors": 201,
+        "runtime_errors": 205,
         "new_phase024_findings": 0,
-        "checked_at": "2026-11-06T00:42:54.489496Z"
+        "checked_at": "2026-11-06T00:46:48.553356Z"
       },
       "all": {
-        "total_findings": 877,
-        "own_findings": 39,
+        "total_findings": 881,
+        "own_findings": 43,
         "own_codes": {
-          "RUNTIME_STALE_OBSERVATION": 38,
+          "RUNTIME_STALE_OBSERVATION": 42,
           "BLOCKER_STALE": 1
         },
-        "runtime_errors": 201,
+        "runtime_errors": 205,
         "new_phase024_findings": 0,
-        "checked_at": "2026-11-06T00:42:55.040800Z"
+        "checked_at": "2026-11-06T00:46:49.137620Z"
       }
     },
-    "note": "R4 after actual commit association and UTF8 preservation repair: only39historical own findings retained, no phase024 inconsistency. Original timestamps/guards retained. Prior schema/index failures and encoding correction preserved."
+    "note": "R5 after recording actual main auto-review denial: only historical audit findings retained, no phase024 inconsistency; publication task Open with actual rejection evidence and pending approval. Original timestamps/guards remain unchanged."
   },
   "NEXT_verified": false,
   "whole_audit_complete": false,
@@ -174,7 +174,11 @@
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-checkpoint-encoding-correction-r1.json": "bc16ff33ae4b4e0b24f92796ddf4543baa7ae1d1995b74c72352b967fcff11bd",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-r1-schema-correction.json": "e56c42573d2d6acf9980fef706a91555cefaa4e105160b6b5c35be61d795826d",
     "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-current-r4.json": "e7b472b4276e90164ccefa18e97e4d112d30cd301d81cdb6e51c4d0bc6d443ad",
-    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-all-r4.json": "4c0ac3e3e67198cec72abbf4a55930edac4b903f71bd373d13b9575c70a30a65"
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-all-r4.json": "4c0ac3e3e67198cec72abbf4a55930edac4b903f71bd373d13b9575c70a30a65",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json": "1dc32d4baf16d2db73796016f45370551723b83512a7462fccd4202af5b9f970",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-evidence-only-checkpoint-peer-r1.json": "af47e263cfa0d9b39e4527d95b6b3ea5b4c67a9f557980b40fab425eafdf1a32",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-current-r5.json": "36e3904f8aeb9399afe7c76d317130ede7048581c30c50e9d80757b513703342",
+    "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-manual-all-r5.json": "ad4f4ffb23dfd55ff4a1ae3520af51b69580be1ad9d9719f1a5ae8466a92f545"
   },
   "current_source_manifest_sha256": "d69d0897acdc1143affbabf04d0f5e36de33615b6bac77a771f962b95f68ae0c",
   "preserved_candidate_source_manifest_sha256": "911e815be4922486958e056c007285e61cc9dd6426e64057a8f6d939258a1fef",
@@ -182,5 +186,17 @@
   "body_review_complete": true,
   "stub_finding_state": "OPEN_CANDIDATE_PRESERVED_NOT_APPLIED_CLEANUP_STOP",
   "source_change_applied": false,
-  "source_change_published": false
+  "source_change_published": false,
+  "publication": {
+    "state": "AUTO_REVIEW_DENIED_APPROVAL_PENDING",
+    "task": "BTH061-AUDIT-COVERAGE-PUBLICATION-024",
+    "action": "git push origin HEAD:refs/heads/main",
+    "target": "erikjpet/BeatTheHouse refs/heads/main",
+    "local_evidence_commit": "dd4ff350d31705fe1e91347cac21f27197968eb7",
+    "local_association_commit": "89e58b376573e7cfc53bc337ad57a6c8edad3e8d",
+    "remote_main": "ac877121d68561c818f39fe3c81b892e8a13b932",
+    "retry_count": 0,
+    "evidence": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json",
+    "main_push_succeeded": false
+  }
 }
