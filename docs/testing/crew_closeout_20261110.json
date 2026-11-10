@@ -1,0 +1,163 @@
+{
+  "schema": "bth.crew_closeout/v1",
+  "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "production_changed": false,
+  "objectives": [
+    {
+      "id": "BTH061-CREW-EXPIRED-HANDOFF",
+      "fix_commit": "b29d9b3985b5676aac2439f2f08aae359729a3e3",
+      "fix_ancestor_verified": true,
+      "state": "open",
+      "remaining_acceptance": "Permitted normal-HTTPS deployed recreated handoff behavior/responsiveness."
+    },
+    {
+      "id": "BTH-GAME-RETURN-001",
+      "fix_commit": "4355f5611f0f77f546d898e39524f6b8e974c161",
+      "fix_ancestor_verified": true,
+      "state": "open",
+      "remaining_acceptance": "Permitted normal-HTTPS deployed recreated Roulette/Coin Pusher Crew return interaction."
+    }
+  ],
+  "native_total": 594,
+  "native": [
+    {
+      "run_id": "close-crew-host-catalog-20261110",
+      "kind": "synthetic_native_jazz_timing_and_host_catalog",
+      "checks": 329,
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/crew_expired_handoff_check.gd"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "cpu_rate": 500,
+      "memory_bytes": 2147483648,
+      "finished_at": "2026-11-10T17:23:58.882943+00:00",
+      "private_evidence_directory": "E:\\CodexQA\\BTH\\runs\\close-crew-host-catalog-20261110\\evidence",
+      "job_sha256": "95299f25d416d6c914a3f60826011abae424844e7bdfdbd11dd02e7f51c58fec",
+      "log_sha256": "7af755d0cefef14d64fd882f09038edb461faca9e3c832fdc5a971dd7d129a55",
+      "script_errors": 0
+    },
+    {
+      "run_id": "close-crew-process-cold-20261110-r2",
+      "kind": "process_cold_synthetic_jazz_outcomes",
+      "checks": 105,
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/crew_handoff_cold_continue_check.gd"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "cpu_rate": 500,
+      "memory_bytes": 2147483648,
+      "finished_at": "2026-11-10T17:25:08.495707+00:00",
+      "private_evidence_directory": "E:\\CodexQA\\BTH\\runs\\close-crew-process-cold-20261110-r2\\evidence",
+      "job_sha256": "8dc8adb702b9a0cb6f44ac999e8c131715d1bd852c896718933cff31f6b50976",
+      "log_sha256": "9061d0b19ab549c0d2dc4df8a0fafc31ecdc1053f46e7bd07fc06cfcda209a0b",
+      "script_errors": 0
+    },
+    {
+      "run_id": "close-crew-game-return-20261110",
+      "kind": "synthetic_native_roulette_coin_pusher_return",
+      "checks": 133,
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/crew_delivery_game_return_check.gd"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "cpu_rate": 500,
+      "memory_bytes": 2147483648,
+      "finished_at": "2026-11-10T17:22:18.434975+00:00",
+      "private_evidence_directory": "E:\\CodexQA\\BTH\\runs\\close-crew-game-return-20261110\\evidence",
+      "job_sha256": "f99b9c79d60cd5602404c9754b640541d15fc05ed057433afe8fb38d3778f9a5",
+      "log_sha256": "0cb9fadf549a4b097ce9400d7d88bb39bf794f310894b5185919f08fedb2de43",
+      "script_errors": 0
+    },
+    {
+      "run_id": "close-crew-native-ownership-20261110",
+      "kind": "synthetic_native_surface_ownership_touch",
+      "checks": 27,
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/game_surface_native_ownership_check.gd"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "cpu_rate": 500,
+      "memory_bytes": 2147483648,
+      "finished_at": "2026-11-10T17:23:59.247968+00:00",
+      "private_evidence_directory": "E:\\CodexQA\\BTH\\runs\\close-crew-native-ownership-20261110\\evidence",
+      "job_sha256": "f148ebcf2d689d67a070e609f675d4456dc7173e308d859ccd9afb15a3833427",
+      "log_sha256": "6bfc6e3cdb08ffc52992743050113cf38f593529f4e450a01058fb6ed56b52a3",
+      "script_errors": 0
+    }
+  ],
+  "web": {
+    "state": "blocked_before_startup",
+    "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/",
+    "error": "net::ERR_CERT_AUTHORITY_INVALID",
+    "tls_bypassed": false,
+    "security_settings_changed": false,
+    "alternate_gameplay_route_used": false,
+    "fixture_installed": false,
+    "exit_code": 1,
+    "timed_out": false,
+    "active_at_release": 0,
+    "private_evidence_directory": "E:\\CodexQA\\BTH\\runs\\close-crew-web-20261110\\evidence",
+    "job_sha256": "0a84c8eeee2c224f3ace9b74ebf84258c7774131970d9fbbed61351e9bc260b4",
+    "log_sha256": "fe50cc78b3d6640dc86d81c153d8e178bf68f33994f793defab4ec480374d89a"
+  },
+  "limits": [
+    "No original-player-save access or verification.",
+    "No deployed Web gameplay/startup/responsiveness pass.",
+    "No full suite, performance qualification, physical pointer or device pass.",
+    "Historical pre-fix synthetic cold evidence reused with original attribution, not rerun."
+  ],
+  "excluded_attempts": [
+    {
+      "run_id": "close-crew-native-20261110",
+      "reason": "305 assertions pass but misplaced isolated GDExtension startup errors; superseded by clean host-catalog run."
+    },
+    {
+      "run_id": "close-crew-fixtures-20261110",
+      "reason": "15 synthetic capture assertions followed by fixture-host teardown warning; never browser-installed, not acceptance."
+    },
+    {
+      "run_id": "close-crew-process-cold-20261110",
+      "reason": "Storage gate rejected output file leaves before child creation; corrected directory declaration in r2."
+    }
+  ]
+}
