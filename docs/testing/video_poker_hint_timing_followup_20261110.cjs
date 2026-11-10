@@ -1,0 +1,51 @@
+const fs=require('fs'),path=require('path'),http=require('http'),crypto=require('crypto'),cp=require('child_process');
+const {chromium}=require('D:/Projects/site/node_modules/playwright');
+const root=process.env.BTH_QA_EVIDENCE_DIR, workspace=process.env.BTH_QA_WORKSPACE;
+const mode=process.argv[2]||'next';
+const record={mode,started:new Date().toISOString(),console:[],errors:[],snapshots:[],marks:[],source:'e410e05c6919e7cf7599552f67946f4e53974cd2',fidelity:'Unchanged exact NEXT PCK/engine/native, test-only pre-Deal fixture overlaid through engine preload, rendered production host and ordinary pointer actions'};
+let context,server,cdp,trace=[],tracingStarted=false; function stage(x){record.stage=x;fs.writeFileSync(path.join(root,"stage.json"),JSON.stringify({stage:x,time:new Date().toISOString(),errors:record.errors,console:record.console},null,2));}
+const fixture=fs.readFileSync(path.join(workspace,'scripts/tests/video_poker_hint_rendered_web.gd'),'utf8');
+const scene='[gd_scene load_steps=2 format=3]\n[ext_resource type="Script" path="res://vp_probe.gd" id="1"]\n[node name="VPProbe" type="Node"]\nscript = ExtResource("1")\n';
+let next='http://localhost:8088/p/beat-the-house/play/dev/e410e05c6919e7cf7599552f67946f4e53974cd2/';
+function digest(s){return crypto.createHash('sha256').update(s).digest('hex')}
+function gate(){const py='C:/Users/theep/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe'; const code=`import sys,os,json\nfrom pathlib import Path\nfrom dataclasses import replace\nsys.path.insert(0,${JSON.stringify(path.join(workspace,'tools'))})\nfrom bth_qa_storage import Layout,check_launch\nm=json.loads((Path(os.environ['BTH_QA_EVIDENCE_DIR'])/'storage-manifest.json').read_text())\nl=Layout(**{k:Path(v) for k,v in m['paths'].items()},run_id=m['run_id'],token=m['token'],prepared=True,expected_write_bytes=m['expected_write_bytes'],reserve_bytes=m['reserve_bytes'])\nx=check_launch(l,cwd=os.getcwd(),env=os.environ,extra_write_paths=(l.profile,l.cache,l.temp,l.evidence))\nprint(json.dumps(x))`;const x=cp.spawnSync(py,['-B','-c',code],{encoding:'utf8',windowsHide:true});if(x.status!==0)throw Error(x.stderr||x.stdout);fs.writeFileSync(path.join(root,'browser-launch-storage-gate.json'),x.stdout);}
+async function clickTarget(page,p){const c=await page.locator('canvas').evaluate(e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height,iw:e.width,ih:e.height}));const scale=Math.min(c.width/1280,c.height/720);const point={x:c.x+(c.width-1280*scale)/2+p.x*scale,y:c.y+(c.height-720*scale)/2+p.y*scale};record.pointerGeometry=record.pointerGeometry||[];record.pointerGeometry.push({canvas:c,target:p,scale,point});await page.mouse.click(point.x,point.y);}
+async function snap(label){const s=await context.pages()[0].evaluate(()=>window.__bth_vp_host_snapshot||null);record.snapshots.push({label,time:new Date().toISOString(),...s});fs.writeFileSync(path.join(root,'snapshots.json'),JSON.stringify(record.snapshots,null,2));stage(label);console.log('SNAP',label,JSON.stringify(s));return s;}
+(async()=>{try{
+ stage("gate");gate();
+ if(mode==='fixture'){
+ const exported='E:/CodexQA/BTH/runs/vp-hint-web-export-incremental-rendered-measured-20261110/evidence/web';
+ record.exported=exported;record.fidelity='Preserved rendered-host test export; video_poker.gd byte-identical to e410 NEXT; synthetic pre-Deal fixture, ordinary pointer actions thereafter. Not unchanged deployed PCK.';
+ server=http.createServer((q,r)=>{let file=path.resolve(exported,'.'+decodeURIComponent(new URL(q.url,'http://localhost').pathname));if(!file.startsWith(path.resolve(exported)))return r.end();if(fs.existsSync(file)&&fs.statSync(file).isDirectory())file=path.join(file,'index.html');if(!fs.existsSync(file)){r.statusCode=404;return r.end();}r.setHeader('Content-Type',file.endsWith('.wasm')?'application/wasm':file.endsWith('.js')?'text/javascript':file.endsWith('.html')?'text/html':'application/octet-stream');r.setHeader('Cross-Origin-Opener-Policy','same-origin');r.setHeader('Cross-Origin-Embedder-Policy','require-corp');fs.createReadStream(file).pipe(r);});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));next=`http://127.0.0.1:${server.address().port}/index.html`;record.url=next;
+ }
+ stage("launch");
+ context=await chromium.launchPersistentContext(process.env.BTH_QA_PROFILE_DIR,{executablePath:'C:/Users/theep/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe',headless:true,viewport:{width:1280,height:720},downloadsPath:process.env.BTH_QA_TEMP_DIR,args:['--no-first-run','--no-default-browser-check',`--disk-cache-dir=${process.env.XDG_CACHE_HOME}`,'--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows']});
+ stage("launched");const page=context.pages()[0];
+ page.on('console',m=>{record.console.push({type:m.type(),text:m.text(),time:Date.now()});console.log('BROWSER',m.type(),m.text());});page.on('pageerror',e=>{record.errors.push(String(e));stage('pageerror');});page.on('requestfailed',r=>{record.errors.push(r.url()+':'+JSON.stringify(r.failure()));stage('requestfailed');});
+ cdp=await context.newCDPSession(page);cdp.on('Tracing.dataCollected',e=>trace.push(...e.value));
+ stage("cdp-created");
+ if(mode!=='fixture'){await page.route('**/vp_probe.gd',r=>r.fulfill({body:fixture,contentType:'text/plain'}));await page.route('**/vp_probe.tscn',r=>r.fulfill({body:scene,contentType:'text/plain'}));
+ await page.route(next,r=>{r.fetch().then(async x=>{let html=await x.text();record.original_html_sha256=digest(html);html=html.replace('"args":[]','"args":["res://vp_probe.tscn"]');html=html.replace('const engine = new Engine(GODOT_CONFIG);',`const engine = new Engine(GODOT_CONFIG);\nconst __start=engine.startGame.bind(engine);engine.startGame=async function(opts){await engine.preloadFile('vp_probe.gd','vp_probe.gd');await engine.preloadFile('vp_probe.tscn','vp_probe.tscn');return __start(opts);};`);await r.fulfill({response:x,body:html});}).catch(e=>record.errors.push(String(e)));});
+ stage("navigate");}await page.goto(next,{waitUntil:'domcontentloaded',timeout:15000});stage("navigated");
+ await page.waitForFunction(()=>window.__bth_vp_host_snapshot?.ready,null,{timeout:45000,polling:100});stage("fixture-ready");await cdp.send('Tracing.start',{categories:'toplevel,devtools.timeline,blink.user_timing',options:'record-until-full',transferMode:'ReportEvents'});tracingStarted=true;
+ await Promise.race([cdp.send('Performance.enable'),new Promise(resolve=>setTimeout(resolve,2000))]);
+ await page.evaluate(()=>{let value=window.__bth_vp_host_snapshot;window.__vp_observations=[];window.__vp_longtasks=[];Object.defineProperty(window,'__bth_vp_host_snapshot',{get(){return value},set(v){window.__vp_observations.push({epoch:performance.timeOrigin+performance.now(),now:performance.now(),samples:v.job_samples,active:v.job_active,phase:v.phase,pending:v.pending,maxSlice:v.hint_max_slice_usec,hand:v.hand});value=v;}});new PerformanceObserver(list=>{for(const e of list.getEntries())window.__vp_longtasks.push({start:e.startTime,duration:e.duration,name:e.name});}).observe({entryTypes:['longtask']});});
+ await snap('before-deal');await page.screenshot({path:path.join(root,'before-deal.png')});
+ for(let deal=0;deal<3;deal++){
+   await page.waitForFunction(()=>window.__bth_vp_host_snapshot?.targets?.video_poker_deal,null,{timeout:10000});let s=await snap(`deal-${deal}-ready`);let p=s.targets.video_poker_deal;if(!p)throw Error('No Deal target');
+   record.marks.push(await page.evaluate(n=>{const m=performance.mark(n);return {name:n,start:m.startTime,origin:performance.timeOrigin};},`DEAL_${deal}`));await clickTarget(page,p);
+   await page.waitForFunction(()=>window.__bth_vp_host_snapshot?.phase==='hold',null,{timeout:10000,polling:20});s=await snap(`deal-${deal}-hold`);
+   if(deal===0){p=s.targets.video_poker_hold;await page.waitForTimeout(900);await clickTarget(page,p);await snap('hold-pointer');}
+   await page.waitForFunction(()=>window.__bth_vp_host_snapshot?.phase==='hold'&&!window.__bth_vp_host_snapshot?.pending,null,{timeout:30000,polling:20});s=await snap(`deal-${deal}-complete`);
+   await page.screenshot({path:path.join(root,`deal-${deal}-complete.png`)});
+   record.metrics=record.metrics||[];try{record.metrics.push({deal,metrics:await Promise.race([cdp.send('Performance.getMetrics'),new Promise(resolve=>setTimeout(()=>resolve({timedout:true}),2000))])});}catch(e){}if(s.hint_max_slice_usec>50000)record.errors.push(`50ms gate exceeded on Deal ${deal}: ${s.hint_max_slice_usec}`);
+   await page.waitForTimeout(900);p=s.targets.video_poker_draw;await clickTarget(page,p);await page.waitForFunction(()=>window.__bth_vp_host_snapshot?.phase!=='hold',null,{timeout:10000});await snap(`deal-${deal}-draw`);
+ }
+ record.observations=await page.evaluate(()=>({frames:window.__vp_observations,longtasks:window.__vp_longtasks}));record.state=record.errors.length?'FAIL':'PASS';
+ }catch(e){record.state='FAIL';record.failure=String(e);console.error(e);}finally{
+ fs.writeFileSync(path.join(root,"result-partial.json"),JSON.stringify(record,null,2));if(tracingStarted){try{await Promise.race([new Promise(async resolve=>{cdp.once('Tracing.tracingComplete',resolve);await cdp.send('Tracing.end');}),new Promise((_,reject)=>setTimeout(()=>reject(Error('Trace completion timeout')),3000))]);}catch(e){record.traceError=String(e);}}
+ fs.writeFileSync(path.join(root,'trace.json'),JSON.stringify({traceEvents:trace}));
+ record.traceLongTasks=trace.filter(e=>e.ph==='X'&&e.dur>50000&&/RunTask|FireAnimationFrame|FunctionCall/.test(e.name)).map(e=>({name:e.name,pid:e.pid,tid:e.tid,ts:e.ts,dur:e.dur,tdur:e.tdur,tts:e.tts}));
+ record.finished=new Date().toISOString();fs.writeFileSync(path.join(root,'result.json'),JSON.stringify(record,null,2));
+ if(context)await context.close();if(server)server.close();console.log('RESULT',JSON.stringify(record));process.exitCode=record.state==='PASS'?0:1;
+ }})();

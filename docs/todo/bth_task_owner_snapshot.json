@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T19:06:02.373716+00:00",
+  "observed_at": "2026-11-10T19:36:48.757417+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -209,8 +209,15 @@
       "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
       "title": "Qualify Video Poker hints",
       "state": "active",
-      "observed_at": "2026-11-10T19:06:02.373716+00:00",
-      "source": "Actual current qualification checkpoint: tested code published and exact NEXT e410e05c identity/assets/basic startup verified. Coordinator preparing final combined receipt; real NEXT timing acceptance remains Open."
+      "observed_at": "2026-11-10T19:36:48.757417+00:00",
+      "source": "Actual project checkpoint: scoped timing-evidence integration/publication and exact NEXT follow-through are underway. Diagnostic worker has finished; pending exact-deployed gameplay/performance and outlier attribution remain owned by this project task. No further experimental runtime is underway."
+    },
+    {
+      "task_ref": "/root/diagnose_hint_outliers",
+      "title": "Qualify Video Poker timing",
+      "state": "ended",
+      "observed_at": "2026-11-10T19:36:48.757417+00:00",
+      "source": "Parent confirms diagnostic worker finished. Preserved rendered source-matched timing and eight owned-zero Job receipts; pending exact-deployed and whole-game performance remain Open under BTH-PERF-VIDEO-HINT-20261110, not this ended worker."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

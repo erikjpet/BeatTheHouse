@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T19:06:02.373716+00:00",
+  "updated_at": "2026-11-10T19:36:48.757417+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -634,7 +634,8 @@
             "state": "open",
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
-              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
+              "docs/testing/video_poker_hint_timing_followup_20261110.json"
             ]
           },
           {
@@ -644,7 +645,8 @@
             "state": "open",
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
-              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
+              "docs/testing/video_poker_hint_timing_followup_20261110.json"
             ]
           },
           {
@@ -654,7 +656,8 @@
             "state": "open",
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
-              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
+              "docs/testing/video_poker_hint_timing_followup_20261110.json"
             ]
           }
         ],
@@ -665,7 +668,7 @@
         }
       },
       "state": "open",
-      "status": "INCREMENTAL_HINT_MAIN_NEXT_IDENTITY_STARTUP_VERIFIED; WEB_TIMING_OPEN",
+      "status": "RENDERED_SOURCE_HINT_SLICES_PASS; NEXT_IDENTITY_STARTUP_VERIFIED; DEPLOYED_PERFORMANCE_OPEN",
       "owner": {
         "name": "Video Poker hint qualification",
         "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
@@ -691,9 +694,12 @@
         "state": "verified",
         "commit": "e410e05c6919e7cf7599552f67946f4e53974cd2",
         "evidence": [
-          "docs/testing/video_poker_hint_delivery_20261110.json"
+          "docs/testing/video_poker_hint_delivery_20261110.json",
+          "docs/testing/video_poker_hint_timing_followup_20261110.json"
         ],
-        "scope": "Exact source/tree/NEXT metadata, redirect, served PCK/native hashes, unchanged engine receipt/header links and fresh correct-version rendered basic menu verified. Actual NEXT Video Poker timing/gameplay acceptance remains Open."
+        "scope": "Exact source/tree/NEXT metadata, redirect, served PCK/native hashes, unchanged engine receipt/header links and fresh correct-version rendered basic menu verified. Actual NEXT Video Poker timing/gameplay acceptance remains Open.",
+        "verified_scope": "Retained exact NEXT identity, served payload and menu startup only.",
+        "pending_scope": "Exact deployed ordinary gameplay and performance; rendered timing uses a source-matched test export."
       },
       "evidence": [
         {
@@ -715,23 +721,28 @@
           "kind": "exact_next_delivery",
           "reference": "docs/testing/video_poker_hint_delivery_20261110.json",
           "summary": "Exact e410e05c/tree093f0125 delivered 2026-11-10T19:00:56Z; served identity/assets and fresh rendered menu pass. Initial import-admission failure recovered through maintained exact-source cold request and normal retry; first Node CA failure retained. Web timing remains unqualified."
+        },
+        {
+          "kind": "rendered_timing_followup",
+          "reference": "docs/testing/video_poker_hint_timing_followup_20261110.json",
+          "summary": "Three rendered production-host cold Deals pass unchanged 50 ms advice-slice ceiling at 3.010-3.045 ms under 12% aggregate CPU cap. Other 52-222 ms browser/full-host tasks and old 188-344 ms minimal outliers remain; no deployed-PCK timing or whole-game pass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify actual rendered Video Poker Deal/Hold/Draw timing on the exact served NEXT payload under existing controls, explain standalone 188-344 ms outliers and complete the previously unexecuted live timing gate. Keep full performance parent Open.",
+      "next_action": "Qualify exact deployed ordinary gameplay/performance and attribute retained minimal-harness outliers using targeted evidence. Preserve source-matched rendered slice pass and failed5% startup comparison; keep full performance parent Open.",
       "blocker": {
         "state": "active",
         "kind": "acceptance_evidence",
-        "description": "Exact NEXT delivery/basic launch passed. Web wall-time outliers remain unexplained and final timing-instrumented candidate setup timed out before fixture readiness; actual NEXT timing/gameplay acceptance is unperformed. No user-save dependency.",
+        "description": "Exact NEXT identity, payload custody and menu startup passed on e410e05c. Source-matched rendered advice-slice timing passed separately; exact deployed ordinary gameplay/performance remains unexecuted and historical 188-344 ms minimal-harness outliers remain unattributed. Engine scene override is unavailable; no bypass attempted. No user input or original-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T19:06:02.373716+00:00",
+        "observed_at": "2026-11-10T19:36:48.757417+00:00",
         "evidence": [
           "docs/testing/video_poker_hint_delivery_20261110.json",
-          "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+          "docs/testing/video_poker_hint_timing_followup_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T19:06:02.373716+00:00"
+      "updated_at": "2026-11-10T19:36:48.757417+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",

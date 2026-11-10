@@ -1,0 +1,1839 @@
+{
+  "schema": "bth.video_poker_hint_timing_followup/v1",
+  "recorded_at": "2026-11-10T19:31:01.239521+00:00",
+  "task_id": "BTH-PERF-20261104-002",
+  "state": "SOURCE_MATCHED_RENDERED_HINT_SLICE_GATE_PASS_DEPLOYED_PERFORMANCE_OPEN",
+  "fix_commit": "b64344b5a1c89540d7eebbea88fbd110ef1e1337",
+  "video_poker_gd_sha256": "ac367c3b96ffb068fca63183163b082a0586ef88bdd5b65fc6fb6a01f83bc3c9",
+  "product_source_changed": false,
+  "publication_performed": false,
+  "rendered": {
+    "state": "PASS",
+    "run_id": "vp-hint-rendered-logical-trace12-20261110",
+    "fidelity": "Preserved rendered-host test export; video_poker.gd byte-identical to e410 NEXT; synthetic pre-Deal fixture, ordinary pointer actions thereafter. Not unchanged deployed PCK.",
+    "browser": "Pinned Chromium 153.0.8010.12 / Playwright 1.63.0",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "cpu_cap_percent": 12,
+    "strategy_slice_ceiling_usec": 50000,
+    "cold_deals": [
+      {
+        "label": "deal-0-complete",
+        "max_slice_usec": 3010,
+        "recommended_holds": []
+      },
+      {
+        "label": "deal-1-complete",
+        "max_slice_usec": 3020,
+        "recommended_holds": [
+          1,
+          3
+        ]
+      },
+      {
+        "label": "deal-2-complete",
+        "max_slice_usec": 3045,
+        "recommended_holds": []
+      }
+    ],
+    "first_deal_to_rendered_hold_usec": 67185,
+    "first_hold_prior_hint_completions": 0,
+    "pending_hold_pass": true,
+    "snapshots": [
+      {
+        "label": "before-deal",
+        "time": "2026-11-10T19:25:34.207Z",
+        "bankroll": 10000,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 0,
+        "first_hold_hint_samples": -1,
+        "hand": [
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          }
+        ],
+        "hint_max_slice_usec": 0,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 0,
+        "phase": "idle",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_deal": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-0-ready",
+        "time": "2026-11-10T19:25:34.254Z",
+        "bankroll": 10000,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 0,
+        "first_hold_hint_samples": -1,
+        "hand": [
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          },
+          {
+            "hidden": true
+          }
+        ],
+        "hint_max_slice_usec": 0,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 0,
+        "phase": "idle",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_deal": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-0-hold",
+        "time": "2026-11-10T19:25:34.462Z",
+        "bankroll": 10000,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 4,
+            "suit": 0
+          }
+        ],
+        "hint_max_slice_usec": 3010,
+        "holds": [],
+        "job_active": true,
+        "job_samples": 1471,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": true,
+        "pending_rendered_frames": 12,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "READING THE HAND... 3%",
+        "transition_animation_active": true
+      },
+      {
+        "label": "hold-pointer",
+        "time": "2026-11-10T19:25:35.485Z",
+        "bankroll": 10000,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 4,
+            "suit": 0
+          }
+        ],
+        "hint_max_slice_usec": 3010,
+        "holds": [
+          0
+        ],
+        "job_active": true,
+        "job_samples": 16712,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": true,
+        "pending_rendered_frames": 92,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "READING THE HAND... 53%",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-0-complete",
+        "time": "2026-11-10T19:25:36.014Z",
+        "bankroll": 10000,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 4,
+            "suit": 0
+          }
+        ],
+        "hint_max_slice_usec": 3010,
+        "holds": [
+          0
+        ],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 145,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-0-draw",
+        "time": "2026-11-10T19:25:37.199Z",
+        "bankroll": 9998,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 11,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 13,
+            "suit": 1
+          }
+        ],
+        "hint_max_slice_usec": 3010,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 145,
+        "phase": "settled",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {},
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": true
+      },
+      {
+        "label": "deal-1-ready",
+        "time": "2026-11-10T19:25:37.980Z",
+        "bankroll": 9998,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 11,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 13,
+            "suit": 1
+          }
+        ],
+        "hint_max_slice_usec": 3010,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 145,
+        "phase": "settled",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_deal": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-1-hold",
+        "time": "2026-11-10T19:25:38.131Z",
+        "bankroll": 9998,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 10,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          }
+        ],
+        "hint_max_slice_usec": 3005,
+        "holds": [],
+        "job_active": true,
+        "job_samples": 300,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": true,
+        "pending_rendered_frames": 148,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "READING THE HAND... 0%",
+        "transition_animation_active": true
+      },
+      {
+        "label": "deal-1-complete",
+        "time": "2026-11-10T19:25:39.594Z",
+        "bankroll": 9998,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 10,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 9,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          }
+        ],
+        "hint_max_slice_usec": 3020,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 289,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [
+          1,
+          3
+        ],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "HOLD CARDS 2, 4",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-1-draw",
+        "time": "2026-11-10T19:25:40.752Z",
+        "bankroll": 9997,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 7,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 7,
+            "suit": 3
+          }
+        ],
+        "hint_max_slice_usec": 3020,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 289,
+        "phase": "settled",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {},
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": true
+      },
+      {
+        "label": "deal-2-ready",
+        "time": "2026-11-10T19:25:41.525Z",
+        "bankroll": 9997,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 7,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 2,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 7,
+            "suit": 3
+          }
+        ],
+        "hint_max_slice_usec": 3020,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 289,
+        "phase": "settled",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_deal": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-2-hold",
+        "time": "2026-11-10T19:25:41.710Z",
+        "bankroll": 9997,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 3,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 11,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 1
+          }
+        ],
+        "hint_max_slice_usec": 3005,
+        "holds": [],
+        "job_active": true,
+        "job_samples": 949,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": true,
+        "pending_rendered_frames": 296,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "READING THE HAND... 0%",
+        "transition_animation_active": true
+      },
+      {
+        "label": "deal-2-complete",
+        "time": "2026-11-10T19:25:43.095Z",
+        "bankroll": 9997,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 3,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 8,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 11,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 6,
+            "suit": 2
+          },
+          {
+            "deck": 0,
+            "rank": 14,
+            "suit": 1
+          }
+        ],
+        "hint_max_slice_usec": 3045,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 432,
+        "phase": "hold",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {
+          "video_poker_draw": {
+            "x": 642.200012207031,
+            "y": 667.200012207031
+          },
+          "video_poker_hold": {
+            "x": 222.880004882812,
+            "y": 523.099975585938
+          }
+        },
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": false
+      },
+      {
+        "label": "deal-2-draw",
+        "time": "2026-11-10T19:25:44.299Z",
+        "bankroll": 9995,
+        "cabinet_id": "double_deuces",
+        "first_deal_to_rendered_hold_usec": 67185,
+        "first_hold_hint_samples": 0,
+        "hand": [
+          {
+            "deck": 0,
+            "rank": 7,
+            "suit": 1
+          },
+          {
+            "deck": 0,
+            "rank": 13,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 3,
+            "suit": 3
+          },
+          {
+            "deck": 0,
+            "rank": 12,
+            "suit": 0
+          },
+          {
+            "deck": 0,
+            "rank": 3,
+            "suit": 2
+          }
+        ],
+        "hint_max_slice_usec": 3045,
+        "holds": [],
+        "job_active": false,
+        "job_samples": 0,
+        "observed_phases": [
+          {
+            "pending": false,
+            "phase": "idle"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          },
+          {
+            "pending": true,
+            "phase": "hold"
+          },
+          {
+            "pending": false,
+            "phase": "settled"
+          }
+        ],
+        "pending": false,
+        "pending_rendered_frames": 432,
+        "phase": "settled",
+        "ready": true,
+        "recommended_holds": [],
+        "targets": {},
+        "text": "DRAW ALL FIVE",
+        "transition_animation_active": true
+      }
+    ],
+    "pointer_geometry": [
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 222.880004882812,
+          "y": 523.099975585938
+        },
+        "scale": 1,
+        "point": {
+          "x": 222.880004882812,
+          "y": 523.099975585938
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      },
+      {
+        "canvas": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 720,
+          "iw": 1280,
+          "ih": 720
+        },
+        "target": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        },
+        "scale": 1,
+        "point": {
+          "x": 642.200012207031,
+          "y": 667.200012207031
+        }
+      }
+    ],
+    "browser_errors": [],
+    "longtasks": [
+      {
+        "start": 15509.869999885559,
+        "duration": 55,
+        "name": "self"
+      },
+      {
+        "start": 16374,
+        "duration": 102,
+        "name": "self"
+      },
+      {
+        "start": 18196.769999980927,
+        "duration": 180,
+        "name": "self"
+      },
+      {
+        "start": 19024.74499988556,
+        "duration": 130,
+        "name": "self"
+      },
+      {
+        "start": 19267.25,
+        "duration": 51,
+        "name": "self"
+      },
+      {
+        "start": 19701.939999818802,
+        "duration": 97,
+        "name": "self"
+      },
+      {
+        "start": 21770.08999991417,
+        "duration": 169,
+        "name": "self"
+      },
+      {
+        "start": 22569.42999982834,
+        "duration": 131,
+        "name": "self"
+      },
+      {
+        "start": 22808.109999895096,
+        "duration": 52,
+        "name": "self"
+      },
+      {
+        "start": 22958.169999837875,
+        "duration": 91,
+        "name": "self"
+      },
+      {
+        "start": 25273.979999780655,
+        "duration": 222,
+        "name": "self"
+      }
+    ],
+    "long_animation_frames": [
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 130899,
+        "thread_cpu_usec": 127870,
+        "trace_timestamp": 1568938915083
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 130651,
+        "thread_cpu_usec": 125318,
+        "trace_timestamp": 1568935370398
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 102212,
+        "thread_cpu_usec": 98380,
+        "trace_timestamp": 1568932719650
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 97101,
+        "thread_cpu_usec": 93940,
+        "trace_timestamp": 1568936047585
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 91824,
+        "thread_cpu_usec": 88825,
+        "trace_timestamp": 1568939303820
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 46870,
+        "thread_cpu_usec": 43510,
+        "trace_timestamp": 1568932822214
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 45149,
+        "thread_cpu_usec": 43024,
+        "trace_timestamp": 1568935501387
+      },
+      {
+        "name": "FireAnimationFrame",
+        "wall_usec": 44452,
+        "thread_cpu_usec": 41124,
+        "trace_timestamp": 1568939046344
+      }
+    ],
+    "scope_limit": "Strategy slice timing only. First Hold paint is67.185ms, and other full-host/browser long tasks are52-222ms. No whole-frame50ms or whole-game responsiveness pass."
+  },
+  "rendered_export": {
+    "pck_path": "E:\\CodexQA\\BTH\\runs\\vp-hint-web-export-incremental-rendered-measured-20261110\\evidence\\web\\index.pck",
+    "pck_sha256": "0c5b7846c2f101f752104aa3731496a30468d2da03f41d58d9e96b432a13923c",
+    "historical_export_identity": "Original timing-instrumented fixture export, preserved unchanged; hash matches original candidate report. Production video_poker.gd has no diff between candidate18a99d5e and e410e05c. This test export is not the deployed PCK."
+  },
+  "harness": {
+    "path": "docs/testing/video_poker_hint_timing_followup_20261110.cjs",
+    "sha256": "56d9bdf3e6734232000d186595edbf77960b6e462fac264713a57a6e60aaa395",
+    "original_command_path": ".tmp/vp_outlier_probe.cjs",
+    "limit": "Archived exact final harness used by accepted12% and final5% comparison. Earlier failed revisions were scratch diagnostics; their receipts and outcomes are preserved separately."
+  },
+  "cpu_cap_comparison": {
+    "run_id": "vp-hint-rendered-logical-trace5-20261110",
+    "cpu_cap_percent": 5,
+    "state": "STARTUP_TIMEOUT_BEFORE_FIXTURE_READY",
+    "hard_timeout_seconds": 100,
+    "last_console_checkpoint": "VP_HOST_SETUP: scene added",
+    "strategy_timing_gate_executed": false,
+    "conclusion": "The5% hard cap materially changes host startup in this pair. It is a plausible scheduling contributor, not established attribution of the historical188-344ms minimal-harness outliers. Do not exclude or relabel those measurements as proven non-product costs."
+  },
+  "historical_outliers": {
+    "state": "UNATTRIBUTED",
+    "values_usec": [
+      188420,
+      307000,
+      344000
+    ],
+    "source": "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
+    "policy": "Threshold remains50ms. No product fix or outlier exclusion is supported by this follow-up."
+  },
+  "failed_diagnostic_dispositions": [
+    {
+      "run_ids": [
+        "vp-hint-next-outlier-trace12-20261110"
+      ],
+      "cause": "Manifest reconstruction incorrectly called plan_layout for an already prepared directory. Storage guard rejected occupied_run before browser launch. Fixed by reconstructing the exact manifest Layout and rechecking it."
+    },
+    {
+      "run_ids": [
+        "vp-hint-next-outlier-trace12-r2-20261110",
+        "vp-hint-next-stage-bounded-20261110"
+      ],
+      "cause": "Installed Google Chrome did not complete Playwright launch before the guard. Switched to the pinned browser/Playwright pair used by retained successful NEXT verification."
+    },
+    {
+      "run_ids": [
+        "vp-hint-next-pinned-browser-20261110"
+      ],
+      "cause": "Exact deployed engine was built without command-line scene path overrides. Its explicit abort is a test setup failure, not ordinary startup failure. No engine setting or warning was bypassed."
+    },
+    {
+      "run_ids": [
+        "vp-hint-rendered-source-trace12-20261110",
+        "vp-hint-rendered-mapped-trace12-20261110"
+      ],
+      "cause": "Pointer harness did not account for Godot internal letterboxing. Screenshots and traces retained; no Deal was exercised. Final fixed logical1280x720 viewport and persisted coordinate geometry exercised ordinary pointer actions."
+    }
+  ],
+  "next_identity_startup_reference": {
+    "receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-verification-siteca-20261110\\evidence\\worker.log",
+    "sha256": "196b2461a6b05002c5971917713006a6e8f7b8c798c9904aa180b74b2c164098",
+    "scope": "Retained earlier exact e410 metadata, served PCK/native identity and menu startup. Not rerun by this follow-up and not deployed gameplay/timing."
+  },
+  "runs": [
+    {
+      "run_id": "vp-hint-next-outlier-trace12-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "next"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "4bb381e2c3876e607d6dae13460c88e648f0d79c34b9b1aa66faccfe2bc5c7b9",
+      "manifest_sha256": "8222cd9daeb51859a819c78228f15f4cef8508c4892279df582b0f8178bfa81d",
+      "launch_claim_sha256": "71801136df4995393bc6d7ab065b40b2c748262490231e827f6f175fa6f88647",
+      "claimed_at": "2026-11-10T19:10:35.536170+00:00",
+      "finished_at": "2026-11-10T19:10:37.186931+00:00",
+      "wall_seconds": 1.651,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "result.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-20261110\\evidence\\result.json",
+          "sha256": "f391217e89f144ec5ef7b51ce5d825a8702c49c630f1a8b17e59eb9cd7b53b89"
+        },
+        "trace.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-20261110\\evidence\\trace.json",
+          "sha256": "cb86308ec77f23ac48c88eb82392bbde7fe54f3bbdfdf4ba4670da3c27545cde"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-20261110\\evidence\\worker.log",
+          "sha256": "6f83d9b2277d852694a9f7da64a2c7605527ba864a3b003c5373f79e20b52d1f"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-next-outlier-trace12-r2-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "next"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-r2-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "53685d07a39dc1a0c05d1e2bc6b929d0f314e2ec2fa7ff20ad3ba12fd1ccc423",
+      "manifest_sha256": "5073c11f1e6d47514ecdf43ccd3eb5aa3d1ef42ad5da5b7005026220972ffaba",
+      "launch_claim_sha256": "0d42a0366d042dd2bee0a20eda72218ee2e1648b9b832d7f769e1e2006a96923",
+      "claimed_at": "2026-11-10T19:11:09.602373+00:00",
+      "finished_at": "2026-11-10T19:13:55.254462+00:00",
+      "wall_seconds": 165.652,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": true,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-r2-20261110\\evidence\\worker.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-outlier-trace12-r2-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "b743404d572722967c4bad140ff38db9b17fdbfae5e96767a323dfab84ea8e87"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-next-stage-bounded-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "next"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-stage-bounded-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "bdf9d67a8d99fc3244e2406a8d7f90a61322f46c4b253e65b9cc4589d8eeccbb",
+      "manifest_sha256": "764ef77fc74a8f113e602ace464c55c624bb1b8951f8cbe28800a603d3be37a2",
+      "launch_claim_sha256": "591167af79f33cdd27e6e8a60b7fd9f478c38e3053d6da28870fbf3c86833d3a",
+      "claimed_at": "2026-11-10T19:14:03.092152+00:00",
+      "finished_at": "2026-11-10T19:15:23.752572+00:00",
+      "wall_seconds": 80.66,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": true,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-stage-bounded-20261110\\evidence\\stage.json",
+          "sha256": "7aa6bb5654d0bb38c0169a086320f6b78727ae5cb8b2f83a155ec513fcdc4762"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-stage-bounded-20261110\\evidence\\worker.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-stage-bounded-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "7493c4281b0c63db8678465398a2fc29eca38cda008e9bed89fec87b269cf1bc"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-next-pinned-browser-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "next"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "6d44b7c2780c2e831006d58f7f54e90f0a8e4a9c37dd92ce44373626c8d5a7dd",
+      "manifest_sha256": "7ade3eafd552ad4e8e412ce2584e6943510663058fca7aa2bb88255f61eb5198",
+      "launch_claim_sha256": "03a076134b01a76aa60bb61ad86efa6ee7a3923551c0f255697318ce4e4e2117",
+      "claimed_at": "2026-11-10T19:15:31.223776+00:00",
+      "finished_at": "2026-11-10T19:16:07.808690+00:00",
+      "wall_seconds": 36.585,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\stage.json",
+          "sha256": "381ed3b0e79487387a36f6f19d52b55f8a1a3b3b96344fe5f006169b94dca092"
+        },
+        "result.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\result.json",
+          "sha256": "86f3b7341c99dc335891441738700fb71f49c0ea466e816415fadf00ad74c0ce"
+        },
+        "trace.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\trace.json",
+          "sha256": "cb86308ec77f23ac48c88eb82392bbde7fe54f3bbdfdf4ba4670da3c27545cde"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\worker.log",
+          "sha256": "9533d9a759412359b59c32439bae79df8e8f0812308c906b3985809374ad1504"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-next-pinned-browser-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "609ad0ec8fae1d8ebd3f4bb642ba01b2f1f8894953871899572db533f3017ad5"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-rendered-source-trace12-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "fixture"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "3eddcd1a81e2cdbb202fb82f49fa63e22f83c4c530b2bea149db1aecd8b49a04",
+      "manifest_sha256": "e9a5f1c54ba21eba798c3d53418da65714c1419960920dc13f4e465009ead47f",
+      "launch_claim_sha256": "ce8b299f441fe55909b10654fe4ff273ac45710b8c6406ae18eb5983f452f44a",
+      "claimed_at": "2026-11-10T19:17:24.235134+00:00",
+      "finished_at": "2026-11-10T19:17:54.525409+00:00",
+      "wall_seconds": 30.29,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\stage.json",
+          "sha256": "4f3a0b0bfa2a160a6747a604df97186b292a18545a54876cf9ac9d18c1626912"
+        },
+        "result.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\result.json",
+          "sha256": "8c9472a1818d9715999822ba6c8a37f61216045c4c91fa34d4ce68f33d51984e"
+        },
+        "trace.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\trace.json",
+          "sha256": "1870031a01c5a2c57b10e37d85055689e6c313c5e0ee6521ea429a53016eeabf"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\worker.log",
+          "sha256": "4a4a6e47d5343ade3857844390d8c83344103f88436dbe6955ebaae254982a5d"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-source-trace12-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "646594576aa0374b73abe137580f9422dc7aca1817aa8153bca33ea854ce04d1"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-rendered-mapped-trace12-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "fixture"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "fcd4dacd62f9ef6e80f223dde54f24476002e84e91cded6573481236a88ef2a6",
+      "manifest_sha256": "e26f528ea91e93627abf0bcba573f5991f1583c35c8e0eb2f41a598ba31d4bf9",
+      "launch_claim_sha256": "dca0af1fb11d6aaaa01edc770e165d8d93075e8c30aea9fa3693fec011c37dc8",
+      "claimed_at": "2026-11-10T19:19:58.283647+00:00",
+      "finished_at": "2026-11-10T19:20:29.304896+00:00",
+      "wall_seconds": 31.021,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\stage.json",
+          "sha256": "5da3414942a6153af90c47f67fca64a987250cea4219d9a0e40a3587f42644c7"
+        },
+        "result.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\result.json",
+          "sha256": "1a2665a69a87801120706e135f0236e77fb63b5d39b858e46e430a2d0bd3aea2"
+        },
+        "trace.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\trace.json",
+          "sha256": "ee8671449fc993404c35d39278d9a28c02023095492c8bc220a0c048e1d4ea4e"
+        },
+        "snapshots.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\snapshots.json",
+          "sha256": "c1d27ccfc95f9078992f328e47fe3824a7fe1140d736099339c8c2e2519e28b2"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\worker.log",
+          "sha256": "30fec0f09a46118b24238e061a76d1cea3359b590f151ac3b9b758509a4246b7"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-mapped-trace12-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "0c6265f537a4762b8be82cf6171c1ff47d9a6dfef3ec4dbf67acbf32fd890a15"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-rendered-logical-trace12-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "fixture"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "e58044d7171bc22894aa1afabf77e7ab8055800faf347dfe70431d84664501e7",
+      "manifest_sha256": "b649a8ea5cdf8bea6ef2bb3028e2f5c37f3cf0ff32fd96d0ea37f0fb82e7cbce",
+      "launch_claim_sha256": "804c319c2186ad9f050caca77f5a5e4adc1e03fbd6ba58878729071330f6ac2c",
+      "claimed_at": "2026-11-10T19:25:17.241194+00:00",
+      "finished_at": "2026-11-10T19:25:48.577106+00:00",
+      "wall_seconds": 31.336,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 0,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\stage.json",
+          "sha256": "35e6f61f68457f64f04a233f136042546c6e3da4f8178031e3313d7961ef804b"
+        },
+        "result.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\result.json",
+          "sha256": "ffece90e1807638d35dfaacb2b0d93912dfba3b1dcb458da16382d63e0ba1e1e"
+        },
+        "trace.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\trace.json",
+          "sha256": "4934cc4522abbd640ad286ad47d51d387d498b2c80fc5ed55ddfe32bdf99312a"
+        },
+        "snapshots.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\snapshots.json",
+          "sha256": "fe25332c82d57e795252fe6abe705882cc96c382a7ab9997c4898b4bd66f9b98"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\worker.log",
+          "sha256": "291d8305469cdce34312125101bfbec21d60b97c2d380b48faa6b3f14b1ded7f"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace12-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "36fab32924f7bd346a701318ac12060c77ff03a79e6ff3e9ebe1bdec2fca203e"
+        }
+      }
+    },
+    {
+      "run_id": "vp-hint-rendered-logical-trace5-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        ".tmp/vp_outlier_probe.cjs",
+        "fixture"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace5-20261110\\evidence\\job.json",
+      "job_receipt_sha256": "b73d6458d5cda6e9eac9519834641173bd8d23550c91e7427d486dc3cfb37a62",
+      "manifest_sha256": "dfded46dd0d66b65016924675ba165da19923174cfa1d62b04fd25c583e767cf",
+      "launch_claim_sha256": "97c05be1395ebc05f7b8cbeab8c01f83cff7cbcc463b0faef41d488e573943e7",
+      "claimed_at": "2026-11-10T19:26:05.432939+00:00",
+      "finished_at": "2026-11-10T19:27:46.059021+00:00",
+      "wall_seconds": 100.626,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "exit_code": 1,
+      "timed_out": true,
+      "error": null,
+      "cleanup_errors": [],
+      "active_at_release": 0,
+      "files": {
+        "stage.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace5-20261110\\evidence\\stage.json",
+          "sha256": "297273865f59a916fc3048c1b4a27d94f6d285b512b6cb383ea4126e2711b412"
+        },
+        "worker.log": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace5-20261110\\evidence\\worker.log",
+          "sha256": "c2e666e79559d7571181b38780178d4638cb0724d80430cdb092ed98c82855bd"
+        },
+        "browser-launch-storage-gate.json": {
+          "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-rendered-logical-trace5-20261110\\evidence\\browser-launch-storage-gate.json",
+          "sha256": "99baa6a14057ab33f08e03f7b2d5ed04f227d9d340787ddfb37e2fb576d1ce31"
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Whole-game performance parent remains Open.",
+    "Exact deployed NEXT gameplay/performance remains Open; source-matched test export is not its replacement.",
+    "Historical minimal-harness188-344ms outliers remain unattributed.",
+    "First Hold paint67.185ms and other52-222ms browser/full-frame work are not a global50ms pass.",
+    "Synthetic disposable E-drive state only; no personal save/profile was accessed.",
+    "No product, canvas scheduling, animation, RNG, payout, save or security setting changed.",
+    "No new experimental runtime is planned after these recorded comparisons."
+  ],
+  "comparison_commit": "e410e05c6919e7cf7599552f67946f4e53974cd2",
+  "comparison_source_tree": "093f0125adaa380eaeb3f9b80013bbd6ac2339b0",
+  "tested_export_source_reference_commit": "18a99d5ec2dc241552d304e96faf6ad429433fd3",
+  "source_identity_limit": "The preserved fixture PCK and Video Poker product-source hash identify the actual test. e410 is the unchanged-game-source comparison/deployed identity, not the PCK exercised by this test.",
+  "manual_reconciliation": {
+    "command": [
+      "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+      "-B",
+      "tools/check_bth_task_ledger.py",
+      "--owners",
+      "docs/todo/bth_task_owner_snapshot.json",
+      "--runtimes",
+      "docs/testing/video_poker_hint_timing_followup_20261110.runtime.json",
+      "--group",
+      "current",
+      "--now",
+      "2026-11-10T19:31:01.239521+00:00",
+      "--format",
+      "json",
+      "--output",
+      "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-final-reconcile-20261110\\evidence\\report.json"
+    ],
+    "report": "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-final-reconcile-20261110\\evidence\\report.json",
+    "report_sha256": "1bf367834eadc4b006b3651961c56523bdb3c98564392b7d5d3a94ae8a607625",
+    "exit_code": 1,
+    "active_at_release": 0,
+    "summary": {
+      "objectives_checked": 161,
+      "batches_checked": 9,
+      "open_objectives": 66,
+      "open_batches": 5,
+      "open_work_items": 71,
+      "user_paused_items": 36,
+      "complete_objectives": 95,
+      "errors": 48,
+      "warnings": 0,
+      "tasks_with_errors": 28
+    },
+    "runtime_summary": {
+      "instances_checked": 8,
+      "errors": 1,
+      "warnings": 0,
+      "candidate_orphans": 0,
+      "historical_cleanup_verified": 0
+    },
+    "task_findings": [],
+    "findings_by_code": {
+      "OBJECTIVE_SCOPE_UNCONFIRMED": 7,
+      "BLOCKER_STALE": 11,
+      "OWNER_OBSERVATION_STALE": 23,
+      "OWNER_IDLE_WITH_OPEN_WORK": 2,
+      "BATCH_NOT_LINKED_BY_PARENT": 1,
+      "RUNTIME_COVERAGE_INCOMPLETE": 1,
+      "OWNER_TASK_REFERENCE_MISSING": 2,
+      "OWNER_NOT_IN_SNAPSHOT": 1
+    },
+    "scope_limit": "48 remaining findings concern unchanged other tasks/owners and incomplete runtime coverage. The scoped inventory deliberately covers the eight diagnostic Jobs only, not the entire host. No finding is associated with BTH-PERF-20261104-002. This is not a clean whole-ledger reconciliation."
+  },
+  "metadata_validation_jobs": [
+    {
+      "run_id": "vp-hint-timing-evidence-reconcile-20261110",
+      "command": [
+        "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-B",
+        "tools/check_bth_task_ledger.py",
+        "--owners",
+        "docs/todo/bth_task_owner_snapshot.json",
+        "--runtimes",
+        "docs/testing/video_poker_hint_timing_followup_20261110.runtime.json",
+        "--group",
+        "current",
+        "--now",
+        "2026-11-10T19:31:01.239521+00:00",
+        "--format",
+        "json",
+        "--output",
+        "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-evidence-reconcile-20261110\\evidence\\report.json"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-evidence-reconcile-20261110\\evidence\\job.json",
+      "sha256": "6f20f0e7c17a80058b90dfdcf9b2c59f203d1490825dda71bcfd951df85ceab2",
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "vp-hint-timing-evidence-syntax-20261110",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--check",
+        "docs/testing/video_poker_hint_timing_followup_20261110.cjs"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-evidence-syntax-20261110\\evidence\\job.json",
+      "sha256": "7c63f4b92d6a7111f5fc9b50c92cbfa52f0fad07403052b16364567cc89ef42c",
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "vp-hint-timing-final-reconcile-20261110",
+      "command": [
+        "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-B",
+        "tools/check_bth_task_ledger.py",
+        "--owners",
+        "docs/todo/bth_task_owner_snapshot.json",
+        "--runtimes",
+        "docs/testing/video_poker_hint_timing_followup_20261110.runtime.json",
+        "--group",
+        "current",
+        "--now",
+        "2026-11-10T19:31:01.239521+00:00",
+        "--format",
+        "json",
+        "--output",
+        "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-final-reconcile-20261110\\evidence\\report.json"
+      ],
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\vp-hint-timing-final-reconcile-20261110\\evidence\\job.json",
+      "sha256": "6fb570f9649ed4002d603470fb446862da227a699547c7b8197c23a9eeba4e48",
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": []
+    }
+  ]
+}
