@@ -561,5 +561,28 @@
     "First setup attempt failed before worker creation because bare git was unresolved; full executable retry succeeded.",
     "home-green run remained baseline after a UTF-8 source editing failure before writes; it is not a corrected-code acceptance.",
     "home-final2 incorrectly asserted that map visibility was identical to reentry eligibility; final delivery check uses public travel_target_ids and passes."
-  ]
+  ],
+  "fix_commit": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+  "reconciliation": {
+    "command": "python -B tools/check_bth_task_ledger.py --owners E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\owner-snapshot.json --runtimes E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\runtime-snapshot.json --group current --format json --output E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\ledger-reconciliation.json",
+    "exit_code": 1,
+    "summary": {
+      "objectives_checked": 159,
+      "batches_checked": 9,
+      "open_objectives": 70,
+      "open_batches": 5,
+      "open_work_items": 75,
+      "user_paused_items": 37,
+      "complete_objectives": 89,
+      "errors": 899,
+      "warnings": 0,
+      "tasks_with_errors": 67
+    },
+    "assigned_named_findings": 45,
+    "assigned_named_finding_codes": {
+      "RUNTIME_STALE_OBSERVATION": 45
+    },
+    "new_owned_runtime_findings": 0,
+    "scope": "The 45 named memo findings are stale observations on retained historical task9 Jobs, not the new closed Jobs. No prior observations were silently refreshed; all 899 findings remain explicitly reported for broader reconciliation. No non-runtime ledger/Markdown error concerns the two assigned rows."
+  }
 }

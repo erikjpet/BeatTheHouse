@@ -84,3 +84,19 @@ canvas scheduling, audiences, export scope or paused item/scenario content was
 redesigned. The existing whole-audit objectives remain Open. Follow the exact
 fix commit through the authorized existing main/NEXT workflow, then record the
 remote source identity and actual deployment/behavior evidence separately.
+
+
+## Commit and manual reconciliation
+
+Actual tested source commit: `31bb55b88fce5890029b9470ceb7548c9ce1bad5`.
+Both assigned ledger rows record local qualification and remain Open pending
+main/NEXT delivery. Their historical evidence is preserved.
+
+The required manual reconciliation was run with the historical snapshots plus
+actual current parent/worker observations and this task's closed Job receipts.
+It exits 1 with 899 existing/global findings across 67 tasks. Forty-five findings
+associated with the memo objective are stale observations of historical task9
+Jobs, not this task's new owned processes. No current owned-Job finding and no
+non-runtime ledger/Markdown finding concerns either assigned row. This is not a
+whole-backlog reconciliation pass; the exact command and retained report paths
+are in the JSON evidence. Earlier observations were not re-dated or hidden.
