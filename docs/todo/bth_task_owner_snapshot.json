@@ -148,6 +148,13 @@
       "state": "active",
       "observed_at": "2026-11-10T06:48:58.711335+00:00",
       "source": "Active native integration worker is committing tested components and following existing NEXT."
+    },
+    {
+      "task_ref": "/root/finish_storage_commit",
+      "title": "Finalize guarded QA storage tooling",
+      "state": "active",
+      "observed_at": "2026-11-10T06:46:56.711046+00:00",
+      "source": "Actual native worker resumed the existing prepared storage worktree and is finalizing its scoped tested local commit; parent integration owner handles main/NEXT."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
