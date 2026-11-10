@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:33:53.950529+00:00",
+  "updated_at": "2026-11-10T17:44:26.245214+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -851,10 +851,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_ORIGINAL_GENERATION_UNKNOWN_NO_NEW_SUPPORTED_PATH",
+      "status": "CURRENT_RECONSTRUCTION_PASS_ORIGINAL_GENERATIONS_UNKNOWN",
       "owner": {
-        "name": "Pull Tabs save investigation (task-14)",
-        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "name": "Coordinate save investigation closeout",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -878,6 +878,13 @@
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "37f0aa4979aeb8ec7d61c0a81da234d19bae367e",
+          "evidence": [
+            "docs/testing/save_rollback_closeout_20261110.json",
+            "Test-only provenance/evidence commit; not a production fix."
+          ]
         }
       ],
       "deployment": {
@@ -894,6 +901,11 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Original #008/two clock rollbacks preserved; c43 Save acknowledgment correction remains verified. Existing177 custody assertions and two Web arms/six sessions cover distinct Save/restore boundaries;16 adapter contracts cover acknowledgment success/failure; At the3a provenance review, Pull Tabs/save/bridge blobs and manual Save methods matched the qualified baseline;85c1782b subsequently adds manual refusal feedback only. No new ordinary-action reconstruction is supported. Exact gap: original primary/backup fingerprints and load outcome absent; custody unobserved between Saves. Next trigger: current post-ack cold rollback, raw/canonical divergence or unexplained backup load; preserve new disposable-case build/slot/origin, first cold clock/custody and generation/load provenance before another Save. No original-save request, production change or Gas resumption. [Review and evidence](../testing/pull_tab_custody_followup.md#remaining-evidence-limit-review--2026-11-04)."
+        },
+        {
+          "kind": "current_provenance_qualification",
+          "reference": "docs/testing/save_rollback_closeout_20261110.json",
+          "summary": "Current exact qualified native fixture: Pull129warm+70cold, Vault57warm+15cold, Webdurability16 CLI contracts pass. All first-cold loads use primary with preserved file/snapshot provenance. No current production defect, original acknowledged-save branch or historical generation cause established; parents remain Open."
         }
       ],
       "implementation_batches": [],
@@ -903,11 +915,13 @@
         "kind": null,
         "description": "Original generation fingerprints/load outcome and between-Save custody were not captured. This is an evidence limitation, not a user-save request or an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "evidence": [
+          "docs/testing/save_rollback_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T17:44:26.245214+00:00"
     },
     {
       "id": "UX-ROULETTE-SOCIAL-QUOTE-001",
@@ -1450,13 +1464,21 @@
         }
       },
       "state": "open",
-      "status": "OPEN_INDEPENDENT_RECONSTRUCTION_ORIGINAL_USER_SAVE_UNAVAILABLE",
+      "status": "CURRENT_NATIVE_154_PASS_NOT_REPRODUCED_ORIGINAL_CAUSE_UNKNOWN",
       "owner": {
-        "name": "Restore baccarat deal animation",
-        "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+        "name": "Coordinate Gas report disposition",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a9c2a14d260584e85a32862157dbaa463ec91e24",
+          "evidence": [
+            "docs/testing/gas_exit_closeout_20261110.json",
+            "Regression/evidence commit only; no product fix."
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -1473,20 +1495,27 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-02\\task-3\\evidence\\OPS-07-closeout-audit.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "bounded_independent_native",
+          "reference": "docs/testing/gas_exit_closeout_20261110.json",
+          "summary": "124 warm+30 process-cold=154 checks pass at02:30 closure,03:15gap,04:00reopening and reconstructedDay1 16:30/cash117. Paid Scratchers/Back/Save/Continue/Leave/mapClose retain state/authority/base controls. Expected02:30-03:59scenario absence is not original cause attribution. No product change; not reproduced only in declared native paths; parent remains Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Recover surviving Day1 16:30/$117 report/capture context, reconstruct the suspected transition and obtain independent warm/cold evidence; do not wait on Erik.",
+      "next_action": "Review whether the bounded independent not-reproduced evidence provides adequate acceptance/disposition. Preserve original cause as unknown and retain first-failure build/actions/state/generation evidence on a new recurrence. No original replay or gone-save request.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Exact personal-save evidence is unavailable, not an intentional hold or pending user action.",
+        "description": "Declared independent native paths do not reproduce the incident; original build/action sequence/generations were not captured. This is an evidence limitation, not a pending user-save request. Parent remains Open for disposition.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "evidence": [
+          "docs/testing/gas_exit_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-10T17:44:26.245214+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4154,10 +4183,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_SCOPE_OWNER_AND_EXIT_BOUNDARY_RECONCILIATION",
+      "status": "CURRENT_NATIVE_154_PASS_NOT_REPRODUCED_ORIGINAL_CAUSE_UNKNOWN",
       "owner": {
-        "name": "Restore baccarat deal animation",
-        "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+        "name": "Coordinate Gas report disposition",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4166,6 +4195,13 @@
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "a9c2a14d260584e85a32862157dbaa463ec91e24",
+          "evidence": [
+            "docs/testing/gas_exit_closeout_20261110.json",
+            "Regression/evidence commit only; no product fix."
           ]
         }
       ],
@@ -4188,20 +4224,27 @@
           "kind": "recorded_receipt",
           "reference": "01a16736-0a2f-7668-8ad8-a6074981c01e",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "bounded_independent_native",
+          "reference": "docs/testing/gas_exit_closeout_20261110.json",
+          "summary": "124 warm+30 process-cold=154 checks pass at02:30 closure,03:15gap,04:00reopening and reconstructedDay1 16:30/cash117. Paid Scratchers/Back/Save/Continue/Leave/mapClose retain state/authority/base controls. Expected02:30-03:59scenario absence is not original cause attribution. No product change; not reproduced only in declared native paths; parent remains Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the current bug-investigation owner and recovered prior scenario-assignment boundary against the eight explicit user-paused objectives. Then carry out permitted declared-state exit/time/room-publication investigation using retained evidence; preserve unrun fixture and do not request Erik's gone save or assume before-purchase passes exercised paid-ticket exit.",
+      "next_action": "Review whether the bounded independent not-reproduced evidence provides adequate acceptance/disposition. Preserve original cause as unknown and retain first-failure build/actions/state/generation evidence on a new recurrence. No original replay or gone-save request.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Owner/scope reconciliation and paid-ticket exit acceptance remain unfinished. This bug row is not a newly imposed pause or missing-save dependency.",
+        "description": "Declared independent native paths do not reproduce the incident; original build/action sequence/generations were not captured. This is an evidence limitation, not a pending user-save request. Parent remains Open for disposition.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "evidence": [
+          "docs/testing/gas_exit_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-10T17:44:26.245214+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -17016,10 +17059,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_ORIGINAL_BRANCH_AND_GENERATIONS_UNCAPTURED",
+      "status": "CURRENT_RECONSTRUCTION_PASS_ORIGINAL_GENERATIONS_UNKNOWN",
       "owner": {
-        "name": "Vault save investigation (task-14)",
-        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "name": "Coordinate save investigation closeout",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -17028,6 +17071,13 @@
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "37f0aa4979aeb8ec7d61c0a81da234d19bae367e",
+          "evidence": [
+            "docs/testing/save_rollback_closeout_20261110.json",
+            "Test-only provenance/evidence commit; not a production fix."
           ]
         }
       ],
@@ -17046,6 +17096,11 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Preserve cases763/764; no original action replay or false acknowledgment established. Independent Vault reconstruction confirms correct no-write refusal while unsettled and hidden menu feedback. Exact original Save branch/generations remain unknown. Next trigger: post-ack rollback or unexplained fallback; retain first-cold state and generation/load provenance before another Save. [Evidence](../testing/vault_drop_save_feedback.md)."
+        },
+        {
+          "kind": "current_provenance_qualification",
+          "reference": "docs/testing/save_rollback_closeout_20261110.json",
+          "summary": "Current exact qualified native fixture: Pull129warm+70cold, Vault57warm+15cold, Webdurability16 CLI contracts pass. All first-cold loads use primary with preserved file/snapshot provenance. No current production defect, original acknowledged-save branch or historical generation cause established; parents remain Open."
         }
       ],
       "implementation_batches": [
@@ -17057,11 +17112,13 @@
         "kind": null,
         "description": "Original branch and generations were not captured; unavailable personal originals are not a pending user dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "evidence": [
+          "docs/testing/save_rollback_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-10T17:44:26.245214+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -29885,7 +29942,7 @@
         }
       },
       "state": "open",
-      "status": "INTEGRATED_NATIVE_98_PASS_NEXT_WEB_ACCEPTANCE_PENDING",
+      "status": "EXACT_NEXT_DEPLOYED_RENDERED_WARM_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Close Roulette settlement",
         "task_ref": "/root/close_roulette_settlement",
@@ -29901,14 +29958,12 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b",
         "evidence": [
-          "docs/testing/roulette_sealed_pending_r08.md",
-          "docs/testing/roulette_sealed_pending_r08.json",
-          "docs/testing/closeout_integration_20261110.json"
+          "docs/testing/closeout_next_delivery_20261110.json"
         ],
-        "scope": "Scoped fix integrated on local main; final current-source native warm98 and no-pointer liveness pass. Remote main/NEXT and rendered warm acceptance pending."
+        "scope": "Exact main/tree/NEXT metadata, changed-PCK custody, native full served hash, asset receipts and basic rendered menu verified; real warm first-result acceptance remains unverified."
       },
       "evidence": [
         {
@@ -29928,19 +29983,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Push scoped tested main, verify exact existing NEXT identity/assets, then obtain fresh rendered same-process first-result acceptance. Original sealed-pending attribution remains separate.",
+      "next_action": "Obtain fresh rendered same-process Blackjack-to-Roulette first-result acceptance on immutable b6c1602d. Preserve original SEALED pending attribution separately.",
       "blocker": {
         "state": "active",
         "kind": "exact_main_next_acceptance_pending",
-        "description": "Scoped fix integrated and current native checks pass; remote main/NEXT identity and rendered changed-behavior acceptance remain.",
+        "description": "Exact main/NEXT delivery is verified; fresh rendered same-process warm first-result acceptance remains.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:33:45.358807+00:00",
+        "observed_at": "2026-11-10T17:44:26.245214+00:00",
         "evidence": [
           "docs/testing/roulette_closeout_20261110.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:33:45.358807+00:00"
+      "updated_at": "2026-11-10T17:44:26.245214+00:00"
     }
   ],
   "batches": [
