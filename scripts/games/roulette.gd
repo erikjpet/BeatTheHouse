@@ -4387,7 +4387,11 @@ func _roulette_phase_status_for_result(last_result_value: Variant, now_msec: int
 	var result_reveal_active := false
 	if typeof(last_result_value) == TYPE_DICTIONARY and not (last_result_value as Dictionary).is_empty():
 		var last_result: Dictionary = last_result_value as Dictionary
-		elapsed_msec = now_msec - int(last_result.get("resolved_at_msec", 0))
+		# Accepted input is stamped against the visible canvas clock. A fresh
+		# host projection can trail it by part of a frame. Keep that result at
+		# the start of its reveal instead of disabling motion/realtime refresh
+		# while its money and history are still withheld.
+		elapsed_msec = maxi(0, now_msec - int(last_result.get("resolved_at_msec", 0)))
 		if not completed_presentation_spin_id.is_empty() and str(last_result.get("spin_id", "")) == completed_presentation_spin_id:
 			elapsed_msec = maxi(elapsed_msec, SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC)
 		spin_active = elapsed_msec >= 0 and elapsed_msec < SPIN_ANIMATION_DURATION_MSEC

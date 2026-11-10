@@ -7,6 +7,9 @@ class ClockHost extends Foundation:
 	var test_msec := 100000
 	func _environment_simulation_time_msec() -> int:
 		return test_msec
+	func _current_game_surface_input_time_msec() -> int:
+		# Keep this synthetic boundary fixture in one clock domain.
+		return test_msec
 
 var checks := 0
 var failures: Array[String] = []

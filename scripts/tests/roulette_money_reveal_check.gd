@@ -9,6 +9,9 @@ class ClockHost extends Foundation:
 	var cash_fixture := false
 	func _environment_simulation_time_msec() -> int:
 		return test_msec
+	func _current_game_surface_input_time_msec() -> int:
+		# Keep this synthetic boundary fixture in one clock domain.
+		return test_msec
 	func _game_test_archetype() -> Dictionary:
 		if cash_fixture:
 			for value in library.environment_archetypes:

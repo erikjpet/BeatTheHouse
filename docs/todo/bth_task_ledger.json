@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:40:12.965519+00:00",
+  "updated_at": "2026-11-10T17:24:57.997934+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21744,10 +21744,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_SEED_B_COLD_SETTLEMENT_VERIFIED_WARM_WEB_GAP",
+      "status": "ORIGINAL_PENDING_UNATTRIBUTED_WARM_FIX_LOCAL_PASS",
       "owner": {
-        "name": "R08 Roulette investigation (task-14)",
-        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "name": "Close Roulette settlement",
+        "task_ref": "/root/close_roulette_settlement",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -21832,20 +21832,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify the remaining direct same-process Web Blackjack-to-Roulette first-Confirm and warm payout/history progression using an independent legitimate fixture with public result/console/journal captured before cold reset. Preserve the documented cold77 financial control, unknown+0 row and earlier failures. Keep originalR08 pending untouched; capture first public rejection/exception and first unsuccessful host boundary before more financial input or Save, fix only a reproduced responsible contract, then qualify pending persistence/recovery and NEXT.",
+      "next_action": "Finish warm reveal child; retain factual original pending attribution limit rather than retry/cancel or replay its request.",
       "blocker": {
         "state": "active",
-        "kind": "unqualified_warm_web_and_original_rejection",
-        "description": "New seed-B financial settlement is verified after cold, but Jobwork/terminal boundaries separated Blackjack and firstRouletteConfirm and prevented warmfinalJournal. WarmHUD59/NoSpins progression remains unqualified; directsame-processWeb bridge and livehistoryrelease are unqualified. OriginalDay3/Heat1 rejection stillnotcaptured; no responsibleproductdefect proven. No permission/scheduling/user-save wait. Existing NEXTdiskgate remainsunchanged.",
+        "kind": "original_pending_attribution_unavailable",
+        "description": "The original first rejection was not captured. Original pending request remains protected; independent warm settlement succeeds and a separate presentation defect is fixed. No missing-user-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:40:02.088159+00:00",
+        "observed_at": "2026-11-10T17:24:57.997934+00:00",
         "evidence": [
-          "docs/testing/roulette_sealed_pending_r08.md",
-          "docs/testing/roulette_sealed_pending_r08.json"
+          "docs/testing/roulette_closeout_20261110.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:47:26.094833+00:00"
+      "updated_at": "2026-11-10T17:24:57.997934+00:00"
     },
     {
       "id": "BTH061-AUDIT-COVERAGE-RECONCILE-007",
@@ -29785,6 +29784,110 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-10T07:40:12.965519+00:00"
+    },
+    {
+      "id": "BTH061-ROULETTE-WARM-REVEAL-001",
+      "name": "Roulette payout and history stay stale until menu refresh",
+      "aliases": [
+        "OBS-R08-WARM09-STALE-PAYOUT"
+      ],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-ROULETTE-SEALED-PENDING-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Fix the independently reproduced current-NEXT warm Roulette display defect: after a paid firstConfirm in the same process as Blackjack, accepted result/journal records+9 but HUD59/historyNoSpins persist beyond9s active processing; ordinary JournalClose/Resume releases77/Recent23. Establish the responsible clock/state binding before changing code. Preserve nine-second reveal/payout pacing, pause/drunk clock semantics, cash/chips/RNG/receipt exactly-once behavior and autonomy without pointer input. This child does not establish the cause of originalR08 SEALED pending.",
+        "source": "Trusted parent direct-warm investigation continuation2026-11-04; own current-aece warm09 public proof, SHA09775001941514719957d42b20f5da11e593cc6a4f257bdd640b4015a2a4ce4d; existing standing tested BTH main/NEXT authorization.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "public-reproduction",
+            "description": "Same-process current-aece Web proof beyond9active seconds, accepted journal and ordinary refresh discriminator; original R08 untouched.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_closeout_20261110.md"
+            ]
+          },
+          {
+            "id": "causal-diagnostic",
+            "description": "Live MainScene clocks/state establish responsible binding with no manual time, processing override or observation-induced fresh projection.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_closeout_20261110.md"
+            ]
+          },
+          {
+            "id": "focused-fix-tests",
+            "description": "Evidence-backed fix preserves reveal timing, pause/drunk semantics, ledger/RNG/economy and relevant Save/Continue; verify no-pointer scheduling if changed.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_closeout_20261110.md"
+            ]
+          },
+          {
+            "id": "commit-next",
+            "description": "Associated tested fix commit on main and exact NEXT identity/served assets/real warm behavior acceptance before closure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/roulette_closeout_20261110.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "LOCAL_PASS_AWAITING_MAIN_NEXT",
+      "owner": {
+        "name": "Close Roulette settlement",
+        "task_ref": "/root/close_roulette_settlement",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/roulette_sealed_pending_r08.md",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "scope": "Current closeout qualification and exact NEXT warm acceptance pending; historical stopped-watcher state is superseded."
+      },
+      "evidence": [
+        {
+          "kind": "same_process_web_reproduction",
+          "reference": "docs/testing/roulette_closeout_20261110.md",
+          "summary": "Currentaece warm09 no cold bridge; publicclock4:30to5:15 while59/NoSpins remains, journal+9/no+0, normalJournalClose/Resume gives77/Recent23/WINNINGNUMBERRED23. No errors, jobowned0."
+        },
+        {
+          "kind": "live_clock_causal_comparison",
+          "reference": "docs/testing/roulette_closeout_20261110.md",
+          "summary": "Native baseline -4ms projection freezesmoney/history past9552active ms; candidate -33ms clamps0 and reveals77/history1 at9107ms,76checks0fails. First automaticzero stake0/satouttrue observed with oneConfirm in each. No clock/processing mutation."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Integrate tested isolated fix, verify exact main/NEXT identity, then run fresh rendered same-process Blackjack-to-Roulette first-result acceptance.",
+      "blocker": {
+        "state": "active",
+        "kind": "exact_main_next_acceptance_pending",
+        "description": "Scoped warm fix passes current native same-process first-result accounting and passive reveal. Main/NEXT integration and exact Web acceptance remain.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-10T17:24:57.997934+00:00",
+        "evidence": [
+          "docs/testing/roulette_closeout_20261110.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-10T17:24:57.997934+00:00"
     }
   ],
   "batches": [

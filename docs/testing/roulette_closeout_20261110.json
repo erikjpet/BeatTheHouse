@@ -1,0 +1,1466 @@
+{
+  "id": "BTH061-ROULETTE-WARM-REVEAL-001",
+  "baseline": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "recovered_historical_commit": "2fc2b6dbe46ece64832c71f85fc1f6dae3355e1b",
+  "updated_at": "2026-11-10T17:25:54.866572+00:00",
+  "fidelity": "Fresh explicitly staged independent seeded generated cash80/min9 three-game Riverboat fixture. Actual MainScene Deal/Stand, naturally visible Machine Jam Wait, Leave, one Red9/Spin/Confirm. Live host/canvas clocks; only retained scalar reads after Confirm. No original R08 state or outcome search. Native evidence, not Web pixels.",
+  "product_source_sha256": "ac2c5bd74ce704201b9266aa4cd85a76bf9c881053dc007d2a2efbbcc274f208",
+  "live": {
+    "checks": 97,
+    "failures": [],
+    "observation": {
+      "bounded_limit_msec": 65000,
+      "explicit_callbacks": {
+        "chip": 1,
+        "confirm": 1,
+        "deal": 1,
+        "leave": 1,
+        "red": 1,
+        "spin": 1,
+        "stand": 1,
+        "wait": 1
+      },
+      "first_postpaid_zero_spin_observed": true,
+      "paid_reveal_observed": true,
+      "reveal_stall_observed": false,
+      "stop_reason": "first-postpaid-zero-spin",
+      "wall_elapsed_msec": 49284
+    },
+    "story_rows": [
+      {
+        "action_id": "spin_roulette",
+        "bankroll_delta": 9,
+        "currency_delta": 9,
+        "explicit_confirm_callbacks": 1,
+        "game_id": "roulette",
+        "index": 3,
+        "request_count": 1,
+        "request_delta_from_paid": 0,
+        "sat_out": false,
+        "spin_count": 1,
+        "spin_delta_from_paid": 0,
+        "stake": 9,
+        "total_wager": 9,
+        "type": "game_action"
+      },
+      {
+        "action_id": "spin_roulette",
+        "bankroll_delta": 0,
+        "currency_delta": 0,
+        "explicit_confirm_callbacks": 1,
+        "game_id": "roulette",
+        "index": 4,
+        "request_count": 2,
+        "request_delta_from_paid": 1,
+        "sat_out": true,
+        "spin_count": 2,
+        "spin_delta_from_paid": 1,
+        "stake": 0,
+        "total_wager": 0,
+        "type": "game_action"
+      }
+    ],
+    "cash_before_roulette": 68,
+    "snapshots": [
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 9,
+          "has_last_spin": false,
+          "history_contains_paid": false,
+          "history_count": 0,
+          "last_spin_is_paid": false,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 0,
+          "resolved_at_msec": -1,
+          "spin_count": 0,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 17554,
+          "canvas_simulation_msec": 17554,
+          "game_clock_minutes": 725,
+          "host_simulation_msec": 17427,
+          "input_time_msec": 17554,
+          "process_frame": 514,
+          "rendered_drunk_scaled_msec": 15739,
+          "rendered_presentation_msec": 15739,
+          "rendered_raw_msec": 15739,
+          "run_action_simulation_msec": 9000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 0,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 1,
+        "input_minus_host_msec": 127,
+        "label": "before-confirm",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 68,
+          "history_contains_paid": false,
+          "history_count": 0,
+          "money_pending": false,
+          "motion_active": false,
+          "phase": "betting",
+          "raw_minus_resolved_msec": 0,
+          "realtime_refresh": false,
+          "recent_count": 0,
+          "settled": true,
+          "spin_elapsed_msec": -1,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": 40000
+        },
+        "result": {
+          "action_id": "",
+          "committed": false,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": false,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 16549,
+          "presentation_msec": -1,
+          "raw_msec": 16549
+        },
+        "wall_msec": 18590,
+        "wall_since_confirm_return_msec": -1,
+        "wallet": {
+          "actual": 68,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$68",
+          "presented": 68,
+          "rng_changed_since_preconfirm": false
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 17554,
+          "canvas_simulation_msec": 17475,
+          "game_clock_minutes": 725,
+          "host_simulation_msec": 17483,
+          "input_time_msec": 17475,
+          "process_frame": 514,
+          "rendered_drunk_scaled_msec": 17475,
+          "rendered_presentation_msec": 17554,
+          "rendered_raw_msec": 17475,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 57,
+        "input_minus_host_msec": -8,
+        "label": "confirm-immediate",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 59,
+          "history_contains_paid": false,
+          "history_count": 0,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "spinning",
+          "raw_minus_resolved_msec": -79,
+          "realtime_refresh": true,
+          "recent_count": 0,
+          "settled": false,
+          "spin_elapsed_msec": 0,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 18646,
+        "wall_since_confirm_return_msec": 0,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 18,
+          "chips": 0,
+          "hold": true,
+          "hud_text": "$59",
+          "presented": 59,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 21638,
+          "canvas_simulation_msec": 21518,
+          "game_clock_minutes": 732,
+          "host_simulation_msec": 21515,
+          "input_time_msec": 21518,
+          "process_frame": 1095,
+          "rendered_drunk_scaled_msec": 17475,
+          "rendered_presentation_msec": 17554,
+          "rendered_raw_msec": 21497,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 4089,
+        "input_minus_host_msec": 3,
+        "label": "after-4000-ms",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 59,
+          "history_contains_paid": false,
+          "history_count": 0,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "spinning",
+          "raw_minus_resolved_msec": 3943,
+          "realtime_refresh": true,
+          "recent_count": 0,
+          "settled": false,
+          "spin_elapsed_msec": 3943,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 22678,
+        "wall_since_confirm_return_msec": 4032,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 18,
+          "chips": 0,
+          "hold": true,
+          "hud_text": "$59",
+          "presented": 59,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 23349,
+          "canvas_simulation_msec": 23229,
+          "game_clock_minutes": 734,
+          "host_simulation_msec": 23226,
+          "input_time_msec": 23229,
+          "process_frame": 1343,
+          "rendered_drunk_scaled_msec": 17475,
+          "rendered_presentation_msec": 17554,
+          "rendered_raw_msec": 23215,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 5800,
+        "input_minus_host_msec": 3,
+        "label": "state-change",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 59,
+          "history_contains_paid": false,
+          "history_count": 0,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "payout",
+          "raw_minus_resolved_msec": 5661,
+          "realtime_refresh": true,
+          "recent_count": 0,
+          "settled": false,
+          "spin_elapsed_msec": 5661,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 24389,
+        "wall_since_confirm_return_msec": 5743,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 18,
+          "chips": 0,
+          "hold": true,
+          "hud_text": "$59",
+          "presented": 59,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 26554
+        },
+        "clocks": {
+          "canvas_presentation_msec": 26806,
+          "canvas_simulation_msec": 26801,
+          "game_clock_minutes": 739,
+          "host_simulation_msec": 26690,
+          "input_time_msec": 26801,
+          "process_frame": 1827,
+          "rendered_drunk_scaled_msec": 26668,
+          "rendered_presentation_msec": 26673,
+          "rendered_raw_msec": 26668,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 9264,
+        "input_minus_host_msec": 111,
+        "label": "state-change",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": false,
+          "motion_active": false,
+          "phase": "betting",
+          "raw_minus_resolved_msec": 9114,
+          "realtime_refresh": false,
+          "recent_count": 1,
+          "settled": true,
+          "spin_elapsed_msec": 9114,
+          "timer_active": true,
+          "timer_due": false,
+          "timer_remaining_msec": 39886
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 27853,
+        "wall_since_confirm_return_msec": 9207,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 26554
+        },
+        "clocks": {
+          "canvas_presentation_msec": 29625,
+          "canvas_simulation_msec": 29620,
+          "game_clock_minutes": 744,
+          "host_simulation_msec": 29498,
+          "input_time_msec": 29620,
+          "process_frame": 2235,
+          "rendered_drunk_scaled_msec": 26668,
+          "rendered_presentation_msec": 26673,
+          "rendered_raw_msec": 26668,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 12072,
+        "input_minus_host_msec": 122,
+        "label": "after-12000-ms",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": false,
+          "motion_active": false,
+          "phase": "betting",
+          "raw_minus_resolved_msec": 9114,
+          "realtime_refresh": false,
+          "recent_count": 1,
+          "settled": true,
+          "spin_elapsed_msec": 9114,
+          "timer_active": true,
+          "timer_due": false,
+          "timer_remaining_msec": 39886
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 30661,
+        "wall_since_confirm_return_msec": 12015,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "last_spin_is_paid": true,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 1,
+          "resolved_at_msec": 17554,
+          "spin_count": 1,
+          "timer_started_msec": 26554
+        },
+        "clocks": {
+          "canvas_presentation_msec": 37624,
+          "canvas_simulation_msec": 37619,
+          "game_clock_minutes": 756,
+          "host_simulation_msec": 37502,
+          "input_time_msec": 37619,
+          "process_frame": 3395,
+          "rendered_drunk_scaled_msec": 26668,
+          "rendered_presentation_msec": 26673,
+          "rendered_raw_msec": 26668,
+          "run_action_simulation_msec": 12000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 20076,
+        "input_minus_host_msec": 117,
+        "label": "after-20000-ms",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": false,
+          "motion_active": false,
+          "phase": "betting",
+          "raw_minus_resolved_msec": 9114,
+          "realtime_refresh": false,
+          "recent_count": 1,
+          "settled": true,
+          "spin_elapsed_msec": 9114,
+          "timer_active": true,
+          "timer_due": false,
+          "timer_remaining_msec": 39886
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 17554,
+          "presentation_msec": 17554,
+          "raw_msec": 17554
+        },
+        "wall_msec": 38665,
+        "wall_since_confirm_return_msec": 20019,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 2,
+          "last_spin_is_paid": false,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 2,
+          "resolved_at_msec": 66556,
+          "spin_count": 2,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 66879,
+          "canvas_simulation_msec": 66893,
+          "game_clock_minutes": 799,
+          "host_simulation_msec": 66767,
+          "input_time_msec": 66893,
+          "process_frame": 7607,
+          "rendered_drunk_scaled_msec": 66746,
+          "rendered_presentation_msec": 66746,
+          "rendered_raw_msec": 66760,
+          "run_action_simulation_msec": 15000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 49341,
+        "input_minus_host_msec": 126,
+        "label": "state-change",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "spinning",
+          "raw_minus_resolved_msec": 204,
+          "realtime_refresh": true,
+          "recent_count": 1,
+          "settled": false,
+          "spin_elapsed_msec": 204,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 66556,
+          "presentation_msec": 17554,
+          "raw_msec": 66556
+        },
+        "wall_msec": 67930,
+        "wall_since_confirm_return_msec": 49284,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 2,
+          "last_spin_is_paid": false,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 2,
+          "resolved_at_msec": 66556,
+          "spin_count": 2,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 66879,
+          "canvas_simulation_msec": 66893,
+          "game_clock_minutes": 799,
+          "host_simulation_msec": 66768,
+          "input_time_msec": 66893,
+          "process_frame": 7607,
+          "rendered_drunk_scaled_msec": 66746,
+          "rendered_presentation_msec": 66746,
+          "rendered_raw_msec": 66760,
+          "run_action_simulation_msec": 15000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 49342,
+        "input_minus_host_msec": 125,
+        "label": "first-postpaid-zero-spin-stop",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "spinning",
+          "raw_minus_resolved_msec": 204,
+          "realtime_refresh": true,
+          "recent_count": 1,
+          "settled": false,
+          "spin_elapsed_msec": 204,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 66556,
+          "presentation_msec": 17554,
+          "raw_msec": 66556
+        },
+        "wall_msec": 67931,
+        "wall_since_confirm_return_msec": 49285,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      },
+      {
+        "binding": {
+          "active_game_id": "roulette",
+          "game_id": "roulette",
+          "screen": "GAME",
+          "state_binding": "roulette"
+        },
+        "canonical": {
+          "draft_wager": 0,
+          "has_last_spin": true,
+          "history_contains_paid": true,
+          "history_count": 2,
+          "last_spin_is_paid": false,
+          "pending": false,
+          "pending_stake": -1,
+          "request_count": 2,
+          "resolved_at_msec": 66556,
+          "spin_count": 2,
+          "timer_started_msec": 0
+        },
+        "clocks": {
+          "canvas_presentation_msec": 66879,
+          "canvas_simulation_msec": 66893,
+          "game_clock_minutes": 799,
+          "host_simulation_msec": 66768,
+          "input_time_msec": 66893,
+          "process_frame": 7607,
+          "rendered_drunk_scaled_msec": 66746,
+          "rendered_presentation_msec": 66746,
+          "rendered_raw_msec": 66760,
+          "run_action_simulation_msec": 15000
+        },
+        "explicit_callbacks": {
+          "chip": 1,
+          "confirm": 1,
+          "deal": 1,
+          "leave": 1,
+          "red": 1,
+          "spin": 1,
+          "stand": 1,
+          "wait": 1
+        },
+        "host_since_preconfirm_msec": 49342,
+        "input_minus_host_msec": 125,
+        "label": "observation-finished",
+        "processing": {
+          "canvas": true,
+          "canvas_visible": true,
+          "deferred_blocked_input": 0,
+          "deferred_executed": 1,
+          "deferred_pending": false,
+          "deferred_scheduled": 1,
+          "deferred_stale": 0,
+          "event_response_pending": false,
+          "event_transaction": false,
+          "host": true,
+          "lifecycle": {
+            "application_paused": false,
+            "environment_canvas_paused": false,
+            "game_canvas_paused": false,
+            "game_timed_feedback_paused": false,
+            "pause_owners": [],
+            "simulation_paused": false
+          },
+          "popup_event_id": "",
+          "popup_visible": false,
+          "tree_paused": false
+        },
+        "rendered": {
+          "bankroll": 77,
+          "history_contains_paid": true,
+          "history_count": 1,
+          "money_pending": true,
+          "motion_active": true,
+          "phase": "spinning",
+          "raw_minus_resolved_msec": 204,
+          "realtime_refresh": true,
+          "recent_count": 1,
+          "settled": false,
+          "spin_elapsed_msec": 204,
+          "timer_active": false,
+          "timer_due": false,
+          "timer_remaining_msec": -1
+        },
+        "result": {
+          "action_id": "spin_roulette",
+          "committed": true,
+          "error_code": "",
+          "game_id": "roulette",
+          "has_apply_receipt": true,
+          "ok": true
+        },
+        "retained_ui": {
+          "drunk_scaled_msec": 66556,
+          "presentation_msec": 17554,
+          "raw_msec": 66556
+        },
+        "wall_msec": 67931,
+        "wall_since_confirm_return_msec": 49285,
+        "wallet": {
+          "actual": 77,
+          "cash_withheld": 0,
+          "chips": 0,
+          "hold": false,
+          "hud_text": "$77",
+          "presented": 77,
+          "rng_changed_since_preconfirm": true
+        }
+      }
+    ]
+  },
+  "jobs": [
+    {
+      "run_id": "native-private-closeout-roulette-import",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--editor",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--import"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-import\\evidence\\job.json",
+      "receipt_sha256": "62476a8d87b598a3fb9b6d12ea2a8c86c5c92babc3141b80c3a1dca5174390ce",
+      "storage_manifest_sha256": "2154d2535d56cb4216df7d031473335a6fe3a64387b9c6ae30f04e0952f59ce8",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-live",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--script",
+        "res://scripts/tests/roulette_warm_live_clock_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-live\\evidence\\job.json",
+      "receipt_sha256": "98fb0bc67b8e183c2368c26ba13bff7c271c3c93779665380602a51541e181a1",
+      "storage_manifest_sha256": "c9d6cd3a2e0397040ae05990086a0d5f37d50fd2fbec65d8f50d9ada89440883",
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-live2",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--script",
+        "res://scripts/tests/roulette_warm_live_clock_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-live2\\evidence\\job.json",
+      "receipt_sha256": "b764dc0228f29ee7a87390d155a257f34ef3a48970a88689ad737616e3ae8876",
+      "storage_manifest_sha256": "94d5259c31c45405f063fe5bad22d7017c05d65bc594367f78d9ca36522225b4",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [
+        {
+          "checks": 97,
+          "failures": []
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-cash",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--script",
+        "res://scripts/tests/roulette_money_reveal_check.gd",
+        "--",
+        "--cash"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-cash\\evidence\\job.json",
+      "receipt_sha256": "9c2a5d89fff62035570ce9933323e76ca6add2cba78f9e468e415fc128c444bc",
+      "storage_manifest_sha256": "424adfae11e93f5a9d5c2a99d0ed2993a52f817d3b05d7aa762ef79b3f377f91",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [
+        {
+          "checks": 237,
+          "failures": []
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-pairchips",
+      "command": [
+        "python",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\init\\evidence\\paired_native.py"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-pairchips\\evidence\\job.json",
+      "receipt_sha256": "bcb3ef70e148209ed964298cb9a6d8b8183276fffbf628ba771fc7f235cd4828",
+      "storage_manifest_sha256": "dd16a37ed3cbeac003b6f8f05ac7e1e90555b60be91ba1d6bbf1e879bfe5db3b",
+      "exit_code": null,
+      "error": "[WinError 2] The system cannot find the file specified",
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-pairchips2",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\init\\evidence\\paired_native.py"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-pairchips2\\evidence\\job.json",
+      "receipt_sha256": "77bd3a79d4984816da422f8a515086b373dab92a66fee9b4a2da2394efd3de0a",
+      "storage_manifest_sha256": "06161cad5ece19f652e0ff9c94421b8cec8e957c505a53fd80db06d2e5798246",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [
+        {
+          "checks": 237,
+          "failures": []
+        },
+        {
+          "checks": 5,
+          "failures": []
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-paircash",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\init\\evidence\\paired_native.py",
+        "--cash"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-paircash\\evidence\\job.json",
+      "receipt_sha256": "1e91d8a2123e4871613ade194d66f35aa4c76349fe5b3d8f31271db2fb28f974",
+      "storage_manifest_sha256": "9773bcc0ba9287a5b54a1fee5f226cecfbd354979cdf5fe1bda98993f93bb01a",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [
+        {
+          "checks": 237,
+          "failures": []
+        },
+        {
+          "checks": 5,
+          "failures": []
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-consumed",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--script",
+        "res://scripts/tests/roulette_consumed_wager_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-consumed\\evidence\\job.json",
+      "receipt_sha256": "3d6a696bb33a72c8bd380e0a138ac76a0d8e7d384284352d0459fd42c193633f",
+      "storage_manifest_sha256": "bb1aa25883944482f71d146e77b839888292d25d95099b8f74a0572ec04ebcc2",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [
+        {
+          "checks": 16,
+          "failures": []
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "native-private-closeout-roulette-liveness",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+        "--script",
+        "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-roulette-liveness\\evidence\\job.json",
+      "receipt_sha256": "58c29f95784ca29a81a8a2229b369d2d9a4bc4426ea90d7d9fff8719dbee0bb2",
+      "storage_manifest_sha256": "9582f29de178eacb3636df1d5f6028ec9654652bfde05f71849715b4cb70a4bd",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "results": [],
+      "liveness_pass": true
+    }
+  ],
+  "reconciliation": {
+    "findings_total": 898,
+    "assigned_ids_findings": 54,
+    "assigned_nonhistorical_runtime_findings": [],
+    "scope": "Historical runtime observations remain stale and were not restamped. No new Markdown drift or current-owner finding for either Roulette ID."
+  },
+  "delivery": "Local tested fix awaiting main/NEXT and fresh rendered warm acceptance. Original sealed-pending first rejection remains unclassified; no original request retried/cancelled/replayed."
+}
