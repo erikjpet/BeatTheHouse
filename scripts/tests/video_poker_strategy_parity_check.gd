@@ -13,6 +13,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 var failures: Array[String] = []
 var payout_checks := 0
 var mask_checks := 0
+var numeric_checks := 0
 var generated_cases: Array = []
 
 
@@ -31,6 +32,7 @@ func _run() -> void:
 		failures.append("Production content did not load: %s" % str(library.validation_errors))
 	else:
 		_check_payout_categories(game, reference)
+		_check_numeric_rank_shapes(game, reference)
 		_check_generated_masks(library, game, reference)
 	print("BTH_VP_STRATEGY_PARITY_REPORT " + JSON.stringify({
 		"source_sha_reported_by_runner": OS.get_environment("BTH_PERF_SOURCE_SHA"),
@@ -38,6 +40,7 @@ func _run() -> void:
 		"method": "exact old payout/category oracle and old deterministic completion loop",
 		"payout_checks": payout_checks,
 		"mask_checks": mask_checks,
+		"numeric_checks": numeric_checks,
 		"generated_cases": generated_cases,
 		"passed": failures.is_empty(),
 		"failures": failures,
@@ -107,10 +110,56 @@ func _check_pay(game: GameModule, reference: GameModule, hand: Array, variant: D
 	var expected := int(reference.call("_strategy_hand_pay", hand, variant, state, coin_count, coin_value, is_max_bet))
 	var actual := int(game.call("_strategy_hand_pay", hand, variant, state, coin_count, coin_value, is_max_bet))
 	payout_checks += 1
+	_check_numeric_pay(game, reference, hand, variant, state, coin_count, coin_value, is_max_bet)
 	if actual != expected:
 		failures.append("Payout differs: variant=%s tier=%s hand=%s coins=%d value=%d max=%s expected=%d actual=%d" % [str(variant.get("id", "")), str(variant.get("paytable_tier_id", "")), JSON.stringify(hand), coin_count, coin_value, str(is_max_bet), expected, actual])
 	if JSON.stringify([hand, variant, state]) != before:
 		failures.append("Payout projection mutated its inputs.")
+
+
+
+# Every five-rank multiset, both flush and mixed suits, across every variant.
+# This covers all multiplicity/span shapes, including all-wild edge cases.
+# The separate ordered domain also exercises every sorting-network permutation.
+func _check_numeric_rank_shapes(game: GameModule, reference: GameModule) -> void:
+	var state := {"paytable_tier_id": "full_pay", "progressive_meter": 777}
+	for variant_id in VideoPokerScript.VARIANTS:
+		state["variant_id"] = variant_id
+		var variant: Dictionary = game.call("_variant", state)
+		for a in range(2, 15):
+			for b in range(a, 15):
+				for c in range(b, 15):
+					for d in range(c, 15):
+						for e in range(d, 15):
+							var ranks := [a, b, c, d, e]
+							for suits in [[0, 0, 0, 0, 0], [0, 1, 2, 3, 0]]:
+								_check_numeric_pay(game, reference, _hand(ranks, suits), variant, state, 5, 3, true)
+		for a in [2, 3, 10, 13, 14]:
+			for b in [2, 3, 10, 13, 14]:
+				for c in [2, 3, 10, 13, 14]:
+					for d in [2, 3, 10, 13, 14]:
+						for e in [2, 3, 10, 13, 14]:
+							_check_numeric_pay(game, reference, _hand([a, b, c, d, e]), variant, state, 5, 3, true)
+		# A generated joker deck has one joker; test every remaining rank shape.
+		if variant_id == "joker_poker":
+			for a in range(2, 15):
+				for b in range(a, 15):
+					for c in range(b, 15):
+						for d in range(c, 15):
+							for suits in [[4, 0, 0, 0, 0], [4, 0, 1, 2, 3]]:
+								_check_numeric_pay(game, reference, _hand([0, a, b, c, d], suits), variant, state, 5, 3, true)
+
+
+func _check_numeric_pay(game: GameModule, reference: GameModule, hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> void:
+	var encoded: PackedInt32Array = game.call("_strategy_encode_cards", hand, game.call("_wild_ranks", variant))
+	if encoded.size() != VideoPokerScript.HAND_SIZE:
+		return # Unsupported malformed cards deliberately retain the generic path.
+	var context: Dictionary = game.call("_strategy_numeric_context", variant, state, coin_count, coin_value, is_max_bet)
+	var actual := int(game.call("_strategy_numeric_pay", encoded, context.pays, context.wild_order, not (game.call("_wild_ranks", variant) as Array).is_empty(), str(game.call("_variant_id_of", variant)), int(context.progressive), int(context.sequential)))
+	var expected := int(reference.call("_strategy_hand_pay", hand, variant, state, coin_count, coin_value, is_max_bet))
+	numeric_checks += 1
+	if actual != expected and failures.size() < 20:
+		failures.append("Numeric payout differs: variant=%s hand=%s expected=%d actual=%d" % [str(variant.get("id", "")), JSON.stringify(hand), expected, actual])
 
 
 func _check_generated_masks(library: ContentLibrary, game: GameModule, reference: GameModule) -> void:

@@ -303,6 +303,12 @@ const RANK_WORD := {
 const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 
 var machine_renderer := VideoPokerRendererScript.new()
+const STRATEGY_HINT_SLICE_USEC := 3000
+const STRATEGY_HINT_MAX_COMPLETIONS_PER_SLICE := 512
+var _strategy_hint_last_completed: Dictionary = {}
+var _strategy_hint_last_slice_usec := 0
+var _strategy_hint_max_slice_usec := 0
+var _strategy_hint_job: Dictionary = {}
 var _strategy_hold_cache: Dictionary = {}
 var _strategy_hold_cache_order: Array[String] = []
 var _ritual_host_run_state: RunState = null
@@ -439,6 +445,7 @@ func _video_poker_ritual_object(object_id: String, anchor: String, appearances: 
 
 # Creates the entry message for the cabinet.
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	_strategy_hint_job.clear()
 	_ritual_host_run_state = run_state
 	var result: Dictionary = super.enter(run_state, environment)
 	var state: Dictionary = _machine_state(run_state, environment)
@@ -565,8 +572,13 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var suggested: Array = _suggested_holds(hand, variant) if phase == "hold" else []
 	var poker_hat_strategy_active := phase == "hold" and _item_bonus("video_poker_strategy_hint", run_state, false) > 0
 	var recommended_holds: Array = []
+	var strategy_hint_pending := false
 	if poker_hat_strategy_active:
-		recommended_holds = _best_odds_holds(hand, variant, state, coin_count, coin_value, bet_level >= MAX_BET_LEVEL)
+		var hint := _strategy_hint_projection(hand, variant, state, coin_count, coin_value, bet_level >= MAX_BET_LEVEL, "%d|%s|%s" % [run_state.get_instance_id(), str(environment.get("id", "")), transient_state_key_context()])
+		recommended_holds = hint.holds
+		strategy_hint_pending = bool(hint.pending)
+	else:
+		_strategy_hint_job.clear()
 	var marked := bool(ui.get("marked", false)) and phase == "hold"
 	var holdout_challenge: Dictionary = _normalized_holdout_challenge(ui.get("holdout_challenge", {})) if marked else {}
 	var holdout_meter: Dictionary = _holdout_meter(holdout_challenge, ui) if not holdout_challenge.is_empty() else {}
@@ -631,7 +643,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"money_presentation_animation_channel": FLIP_CHANNEL,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": double_result_phase or (marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false))),
+		"surface_realtime_state_refresh": strategy_hint_pending or double_result_phase or (marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false))),
 		"reduce_motion": bool(ui.get("reduce_motion", false)),
 		"phase": phase,
 		"machine_name": str(state.get("machine_name", "Video Poker")),
@@ -678,7 +690,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"suggested_holds": suggested,
 		"poker_hat_strategy_active": poker_hat_strategy_active,
 		"recommended_holds": recommended_holds,
-		"recommended_hold_text": _recommended_hold_text(recommended_holds),
+		"recommended_hold_text": _strategy_hint_pending_text() if strategy_hint_pending else _recommended_hold_text(recommended_holds),
+		"strategy_hint_pending": strategy_hint_pending,
 		"scoring_indices": scoring_indices,
 		"drawn_indices": drawn_indices,
 		"marked": marked,
@@ -2893,14 +2906,7 @@ func _natural_scoring_indices(ranks: Array, base: String, rank_counts: Dictionar
 func _best_odds_holds(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> Array:
 	if hand.size() != HAND_SIZE:
 		return []
-	var cache_key := "%s|%s|%d|%d|%d|%d" % [
-		str(variant.get("id", "")),
-		str(variant.get("paytable_tier_id", "")),
-		coin_count,
-		coin_value,
-		int(state.get("progressive_meter", PROGRESSIVE_BASE)),
-		JsonCoerceScript._stable_hash(_hand_signature(hand)),
-	]
+	var cache_key := _strategy_cache_key(hand, variant, state, coin_count, coin_value)
 	if _strategy_hold_cache.has(cache_key):
 		return _index_array(_strategy_hold_cache.get(cache_key, []))
 	var deck := _deck_without_cards(_base_deck(variant), hand)
@@ -2915,14 +2921,434 @@ func _best_odds_holds(hand: Array, variant: Dictionary, state: Dictionary, coin_
 		if score > best_average + 0.000001 or (is_equal_approx(score, best_average) and holds.size() > best_holds.size()):
 			best_average = score
 			best_holds = holds
-	_strategy_hold_cache[cache_key] = _index_array(best_holds)
-	_strategy_hold_cache_order.append(cache_key)
-	while _strategy_hold_cache_order.size() > STRATEGY_CACHE_LIMIT:
-		_strategy_hold_cache.erase(_strategy_hold_cache_order.pop_front())
+	_strategy_cache_holds(cache_key, best_holds)
 	return _index_array(best_holds)
 
 
+# The host resets this context synchronously on Leave, new runs and session
+# replacement. No callbacks, worker threads or completed stale hints can outlive it.
+func set_transient_state_key_context(state_key: String) -> void:
+	if state_key.strip_edges() != transient_state_key_context():
+		_strategy_hint_job.clear()
+	super.set_transient_state_key_context(state_key)
+
+
+func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary = {}) -> Dictionary:
+	var projection := surface_state(run_state, environment, ui_state)
+	if bool(projection.get("strategy_hint_pending", false)) and Engine.get_process_frames() > int(_strategy_hint_job.get("created_frame", -1)):
+		_advance_strategy_hint_job(STRATEGY_HINT_SLICE_USEC)
+		if _strategy_hint_job.is_empty():
+			return surface_state(run_state, environment, ui_state)
+		projection["recommended_hold_text"] = _strategy_hint_pending_text()
+	return projection
+
+
+func _strategy_cache_key(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int) -> String:
+	return "%s|%s|%d|%d|%d|%d" % [
+		str(variant.get("id", "")),
+		str(variant.get("paytable_tier_id", "")),
+		coin_count,
+		coin_value,
+		int(state.get("progressive_meter", PROGRESSIVE_BASE)),
+		JsonCoerceScript._stable_hash(_hand_signature(hand)),
+	]
+
+
+func _strategy_cache_holds(cache_key: String, holds: Array) -> void:
+	_strategy_hold_cache[cache_key] = _index_array(holds)
+	if not _strategy_hold_cache_order.has(cache_key):
+		_strategy_hold_cache_order.append(cache_key)
+	while _strategy_hold_cache_order.size() > STRATEGY_CACHE_LIMIT:
+		_strategy_hold_cache.erase(_strategy_hold_cache_order.pop_front())
+
+
+func _strategy_hint_projection(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool, owner: String) -> Dictionary:
+	var key := _strategy_cache_key(hand, variant, state, coin_count, coin_value)
+	if _strategy_hold_cache.has(key):
+		_strategy_hint_job.clear()
+		return {"pending": false, "holds": _index_array(_strategy_hold_cache[key])}
+	if str(_strategy_hint_job.get("key", "")) != key or str(_strategy_hint_job.get("owner", "")) != owner:
+		var wild_ranks := _wild_ranks(variant)
+		var encoded := _strategy_encode_cards(hand, wild_ranks)
+		var deck := _deck_without_cards(_base_deck(variant), hand)
+		var encoded_deck := _strategy_encode_cards(deck, wild_ranks)
+		var context := _strategy_numeric_context(variant, state, coin_count, coin_value, is_max_bet)
+		if encoded.size() != HAND_SIZE or encoded_deck.size() != deck.size() or not bool(context.supported):
+			return {"pending": false, "holds": _best_odds_holds(hand, variant, state, coin_count, coin_value, is_max_bet)}
+		_strategy_hint_max_slice_usec = 0
+		_strategy_hint_last_slice_usec = 0
+		_strategy_hint_job = {"key": key, "owner": owner, "hand": encoded, "deck": encoded_deck,
+			"pays": context.pays, "wild_order": context.wild_order, "wild": not wild_ranks.is_empty(),
+			"variant_id": _variant_id_of(variant), "progressive": context.progressive, "sequential": context.sequential,
+			"mask": 0, "best_average": -1.0, "best_holds": [], "created_frame": Engine.get_process_frames(),
+			"completed_samples": 0, "scores": PackedFloat64Array()}
+		_start_strategy_hint_mask(_strategy_hint_job)
+	return {"pending": true, "holds": []}
+
+
+func _strategy_hint_pending_text() -> String:
+	return "READING THE HAND... %d%%" % (int(_strategy_hint_job.get("mask", 0)) * 100 / 32)
+
+
+func _start_strategy_hint_mask(job: Dictionary) -> void:
+	var holds: Array = []
+	var slots := PackedInt32Array()
+	for index in range(HAND_SIZE):
+		if int(job.mask) & (1 << index):
+			holds.append(index)
+		else:
+			slots.append(index)
+	job["holds"] = holds
+	job["slots"] = slots
+	job["completed"] = (job.hand as PackedInt32Array).duplicate()
+	job["first"] = 0
+	job["second"] = 1
+	job["samples"] = 0
+	job["total"] = 0.0
+	if slots.size() > 2:
+		var sample_rng := RngStream.new()
+		sample_rng.configure(JsonCoerceScript._stable_hash("%s|%s" % [str(job.key), JSON.stringify(holds)]))
+		job["rng"] = sample_rng
+
+
+# One completion is the indivisible work unit. The deadline is checked after
+# each, so one expensive hold mask cannot turn into a synchronous cold stall.
+func _advance_strategy_hint_job(budget_usec: int = STRATEGY_HINT_SLICE_USEC) -> void:
+	if _strategy_hint_job.is_empty():
+		return
+	var job := _strategy_hint_job
+	var started_usec := Time.get_ticks_usec()
+	var deadline := started_usec + maxi(1, budget_usec)
+	var deck: PackedInt32Array = job.deck
+	var slots: PackedInt32Array = job.slots
+	var completed: PackedInt32Array = job.completed
+	for _completion in range(STRATEGY_HINT_MAX_COMPLETIONS_PER_SLICE):
+		var mask_done := false
+		if slots.size() == 0:
+			mask_done = true
+		elif slots.size() == 1:
+			completed[slots[0]] = deck[int(job.first)]
+			job.first = int(job.first) + 1
+			mask_done = int(job.first) >= deck.size()
+		elif slots.size() == 2:
+			completed[slots[0]] = deck[int(job.first)]
+			completed[slots[1]] = deck[int(job.second)]
+			job.second = int(job.second) + 1
+			if int(job.second) >= deck.size():
+				job.first = int(job.first) + 1
+				job.second = int(job.first) + 1
+			mask_done = int(job.first) >= deck.size() - 1
+		else:
+			var pool := deck.duplicate()
+			var sample_rng: RngStream = job.rng
+			for slot in slots:
+				var pick := sample_rng.randi_range(0, pool.size() - 1)
+				completed[slot] = pool[pick]
+				pool.remove_at(pick)
+			mask_done = int(job.samples) + 1 >= STRATEGY_SAMPLE_CAP
+		job.total = float(job.total) + _strategy_numeric_pay(completed, job.pays, job.wild_order, bool(job.wild), str(job.variant_id), int(job.progressive), int(job.sequential))
+		job.samples = int(job.samples) + 1
+		job.completed_samples = int(job.completed_samples) + 1
+		job.completed = completed
+		if mask_done:
+			var average := float(job.total) / float(maxi(1, int(job.samples)))
+			var scores: PackedFloat64Array = job.scores
+			scores.append(average)
+			job.scores = scores
+			var best := float(job.best_average)
+			if average > best + 0.000001 or (is_equal_approx(average, best) and (job.holds as Array).size() > (job.best_holds as Array).size()):
+				job.best_average = average
+				job.best_holds = (job.holds as Array).duplicate()
+			job.mask = int(job.mask) + 1
+			if int(job.mask) >= (1 << HAND_SIZE):
+				_strategy_hint_last_completed = {"key": str(job.key), "scores": job.scores, "completed_samples": int(job.completed_samples)}
+				_strategy_cache_holds(str(job.key), job.best_holds)
+				_strategy_hint_job.clear()
+				_record_strategy_hint_slice(started_usec)
+				return
+			_start_strategy_hint_mask(job)
+			slots = job.slots
+			completed = job.completed
+		if Time.get_ticks_usec() >= deadline:
+			_record_strategy_hint_slice(started_usec)
+			return
+	_record_strategy_hint_slice(started_usec)
+
+
+func _record_strategy_hint_slice(started_usec: int) -> void:
+	_strategy_hint_last_slice_usec = Time.get_ticks_usec() - started_usec
+	_strategy_hint_max_slice_usec = maxi(_strategy_hint_max_slice_usec, _strategy_hint_last_slice_usec)
+
+
+# Numeric cards and payout rows are private strategy scratch data, never a save
+# or settlement representation. Keep the same completion order and RNG calls.
 func _hold_expected_pay(hand: Array, deck: Array, holds: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool, seed_key: String) -> float:
+	var wild_ranks := _wild_ranks(variant)
+	var completed := _strategy_encode_cards(hand, wild_ranks)
+	var encoded_deck := _strategy_encode_cards(deck, wild_ranks)
+	if completed.size() != HAND_SIZE or encoded_deck.size() != deck.size():
+		return _hold_expected_pay_generic(hand, deck, holds, variant, state, coin_count, coin_value, is_max_bet, seed_key)
+	var context := _strategy_numeric_context(variant, state, coin_count, coin_value, is_max_bet)
+	if not bool(context.supported):
+		return _hold_expected_pay_generic(hand, deck, holds, variant, state, coin_count, coin_value, is_max_bet, seed_key)
+	var pays: PackedInt64Array = context.pays
+	var wild_order: PackedInt32Array = context.wild_order
+	var draw_slots: Array = []
+	for index in range(HAND_SIZE):
+		if not holds.has(index):
+			draw_slots.append(index)
+	var draw_count := draw_slots.size()
+	var variant_id := _variant_id_of(variant)
+	var progressive := int(context.progressive)
+	var sequential := int(context.sequential)
+	var is_wild := not wild_ranks.is_empty()
+	if draw_count == 0:
+		return float(_strategy_numeric_pay(completed, pays, wild_order, is_wild, variant_id, progressive, sequential))
+	var total := 0.0
+	var samples := 0
+	if draw_count == 1:
+		for first in range(encoded_deck.size()):
+			completed[int(draw_slots[0])] = encoded_deck[first]
+			total += _strategy_numeric_pay(completed, pays, wild_order, is_wild, variant_id, progressive, sequential)
+			samples += 1
+	elif draw_count == 2:
+		for first in range(encoded_deck.size() - 1):
+			completed[int(draw_slots[0])] = encoded_deck[first]
+			for second in range(first + 1, encoded_deck.size()):
+				completed[int(draw_slots[1])] = encoded_deck[second]
+				total += _strategy_numeric_pay(completed, pays, wild_order, is_wild, variant_id, progressive, sequential)
+				samples += 1
+	else:
+		var sample_rng := RngStream.new()
+		sample_rng.configure(JsonCoerceScript._stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
+		var pool := PackedInt32Array()
+		for _sample in range(STRATEGY_SAMPLE_CAP):
+			pool = encoded_deck.duplicate()
+			for draw_index in range(draw_count):
+				var pick := sample_rng.randi_range(0, pool.size() - 1)
+				completed[int(draw_slots[draw_index])] = pool[pick]
+				pool.remove_at(pick)
+			total += _strategy_numeric_pay(completed, pays, wild_order, is_wild, variant_id, progressive, sequential)
+			samples += 1
+	return total / float(maxi(1, samples))
+
+
+enum StrategyPay {
+	ROYAL_FLUSH,
+	NATURAL_ROYAL,
+	STRAIGHT_FLUSH,
+	FOUR_KIND,
+	FULL_HOUSE,
+	FLUSH,
+	STRAIGHT,
+	THREE_KIND,
+	TWO_PAIR,
+	JACKS_OR_BETTER,
+	FOUR_ACES,
+	FOUR_2_4,
+	FOUR_5_K,
+	FOUR_ACES_KICKER,
+	FOUR_2_4_KICKER,
+	FOUR_DEUCES,
+	WILD_ROYAL,
+	FIVE_KIND,
+	KINGS_OR_BETTER,
+}
+const STRATEGY_PAY_KEYS := [
+	"royal_flush",
+	"natural_royal",
+	"straight_flush",
+	"four_kind",
+	"full_house",
+	"flush",
+	"straight",
+	"three_kind",
+	"two_pair",
+	"jacks_or_better",
+	"four_aces",
+	"four_2_4",
+	"four_5_k",
+	"four_aces_kicker",
+	"four_2_4_kicker",
+	"four_deuces",
+	"wild_royal",
+	"five_kind",
+	"kings_or_better",
+]
+
+
+func _strategy_encode_cards(cards: Array, wild_ranks: Array) -> PackedInt32Array:
+	var result := PackedInt32Array()
+	for value in cards:
+		if typeof(value) != TYPE_DICTIONARY:
+			return PackedInt32Array()
+		var card: Dictionary = value
+		var rank := int(card.get("rank", 0))
+		var suit := int(card.get("suit", -1))
+		var wild := wild_ranks.has(rank)
+		if (rank < 2 or rank > 14) and not wild or suit < 0 or suit > 4:
+			return PackedInt32Array()
+		result.append((0 if wild else rank) | (suit << 4))
+	return result
+
+
+func _strategy_numeric_context(variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> Dictionary:
+	var pays := PackedInt64Array()
+	pays.resize(STRATEGY_PAY_KEYS.size())
+	# -1 marks an absent row. A present zero-paying royal still receives bonuses.
+	pays.fill(-1)
+	var ordered: Array = []
+	var seen := 0
+	var supported := true
+	for row_value in variant.get("rows", []):
+		var row: Dictionary = row_value
+		var category := STRATEGY_PAY_KEYS.find(str(row.get("key", "")))
+		if category < 0:
+			continue
+		if not seen & (1 << category):
+			pays[category] = _row_pay(row, coin_count, is_max_bet) * coin_value
+			seen |= 1 << category
+			if pays[category] < 0:
+				supported = false
+		var multiplier := int(row.get("mult", 0))
+		if multiplier < 0:
+			continue
+		var at := 0
+		while at < ordered.size() and int(ordered[at][1]) >= multiplier:
+			at += 1
+		ordered.insert(at, [category, multiplier])
+	var wild_order := PackedInt32Array()
+	for entry in ordered:
+		wild_order.append(int(entry[0]))
+	return {"pays": pays, "wild_order": wild_order, "supported": supported,
+		"progressive": int(state.get("progressive_meter", PROGRESSIVE_BASE)) if is_max_bet else 0,
+		"sequential": SEQUENTIAL_ROYAL_BONUS * coin_value * coin_count if is_max_bet else 0}
+
+
+# Five ranks fit in scalar locals. A sorting network avoids per-completion
+# rank/count/descriptor dictionaries, while settlement keeps its full evaluator.
+func _strategy_numeric_pay(hand: PackedInt32Array, pays: PackedInt64Array, wild_order: PackedInt32Array, is_wild: bool, variant_id: String, progressive: int, sequential: int) -> int:
+	var a := hand[0] & 15
+	var b := hand[1] & 15
+	var c := hand[2] & 15
+	var d := hand[3] & 15
+	var e := hand[4] & 15
+	var sequential_royal := a == 10 and b == 11 and c == 12 and d == 13 and e == 14
+	var suit := -1
+	var flush := true
+	var wilds := 0
+	for card in hand:
+		if (card & 15) == 0:
+			wilds += 1
+		elif suit < 0:
+			suit = card >> 4
+		elif suit != card >> 4:
+			flush = false
+	var swap := 0
+	if a > b:
+		swap = a; a = b; b = swap
+	if d > e:
+		swap = d; d = e; e = swap
+	if c > e:
+		swap = c; c = e; e = swap
+	if c > d:
+		swap = c; c = d; d = swap
+	if b > e:
+		swap = b; b = e; e = swap
+	if a > d:
+		swap = a; a = d; d = swap
+	if a > c:
+		swap = a; a = c; c = swap
+	if b > d:
+		swap = b; b = d; d = swap
+	if b > c:
+		swap = b; b = c; c = swap
+	var ab := a > 0 and a == b
+	var bc := b > 0 and b == c
+	var cd := c > 0 and c == d
+	var de := d > 0 and d == e
+	var repeats := int(ab) + int(bc) + int(cd) + int(de)
+	var top := 1 if wilds < HAND_SIZE else 0
+	if a > 0 and a == e:
+		top = 5
+	elif (a > 0 and a == d) or (b > 0 and b == e):
+		top = 4
+	elif (a > 0 and a == c) or (b > 0 and b == d) or (c > 0 and c == e):
+		top = 3
+	elif repeats > 0:
+		top = 2
+	var low := a if a > 0 else b if b > 0 else c if c > 0 else d if d > 0 else e
+	var straight := repeats == 0 and (e - low <= 4 or (e == 14 and maxi(1, d) <= 5))
+	var category := -1
+	if not is_wild:
+		if straight and flush:
+			category = StrategyPay.ROYAL_FLUSH if a == 10 and e == 14 else StrategyPay.STRAIGHT_FLUSH
+		elif top == 4:
+			var quad := b
+			var kicker := e if a == b else a
+			if variant_id != "bonus_poker" and variant_id != "double_double_bonus":
+				category = StrategyPay.FOUR_KIND
+			elif quad == 14:
+				category = StrategyPay.FOUR_ACES_KICKER if variant_id == "double_double_bonus" and kicker >= 2 and kicker <= 4 else StrategyPay.FOUR_ACES
+			elif quad >= 2 and quad <= 4:
+				category = StrategyPay.FOUR_2_4_KICKER if variant_id == "double_double_bonus" and (kicker == 14 or (kicker >= 2 and kicker <= 4)) else StrategyPay.FOUR_2_4
+			else:
+				category = StrategyPay.FOUR_5_K
+		elif top == 3 and repeats == 3:
+			category = StrategyPay.FULL_HOUSE
+		elif flush:
+			category = StrategyPay.FLUSH
+		elif straight:
+			category = StrategyPay.STRAIGHT
+		elif top == 3:
+			category = StrategyPay.THREE_KIND
+		elif repeats == 2:
+			category = StrategyPay.TWO_PAIR
+		elif top == 2 and ((ab and a >= RANK_JACK) or (bc and b >= RANK_JACK) or (cd and c >= RANK_JACK) or (de and d >= RANK_JACK)):
+			category = StrategyPay.JACKS_OR_BETTER
+	else:
+		var distinct := HAND_SIZE - wilds - repeats
+		var second := 2 if repeats >= top else 1
+		var full_house := distinct >= 2 and maxi(0, 3 - top) + maxi(0, 2 - second) <= wilds
+		var kings := (ab and a >= 13) or (bc and b >= 13) or (cd and c >= 13) or (de and d >= 13) or (wilds > 0 and e >= 13)
+		var achievable := 0
+		if wilds == 0 and flush and a == 10 and e == 14 and repeats == 0:
+			achievable |= 1 << StrategyPay.NATURAL_ROYAL
+		if wilds == 4:
+			achievable |= 1 << StrategyPay.FOUR_DEUCES
+		if wilds > 0 and flush and repeats == 0 and (low >= 10 or wilds == HAND_SIZE):
+			achievable |= 1 << StrategyPay.WILD_ROYAL
+		if top + wilds >= 5:
+			achievable |= 1 << StrategyPay.FIVE_KIND
+		if straight and flush:
+			achievable |= 1 << StrategyPay.STRAIGHT_FLUSH
+		if top + wilds >= 4:
+			achievable |= 1 << StrategyPay.FOUR_KIND
+		if full_house:
+			achievable |= 1 << StrategyPay.FULL_HOUSE
+		if flush:
+			achievable |= 1 << StrategyPay.FLUSH
+		if straight:
+			achievable |= 1 << StrategyPay.STRAIGHT
+		if top + wilds >= 3:
+			achievable |= 1 << StrategyPay.THREE_KIND
+		if kings:
+			achievable |= 1 << StrategyPay.KINGS_OR_BETTER
+		for candidate in wild_order:
+			if achievable & (1 << candidate):
+				category = candidate
+				break
+	if category < 0 or pays[category] == -1:
+		return 0
+	var total := pays[category]
+	if category == StrategyPay.ROYAL_FLUSH or category == StrategyPay.NATURAL_ROYAL:
+		total += progressive
+		if flush and sequential_royal:
+			total += sequential
+	return total
+
+
+func _hold_expected_pay_generic(hand: Array, deck: Array, holds: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool, seed_key: String) -> float:
 	var draw_slots: Array = []
 	for index in range(HAND_SIZE):
 		if not holds.has(index):
