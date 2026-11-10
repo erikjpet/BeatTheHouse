@@ -1,0 +1,1807 @@
+{
+  "schema": "bth.uncommitted_reconciliation/v1",
+  "observed_at": "2026-11-10T06:35:52.835156+00:00",
+  "compared_main": "b2a9cef8156c993391e44bcef75dec42558c41eb",
+  "dirty_historical_and_primary_worktrees": 52,
+  "files": 358,
+  "scope": "Registered worktrees, tracked and untracked files only. Ignored local builds/profiles and stashes are outside this inventory. New E: finalization worktrees excluded. No original data deleted, reset, staged or stashed.",
+  "comparison": "Exact current-main blobs, added production code, regression test presence, and scoped historical diff inspection. Whole old worktrees are not copied onto main.",
+  "worktrees": [
+    {
+      "worktree": "projects:Beat-The-House",
+      "head": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd",
+      "disposition": "Current pending authoring edits and QA tooling; finalized separately, original files preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/environments/developer_placement_overrides.json"
+        },
+        {
+          "status": " M",
+          "path": "tools/bth_qa_storage.py"
+        },
+        {
+          "status": "??",
+          "path": "data/environments/developer_placement_overrides.json.bak"
+        },
+        {
+          "status": "??",
+          "path": "tools/BTH_QA_RESIDENT_PROFILES.md"
+        },
+        {
+          "status": "??",
+          "path": "tools/bth_qa_atomic_receipt.py"
+        },
+        {
+          "status": "??",
+          "path": "tools/bth_qa_closed_inspection.py"
+        },
+        {
+          "status": "??",
+          "path": "tools/bth_qa_crash_inspection.py"
+        },
+        {
+          "status": "??",
+          "path": "tools/bth_qa_paid_trip_inspection.py"
+        },
+        {
+          "status": "??",
+          "path": "tools/bth_qa_resident.py"
+        },
+        {
+          "status": "??",
+          "path": "tools/tests/test_bth_qa_resident.py"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-20/task-7/legacy-source",
+      "head": "d8856cd5c61c5136dfe7d14582b57111af5d40dc",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/gas_scratch_legacy_fixture_prepare.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_legacy_pending_prepare.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_preserved_state_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-20/task-7/motel-source",
+      "head": "79aa4d11ecbc02a1dc79acb503d4c47cb742ff89",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/motel_catalog_decode_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/motel_preserved_continue_probe.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-20/task-7/source",
+      "head": "4d4eb062f3fb3fa547dd61e66c4e3dd9888e4ac8",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_preserved_state_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-22/task-5/baseline",
+      "head": "04a114c05b5103f54fb29ddd75f4689f143e642c",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_board_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_duel_offer_timing_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source",
+      "head": "4bb67124cfe0c46cf0d483359113ee26390cd089",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "Microsoft/Windows/PowerShell/ModuleAnalysisCache"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_boundary_trace_generator.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_boundary_trace_host.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_feedback_web_fixture_export.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_legacy_boundary_copied_state_probe.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-bth-touch-01-c8",
+      "head": "c23c47febd41bbeba273bfb84e31c0d429e6fd60",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/bth_26a_unfinished_coach_restore_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-cage-floor-fare-8b",
+      "head": "f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "qa_private/count_observer_main.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/count_room_rejection_observer.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-count-mainfloor-diagnostic-f98",
+      "head": "f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " M",
+          "path": "project.godot"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/count_observer_main.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/count_room_rejection_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/count_cycle_base_room_probe.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-count-proof-be4",
+      "head": "be4cd6716e3e1f7614008c9cc70a27cee7b48def",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/core/run_state.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-explicit-dialogue-intent-661c",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_bronze_resume_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_counter_manual_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_host_probe.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_resume_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_talk_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gas-scratch-room-87a",
+      "head": "87a06b9a4acbe86b0f761d2cd0ab929f5584b716",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "qa_private/motel_missed_delivery_room_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/motel_missed_delivery_room_observer_parse.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/count_cycle_base_room_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/count_cycle_pre_refresh_cold_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/count_cycle_retired_base_room_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/gas_scratch_exit_scenario_diagnostic.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-alias-retry-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-retry-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-catalog-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-typed-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-practice-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-gold-review-retalk-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-mobile-viewport-b124",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_viewport_whole_app_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_hud_bar.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_screen_builder.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/ui/mobile_viewport_policy.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/run_inventory_screen.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-mobile-viewport-coach-r12",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_coach_dialogue_input_owner_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_viewport_whole_app_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_hud_bar.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_screen_builder.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/ui/mobile_viewport_policy.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/run_inventory_screen.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-mobile-viewport-stress-web",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "project.godot"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_coach_dialogue_input_owner_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_settings_rotation_boundary_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/mobile_viewport_whole_app_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_hud_bar.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_screen_builder.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/ui/mobile_viewport_policy.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/run_inventory_screen.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/settings_menu.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/bth31_fidelity.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/bth31_stress.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/bth31_stress_controller.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/bth31_stress_parse_driver.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-pal-clean-deal-readonly-private-61081",
+      "head": "61081e76535ef3013ae8a2770b05e1af80086b4a",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/tutorial/lessons.json"
+        },
+        {
+          "status": " M",
+          "path": "project.godot"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/save_service.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/coach_view_model.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/pal_observer_main.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/pal_public_coach_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_diagnostic_log.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/pal_no_write_guard_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/pal_public_snapshot_projection_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-practice-crew-layer-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-punchline-cold-room-de35",
+      "head": "ac9188b7c370dab46acb4a44035692dd3a717a1e",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_cold_room_boundary_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_room_rejection_observer.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-punchline-readonly-observer-de35",
+      "head": "de3529c8faee12df3d2671d1ee1812957f0fd734",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " M",
+          "path": "project.godot"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/room_presentation_publication.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/save_service.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/environment_interaction_controller.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_diagnostic_log.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_observer_main.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_room_rejection_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_readonly_observer_guard_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-punchline-repair-readonly-de35",
+      "head": "de3529c8faee12df3d2671d1ee1812957f0fd734",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " M",
+          "path": "project.godot"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/content_library.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/room_presentation_publication.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/save_service.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/environment_interaction_controller.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_diagnostic_log.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_observer_main.tscn"
+        },
+        {
+          "status": "??",
+          "path": "qa_private/punchline_room_rejection_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/punchline_readonly_observer_guard_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-23/task-2/source-video-poker-save-current",
+      "head": "da59be9a2c3091898f7777f0ee86fa0a71e0615b",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/video_poker_opening_save_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-26/task/source-turnover-intersections",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": " A",
+          "path": "scripts/tests/broad_turnover_intersections_README.md"
+        },
+        {
+          "status": " A",
+          "path": "scripts/tests/broad_turnover_intersections_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/broad_expired_offer_dispatch_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-2/source-explicit-entry-acceptance",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_bronze_resume_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_counter_manual_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_host_probe.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_resume_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_talk_entry_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_bronze_cold_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_bronze_cold_host.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_bronze_resume_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_explicit_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_explicit_host_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_sal_resume_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_independent_acceptance/grand_sal_talk_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_suspicion_diagnostic/grand_bronze_close_save_continue.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_suspicion_diagnostic/grand_bronze_cold_reopen_retest.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_suspicion_diagnostic/grand_bronze_one_save_host.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_suspicion_diagnostic/grand_suspicion_field_compare.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_suspicion_diagnostic/grand_suspicion_readonly_host.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-2/source-explicit-entry-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_explicit_qa/grand_bronze_resume_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_explicit_qa/grand_explicit_host_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_resume_entry_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/grand_explicit_qa/grand_sal_talk_entry_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-card-interest",
+      "head": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/cage_card_interest_refresh_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-cold-glimpse",
+      "head": "c263597a60c662842398f3e8b77919cc358a7b4f",
+      "disposition": "Retained private diagnostic instrumentation or prepared test-only fixtures; no release implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/cold_glimpse_clock_readonly_probe.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-crew-cold-feedback",
+      "head": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_handoff_cold_result_feedback_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-gala-cold-feedback",
+      "head": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/scenario_action_cold_result_feedback_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-paid-auto-guard",
+      "head": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "disposition": "Private instrumented test artifact; explicit source README says never merge game hooks or publish to NEXT.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/games/slot.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/games/slots/slot_resolver.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/sealed_action_host.gd"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/FIFTH_WINDOW_PLAN.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/FOURTH_WINDOW_PLAN.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/KEY_LOCAL_PROCEDURE.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/KEY_RESIDENT_ASSET_APPROVAL_FIX.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/KEY_RESIDENT_REVIEW_FIXES.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/KEY_RESIDENT_SOURCE_STATUS.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/README.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/SIXTH_WINDOW_PLAN.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/THIRD_WINDOW_PLAN.md"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/bind_case.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/bootstrap_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/budget_authority.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/fifth_window.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/fourth_window.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/guarded_browser.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/instrumentation_manifest.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_approval_io.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_assets.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_browser.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_build_receipt.template.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_closure_input.template.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_controls.template.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_creation_plan.template.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_directory_lease.ps1"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_external_approval.template.json"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_guardian_io.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_job_readback.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_lease_lifecycle.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/key_resident_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/prepare_artifact.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/prepare_base_control.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/prepare_synthetic_case.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/resident_profile_declarations.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/runner_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/second_window.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/sixth_window.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_bind_case.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_bootstrap_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_budget_authority.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_key_resident_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_key_resident_reviewfixes.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/test_runner_policy.cjs"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/third_window.py"
+        },
+        {
+          "status": "??",
+          "path": "qa_guard/zero_paid_web_bootstrap.cjs"
+        },
+        {
+          "status": "??",
+          "path": "scripts/qa_instrumentation/paid_auto_guard/artifact_identity.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/qa_instrumentation/paid_auto_guard/key_resident_observer.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/qa_instrumentation/paid_auto_guard/paid_auto_budget.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_key_local_contract_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_key_local_readonly_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_paid_boundary_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_routes_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_stage_evidence_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_stored_contract_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/qa_paid_auto_guard_stored_proof_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-peek-cold-hud-test",
+      "head": "8107039e9fa47b630207971bde62e6ca9c65b0b8",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/blackjack_cold_currency_hud_visibility_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-3/source-street-craps-034",
+      "head": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/games/craps.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/street_craps034_captured_throw_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task-4/bth-item-audit-worktree",
+      "head": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+      "disposition": "All nine artifact files exactly match origin/main; preserve original working files.",
+      "files": [
+        {
+          "status": "??",
+          "path": "docs/item-audit/README.md"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/artifact_manifest.json"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/beat_the_house_item_audit.csv"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/beat_the_house_item_audit_categorized.csv"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/beat_the_house_item_audit_mobile.html"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/categorized_acquisition_evidence.json"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/categorized_coverage_guide.md"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/categorized_validation.json"
+        },
+        {
+          "status": "??",
+          "path": "docs/item-audit/mobile_validation.json"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/native-regressions/source-crew-independent-661c",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": "M ",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_generator.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/environment_practice_crew_layer_membership_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/gold_review_manual_reopen_check.gd"
+        },
+        {
+          "status": "A ",
+          "path": "scripts/tests/room_event_membership_alias_retry_check.gd"
+        },
+        {
+          "status": "M ",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_new_owner_boundary_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_owner_continue_diag_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_owner_continue_diag_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_owner_service_readonly_diag_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_owner_typed_witness.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_owner_typed_witness_r2.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_661c_river_scoped_independent_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_independent_candidate_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_evidence_guard.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_save_contract.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_boundary_capture.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/native-regressions/source-CrewMoney-candidate-b549",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_adjacent_synthetic_candidate_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_adjacent_synthetic_candidate_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_contract_r3_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_gas_boundary_r1_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_gas_custody_diagnostic.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_gas_field_diagnostic.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_independent_candidate_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_independent_candidate_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_evidence_guard.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_save_contract.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_save_contract_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_boundary_capture.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_boundary_focused_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_cold_diagnostic.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_cold_diagnostic_r2.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_cold_diagnostic_r3.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/native-regressions/source-CrewMoney-river-7a09",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_CrewMoney_independent_candidate_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_evidence_guard.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_game_state_save_contract.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_river_custody_readonly_diag_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_river_new_boundary_capture_r3_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_river_relocated_note_acceptance_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_river_relocated_note_acceptance_r2_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_boundary_capture.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_scenario_owner_boundary_focused_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/native-regressions/source-save-float-e747",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Historical float-precision candidate superseded by a7464c13 and current StorageNumericJson implementation; private test evidence preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/core/run_save_codec.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_save_float_independent_size_physics_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/save_float_precision_codec_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/save_float_precision_service_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/native-regressions/source-stake-loss-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_warm_synthetic_e53_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_warm_synthetic_e53_cold_diagnostic.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_warm_synthetic_e53_fixture_order_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_warm_synthetic_e53_retry_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-27/task/source-planning-overflow",
+      "head": "f7e63136d3e5cb57699e91156e252ff285e1d9ad",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_planning_popup_layout_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-29/task/collection-warm-source",
+      "head": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/core/delivery_run_facade.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_collection_warm_materialization_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-29/task/gala-aftermath-source",
+      "head": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "disposition": "Production additions and regression tests already integrated on main or evolved there; retained candidate not re-merged.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/environments/scenario_sequences/env06_7_queen_public.json"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/gala_failure_aftermath_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-29/task/save-float-source",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Historical float-precision candidate superseded by a7464c13 and current StorageNumericJson implementation; private test evidence preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "scripts/core/run_save_codec.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/save_float_precision_codec_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/save_float_precision_service_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-10-29/task/stake-loss-source",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "disposition": "Earlier Crew room-publication candidate superseded by later typed/visit-bound integration on main; tests and older candidates preserved.",
+      "files": [
+        {
+          "status": " M",
+          "path": "data/environments/placement_surfaces.json"
+        },
+        {
+          "status": " M",
+          "path": "scripts/core/run_state.gd"
+        },
+        {
+          "status": " M",
+          "path": "scripts/ui/foundation_main.gd"
+        },
+        {
+          "status": "??",
+          "path": "scripts/tests/crew_stake_loss_publication_check.gd"
+        }
+      ]
+    },
+    {
+      "worktree": "codex:2026-11-03/task-13/publication-checkout",
+      "head": "cb5732d033876856be9027f8800fbe926d09e49b",
+      "disposition": "Historical runtime/owner observation snapshots superseded by later main snapshots; do not replace newer tracking.",
+      "files": [
+        {
+          "status": " M",
+          "path": "docs/todo/bth_runtime_inventory_20261104.json"
+        },
+        {
+          "status": " M",
+          "path": "docs/todo/bth_task_owner_snapshot.json"
+        }
+      ]
+    },
+    {
+      "worktree": "projects:site/.worktrees/bth-crew",
+      "head": "8592d0d89ef394749a594f05ea381282d07ec09a",
+      "disposition": "Historical probes/fixture helpers only; any identical main tests remain preserved; no pending production implementation.",
+      "files": [
+        {
+          "status": "??",
+          "path": "crew_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "crew_continue_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "crew_library_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "crew_parent_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "crew_probe.gd"
+        },
+        {
+          "status": "??",
+          "path": "crew_ui_check.gd"
+        },
+        {
+          "status": "??",
+          "path": "gas_continue_probe.gd"
+        }
+      ]
+    }
+  ]
+}

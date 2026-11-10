@@ -1,0 +1,25 @@
+{
+  "status": "PASS",
+  "checks": 308,
+  "scope": "Authored data schema, exact slot authority, saved completeness, finite values/scales, four semantic edits only, newer motel unchanged",
+  "runtime_gameplay": "not run",
+  "source_sha256": "625a58638da45e2783baf87409a825cf9dd949696772989efda642fe6f8d1688",
+  "observed_at": "2026-11-10T06:35:52.835156+00:00",
+  "guard": {
+    "cpu_percent": 12,
+    "memory_bytes": 2147483648,
+    "timeout_seconds": 90,
+    "exit_code": 0,
+    "active_at_release": 0
+  },
+  "validator_sha256": "e241cf2770368caa9ae69142b30190b450a6c623486be5f404f86d395650958c",
+  "git_normalized_source_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+  "source_commit": "9794d07a440ceaa11c4410d1ec4fcbaefe83886c",
+  "reconciliation": {
+    "exit_code": 1,
+    "new_task_findings": 0,
+    "other_errors": 635,
+    "other_tasks_with_errors": 67,
+    "scope": "Historical owner/runtime/scope/acceptance gaps retained; no whole-backlog completion claim."
+  }
+}

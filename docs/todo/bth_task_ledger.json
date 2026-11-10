@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T09:06:32.056627+00:00",
+  "updated_at": "2026-11-10T06:37:32.424113+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29118,6 +29118,99 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T09:06:32.056627+00:00"
+    },
+    {
+      "id": "BTH061-FINALIZE-LAYOUT-20261110",
+      "name": "Finalize existing saved layout edits",
+      "aliases": [],
+      "kind": "operation",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Finalize the four existing uncommitted placement edits on current main without reverting newer motel coordinates or restarting paused item/scenario feature work. Validate their exact scope and preserve all original files.",
+        "source": "User: Can you finalize all work that remains out uncommitted or on branches. I want next to be stable for extensive playtesting",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "scoped-existing-layout-delta",
+            "description": "Only existing Bar live-band, Grand audit completion and machine scale, and home bed coordinate edits; keep current main motel coordinates.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/saved_layout_finalization_20261110.json"
+            ]
+          },
+          {
+            "id": "authored-layout-validation",
+            "description": "Bounded schema and authority checks of existing saved edits. No fresh gameplay claim.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/saved_layout_finalization_20261110.json"
+            ]
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Integrate commit and verify exact existing NEXT.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "COMMITTED_STATIC_VALIDATED_NEXT_PENDING",
+      "owner": {
+        "name": "Finalize uncommitted work",
+        "task_ref": "/root/assess_uncommitted_work",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "9794d07a440ceaa11c4410d1ec4fcbaefe83886c",
+          "evidence": [
+            "docs/testing/saved_layout_finalization_20261110.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing NEXT only. Stable, itch, audience and paused feature work unchanged."
+      },
+      "evidence": [
+        {
+          "kind": "static_data_validation",
+          "reference": "docs/testing/saved_layout_finalization_20261110.json",
+          "summary": "308 static assertions passed; exact four semantic edits, preserved newer motel data, zero owned processes. No runtime gameplay claim."
+        },
+        {
+          "kind": "historical_work_reconciliation",
+          "reference": "docs/testing/uncommitted_work_reconciliation_20261110.json",
+          "summary": "All original registered dirty worktrees preserved and classified; private diagnostic hooks excluded."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Integrate source commit 9794d07a with the finalization branch and verify exact existing NEXT. No exploratory playtesting requested by this bounded batch.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No blocker. Narrow automated validation in progress.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-10T06:32:48.203565+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Existing saved placement coordinates and flags only."
+      ],
+      "updated_at": "2026-11-10T06:37:32.424113+00:00"
     }
   ],
   "batches": [

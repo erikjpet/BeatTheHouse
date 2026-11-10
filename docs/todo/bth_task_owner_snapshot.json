@@ -134,6 +134,13 @@
       "state": "active",
       "observed_at": "2026-11-04T15:55:05Z",
       "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "/root/assess_uncommitted_work",
+      "title": "Finalize existing saved layout edits",
+      "state": "active",
+      "observed_at": "2026-11-10T06:35:52.835156+00:00",
+      "source": "Active native worker prepared and validated four existing authoring edits; integration pending."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
