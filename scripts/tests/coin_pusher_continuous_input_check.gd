@@ -143,11 +143,9 @@ func _run_check() -> void:
 			failures.append("Continuous rail input did not move the nozzle throughout its sample.")
 		if not bool(invariants.get("conservation_ok", false)):
 			failures.append("Coin conservation failed during %s." % phase["id"])
-	var emitted_drops := 0
-	for event_value in session.get("input_trace", []):
-		var event: Dictionary = event_value
-		if str(event.get("kind", "")) == "drop" and not bool(event.get("bonus_origin", false)):
-			emitted_drops += 1
+	# This Quarter Falls fixture has no feature bonus drops. Native authority
+	# counters account for every emitted attempt even after trace compaction.
+	var emitted_drops := int(simulation.get("accepted_inserts", 0)) + int(simulation.get("refused_inserts", 0))
 	var pending_drops := 0
 	for queued_value in machine.get("drop_queue", []):
 		var queued: Dictionary = queued_value

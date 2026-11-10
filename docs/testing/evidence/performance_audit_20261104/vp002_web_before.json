@@ -1,0 +1,200 @@
+{
+  "engine": {
+    "build": "custom_build",
+    "hash": "89cea143987d564363e15d207438530651d943ac",
+    "hex": 263680,
+    "major": 4,
+    "minor": 6,
+    "patch": 0,
+    "status": "stable",
+    "string": "4.6-stable (custom_build)",
+    "timestamp": 1769344901
+  },
+  "failures": [],
+  "fidelity": "synthetic Web attribution; generated hands, no normal rendered player action",
+  "finding_id": "BTH-PERF-20261104-002",
+  "functional_checks_passed": true,
+  "method": "generated cabinet + production Deal command; direct cold/warm strategy helper",
+  "performance_budget_verdict": "none; attribution measurements only",
+  "platform": "Web",
+  "rows": [
+    {
+      "bare_surface_usec": 3625,
+      "cabinet_id": "jacks_or_better",
+      "cache_entries_after": 1,
+      "coin_count": 1,
+      "coin_value": 3,
+      "cold_strategy_usec": 2337075,
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 11,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 7,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 8,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 7,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 12,
+          "suit": 3
+        }
+      ],
+      "is_max_bet": false,
+      "paytable_tier_id": "full_pay",
+      "recommended_holds": [
+        1,
+        3
+      ],
+      "seed": "BTH-PERF-20261104-002-0",
+      "variant_id": "jacks_or_better",
+      "warm_hat_surface_usec": 990,
+      "warm_strategy_usec": [
+        35,
+        10,
+        15,
+        15,
+        15,
+        15,
+        20,
+        15
+      ]
+    },
+    {
+      "bare_surface_usec": 2650,
+      "cabinet_id": "triple_double_bonus",
+      "cache_entries_after": 1,
+      "coin_count": 1,
+      "coin_value": 1,
+      "cold_strategy_usec": 1843645,
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 6,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 12,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 9,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 8,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 11,
+          "suit": 1
+        }
+      ],
+      "is_max_bet": false,
+      "paytable_tier_id": "full_pay",
+      "recommended_holds": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "seed": "BTH-PERF-20261104-002-1",
+      "variant_id": "double_double_bonus",
+      "warm_hat_surface_usec": 825,
+      "warm_strategy_usec": [
+        50,
+        30,
+        25,
+        20,
+        20,
+        25,
+        20,
+        15
+      ]
+    },
+    {
+      "bare_surface_usec": 4240,
+      "cabinet_id": "jacks_or_better",
+      "cache_entries_after": 1,
+      "coin_count": 1,
+      "coin_value": 3,
+      "cold_strategy_usec": 2044280,
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 2,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 9,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 11,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 13,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 11,
+          "suit": 0
+        }
+      ],
+      "is_max_bet": false,
+      "paytable_tier_id": "full_pay",
+      "recommended_holds": [
+        2,
+        4
+      ],
+      "seed": "BTH-PERF-20261104-002-2",
+      "variant_id": "jacks_or_better",
+      "warm_hat_surface_usec": 1550,
+      "warm_strategy_usec": [
+        60,
+        40,
+        30,
+        35,
+        40,
+        35,
+        35,
+        30
+      ]
+    }
+  ],
+  "sample_count_requested": 3,
+  "source_sha_reported_by_runner": "",
+  "warm_repeats_per_hand": 8,
+  "web_feature": true,
+  "browser": {
+    "version": "156.0.8078.74",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "headless": true,
+    "url": "http://127.0.0.1:51634/index.html",
+    "errors": []
+  }
+}

@@ -455,13 +455,26 @@
         }
       },
       "state": "open",
-      "status": "INVESTIGATING; full coverage remains open after any individual fix",
+      "status": "OPEN_FULL_GAME_COVERAGE; SCOPED_BATCHES_DO_NOT_CLOSE_PARENT",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ea136553ce3f33236aa3ea22d23921e6f957e7a2",
+          "evidence": [
+            "docs/testing/performance_audit_20261104_batch002_003.md"
+          ]
+        },
+        {
+          "sha": "e6fef69a19cf73b4805fda734724652d76e0e141",
+          "evidence": [
+            "docs/testing/performance_audit_20261104_batch002_003.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -486,7 +499,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T06:33:15.814125+00:00"
     },
     {
       "id": "BTH-PERF-20261104-001",
@@ -540,7 +553,7 @@
         }
       },
       "state": "open",
-      "status": "MAIN_COMMITTED_MODULE_CHECKS_PASS_NEXT_AND_NORMAL_INPUT_ACCEPTANCE_OPEN",
+      "status": "SCOPED_FIX_MAIN_NEXT_IDENTITY_STARTUP_VERIFIED; NORMAL_PLAY_PERF_OPEN",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
@@ -566,6 +579,11 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "[Measured reproduction and fix](../testing/performance_audit_20261104_coin001.md): Web180ticks/180moves with0publications becomes90publications, sampled staleness3017ms becomes17ms. Native and conservation/liveness pass; normal-input deployed acceptance remains. PR28 squash ea136553ce3f33236aa3ea22d23921e6f957e7a2 is on main; source precursor cd20650a3e63709407122c48015acf483064305d is historical. NEXT and ordinary-input/actual-native-runtime acceptance remain Open."
+        },
+        {
+          "kind": "historical_next_identity_startup",
+          "reference": "docs/testing/evidence/performance_audit_20261104/next247-served-identity.json",
+          "summary": "Retained PR30 evidence for historical NEXT247ebe32 includes Coin001; not a fresh acceptance pass on the current merged candidate."
         }
       ],
       "implementation_batches": [],
@@ -579,7 +597,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T06:33:15.814125+00:00"
     },
     {
       "id": "BTH-PERF-20261104-002",
@@ -633,16 +651,23 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_ATTRIBUTION_MEASURED_WEB_AND_FIX_PENDING",
+      "status": "PARTIAL_IMPROVEMENT_NATIVE_WEB_TESTED; RESIDUAL_SYNCHRONOUS_HITCH_OPEN",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e6fef69a19cf73b4805fda734724652d76e0e141",
+          "evidence": [
+            "docs/testing/performance_audit_20261104_batch002_003.md"
+          ]
+        }
+      ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
         "evidence": []
       },
@@ -651,10 +676,15 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+        },
+        {
+          "kind": "branch_integration",
+          "reference": "docs/testing/performance_audit_20261104_batch002_003.md",
+          "summary": "PR 30 source and retained native/Web evidence reconciled with current main; final merged-source automated checks pending. Broad playtesting remains paused by the current user direction."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Measure actual Web/native runtime hint use against capped cold/cached attribution; preserve deterministic32-mask recommendations, then implement only a confirmed material remedy and qualify before/after. No fix commit exists.",
+      "next_action": "Finish merged-source automated checks and current main/NEXT delivery. Preserve residual synchronous hint latency and broader runtime acceptance as Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -664,7 +694,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T06:27:57.161796+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",
@@ -709,16 +739,23 @@
         }
       },
       "state": "open",
-      "status": "CANDIDATE_UNMEASURED",
+      "status": "RETENTION_FIX_NATIVE_WEB_TESTED; NEXT_NORMAL_PLAY_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e6fef69a19cf73b4805fda734724652d76e0e141",
+          "evidence": [
+            "docs/testing/performance_audit_20261104_batch002_003.md"
+          ]
+        }
+      ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
         "evidence": []
       },
@@ -727,10 +764,15 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Measure retained bytes/entries over long input windows and check pending ordering, rollback and exit settlement before any fix."
+        },
+        {
+          "kind": "branch_integration",
+          "reference": "docs/testing/performance_audit_20261104_batch002_003.md",
+          "summary": "PR 30 source and retained native/Web evidence reconciled with current main; final merged-source automated checks pending. Broad playtesting remains paused by the current user direction."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Measure retained consumed-input entries/bytes and slopes over long live windows and exit on both runtime platforms. Prove pending ordering/rollback/exit settlement before deciding any fix; candidate remains unmeasured and no leak is confirmed.",
+      "next_action": "Finish merged-source ordering, settlement, rollback and liveness checks; then verify exact main/NEXT delivery. Broader play acceptance remains Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -740,7 +782,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T06:27:57.161796+00:00"
     },
     {
       "id": "BTH061-PULLTABS-SAVE-001",

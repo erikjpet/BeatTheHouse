@@ -1,0 +1,132 @@
+{
+  "status": "complete",
+  "enrichment": {
+    "status": "complete"
+  },
+  "browser": "chrome",
+  "browser_version": "156.0.8078.74",
+  "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+  "launch_options": {
+    "headless": true,
+    "executable_path": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "args": [
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "--disable-backgrounding-occluded-windows"
+    ]
+  },
+  "cpu_throttle_rate": 1,
+  "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/?bth_perf=1",
+  "cold_cache": false,
+  "ready_only": true,
+  "ready": {
+    "wall_msec": 18969,
+    "navigation_wall_msec": 16952,
+    "node_navigation_wall_msec": 16959,
+    "payload": {
+      "plan": "",
+      "sample_stride_frames": 30,
+      "ticks_msec": 14429,
+      "web_thread_feature": false
+    }
+  },
+  "startup_timing": {
+    "now_msec": 23525,
+    "navigation": [
+      {
+        "dom_content_loaded_msec": 1234.2000000476837,
+        "load_msec": 1234.3999999761581,
+        "response_end_msec": 5.5,
+        "transfer_bytes": 5814,
+        "encoded_bytes": 5514
+      }
+    ],
+    "resources": [
+      {
+        "name": "index.pck",
+        "start_msec": 1232.6000000238419,
+        "duration_msec": 1186.7999999523163,
+        "response_end_msec": 2419.399999976158,
+        "transfer_bytes": 47241732,
+        "encoded_bytes": 47241432,
+        "decoded_bytes": 47241432
+      },
+      {
+        "name": "index.js",
+        "start_msec": 12.899999976158142,
+        "duration_msec": 1178.5,
+        "response_end_msec": 1191.3999999761581,
+        "transfer_bytes": 2824117,
+        "encoded_bytes": 2823817,
+        "decoded_bytes": 2823817
+      },
+      {
+        "name": "index.side.wasm",
+        "start_msec": 1356.1000000238419,
+        "duration_msec": 537.3999999761581,
+        "response_end_msec": 1893.5,
+        "transfer_bytes": 21802658,
+        "encoded_bytes": 21802358,
+        "decoded_bytes": 21802358
+      },
+      {
+        "name": "index.wasm",
+        "start_msec": 1232.2000000476837,
+        "duration_msec": 24,
+        "response_end_msec": 1256.2000000476837,
+        "transfer_bytes": 1508537,
+        "encoded_bytes": 1508237,
+        "decoded_bytes": 1508237
+      },
+      {
+        "name": "index.png",
+        "start_msec": 12.5,
+        "duration_msec": 21.899999976158142,
+        "response_end_msec": 34.39999997615814,
+        "transfer_bytes": 21743,
+        "encoded_bytes": 21443,
+        "decoded_bytes": 21443
+      },
+      {
+        "name": "index.icon.png",
+        "start_msec": 1236.8999999761581,
+        "duration_msec": 14.300000071525574,
+        "response_end_msec": 1251.2000000476837,
+        "transfer_bytes": 15118,
+        "encoded_bytes": 14818,
+        "decoded_bytes": 14818
+      },
+      {
+        "name": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "start_msec": 2416.899999976158,
+        "duration_msec": 13,
+        "response_end_msec": 2429.899999976158,
+        "transfer_bytes": 341186,
+        "encoded_bytes": 340886,
+        "decoded_bytes": 340886
+      }
+    ]
+  },
+  "startup_console": [
+    {
+      "type": "warning",
+      "classification": "expected_audio_autoplay_warning",
+      "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio",
+      "wall_msec": 19821
+    }
+  ],
+  "page_errors": [],
+  "request_failures": [],
+  "failed_responses": [],
+  "viewport": {
+    "inner_width": 1280,
+    "inner_height": 720,
+    "outer_width": 1280,
+    "outer_height": 720,
+    "device_pixel_ratio": 1,
+    "screen_width": 1280,
+    "screen_height": 720
+  },
+  "wall_msec": 25899,
+  "report": null
+}

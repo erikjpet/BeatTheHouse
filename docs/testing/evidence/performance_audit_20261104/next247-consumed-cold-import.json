@@ -1,0 +1,11 @@
+{
+  "schema": "bth.cold_import_request/v1",
+  "target_commit": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+  "target_tree": "d6666d67326787155852e0fc51a91c354946e8ff",
+  "baseline_commit": "adb75dbe7f97e2b96279fbf401f7d7b8913072b3",
+  "before_inputs_sha256": "c75666fb787adb05b87da15896a9458412f968041245fbedba90fa16818ef20b",
+  "after_inputs_sha256": "ca80d6c9d863263f44704f45c4443f88c7b5c996b3904d20cc648707db90ec3e",
+  "changed_paths": [
+    "scripts/tests/coin_pusher_continuous_input_check.tscn"
+  ]
+}

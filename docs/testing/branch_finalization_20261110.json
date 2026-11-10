@@ -1,0 +1,933 @@
+{
+  "observed_at": "2026-11-10T06:30:30.229882+00:00",
+  "base": "b2a9cef8156c993391e44bcef75dec42558c41eb",
+  "scope": "All local heads and currently fetched origin heads in the primary repository; no branch deleted; archived or superseded experiments are not product merge candidates.",
+  "branches": [
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-card-layout",
+      "sha": "760b58f549ee6e8cc68a9e24a16e4808642b1d51",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "760b58f549ee6e8cc68a9e24a16e4808642b1d51 Keep guided event cards readable beside Pal's pointer"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-parking-verified",
+      "sha": "0e0825e62c05a03ceba5dbe7ddf090cfd648c264",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "0e0825e62c05a03ceba5dbe7ddf090cfd648c264 Keep Parking Lot Tip readable beside Pal's pointer"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Current lessons.json retains parking-tip beside_card; current CoachViewModel/CoachOverlay preserve the placement argument and side-card positioning."
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-crew-club-diagnosis",
+      "sha": "32708794db6fa72de56e516b6a0d770aada822d5",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-dialogue-tutorial-source",
+      "sha": "6d03a823d650acddc110cad8556c870d1b25d9cc",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "6fc40eeff0a0d43a91bf24cf7f87bd4848b491de WIP: stabilize TalkDock choices during text reveal",
+        "6d03a823d650acddc110cad8556c870d1b25d9cc WIP: recognize tutorial room return after Continue"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-dialogue-tutorial-stability",
+      "sha": "6b93db92351bd4783ad6848d5f9f6e3851cbdf46",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-grand-auto-snapshot",
+      "sha": "76e1e478e09567680bf9a4069b379a775171c2cf",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "76e1e478e09567680bf9a4069b379a775171c2cf Reuse unchanged visited room projections in save snapshots"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Superseded by fec11876 owned inactive-room projections across save generations; do not restore full source JSON/recursive comparison caching."
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-item-card-readability",
+      "sha": "514d73a0cee36558e4d46b158c421757c60d8eca",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "514d73a0cee36558e4d46b158c421757c60d8eca Keep selected room cards legible over scene art"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-linda-stability",
+      "sha": "84fadd27f10ecc94d23417e64a699852ff29aea5",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "84fadd27f10ecc94d23417e64a699852ff29aea5 Keep dialogue choices stable during text reveal"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-linda-travel",
+      "sha": "519ee155ed7ec568b5cbebadd1f144a4351f396c",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "519ee155ed7ec568b5cbebadd1f144a4351f396c Avoid punishing instructed tutorial room travel"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-live-resume-repairs",
+      "sha": "1532028608d053834494c78ef65ef11c1a995801",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "107c03727e10b323c8825515d5f37b0ce493aeb2 WIP: preserve live game state and tutorial direction after Continue",
+        "1532028608d053834494c78ef65ef11c1a995801 WIP: reveal restored poker hand and stabilize dialogue choices"
+      ],
+      "equivalent_commits": [],
+      "disposition": "WIP prototypes replaced by qualified resume fb414510, tutorial-return 6b93db92, wager/session fixes and later save/room authority corrections on main."
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-nell-guide",
+      "sha": "cf234e6b03220959c574a57f9057c3a66ee54566",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "cf234e6b03220959c574a57f9057c3a66ee54566 Point Pull Tabs tutorial at the machine"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-neon-jacks-wager",
+      "sha": "4179e0105c7bdd3645f5e7e5767de8c6b8257fba",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "4179e0105c7bdd3645f5e7e5767de8c6b8257fba WIP: validate Video Poker wagers against cabinet funding"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-populated-room-safeguard",
+      "sha": "7d297ce053502e34cdad5e93b1742b2bb32797b6",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-current",
+      "sha": "6143be7d25f23e210c0d51078fc0da02b8e8369c",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-proof",
+      "sha": "43c611751be2645ceb7042226f734b5f95a81ed6",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "43c611751be2645ceb7042226f734b5f95a81ed6 Reuse exact validated primary bytes during save rotation"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-pull-tabs-tray",
+      "sha": "cdfedca6614532e39d484209386bcee6b4941578",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-qualified-resume",
+      "sha": "fb4145100cc8e8206f3ff0c4b302750c9a47f71e",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-sal-talk",
+      "sha": "713acc7633910ae7bb70fb2795e961e60f2278ef",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "713acc7633910ae7bb70fb2795e961e60f2278ef WIP: Load authored Sal dialogue on cold shop entry"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-save-stage-diagnostic",
+      "sha": "f5923e069bfada79aafaf530dabf4a679d0f12d6",
+      "classification": "historical_diagnostic",
+      "unique_commits": [
+        "f5923e069bfada79aafaf530dabf4a679d0f12d6 diag(save): add opt-in Web save stage clock"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Opt-in timing instrumentation only. No player fix; preserve branch as diagnostic history without importing extra probes into release source."
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-tutorial-paid-recovery",
+      "sha": "ceba2ad0b56f3a2993dd324541a6a8dd1e3c163d",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "ceba2ad0b56f3a2993dd324541a6a8dd1e3c163d WIP: recover tutorial redemption from retained receipts"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-tutorial-return-stability",
+      "sha": "990436c70102faa06e99907638aca995f6713666",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "990436c70102faa06e99907638aca995f6713666 Recognize tutorial room return after Continue"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-video-poker-denom-copy",
+      "sha": "ade346ca435a0d809aba3761807d92adf99ee164",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "f58781492bab90a7c1de5762a31ff094fe798562 WIP: Show actual video-poker coin cost beside cabinet label"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-video-poker-production",
+      "sha": "15aae0cc0b574a60a9e40b41265c931d98134fe8",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "15aae0cc0b574a60a9e40b41265c931d98134fe8 Validate Video Poker wagers against cabinet funding"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-functional",
+      "sha": "33825aed3d69eb3bbae88a5bc88a7609fc8c5f89",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "cf1e5c2f5e4ce84735f21ad4e8a61e9da90e6b64 Validate Video Poker wagers against cabinet funding",
+        "33825aed3d69eb3bbae88a5bc88a7609fc8c5f89 Restore validated Video Poker wager preferences on entry"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-main-ready",
+      "sha": "0dfe1c79af70f9bb7667c1b67c9a6c7eb660105c",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-saved-wager-restore",
+      "sha": "1e2fe7a790b7fcee4722356030da36645d25f301",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "1e2fe7a790b7fcee4722356030da36645d25f301 Restore validated Video Poker wager preferences on entry"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-settled-session",
+      "sha": "11b8c99fac1529046e93b0a823f4cc4d564b8477",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "cf1e5c2f5e4ce84735f21ad4e8a61e9da90e6b64 Validate Video Poker wagers against cabinet funding",
+        "33825aed3d69eb3bbae88a5bc88a7609fc8c5f89 Restore validated Video Poker wager preferences on entry",
+        "11b8c99fac1529046e93b0a823f4cc4d564b8477 Retire settled Video Poker authority sessions"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-web-phased-autosave",
+      "sha": "41b19a4ba4e3b28054aa01236ae57e22a15eda12",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "41b19a4ba4e3b28054aa01236ae57e22a15eda12 perf(web): phase autosave across presentation frames"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Main has qualified 9fbdc5f5 Web phased saves plus subsequent e5954a48 validation. docs/development/web-autosave-phases-20261021.md records qualified ownership and durability."
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-z85-decode",
+      "sha": "94bcba72b2744ef89dc01fc90d3c6e6102fe4078",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-after-host-evaluation-1625",
+      "sha": "f134eb34685bc7f4e60310e00cba3930332bc3a7",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-final-script-20261022",
+      "sha": "9e8dfe12cf854deef868b7da38a7af0b93537b6e",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-guard-experiment-20261022",
+      "sha": "4ca11ee8cbd3ac77f69981e490b2a044da910095",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "fe51c0f6c661ea2cdf75fc52f6f37581932a9f8a Avoid full-run continuations for bounded ordinary event commands",
+        "d30bbcf0d53f91158c248f48e8cb6011898f4368 Compile authored route unlocks with event removal from owned room input",
+        "4ca11ee8cbd3ac77f69981e490b2a044da910095 Own continuation guard input separately from turn advancement"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Alternative continuation/room compilation experiment. Main retains qualified bounded script path 9e8dfe12 and actual membership fix c43391ad; do not replace current authority boundaries with old prototype."
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-remaining-20261022",
+      "sha": "c43391adefadc929c9de019608ae153eb0dffcce",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-source-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "91f706901c1580760e4763a663e02979f6dc74ae Bound room event responses with owned native continuations"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Same 91f70690 commit retained on rejected-native-bulk-comparison; not a missing accepted fix. Current bounded script/membership corrections supersede this native bulk experiment."
+    },
+    {
+      "ref": "refs/heads/codex/baccarat-display-20261028",
+      "sha": "d503433db2d590fe447a666e1299161f6b70ecd7",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "d503433db2d590fe447a666e1299161f6b70ecd7 Fix Baccarat readiness and currency display records"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/blackjack-character-detail-20261023",
+      "sha": "6137ae7c32e683f4c3805f5abacd8e2c054fb1c1",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/bounded-popup-transaction-20261021",
+      "sha": "2c7653b09eb427e8361c907c45d6e355121fa444",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "2c7653b09eb427e8361c907c45d6e355121fa444 Isolate one ordinary popup response across model and presentation iterations"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Early broad popup snapshot prototype predates qualified owned room publication and bounded script continuations. docs/analysis/owned-event-publication.md preserves the narrower production authority contract."
+    },
+    {
+      "ref": "refs/heads/codex/bus-driver-copy-20261021",
+      "sha": "f79c08caa9e84cb8e12953a26fb34597223cdaa4",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "f79c08caa9e84cb8e12953a26fb34597223cdaa4 fix: keep bus driver count guidance within compact card"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/cage-room-access-20261023",
+      "sha": "7508210fdb04d5267f4bb260801563131ed72ab0",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/card-interest-display-20261030",
+      "sha": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/cass-slot-reconciliation-20261028",
+      "sha": "3db4b1a4d099ae2543671afbfb276b5ca3265831",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "3db4b1a4d099ae2543671afbfb276b5ca3265831 Reconcile live actor slots with sealed room occupancy"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/cold-glimpse-readonly-diagnostic-20261028",
+      "sha": "c263597a60c662842398f3e8b77919cc358a7b4f",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/collection-warm-materialization-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/compiled-scenario-host-20261021",
+      "sha": "ae4400cd64c00dac022b3b86b43ce33b0b673d07",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "f158704f5b4fddbef2ea2967f9bb1ba557f2fa98 experiment: retain scenario host compilation evaluation",
+        "ae4400cd64c00dac022b3b86b43ce33b0b673d07 docs: correct retained Web export file count"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Its docs/testing/scenario_host_compilation.md explicitly says retain as experiment, do not publish: ~20 ms contextual gain did not remove stall, with incomplete Web parity. Do not revive."
+    },
+    {
+      "ref": "refs/heads/codex/crew-delivery-time-windows-20261023",
+      "sha": "04b3520571c38d243216ec68f025794289ee7f59",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/crew-handoff-cold-feedback-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/crew-planning-overflow-20261031",
+      "sha": "f7e63136d3e5cb57699e91156e252ff285e1d9ad",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/crew-stake-loss-publication-20261101",
+      "sha": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/family-repayment-qualified-4a5b62c3",
+      "sha": "4a5b62c3530a16eb0350e8740c1abadadfff5c08",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "4a5b62c3530a16eb0350e8740c1abadadfff5c08 Expose local family loan repayment in Run Menu"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/family-repayment-visibility-20261021",
+      "sha": "fa0e0c87408437f9245af83ec8ad4bd87d67bdf0",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/finalize-layout-20261110",
+      "sha": "b2a9cef8156c993391e44bcef75dec42558c41eb",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/finalize-qa-storage-20261110",
+      "sha": "b2a9cef8156c993391e44bcef75dec42558c41eb",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/fixed-hud-banner-20261103",
+      "sha": "3fd56aebde05182a02a6babf096ae8b7fe430f7f",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/gala-cold-result-feedback-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/gala-failure-aftermath-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/inactive-save-projection-20261021",
+      "sha": "fec1187642da652c48371c138c5af043e3077b60",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/inactive-save-projection-qualified-20261021",
+      "sha": "50005eec467f307668bd4bdefb2e397dfac97ac4",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "50005eec467f307668bd4bdefb2e397dfac97ac4 Reuse owned inactive-room projections across save generations"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/incremental-cleanup",
+      "sha": "d1bab36ca4374bd20364a0dfa042be6298026dde",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/item-audit-report-20261028",
+      "sha": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/jazz-room-availability-20261027",
+      "sha": "e70b778ae683f4b2c74b7e434a65088eff43d038",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "e70b778ae683f4b2c74b7e434a65088eff43d038 fix: give Jazz paper leads a slot and propagate publication failure"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/live-catalog-boundary-20261021",
+      "sha": "2751fced1d6f5d95ace85c975671ccc87878b0ab",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/live-room-authority-first-web-20261021",
+      "sha": "4211d2543cc92c435d06012a7304fb96bd7bf6c9",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "4211d2543cc92c435d06012a7304fb96bd7bf6c9 Reuse accepted room authority for unchanged live action inputs"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Qualified current live-room authority implementation and review e0913242 are on main. This earlier first-Web alternative is not a new accepted fix."
+    },
+    {
+      "ref": "refs/heads/codex/live-room-authority-reuse-20261021",
+      "sha": "9d10d5ffa8e4950b4e85205a3fc4a8931202d731",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/loaded-primary-proof-20261021",
+      "sha": "71c3f0a63c55ab99b940c2be036853f502b551ff",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/map-travel-coach-20261021",
+      "sha": "30156c3a57c877d9cf4a8f655907603f10479ac2",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/money-flow-archive-20261028",
+      "sha": "d3cd5c80cd4fb8c8a6677b849d8a32425fbe61a0",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "d3cd5c80cd4fb8c8a6677b849d8a32425fbe61a0 Preserve archived Money Flow totals with explicit history coverage"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/motel-clue-copy-20261021",
+      "sha": "dfb2f8a45558179c56562ad5b7b98a1a53f57c9a",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/motel-stakeout-vis020-20261028",
+      "sha": "9f299c570419d70250360fca41961048a95d852f",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "3d843dfedfeb35d8cbe4b732fe0ef3be5bb8d044 Restore Motel Stakeout actor corridor positions",
+        "9f299c570419d70250360fca41961048a95d852f Fit Blackjack Peek warning within inspector card"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/native-snapshot-direct-comparison-20261022",
+      "sha": "075b8e16194a5be88debc7f32a65a46f056bdb2a",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "075b8e16194a5be88debc7f32a65a46f056bdb2a Bound room event responses with owned native continuations"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Native snapshot comparison arm, not current production continuation. Retain comparison history; qualified script/membership path already on main."
+    },
+    {
+      "ref": "refs/heads/codex/numbers-slip-history-20261021",
+      "sha": "8eefe65008d6c3c34c9bca9e1d1319674964bfa4",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers",
+      "sha": "b82b84b9dec4a0a158a6ef6e758540c49ce56afd",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "7f04a1561f99ae74adc684c8068baa9e46f09a13 feat: add deterministic optional offers to existing characters",
+        "b82b84b9dec4a0a158a6ef6e758540c49ce56afd fix: expose optional offers on visible character cards"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Nine-offer integration documented by docs/reports/character_offers_integrated_2026-10-20.md and main ancestor d8856cd5; current code retains later qualified caches and authority corrections."
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-batch-two",
+      "sha": "bfe26291191758e92f3ef88ab56482de8e6cd696",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "7f04a1561f99ae74adc684c8068baa9e46f09a13 feat: add deterministic optional offers to existing characters",
+        "b82b84b9dec4a0a158a6ef6e758540c49ce56afd fix: expose optional offers on visible character cards",
+        "bfe26291191758e92f3ef88ab56482de8e6cd696 feat: add Ox route advice and Rafi casino ride offers"
+      ],
+      "equivalent_commits": [
+        "4508442d832269dcd3076fe7fb7e9a684f7112d9 feat: add June watch sale and Sable cufflink repair offers"
+      ],
+      "disposition": "June/Sable and Ox/Rafi changes explicitly integrated in docs/reports/character_offers_integrated_2026-10-20.md; main contains current nine-offer implementation."
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-integrated-20261020",
+      "sha": "d8856cd5c61c5136dfe7d14582b57111af5d40dc",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/owned-membership-evaluation-20261021",
+      "sha": "8878516168390756a3b0c5ce666b6f3df05b11f7",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "172df481e1de23f754791fe4d359f7da30064634 experiment: evaluate owned resolved-event compilation (not qualified)",
+        "8878516168390756a3b0c5ce666b6f3df05b11f7 experiment: preserve unshipped authenticated membership evaluation"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Commits explicitly retain unqualified/unshipped authenticated-membership evaluation. Current narrower owned-event publication is documented in docs/analysis/owned-event-publication.md."
+    },
+    {
+      "ref": "refs/heads/codex/owned-physical-compiler-20261021",
+      "sha": "158718f28481afe3210177894aaacbba3f987d6d",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-20261021",
+      "sha": "b92a93f5ef11b399c2f88913cbb55aa42c62b747",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-a23-qualified-20261021",
+      "sha": "fc3eccf497bd093cb9f22949434138720b345836",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "7187f59094aeed62bf76776e46113fbf0a2cff68 refactor: publish owned room catalogs at state boundaries",
+        "fc3eccf497bd093cb9f22949434138720b345836 docs: record real Web room publication response and parity limits"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-qualified-private-20261021",
+      "sha": "c9ee2fb7b5034fce46ec38b3c66ad75239ddd1cc",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "d26240541fd199e99012fb9769ba93fae8eb5cd8 refactor: publish owned room catalogs at state boundaries",
+        "c9ee2fb7b5034fce46ec38b3c66ad75239ddd1cc docs: record real Web room publication response and parity limits"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/pawn-counter-refresh-20261027",
+      "sha": "aac3cad69f3561d76b751566525224c2dc221320",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "aac3cad69f3561d76b751566525224c2dc221320 Refresh the Pawn Counter after an interrupted sale"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/peek-cold-hud-test-20261028",
+      "sha": "8107039e9fa47b630207971bde62e6ca9c65b0b8",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/preservation-reconciliation-20261021",
+      "sha": "756690c66d1376c9af78e9fe4017f460a44aa5b4",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/qa-paid-auto-guard-test-only-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/qa-ux012-watched-nudge-20261027",
+      "sha": "24a06be5a0ba42f9726fc2b92ce2a36865bc201f",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/quick-start-equipped-loadout-20261027",
+      "sha": "10cf99b2409ed1646d29d13849252f88045d3a44",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "10cf99b2409ed1646d29d13849252f88045d3a44 Carry equipped loadout through Home Quick Start"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/rejected-bulk-script-comparison-20261022",
+      "sha": "1dab653a072f96671fe7de0f418143da992a1b7d",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "1dab653a072f96671fe7de0f418143da992a1b7d Bound inline room responses across owned model and presentation phases"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Named rejected comparison arm; current qualified script continuation 9e8dfe12 and later c43391ad are retained."
+    },
+    {
+      "ref": "refs/heads/codex/rejected-native-bulk-comparison-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "91f706901c1580760e4763a663e02979f6dc74ae Bound room event responses with owned native continuations"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Named rejected native comparison arm; do not add native toolchain changes to this stability integration."
+    },
+    {
+      "ref": "refs/heads/codex/rejected-script-runtime-comparison-20261022",
+      "sha": "22e9831a5172ffc1edb6266b4d1351c1a2428162",
+      "classification": "retired_experiment",
+      "unique_commits": [
+        "22e9831a5172ffc1edb6266b4d1351c1a2428162 Bound inline room responses across owned model and presentation phases"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Named rejected script comparison arm; current qualified script continuation 9e8dfe12 and later c43391ad are retained."
+    },
+    {
+      "ref": "refs/heads/codex/roulette-reveal-20261023",
+      "sha": "5401462aaf1550b4d1a5883cb35d5813a3f66586",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/run-menu-actions-first-20261021",
+      "sha": "6bb31bb798d6715b5257046c63b424d73a80dcf6",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/runtime-terminal-shop-peek-20261028",
+      "sha": "3408583ab1c50ba1c40b423a50d54a6631f13564",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "3408583ab1c50ba1c40b423a50d54a6631f13564 Record actual applied watched Peek chip loss"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/save-z85-browser-20261021",
+      "sha": "ef3c963bb3f1f0cd54ca4533c42c6f607567b7e3",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "175ed6795a63e809e4ba2db9e7606cb01bedee28 perf: accelerate Web save byte conversion without changing format",
+        "02bd8d1d45b7a3e5bfc07a60f13f5d9df284c6d7 perf: bound no-thread Web autosave work across owned phases",
+        "b31cfb05040ae3cee196bc4d22cf98989299cccf fix: detach nonstandard definition values in pending saves",
+        "ef3c963bb3f1f0cd54ca4533c42c6f607567b7e3 perf: retain scalar fast path while owning save buffers"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Qualified byte ownership/phased save work is on main via 9fbdc5f5; current documentation records scalar fast-path correction, detached packed arrays and exact restore parity."
+    },
+    {
+      "ref": "refs/heads/codex/scenario-flush-noop-20261021",
+      "sha": "dfb2f8a45558179c56562ad5b7b98a1a53f57c9a",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/scenario-projection-once-20261021",
+      "sha": "30156c3a57c877d9cf4a8f655907603f10479ac2",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/slot-collect-cheat-current-20261104",
+      "sha": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/street-craps-throw-034-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/table-ending-presentation-20261103",
+      "sha": "0324b475f424115cb8a731119fa53ca5b5e3f61c",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/travel-risk-disclosure-history-20261030",
+      "sha": "78be621bbaae831994ad55187f239056fc751d43",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "5c907791f4289c894312d73739de678c4836009e Disclose route shakedowns and publish terminal travel history",
+        "78be621bbaae831994ad55187f239056fc751d43 Verify shaped travel quote bounds and popup controls"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Integrated in ab57f8fa. Current travel view includes original disclosure changes plus closing fallback; current same-named test adds full-rect and cold difference diagnostics."
+    },
+    {
+      "ref": "refs/heads/codex/turn-counter-publication-20261021",
+      "sha": "16f1598288247af7ea78bf80bb6a976a8c59a113",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/turn-publication-native-qualified-20261021",
+      "sha": "8c2c8d57e08b3ba50d913a18e196a660aa3e2bb6",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "8c2c8d57e08b3ba50d913a18e196a660aa3e2bb6 Retain validated room compilation across empty turn boundaries"
+      ]
+    },
+    {
+      "ref": "refs/heads/codex/underground-game-placement-20261023",
+      "sha": "04a114c05b5103f54fb29ddd75f4689f143e642c",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/web-save-phases-main-20261021",
+      "sha": "9fbdc5f5e4d4b4895c9c5d6938a962cd3ce26ad5",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/heads/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "classification": "archive_only",
+      "evidence": "docs/reports/0.6_wip_player_benefit_decisions_2026-10-18.md; archive handoff at 23f6eba4",
+      "note": "Historical consolidated archive explicitly has no pending implementation; never merge wholesale."
+    },
+    {
+      "ref": "refs/heads/fix/crew-access-recovery",
+      "sha": "8592d0d89ef394749a594f05ea381282d07ec09a",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "6be04c922b1510b01f6b84ea8637a615d53e2aca Enforce Crew room credentials and preserve safe recovery",
+        "240f2d44f82d07f7769e91063b9da3b72f268b40 Expose ticket cashout on counter NPCs and require redemption hosts",
+        "9916293ec4c7da5c01172a79632f8c0a7eb3e7b0 Refresh restored room bindings from trusted catalog",
+        "8592d0d89ef394749a594f05ea381282d07ec09a Reconstruct already sealed Crew baseline geometry"
+      ]
+    },
+    {
+      "ref": "refs/heads/wip/preservation-20261018-authority-placement",
+      "sha": "f2994d1600f970488dd17fc0e2e790b365d54437",
+      "classification": "archive_only",
+      "unique_commits": [
+        "8a3534fa197b23c43680626a642a45c286c6c1c6 index on codex/0.6.1-stability: 9f813505 Prevent scenario journals from blocking long play"
+      ],
+      "equivalent_commits": [
+        "a0515b2b4b0becd0e1a40e6df62c7eefc91842de Stabilize replay save acknowledgments",
+        "03420c7964953be5993ea1188a78d6066aeed637 Ignore hover-derived replay info cards",
+        "5764b15c157adc5ee1cd4a4022346d02b1f00266 Align Crew fixture with released state",
+        "9f813505179944d463cdc1a7b6381e85e2ee2122 Prevent scenario journals from blocking long play"
+      ],
+      "disposition": "Held stash/index history explicitly dispositioned by docs/archive/0.6/preservation-reconciliation-20261018.md and 30-entry table; no justified runtime cherry-pick remains."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/bth-lan-tls-trust-20261104",
+      "sha": "5274623bff638682ec9f41f8d92be489a4505355",
+      "classification": "historical_environment_report",
+      "unique_commits": [
+        "5274623bff638682ec9f41f8d92be489a4505355 Record open BTH browser acceptance environment status"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Documentation-only open acceptance report at 5274623b. No runtime implementation; current acceptance/security state is tracked separately and is not changed by this branch integration."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/item-factual-help-20261104",
+      "sha": "9b3e4db273b91ebf2eea071d3bd54393f3caccaf",
+      "classification": "ancestor_of_main"
+    },
+    {
+      "ref": "refs/remotes/origin/codex/optional-character-offers-batch-two",
+      "sha": "bfe26291191758e92f3ef88ab56482de8e6cd696",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "7f04a1561f99ae74adc684c8068baa9e46f09a13 feat: add deterministic optional offers to existing characters",
+        "b82b84b9dec4a0a158a6ef6e758540c49ce56afd fix: expose optional offers on visible character cards",
+        "bfe26291191758e92f3ef88ab56482de8e6cd696 feat: add Ox route advice and Rafi casino ride offers"
+      ],
+      "equivalent_commits": [
+        "4508442d832269dcd3076fe7fb7e9a684f7112d9 feat: add June watch sale and Sable cufflink repair offers"
+      ],
+      "disposition": "June/Sable and Ox/Rafi changes explicitly integrated in docs/reports/character_offers_integrated_2026-10-20.md; main contains current nine-offer implementation."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/optional-character-offers-qualified-20261020-2018",
+      "sha": "240f0d8681c1004021cb5889154e5e0d225e362c",
+      "classification": "patch_equivalent",
+      "unique_commits": [],
+      "equivalent_commits": [
+        "240f0d8681c1004021cb5889154e5e0d225e362c feat(offers): preserve cloud-qualified optional character offers"
+      ]
+    },
+    {
+      "ref": "refs/remotes/origin/codex/performance-audit-20261104",
+      "sha": "ed93e10a3ddbeedee37b0a8037eea33fd8af0807",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "ed93e10a3ddbeedee37b0a8037eea33fd8af0807 Track BTH-PERF-20261104 and prevent continuous input starving Web coin views"
+      ],
+      "equivalent_commits": [],
+      "disposition": "PR28 squash ea136553 is already on main; retained Coin001 evidence identifies precursor separately. This branch is not another missing runtime change."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/performance-retention-hints-20261104",
+      "sha": "7502ba860908fdc76e6163bcbdf6fadabc72e063",
+      "classification": "integrated_in_this_batch",
+      "unique_commits": [
+        "e6fef69a19cf73b4805fda734724652d76e0e141 BTH-PERF-20261104-002/003: bound consumed pusher inputs and reduce poker hint work",
+        "7502ba860908fdc76e6163bcbdf6fadabc72e063 Associate performance findings with tested source while keeping whole-game scope Open"
+      ],
+      "equivalent_commits": [],
+      "disposition": "PR30 e6fef69a + 7502ba86 merged with current main. Preserve current Drop-price/queue patch and newer task entries; fresh focused parity/liveness/compaction checks recorded separately."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/restore-bth-todo-20261103",
+      "sha": "ce095b2c9c92eba68d1b889036dc1bd8dc9976c5",
+      "classification": "superseded_integrated",
+      "unique_commits": [
+        "1567f51e0b45d71cbd5d8de8f6b0b3c6082eb070 Restore stable BTH task IDs and commit-gated playtest tracking",
+        "d8b1ef412ff28ecda2157780b62bf917b6efc54e Associate restored task tracking with its commit and preserve current main records",
+        "8b2b3e11c33f1a3e7fde5d26dc58d707500a1f0f Refresh active fix commits and preserve current main task records",
+        "ce095b2c9c92eba68d1b889036dc1bd8dc9976c5 Record verified game-return and Alley NEXT identities with acceptance limits"
+      ],
+      "equivalent_commits": [],
+      "disposition": "Older named-task table restoration is superseded by current structured ledger/manual checker and later reconciled task/deployment records. Do not overwrite newer statuses with stale branch text."
+    },
+    {
+      "ref": "refs/remotes/origin/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "classification": "archive_only",
+      "evidence": "docs/reports/0.6_wip_player_benefit_decisions_2026-10-18.md; archive handoff at 23f6eba4",
+      "note": "Historical consolidated archive explicitly has no pending implementation; never merge wholesale."
+    }
+  ],
+  "summary": {
+    "patch_equivalent": 32,
+    "superseded_integrated": 12,
+    "ancestor_of_main": 53,
+    "historical_diagnostic": 1,
+    "retired_experiment": 9,
+    "archive_only": 3,
+    "historical_environment_report": 1,
+    "integrated_in_this_batch": 1
+  },
+  "current_merged_source_tests": [
+    {
+      "run": "finalize-branches-20261110-vp-parity",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-vp-parity\\evidence\\job.json",
+      "job_sha256": "4778ce7a38a005a4a3476c3be691dd944da0dd682b503f554db299827945d45f",
+      "log_sha256": "2f98db0afe4cd8148acba27078bab3b52e524f3fe981f544748aa77645086cd2",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292235.8403318
+    },
+    {
+      "run": "finalize-branches-20261110-compaction-current",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-compaction-current\\evidence\\job.json",
+      "job_sha256": "70e051a71f03445c5f7b5318e7c9041d28ff5d0925303ff4e80d9321abca36e6",
+      "log_sha256": "4773ddb7301cb9e9d158e60c0081e0bd0abe653fb9bce58c3f258ad08e4d1de1",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292447.7133038
+    },
+    {
+      "run": "finalize-branches-20261110-continuous",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-continuous\\evidence\\job.json",
+      "job_sha256": "466bceae4c6aba1f60692d97de105069b6a460c69c35831614b759a3f298290b",
+      "log_sha256": "285382c52914140d75605e563aec2a659d10e9541f2c4579a736233b98493209",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292460.212166
+    },
+    {
+      "run": "finalize-branches-20261110-drop-price-guarded",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-drop-price-guarded\\evidence\\job.json",
+      "job_sha256": "33ebf14d0cf804d21409259238ee52113dd78ef4e5cf2dd5905cad4d929e09e0",
+      "log_sha256": "3b1870f1250911aef09a64e63be5d5e3a728f5d396c129005db13e7b797cabf6",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292587.932175
+    },
+    {
+      "run": "finalize-branches-20261110-liveness-current",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-liveness-current\\evidence\\job.json",
+      "job_sha256": "dbcb4476c09a2b8a11b75e284b5a8004c0b295a083cc31c2143317312db7f417",
+      "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292612.1702204
+    },
+    {
+      "run": "finalize-branches-20261110-tool-tests",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\finalize-branches-20261110-tool-tests\\evidence\\job.json",
+      "job_sha256": "b431728cd4c221fd48d092f84176342d83f7089e616735d6edbd09f56c8b96b1",
+      "log_sha256": "89ca6f96567412204d193fbe448f029be8cd8debd51123b7e896a3b610d8bdb0",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "finished_epoch": 1794292515.5013227
+    }
+  ],
+  "tested_source_sha256": {
+    "scripts/games/coin_pusher.gd": "5074bbdfc9157586b443c6f37877253822a854542e5dfb08eeb2455a34ef8b75",
+    "scripts/games/coin_pusher/coin_pusher_live_session.gd": "5397496ae4c24436df9daac10e69eb47c09df50c9a2860bdcd96dc5467178e63",
+    "scripts/games/video_poker.gd": "12148ac5a579dc664013972541d82c9435a9821c937c2f50556937391baccc76"
+  },
+  "limits": "Focused native/module regression and Python tooling. Historical true-Web receipts preserved separately. Not extensive playtesting or full-game qualification; exploratory playtesting remains paused."
+}
