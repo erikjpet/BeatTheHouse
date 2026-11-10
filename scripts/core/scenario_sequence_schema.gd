@@ -83,7 +83,7 @@ const MATERIAL_PATH_FINGERPRINT_ENTRY_OVERHEAD_BYTES := 128
 const MAX_BRANCHES_PER_PHASE := 8
 const MAX_OBJECTIVES := 8
 const MAX_STEPS_PER_OBJECTIVE := 8
-const SUCCESSFUL_VALIDATION_MEMO_VERSION := 2
+const SUCCESSFUL_VALIDATION_MEMO_VERSION := 3
 const SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES := 256
 
 static var _successful_validation_memo: Dictionary = {}
@@ -170,12 +170,23 @@ static func _successful_validation_memo_key(definition: Dictionary, target_inven
 	var memo_definition := definition.duplicate(false)
 	memo_definition.erase("__scenario_sequence_runtime_validated")
 	memo_definition.erase("__scenario_sequence_catalog_resolved")
-	return JSON.stringify({
+	# JSON erases Variant distinctions (for example StringName/String and packed/
+	# ordinary arrays). The validator observes those types, so a successful proof
+	# must use their native typed representation, not a lossy JSON identity.
+	var memo_bytes := var_to_bytes({
 		"memo_version": SUCCESSFUL_VALIDATION_MEMO_VERSION,
 		"definition": memo_definition,
 		"target_inventory": _validation_authority_memo_projection(definition, target_inventory),
 		"operation_registry": _operation_registry_memo_identity(operation_registry),
-	}).sha256_text()
+	})
+	# Native serialization rejects cycles/depth overflow. Never turn a failed
+	# encoding into one shared positive-result cache entry.
+	if memo_bytes.is_empty():
+		return ""
+	var digest := HashingContext.new()
+	digest.start(HashingContext.HASH_SHA256)
+	digest.update(memo_bytes)
+	return digest.finish().hex_encode()
 
 
 static func _validation_authority_memo_projection(definition: Dictionary, target_inventory: Dictionary) -> Dictionary:

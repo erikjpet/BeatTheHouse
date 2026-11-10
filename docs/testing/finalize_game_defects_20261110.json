@@ -1,0 +1,565 @@
+{
+  "schema": "bth.finalize_game_defects/v1",
+  "recorded_at": "2026-11-10T07:26:04.372666+00:00",
+  "base_commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+  "task_ids": [
+    "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+    "BTH061-AUDIT-MEMO-TYPE-SAFETY-014"
+  ],
+  "platform": "Windows native Godot4.6.stable.official.89cea1439",
+  "workspace": "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+  "source_sha256": {
+    "scripts/core/run_state.gd": "f0ecccefe9a59de0eff1d145fcddc4aada6734309b3ff96a0f4d09fea3948032",
+    "scripts/core/scenario_sequence_schema.gd": "a1b9475b1dcfbf07658c52cabb768311c40b7d9ae0ffe51f1f8835c48aad42dc",
+    "scripts/tests/home_loss_projection_contract.gd": "63ff24339d55621478551ff6ca9c7f888ba48163dc1806fd5845ad135f03d84e",
+    "scripts/tests/foundation/scenario_validation_memo_contract.gd": "112a24c40504cba3d6b8e9dd8b82f8398611765a867f038ce794ab4bd3d6e7fa",
+    "scripts/tests/scenario_memo_encoding_failure_check.gd": "b070a08289b8d4164500bcd6f1074ef447839f7b4e68374cf02069a53faa07e4",
+    "scripts/tests/foundation/scenario_validation_memo_cost_diagnostic.gd": "91906b093010bf4cf011fcbb68c5e858bc25cb7f1809f36d30d656d0fd0295d4"
+  },
+  "runs": [
+    {
+      "run_id": "finalize-defects-home-delivery-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-delivery-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-delivery-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-delivery-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-final-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-final2-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final2-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final2-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-final2-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-green-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-green2-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green2-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green2-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-green2-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-qualified-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-qualified-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-qualified-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-qualified-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-home-red-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-red-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-red-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-home-red-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-import-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--editor",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--import"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-import-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-import-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-import-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-cost-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://.tmp/memo_key_cost.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-cost-final-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://.tmp/memo_key_cost.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-final-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-final-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cost-final-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-cycles-final-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/scenario_memo_encoding_failure_check.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cycles-final-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cycles-final-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-cycles-final-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-failure-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://.tmp/memo_encoding_failure.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-failure-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-failure-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-failure-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-final-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/foundation/scenario_validation_memo_contract.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-final-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-final-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-final-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-green-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/foundation/scenario_validation_memo_contract.gd"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-green-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-green-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-green-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-memo-red-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "--script",
+        "res://scripts/tests/foundation/scenario_validation_memo_contract.gd"
+      ],
+      "exit_code": 1,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-red-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-red-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-memo-red-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-setup-20261110",
+      "command": [
+        "git",
+        "-C",
+        "D:\\Projects\\Beat-The-House",
+        "worktree",
+        "add",
+        "-b",
+        "codex/finalize-game-defects-20261110",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "main"
+      ],
+      "exit_code": null,
+      "error": "[WinError 2] The system cannot find the file specified",
+      "timed_out": null,
+      "assigned_before_execution": null,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup-20261110\\evidence\\worker.log"
+    },
+    {
+      "run_id": "finalize-defects-setup2-20261110",
+      "command": [
+        "C:\\Program Files\\Git\\cmd\\git.exe",
+        "-C",
+        "D:\\Projects\\Beat-The-House",
+        "worktree",
+        "add",
+        "-b",
+        "codex/finalize-game-defects-20261110",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "main"
+      ],
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\job.json",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\storage-manifest.json",
+      "worker_log": "E:\\CodexQA\\BTH\\runs\\finalize-defects-setup2-20261110\\evidence\\worker.log"
+    }
+  ],
+  "key_cost": {
+    "actual_32_hit_mean_usec": 1185.84375,
+    "kind": "native_key_cost_diagnostic",
+    "legacy_mean_usec": 1622.39393939394,
+    "memo_stats": {
+      "entries": 1,
+      "evictions": 0,
+      "full_runs": 1,
+      "hits": 32,
+      "max_entries": 256,
+      "order_entries": 1
+    },
+    "ok": true,
+    "production_definitions": 55,
+    "samples_each": 165,
+    "typed_legacy_ratio": 0.699243542090812,
+    "typed_mean_usec": 1134.44848484848
+  },
+  "limits": [
+    "Synthetic production-archetype/native API checks, not an original personal incident save.",
+    "Home restore uses save codec/native state and Continue catalog rehydration, not UI Save/cold Continue.",
+    "No browser visual play, full-suite qualification or deployed NEXT behavior is established by these local checks.",
+    "Cycles deliberately trigger native serializer recursion stderr; only the standalone negative probe expects it.",
+    "Earlier home restore attempts failed due fixture topology/catalog-rehydration mistakes; their receipts are retained and not qualified as product passes.",
+    "First setup attempt failed before worker creation because bare git was unresolved; full executable retry succeeded.",
+    "home-green run remained baseline after a UTF-8 source editing failure before writes; it is not a corrected-code acceptance.",
+    "home-final2 incorrectly asserted that map visibility was identical to reentry eligibility; final delivery check uses public travel_target_ids and passes."
+  ]
+}
