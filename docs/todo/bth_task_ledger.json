@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-06T09:06:32.056627+00:00",
+  "updated_at": "2026-11-10T06:46:56.711046+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29118,6 +29118,91 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-06T09:06:32.056627+00:00"
+    },
+    {
+      "id": "BTH-QA-STORAGE-GUARD-001",
+      "name": "Finalize guarded QA storage tooling",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Finalize the existing future-QA storage admission package and its closed resident-profile and bounded QA-receipt helpers. Preserve current profiles, saves, historical recovery restrictions, capped-Job ownership and unrelated work. Associate tested tooling with a source commit and integrate it through the authorized main/NEXT finalization without changing the audience or approved content scope. This is tooling qualification, not gameplay acceptance or a blanket migration of legacy launchers.",
+        "source": "User continuation: Can you finalize all work that remains out uncommitted or on branches. I want next to be stable for extensive playtesting. Existing package stable ID and admission contract: docs/testing/qa_storage_guard.md.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "fail-closed-storage-and-resident-contract",
+            "description": "New work admits explicit non-C writable paths, current space budget, ownership manifests and pre-child gates; resident admission requires exact closed custody and exclusive ownership without profile migration.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/qa_storage_guard.md",
+              "tools/BTH_QA_RESIDENT_PROFILES.md",
+              "docs/testing/qa_storage_finalization_20261110.md"
+            ]
+          },
+          {
+            "id": "guarded-helper-tests",
+            "description": "Full current Python helper suite passes under preserved owned capped-Job limits with zero owned processes at release; synthetic scope remains explicit.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "E:\\CodexQA\\BTH\\runs\\finalize-qa-storage-resume-final-tests-20261110\\evidence\\job.json",
+              "E:/CodexQA/BTH/runs/finalize-qa-storage-final-tests-20261110/evidence/job.json",
+              "docs/testing/qa_storage_finalization_20261110.md"
+            ]
+          },
+          {
+            "id": "associated-commit-and-source-integration",
+            "description": "Record the actual tested tooling commit and integrate it with the requested main/NEXT finalization; retain exact commit/publication evidence before completion.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "GUARDED_TOOLING_180_TESTS_PASS_LOCAL_COMMIT_AND_INTEGRATION_PENDING",
+      "owner": {
+        "name": "Finalize guarded QA storage tooling",
+        "task_ref": "/root/finish_storage_commit",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Source tooling travels with the authorized main/NEXT integration; no gameplay behavior or retained-campaign acceptance is claimed."
+      },
+      "evidence": [
+        {
+          "kind": "guarded_helper_suite",
+          "reference": "docs/testing/qa_storage_finalization_20261110.md",
+          "summary": "Existing final suite 180 tests PASS; exit0/owned0, 12 percent aggregate CPU, 2 GiB aggregate memory, assignment before execution, no timeout or cleanup errors. Historical checker findings remain open outside this tooling scope."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Create the scoped tested local commit, hand its exact hash to the main/NEXT integration owner, and associate actual publication evidence before completion.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Local commit and integration are underway under the user finalization instruction; no tooling blocker is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-10T06:46:56.711046+00:00",
+        "evidence": [
+          "docs/testing/qa_storage_finalization_20261110.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-10T06:46:56.711046+00:00"
     }
   ],
   "batches": [
