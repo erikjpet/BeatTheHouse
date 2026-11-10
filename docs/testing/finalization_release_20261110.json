@@ -1,0 +1,184 @@
+{
+  "observed_at": "2026-11-10T06:51:26.614080+00:00",
+  "state": "TESTED_INTEGRATED_MAIN_NEXT_PENDING",
+  "integration_commit": "0bc62179263fb86def188c0f5bc3a27ea3c308e7",
+  "integration_tree": "7405d000a76cee78068a2382037cfa2593814982",
+  "base_main": "b2a9cef8156c993391e44bcef75dec42558c41eb",
+  "component_equality": [
+    {
+      "path": "scripts/games/coin_pusher.gd",
+      "tested_commit": "71981e7928276cb4bca657c2e7d0f1d5a8809c5b",
+      "integrated_blob": "9c2fef0132adce573e6ec9ff4d24df1b922f1ec3",
+      "matches": true
+    },
+    {
+      "path": "scripts/games/coin_pusher/coin_pusher_live_session.gd",
+      "tested_commit": "71981e7928276cb4bca657c2e7d0f1d5a8809c5b",
+      "integrated_blob": "da1f99912b1126ef287483a481417d9b8663223a",
+      "matches": true
+    },
+    {
+      "path": "scripts/games/video_poker.gd",
+      "tested_commit": "71981e7928276cb4bca657c2e7d0f1d5a8809c5b",
+      "integrated_blob": "9db7a52ddf5bc1894df63f1caf6f0cc007b78e22",
+      "matches": true
+    },
+    {
+      "path": "data/environments/developer_placement_overrides.json",
+      "tested_commit": "9794d07a440ceaa11c4410d1ec4fcbaefe83886c",
+      "integrated_blob": "44f34d1077ebee4132700cd2dfb18270d900707b",
+      "matches": true
+    },
+    {
+      "path": "AGENTS.md",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "660e26429aef53c89cf74e847b29caefc18b5411",
+      "matches": true
+    },
+    {
+      "path": "tools/BTH_QA_RESIDENT_PROFILES.md",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "7c1e2a687fad47ab465a07d558632a95fe443d98",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_atomic_receipt.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "6f0938311c9e8b97326c818595b9dcbd5a1612ac",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_closed_inspection.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "0895740920cef0446f4ac00f3bccb3ccfe7dd559",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_command_paths.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "c92bbb0895385c84272721c1a70b1c6ff9b73984",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_crash_inspection.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "672c5bd9960a985537351c88e4c9671966edc1eb",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_guarded_run.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "c2e4b3a6693771cda034899b4942d4b6f39e61f4",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_paid_trip_inspection.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "5938e8da9bb9c0e941b1bbad49bcceb2f28f7946",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_resident.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "a9690d546e8598fabbb06ce0075486526867085b",
+      "matches": true
+    },
+    {
+      "path": "tools/bth_qa_storage.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "81a7345e39ed0d060bb474d441d8605bf6a95280",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_atomic_receipt.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "8e3451ed47726730272041918f97eebf39612023",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_command_paths.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "75d58b468e16039d807428fe33f875de063952b8",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_guarded_run.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "0d75a5ab2d63fd93c132eb9ed8ad27ad1fa385b4",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_recovery_policies.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "cc2beae5d0da2e5cda70fc44f4ce79f0cc968a06",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_resident.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "957463cbc1463e9a9b5add9806a7707a637526ee",
+      "matches": true
+    },
+    {
+      "path": "tools/tests/test_bth_qa_storage.py",
+      "tested_commit": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "integrated_blob": "3654f64a4ec1b3bc35326e1c387525ff4a07dd7a",
+      "matches": true
+    }
+  ],
+  "final_integrated_liveness": {
+    "run": "finalize-integrated-liveness-20261110",
+    "exit_code": 0,
+    "active_at_release": 0,
+    "timed_out": false,
+    "job_sha256": "c2c53c58c17a3805811e65bf30f5daff91dd85de833edf766caa0c1a0f38a0f5",
+    "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b"
+  },
+  "qa_helper_suite": {
+    "run": "finalize-qa-storage-resume-final-tests-20261110",
+    "exit_code": 0,
+    "active_at_release": 0,
+    "timed_out": false,
+    "job_sha256": "0983ac022700f96563f90d75bb23c5c03c9bc41c5f134650d848d8773236012b",
+    "log_sha256": "319e39a386da7f6cc3a447c510006c465a1b82c15011373270ac9c5b3b4a1b7d",
+    "tests": 180,
+    "scope": "Helper synthetic contracts; unchanged exact source objects reused after integration."
+  },
+  "performance_receipts": "docs/testing/branch_finalization_20261110.json",
+  "layout_static_receipt": "docs/testing/saved_layout_finalization_20261110.json",
+  "manual_reconciliation": {
+    "summary": {
+      "objectives_checked": 159,
+      "batches_checked": 9,
+      "open_objectives": 70,
+      "open_batches": 5,
+      "open_work_items": 75,
+      "user_paused_items": 39,
+      "complete_objectives": 89,
+      "errors": 900,
+      "warnings": 0,
+      "tasks_with_errors": 67
+    },
+    "scoped_findings": [],
+    "receipt": {
+      "run": "finalize-integrated-ledger-02-20261110",
+      "exit_code": 1,
+      "active_at_release": 0,
+      "timed_out": false,
+      "job_sha256": "c1336b09caae194055955c079e5a83fd3f84e2d5afbfe95a253c35b66f403132",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "scope": "900 historical/stale tracking errors across 67 other tasks preserved. Scoped finalization, layout and QA storage items have no findings. Initial exact Python-alias launch failed before execution, then retried using the installed executable in a fresh run."
+  },
+  "deployment": {
+    "state": "pending",
+    "existing_next_only": true,
+    "stable_itch_audience_unchanged": true
+  },
+  "limits": [
+    "No extensive or exploratory playtesting resumed. Native regression, historical true-Web and basic startup evidence have separate scope.",
+    "Residual synchronous Video Poker cold-advice hitch and full-game performance/audit scope remain open.",
+    "Historical dirty diagnostics, profiles, saves and archives preserved; no diagnostic hooks shipped.",
+    "Existing watcher owns E ephemeral build and cleanup; no manual export or duplicate watcher."
+  ]
+}

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T06:48:58.711335+00:00",
+  "updated_at": "2026-11-10T06:51:26.614080+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29206,10 +29206,10 @@
         }
       },
       "state": "open",
-      "status": "COMMITTED_STATIC_VALIDATED_NEXT_PENDING",
+      "status": "INTEGRATED_STATIC_VALIDATED_NEXT_PENDING",
       "owner": {
-        "name": "Finalize uncommitted work",
-        "task_ref": "/root/assess_uncommitted_work",
+        "name": "Finalize stable NEXT",
+        "task_ref": "/root/integrate_stable_next",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -29240,7 +29240,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate source commit 9794d07a with the finalization branch and verify exact existing NEXT. No exploratory playtesting requested by this bounded batch.",
+      "next_action": "Verify the integrated source through existing NEXT; retained 308-assertion receipt matches exact unchanged layout blob.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -29252,7 +29252,7 @@
       "planned_app_changes": [
         "Existing saved placement coordinates and flags only."
       ],
-      "updated_at": "2026-11-10T06:37:32.424113+00:00"
+      "updated_at": "2026-11-10T06:50:13.978194+00:00"
     },
     {
       "id": "BTH061-FINALIZE-20261110",
@@ -29280,8 +29280,10 @@
             "id": "integrated-focused-validation",
             "description": "Validate final supported combined source and tooling with applicable focused checks and preserve historical/current scope limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/finalization_release_20261110.json"
+            ]
           },
           {
             "id": "main-next-delivery",
@@ -29298,7 +29300,7 @@
         }
       },
       "state": "open",
-      "status": "INTEGRATING_TESTED_COMPONENTS_NEXT_PENDING",
+      "status": "FINAL_FOCUSED_CHECKS_PASS_MAIN_NEXT_PENDING",
       "owner": {
         "name": "Finalize stable NEXT",
         "task_ref": "/root/integrate_stable_next",
@@ -29315,6 +29317,12 @@
           "sha": "9794d07a440ceaa11c4410d1ec4fcbaefe83886c",
           "evidence": [
             "docs/testing/saved_layout_finalization_20261110.json"
+          ]
+        },
+        {
+          "sha": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+          "evidence": [
+            "docs/testing/qa_storage_finalization_20261110.md"
           ]
         }
       ],
@@ -29335,10 +29343,15 @@
           "kind": "dirty_worktree_reconciliation",
           "reference": "docs/testing/uncommitted_work_reconciliation_20261110.json",
           "summary": "Historical dirty work preserved and classified. Four supported saved-layout changes integrated; private diagnostic hooks excluded."
+        },
+        {
+          "kind": "integrated_validation",
+          "reference": "docs/testing/finalization_release_20261110.json",
+          "summary": "Source objects match exact tested components; final integrated no-pointer liveness passes; 180 helper tests retained. Current manual reconciliation has zero findings on all three scoped finalization items and 900 preserved historical/stale findings across 67 other tasks."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate tested QA storage tooling, run final focused checks/reconciliation, push current main and verify exact existing NEXT build/startup and owned build-workspace cleanup.",
+      "next_action": "Finish final liveness/source-identity/manual reconciliation, push current main, and verify exact existing NEXT build/basic startup/owned E cleanup.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -29350,7 +29363,7 @@
       "planned_app_changes": [
         "Only existing supported performance fixes and saved placement edits; finalize existing QA tooling. No new feature, stable/itch or audience changes."
       ],
-      "updated_at": "2026-11-10T06:48:58.711335+00:00"
+      "updated_at": "2026-11-10T06:51:26.614080+00:00"
     },
     {
       "id": "BTH-QA-STORAGE-GUARD-001",
@@ -29401,13 +29414,20 @@
         }
       },
       "state": "open",
-      "status": "GUARDED_TOOLING_180_TESTS_PASS_LOCAL_COMMIT_AND_INTEGRATION_PENDING",
+      "status": "COMMITTED_INTEGRATED_HELPER_TESTS_PASS_FINAL_RECONCILIATION_PENDING",
       "owner": {
         "name": "Finalize guarded QA storage tooling",
         "task_ref": "/root/finish_storage_commit",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+          "evidence": [
+            "docs/testing/qa_storage_finalization_20261110.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -29423,7 +29443,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Create the scoped tested local commit, hand its exact hash to the main/NEXT integration owner, and associate actual publication evidence before completion.",
+      "next_action": "Reconcile final integrated source/test receipts and publication; no game runtime or broad legacy launcher qualification inferred.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -29435,7 +29455,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T06:46:56.711046+00:00"
+      "updated_at": "2026-11-10T06:50:13.978194+00:00"
     }
   ],
   "batches": [
