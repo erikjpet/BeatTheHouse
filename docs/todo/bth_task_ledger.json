@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T06:37:32.424113+00:00",
+  "updated_at": "2026-11-10T06:48:58.711335+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29253,6 +29253,104 @@
         "Existing saved placement coordinates and flags only."
       ],
       "updated_at": "2026-11-10T06:37:32.424113+00:00"
+    },
+    {
+      "id": "BTH061-FINALIZE-20261110",
+      "name": "Finalize outstanding work for stable NEXT",
+      "aliases": [],
+      "kind": "operation",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Finalize outstanding uncommitted and branch work for a stable NEXT suitable for the user to begin extensive playtesting. Integrate supported tested changes, preserve newer main and historical experiments/diagnostics, finish pending evidence/tooling, verify existing NEXT delivery, and remove only owned ephemeral build workspaces after preserving evidence. This does not close unrelated paused features, incomplete audits or residual gameplay/performance findings.",
+        "source": "User: Can you finalize all work that remains out uncommitted or on branches. I want next to be stable for extensive playtesting",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "branch-and-dirty-work-reconciliation",
+            "description": "Classify all discovered outstanding branch/dirty work; carry supported changes without shipping diagnostic hooks or losing newer work.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/branch_finalization_20261110.json",
+              "docs/testing/uncommitted_work_reconciliation_20261110.json"
+            ]
+          },
+          {
+            "id": "integrated-focused-validation",
+            "description": "Validate final supported combined source and tooling with applicable focused checks and preserve historical/current scope limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Push tested integrated source to main; verify exact existing NEXT build identity and basic launch, preserve stable/itch/audience, verify owned E build cleanup.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INTEGRATING_TESTED_COMPONENTS_NEXT_PENDING",
+      "owner": {
+        "name": "Finalize stable NEXT",
+        "task_ref": "/root/integrate_stable_next",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "71981e7928276cb4bca657c2e7d0f1d5a8809c5b",
+          "evidence": [
+            "docs/testing/branch_finalization_20261110.json"
+          ]
+        },
+        {
+          "sha": "9794d07a440ceaa11c4410d1ec4fcbaefe83886c",
+          "evidence": [
+            "docs/testing/saved_layout_finalization_20261110.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing NEXT only. Stable, itch, audience and paused feature work unchanged."
+      },
+      "evidence": [
+        {
+          "kind": "branch_reconciliation",
+          "reference": "docs/testing/branch_finalization_20261110.json",
+          "summary": "All fetched/local branch heads classified. Accepted PR30 performance source integrated; retired experiments and archives preserved, not shipped."
+        },
+        {
+          "kind": "dirty_worktree_reconciliation",
+          "reference": "docs/testing/uncommitted_work_reconciliation_20261110.json",
+          "summary": "Historical dirty work preserved and classified. Four supported saved-layout changes integrated; private diagnostic hooks excluded."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Integrate tested QA storage tooling, run final focused checks/reconciliation, push current main and verify exact existing NEXT build/startup and owned build-workspace cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No blocker. Final tooling integration and exact NEXT delivery are underway.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-10T06:48:58.711335+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Only existing supported performance fixes and saved placement edits; finalize existing QA tooling. No new feature, stable/itch or audience changes."
+      ],
+      "updated_at": "2026-11-10T06:48:58.711335+00:00"
     }
   ],
   "batches": [
