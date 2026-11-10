@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T07:11:39.894401+00:00",
+  "observed_at": "2026-11-10T07:19:45.725799+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -167,8 +167,8 @@
       "task_ref": "/root/reconcile_old_branches",
       "title": "Clean obsolete branches",
       "state": "active",
-      "observed_at": "2026-11-10T07:11:39.894401+00:00",
-      "source": "Actual current native worker performs authorized branch reconciliation and metadata-only cleanup with verified backups."
+      "observed_at": "2026-11-10T07:19:45.725799+00:00",
+      "source": "Actual active native worker verified completed cleanup and commits its closure receipt; all original worktrees preserved. Parent owns remaining active main/NEXT integration."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

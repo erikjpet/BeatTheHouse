@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:17:47.084098+00:00",
+  "updated_at": "2026-11-10T07:19:45.725799+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29522,22 +29522,28 @@
             "id": "current-inventory",
             "description": "Recheck local/GitHub branch tips, dirty worktrees and existing integrated/superseded dispositions.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/branch_cleanup_20261110.json"
+            ]
           },
           {
             "id": "verified-recovery",
             "description": "Verify complete Git bundle and dirty file/index/patch recovery copies on guarded E storage.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/branch_cleanup_20261110.json"
+            ]
           },
           {
             "id": "safe-cleanup",
             "description": "Remove proven obsolete integrated refs with exact-SHA checks; preserve files/index/status, unique history and active work.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/branch_cleanup_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -29546,14 +29552,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CLEANUP_VERIFIED_RECEIPT_COMMIT_PENDING",
+      "state": "complete",
+      "status": "OBSOLETE_BRANCHES_CLEANED_HISTORY_PRESERVED",
       "owner": {
         "name": "Clean obsolete branches",
         "task_ref": "/root/reconcile_old_branches",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c72b17ff6f688042235780c0c082cc96200d6669",
+          "evidence": [
+            "docs/testing/branch_cleanup_20261110.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -29584,19 +29597,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit the verified cleanup receipt, then associate its commit and reconcile both ledger views. Parent owns final main integration/NEXT.",
+      "next_action": "Scoped cleanup complete. Parent retains active finalization/defect branches until final main integration and verifies NEXT separately; all original files and archived history remain preserved.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "No blocker within the authorized safe cleanup; unique/active refs are preserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T07:11:39.894401+00:00",
+        "observed_at": "2026-11-10T07:19:45.725799+00:00",
         "evidence": [
-          "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence\\cleanup-plan.json"
+          "docs/testing/branch_cleanup_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:17:47.084098+00:00"
+      "updated_at": "2026-11-10T07:19:45.725799+00:00"
     }
   ],
   "batches": [
