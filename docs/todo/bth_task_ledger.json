@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T20:00:50.615305+00:00",
+  "updated_at": "2026-11-10T23:02:09.797576+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -614,7 +614,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -705,7 +705,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         },
         {
           "kind": "branch_integration",
@@ -4096,10 +4096,13 @@
           },
           {
             "id": "independent",
-            "description": "Reconcile independent retained/reconstructed-state and deployed Crew/game-return behavior; startup/native proof alone must not be relabeled as played Web gameplay.",
+            "description": "Exact 85d38b96 normal-HTTPS recreated Web interaction acceptance passes, including paid full-game acceptance/neutral Close and accepted-run cold Continue, or Jazz expiry/cold responsiveness as applicable. Synthetic fixtures, not original personal saves.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/crew_web_acceptance_20261110.md",
+              "docs/testing/crew_web_acceptance_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -4108,11 +4111,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CURRENT_NATIVE_594_PASS_DEPLOYED_WEB_ACCEPTANCE_OPEN",
+      "state": "complete",
+      "status": "COMPLETE_RECREATED_WEB_BEHAVIOR_AND_COLD_RETURN",
       "owner": {
-        "name": "Coordinate Crew closeout",
-        "task_ref": "/root",
+        "name": "Finish Crew Web tests",
+        "task_ref": "/root/finish_crew_web_tests",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4127,11 +4130,12 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "c6fef9b0063b2084c4b3bab04990e8e8e893133d",
+        "commit": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-8\\evidence\\source-fix-receipt.json"
+          "docs/testing/crew_web_acceptance_20261110.md",
+          "docs/testing/crew_web_acceptance_20261110.json"
         ],
-        "scope": "Native production callbacks and exact startup; separate deployed interaction acceptance."
+        "scope": "Exact immutable NEXT delivered footer, normal HTTPS and recreated played behavior; both fix commits verified ancestors."
       },
       "evidence": [
         {
@@ -4153,22 +4157,27 @@
           "kind": "current_native_requalification",
           "reference": "docs/testing/crew_closeout_20261110.json",
           "summary": "Baseline2e3b881:329 expired-handoff+105 separate-process cold+133 game-return+27 renderer=594 focused native checks, clean Jobs/owned0. Current normal HTTPS Chromium stops before startup at ERR_CERT_AUTHORITY_INVALID; no Web startup/interaction or original-save claim."
+        },
+        {
+          "kind": "deployed_recreated_web_acceptance",
+          "reference": "docs/testing/crew_web_acceptance_20261110.json",
+          "summary": "Eight qualifying recreated Web flows pass: Jazz expiry/cold map responsiveness; paid Roulette/Coin Pusher acceptance, neutral Close and accepted-run cold reentry. Final owned Job exit 0 / active 0. No production changes or original-save claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain permitted deployed recreated Crew handoff/game-return interaction acceptance. Retain current594 native checks and the strict certificate failure as separate evidence; do not request the gone original personal save.",
+      "next_action": "None. Recreated current-NEXT Web acceptance completed; retain original-save and focused-scope limits.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_trust",
-        "description": "Fresh Chromium1243 normal HTTPS failed before startup with ERR_CERT_AUTHORITY_INVALID. No warning bypass or trust-store change was made. A permitted normal trust route and deployed interaction evidence remain.",
+        "state": "none",
+        "kind": "none",
+        "description": "Earlier browser trust blocker is resolved by the separately authorized CA setup and normal-HTTPS gameplay acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:33:45.358807+00:00",
+        "observed_at": "2026-11-10T23:02:09.797576+00:00",
         "evidence": [
-          "docs/testing/crew_closeout_20261110.md"
+          "docs/testing/crew_web_acceptance_20261110.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:33:45.358807+00:00",
+      "updated_at": "2026-11-10T23:02:09.797576+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -5251,13 +5260,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5468,13 +5477,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -7480,10 +7489,13 @@
           },
           {
             "id": "current-web",
-            "description": "Finish permitted current-NEXT recreated handoff responsiveness/behavior acceptance. Strict HTTPS currently stops before startup with NET::ERR_CERT_AUTHORITY_INVALID; served identity/ancestry alone is not Web behavior acceptance.",
+            "description": "Exact 85d38b96 normal-HTTPS recreated Web interaction acceptance passes, including paid full-game acceptance/neutral Close and accepted-run cold Continue, or Jazz expiry/cold responsiveness as applicable. Synthetic fixtures, not original personal saves.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/crew_web_acceptance_20261110.md",
+              "docs/testing/crew_web_acceptance_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -7492,11 +7504,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CURRENT_NATIVE_594_PASS_DEPLOYED_WEB_ACCEPTANCE_OPEN",
+      "state": "complete",
+      "status": "COMPLETE_RECREATED_WEB_BEHAVIOR_AND_COLD_RETURN",
       "owner": {
-        "name": "Coordinate Crew closeout",
-        "task_ref": "/root",
+        "name": "Finish Crew Web tests",
+        "task_ref": "/root/finish_crew_web_tests",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -7511,11 +7523,12 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
+        "commit": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
         "evidence": [
-          "docs/testing/crew_expired_handoff.md"
+          "docs/testing/crew_web_acceptance_20261110.md",
+          "docs/testing/crew_web_acceptance_20261110.json"
         ],
-        "scope": "Current NEXT ancestry/identity only;509 native recreated/historical-synthetic scopes are separate, and HTTPS Web responsiveness is unverified."
+        "scope": "Exact immutable NEXT delivered footer, normal HTTPS and recreated played behavior; both fix commits verified ancestors."
       },
       "evidence": [
         {
@@ -7532,22 +7545,27 @@
           "kind": "current_native_requalification",
           "reference": "docs/testing/crew_closeout_20261110.json",
           "summary": "Baseline2e3b881:329 expired-handoff+105 separate-process cold+133 game-return+27 renderer=594 focused native checks, clean Jobs/owned0. Current normal HTTPS Chromium stops before startup at ERR_CERT_AUTHORITY_INVALID; no Web startup/interaction or original-save claim."
+        },
+        {
+          "kind": "deployed_recreated_web_acceptance",
+          "reference": "docs/testing/crew_web_acceptance_20261110.json",
+          "summary": "Eight qualifying recreated Web flows pass: Jazz expiry/cold map responsiveness; paid Roulette/Coin Pusher acceptance, neutral Close and accepted-run cold reentry. Final owned Job exit 0 / active 0. No production changes or original-save claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain permitted deployed recreated Crew handoff/game-return interaction acceptance. Retain current594 native checks and the strict certificate failure as separate evidence; do not request the gone original personal save.",
+      "next_action": "None. Recreated current-NEXT Web acceptance completed; retain original-save and focused-scope limits.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_trust",
-        "description": "Fresh Chromium1243 normal HTTPS failed before startup with ERR_CERT_AUTHORITY_INVALID. No warning bypass or trust-store change was made. A permitted normal trust route and deployed interaction evidence remain.",
+        "state": "none",
+        "kind": "none",
+        "description": "Earlier browser trust blocker is resolved by the separately authorized CA setup and normal-HTTPS gameplay acceptance.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:33:45.358807+00:00",
+        "observed_at": "2026-11-10T23:02:09.797576+00:00",
         "evidence": [
-          "docs/testing/crew_closeout_20261110.md"
+          "docs/testing/crew_web_acceptance_20261110.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:33:45.358807+00:00",
+      "updated_at": "2026-11-10T23:02:09.797576+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -13249,7 +13267,7 @@
                 "docs/testing/deprecated_code_audit_continuation_025.json",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44\u21920. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
@@ -13260,7 +13278,7 @@
                 "docs/testing/incremental_cleanup.md",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44\u21920. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
@@ -14409,13 +14427,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -22319,7 +22337,7 @@
         {
           "kind": "private_substantive_cause_proposal",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947→candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
+          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947\u2192candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
         },
         {
           "kind": "canonical_fix_qualified",
@@ -22329,7 +22347,7 @@
         {
           "kind": "canonical_and_full_sequence_nonregression",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947→17.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
+          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947\u219217.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
         },
         {
           "kind": "exact_next_delivery_and_basic_task_browser_launch",
@@ -25083,7 +25101,7 @@
       "group": "current",
       "objective": {
         "text": "Qualify a narrowly measured generic Runtime normalization optimization: cached command results are already deep-owned before scalar normalization and pure shape validation, so the final second deep copy may be redundant. Preserve the initial ownership clone, complete caller isolation, exact values/type flags, saved-float behavior, receipt membership/fingerprint checks, all bounds and default public APIs. No production adoption without substantive measured benefit and compatibility evidence.",
-        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806–1829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
+        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806\u20131829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -26957,7 +26975,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -27094,7 +27112,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -27495,7 +27513,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -28729,7 +28747,7 @@
         {
           "kind": "precise_current_source_dominance_proof031",
           "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
-          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint→entry→classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
+          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint\u2192entry\u2192classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
         }
       ],
       "implementation_batches": [],
@@ -29883,7 +29901,7 @@
       "group": "current",
       "objective": {
         "text": "Reconcile remaining branch and dirty worktree contents with current main/NEXT and clean obsolete integrated branches before the next large feature workspace. Preserve all unique work, dirty files, historical diagnostics and active worker branches. Branch cleanup does not close unfinished product objectives or restart paused work.",
-        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we donâ€™t have any merge issues later",
+        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we don\u00e2\u20ac\u2122t have any merge issues later",
         "scope_confirmed": true,
         "acceptance": [
           {

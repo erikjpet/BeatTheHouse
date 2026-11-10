@@ -1,0 +1,505 @@
+{
+  "schema": "bth.crew_web_acceptance/v1",
+  "recorded_at": "2026-11-10T23:02:09.797576+00:00",
+  "source_commit": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f/",
+  "production_changed": false,
+  "browser": "Playwright-installed Chromium1243, headless, 1280x720, normal HTTPS",
+  "audio_scope": "--disable-audio-output avoids observed QA AudioService startup contention; audio quality not tested; no trust/sandbox/isolation change in this worker",
+  "fixtures": [
+    {
+      "name": "crew_timed_coin_pusher.json",
+      "sha256": "af241b49356d3f68035f74ebf909b6b0ce0c51d9e72a3dc3ab1be82f3401559d",
+      "clock": 750,
+      "last_attempt_hour": 12,
+      "offer_rng_state": 48
+    },
+    {
+      "name": "crew_timed_roulette.json",
+      "sha256": "72b3305ff534cb9b3a689f98df4403f14bebb1f95e09f76980df3cffb296da59",
+      "clock": 750,
+      "last_attempt_hour": 12,
+      "offer_rng_state": 48
+    }
+  ],
+  "fixture_fidelity": "Synthetic practice rooms, generated map and real native game/Save APIs, with explicit Crew prerequisites and controlled hourly roll; Jazz uses authored event and normal world sequence APIs with pinned target. No original personal save.",
+  "retained_native_evidence": "docs/testing/crew_closeout_20261110.json:594 checks on2e3b881; reused, not rerun or renamed as Web checks.",
+  "flows": [
+    {
+      "id": "jazz-expire-warm",
+      "state": "pass",
+      "commands": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "facts": "At closing1050 missed delivery settles:cash66,heat9; no stale Handoff, Recording Night remains; room remains responsive."
+    },
+    {
+      "id": "jazz-expire-cold",
+      "state": "pass",
+      "commands": [
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "facts": "Browser-process cold Continue retains identical primary; legal Leave opens city map. No replay."
+    },
+    {
+      "id": "roulette-accept",
+      "state": "pass",
+      "commands": [
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        34,
+        35,
+        36
+      ],
+      "facts": "Paid RED spin to999; real Mags offer; Run the package returns full Neon Wheel;32red resolves to1001, one active carried package, no early22Crew payment."
+    },
+    {
+      "id": "roulette-accept-cold",
+      "state": "pass",
+      "commands": [
+        37,
+        38,
+        39,
+        40,
+        41
+      ],
+      "facts": "Normal cold Continue and game reentry retain1001, original32 history and active package. Ordinary unfunded sitout12 subsequently advances history, so primary/RNG are not claimed byte-identical."
+    },
+    {
+      "id": "roulette-neutral-close",
+      "state": "pass",
+      "commands": [
+        69,
+        70,
+        71,
+        72,
+        73,
+        74,
+        75,
+        76,
+        77
+      ],
+      "facts": "Actual paid-spin Mags offer visible; neutral Close returns full wheel;32red settles to1001, no delivery accepted."
+    },
+    {
+      "id": "coin-accept",
+      "state": "pass",
+      "commands": [
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        61,
+        62,
+        63
+      ],
+      "facts": "Paid Drop to999; actual Bishop offer; acceptance returns live full Quarter Falls board, one active carried package and no early22payment."
+    },
+    {
+      "id": "coin-accept-cold",
+      "state": "pass",
+      "commands": [
+        64,
+        65,
+        66,
+        67,
+        68
+      ],
+      "facts": "Browser-process cold Continue/reentry retains999, same delivery ID, one package, byte-identical primary."
+    },
+    {
+      "id": "coin-neutral-close",
+      "state": "pass",
+      "commands": [
+        78,
+        79,
+        80,
+        81,
+        82,
+        83,
+        84,
+        85,
+        86
+      ],
+      "facts": "Actual paid Drop offer visible; Close retains full board and persisted999, no delivery. A further normal Drop renders998 and continued physics; the last liveness Drop was not cold-save qualified and its immediate IDB snapshot still had the prior999 primary."
+    }
+  ],
+  "primary_custody": [
+    {
+      "command": 3,
+      "bytes": 137308,
+      "sha256": "00fd1155ecf90b419d269bf84d3f3fae713ee5cd126b9bbf188f48bddd634d56"
+    },
+    {
+      "command": 7,
+      "bytes": 137308,
+      "sha256": "00fd1155ecf90b419d269bf84d3f3fae713ee5cd126b9bbf188f48bddd634d56"
+    },
+    {
+      "command": 10,
+      "bytes": 137308,
+      "sha256": "00fd1155ecf90b419d269bf84d3f3fae713ee5cd126b9bbf188f48bddd634d56"
+    },
+    {
+      "command": 36,
+      "bytes": 111607,
+      "sha256": "64dcaae278c1c367bdd68145243d23f13dc3ca8305aa51f0177b883e7b3add24"
+    },
+    {
+      "command": 41,
+      "bytes": 117577,
+      "sha256": "6d7bd7b08449d504cec7fd7d90e10589a52a1e6c34a30e1fa7104fdf7c49641d"
+    },
+    {
+      "command": 63,
+      "bytes": 103027,
+      "sha256": "485f5647283dfd854c8d6b9e5f3b9008522877ef5d9cb1839a61d52be227277c"
+    },
+    {
+      "command": 68,
+      "bytes": 103027,
+      "sha256": "485f5647283dfd854c8d6b9e5f3b9008522877ef5d9cb1839a61d52be227277c"
+    },
+    {
+      "command": 77,
+      "bytes": 106347,
+      "sha256": "ea79cebae6b041fdfd0a36f01e491c2947cb01e36bcab5b841294095a1983cfd"
+    },
+    {
+      "command": 84,
+      "bytes": 98362,
+      "sha256": "422c32f68dac847392f84fb7b2af6614072c403da23bc262cf59fc7b33bd00b5"
+    },
+    {
+      "command": 86,
+      "bytes": 98362,
+      "sha256": "422c32f68dac847392f84fb7b2af6614072c403da23bc262cf59fc7b33bd00b5"
+    }
+  ],
+  "screenshots": [
+    {
+      "command": 9,
+      "file": "docs/testing/crew_web_20261110/jazz_cold.png",
+      "sha256": "8c237ca9fc00017dd106f070915a9f34801ba6db49e6075f9a2addd38c46cd7a"
+    },
+    {
+      "command": 12,
+      "file": "docs/testing/crew_web_20261110/jazz_map.png",
+      "sha256": "752bf0a49d9d27ba9b3507f9213633eb7f77dd26fee36e312dd3248635100d03"
+    },
+    {
+      "command": 32,
+      "file": "docs/testing/crew_web_20261110/roulette_offer.png",
+      "sha256": "1a47b027dd8239d688b0a97fc6b2fc84b921dedb20f08e185dd4951e864fb46a"
+    },
+    {
+      "command": 35,
+      "file": "docs/testing/crew_web_20261110/roulette_accepted.png",
+      "sha256": "ff0423a54dc5dab8561a142defd5e776a69715b2792445f26ce8a2acff525ab1"
+    },
+    {
+      "command": 40,
+      "file": "docs/testing/crew_web_20261110/roulette_cold.png",
+      "sha256": "71637419afb957133e01a497e632c9d11c667e5da826a1524eb8ca4a1341ad25"
+    },
+    {
+      "command": 75,
+      "file": "docs/testing/crew_web_20261110/roulette_close_offer.png",
+      "sha256": "e70d38ad4caeba88e8fcde44858d041e0221356cd5ae08df9dadea9ccc8fec1c"
+    },
+    {
+      "command": 76,
+      "file": "docs/testing/crew_web_20261110/roulette_closed.png",
+      "sha256": "a3e7179d217d13100aad2bc9eaeed7bc1dd48a97e21f8c5828613d61a0e41d75"
+    },
+    {
+      "command": 59,
+      "file": "docs/testing/crew_web_20261110/coin_offer.png",
+      "sha256": "6c777759747c89d5b0eedd1f139028a8156a4b537cd26b5daa5b78e6226e787f"
+    },
+    {
+      "command": 62,
+      "file": "docs/testing/crew_web_20261110/coin_accepted.png",
+      "sha256": "2f91a7435b7a7a3f3cb210776f3fa280b5203c7d8164fffdf707790c0d276564"
+    },
+    {
+      "command": 67,
+      "file": "docs/testing/crew_web_20261110/coin_cold.png",
+      "sha256": "8709ad86438daa6d7573bba2045d2092c41a89cfca55670944701ef30d8824de"
+    },
+    {
+      "command": 82,
+      "file": "docs/testing/crew_web_20261110/coin_close_offer.png",
+      "sha256": "463725372fd9a0b5202764701a6026a993b5eeafedf9ff5eb3bc9c40a14246e7"
+    },
+    {
+      "command": 83,
+      "file": "docs/testing/crew_web_20261110/coin_closed.png",
+      "sha256": "6309883427d29f633bb26383ba026226714d090d57e9f208a09e77ad76cec60e"
+    },
+    {
+      "command": 85,
+      "file": "docs/testing/crew_web_20261110/coin_second_drop.png",
+      "sha256": "9c2e263139bc3c777944fb81e5306c0472a9fee0687f16132314ed6ce54dc4ef"
+    }
+  ],
+  "driver": {
+    "envelopes": 88,
+    "action_error_count": 0,
+    "page_errors": [],
+    "resource_console_errors": [
+      "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    ],
+    "scope": "88 envelopes include setup, exploration and eight qualifying flows; not88 gameplay assertions. An earlier too-early Close trial had no offer and is excluded. Generic resource404 messages are retained without attributing an unrecorded URL; no clean-console claim."
+  },
+  "jobs": [
+    {
+      "run_id": "finish-crew-web-20261110",
+      "receipt_sha256": "8a4f81a4de7cbff1b90dfb63e11702e099dcfa4f4d5a06e140ab88919fd0737c",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\crew_closeout_web_capture.cjs"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-web-r2-20261110",
+      "receipt_sha256": "c6b318d4840dcdb93696a67c3cbfca23fe4700124154aba9b2d9bbfac14abd0f",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\crew_closeout_web_capture.cjs"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 4294967295,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-web-diagnostic-20261110",
+      "receipt_sha256": "63eb6948d39aad36697c8b050b929ab2f6e339249bb75b719b4b51b0676cd034",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\crew_closeout_web_capture.cjs"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": true,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-web-silent-20261110",
+      "receipt_sha256": "aae54935fec8362e7b2e6e7ff25aa5acd1e8fa189a38dd53e45f73d591ff7e04",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\crew_closeout_web_capture.cjs"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-timed-fixtures-20261110",
+      "receipt_sha256": "72f528d88e3584fe7323a4d7c2f25b6458d75bc4f5dbb6c86290228949becf8e",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\timed_fixture_capture.gd"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-timed-fixtures-r2-20261110",
+      "receipt_sha256": "b44960fd1e81d764431dd3c09b5574d7a7d1e65e2a550fd2ecc5843a7a2f6efd",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-crew-handoff-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "E:\\CodexQA\\BTH\\runs\\finish-crew-setup-20261110\\evidence\\timed_fixture_capture.gd"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    },
+    {
+      "run_id": "finish-crew-ledger-checks-20261110",
+      "receipt_sha256": "c02762223e5e6e448cfce7279cca5c1567f5bc8ecbeb3b7cc0061b3c9b1406e0",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/tests",
+        "-p",
+        "test_check_bth_task_ledger.py",
+        "-v"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": []
+    }
+  ],
+  "private_evidence_run": "finish-crew-web-silent-20261110",
+  "raw_inputs_committed": false,
+  "cold_comparisons": {
+    "roulette": {
+      "run_id_equal": true,
+      "package_counts": [
+        1,
+        1
+      ],
+      "cash": [
+        1001,
+        1001
+      ],
+      "delivery_changed_fields": [
+        "boundaries_elapsed",
+        "deadline_remaining",
+        "last_boundary_action"
+      ]
+    },
+    "coin_pusher": {
+      "exact_delivery_equal": true,
+      "run_id_equal": true,
+      "package_counts": [
+        1,
+        1
+      ],
+      "cash": [
+        999,
+        999
+      ]
+    }
+  },
+  "reconciliation": {
+    "checked_at": "2026-11-10T23:03:47.699674Z",
+    "summary": {
+      "objectives_checked": 161,
+      "batches_checked": 9,
+      "open_objectives": 63,
+      "open_batches": 5,
+      "open_work_items": 68,
+      "user_paused_items": 36,
+      "complete_objectives": 98,
+      "errors": 889,
+      "warnings": 0,
+      "tasks_with_errors": 60
+    },
+    "assigned_objective_findings": [],
+    "other_findings": 889,
+    "scope": "Retained global owner/runtime snapshots, not a fresh global inventory; findings outside the two assigned Crew IDs remain unresolved.",
+    "focused_checker_unit_tests": 36,
+    "unit_test_result": "pass"
+  }
+}
