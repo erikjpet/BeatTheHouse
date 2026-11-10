@@ -1,0 +1,369 @@
+{
+  "schema": "bth.closeout_meta_integration/v1",
+  "observed_at": "2026-11-10T17:53:33.734243+00:00",
+  "source_commit": "564cebb69d009faaa1e1fc84b549e4e76026ad42",
+  "source_tree": "5ad35bba30f2a47be5f7aa1f504fce432e96203b",
+  "original_commit": "d8f70beecad361922d23cc6b03201c897e873590",
+  "scope": "Only item 12 canonical showdown Meta choice/selected-instance and lossless Crew escrow correction. Other item/scenario/audit pauses retained.",
+  "resumption": "docs/testing/meta_choice_resumption_20261110.json",
+  "assertions": [
+    {
+      "stage": "warm",
+      "checks": 52,
+      "cold": false,
+      "failures": []
+    },
+    {
+      "stage": "cold",
+      "checks": 5,
+      "cold": true,
+      "failures": []
+    }
+  ],
+  "native_job": {
+    "command": [
+      "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+      "-B",
+      "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-evidence-20261110\\evidence\\meta_showdown_worker.py"
+    ],
+    "receipt": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence\\job.json",
+    "sha256": "b6a651ff1d2bd07c82d9215d36aa49b23729e75012db46665a67f62cd42cfb3b",
+    "manifest_sha256": "63a01e7fe0e617a3c1ba1f4d2a9b057c002bb31a252fc4baa48d9f5874081008",
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 800,
+      "aggregate_job_cpu_percent": 8.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "active_at_release": 0,
+    "exit_code": 0
+  },
+  "stages": [
+    {
+      "stage": "warm",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/showdown_meta_inventory_check.gd"
+      ],
+      "exit_code": 0,
+      "seconds": 8.44367527961731,
+      "log_sha256": "abee7fa52a59b41112a79977fde518f3969cc9a2a02ac52bc95b843f62e5aacf",
+      "storage_gate": {
+        "E:\\CodexQA\\BTH": {
+          "probe": "E:\\CodexQA\\BTH",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110": {
+          "probe": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\profile": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\profile",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\temp": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\temp",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\appdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\appdata",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\localappdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\localappdata",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\home": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\home",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\cache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\cache",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\save_dir": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\save_dir",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\pycache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\pycache",
+          "available_bytes": 239160258560
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence\\warm.log": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence",
+          "available_bytes": 239160258560
+        }
+      }
+    },
+    {
+      "stage": "cold",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/showdown_meta_inventory_check.gd",
+        "--",
+        "--cold"
+      ],
+      "exit_code": 0,
+      "seconds": 6.067209243774414,
+      "log_sha256": "28b940ef4ea90ceab1bda51010211ad463823d30b5a5cf5ec9da64b0cca9e04c",
+      "storage_gate": {
+        "E:\\CodexQA\\BTH": {
+          "probe": "E:\\CodexQA\\BTH",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110": {
+          "probe": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\profile": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\profile",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\temp": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\temp",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\appdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\appdata",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\localappdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\localappdata",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\home": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\home",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\cache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\cache",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\save_dir": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\save_dir",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\pycache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\pycache",
+          "available_bytes": 239160041472
+        },
+        "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence\\cold.log": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence",
+          "available_bytes": 239160041472
+        }
+      }
+    }
+  ],
+  "custody": {
+    "path": "E:\\CodexQA\\BTH\\runs\\closeout-meta-integrated-native-20261110\\evidence\\before-first-cold\\custody.json",
+    "sha256": "80e1f9143470d218279ec48eec89adbdff6db47d2b54ebad07de0d52d0b074a3"
+  },
+  "second_batch_delivery": {
+    "source_commit": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4",
+    "source_tree": "1584d6e2d91a4064961498154f79df4eb7d31ce3",
+    "deployed_at": "2026-11-10T17:50:50Z",
+    "served": {
+      "scope": "Exact identity, PCK and native custody, unchanged asset headers/pipeline hash receipts, basic menu startup only. No Web gameplay.",
+      "sha": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4",
+      "tree": "1584d6e2d91a4064961498154f79df4eb7d31ce3",
+      "observed_at": "2026-11-10T17:51:02.924Z",
+      "metadata": [
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/next.json",
+          "status": 200,
+          "sha256": "e3d77391675783a70259f84ae6125cef3edf43c6902b8fd3eb9bb4cefeeab064",
+          "source_commit": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4",
+          "source_tree": "1584d6e2d91a4064961498154f79df4eb7d31ce3",
+          "archive_sha256": "ec3030e7f26efb8fc055b197c12d03bb93836397c5b0af62a7e41546850b57bd",
+          "tls_validation_disabled": false
+        },
+        {
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/next.json",
+          "status": 200,
+          "sha256": "e3d77391675783a70259f84ae6125cef3edf43c6902b8fd3eb9bb4cefeeab064",
+          "source_commit": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4",
+          "source_tree": "1584d6e2d91a4064961498154f79df4eb7d31ce3",
+          "archive_sha256": "ec3030e7f26efb8fc055b197c12d03bb93836397c5b0af62a7e41546850b57bd",
+          "tls_validation_disabled": false
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/BUILD.json",
+          "status": 200,
+          "sha256": "931b3e999359eea55caff4ec07cf7e6c5dcfb45ce1318ed17d956c73770a9076",
+          "text": "{\r\n  \"source_tree\": \"1584d6e2d91a4064961498154f79df4eb7d31ce3\",\r\n  \"built_at\": \"2026-11-10T17:50:46Z\",\r\n  \"source_branch\": \"main\",\r\n  \"source_commit\": \"4aff4073f7fa85bd9aaf5b760ead94c276c182f4\",\r\n  \"version\": \"0.6.0-dev+4aff4073f7fa\"\r\n}\r\n"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/build_manifest.json",
+          "status": 200,
+          "sha256": "a054881a9137efe67acc9b9667eb8d33a1ba742c4ee62545e21d4d9b01a7e7a8",
+          "text": "{\r\n  \"schema\": \"beat_the_house.build_manifest/v1\",\r\n  \"build_version\": \"0.6.0-dev+4aff4073f7fa\",\r\n  \"release_version\": \"0.6.0\",\r\n  \"source_commit\": \"4aff4073f7fa85bd9aaf5b760ead94c276c182f4\",\r\n  \"source_tree\": \"1584d6e2d91a4064961498154f79df4eb7d31ce3\",\r\n  \"source_dirty\": false,\r\n  \"dirty_state_digest\": \"a51a7c91930243bbc61ed7b8cea76c1e5db706ac82b1f5a92f8a5b1416fb2d7c\",\r\n  \"engine_sha256\": \"fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae\",\r\n  \"export_presets_sha256\": \"ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad\",\r\n  \"platform\": \"web\",\r\n  \"native_library_path\": \"coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm\",\r\n  \"native_library_sha256\": \"4e148f1fcd3934c2c1fb3d0b9461ec396860b5b2f8d1974fc7e08423aa830ee2\"\r\n}"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/REF",
+          "status": 200,
+          "sha256": "cf0e997deebeb16914f8b95fe148c840717b806804a0c5791814b18da94715f7",
+          "text": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4\r\n"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/VERSION",
+          "status": 200,
+          "sha256": "46e9216a9444f28383c71e32da577faecfbe8bcca382283acca6772823ce0ff4",
+          "text": "0.6.0-dev+4aff4073f7fa\r\n"
+        }
+      ],
+      "assets": [
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.js",
+          "file": "index.js",
+          "local_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+          "matchesArchiveJournal": true,
+          "status": 200,
+          "bytes": 2828608,
+          "contentType": "text/javascript",
+          "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+          "matchesGlHandleReceipt": true
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.wasm",
+          "file": "index.wasm",
+          "local_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+          "matchesArchiveJournal": true,
+          "status": 200,
+          "bytes": 1508237,
+          "contentType": "application/wasm",
+          "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+          "matchesPinnedEngine": true
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.side.wasm",
+          "file": "index.side.wasm",
+          "local_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+          "matchesArchiveJournal": true,
+          "status": 200,
+          "bytes": 21802358,
+          "contentType": "application/wasm",
+          "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+          "matchesPinnedEngine": true
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.pck",
+          "file": "index.pck",
+          "local_sha256": "0f3713cc842c111fc0aa95c6d85603a0825de241ebb63d11f08130948cdf2adb",
+          "matchesArchiveJournal": true,
+          "status": 200,
+          "bytes": 47205512,
+          "sha256": "0f3713cc842c111fc0aa95c6d85603a0825de241ebb63d11f08130948cdf2adb",
+          "contentType": "application/octet-stream",
+          "servedFullHashMatchesInstalled": true
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+          "file": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+          "local_sha256": "4e148f1fcd3934c2c1fb3d0b9461ec396860b5b2f8d1974fc7e08423aa830ee2",
+          "matchesArchiveJournal": true,
+          "status": 200,
+          "bytes": 340415,
+          "sha256": "4e148f1fcd3934c2c1fb3d0b9461ec396860b5b2f8d1974fc7e08423aa830ee2",
+          "contentType": "application/wasm",
+          "servedFullHashMatchesInstalled": true,
+          "matchesNativeManifest": true
+        }
+      ],
+      "browserResponses": [
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.wasm",
+          "status": 200,
+          "contentType": "application/wasm"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.pck",
+          "status": 200,
+          "contentType": "application/octet-stream"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/index.side.wasm",
+          "status": 200,
+          "contentType": "application/wasm"
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+          "status": 200,
+          "contentType": "application/wasm"
+        }
+      ],
+      "pageErrors": [],
+      "consoleErrors": [],
+      "requestFailed": [],
+      "deployed_at": "2026-11-10T17:50:50Z",
+      "redirect": {
+        "requested": "http://localhost:8088/p/beat-the-house/play/dev/",
+        "resolved": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/",
+        "status": 200,
+        "matchesInstalled": true
+      },
+      "final_url": "http://localhost:8088/p/beat-the-house/play/dev/4aff4073f7fa85bd9aaf5b760ead94c276c182f4/",
+      "canvas_visible": true,
+      "loading_overlay_removed": true,
+      "title": "Beat the House",
+      "state": "PASS",
+      "finished_at": "2026-11-10T17:51:37.881Z"
+    },
+    "startup_screenshot": "E:\\CodexQA\\BTH\\runs\\closeout-next-4aff-startup-20261110\\evidence\\startup.png",
+    "startup_screenshot_sha256": "045e1f15b7d7025c66a0bc4fc46c53d934edeb80cb43f26b27254e759f04565e",
+    "pixels_reviewed_version": "0.6.0-dev+4aff4073f7fa",
+    "job_sha256": "1eecb529e9900b5512445dd716b0c7a0dfb63ae599a01ca28e8b50fca2b5f052",
+    "exit_code": 0,
+    "active_at_release": 0
+  },
+  "delivery": "Mapped Meta source tested locally. Required source publication/exact NEXT/rendered Meta choice acceptance remain pending.",
+  "limits": "Native authored-event warm/cold compatibility is not original-player, whole-journey, rendered-pointer or Web behavior acceptance. No full aggregate suite or broader item redesign claimed.",
+  "reconciliation": {
+    "findings_total": 891,
+    "counts": {
+      "OBJECTIVE_SCOPE_UNCONFIRMED": 7,
+      "BLOCKER_STALE": 11,
+      "OWNER_OBSERVATION_STALE": 24,
+      "RUNTIME_STALE_OBSERVATION": 806,
+      "OWNER_IDLE_WITH_OPEN_WORK": 2,
+      "COMMIT_NOT_FOUND": 5,
+      "BATCH_NOT_LINKED_BY_PARENT": 1,
+      "RUNTIME_CLEANUP_CONTRACT_INCOMPLETE": 6,
+      "RUNTIME_CLEANUP_UNCERTAIN": 1,
+      "RUNTIME_COVERAGE_INCOMPLETE": 1,
+      "RUNTIME_CURRENT_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_LAUNCH_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_OWNER_UNKNOWN": 2,
+      "OWNER_TASK_REFERENCE_MISSING": 2,
+      "OWNER_NOT_IN_SNAPSHOT": 1
+    },
+    "assigned_meta_findings": [],
+    "scope": "No findings for this resumed Meta correction or matching readable row. Inherited runtime, ownership, scope and historical commit findings remain; whole checker exits1."
+  }
+}

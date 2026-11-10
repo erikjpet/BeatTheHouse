@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T17:34:16.826901+00:00",
+  "observed_at": "2026-11-10T17:52:06.744137+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -190,6 +190,13 @@
       "state": "active",
       "observed_at": "2026-11-10T17:34:16.826901+00:00",
       "source": "Actual native collaboration list: root running while coordinating the user-requested closeout tasks."
+    },
+    {
+      "task_ref": "/root/integrate_first_closeouts",
+      "title": "Integrate requested closeouts",
+      "state": "active",
+      "observed_at": "2026-11-10T17:52:06.744137+00:00",
+      "source": "Actual running native integration worker applying this specific user-approved item12 correction."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

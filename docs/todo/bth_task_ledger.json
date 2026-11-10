@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:44:26.245214+00:00",
+  "updated_at": "2026-11-10T17:53:33.734243+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -98,7 +98,6 @@
           "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
           "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
           "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
-          "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
           "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
         ],
         "resume_only_on_user_instruction": true,
@@ -108,8 +107,12 @@
         "no_new_phase033_registered_or_tests": true,
         "resumed_task_ids": [
           "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
-          "BTH061-AUDIT-HOME-LOSS-PROJECTION-032"
-        ]
+          "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+          "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031"
+        ],
+        "scoped_resumption_evidence": {
+          "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031": "docs/testing/meta_choice_resumption_20261110.json"
+        }
       }
     ],
     "no_intentional_holds_scope": "No agent-imposed or invented holds. Current explicit user pauses override the earlier zero-holds direction only for their named scope."
@@ -28826,8 +28829,8 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Correct the offered Meta Dictionary item versus String owner-membership contract at House Calls walk without silently losing instance identity/effects or altering collection ownership. Decide supported item eligibility from existing intended behavior before implementation; a token-only fix is insufficient because direct canonical owner control also rejects. Preserve legitimate String items, serialized walk/return behavior and applicable paired Crew handling. No corrective item/scenario code change is authorized by qualification alone.",
-        "source": "Phase031 one independently reviewed native public-model qualification: normal host Meta Dictionary offered as trash choice rejects; canonical ID owner also rejects; authored scratch_pad String control succeeds. Parent requested qualification and preservation of paused implementation/access/publication restrictions.",
+        "text": "Correct the offered Meta Dictionary item versus String owner-membership contract at House Calls walk without silently losing instance identity/effects or altering collection ownership. Decide supported item eligibility from existing intended behavior before implementation; a token-only fix is insufficient because direct canonical owner control also rejects. Preserve legitimate String items, serialized walk/return behavior and applicable paired Crew handling. The 2026-11-10 user approval resumes only this named item 12 correction; broader item/scenario and audit pauses remain.",
+        "source": "Phase031 one independently reviewed native public-model qualification: normal host Meta Dictionary offered as trash choice rejects; canonical ID owner also rejects; authored scratch_pad String control succeeds. Parent requested qualification and preservation of paused implementation/access/publication restrictions. Current scoped resumption: docs/testing/meta_choice_resumption_20261110.json",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -28844,15 +28847,21 @@
             "id": "qualified-corrective-behavior",
             "description": "When implementation is authorized, resolve the offered-choice contract and preserve instance identity/eligibility, ownership, String controls and applicable save/handoff/return behavior with focused regressions.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/closeout_meta_integration_20261110.json",
+              "docs/testing/showdown_meta_choice_closeout_20261110.json"
+            ]
           },
           {
             "id": "actual-associated-fix-commit",
             "description": "Actual product correction commit before completion; source-qualification or registration evidence commits are not a code fix.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/closeout_meta_integration_20261110.json",
+              "docs/testing/showdown_meta_choice_closeout_20261110.json"
+            ]
           },
           {
             "id": "required-next-delivery",
@@ -28869,10 +28878,10 @@
         }
       },
       "state": "open",
-      "status": "MODEL_REJECTION_CONFIRMED_CORRECTIVE_ITEM_SCOPE_NOT_AUTHORIZED_031",
+      "status": "INTEGRATED_NATIVE_52_5_PASS_NEXT_BEHAVIOR_ACCEPTANCE_PENDING",
       "owner": {
-        "name": "Audit phase030 qualification",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Integrate Meta showdown correction",
+        "task_ref": "/root/integrate_first_closeouts",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -28882,14 +28891,24 @@
             "docs/testing/deprecated_code_audit_continuation_031.json",
             "docs/testing/deprecated_code_audit_continuation_031.md"
           ]
+        },
+        {
+          "sha": "564cebb69d009faaa1e1fc84b549e4e76026ad42",
+          "evidence": [
+            "docs/testing/showdown_meta_choice_closeout_20261110.json",
+            "docs/testing/closeout_meta_integration_20261110.json",
+            "Actual scoped Meta choice and escrow product correction."
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "No correction commit or NEXT delivery exists. Standing item/scenario implementation pause and separate publication denial are preserved."
+        "evidence": [
+          "docs/testing/closeout_meta_integration_20261110.json"
+        ],
+        "scope": "Mapped fix 564cebb6 tested on local main. Existing verified NEXT 4aff4073 does not yet contain this fix; exact source publication/NEXT and rendered changed behavior remain."
       },
       "evidence": [
         {
@@ -28901,24 +28920,35 @@
           "kind": "paired_qualified_native_model_results031",
           "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
           "summary": "Qualification is concrete and separately tracked; no product correction commit exists. Item/scenario implementation pause and required future correction/NEXT criteria remain."
+        },
+        {
+          "kind": "scoped_user_resumption",
+          "reference": "docs/testing/meta_choice_resumption_20261110.json",
+          "summary": "User approved the previously enumerated 12 closeouts, including explicit item 12Meta choices within the prior pause. Resume this exact correction only; preserve all other item/scenario/audit restrictions."
+        },
+        {
+          "kind": "current_integrated_native",
+          "reference": "docs/testing/closeout_meta_integration_20261110.json",
+          "summary": "Mapped scoped correction passes 52 warm + 5 separate-process cold, exact same assertion logs as worker; first-cold custody retained. Canonical offered/direct Meta, selected instance/effects, locks/reservations/live-ticket exclusions, ordinary String/legacy return and exact escrow preserved. Clean 8% CPU / 2 GiB Job exited 0 with zero owned processes. Web acceptance remains open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
+      "next_action": "Publish the scoped tested correction, verify exact existing NEXT identity/assets, then obtain permitted rendered Meta showdown choice acceptance. Preserve all broader pauses and original collection ownership.",
       "blocker": {
         "state": "active",
-        "kind": "user_requested_pause",
-        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "kind": "main_next_and_behavior_acceptance_pending",
+        "description": "Integrated 52 warm + 5 cold pass. Actual source publication, exact NEXT and rendered changed-behavior acceptance remain.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "observed_at": "2026-11-10T17:53:33.734243+00:00",
         "evidence": [
-          "docs/testing/audit_pause_finish_20261106.json"
+          "docs/testing/meta_choice_resumption_20261110.json",
+          "docs/testing/showdown_meta_choice_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "updated_at": "2026-11-10T17:53:33.734243+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:56:17.463862+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -28936,7 +28966,10 @@
             "docs/todo/bth_user_item_scenario_pause_20261104.json",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-registration-r1.json"
           ]
-        }
+        },
+        "resumed_at": "2026-11-10T17:52:06.744137+00:00",
+        "resumed_source": "docs/testing/meta_choice_resumption_20261110.json",
+        "scope": "Only this named item 12 correction resumed. Original pause details retained for provenance; other paused rows remain unchanged."
       }
     },
     {

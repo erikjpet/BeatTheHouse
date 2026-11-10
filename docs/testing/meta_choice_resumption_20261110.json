@@ -1,0 +1,13 @@
+{
+  "schema": "bth.scoped_work_resumption/v1",
+  "observed_at": "2026-11-10T17:52:06.744137+00:00",
+  "task_id": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+  "source": "Trusted parent transcript evidence from this user conversation, forwarded verbatim on 2026-11-10.",
+  "transcript_evidence": {
+    "assistant": "12. **Meta item choices:** fix choices that reject unusably at showdown. This is currently within the item-work pause.",
+    "user": "Yes please execute the 12 close out items you have identified. Ensure at the end of your work all branches get closed and either land in main or get deleted."
+  },
+  "scope": "Only item 12 Meta showdown choice correction resumed. No broader item/scenario/audit pause, audience, stable/itch, or diagnostic-access restriction is changed. Historical specific denials are preserved as historical, not silently retried.",
+  "native_evidence": "docs/testing/showdown_meta_choice_closeout_20261110.json",
+  "required_delivery": "Scoped tested main commit, exact existing NEXT identity/assets and changed-behavior acceptance before completion."
+}
