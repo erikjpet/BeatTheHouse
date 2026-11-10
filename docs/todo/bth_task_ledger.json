@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:24:57.997934+00:00",
+  "updated_at": "2026-11-10T17:27:24.738687+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -15153,9 +15153,11 @@
             "id": "actual-input",
             "description": "Complete pointer/touch action routing, actual warning visibility and intentional Nudge versus legal collection regression; preserve hit rectangles and avoid accidental cheat dispatch.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/slot_collect_nudge_label.md"
+              "docs/testing/slot_collect_nudge_label.md",
+              "docs/testing/slot_visible_web_acceptance_20261110.md",
+              "docs/testing/slot_visible_web_acceptance_20261110.json"
             ]
           },
           {
@@ -15184,11 +15186,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "FIX_MAIN_NEXT_VERIFIED_NATIVE_INPUT_COLD_PASS_VISIBLE_WEB_ACCEPTANCE_OPEN",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_COLD_AND_VISIBLE_WEB_WARNING_INPUT_VERIFIED",
       "owner": {
-        "name": "Fix Slot Collect action",
-        "task_ref": "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+        "name": "Close Slot warning acceptance",
+        "task_ref": "/root/close_validation_and_slot",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -15202,12 +15204,13 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+        "commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
         "evidence": [
           "docs/testing/finalization_next_delivery_20261110.json",
-          "docs/testing/slot_collect_nudge_label.md"
+          "docs/testing/slot_collect_nudge_label.md",
+          "docs/testing/slot_visible_web_acceptance_20261110.json"
         ],
-        "scope": "Source inclusion, exact served identity/assets and basic menu startup only. Native canvas mouse/touch and separate-process cold behavior are documented existing checks; visible Web warning/pixels and physical-device gameplay are unverified."
+        "scope": "Exact current served identity/basic launch and visible Web mouse/Enter/browser-emulated touch warning acceptance verified. Existing authentic native mouse/touch and process-cold checks retain their original identities; physical-device testing is not claimed."
       },
       "evidence": [
         {
@@ -15219,20 +15222,27 @@
           "kind": "existing_receipts_reconciled",
           "reference": "docs/testing/unfinished_work_audit_20261110.md",
           "summary": "Fix 247ebe32 is already on main and exact served c3d16523. Existing native canvas mouse and touch each found the offer on natural spin 14; Save, separate-process cold Continue, one intentional Nudge and settled cold accounting/Heat/Card checks pass. Original incident remains untouched. The old no-fix-commit/in-progress metadata is superseded; visible Web warning and physical-device gameplay are not established."
+        },
+        {
+          "kind": "actual_current_web_acceptance",
+          "reference": "docs/testing/slot_visible_web_acceptance_20261110.md",
+          "summary": "Exact served 2e3b fresh UI practice: visible NUDGE/CHEAT and Heat/catch/Card warning before input; Enter dispatches no cheat or new wager; intentional emulated touch Nudge applies Heat 41 with cash $99,998 and chips 0 unchanged. Historical 75b actual Web mouse evidence recovered and preserved. Job exit 0 and active 0. Existing native cold/Card checks reused without changing the original incident."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Do not repeat the landed implementation or passed native mouse/touch and cold accounting checks. Reconcile remaining actual visible warning/input acceptance on the matching deployed build when testing is resumed; preserve the original settled incident and record Web/pixel/physical-device limits. No new exploratory testing was started by this audit.",
+      "next_action": "Complete. Retain original incident and all historical receipts. Physical-device testing and broad Slot coverage are not claimed by this narrow objective.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "No new blocker is established. Existing receipts support the committed native/cold fix and exact NEXT source delivery; actual visible Web warning acceptance remains unverified. Owner heartbeat and prior observations are not restamped by this metadata audit.",
+        "description": "No remaining blocker for the named warning/input repair. Current Web pixels and input, historical Web mouse acceptance and original native staged accounting/Card checks are recorded with their precise identities and limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:27:24.738687+00:00",
+        "evidence": [
+          "docs/testing/slot_visible_web_acceptance_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:15:01.032782+00:00",
+      "updated_at": "2026-11-10T17:27:24.738687+00:00",
       "evidence_reconciliation_20261110": {
         "observed_at": "2026-11-10T07:15:01.032782+00:00",
         "source_commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",

@@ -1,0 +1,370 @@
+{
+  "schema": "bth.slot_visible_web_acceptance/v1",
+  "task_id": "BTH-SLOT-COLLECT-001",
+  "observed_at": "2026-11-10T17:27:24.738687+00:00",
+  "fix_commit": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+  "served_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "served_tree": "2bcf6a4c52d6404bbd90d8e20731570b0d58eac7",
+  "state": "PASS_NAMED_OBJECTIVE",
+  "current_web": {
+    "sha": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+    "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/",
+    "scope": "Fresh Game Library practice by normal mouse/key and browser-emulated touch; no engine mutation or player save",
+    "logs": [
+      {
+        "type": "log",
+        "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org"
+      },
+      {
+        "type": "log",
+        "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+      },
+      {
+        "type": "log",
+        "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support."
+      }
+    ],
+    "pageErrors": [],
+    "commands": [
+      {
+        "i": 0,
+        "cmd": {
+          "actions": [
+            {
+              "type": "click",
+              "x": 580,
+              "y": 50
+            },
+            {
+              "type": "wait",
+              "ms": 600
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 1,
+        "cmd": {
+          "actions": [
+            {
+              "type": "click",
+              "x": 300,
+              "y": 214
+            },
+            {
+              "type": "key",
+              "key": "ControlOrMeta+A"
+            },
+            {
+              "type": "text",
+              "text": "SLOT-WEB-05"
+            },
+            {
+              "type": "wait",
+              "ms": 250
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 2,
+        "cmd": {
+          "actions": [
+            {
+              "type": "click",
+              "x": 337,
+              "y": 425
+            },
+            {
+              "type": "wait",
+              "ms": 800
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 3,
+        "cmd": {
+          "actions": [
+            {
+              "type": "click",
+              "x": 811,
+              "y": 642
+            },
+            {
+              "type": "wait",
+              "ms": 4200
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 4,
+        "cmd": {
+          "actions": [
+            {
+              "type": "key",
+              "key": "Enter"
+            },
+            {
+              "type": "wait",
+              "ms": 500
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 5,
+        "cmd": {
+          "actions": [
+            {
+              "type": "tap",
+              "x": 852,
+              "y": 642
+            },
+            {
+              "type": "wait",
+              "ms": 4200
+            }
+          ]
+        },
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/"
+      },
+      {
+        "i": 6,
+        "cmd": {
+          "actions": [
+            {
+              "type": "close"
+            }
+          ]
+        }
+      }
+    ],
+    "started": "2026-11-10T17:22:39.193Z",
+    "build": {
+      "source_tree": "2bcf6a4c52d6404bbd90d8e20731570b0d58eac7",
+      "version": "0.6.0-dev+2e3b88103d01",
+      "source_branch": "main",
+      "built_at": "2026-11-10T07:45:54Z",
+      "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b"
+    },
+    "state": "PASS_SESSION_REQUIRES_PIXEL_REVIEW",
+    "closed": true,
+    "finished": "2026-11-10T17:24:32.630Z"
+  },
+  "owned_job": {
+    "schema": "bth.qa_guarded_run/v1",
+    "command": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\slot.cjs"
+    ],
+    "storage_manifest": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\storage-manifest.json",
+    "storage_manifest_sha256": "1025c1681304966437d8350aa14f7d9ac2c292babe8bb2df3504a0e8a2935189",
+    "storage": {
+      "schema": "bth-qa-storage/v1",
+      "run_id": "close-slot-web-r1-20261110",
+      "token": "e8a0783e73d48933e94ae81c67fb1b51",
+      "prepared": true,
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "required_bytes": 25769803776,
+      "paths": {
+        "root": "E:\\CodexQA\\BTH",
+        "workspace": "E:\\CodexQA\\BTH\\workspaces\\close-memo-slot-20261110",
+        "run_root": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110",
+        "profile": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\profile",
+        "temp": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\temp",
+        "evidence": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence",
+        "appdata": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\appdata",
+        "localappdata": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\localappdata",
+        "home": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\home",
+        "cache": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\cache",
+        "save_dir": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\save_dir",
+        "pycache": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\pycache"
+      },
+      "manifest_path": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\storage-manifest.json"
+    },
+    "timeout_seconds": 360,
+    "storage_gate_before_job": {
+      "E:\\CodexQA\\BTH": {
+        "probe": "E:\\CodexQA\\BTH",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\workspaces\\close-memo-slot-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\workspaces\\close-memo-slot-20261110",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\profile": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\profile",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\temp": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\temp",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\appdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\appdata",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\localappdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\localappdata",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\home": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\home",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\cache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\cache",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\save_dir": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\save_dir",
+        "available_bytes": 241989623808
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\pycache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\pycache",
+        "available_bytes": 241989623808
+      }
+    },
+    "error": null,
+    "cleanup_errors": [],
+    "log_truncated": false,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "storage_gate_before_child": {
+      "E:\\CodexQA\\BTH": {
+        "probe": "E:\\CodexQA\\BTH",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\workspaces\\close-memo-slot-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\workspaces\\close-memo-slot-20261110",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\profile": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\profile",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\temp": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\temp",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\appdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\appdata",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\localappdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\localappdata",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\home": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\home",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\cache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\cache",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\save_dir": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\save_dir",
+        "available_bytes": 241989619712
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\pycache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\pycache",
+        "available_bytes": 241989619712
+      }
+    },
+    "pid": 20900,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "finished_epoch": 1794331472.6637878
+  },
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\storage-manifest.json": "1025c1681304966437d8350aa14f7d9ac2c292babe8bb2df3504a0e8a2935189",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\job.json": "9bb7dd7d939558f916efaad085205c4d3215570eddb0b910a3ae9cc73ca7eeb1",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\slot.cjs": "4b2da5f29e01e157463ad6dd8d908ffa1eda1b6b7651073bd78837d824ae3023",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\slot-web-result.json": "eb7d207800520ff2a08b6d707de307f4d6e81cb998c6a4943c2865b0b58fbde5",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\initial.png": "f861332fc87dc37ac0332d499644741638a475a0a2bba6195e61f68efb4bfcc4",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\screen-2.png": "c80630994572075513a6fedd9fb973402ab809a844c46050ddf416268877f04e",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\screen-3.png": "1304f00eda353a7222478ebd7828d6a884dd64c6e4ced883a48cbd7516073df3",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\screen-4.png": "e15f524da87b3ba8ee5db10cce395e596f27ce294a14adc9fd94dd4e024691a7",
+    "E:\\CodexQA\\BTH\\runs\\close-slot-web-r1-20261110\\evidence\\screen-5.png": "86b1e8d2da426acce87a13a23a91446068ecb4e0e76ac407efc57545d150e11d"
+  },
+  "pixel_review": {
+    "initial": "Menu shows Version 0.6.0-dev+2e3b88103d01.",
+    "screen-2": "Fresh Grand practice; cash $100,000, Heat 0, bet $2 and ordinary SPIN; no COLLECT alias.",
+    "screen-3": "One ordinary mouse SPIN settles a two-dollar loss; cash $99,998, chips 0, Heat 0. NUDGE with CHEAT sublabel, HEAT/CATCH RISK and AT GRAND: CLOSES CARDS FOR THIS RUN are visible before input.",
+    "screen-4": "Enter dispatches no cheat or new wager: cash $99,998, chips 0, Heat 0 and explicit Nudge offer remain. The living clock is not asserted frozen.",
+    "screen-5": "One intentional browser-emulated touch on NUDGE/CHEAT applies Heat 41; cash $99,998/chips 0 unchanged, offer removed and ordinary SPIN restored."
+  },
+  "reused_historical_web": {
+    "commit": "75b491df2410b90a65c72160bd433a37389099f7",
+    "tree": "6f3dccd2d214fdc88a6c19ef76c2f62753ab22f5",
+    "artifact_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-20\\evidence\\slot-web-75b-owner-r5",
+    "state_sha256": "9a37431e8688418f2988e2e517fcfaca3550f1066f764b3f2511417d8d9271b5",
+    "screenshots": {
+      "slot-near-miss-offer.png": "ac1cc417424bca4d5e2901a915c5ca46c2f4fa30ed638407e84b52059968eb44",
+      "slot-enter-inert.png": "f2e5d65fd08805929f5d68db9f30f71964f78f0fb4e72edb86944f118420c093",
+      "slot-explicit-nudge-result.png": "613d2a12c9d6be59188ef25bd9e85793144fb0e04f088efc8f0b6cbef5bb9433"
+    },
+    "scope": "Retained actual Web mouse UI acceptance, independently inspected now; original identity and date preserved, not a new-build pass."
+  },
+  "reused_native": "docs/testing/slot_collect_nudge_label.md; native mouse/touch authentic natural offers, Save/separate-process cold Continue, deliberate Nudge and settled cold accounting/Heat/Card/RNG checks at original source identity.",
+  "limits": [
+    "Current Web uses fresh Game Library practice, not the original incident and not an actual Players Card progression run.",
+    "Current Web touch is browser-emulated; no physical-device test is claimed.",
+    "Current Web Save/cold Continue was not repeated; original exact-identity native checks are retained.",
+    "No original save/profile, original two-dollar loss, Heat 42 or Card outcome was replayed, changed or refunded.",
+    "No full-game, parent-audit, stable/itch or audience acceptance is claimed."
+  ],
+  "ledger_reconciliation": {
+    "exit_code": 1,
+    "summary": {
+      "objectives_checked": 304,
+      "batches_checked": 9,
+      "open_objectives": 196,
+      "open_batches": 5,
+      "open_work_items": 201,
+      "user_paused_items": 37,
+      "complete_objectives": 106,
+      "errors": 593,
+      "warnings": 1,
+      "tasks_with_errors": 162
+    },
+    "scoped_slot_findings": [],
+    "report_path": "E:\\CodexQA\\BTH\\runs\\close-slot-ledger-check-20261110\\evidence\\reconciliation.json",
+    "report_sha256": "817cfb5b91159f05b3fbc6e861f1e4620bf49f36580da3840ca075b6e99a185b",
+    "scope": "Existing/global unfinished-work findings remain; no Slot named-row finding. No full-ledger pass is claimed."
+  }
+}
