@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:30:45.465180+00:00",
+  "updated_at": "2026-11-10T07:40:12.965519+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -24552,7 +24552,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
+      "status": "MAIN_NEXT_DELIVERED_NATIVE_PASS_WEB_BEHAVIOR_UNVERIFIED",
       "owner": {
         "name": "Finalize main and NEXT",
         "task_ref": "/root/publish_final_stabilization",
@@ -24604,10 +24604,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Local tested product fix31bb55b8 exists; exact main/NEXT delivery and changed-behavior evidence are still required. No local check is deployment proof."
+        "state": "verified",
+        "commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "evidence": [
+          "docs/testing/final_stabilization_next_delivery_20261110.json",
+          "docs/testing/final_stabilization_integration_20261110.json"
+        ],
+        "scope": "Exact source/tree, changed PCK, existing engine/native receipts, redirect and basic rendered Web menu verified. Native changed behavior passed in integrated source. Actual changed Web behavior and UI Save/cold Continue unverified."
       },
       "evidence": [
         {
@@ -24669,23 +24672,27 @@
           "kind": "local_tested_product_fix",
           "reference": "docs/testing/finalize_game_defects_20261110.md",
           "summary": "Scoped native regression checks pass on current-main-based fix31bb55b8. Home production-API/codec restore and memo typed/cycle/authority/FIFO controls are distinct from browser UI Save/cold Continue or deployed NEXT acceptance. Exact matched key-cost ratio0.699; no whole-game speedup claim."
+        },
+        {
+          "kind": "exact_main_next_delivery",
+          "reference": "docs/testing/final_stabilization_next_delivery_20261110.json",
+          "summary": "Source31bb55b8 integrated into main cef35289; exact served source/tree/assets/basic menu and owned E cleanup pass. Native home/memo/cycle checks pass separately. Required changed Web behavior remains unverified; objective stays Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate fix 31bb55b88fce5890029b9470ceb7548c9ce1bad5 into main, follow the existing NEXT deployment, and record exact deployed source identity and changed-behavior acceptance. Local native checks passed; parent audit scope remains Open.",
+      "next_action": "Retain committed/delivered fix and passing native regression evidence. Qualify actual changed Web behavior when testing resumes; UI Save/cold Continue and original-personal-save coverage are not established. Keep this objective and parent audits Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Local correction is tested and committed; parent is actively coordinating main/NEXT integration.",
+        "description": "No pipeline/source blocker. Exact delivery is verified; changed Web behavior acceptance remains unverified and is not replaced by native or menu checks.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T07:27:28.494025+00:00",
+        "observed_at": "2026-11-10T07:40:12.965519+00:00",
         "evidence": [
-          "docs/testing/finalize_game_defects_20261110.md",
-          "docs/testing/finalize_game_defects_20261110.json"
+          "docs/testing/final_stabilization_next_delivery_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:30:45.465180+00:00",
+      "updated_at": "2026-11-10T07:40:12.965519+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -29020,7 +29027,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
+      "status": "MAIN_NEXT_DELIVERED_NATIVE_PASS_WEB_BEHAVIOR_UNVERIFIED",
       "owner": {
         "name": "Finalize main and NEXT",
         "task_ref": "/root/publish_final_stabilization",
@@ -29044,10 +29051,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Local tested product fix31bb55b8 exists; exact main/NEXT delivery and changed-behavior evidence are still required. No local check is deployment proof."
+        "state": "verified",
+        "commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "evidence": [
+          "docs/testing/final_stabilization_next_delivery_20261110.json",
+          "docs/testing/final_stabilization_integration_20261110.json"
+        ],
+        "scope": "Exact source/tree, changed PCK, existing engine/native receipts, redirect and basic rendered Web menu verified. Native changed behavior passed in integrated source. Actual changed Web behavior and UI Save/cold Continue unverified."
       },
       "evidence": [
         {
@@ -29059,23 +29069,27 @@
           "kind": "local_tested_product_fix",
           "reference": "docs/testing/finalize_game_defects_20261110.md",
           "summary": "Scoped native regression checks pass on current-main-based fix31bb55b8. Home production-API/codec restore and memo typed/cycle/authority/FIFO controls are distinct from browser UI Save/cold Continue or deployed NEXT acceptance. Exact matched key-cost ratio0.699; no whole-game speedup claim."
+        },
+        {
+          "kind": "exact_main_next_delivery",
+          "reference": "docs/testing/final_stabilization_next_delivery_20261110.json",
+          "summary": "Source31bb55b8 integrated into main cef35289; exact served source/tree/assets/basic menu and owned E cleanup pass. Native home/memo/cycle checks pass separately. Required changed Web behavior remains unverified; objective stays Open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate fix 31bb55b88fce5890029b9470ceb7548c9ce1bad5 into main, follow the existing NEXT deployment, and record exact deployed source identity and changed-behavior acceptance. Local native checks passed; parent audit scope remains Open.",
+      "next_action": "Retain committed/delivered fix and passing native regression evidence. Qualify actual changed Web behavior when testing resumes; UI Save/cold Continue and original-personal-save coverage are not established. Keep this objective and parent audits Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Local correction is tested and committed; parent is actively coordinating main/NEXT integration.",
+        "description": "No pipeline/source blocker. Exact delivery is verified; changed Web behavior acceptance remains unverified and is not replaced by native or menu checks.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T07:27:28.494025+00:00",
+        "observed_at": "2026-11-10T07:40:12.965519+00:00",
         "evidence": [
-          "docs/testing/finalize_game_defects_20261110.md",
-          "docs/testing/finalize_game_defects_20261110.json"
+          "docs/testing/final_stabilization_next_delivery_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:30:45.465180+00:00",
+      "updated_at": "2026-11-10T07:40:12.965519+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -29750,10 +29764,15 @@
           "kind": "branch_cleanup_receipt",
           "reference": "docs/testing/branch_cleanup_20261110.json",
           "summary": "104 obsolete local heads and all eight non-main GitHub branches removed. Fourteen exact historical tips durably archived; 44 metadata-only detachments preserve every index/status, and all 52 dirty worktrees/358 files remain byte-identical."
+        },
+        {
+          "kind": "final_main_ownership_consolidation",
+          "reference": "docs/testing/final_stabilization_next_delivery_20261110.json",
+          "summary": "After integration cef35289, archived/deleted remaining transient refs, metadata-detached old dirty main at19388 and attached main to clean E workspace. All four targeted worktree file/status/index snapshots unchanged; no files/directories deleted."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Scoped cleanup complete. Parent retains active finalization/defect branches until final main integration and verifies NEXT separately; all original files and archived history remain preserved.",
+      "next_action": "Cleanup complete. Only main remains in the shared repository and isolated audit clone; clean E integration workspace owns current main. Original dirty D checkout and all detached historical files/indexes remain preserved; future feature work can branch from verified main in a separate workspace.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -29765,7 +29784,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:19:45.725799+00:00"
+      "updated_at": "2026-11-10T07:40:12.965519+00:00"
     }
   ],
   "batches": [

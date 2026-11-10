@@ -1,0 +1,266 @@
+{
+  "schema": "bth.final_stabilization_next_delivery/v1",
+  "observed_at": "2026-11-10T07:40:12.965519+00:00",
+  "state": "EXACT_SOURCE_DELIVERY_AND_BASIC_STARTUP_VERIFIED",
+  "source_commit": "cef352890740412769cd4e3c7488763a4262fb67",
+  "source_tree": "815729f8377d94cceb6b0f6296dcaf805142581e",
+  "reviewed_fix": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+  "version": "0.6.0-dev+cef352890740",
+  "deployed_at": "2026-11-10T07:35:48Z",
+  "build_log": "state\\bth-next\\logs\\cef352890740412769cd4e3c7488763a4262fb67-1794296037821337500.log",
+  "served": {
+    "scope": "Exact served identity/assets and basic menu startup only; no gameplay or exploratory playtesting.",
+    "sha": "cef352890740412769cd4e3c7488763a4262fb67",
+    "tree": "815729f8377d94cceb6b0f6296dcaf805142581e",
+    "observed_at": "2026-11-10T07:38:41.151Z",
+    "metadata": [
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/next.json",
+        "status": 200,
+        "sha256": "a576c59d723690420b74aef2d0e65afd777b1c1b9ef4635471b668d10de5158e",
+        "source_commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "source_tree": "815729f8377d94cceb6b0f6296dcaf805142581e",
+        "archive_sha256": "f075f8e0ce5b0dfd94d7bec67c47a41d348730b045a1c0032ee1c339de12a021",
+        "tls_validation_disabled": false
+      },
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/next.json",
+        "status": 200,
+        "sha256": "a576c59d723690420b74aef2d0e65afd777b1c1b9ef4635471b668d10de5158e",
+        "source_commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "source_tree": "815729f8377d94cceb6b0f6296dcaf805142581e",
+        "archive_sha256": "f075f8e0ce5b0dfd94d7bec67c47a41d348730b045a1c0032ee1c339de12a021",
+        "tls_validation_disabled": false
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/BUILD.json",
+        "status": 200,
+        "sha256": "4152137f63adc3e9f6854bdc9a59782e287e1c3339a931e52de13e10578f44e1",
+        "text": "{\r\n  \"built_at\": \"2026-11-10T07:35:44Z\",\r\n  \"source_branch\": \"main\",\r\n  \"version\": \"0.6.0-dev+cef352890740\",\r\n  \"source_tree\": \"815729f8377d94cceb6b0f6296dcaf805142581e\",\r\n  \"source_commit\": \"cef352890740412769cd4e3c7488763a4262fb67\"\r\n}\r\n"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/build_manifest.json",
+        "status": 200,
+        "sha256": "967311775ecd3c3edc4102995f499a629f487e7cc9836ae9e95daa882ead0dbd",
+        "text": "{\r\n  \"schema\": \"beat_the_house.build_manifest/v1\",\r\n  \"build_version\": \"0.6.0-dev+cef352890740\",\r\n  \"release_version\": \"0.6.0\",\r\n  \"source_commit\": \"cef352890740412769cd4e3c7488763a4262fb67\",\r\n  \"source_tree\": \"815729f8377d94cceb6b0f6296dcaf805142581e\",\r\n  \"source_dirty\": false,\r\n  \"dirty_state_digest\": \"a51a7c91930243bbc61ed7b8cea76c1e5db706ac82b1f5a92f8a5b1416fb2d7c\",\r\n  \"engine_sha256\": \"fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae\",\r\n  \"export_presets_sha256\": \"ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad\",\r\n  \"platform\": \"web\",\r\n  \"native_library_path\": \"coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm\",\r\n  \"native_library_sha256\": \"b0e3704648bf8c9c03ad0fa4624554d68435d10a87908f43e58ef02d558a71fe\"\r\n}"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/REF",
+        "status": 200,
+        "sha256": "6524b50fd6046fb58f14909cece9a0c984ba69aac0c6b4994969b5b8af01b70d",
+        "text": "cef352890740412769cd4e3c7488763a4262fb67\r\n"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/VERSION",
+        "status": 200,
+        "sha256": "39da8597187d0b78f8079366fe9333f1c1dec967075a066ac4c4f685f0d4d4a9",
+        "text": "0.6.0-dev+cef352890740\r\n"
+      }
+    ],
+    "assets": [
+      {
+        "evidenceSource": "installed_bytes_and_exact_pipeline_journal",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.js",
+        "status": null,
+        "file": "index.js",
+        "bytes": 2828608,
+        "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "contentType": "text/javascript",
+        "matchesInstalled": true,
+        "matchesArchiveJournal": true,
+        "matchesGlHandleReceipt": true,
+        "httpStatusSource": "not_separately_http_checked"
+      },
+      {
+        "evidenceSource": "installed_bytes_and_exact_pipeline_journal",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.wasm",
+        "status": 200,
+        "file": "index.wasm",
+        "bytes": 1508237,
+        "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "contentType": "application/wasm",
+        "matchesInstalled": true,
+        "matchesArchiveJournal": true,
+        "matchesPinnedEngine": true,
+        "httpStatusSource": "actual_browser_response"
+      },
+      {
+        "evidenceSource": "installed_bytes_and_exact_pipeline_journal",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.side.wasm",
+        "status": 200,
+        "file": "index.side.wasm",
+        "bytes": 21802358,
+        "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "contentType": "application/wasm",
+        "matchesInstalled": true,
+        "matchesArchiveJournal": true,
+        "matchesPinnedEngine": true,
+        "httpStatusSource": "actual_browser_response"
+      },
+      {
+        "evidenceSource": "served_changed_payload",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.pck",
+        "status": 200,
+        "file": "index.pck",
+        "bytes": 47205080,
+        "sha256": "65bc816a59d336ef254f04c45646015c9658205b567878609709cf70d6e2da77",
+        "contentType": "application/octet-stream",
+        "matchesInstalled": true,
+        "matchesArchiveJournal": true
+      },
+      {
+        "evidenceSource": "installed_bytes_and_exact_pipeline_journal",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "status": 200,
+        "file": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "bytes": 340415,
+        "sha256": "b0e3704648bf8c9c03ad0fa4624554d68435d10a87908f43e58ef02d558a71fe",
+        "contentType": "application/wasm",
+        "matchesInstalled": true,
+        "matchesArchiveJournal": true,
+        "matchesNativeManifest": true,
+        "httpStatusSource": "actual_browser_response"
+      }
+    ],
+    "browserResponses": [
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.wasm",
+        "status": 200,
+        "contentType": "application/wasm"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.pck",
+        "status": 200,
+        "contentType": "application/octet-stream"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/index.side.wasm",
+        "status": 200,
+        "contentType": "application/wasm"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "status": 200,
+        "contentType": "application/wasm"
+      }
+    ],
+    "pageErrors": [],
+    "consoleErrors": [],
+    "console": [
+      {
+        "type": "log",
+        "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org"
+      },
+      {
+        "type": "log",
+        "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+      },
+      {
+        "type": "log",
+        "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support."
+      },
+      {
+        "type": "warning",
+        "text": "The AudioContext was not allowed to start. It must be resumed (or created) after a user gesture on the page. https://developer.chrome.com/blog/autoplay/#web_audio"
+      }
+    ],
+    "requestFailed": [],
+    "deployed_at": "2026-11-10T07:35:48Z",
+    "redirect": {
+      "requested": "http://localhost:8088/p/beat-the-house/play/dev/",
+      "resolved": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/",
+      "status": 200,
+      "matchesInstalled": true
+    },
+    "final_url": "http://localhost:8088/p/beat-the-house/play/dev/cef352890740412769cd4e3c7488763a4262fb67/",
+    "canvas_count": 1,
+    "canvas_visible": true,
+    "loading_overlay_removed": true,
+    "title": "Beat the House",
+    "asset_scope": "Changed PCK fetched and hashed; unchanged engine/native installed hashes matched exact pipeline journal and pins, with actual browser response status/MIME checks. Basic menu startup only.",
+    "state": "PASS",
+    "finished_at": "2026-11-10T07:39:11.584Z"
+  },
+  "startup_job": {
+    "run_id": "final-stab-cef352-startup-r4-20261110",
+    "exit_code": 0,
+    "active_at_release": 0,
+    "job_sha256": "f8b026c362b86b69f5c622f8f63b2487b00b9e7731448c9f466fd6287794f3e3",
+    "startup_sha256": "23a2fe06913bc7a600f6f226ee2fac023ae89588449ba68d9812892fd62945d4",
+    "screenshot_sha256": "7bfcd31ad22903bf9c471101911923d7693b65d3a4a7899bd34de100711fcab9",
+    "visual_review": "Start menu visibly rendered with PLAY, RUN SETUP and exact Version0.6.0-dev+cef352890740; no page/console errors."
+  },
+  "existing_trust": "Node verification used existing D:/Projects/site/state/lan-tls/ca.crt via process-only NODE_EXTRA_CA_CERTS. TLS validation remained on; no trust/security configuration changed.",
+  "guarded_native_evidence": "docs/testing/final_stabilization_integration_20261110.json",
+  "ephemeral_cleanup": {
+    "source": "E:\\CodexTaskStorage\\bth-next-build-cef352890740412769cd4e3c7488763a4262fb67-1794295970220317000",
+    "removed": true,
+    "ignored_files_checked": 1654,
+    "owned_record": "D:\\Projects\\site\\state\\bth-next\\retention\\attempts\\bth-next-build-cef352890740412769cd4e3c7488763a4262fb67-1794295970220317000.json",
+    "terminal_state": "deployed"
+  },
+  "branch_consolidation": {
+    "schema": "bth.final_branch_consolidation/v1",
+    "observed_at": "2026-11-10T07:36:26.715836+00:00",
+    "target_main": "cef352890740412769cd4e3c7488763a4262fb67",
+    "operations": [
+      {
+        "repo": "D:\\Projects\\Beat-The-House",
+        "ref": "refs/heads/main",
+        "archive": "refs/archive/bth-20261110/final/main",
+        "sha": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "ref": "refs/heads/codex/finalize-branches-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/finalize-branches-20261110",
+        "sha": "cef352890740412769cd4e3c7488763a4262fb67"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "ref": "refs/heads/codex/finalize-game-defects-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/finalize-game-defects-20261110",
+        "sha": "a928b90c53c0041dc5835cfef34174efe4f1b433"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\unfinished-audit-20261110",
+        "ref": "refs/heads/codex/unfinished-audit-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/unfinished-audit-20261110",
+        "sha": "846ba6f29949bfe98cd83b0fecad4f54668ca46e"
+      }
+    ],
+    "snapshots_preserved_exactly": true,
+    "primary_dirty_files_preserved": 10,
+    "original_primary_head_detached": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd",
+    "clean_main_workspace": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+    "common_repo_heads": [
+      "refs/heads/main cef352890740412769cd4e3c7488763a4262fb67"
+    ],
+    "audit_clone_heads": [
+      "refs/heads/main cef352890740412769cd4e3c7488763a4262fb67"
+    ],
+    "directories_deleted": 0,
+    "files_deleted": 0,
+    "method": "Exact SHA metadata-only detach/update/symbolic HEAD transfer; compare/delete refs only after archive. No checkout/reset/clean, no file/index mutation."
+  },
+  "remaining_acceptance": "Both correction objectives remain Open: native synthetic/API/codec checks and exact delivered source/basic Web startup are verified; actual changed Web behavior and UI Save/cold Continue are unverified. No broad playtesting, parent-audit closure or paused redesign acceptance.",
+  "audience": "Existing private LAN NEXT only; stable/itch/audience not changed.",
+  "final_reconciliation": {
+    "summary": {
+      "objectives_checked": 160,
+      "batches_checked": 9,
+      "open_objectives": 67,
+      "open_batches": 5,
+      "open_work_items": 72,
+      "user_paused_items": 37,
+      "complete_objectives": 93,
+      "errors": 900,
+      "warnings": 0,
+      "tasks_with_errors": 67
+    },
+    "new_scoped_findings": 0,
+    "report_sha256": "433580c4564c19c14c555d5e1efbf2c04bcecab8f63ba70a0b31a355af888557",
+    "report_path": "E:\\CodexQA\\BTH\\runs\\final-delivery-reconcile-r2-20261110\\evidence\\reconciliation.json",
+    "unrelated_rows_pauses_policies_batches_unchanged": true
+  }
+}

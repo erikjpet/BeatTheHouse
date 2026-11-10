@@ -1791,5 +1791,51 @@
     "full_all_group_errors": 1516,
     "full_all_group_tasks_with_errors": 207,
     "limits": "All-group errors are preserved preexisting stale/historical/open-task reconciliation gaps; no global pass or closure is claimed. The new cleanup task has zero findings."
-  }
+  },
+  "postintegration_main_consolidation": {
+    "schema": "bth.final_branch_consolidation/v1",
+    "observed_at": "2026-11-10T07:36:26.715836+00:00",
+    "target_main": "cef352890740412769cd4e3c7488763a4262fb67",
+    "operations": [
+      {
+        "repo": "D:\\Projects\\Beat-The-House",
+        "ref": "refs/heads/main",
+        "archive": "refs/archive/bth-20261110/final/main",
+        "sha": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "ref": "refs/heads/codex/finalize-branches-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/finalize-branches-20261110",
+        "sha": "cef352890740412769cd4e3c7488763a4262fb67"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\finalize-game-defects-20261110",
+        "ref": "refs/heads/codex/finalize-game-defects-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/finalize-game-defects-20261110",
+        "sha": "a928b90c53c0041dc5835cfef34174efe4f1b433"
+      },
+      {
+        "repo": "E:\\CodexQA\\BTH\\workspaces\\unfinished-audit-20261110",
+        "ref": "refs/heads/codex/unfinished-audit-20261110",
+        "archive": "refs/archive/bth-20261110/final/codex/unfinished-audit-20261110",
+        "sha": "846ba6f29949bfe98cd83b0fecad4f54668ca46e"
+      }
+    ],
+    "snapshots_preserved_exactly": true,
+    "primary_dirty_files_preserved": 10,
+    "original_primary_head_detached": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd",
+    "clean_main_workspace": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+    "common_repo_heads": [
+      "refs/heads/main cef352890740412769cd4e3c7488763a4262fb67"
+    ],
+    "audit_clone_heads": [
+      "refs/heads/main cef352890740412769cd4e3c7488763a4262fb67"
+    ],
+    "directories_deleted": 0,
+    "files_deleted": 0,
+    "method": "Exact SHA metadata-only detach/update/symbolic HEAD transfer; compare/delete refs only after archive. No checkout/reset/clean, no file/index mutation."
+  },
+  "non_main_local_branches_remaining": 0,
+  "clean_main_workspace": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110"
 }
