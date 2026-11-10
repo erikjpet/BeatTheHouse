@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-06T07:22:34.661932+00:00",
+  "observed_at": "2026-11-10T17:56:45.540517+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -22,7 +22,8 @@
       "docs/testing/pulltabs_practice_redeem_currency_20261105.json",
       "docs/testing/deprecated_code_audit_continuation_013.md",
       "docs/testing/deprecated_code_audit_continuation_014.md",
-      "docs/testing/deprecated_code_audit_continuation_015.md"
+      "docs/testing/deprecated_code_audit_continuation_015.md",
+      "docs/testing/roulette_web_closeout_b6_20261110.json"
     ]
   },
   "instances": [
@@ -22388,6 +22389,168 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog031-walk-root-postcheck-r1.json"
         ],
         "limit": "Unchanged180sec12percent2GiB assigned-before-execution kill-on-close noBreakaway ownedJob0. One native public-model qualification:12controls0fail, actual normal Meta Dictionary offered/rejected, canonical owner also rejected; public String control succeeds. No full journey/UI/original-save, implementation or NEXT claim. All original files/logs retained; no cleanup or denied operation retry."
+      }
+    },
+    {
+      "instance_id": "roulette-closeout:roulette-b6-web-warm10-20261110",
+      "task_id": "BTH061-ROULETTE-WARM-REVEAL-001",
+      "owner_task_ref": "/root/verify_roulette_deployment",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "roulette-b6-web-warm10-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json:pid:7784",
+        "started_at": "2026-11-10T17:45:50.055912+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T17:45:51.341333+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json:pid:7784",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T17:45:51.341333+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T17:45:51.341333+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "roulette-b6-web-warm10-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T17:45:51.341333+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ],
+        "limit": "Owned capped Job drained0 with no cleanup errors. Gameplay unverified; setup failure/timeout retained. No global process cleanup. Launch timestamp is the recorded exclusive launch claim immediately before gated suspended-child creation; the receipt binds the creation PID and manifest. It is not an OS process start-time census."
+      }
+    },
+    {
+      "instance_id": "roulette-closeout:roulette-b6-web-warm10-r2-20261110",
+      "task_id": "BTH061-ROULETTE-WARM-REVEAL-001",
+      "owner_task_ref": "/root/verify_roulette_deployment",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "roulette-b6-web-warm10-r2-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json:pid:28316",
+        "started_at": "2026-11-10T17:46:36.733142+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T17:54:47.368864+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json:pid:28316",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T17:54:47.368864+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T17:54:47.368864+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "roulette-b6-web-warm10-r2-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_closeout_b6_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T17:54:47.368864+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
+        ],
+        "limit": "Owned capped Job drained0 with no cleanup errors. Gameplay unverified; setup failure/timeout retained. No global process cleanup. Launch timestamp is the recorded exclusive launch claim immediately before gated suspended-child creation; the receipt binds the creation PID and manifest. It is not an OS process start-time census."
       }
     }
   ],

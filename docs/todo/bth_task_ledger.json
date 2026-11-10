@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:53:33.734243+00:00",
+  "updated_at": "2026-11-10T17:56:45.540517+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -21828,8 +21828,8 @@
       "state": "open",
       "status": "ORIGINAL_PENDING_UNATTRIBUTED_WARM_FIX_LOCAL_PASS",
       "owner": {
-        "name": "Close Roulette settlement",
-        "task_ref": "/root/close_roulette_settlement",
+        "name": "Verify Roulette deployment",
+        "task_ref": "/root/verify_roulette_deployment",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -21911,10 +21911,15 @@
           "kind": "merged_source_gate",
           "reference": "docs/testing/roulette_sealed_pending_r08.json",
           "summary": "Incoming main253454b7 retained, mergedcandidate9f1e2e17. Fresh separate E nativezero-input Save/Continue36 gate passes/no timeout/owned0; no new Web/gameplay run. All247IDs and otherincomingrecords preserved. Ownproductdelta fromincomingnone; sourceWebfinancialcase remainsf305 with documentedwarmgap."
+        },
+        {
+          "kind": "exact_b6_web_acceptance_attempt",
+          "reference": "docs/testing/roulette_web_closeout_b6_20261110.json",
+          "summary": "Exact b6 identity/assets/menu startup reused. Two fresh admitted Web attempts retained: missing-browser setup failure then navigate stall closed by a 490-second supervisor, both with zero owned processes. Zero gameplay input; first payout/history remains unverified. HTTPS trust separate, original R08 untouched."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish warm reveal child; retain factual original pending attribution limit rather than retry/cancel or replay its request.",
+      "next_action": "Retain original pending attribution limit; diagnose the independent warm child startup blocker without retrying, cancelling or replaying original R08.",
       "blocker": {
         "state": "active",
         "kind": "original_pending_attribution_unavailable",
@@ -21926,7 +21931,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:24:57.997934+00:00"
+      "updated_at": "2026-11-10T17:56:45.540517+00:00"
     },
     {
       "id": "BTH061-AUDIT-COVERAGE-RECONCILE-007",
@@ -29964,7 +29969,8 @@
             "required": true,
             "state": "open",
             "evidence": [
-              "docs/testing/roulette_closeout_20261110.md"
+              "docs/testing/roulette_closeout_20261110.md",
+              "docs/testing/roulette_web_closeout_b6_20261110.json"
             ]
           }
         ],
@@ -29975,10 +29981,10 @@
         }
       },
       "state": "open",
-      "status": "EXACT_NEXT_DEPLOYED_RENDERED_WARM_ACCEPTANCE_OPEN",
+      "status": "DEPLOYED_B6_NATIVE_PASS_WEB_STARTUP_BLOCKED",
       "owner": {
-        "name": "Close Roulette settlement",
-        "task_ref": "/root/close_roulette_settlement",
+        "name": "Verify Roulette deployment",
+        "task_ref": "/root/verify_roulette_deployment",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -29994,9 +30000,13 @@
         "state": "verified",
         "commit": "b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b",
         "evidence": [
+          "docs/testing/roulette_web_closeout_b6_20261110.json",
+          "docs/testing/closeout_integration_20261110.json",
+          "docs/testing/roulette_sealed_pending_r08.md",
+          "docs/testing/roulette_sealed_pending_r08.json",
           "docs/testing/closeout_next_delivery_20261110.json"
         ],
-        "scope": "Exact main/tree/NEXT metadata, changed-PCK custody, native full served hash, asset receipts and basic rendered menu verified; real warm first-result acceptance remains unverified."
+        "scope": "Exact b6 served identity/assets/PCK custody/redirect/menu startup only, reusing original exact-build receipt. Fresh rendered warm-gameplay acceptance remains Open after a no-input startup stall. No HTTPS rendered acceptance. Later metadata reports current NEXT 4aff4073f7fa85bd9aaf5b760ead94c276c182f4; b6 is the last exact-build startup identity reused here, not a current-NEXT warm pass."
       },
       "evidence": [
         {
@@ -30013,22 +30023,27 @@
           "kind": "current_integrated_native",
           "reference": "docs/testing/closeout_integration_20261110.json",
           "summary": "Current integrated source:98 same-process native checks pass with automatic payout/history and one paid Confirm; no-pointer animation liveness pass. Both Jobs exit0/owned0. Prior boundary/cash/chips/cold evidence retained at original identity. Web acceptance remains open."
+        },
+        {
+          "kind": "exact_b6_web_acceptance_attempt",
+          "reference": "docs/testing/roulette_web_closeout_b6_20261110.json",
+          "summary": "Exact b6 identity/assets/menu startup reused. Two fresh admitted Web attempts retained: missing-browser setup failure then navigate stall closed by a 490-second supervisor, both with zero owned processes. Zero gameplay input; first payout/history remains unverified. HTTPS trust separate, original R08 untouched."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain fresh rendered same-process Blackjack-to-Roulette first-result acceptance on immutable b6c1602d. Preserve original SEALED pending attribution separately.",
+      "next_action": "Diagnose retained independent localhost startup stall before another bounded same-process first paid result/history acceptance attempt; preserve TLS and original pending-request boundaries.",
       "blocker": {
         "state": "active",
-        "kind": "exact_main_next_acceptance_pending",
-        "description": "Exact main/NEXT delivery is verified; fresh rendered same-process warm first-result acceptance remains.",
+        "kind": "rendered_warm_startup_unverified",
+        "description": "Fresh strict localhost attempt stalled before interactive readiness; the 490-second supervisor closed owned Job to zero owned processes. No gameplay input, screenshot or first-result acceptance. LAN HTTPS certificate failure remains separate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "observed_at": "2026-11-10T17:56:45.540517+00:00",
         "evidence": [
-          "docs/testing/roulette_closeout_20261110.md"
+          "docs/testing/roulette_web_closeout_b6_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:44:26.245214+00:00"
+      "updated_at": "2026-11-10T17:56:45.540517+00:00"
     }
   ],
   "batches": [

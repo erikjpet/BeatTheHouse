@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T17:52:06.744137+00:00",
+  "observed_at": "2026-11-10T18:02:18.343247+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -192,11 +192,18 @@
       "source": "Actual native collaboration list: root running while coordinating the user-requested closeout tasks."
     },
     {
+      "task_ref": "/root/verify_roulette_deployment",
+      "title": "Verify Roulette deployment",
+      "state": "active",
+      "observed_at": "2026-11-10T17:56:45.540517+00:00",
+      "source": "Actual native worker finalizing a limited exact-b6 acceptance receipt after two owned Jobs closed/0. Fresh warm Web acceptance not reached; no original pending access or security bypass."
+    },
+    {
       "task_ref": "/root/integrate_first_closeouts",
       "title": "Integrate requested closeouts",
       "state": "active",
-      "observed_at": "2026-11-10T17:52:06.744137+00:00",
-      "source": "Actual running native integration worker applying this specific user-approved item12 correction."
+      "observed_at": "2026-11-10T18:02:18.343247+00:00",
+      "source": "Actual active integration worker retaining the latest timeout evidence without closing Roulette acceptance or using the browser resource window."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

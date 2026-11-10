@@ -1,0 +1,183 @@
+{
+  "schema": "bth.roulette_web_closeout/v1",
+  "observed_at": "2026-11-10T17:56:45.540517+00:00",
+  "fix_original_commit": "9300a5ae96d1a7e70e98c296ef39f9bdd7d42141",
+  "fix_integrated_commit": "8b4653d0a390745d05bcd404ba529efc07d0a726",
+  "served_commit": "b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b",
+  "served_tree": "e4ee6d6d85b9485b5054757f094b741b3f45e98e",
+  "source_hash": "ac2c5bd74ce704201b9266aa4cd85a76bf9c881053dc007d2a2efbbcc274f208",
+  "prior_exact_build_startup": {
+    "receipt": "E:\\CodexQA\\BTH\\runs\\closeout-next-b6-startup-20261110\\evidence\\startup.json",
+    "sha256": "5d3507c8aa2f5a11abd2c2c6aa5c414467c171a81a9a275617e6366685ef5af0",
+    "scope": "Exact identity, changed PCK custody, unchanged asset headers/pipeline hash receipts, basic menu startup only. No Web gameplay.",
+    "state": "PASS",
+    "observed_at": "2026-11-10T17:40:50.809Z",
+    "finished_at": "2026-11-10T17:41:26.895Z"
+  },
+  "current_localhost_next": {
+    "source_commit": "4aff4073f7fa85bd9aaf5b760ead94c276c182f4",
+    "source_tree": "1584d6e2d91a4064961498154f79df4eb7d31ce3",
+    "metadata_sha256": "e3d77391675783a70259f84ae6125cef3edf43c6902b8fd3eb9bb4cefeeab064"
+  },
+  "driver": {
+    "path": "E:\\CodexQA\\BTH\\runs\\init\\evidence\\web_roulette_closeout.cjs",
+    "sha256": "2e9549cfa721d309249be36dcfec04601d8a86935ca0ca2fb2d6456e9445cbee",
+    "unchanged": true,
+    "mode": "Independent documented localhost QA, fresh predeclared B fixture/profile; exact b6 engine/PCK/assets with bootstrap HTML fixture preload only."
+  },
+  "runs": [
+    {
+      "run_id": "roulette-b6-web-warm10-20261110",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\job.json",
+      "job_sha256": "f210d73b00c58e428f1e142029ac8f45b8fe0afa3d1caf7fab47c849bc4f0e3d",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\storage-manifest.json",
+      "storage_manifest_sha256": "2e7d4e82f274e8e70dbc1818251db8c2ebcc7de106e2bae2ff9382c6eb084ad9",
+      "state": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\evidence\\r08-warm-session-10\\state.json",
+      "state_sha256": "a819ed394a409bb8fbf76dcb69161423961a6e6d2557e5ebb9fe974129b00035",
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "pid": 7784,
+      "finished_epoch": 1794332751.3413327,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "ready": false,
+      "stage": "error",
+      "driver_error": "Error: browserType.launchPersistentContext: Executable doesn't exist at E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-20261110\\localappdata\\ms-playwright\\chromium-1243\\chrome-win64\\chrome.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝",
+      "commands": [],
+      "action_dispatches": [],
+      "page_errors": [],
+      "request_failures": [],
+      "responses": []
+    },
+    {
+      "run_id": "roulette-b6-web-warm10-r2-20261110",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\job.json",
+      "job_sha256": "92e648f70dcc438b598af82197410e556cfca6272b4b37f63948c186b2d25f16",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\storage-manifest.json",
+      "storage_manifest_sha256": "0d22068d0769c01c1a03e0cfd13a1b9f605393187915bd569838a2f9bec3bb38",
+      "state": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\r08-warm-session-10\\state.json",
+      "state_sha256": "1a84e502a81f4e6797622ec28f423874a578541c3df77200ebb540f3a7b56153",
+      "exit_code": 1,
+      "timed_out": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "pid": 28316,
+      "finished_epoch": 1794333287.3688636,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "assigned_before_execution": true,
+      "ready": false,
+      "stage": "navigate",
+      "driver_error": "SESSION_DEADLINE",
+      "commands": [],
+      "action_dispatches": [],
+      "page_errors": [],
+      "request_failures": [],
+      "responses": [
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.html",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.png",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.js",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/fixture_manifest.json",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/qa-run.json",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/qa-meta.json",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/qa-settings.json",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/qa-profile.json",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/qa-authority.bin",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.icon.png",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.wasm",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.pck",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/index.side.wasm",
+          "status": 200
+        },
+        {
+          "url": "http://localhost:8088/p/beat-the-house/play/dev/b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+          "status": 200
+        }
+      ]
+    }
+  ],
+  "outcome": "RENDERED_GAMEPLAY_UNVERIFIED_STARTUP_STALL",
+  "result": "No Deal, Stand, Leave, Red9, Spin or Confirm was dispatched. First paid payout/history acceptance was never reached; no Roulette gameplay failure or success inferred.",
+  "limits": [
+    "First attempt did not launch browser: isolated LOCALAPPDATA hid existing browser. Corrected only PLAYWRIGHT_BROWSERS_PATH to installed browser; retained first setup failure, no gameplay outcome selection.",
+    "Second attempt loaded the fixture and engine/WebGL with four served runtime payloads HTTP200, but remained at navigate and produced no startup PNG. It did not return its own readiness/terminal timers; the independent490-second capped supervisor timed out and drained its owned Job to0. Cause unclassified.",
+    "Prior HTTPS browser attempt on the LAN URL was reported to parent as ERR_CERT_AUTHORITY_INVALID. Not retried here, and no TLS verification, security warning or browser sandbox bypass was used. Localhost evidence does not qualify HTTPS rendered access.",
+    "Existing97/98 native same-process, boundary/persistence and no-pointer liveness receipts remain qualification only at their original source and scope; they are not a fresh Web pass.",
+    "Original R08 save, pending request, profile and authority are untouched. Original first rejection remains unrecorded and unattributed. Stable, itch, site audience, hosting, watcher and source code unchanged. No push."
+  ],
+  "identity_scope": "The warm attempt pinned immutable b6. A later metadata read observed current NEXT 4aff4073f7fa85bd9aaf5b760ead94c276c182f4; no current-NEXT asset/startup or gameplay qualification is claimed for that newer build.",
+  "reconciliation": {
+    "exit_code": 1,
+    "output": "E:\\CodexQA\\BTH\\runs\\roulette-b6-web-warm10-r2-20261110\\evidence\\reconciliation-final.json",
+    "output_sha256": "70caedcadb860a7aed283dc817a310281d10dc11a59b3cc7351dcd3034ffb599",
+    "summary": {
+      "objectives_checked": 161,
+      "batches_checked": 9,
+      "open_objectives": 67,
+      "open_batches": 5,
+      "open_work_items": 72,
+      "user_paused_items": 37,
+      "complete_objectives": 94,
+      "errors": 890,
+      "warnings": 0,
+      "tasks_with_errors": 64
+    },
+    "assigned_findings_count": 54,
+    "assigned_nonhistorical_findings": [],
+    "scope": "Historical runtime stale observations preserved, not restamped; no global reconciliation pass claimed."
+  }
+}
