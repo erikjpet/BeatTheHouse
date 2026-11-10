@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T06:48:58.711335+00:00",
+  "observed_at": "2026-11-10T07:02:39.283972+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -155,6 +155,13 @@
       "state": "active",
       "observed_at": "2026-11-10T06:46:56.711046+00:00",
       "source": "Actual native worker resumed the existing prepared storage worktree and is finalizing its scoped tested local commit; parent integration owner handles main/NEXT."
+    },
+    {
+      "task_ref": "/root/complete_next_release",
+      "title": "Finalize stable NEXT delivery",
+      "state": "active",
+      "observed_at": "2026-11-10T07:02:39.283972+00:00",
+      "source": "Actual active native worker observes verified c3d16523 delivery and commits its scoped receipt; existing watcher remains sole builder. Other historical task observations are not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

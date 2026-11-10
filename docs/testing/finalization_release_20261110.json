@@ -1,6 +1,6 @@
 {
   "observed_at": "2026-11-10T06:51:26.614080+00:00",
-  "state": "TESTED_INTEGRATED_MAIN_NEXT_PENDING",
+  "state": "TESTED_INTEGRATED_MAIN_NEXT_VERIFIED",
   "integration_commit": "0bc62179263fb86def188c0f5bc3a27ea3c308e7",
   "integration_tree": "7405d000a76cee78068a2382037cfa2593814982",
   "base_main": "b2a9cef8156c993391e44bcef75dec42558c41eb",
@@ -171,7 +171,12 @@
     "scope": "900 historical/stale tracking errors across 67 other tasks preserved. Scoped finalization, layout and QA storage items have no findings. Initial exact Python-alias launch failed before execution, then retried using the installed executable in a fresh run."
   },
   "deployment": {
-    "state": "pending",
+    "state": "verified",
+    "commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+    "source_tree": "1e056706c242a47f16ed380abc75ce80b7b451e8",
+    "evidence": [
+      "docs/testing/finalization_next_delivery_20261110.json"
+    ],
     "existing_next_only": true,
     "stable_itch_audience_unchanged": true
   },
@@ -180,5 +185,22 @@
     "Residual synchronous Video Poker cold-advice hitch and full-game performance/audit scope remain open.",
     "Historical dirty diagnostics, profiles, saves and archives preserved; no diagnostic hooks shipped.",
     "Existing watcher owns E ephemeral build and cleanup; no manual export or duplicate watcher."
-  ]
+  ],
+  "final_delivery_reconciliation": {
+    "summary": {
+      "objectives_checked": 159,
+      "batches_checked": 9,
+      "open_objectives": 67,
+      "open_batches": 5,
+      "open_work_items": 72,
+      "user_paused_items": 39,
+      "complete_objectives": 92,
+      "errors": 900,
+      "warnings": 0,
+      "tasks_with_errors": 67
+    },
+    "scoped_findings": [],
+    "report_sha256": "720e74ae58f9f137a62654a0c0c4e74351265f53a49e8ffdf63a14248d9677fe",
+    "scope": "Current supplied owner/runtime snapshots. Historical/stale findings outside the three completed finalization items remain open; this is not a backlog pass."
+  }
 }
