@@ -114,6 +114,9 @@ func _init() -> void:
 		if int(hostile_stats.get("full_runs", -1)) != 9 or int(hostile_stats.get("hits", -1)) != 2 or int(hostile_stats.get("entries", -1)) != 1:
 			failures.append("Invalid or mutated validation inputs entered the positive-result memo: %s" % JSON.stringify(hostile_stats))
 
+	if not definition.is_empty():
+		_check_typed_memo_boundaries(definition, target_inventory, failures)
+
 	Schema._clear_successful_validation_memo_for_tests()
 	for memo_index in range(Schema.SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES + 1):
 		Schema._remember_successful_validation("bounded_fixture_%03d" % memo_index)
@@ -181,3 +184,42 @@ func _first_sequence_fixture(library: Variant) -> Dictionary:
 			target_inventory["event_choices"] = (target_catalog.get("event_choices", {}) as Dictionary).duplicate(true)
 			return {"definition": definition, "target_inventory": target_inventory}
 	return {}
+
+
+func _check_typed_memo_boundaries(definition: Dictionary, targets: Dictionary, failures: Array[String]) -> void:
+	var alternatives: Array[Dictionary] = []
+	var named_text := definition.duplicate(true)
+	var phases: Array = named_text["sequence"]["phase_graph"]["phases"]
+	phases[0]["label"] = StringName(str(phases[0]["label"]))
+	alternatives.append(named_text)
+	var packed_tags := definition.duplicate(true)
+	packed_tags["sequence"]["mechanic_tags"] = PackedStringArray(packed_tags["sequence"]["mechanic_tags"])
+	alternatives.append(packed_tags)
+	var typed_array := definition.duplicate(true)
+	var ordinary_typed_tags: Array[String] = []
+	for tag in typed_array["sequence"]["mechanic_tags"]:
+		ordinary_typed_tags.append(str(tag))
+	typed_array["sequence"]["mechanic_tags"] = ordinary_typed_tags
+	if not Schema.validate_definition(typed_array, Registry, targets).is_empty():
+		failures.append("A valid typed ordinary string Array was rejected with packed arrays.")
+	if Schema._successful_validation_memo_key({"value": 1}, targets, Registry) == Schema._successful_validation_memo_key({"value": 1.0}, targets, Registry):
+		failures.append("Native memo identity erased the integer/float distinction.")
+	var source_bytes := var_to_bytes(definition)
+	for alternative in alternatives:
+		Schema._clear_successful_validation_memo_for_tests()
+		var cold_errors := Schema.validate_definition(alternative, Registry, targets)
+		Schema._clear_successful_validation_memo_for_tests()
+		var valid_errors := Schema.validate_definition(definition, Registry, targets)
+		var valid_repeat := Schema.validate_definition(definition, Registry, targets)
+		var valid_stats := Schema._successful_validation_memo_stats_for_tests()
+		var warm_errors := Schema.validate_definition(alternative, Registry, targets)
+		var repeated_errors := Schema.validate_definition(alternative, Registry, targets)
+		var stats := Schema._successful_validation_memo_stats_for_tests()
+		if cold_errors.is_empty() or cold_errors != warm_errors or cold_errors != repeated_errors:
+			failures.append("Typed alternative bypassed exact cold rejection after positive warm hit: cold=%s warm=%s repeat=%s" % [JSON.stringify(cold_errors), JSON.stringify(warm_errors), JSON.stringify(repeated_errors)])
+		if not valid_errors.is_empty() or not valid_repeat.is_empty() or int(valid_stats.hits) != 1 or int(valid_stats.full_runs) != 1 or int(stats.hits) != 1 or int(stats.full_runs) != 3 or int(stats.entries) != 1:
+			failures.append("Typed rejection corrupted positive-only memo accounting: %s" % JSON.stringify(stats))
+		if Schema._successful_validation_memo_key(definition, targets, Registry) == Schema._successful_validation_memo_key(alternative, targets, Registry):
+			failures.append("Typed alternative shared the successful definition's memo identity.")
+	if var_to_bytes(definition) != source_bytes:
+		failures.append("Typed memo probes mutated their original production definition.")

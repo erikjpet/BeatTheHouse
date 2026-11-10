@@ -1492,13 +1492,15 @@ func lose_home(reason: String = "lost") -> Dictionary:
 	if clean_reason.is_empty():
 		clean_reason = "lost"
 	var home_node_id := str(home_state.get("home_node_id", "")).strip_edges()
+	# Capture membership while the active-home gate still describes the room.
+	var losing_current_home := is_current_home_environment()
 	home_state["active"] = false
 	home_state["lost"] = true
 	home_state["lost_reason"] = clean_reason
 	home_state["lost_day"] = game_day()
 	narrative_flags["home_lost"] = true
 	narrative_flags["home_lost_reason"] = clean_reason
-	if is_current_home_environment():
+	if losing_current_home:
 		current_environment["home_containers"] = []
 		current_environment["home_lost"] = true
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
