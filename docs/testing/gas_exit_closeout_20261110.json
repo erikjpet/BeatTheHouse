@@ -1,0 +1,752 @@
+{
+  "schema": "bth.gas_exit_closeout/v1",
+  "date": "2026-11-10",
+  "objectives": [
+    "BTH-GAS-SCRATCHER-EXIT-001",
+    "BTH-09"
+  ],
+  "disposition": "NOT_REPRODUCED_IN_DECLARED_INDEPENDENT_NATIVE_PATHS",
+  "source_base": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "test_file": "scripts/tests/gas_scratch_exit_clock_check.gd",
+  "test_sha256": "9afe262af777ac03a55425d005eb34bf4a91babd91300100c0c7f18d65476dbe",
+  "product_source_changed": false,
+  "runtime": "4.6.stable.official.89cea1439",
+  "fidelity": "Fresh synthetic Act 1 runs, explicit initial time/cash and Graveyard pin, recorded already-visited/stock inputs before manifest sealing. Native host methods dispatch Buy/Collect/Scratch All/File/Back, Save/Continue and Leave/map Close. Not original save replay, natural-first-visit evidence, browser pixels or physical pointer input.",
+  "original_personal_save": {
+    "available": false,
+    "wait_on_user": false,
+    "original_build_action_sequence_and_authority_companions": "not established"
+  },
+  "clock_fidelity": "Pre-install initial clocks are synthetic. Close/open cases then let real host _process time cross the minute while Scratchers stays open; no installed clock edit or injected frame delta. Mid-gap and Day1 cases freeze continuous time.",
+  "save_comparison": "Every JSON value in full portable-ticket data, plus cash, clock, Heat, RNG, inventory, room and scenario identifiers is compared across host Save/Continue. Engine-only container/value typing is not a persistence criterion.",
+  "checks": {
+    "warm": 124,
+    "separate_process_cold": 30,
+    "total": 154,
+    "failures": []
+  },
+  "job": {
+    "exit_code": 0,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    }
+  },
+  "evidence_root": "E:\\CodexQA\\BTH\\runs\\close-gas-exit-native-r4-20261110\\evidence",
+  "receipts": [
+    {
+      "file": "storage-manifest.json",
+      "sha256": "b2853ceb20ba4c10f8d7439328122ca003faf5335e2a818433ce959232bbb2a8"
+    },
+    {
+      "file": "job.json",
+      "sha256": "65e53e2c51462629ed094dea0792f185fb80d4a7b59b9fa9de75b2fea527e61d"
+    },
+    {
+      "file": "stages.json",
+      "sha256": "e2001040bb44b7ee07489dd45372ac757a75d86782e5f4104e9bdfd0d12046bc"
+    },
+    {
+      "file": "import.log",
+      "sha256": "22ede743d00d1c60c1a2237ec84f0a2b978662234df741470a489f68019a3ae9"
+    },
+    {
+      "file": "warm.json",
+      "sha256": "e377455f8310fc7d5d8fd4df56101a5c63f12996c7ff1427ab108e50c604abd3"
+    },
+    {
+      "file": "warm.log",
+      "sha256": "48745b405395ee35fb356737d34329362c3fc7a705837337c3fe2912eb79b160"
+    },
+    {
+      "file": "cold.json",
+      "sha256": "7c46c7c76fc1150b34238f00b8791acd9a4272c3683fe97d7928113428790072"
+    },
+    {
+      "file": "cold.log",
+      "sha256": "453a6475230d5eed787cbc0468dfec0d38d5de64b777fe658ef3a048e2942c0b"
+    }
+  ],
+  "stages": [
+    {
+      "name": "runtime-version",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.0980682373046875,
+      "pid": 2036
+    },
+    {
+      "name": "import",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--editor",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-gas-exit-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--import",
+        "--quit"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.57277774810791,
+      "pid": 27952
+    },
+    {
+      "name": "warm",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-gas-exit-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--max-fps",
+        "30",
+        "--script",
+        "res://scripts/tests/gas_scratch_exit_clock_check.gd"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 29.200928688049316,
+      "pid": 38668
+    },
+    {
+      "name": "cold",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-gas-exit-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--max-fps",
+        "30",
+        "--script",
+        "res://scripts/tests/gas_scratch_exit_clock_check.gd"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 18.266409397125244,
+      "pid": 26584
+    }
+  ],
+  "cases": [
+    {
+      "id": "close",
+      "initial_clock": 4469,
+      "cash_after_paid_ticket": 990,
+      "saved_clock": 4470,
+      "saved_scenario": "",
+      "boundary_wait": {
+        "blocking_message": "",
+        "clock_after": 4470,
+        "elapsed_msec": 851,
+        "live_scratchers": true,
+        "screen": "GAME",
+        "simulation_paused": false,
+        "target": 4470
+      },
+      "fixture_inputs": [
+        {
+          "active_supply_before": 14,
+          "applied": false,
+          "fixture_kind": "synthetic_already_visited_stocked_room_not_natural_first_visit",
+          "next_restock_preserved": 4488,
+          "phase": "factory_before_manifest_and_seals",
+          "scalper_after": false,
+          "scalper_before": false,
+          "visit_token_after": "world:gas_station_casino@4469",
+          "visited_changes": {
+            "scalper_visit_token": {
+              "from": "",
+              "to": "world:gas_station_casino@4469"
+            }
+          }
+        }
+      ],
+      "warm_stage_authority_passed": true,
+      "warm_stages": [
+        {
+          "stage": "generated_room",
+          "clock": 4469,
+          "cash": 1000,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "before_buy",
+          "clock": 4469,
+          "cash": 1000,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_normal_clock_wait",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_buy",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_collect",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_scratch",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_file",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_back",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_continue",
+          "clock": 4470,
+          "cash": 990,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:slot",
+            "travel:leave"
+          ]
+        }
+      ],
+      "warm_leave": {
+        "activated": true,
+        "map_visible": true
+      },
+      "cold_load_outcome": "loaded-primary",
+      "cold_stage_authority_passed": true,
+      "cold_leave": {
+        "activated": true,
+        "map_visible": true
+      }
+    },
+    {
+      "id": "day1_1630_117",
+      "initial_clock": 990,
+      "cash_after_paid_ticket": 117,
+      "saved_clock": 990,
+      "saved_scenario": "gas_station_graveyard_shift",
+      "boundary_wait": null,
+      "fixture_inputs": [
+        {
+          "active_supply_before": 7,
+          "applied": false,
+          "fixture_kind": "synthetic_already_visited_stocked_room_not_natural_first_visit",
+          "next_restock_preserved": 1058,
+          "phase": "factory_before_manifest_and_seals",
+          "preseal_cash_fixture": {
+            "after": 122,
+            "before": 1000,
+            "normal_ticket_price": 5
+          },
+          "scalper_after": false,
+          "scalper_before": false,
+          "visit_token_after": "world:gas_station_casino@990",
+          "visited_changes": {
+            "scalper_visit_token": {
+              "from": "",
+              "to": "world:gas_station_casino@990"
+            }
+          }
+        }
+      ],
+      "warm_stage_authority_passed": true,
+      "warm_stages": [
+        {
+          "stage": "generated_room",
+          "clock": 990,
+          "cash": 122,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "before_buy",
+          "clock": 990,
+          "cash": 122,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_buy",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_collect",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_scratch",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_file",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_back",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_continue",
+          "clock": 990,
+          "cash": 117,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        }
+      ],
+      "warm_leave": {
+        "activated": true,
+        "map_visible": true
+      },
+      "cold_load_outcome": "loaded-primary",
+      "cold_stage_authority_passed": true,
+      "cold_leave": {
+        "activated": true,
+        "map_visible": true
+      }
+    },
+    {
+      "id": "gap_middle",
+      "initial_clock": 4515,
+      "cash_after_paid_ticket": 998,
+      "saved_clock": 4515,
+      "saved_scenario": "",
+      "boundary_wait": null,
+      "fixture_inputs": [
+        {
+          "active_supply_before": 12,
+          "applied": false,
+          "fixture_kind": "synthetic_already_visited_stocked_room_not_natural_first_visit",
+          "next_restock_preserved": 4585,
+          "phase": "factory_before_manifest_and_seals",
+          "scalper_after": false,
+          "scalper_before": false,
+          "visit_token_after": "world:gas_station_casino@4515",
+          "visited_changes": {
+            "scalper_visit_token": {
+              "from": "",
+              "to": "world:gas_station_casino@4515"
+            }
+          }
+        }
+      ],
+      "warm_stage_authority_passed": true,
+      "warm_stages": [
+        {
+          "stage": "generated_room",
+          "clock": 4515,
+          "cash": 1000,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "before_buy",
+          "clock": 4515,
+          "cash": 1000,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_buy",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_collect",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_scratch",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_file",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_back",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_continue",
+          "clock": 4515,
+          "cash": 998,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        }
+      ],
+      "warm_leave": {
+        "activated": true,
+        "map_visible": true
+      },
+      "cold_load_outcome": "loaded-primary",
+      "cold_stage_authority_passed": true,
+      "cold_leave": {
+        "activated": true,
+        "map_visible": true
+      }
+    },
+    {
+      "id": "open",
+      "initial_clock": 4559,
+      "cash_after_paid_ticket": 980,
+      "saved_clock": 4560,
+      "saved_scenario": "gas_station_graveyard_shift",
+      "boundary_wait": {
+        "blocking_message": "",
+        "clock_after": 4560,
+        "elapsed_msec": 1510,
+        "live_scratchers": true,
+        "screen": "GAME",
+        "simulation_paused": false,
+        "target": 4560
+      },
+      "fixture_inputs": [
+        {
+          "active_supply_before": 1,
+          "applied": false,
+          "fixture_kind": "synthetic_already_visited_stocked_room_not_natural_first_visit",
+          "next_restock_preserved": 4723,
+          "phase": "factory_before_manifest_and_seals",
+          "scalper_after": false,
+          "scalper_before": false,
+          "visit_token_after": "world:gas_station_casino@4559",
+          "visited_changes": {
+            "scalper_visit_token": {
+              "from": "",
+              "to": "world:gas_station_casino@4559"
+            }
+          }
+        }
+      ],
+      "warm_stage_authority_passed": true,
+      "warm_stages": [
+        {
+          "stage": "generated_room",
+          "clock": 4559,
+          "cash": 1000,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "before_buy",
+          "clock": 4559,
+          "cash": 1000,
+          "scenario": "",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_normal_clock_wait",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_buy",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_collect",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_scratch",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_file",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_back",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        },
+        {
+          "stage": "after_continue",
+          "clock": 4560,
+          "cash": 980,
+          "scenario": "gas_station_graveyard_shift",
+          "usable_controls": [
+            "game:pull_tabs",
+            "game:scratch_tickets",
+            "game:video_poker",
+            "travel:leave"
+          ]
+        }
+      ],
+      "warm_leave": {
+        "activated": true,
+        "map_visible": true
+      },
+      "cold_load_outcome": "loaded-primary",
+      "cold_stage_authority_passed": true,
+      "cold_leave": {
+        "activated": true,
+        "map_visible": true
+      }
+    }
+  ],
+  "retained_attempts": [
+    {
+      "run": "close-gas-exit-native-r1-20261110",
+      "outcome": "No worker created: executable argument python did not resolve in explicit Windows CreateProcess; exact Python executable used afterward. Zero owned processes."
+    },
+    {
+      "run": "close-gas-exit-native-r2-20261110",
+      "outcome": "Paid close-boundary path reached Back with valid room; direct live/loaded Dictionary equality failed before subsequent cases. No original incident reproduced."
+    },
+    {
+      "run": "close-gas-exit-native-r3-20261110",
+      "outcome": "Recorded complete live/disk signatures. All serialized JSON values matched despite engine direct Dictionary equality; comparison corrected explicitly, without product edits."
+    }
+  ],
+  "limits": [
+    "Original incident build/save/actions are unavailable. These passes cannot attribute its cause or certify all Gas scenarios or builds.",
+    "Day1 16:30/$117 is an independently constructed money/time shape, not an authentic historical campaign.",
+    "No product defect was reproduced, so no product fix or behavior-changing NEXT deployment is claimed.",
+    "The existing scratch-scalper fix and historical 10-check noon diagnostic remain separately attributed.",
+    "No user item/scenario feature pause was lifted or content changed."
+  ]
+}

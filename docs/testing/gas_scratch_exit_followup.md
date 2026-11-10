@@ -1,7 +1,11 @@
 # BTH-GAS-SCRATCHER-EXIT-001 — Gas Casino objects after Scratchers
 
-Status: Open; stopped after recovering a prior paused assignment under alias
-`BTH-GAS-SCRATCH-SCENARIO-001`. No production fix or acceptance.
+Current disposition, 10 November 2026: **not reproduced in declared independent native paths**. The bounded closeout passed 154 warm/separate-process cold assertions across the scenario gap and an independent Day 1 16:30/$117 condition. No original replay, incident root-cause attribution or production fix is claimed. See [closeout evidence and limits](gas_exit_closeout_20261110.md).
+
+## Prior investigation, preserved
+
+Historical status: Open; stopped after recovering a prior paused assignment under alias
+`BTH-GAS-SCRATCH-SCENARIO-001`. No production fix or acceptance was established by that earlier work.
 
 The reported failure is that Gas Casino objects disappear after leaving
 Scratchers. Original failure clock/control state and save identity are not
