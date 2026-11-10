@@ -8176,6 +8176,7 @@ func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
 	narrative_flags.erase("grand_casino_showdown_ditch_method")
 	narrative_flags.erase("grand_casino_showdown_ditch_item_id")
 	narrative_flags.erase("grand_casino_showdown_crew_handoff_item_id")
+	narrative_flags.erase("grand_casino_showdown_crew_handoff_item_entry")
 	narrative_flags.erase("grand_casino_showdown_trash_seen")
 	narrative_flags.erase("grand_casino_showdown_trash_flavor")
 	narrative_flags.erase("grand_casino_showdown_pat_down")
@@ -8207,6 +8208,15 @@ func start_grand_casino_showdown(config: Dictionary = {}) -> Dictionary:
 	}
 
 
+# Keep the presented choices and action owner on the same carried-item contract.
+# Ticket piles with live tickets cannot be removed, even though their marker is
+# present in inventory. Reserved instance gear remains under its existing owner.
+func grand_casino_showdown_walk_item_index(item_id: String) -> int:
+	if is_portable_ticket_pile_item(item_id) and int(portable_ticket_pile_summary(item_id).get("ticket_count", 0)) > 0:
+		return -1
+	return available_carried_item_index(item_id)
+
+
 func resolve_grand_casino_showdown_walk(method: String, item_id: String, config: Dictionary = {}) -> Dictionary:
 	if not bool(narrative_flags.get("grand_casino_showdown_active", false)):
 		return {"ok": false, "message": "The walk has not started."}
@@ -8218,7 +8228,8 @@ func resolve_grand_casino_showdown_walk(method: String, item_id: String, config:
 	var clean_item_id := item_id.strip_edges()
 	if not ["crew", "trash", "keep"].has(clean_method):
 		return {"ok": false, "message": "That walk choice is not available."}
-	if clean_method != "keep" and (clean_item_id.is_empty() or not inventory.has(clean_item_id)):
+	var item_index := grand_casino_showdown_walk_item_index(clean_item_id) if clean_method != "keep" else -1
+	if clean_method != "keep" and item_index < 0:
 		return {"ok": false, "message": "That item is no longer in your pocket."}
 	if clean_method == "crew" and not GrandCasinoShowdownModelScript.crew_interacted(narrative_flags, debt):
 		return {"ok": false, "message": "The Crew has no reason to take your handoff."}
@@ -8229,11 +8240,16 @@ func resolve_grand_casino_showdown_walk(method: String, item_id: String, config:
 	var message := "You keep every pocket steady while Rourke walks."
 	var heat_sting := 0
 	if clean_method == "crew":
-		remove_item(clean_item_id)
+		var item_entry: Variant = inventory[item_index]
+		if typeof(item_entry) == TYPE_DICTIONARY:
+			# The canonical id selects the instance; its effects and permanent
+			# collection identity must survive escrow and Save/Continue intact.
+			narrative_flags["grand_casino_showdown_crew_handoff_item_entry"] = (item_entry as Dictionary).duplicate(true)
+		remove_available_carried_item(clean_item_id)
 		narrative_flags["grand_casino_showdown_crew_handoff_item_id"] = clean_item_id
-		message = "The Crew takes %s before the back-room door." % _showdown_item_label(clean_item_id)
+		message = "The Crew takes %s before the back-room door." % _showdown_item_label(item_entry)
 	elif clean_method == "trash":
-		remove_item(clean_item_id)
+		remove_available_carried_item(clean_item_id)
 		var attempt := maxi(1, int(narrative_flags.get("grand_casino_showdown_attempt", 1)))
 		var trash_rng := create_rng("grand_casino_showdown_walk").fork("attempt:%d:item:%s" % [attempt, clean_item_id])
 		var flavors := JsonCoerceScript._copy_array(walk_config.get("trash_flavors", []))
@@ -8577,8 +8593,9 @@ func _showdown_evidence_definition(definitions: Array, evidence_id: String) -> D
 	return {}
 
 
-func _showdown_item_label(item_id: String) -> String:
-	var definition := _item_definition(item_id)
+func _showdown_item_label(item_entry: Variant) -> String:
+	var item_id := _inventory_item_id(item_entry)
+	var definition: Dictionary = item_entry if typeof(item_entry) == TYPE_DICTIONARY else _item_definition(item_id)
 	return str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
 
 
@@ -8655,6 +8672,7 @@ func _complete_grand_casino_showdown_failure(message: String) -> void:
 	if not handoff_item_id.is_empty():
 		narrative_flags["grand_casino_showdown_crew_handoff_lost_on_failure"] = handoff_item_id
 		narrative_flags.erase("grand_casino_showdown_crew_handoff_item_id")
+		narrative_flags.erase("grand_casino_showdown_crew_handoff_item_entry")
 		log_story({
 			"type": "grand_casino_showdown_crew_handoff_lost",
 			"event_id": GRAND_CASINO_SHOWDOWN_EVENT_ID,
@@ -8672,8 +8690,18 @@ func _return_grand_casino_crew_handoff() -> void:
 	var handoff_item_id := str(narrative_flags.get("grand_casino_showdown_crew_handoff_item_id", ""))
 	if handoff_item_id.is_empty():
 		return
-	add_item(handoff_item_id)
+	var item_entry := JsonCoerceScript._copy_dict(narrative_flags.get("grand_casino_showdown_crew_handoff_item_entry", {}))
+	if not item_entry.is_empty():
+		if _inventory_item_id(item_entry) != handoff_item_id:
+			return
+		if not carries_item(handoff_item_id):
+			inventory.append(item_entry.duplicate(true))
+			invalidate_inventory_effect_cache()
+	else:
+		# Legacy saves and ordinary items retain the existing String contract.
+		add_item(handoff_item_id)
 	narrative_flags.erase("grand_casino_showdown_crew_handoff_item_id")
+	narrative_flags.erase("grand_casino_showdown_crew_handoff_item_entry")
 	narrative_flags["grand_casino_showdown_crew_handoff_returned"] = handoff_item_id
 	log_story({
 		"type": "grand_casino_showdown_crew_handoff_returned",

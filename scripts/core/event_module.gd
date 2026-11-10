@@ -1636,8 +1636,8 @@ func _grand_casino_showdown_walk_choices(payload: Dictionary, run_state: RunStat
 		if bool(option.get("requires_crew", false)) and not bool(status.get("crew_available", false)):
 			continue
 		for item_value in inventory_items:
-			var item_id := str(item_value)
-			if item_id.is_empty():
+			var item_id := RunState._inventory_item_id(item_value)
+			if run_state.grand_casino_showdown_walk_item_index(item_id) < 0:
 				continue
 			var item_label := _grand_casino_showdown_item_label(item_value)
 			var choice_data := option.duplicate(true)

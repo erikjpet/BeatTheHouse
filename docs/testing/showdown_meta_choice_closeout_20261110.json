@@ -1,0 +1,119 @@
+{
+  "schema": "bth.showdown_meta_choice_closeout/20261110",
+  "task": "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
+  "source_base": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "status": "LOCAL_CORRECTION_AND_FOCUSED_NATIVE_SAVE_CONTINUE_PASS_DEPLOYMENT_PENDING",
+  "product_files": [
+    "scripts/core/event_module.gd",
+    "scripts/core/run_state.gd"
+  ],
+  "source_sha256": {
+    "scripts/core/event_module.gd": "e771cf4bdedd2708d02355573694b85cfc86453a78b0fe4e4d5cea34112441fb",
+    "scripts/core/run_state.gd": "15fbbc67ef083112301b4385cdb9485352c3ea3b41b47bb2736893b88ae68bc8",
+    "scripts/tests/showdown_meta_inventory_check.gd": "68b0ba3e9320c5e145476edb996070c9fb12d33c78ef2b1aaac0731c558da97c"
+  },
+  "root_cause": "Event choices stringified Dictionary inventory entries; owner required String membership/removal and Crew return stored only a String ID.",
+  "scope": "Canonical run-item identity, shared available-carried eligibility, exact selected-instance removal and lossless Dictionary Crew escrow. Persistent collection ownership, effects, ordinary pat-down classifications and broader item/scenario redesign are unchanged.",
+  "baseline": {
+    "source": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+    "checks": 42,
+    "failure_count": 8,
+    "log": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-baseline-r3-20261110\\evidence\\worker.log",
+      "sha256": "a499a0a4fd5ff0c72756f7813a37e914eed13af44a0292d2c05bfcf821ed723b"
+    },
+    "job": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-baseline-r3-20261110\\evidence\\job.json",
+      "sha256": "0a3f4e3d04633bf1808e2ff98eb5ffba3278a6d07daeeb2a28b5f2fe3dd92a37"
+    },
+    "meaning": "Authored public event walk reached with real Meta producer entries. Offered/canonical Meta trash and Crew reject; live-ticket marker can falsely accept. This pre-fix check predates final numeric comparison and nonzero effect assertions."
+  },
+  "final": {
+    "warm_assertions": 52,
+    "separate_process_cold_assertions": 5,
+    "failures": 0,
+    "stages": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\stages.json",
+      "sha256": "e3f59e3bf2a0df91010a83b432e168c62e11212768c2f3a3ed63951ee21fbdd1"
+    },
+    "warm_log": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\warm.log",
+      "sha256": "abee7fa52a59b41112a79977fde518f3969cc9a2a02ac52bc95b843f62e5aacf"
+    },
+    "cold_log": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\cold.log",
+      "sha256": "28b940ef4ea90ceab1bda51010211ad463823d30b5a5cf5ec9da64b0cca9e04c"
+    },
+    "job": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\job.json",
+      "sha256": "b382dfdda1aaa78e33dbcd9c360fc0339e09ba9d90df759f980c9200a78240ce"
+    },
+    "manifest": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\storage-manifest.json",
+      "sha256": "bbd606793d24e80441b9c67ab3a1afcb6adef5963defdc0f78ddac7a9148e0bb"
+    },
+    "first_cold_custody": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-r2-20261110\\evidence\\before-first-cold\\custody.json",
+      "sha256": "8c3fbdb4a61ac48fa83f6ea6cbc9b7844a6c5b258681135fad98cf08aecd219f"
+    }
+  },
+  "runtime": {
+    "godot": "4.6.stable.official.89cea1439",
+    "native_source_files_matching": 11,
+    "source_match": {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-cache-r2-20261110\\evidence\\runtime-source-match.json",
+      "sha256": "a492480a1ba99c57e9c9c9f08472e8010e4b58b67df09e8f41e7ee8d2e9120ca"
+    },
+    "debug_dll_sha256": "184bfde4d9697b397f347dc9ab35b8915f59a7d3ca54c8849c7c59914d53f17b",
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 800,
+      "aggregate_job_cpu_percent": 8.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "assigned_before_execution": true,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "timed_out": false
+  },
+  "validation": [
+    "Godot parsed changed source and focused check, warm exit 0, cold exit 0.",
+    "git diff --check passed.",
+    "Standalone gdlint was not installed; no full aggregate suite was run."
+  ],
+  "limits": [
+    "Synthetic explicit authored base-room installation and normal Meta producers; no full journey, original-player save, rendered/native pointer input or Web behavior claim.",
+    "Return/failure component controls invoke existing state-owner settlement helpers; not a newly played Blackjack duel.",
+    "Existing JSON number restore converts integer Variants to floats. Full instance comparisons use the exact storage numeric JSON contract, not altered product serialization.",
+    "Initial fixture runs used the wrong Heat threshold; failed setup was corrected to authored85. One launcher used unresolved python; one numeric comparison was too strict across existing JSON numeric types. Those harness failures are retained separately, not called product regressions."
+  ],
+  "harness_runs": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-baseline-20261110\\evidence\\job.json",
+      "sha256": "f97aeda23668c4a3711853c081607098e2ee66c0bfbfb0f08c3ef128773467f6"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-baseline-r2-20261110\\evidence\\job.json",
+      "sha256": "2a64235234e2ddfc5c0775ae3cc5d1d6eca680267a0cf74ab7cbabf11b541bcc"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-fixed-20261110\\evidence\\job.json",
+      "sha256": "b2963f37a34aee60768ed2853c1c54ce472cda22638f25397b09d57550622bd5"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-fixed-r2-20261110\\evidence\\job.json",
+      "sha256": "d590cb74433fe13cb936f1c8d60de3b2088291153ddb00acfdf52ab011202c31"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-qualified-20261110\\evidence\\job.json",
+      "sha256": "e8f1b5f435dbe93d9536e85a641c940277987981df89a8434fd6f747b9c7d60f"
+    }
+  ],
+  "private_worker": {
+    "path": "E:\\CodexQA\\BTH\\runs\\close-meta-showdown-evidence-20261110\\evidence\\meta_showdown_worker.py",
+    "sha256": "d62cc716376e488f3e7cbe47213d8bd715bf8599f7319e61ec8a6686233e745b"
+  }
+}
