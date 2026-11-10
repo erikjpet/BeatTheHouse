@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:33:45.358807+00:00",
+  "updated_at": "2026-11-10T17:33:53.950529+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -24562,7 +24562,9 @@
             "evidence": [
               "docs/testing/finalize_game_defects_20261110.md",
               "docs/testing/finalize_game_defects_20261110.json",
-              "31bb55b88fce5890029b9470ceb7548c9ce1bad5"
+              "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+              "docs/testing/memo_web_acceptance_20261110.md",
+              "docs/testing/memo_web_acceptance_20261110.json"
             ]
           }
         ],
@@ -24573,10 +24575,10 @@
         }
       },
       "state": "open",
-      "status": "MAIN_NEXT_DELIVERED_NATIVE_PASS_WEB_BEHAVIOR_UNVERIFIED",
+      "status": "TYPED_COLLISION_NATIVE_WEB_PASS_REQUIRED_CALLBACK_CHILD_OPEN",
       "owner": {
-        "name": "Finalize main and NEXT",
-        "task_ref": "/root/publish_final_stabilization",
+        "name": "Close typed memo qualification",
+        "task_ref": "/root/close_validation_and_slot",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -24626,12 +24628,13 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
         "evidence": [
           "docs/testing/final_stabilization_next_delivery_20261110.json",
-          "docs/testing/final_stabilization_integration_20261110.json"
+          "docs/testing/final_stabilization_integration_20261110.json",
+          "docs/testing/memo_web_acceptance_20261110.json"
         ],
-        "scope": "Exact source/tree, changed PCK, existing engine/native receipts, redirect and basic rendered Web menu verified. Native changed behavior passed in integrated source. Actual changed Web behavior and UI Save/cold Continue unverified."
+        "scope": "Exact production main/NEXT identity/assets/basic launch retain existing release receipts. Actual typed memo behavior passed in a standalone synthetic Web PCK with byte-verified production schema/registry/helper and the same published Web engine, not a deployed UI scenario. Native full focused compatibility retains original identities."
       },
       "evidence": [
         {
@@ -24698,22 +24701,28 @@
           "kind": "exact_main_next_delivery",
           "reference": "docs/testing/final_stabilization_next_delivery_20261110.json",
           "summary": "Source31bb55b8 integrated into main cef35289; exact served source/tree/assets/basic menu and owned E cleanup pass. Native home/memo/cycle checks pass separately. Required changed Web behavior remains unverified; objective stays Open."
+        },
+        {
+          "kind": "standalone_web_typed_boundary_qualification",
+          "reference": "docs/testing/memo_web_acceptance_20261110.md",
+          "summary": "Exact production schema/registry/helper bytes in a standalone synthetic Web PCK reject Variant types 21 and 34 identically cold, after positive warm hit and repeated; keys distinct, hits 1/full_runs 3/entries 1. Ordinary typed array, int/float distinction, input ownership and FIFO 256 pass. Clean final browser Job exit 0/active 0. Not a deployed UI scenario or full validator parent closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain committed/delivered fix and passing native regression evidence. Qualify actual changed Web behavior when testing resumes; UI Save/cold Continue and original-personal-save coverage are not established. Keep this objective and parent audits Open.",
+      "next_action": "Typed-collision repair and standalone Web acceptance pass. Keep the full objective Open: required child BTH061-AUDIT-MEMO-CALLBACK-CHECK-018 remains unqualified under its preserved historical platform restriction. Do not retry or silently supersede that child; preserve all scope distinctions and evidence.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "No pipeline/source blocker. Exact delivery is verified; changed Web behavior acceptance remains unverified and is not replaced by native or menu checks.",
+        "state": "active",
+        "kind": "required_callback_child_unqualified",
+        "description": "Required child BTH061-AUDIT-MEMO-CALLBACK-CHECK-018 remains Open and unqualified. Current registry method calls and shallow nested input references do not establish that its acceptance intent is obsolete. Historical platform restriction is preserved, with no retry or bypass. Typed-collision native/Web subresults and existing NEXT delivery pass separately.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T07:40:12.965519+00:00",
+        "observed_at": "2026-11-10T17:33:53.950529+00:00",
         "evidence": [
-          "docs/testing/final_stabilization_next_delivery_20261110.json"
+          "docs/testing/memo_web_acceptance_20261110.md",
+          "docs/testing/deprecated_code_audit_continuation_018.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:40:12.965519+00:00",
+      "updated_at": "2026-11-10T17:33:53.950529+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",

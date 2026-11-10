@@ -1,0 +1,436 @@
+{
+  "schema": "bth.memo_web_acceptance/v1",
+  "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+  "observed_at": "2026-11-10T17:33:53.950529+00:00",
+  "fix_commit": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+  "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "state": "TYPED_COLLISION_NATIVE_WEB_ACCEPTANCE_PASS_OBJECTIVE_OPEN_CALLBACK_CHILD",
+  "web_qualification": {
+    "scope": "Standalone synthetic Web schema contract. Three exact production sources and validated production-derived JSON fixture; published Web engine, NOT the deployed production PCK or UI.",
+    "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+    "probe_pck_sha256": "a11896c777642a2eca5fe5cc1eefcfa1035c89053436ea6d2f10b600970c22dd",
+    "source_manifest": {
+      "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+      "production_source_hashes": {
+        "scripts/core/scenario_sequence_schema.gd": "073ae67b4ad98d90d559df9d5af676c86c4f073ebaa947ffd45f2ade80c45aca",
+        "scripts/core/scenario_operation_registry.gd": "76018024ce2bdd0d5a687ccf3a6af3371fd43332a0dfdaea6346fe7c21cc33b2",
+        "scripts/core/json_coerce.gd": "31154243b017913a2cf09b23593cb6a7765d484227b74dba46311120c6b80b1f"
+      },
+      "fixture_sha256": "a818f60cc5a8070fd79cd7d3bc7b7498287405fb1b661d8e6cc0dc31f0acb2d9",
+      "probe_files": [
+        "project.godot",
+        "main.tscn",
+        "probe.gd",
+        "fixture.json",
+        "scripts/core/scenario_sequence_schema.gd",
+        "scripts/core/scenario_operation_registry.gd",
+        "scripts/core/json_coerce.gd",
+        ".godot/global_script_class_cache.cfg"
+      ],
+      "scope": "Standalone test PCK only. No production export/deployment, audience, original player saves or persistent source mutation.",
+      "packaging_repair": "Added the standard explicit index for the same three preloaded production classes; no production source, fixture or assertions changed."
+    },
+    "logs": [
+      {
+        "type": "log",
+        "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org"
+      },
+      {
+        "type": "log",
+        "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL"
+      },
+      {
+        "type": "log",
+        "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support."
+      },
+      {
+        "type": "log",
+        "text": "MEMO_WEB {\"failures\":[],\"fifo\":{\"entries\":256,\"evictions\":1,\"full_runs\":0,\"hits\":0,\"max_entries\":256,\"order_entries\":256},\"fixture_id\":\"corner_store_delivery_day\",\"passed\":true,\"platform\":\"Web\",\"source\":\"Standalone synthetic Web contract with exact production schema, registry and JSON helper bytes\",\"typed_rows\":[{\"cold\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 21.\"],\"distinct_key\":true,\"repeated\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 21.\"],\"stats\":{\"entries\":1,\"evictions\":0,\"full_runs\":3,\"hits\":1,\"max_entries\":256,\"order_entries\":1},\"warm\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 21.\"]},{\"cold\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 34.\"],\"distinct_key\":true,\"repeated\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 34.\"],\"stats\":{\"entries\":1,\"evictions\":0,\"full_runs\":3,\"hits\":1,\"max_entries\":256,\"order_entries\":1},\"warm\":[\"scenario corner_store_delivery_day sequence contains unsupported Variant type 34.\"]}]}"
+      }
+    ],
+    "pageErrors": [],
+    "responses": [
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.png",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.js",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.pck",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.icon.png",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.wasm",
+        "status": 200
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/index.side.wasm",
+        "status": 200
+      }
+    ],
+    "started": "2026-11-10T17:31:41.356Z",
+    "contract": {
+      "failures": [],
+      "fifo": {
+        "entries": 256,
+        "evictions": 1,
+        "full_runs": 0,
+        "hits": 0,
+        "max_entries": 256,
+        "order_entries": 256
+      },
+      "fixture_id": "corner_store_delivery_day",
+      "passed": true,
+      "platform": "Web",
+      "source": "Standalone synthetic Web contract with exact production schema, registry and JSON helper bytes",
+      "typed_rows": [
+        {
+          "cold": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 21."
+          ],
+          "distinct_key": true,
+          "repeated": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 21."
+          ],
+          "stats": {
+            "entries": 1,
+            "evictions": 0,
+            "full_runs": 3,
+            "hits": 1,
+            "max_entries": 256,
+            "order_entries": 1
+          },
+          "warm": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 21."
+          ]
+        },
+        {
+          "cold": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 34."
+          ],
+          "distinct_key": true,
+          "repeated": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 34."
+          ],
+          "stats": {
+            "entries": 1,
+            "evictions": 0,
+            "full_runs": 3,
+            "hits": 1,
+            "max_entries": 256,
+            "order_entries": 1
+          },
+          "warm": [
+            "scenario corner_store_delivery_day sequence contains unsupported Variant type 34."
+          ]
+        }
+      ]
+    },
+    "state": "PASS",
+    "finished": "2026-11-10T17:31:49.651Z"
+  },
+  "owned_job": {
+    "schema": "bth.qa_guarded_run/v1",
+    "command": [
+      "C:\\Program Files\\nodejs\\node.exe",
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\standalone.cjs"
+    ],
+    "storage_manifest": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\storage-manifest.json",
+    "storage_manifest_sha256": "01acf1a62364e8abbfefdafdbd30c8a25cb1c72fc054ec2fd274b0762050febf",
+    "storage": {
+      "schema": "bth-qa-storage/v1",
+      "run_id": "close-memo-web-standalone-r2-20261110",
+      "token": "4ad27530f9eeb1b37f0d6df09082a0c1",
+      "prepared": true,
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "required_bytes": 25769803776,
+      "paths": {
+        "root": "E:\\CodexQA\\BTH",
+        "workspace": "E:\\CodexQA\\BTH\\workspaces\\close-memo-web-probe-20261110",
+        "run_root": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110",
+        "profile": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\profile",
+        "temp": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\temp",
+        "evidence": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence",
+        "appdata": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\appdata",
+        "localappdata": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\localappdata",
+        "home": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\home",
+        "cache": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\cache",
+        "save_dir": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\save_dir",
+        "pycache": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\pycache"
+      },
+      "manifest_path": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\storage-manifest.json"
+    },
+    "timeout_seconds": 120,
+    "storage_gate_before_job": {
+      "E:\\CodexQA\\BTH": {
+        "probe": "E:\\CodexQA\\BTH",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\workspaces\\close-memo-web-probe-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\workspaces\\close-memo-web-probe-20261110",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\profile": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\profile",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\temp": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\temp",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\appdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\appdata",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\localappdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\localappdata",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\home": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\home",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\cache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\cache",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\save_dir": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\save_dir",
+        "available_bytes": 240883888128
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\pycache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\pycache",
+        "available_bytes": 240883888128
+      }
+    },
+    "error": null,
+    "cleanup_errors": [],
+    "log_truncated": false,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "storage_gate_before_child": {
+      "E:\\CodexQA\\BTH": {
+        "probe": "E:\\CodexQA\\BTH",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\workspaces\\close-memo-web-probe-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\workspaces\\close-memo-web-probe-20261110",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\profile": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\profile",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\temp": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\temp",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\appdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\appdata",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\localappdata": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\localappdata",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\home": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\home",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\cache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\cache",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\save_dir": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\save_dir",
+        "available_bytes": 240883879936
+      },
+      "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\pycache": {
+        "probe": "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\pycache",
+        "available_bytes": 240883879936
+      }
+    },
+    "pid": 9916,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "finished_epoch": 1794331909.6691122
+  },
+  "pck_production_bytes": [
+    {
+      "file": "scripts/core/scenario_sequence_schema.gd",
+      "bytes": 126629,
+      "sha256": "073ae67b4ad98d90d559df9d5af676c86c4f073ebaa947ffd45f2ade80c45aca",
+      "matches_scoped_source": true
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "bytes": 87344,
+      "sha256": "76018024ce2bdd0d5a687ccf3a6af3371fd43332a0dfdaea6346fe7c21cc33b2",
+      "matches_scoped_source": true
+    },
+    {
+      "file": "scripts/core/json_coerce.gd",
+      "bytes": 3190,
+      "sha256": "31154243b017913a2cf09b23593cb6a7765d484227b74dba46311120c6b80b1f",
+      "matches_scoped_source": true
+    }
+  ],
+  "fixture_generation": {
+    "source_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+    "fixture_id": "corner_store_delivery_day",
+    "path": "E:\\CodexQA\\BTH\\runs\\close-memo-web-fixture-r2-20261110\\evidence\\fixture.json",
+    "method": "Current ContentLibrary.load(true), Catalog.apply_overlay, independently generated guaranteed target/event-choice inventory, native validate_definition successful, then JSON snapshot. Standalone Web valid baseline and repeated validation also pass without resigning or weakening authority.",
+    "native_exit_code": 0,
+    "native_active_at_release": 0
+  },
+  "hashes": {
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\probe.pck": "a11896c777642a2eca5fe5cc1eefcfa1035c89053436ea6d2f10b600970c22dd",
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\source-manifest.json": "2d1d5326057a212c7e056f679cd43a5840859b9aa768c56742b4f34c1464aefe",
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\standalone.cjs": "87b0b740148360cea9c5dc697b46673aeddbb584d37f73ddf3a88cf49f8085b8",
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\result.json": "32a216e07b602f4a7a7f77284fe850a620e8f80a978abb3866f2c9be51012a76",
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\storage-manifest.json": "01acf1a62364e8abbfefdafdbd30c8a25cb1c72fc054ec2fd274b0762050febf",
+    "E:\\CodexQA\\BTH\\runs\\close-memo-web-standalone-r2-20261110\\evidence\\job.json": "ea3b2b5fdba369227cffe49d0daf02c9749cadd5bff11cbfecac608ac857af93"
+  },
+  "native_evidence_reused": [
+    "docs/testing/finalize_game_defects_20261110.md",
+    "docs/testing/finalize_game_defects_20261110.json",
+    "docs/testing/final_stabilization_integration_20261110.json"
+  ],
+  "deployment_evidence_reused": [
+    "docs/testing/final_stabilization_next_delivery_20261110.json",
+    "E:/CodexQA/BTH/runs/final-stab-2e3b-startup-20261110/evidence/final-delivery.json"
+  ],
+  "earlier_attempts": [
+    {
+      "run_id": "close-memo-web-r1-20261110",
+      "state": "HARNESS_FAIL",
+      "reason": "Loader adapter used lastIndex instead of lastIndexOf, before executing contract; fixed in the next run.",
+      "exit_code": 1,
+      "active_at_release": 0
+    },
+    {
+      "run_id": "close-memo-web-r2-20261110",
+      "state": "UNVERIFIED_ENTRYPOINT",
+      "reason": "Release production artifact emitted no contract result using external --script; 100-second wait expired. No product failure inferred and no deployed Web contract pass claimed.",
+      "exit_code": 1,
+      "active_at_release": 0
+    },
+    {
+      "run_id": "close-memo-web-fixture-20261110",
+      "state": "PRELAUNCH_STORAGE_REJECTION",
+      "reason": "Producer --path pointed outside the declared probe workspace. No child launched. Corrected by running in the admitted scoped worktree, not by disabling the guard."
+    },
+    {
+      "run_id": "close-memo-web-standalone-20261110",
+      "state": "HARNESS_STARTUP_ERROR",
+      "reason": "All typed contract assertions passed, but missing standard script-class index produced a console error, so overall runner correctly failed. Added the three-class index and reran unchanged source/fixture/assertions.",
+      "exit_code": 1,
+      "active_at_release": 0
+    }
+  ],
+  "scope_limits": [
+    "This is a standalone synthetic Web schema contract in the same published Web engine, not the deployed production PCK or a UI scenario playtest.",
+    "The three actual PCK production files are byte-for-byte verified against exact current source. The only custom files are test scene/entrypoint/config/index and production-derived fixture.",
+    "Native exact-source checks retain original authority/55-production-load/FIFO/custom-registry/cyclic-failure/cost evidence. Their identities are not relabeled as fresh Web tests.",
+    "No production changes, new test hooks, source export pipeline, original player save/profile, site audience, stable or itch channel were changed.",
+    "No full validator audit, whole-game performance, UI Save/cold Continue or unrelated parent objective is claimed complete."
+  ],
+  "remaining_child": {
+    "id": "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
+    "state": "open",
+    "acceptance": "Independent controlled callback/mutable-input diagnostic remains unqualified.",
+    "restriction": "Historical platform-screening stop and unexecuted partial authoring remain preserved. No retry, rephrasing or alternative execution was performed.",
+    "current_source_scope": "Typed encoding does not remove registry identity method calls or shallow nested definition references. No evidence establishes the child hypothesis is obsolete; no new product-failure claim is inferred.",
+    "parent_disposition": "Memo014 remains Open. The typed-collision repair and Web acceptance are passed subresults; full objective cannot close over this required unresolved child.",
+    "source_references": [
+      "scripts/core/scenario_sequence_schema.gd:_successful_validation_memo_key",
+      "scripts/core/scenario_sequence_schema.gd:_operation_registry_memo_identity",
+      "docs/testing/deprecated_code_audit_continuation_018.md"
+    ]
+  },
+  "earlier_complete_attempt_reconciliation": {
+    "exit_code": 1,
+    "summary": {
+      "objectives_checked": 304,
+      "batches_checked": 9,
+      "open_objectives": 195,
+      "open_batches": 5,
+      "open_work_items": 200,
+      "user_paused_items": 37,
+      "complete_objectives": 107,
+      "errors": 594,
+      "warnings": 1,
+      "tasks_with_errors": 163
+    },
+    "scoped_findings": [
+      {
+        "code": "COMPLETE_WITH_OPEN_CHILDREN",
+        "severity": "error",
+        "task_id": "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+        "message": "Required child work is still open.",
+        "evidence": [
+          "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018"
+        ]
+      }
+    ],
+    "report_path": "E:\\CodexQA\\BTH\\runs\\close-memo-ledger-check-20261110\\evidence\\reconciliation.json",
+    "report_sha256": "a593b10de655a27ce5077e9e61537dd264ec491a7d973b47b0c3f11c633f0744",
+    "scope": "Global backlog/owner/historical gaps remain. No full-ledger pass is claimed."
+  },
+  "final_ledger_reconciliation": {
+    "exit_code": 1,
+    "summary": {
+      "objectives_checked": 304,
+      "batches_checked": 9,
+      "open_objectives": 196,
+      "open_batches": 5,
+      "open_work_items": 201,
+      "user_paused_items": 37,
+      "complete_objectives": 106,
+      "errors": 593,
+      "warnings": 1,
+      "tasks_with_errors": 162
+    },
+    "scoped_findings": [],
+    "report_path": "E:\\CodexQA\\BTH\\runs\\close-memo-ledger-final-20261110\\evidence\\reconciliation.json",
+    "report_sha256": "1fe01061c9a3e0eb41d6f365b310ab9d272efe5fb937a789bfc5eb0420585bff",
+    "scope": "Memo objective retained Open for required child. Existing/global owner/backlog/historical findings remain; no full-ledger pass is claimed."
+  }
+}
