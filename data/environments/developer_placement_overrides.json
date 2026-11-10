@@ -451,6 +451,51 @@
 							144.0
 						]
 					}
+				},
+				"bar_live_band": {
+					"saved": true,
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							862.0,
+							270.0
+						],
+						"scenario.local_floor_fixture_1": [
+							725.0,
+							359.0
+						],
+						"scenario.local_floor_fixture_2": [
+							630.0,
+							427.0
+						],
+						"scenario.local_floor_fixture_3": [
+							629.0,
+							359.0
+						],
+						"scenario.local_floor_fixture_4": [
+							630.0,
+							427.0
+						],
+						"scenario.local_ground_marker_1": [
+							715.0,
+							425.0
+						],
+						"scenario.local_standing_person_1": [
+							725.0,
+							328.0
+						],
+						"scenario.local_standing_person_2": [
+							370.0,
+							293.0
+						],
+						"scenario.local_standing_person_3": [
+							725.0,
+							329.0
+						],
+						"scenario.local_surface_item_1": [
+							789.0,
+							424.0
+						]
+					}
 				}
 			},
 			"slot_positions": {
@@ -1583,7 +1628,7 @@
 			"base_saved": false,
 			"scenario_layouts": {
 				"grand_casino_audit_night": {
-					"saved": false,
+					"saved": true,
 					"slot_positions": {
 						"scenario.local_doorway_1": [
 							864.0,
@@ -1880,7 +1925,7 @@
 				]
 			},
 			"slot_scales": {
-				"fixed.game_machine_3": 1.0,
+				"fixed.game_machine_3": 0.5,
 				"fixed.game_table_left": 1.8,
 				"fixed.game_table_right": 2.0
 			}
@@ -2106,8 +2151,8 @@
 					104.0
 				],
 				"fixed.home_sleep": [
-					224.0,
-					197.0
+					248.0,
+					216.0
 				],
 				"fixed.home_storage": [
 					410.0,
