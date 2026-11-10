@@ -70,7 +70,7 @@ var phase := "warm"
 
 func _init() -> void:
 	phase = OS.get_environment("BTH_GAS_PHASE")
-	if not ["warm", "cold"].has(phase):
+	if not ["warm", "cold", "web_fixture"].has(phase):
 		quit(64)
 		return
 	# This guard runs before a host or persistence service is instantiated.
@@ -80,7 +80,7 @@ func _init() -> void:
 	for key in ["BTH_DISTRIBUTION_DATA_ROOT", "BTH_SAVE_DIR", "BTH_PROFILE_INVENTORY_PATH", "BTH_META_COLLECTION_PATH", "BTH_USER_SETTINGS_PATH", "BTH_DEVELOPER_PLACEMENT_PATH", "BTH_TARGET_OUTPUT"]:
 		ready = ready and _path(OS.get_environment(key)).begins_with(private_root + "/")
 	for key in ["BTH_PROFILE_INVENTORY_PATH", "BTH_META_COLLECTION_PATH", "BTH_USER_SETTINGS_PATH", "BTH_DEVELOPER_PLACEMENT_PATH", "BTH_TARGET_OUTPUT"]:
-		if phase == "warm":
+		if phase in ["warm", "web_fixture"]:
 			for suffix in ["", ".bak", ".tmp"]:
 				ready = ready and not FileAccess.file_exists(OS.get_environment(key) + suffix)
 	ready = ready and OS.get_environment("BTH_PROJECT_PLACEMENT_PATH").strip_edges().is_empty()
@@ -199,6 +199,35 @@ func _run_case(initial_minute: int, boundary: int, post_purchase_cash: int) -> v
 	if not _check(tray.size() == 1 and run.bankroll == purchase_cash - price, "one ordinary purchase debits once and delivers one ticket"): return
 	var ticket_id := str(tray[0].get("id", ""))
 	case_facts["ticket_id"] = ticket_id
+	if phase == "web_fixture":
+		# Export an ordinary paid tray to an isolated Web profile. No ticket,
+		# installed clock, authority or RNG values are rewritten for portability.
+		app.call("back_to_environment")
+		await process_frame
+		await process_frame
+		_capture("prepaid_fixture_after_back")
+		case_facts["fixture_signature"] = _protected()
+		case_facts["fixture_scratch_state"] = _machine().duplicate(true)
+		if not _check(bool(app.call("_autosave_foundation_run", "Independent Web Gas fixture", true)), "prepaid Web fixture Save succeeds"): return
+		var fixture_slot := str(app.get("autosave_slot_id"))
+		var fixture_service := SaveService.new()
+		var fixture_disk: RunState = fixture_service.load_run(fixture_slot)
+		case_facts["fixture_load_outcome"] = fixture_service.last_load_result()
+		case_facts["fixture_slot"] = fixture_slot
+		if not _check(fixture_disk != null, "prepaid Web fixture validates through a fresh native SaveService"): return
+		_check(_same_saved_values(_protected_for(fixture_disk), case_facts.fixture_signature), "fixture protected values survive native load")
+		_check(_same_saved_values(fixture_disk.current_environment.get("game_states", {}).get("scratch_tickets", {}), case_facts.fixture_scratch_state), "fixture preserves full paid tray and scratch machine")
+		case_facts["disk_authority_before_host_install"] = fixture_disk.validate_room_action_authority()
+		app.set("save_service", SaveService.new())
+		if not _check(bool(app.call("load_foundation_run")), "prepaid fixture normal host Continue succeeds"): return
+		run = app.get("run_state")
+		await process_frame
+		await process_frame
+		_capture("prepaid_fixture_host_continue")
+		_check(_base_controls_ok(), "prepaid fixture Continue has usable base controls")
+		if post_purchase_cash >= 0:
+			_check(fixture_disk.bankroll == post_purchase_cash and fixture_disk.game_clock_minutes == 990, "Day1 Web fixture starts at declared 16:30 and $117")
+		return
 	app.call("_on_game_surface_action", "scratch_collect_tray", 0)
 	if not await _gate("scratch_all"): return
 	_capture("after_collect")
