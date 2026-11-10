@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:02:39.283972+00:00",
+  "updated_at": "2026-11-10T07:17:47.084098+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -29505,6 +29505,98 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-10T07:02:39.283972+00:00"
+    },
+    {
+      "id": "BTH061-BRANCH-CLEANUP-20261110",
+      "name": "Reconcile and clean obsolete branches",
+      "aliases": [],
+      "kind": "operation",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Reconcile remaining branch and dirty worktree contents with current main/NEXT and clean obsolete integrated branches before the next large feature workspace. Preserve all unique work, dirty files, historical diagnostics and active worker branches. Branch cleanup does not close unfinished product objectives or restart paused work.",
+        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we donâ€™t have any merge issues later",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "current-inventory",
+            "description": "Recheck local/GitHub branch tips, dirty worktrees and existing integrated/superseded dispositions.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "verified-recovery",
+            "description": "Verify complete Git bundle and dirty file/index/patch recovery copies on guarded E storage.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "safe-cleanup",
+            "description": "Remove proven obsolete integrated refs with exact-SHA checks; preserve files/index/status, unique history and active work.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CLEANUP_VERIFIED_RECEIPT_COMMIT_PENDING",
+      "owner": {
+        "name": "Clean obsolete branches",
+        "task_ref": "/root/reconcile_old_branches",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Git metadata and docs only; runtime source and existing NEXT audience unchanged."
+      },
+      "evidence": [
+        {
+          "kind": "fresh_branch_worktree_inventory",
+          "reference": "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence\\branch-audit.json",
+          "summary": "106 local branches, nine GitHub heads, 109 worktrees; 52 dirty worktrees and 358 files preserved, matching prior reconciliation."
+        },
+        {
+          "kind": "recovery_backup",
+          "reference": "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence\\backup-verification.json",
+          "summary": "Complete all-refs Git bundle and per-worktree changed-file zips plus index/tracked patches verified."
+        },
+        {
+          "kind": "branch_cleanup_receipt",
+          "reference": "docs/testing/branch_cleanup_20261110.json",
+          "summary": "104 obsolete local heads and all eight non-main GitHub branches removed. Fourteen exact historical tips durably archived; 44 metadata-only detachments preserve every index/status, and all 52 dirty worktrees/358 files remain byte-identical."
+        },
+        {
+          "kind": "branch_cleanup_receipt",
+          "reference": "docs/testing/branch_cleanup_20261110.json",
+          "summary": "104 obsolete local heads and all eight non-main GitHub branches removed. Fourteen exact historical tips durably archived; 44 metadata-only detachments preserve every index/status, and all 52 dirty worktrees/358 files remain byte-identical."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit the verified cleanup receipt, then associate its commit and reconcile both ledger views. Parent owns final main integration/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No blocker within the authorized safe cleanup; unique/active refs are preserved.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-10T07:11:39.894401+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence\\cleanup-plan.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-10T07:17:47.084098+00:00"
     }
   ],
   "batches": [

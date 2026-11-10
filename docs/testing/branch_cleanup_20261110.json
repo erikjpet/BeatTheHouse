@@ -1,0 +1,1787 @@
+{
+  "schema": "bth.branch_cleanup/v1",
+  "observed_at": "2026-11-10T07:17:47.084098+00:00",
+  "task_id": "BTH061-BRANCH-CLEANUP-20261110",
+  "compared_main": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+  "inventory": {
+    "local_branches_at_snapshot": 106,
+    "github_heads_at_snapshot": 9,
+    "registered_worktrees_at_snapshot": 109,
+    "dirty_worktrees": 52,
+    "dirty_and_untracked_files": 358
+  },
+  "product_work_disposition": {
+    "missing_supported_runtime_change_found": false,
+    "basis": [
+      "docs/testing/branch_finalization_20261110.json",
+      "docs/testing/uncommitted_work_reconciliation_20261110.json"
+    ],
+    "qualified_changes": "Accepted runtime changes are already integrated on current main/NEXT. Historical staged code/test copies match integrated or superseded work; private probes and rejected experiments are not release candidates. Paused product work and residual acceptance remain separately open.",
+    "sample_verified_integration_commits": {
+      "Card interest": "ab57f8fa",
+      "Crew handoff": "664b1059",
+      "scenario feedback": "963a4720",
+      "Street Craps limits": "7588b81a",
+      "Crew planning": "d68b49cc",
+      "warm collection": "27efd3ac",
+      "explicit entry and save precision": "a7464c13",
+      "phone viewport": "8a87c807"
+    }
+  },
+  "results": {
+    "detached_same_head": 44,
+    "deleted_local_integrated_ref": 92,
+    "deleted_remote_integrated_ref": 6,
+    "created_verified_archive_ref": 14,
+    "deleted_local_archived_ref": 12,
+    "deleted_remote_archived_ref": 2
+  },
+  "non_main_github_branches_remaining": 0,
+  "all_original_dirty_files_preserved_unchanged": true,
+  "all_detached_worktree_indexes_and_status_preserved": true,
+  "directories_deleted": 0,
+  "method": "Metadata-only git update-ref --no-deref HEAD at exact unchanged SHA, then compare-and-delete obsolete refs. Unique historical work first copied to verified durable refs/archive/bth-20261110/...; remote deletes atomic with explicit per-ref expected SHA leases. No checkout/reset/clean/rebase was used.",
+  "recovery": {
+    "evidence_directory": "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence",
+    "git_bundle": "E:\\CodexQA\\BTH\\runs\\branch-cleanup-audit-20261110-0720\\evidence\\bth-pre-cleanup-all-refs.bundle",
+    "git_bundle_bytes": 658399825,
+    "git_bundle_sha256": "834bb498f344a8e3c14c311e851a73199da974c7aa43f12606e24954826bc8ac",
+    "bundle_ref_count": 256,
+    "all_inventory_ref_tips_verified_in_bundle": true,
+    "standalone_recovery_clone_full_fsck": "passed",
+    "dirty_file_zip_crc_and_sha256": "passed for all 358 files",
+    "tracked_and_index_patches": "preserved for each of 52 dirty worktrees",
+    "archive_refs": [
+      {
+        "source_ref": "refs/heads/codex/0.6.1-save-stage-diagnostic",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/0.6.1-save-stage-diagnostic",
+        "sha": "f5923e069bfada79aafaf530dabf4a679d0f12d6",
+        "classification": "historical_diagnostic",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/action-freeze-guard-experiment-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-guard-experiment-20261022",
+        "sha": "4ca11ee8cbd3ac77f69981e490b2a044da910095",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/action-freeze-source-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-source-20261022",
+        "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/bounded-popup-transaction-20261021",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/bounded-popup-transaction-20261021",
+        "sha": "2c7653b09eb427e8361c907c45d6e355121fa444",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/compiled-scenario-host-20261021",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/compiled-scenario-host-20261021",
+        "sha": "ae4400cd64c00dac022b3b86b43ce33b0b673d07",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/native-snapshot-direct-comparison-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/native-snapshot-direct-comparison-20261022",
+        "sha": "075b8e16194a5be88debc7f32a65a46f056bdb2a",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/owned-membership-evaluation-20261021",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/owned-membership-evaluation-20261021",
+        "sha": "8878516168390756a3b0c5ce666b6f3df05b11f7",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/rejected-bulk-script-comparison-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-bulk-script-comparison-20261022",
+        "sha": "1dab653a072f96671fe7de0f418143da992a1b7d",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/rejected-native-bulk-comparison-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-native-bulk-comparison-20261022",
+        "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/rejected-script-runtime-comparison-20261022",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-script-runtime-comparison-20261022",
+        "sha": "22e9831a5172ffc1edb6266b4d1351c1a2428162",
+        "classification": "retired_experiment",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/codex/wip-0.6-consolidated",
+        "archive_ref": "refs/archive/bth-20261110/heads/codex/wip-0.6-consolidated",
+        "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+        "classification": "archive_only",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/heads/wip/preservation-20261018-authority-placement",
+        "archive_ref": "refs/archive/bth-20261110/heads/wip/preservation-20261018-authority-placement",
+        "sha": "f2994d1600f970488dd17fc0e2e790b365d54437",
+        "classification": "archive_only",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/remotes/origin/codex/bth-lan-tls-trust-20261104",
+        "archive_ref": "refs/archive/bth-20261110/remotes/origin/codex/bth-lan-tls-trust-20261104",
+        "sha": "5274623bff638682ec9f41f8d92be489a4505355",
+        "classification": "historical_environment_report",
+        "verified_exact_commit_and_tree": true
+      },
+      {
+        "source_ref": "refs/remotes/origin/codex/wip-0.6-consolidated",
+        "archive_ref": "refs/archive/bth-20261110/remotes/origin/codex/wip-0.6-consolidated",
+        "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+        "classification": "archive_only",
+        "verified_exact_commit_and_tree": true
+      }
+    ],
+    "ignored_files_and_profiles": "Retained untouched in original directories; not copied to changed-file zips."
+  },
+  "remaining_local_heads": [
+    {
+      "ref": "refs/heads/codex/finalize-branches-20261110",
+      "sha": "1c76565d2da4c0ee5cddb59bed81c182e970cc31",
+      "worktree": "E:/CodexQA/BTH/workspaces/finalize-branches-20261110"
+    },
+    {
+      "ref": "refs/heads/codex/finalize-game-defects-20261110",
+      "sha": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+      "worktree": "E:/CodexQA/BTH/workspaces/finalize-game-defects-20261110"
+    },
+    {
+      "ref": "refs/heads/main",
+      "sha": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd",
+      "worktree": "D:/Projects/Beat-The-House"
+    }
+  ],
+  "remaining_github_heads": [
+    {
+      "ref": "refs/heads/main",
+      "sha": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e"
+    }
+  ],
+  "active_exclusions": "Active finalization receipt and defect worker branches are retained until parent integrates their scoped commits. The unfinished-record audit uses a separate isolated clone and is excluded. Local main remains attached to preserved dirty primary originals at 19388e73 until parent safely relocates current main to a clean workspace.",
+  "next_step": "Parent integrates this docs receipt, the Slot ledger correction and any authorized defect fix, pushes tested final main once, verifies existing NEXT, then removes active temporary branch refs only after main contains them. Do not overwrite the preserved primary worktree.",
+  "archived_history_is_not_product_backlog": true,
+  "limits": "No new gameplay tests or feature work. Branch deletion and archival are Git metadata cleanup; they do not claim unfinished product objectives complete or change stable/itch/audience. GitHub open PR search returned none before final unique-branch deletion.",
+  "deleted_and_detached_refs": [
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-card-layout",
+      "sha": "760b58f549ee6e8cc68a9e24a16e4808642b1d51",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/coach-card-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-card-layout",
+      "sha": "760b58f549ee6e8cc68a9e24a16e4808642b1d51",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-parking-verified",
+      "sha": "0e0825e62c05a03ceba5dbe7ddf090cfd648c264",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/coach-parking-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-coach-parking-verified",
+      "sha": "0e0825e62c05a03ceba5dbe7ddf090cfd648c264",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-crew-club-diagnosis",
+      "sha": "32708794db6fa72de56e516b6a0d770aada822d5",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/crew-club-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-crew-club-diagnosis",
+      "sha": "32708794db6fa72de56e516b6a0d770aada822d5",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-dialogue-tutorial-source",
+      "sha": "6d03a823d650acddc110cad8556c870d1b25d9cc",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-dialogue-tutorial-stability",
+      "sha": "6b93db92351bd4783ad6848d5f9f6e3851cbdf46",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-grand-auto-snapshot",
+      "sha": "76e1e478e09567680bf9a4069b379a775171c2cf",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/slot-integrated-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-grand-auto-snapshot",
+      "sha": "76e1e478e09567680bf9a4069b379a775171c2cf",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-item-card-readability",
+      "sha": "514d73a0cee36558e4d46b158c421757c60d8eca",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/item-card-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-item-card-readability",
+      "sha": "514d73a0cee36558e4d46b158c421757c60d8eca",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-linda-stability",
+      "sha": "84fadd27f10ecc94d23417e64a699852ff29aea5",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-linda-travel",
+      "sha": "519ee155ed7ec568b5cbebadd1f144a4351f396c",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/linda-travel-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-linda-travel",
+      "sha": "519ee155ed7ec568b5cbebadd1f144a4351f396c",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-live-resume-repairs",
+      "sha": "1532028608d053834494c78ef65ef11c1a995801",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-nell-guide",
+      "sha": "cf234e6b03220959c574a57f9057c3a66ee54566",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/nell-guide-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-nell-guide",
+      "sha": "cf234e6b03220959c574a57f9057c3a66ee54566",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-neon-jacks-wager",
+      "sha": "4179e0105c7bdd3645f5e7e5767de8c6b8257fba",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-populated-room-safeguard",
+      "sha": "7d297ce053502e34cdad5e93b1742b2bb32797b6",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/room-safeguard-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-populated-room-safeguard",
+      "sha": "7d297ce053502e34cdad5e93b1742b2bb32797b6",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-current",
+      "sha": "6143be7d25f23e210c0d51078fc0da02b8e8369c",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/primary-sha-current",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-current",
+      "sha": "6143be7d25f23e210c0d51078fc0da02b8e8369c",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-proof",
+      "sha": "43c611751be2645ceb7042226f734b5f95a81ed6",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/primary-sha-proof-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-primary-sha-proof",
+      "sha": "43c611751be2645ceb7042226f734b5f95a81ed6",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-pull-tabs-tray",
+      "sha": "cdfedca6614532e39d484209386bcee6b4941578",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/pull-tabs-tray-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-pull-tabs-tray",
+      "sha": "cdfedca6614532e39d484209386bcee6b4941578",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-qualified-resume",
+      "sha": "fb4145100cc8e8206f3ff0c4b302750c9a47f71e",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-sal-talk",
+      "sha": "713acc7633910ae7bb70fb2795e961e60f2278ef",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/sal-talk-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-sal-talk",
+      "sha": "713acc7633910ae7bb70fb2795e961e60f2278ef",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-tutorial-paid-recovery",
+      "sha": "ceba2ad0b56f3a2993dd324541a6a8dd1e3c163d",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/live-resume-repairs-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-tutorial-paid-recovery",
+      "sha": "ceba2ad0b56f3a2993dd324541a6a8dd1e3c163d",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-tutorial-return-stability",
+      "sha": "990436c70102faa06e99907638aca995f6713666",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-video-poker-denom-copy",
+      "sha": "ade346ca435a0d809aba3761807d92adf99ee164",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/video-denom-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-video-poker-denom-copy",
+      "sha": "ade346ca435a0d809aba3761807d92adf99ee164",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-video-poker-production",
+      "sha": "15aae0cc0b574a60a9e40b41265c931d98134fe8",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-functional",
+      "sha": "33825aed3d69eb3bbae88a5bc88a7609fc8c5f89",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-main-ready",
+      "sha": "0dfe1c79af70f9bb7667c1b67c9a6c7eb660105c",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-saved-wager-restore",
+      "sha": "1e2fe7a790b7fcee4722356030da36645d25f301",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-vp-settled-session",
+      "sha": "11b8c99fac1529046e93b0a823f4cc4d564b8477",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-web-phased-autosave",
+      "sha": "41b19a4ba4e3b28054aa01236ae57e22a15eda12",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/web-phased-autosave",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-web-phased-autosave",
+      "sha": "41b19a4ba4e3b28054aa01236ae57e22a15eda12",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-z85-decode",
+      "sha": "94bcba72b2744ef89dc01fc90d3c6e6102fe4078",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/slot-z85-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-z85-decode",
+      "sha": "94bcba72b2744ef89dc01fc90d3c6e6102fe4078",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-after-host-evaluation-1625",
+      "sha": "f134eb34685bc7f4e60310e00cba3930332bc3a7",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-final-script-20261022",
+      "sha": "9e8dfe12cf854deef868b7da38a7af0b93537b6e",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-remaining-20261022",
+      "sha": "c43391adefadc929c9de019608ae153eb0dffcce",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-2/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-remaining-20261022",
+      "sha": "c43391adefadc929c9de019608ae153eb0dffcce",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/baccarat-display-20261028",
+      "sha": "d503433db2d590fe447a666e1299161f6b70ecd7",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/blackjack-character-detail-20261023",
+      "sha": "6137ae7c32e683f4c3805f5abacd8e2c054fb1c1",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/bus-driver-copy-20261021",
+      "sha": "f79c08caa9e84cb8e12953a26fb34597223cdaa4",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/cage-room-access-20261023",
+      "sha": "7508210fdb04d5267f4bb260801563131ed72ab0",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-22/task-6/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/cage-room-access-20261023",
+      "sha": "7508210fdb04d5267f4bb260801563131ed72ab0",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/card-interest-display-20261030",
+      "sha": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-card-interest",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/card-interest-display-20261030",
+      "sha": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/cass-slot-reconciliation-20261028",
+      "sha": "3db4b1a4d099ae2543671afbfb276b5ca3265831",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/cold-glimpse-readonly-diagnostic-20261028",
+      "sha": "c263597a60c662842398f3e8b77919cc358a7b4f",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-cold-glimpse",
+      "files_index_status_unchanged": true,
+      "dirty_files": 1
+    },
+    {
+      "ref": "refs/heads/codex/cold-glimpse-readonly-diagnostic-20261028",
+      "sha": "c263597a60c662842398f3e8b77919cc358a7b4f",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/collection-warm-materialization-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/collection-warm-source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 4
+    },
+    {
+      "ref": "refs/heads/codex/collection-warm-materialization-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/crew-delivery-time-windows-20261023",
+      "sha": "04b3520571c38d243216ec68f025794289ee7f59",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/crew-handoff-cold-feedback-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-crew-cold-feedback",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/crew-handoff-cold-feedback-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/crew-planning-overflow-20261031",
+      "sha": "f7e63136d3e5cb57699e91156e252ff285e1d9ad",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/source-planning-overflow",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/crew-planning-overflow-20261031",
+      "sha": "f7e63136d3e5cb57699e91156e252ff285e1d9ad",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/crew-stake-loss-publication-20261101",
+      "sha": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/stake-loss-source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 4
+    },
+    {
+      "ref": "refs/heads/codex/crew-stake-loss-publication-20261101",
+      "sha": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/family-repayment-qualified-4a5b62c3",
+      "sha": "4a5b62c3530a16eb0350e8740c1abadadfff5c08",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/family-repayment-visibility-20261021",
+      "sha": "fa0e0c87408437f9245af83ec8ad4bd87d67bdf0",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/site/.worktrees/bth-run-menu-720p",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/family-repayment-visibility-20261021",
+      "sha": "fa0e0c87408437f9245af83ec8ad4bd87d67bdf0",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/finalize-layout-20261110",
+      "sha": "f44eb1b8c29cb27cb0e98e175bb66c1d328dcc47",
+      "outcome": "detached_same_head",
+      "worktree": "E:/CodexQA/BTH/finalize-layout-20261110/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/finalize-layout-20261110",
+      "sha": "f44eb1b8c29cb27cb0e98e175bb66c1d328dcc47",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/finalize-qa-storage-20261110",
+      "sha": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "outcome": "detached_same_head",
+      "worktree": "E:/CodexQA/BTH/workspaces/finalize-qa-storage-20261110",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/finalize-qa-storage-20261110",
+      "sha": "a64b3e28294d8fafd2eaa86200594d2a5d49ba37",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/fixed-hud-banner-20261103",
+      "sha": "3fd56aebde05182a02a6babf096ae8b7fe430f7f",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/gala-cold-result-feedback-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-gala-cold-feedback",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/gala-cold-result-feedback-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/gala-failure-aftermath-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/gala-aftermath-source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/gala-failure-aftermath-20261030",
+      "sha": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/inactive-save-projection-20261021",
+      "sha": "fec1187642da652c48371c138c5af043e3077b60",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/inactive-save-projection-qualified-20261021",
+      "sha": "50005eec467f307668bd4bdefb2e397dfac97ac4",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/incremental-cleanup",
+      "sha": "d1bab36ca4374bd20364a0dfa042be6298026dde",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-11/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/incremental-cleanup",
+      "sha": "d1bab36ca4374bd20364a0dfa042be6298026dde",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/item-audit-report-20261028",
+      "sha": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-4/bth-item-audit-worktree",
+      "files_index_status_unchanged": true,
+      "dirty_files": 9
+    },
+    {
+      "ref": "refs/heads/codex/item-audit-report-20261028",
+      "sha": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/jazz-room-availability-20261027",
+      "sha": "e70b778ae683f4b2c74b7e434a65088eff43d038",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/live-catalog-boundary-20261021",
+      "sha": "2751fced1d6f5d95ace85c975671ccc87878b0ab",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/live-room-authority-first-web-20261021",
+      "sha": "4211d2543cc92c435d06012a7304fb96bd7bf6c9",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/live-room-authority-reuse-20261021",
+      "sha": "9d10d5ffa8e4950b4e85205a3fc4a8931202d731",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/loaded-primary-proof-20261021",
+      "sha": "71c3f0a63c55ab99b940c2be036853f502b551ff",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/map-travel-coach-20261021",
+      "sha": "30156c3a57c877d9cf4a8f655907603f10479ac2",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/money-flow-archive-20261028",
+      "sha": "d3cd5c80cd4fb8c8a6677b849d8a32425fbe61a0",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/motel-clue-copy-20261021",
+      "sha": "dfb2f8a45558179c56562ad5b7b98a1a53f57c9a",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/motel-stakeout-vis020-20261028",
+      "sha": "9f299c570419d70250360fca41961048a95d852f",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/numbers-slip-history-20261021",
+      "sha": "8eefe65008d6c3c34c9bca9e1d1319674964bfa4",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers",
+      "sha": "b82b84b9dec4a0a158a6ef6e758540c49ce56afd",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-6/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers",
+      "sha": "b82b84b9dec4a0a158a6ef6e758540c49ce56afd",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-batch-two",
+      "sha": "bfe26291191758e92f3ef88ab56482de8e6cd696",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-6/source-batch-two",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-batch-two",
+      "sha": "bfe26291191758e92f3ef88ab56482de8e6cd696",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-integrated-20261020",
+      "sha": "d8856cd5c61c5136dfe7d14582b57111af5d40dc",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-6/source-integrated",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-integrated-20261020",
+      "sha": "d8856cd5c61c5136dfe7d14582b57111af5d40dc",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/owned-physical-compiler-20261021",
+      "sha": "158718f28481afe3210177894aaacbba3f987d6d",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-20261021",
+      "sha": "b92a93f5ef11b399c2f88913cbb55aa42c62b747",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-a23-qualified-20261021",
+      "sha": "fc3eccf497bd093cb9f22949434138720b345836",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/owned-room-publication-qualified-private-20261021",
+      "sha": "c9ee2fb7b5034fce46ec38b3c66ad75239ddd1cc",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/pawn-counter-refresh-20261027",
+      "sha": "aac3cad69f3561d76b751566525224c2dc221320",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/peek-cold-hud-test-20261028",
+      "sha": "8107039e9fa47b630207971bde62e6ca9c65b0b8",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-peek-cold-hud-test",
+      "files_index_status_unchanged": true,
+      "dirty_files": 1
+    },
+    {
+      "ref": "refs/heads/codex/peek-cold-hud-test-20261028",
+      "sha": "8107039e9fa47b630207971bde62e6ca9c65b0b8",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/preservation-reconciliation-20261021",
+      "sha": "756690c66d1376c9af78e9fe4017f460a44aa5b4",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task/preservation-integration",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/preservation-reconciliation-20261021",
+      "sha": "756690c66d1376c9af78e9fe4017f460a44aa5b4",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/qa-paid-auto-guard-test-only-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-paid-auto-guard",
+      "files_index_status_unchanged": true,
+      "dirty_files": 59
+    },
+    {
+      "ref": "refs/heads/codex/qa-paid-auto-guard-test-only-20261031",
+      "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/qa-ux012-watched-nudge-20261027",
+      "sha": "24a06be5a0ba42f9726fc2b92ce2a36865bc201f",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/quick-start-equipped-loadout-20261027",
+      "sha": "10cf99b2409ed1646d29d13849252f88045d3a44",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/roulette-reveal-20261023",
+      "sha": "5401462aaf1550b4d1a5883cb35d5813a3f66586",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/run-menu-actions-first-20261021",
+      "sha": "6bb31bb798d6715b5257046c63b424d73a80dcf6",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/runtime-terminal-shop-peek-20261028",
+      "sha": "3408583ab1c50ba1c40b423a50d54a6631f13564",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/save-z85-browser-20261021",
+      "sha": "ef3c963bb3f1f0cd54ca4533c42c6f607567b7e3",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/scenario-flush-noop-20261021",
+      "sha": "dfb2f8a45558179c56562ad5b7b98a1a53f57c9a",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/scenario-projection-once-20261021",
+      "sha": "30156c3a57c877d9cf4a8f655907603f10479ac2",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/slot-collect-cheat-current-20261104",
+      "sha": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-11-03/task-20/source-current",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/slot-collect-cheat-current-20261104",
+      "sha": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/street-craps-throw-034-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-street-craps-034",
+      "files_index_status_unchanged": true,
+      "dirty_files": 2
+    },
+    {
+      "ref": "refs/heads/codex/street-craps-throw-034-20261030",
+      "sha": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/table-ending-presentation-20261103",
+      "sha": "0324b475f424115cb8a731119fa53ca5b5e3f61c",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-11-03/task-11/source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/table-ending-presentation-20261103",
+      "sha": "0324b475f424115cb8a731119fa53ca5b5e3f61c",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/travel-risk-disclosure-history-20261030",
+      "sha": "78be621bbaae831994ad55187f239056fc751d43",
+      "outcome": "detached_same_head",
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/travel-risk-source",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/travel-risk-disclosure-history-20261030",
+      "sha": "78be621bbaae831994ad55187f239056fc751d43",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "superseded_integrated",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/turn-counter-publication-20261021",
+      "sha": "16f1598288247af7ea78bf80bb6a976a8c59a113",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/turn-publication-native-qualified-20261021",
+      "sha": "8c2c8d57e08b3ba50d913a18e196a660aa3e2bb6",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/underground-game-placement-20261023",
+      "sha": "04a114c05b5103f54fb29ddd75f4689f143e642c",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/codex/web-save-phases-main-20261021",
+      "sha": "9fbdc5f5e4d4b4895c9c5d6938a962cd3ce26ad5",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "ancestor_of_main",
+      "ancestor_of_main": true
+    },
+    {
+      "ref": "refs/heads/fix/crew-access-recovery",
+      "sha": "8592d0d89ef394749a594f05ea381282d07ec09a",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/site/.worktrees/bth-crew",
+      "files_index_status_unchanged": true,
+      "dirty_files": 7
+    },
+    {
+      "ref": "refs/heads/fix/crew-access-recovery",
+      "sha": "8592d0d89ef394749a594f05ea381282d07ec09a",
+      "outcome": "deleted_local_integrated_ref",
+      "prior_classification": "patch_equivalent",
+      "ancestor_of_main": false
+    },
+    {
+      "ref": "refs/heads/codex/item-factual-help-20261104",
+      "sha": "9b3e4db273b91ebf2eea071d3bd54393f3caccaf",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-batch-two",
+      "sha": "bfe26291191758e92f3ef88ab56482de8e6cd696",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/optional-character-offers-qualified-20261020-2018",
+      "sha": "240f0d8681c1004021cb5889154e5e0d225e362c",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/performance-audit-20261104",
+      "sha": "ed93e10a3ddbeedee37b0a8037eea33fd8af0807",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/performance-retention-hints-20261104",
+      "sha": "7502ba860908fdc76e6163bcbdf6fadabc72e063",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/restore-bth-todo-20261103",
+      "sha": "ce095b2c9c92eba68d1b889036dc1bd8dc9976c5",
+      "outcome": "deleted_remote_integrated_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "source_ref": "refs/heads/codex/0.6.1-save-stage-diagnostic",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/0.6.1-save-stage-diagnostic",
+      "sha": "f5923e069bfada79aafaf530dabf4a679d0f12d6",
+      "classification": "historical_diagnostic",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-save-stage-diagnostic",
+      "sha": "f5923e069bfada79aafaf530dabf4a679d0f12d6",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House/.tmp/save-stage-diagnostic",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/0.6.1-save-stage-diagnostic",
+      "sha": "f5923e069bfada79aafaf530dabf4a679d0f12d6",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/0.6.1-save-stage-diagnostic"
+    },
+    {
+      "source_ref": "refs/heads/codex/action-freeze-guard-experiment-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-guard-experiment-20261022",
+      "sha": "4ca11ee8cbd3ac77f69981e490b2a044da910095",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-guard-experiment-20261022",
+      "sha": "4ca11ee8cbd3ac77f69981e490b2a044da910095",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-guard-experiment-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/action-freeze-source-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-source-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/action-freeze-source-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/action-freeze-source-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/bounded-popup-transaction-20261021",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/bounded-popup-transaction-20261021",
+      "sha": "2c7653b09eb427e8361c907c45d6e355121fa444",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/bounded-popup-transaction-20261021",
+      "sha": "2c7653b09eb427e8361c907c45d6e355121fa444",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/bounded-popup-transaction-20261021"
+    },
+    {
+      "source_ref": "refs/heads/codex/compiled-scenario-host-20261021",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/compiled-scenario-host-20261021",
+      "sha": "ae4400cd64c00dac022b3b86b43ce33b0b673d07",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/compiled-scenario-host-20261021",
+      "sha": "ae4400cd64c00dac022b3b86b43ce33b0b673d07",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/compiled-scenario-host-20261021"
+    },
+    {
+      "source_ref": "refs/heads/codex/native-snapshot-direct-comparison-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/native-snapshot-direct-comparison-20261022",
+      "sha": "075b8e16194a5be88debc7f32a65a46f056bdb2a",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/native-snapshot-direct-comparison-20261022",
+      "sha": "075b8e16194a5be88debc7f32a65a46f056bdb2a",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/native-snapshot-direct-comparison-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/owned-membership-evaluation-20261021",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/owned-membership-evaluation-20261021",
+      "sha": "8878516168390756a3b0c5ce666b6f3df05b11f7",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/owned-membership-evaluation-20261021",
+      "sha": "8878516168390756a3b0c5ce666b6f3df05b11f7",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/owned-membership-evaluation-20261021"
+    },
+    {
+      "source_ref": "refs/heads/codex/rejected-bulk-script-comparison-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-bulk-script-comparison-20261022",
+      "sha": "1dab653a072f96671fe7de0f418143da992a1b7d",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/rejected-bulk-script-comparison-20261022",
+      "sha": "1dab653a072f96671fe7de0f418143da992a1b7d",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-bulk-script-comparison-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/rejected-native-bulk-comparison-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-native-bulk-comparison-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/rejected-native-bulk-comparison-20261022",
+      "sha": "91f706901c1580760e4763a663e02979f6dc74ae",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-native-bulk-comparison-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/rejected-script-runtime-comparison-20261022",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-script-runtime-comparison-20261022",
+      "sha": "22e9831a5172ffc1edb6266b4d1351c1a2428162",
+      "classification": "retired_experiment",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/rejected-script-runtime-comparison-20261022",
+      "sha": "22e9831a5172ffc1edb6266b4d1351c1a2428162",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/rejected-script-runtime-comparison-20261022"
+    },
+    {
+      "source_ref": "refs/heads/codex/wip-0.6-consolidated",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "classification": "archive_only",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "outcome": "detached_same_head",
+      "worktree": "D:/Projects/Beat-The-House-worktrees/wip-0.6-consolidated",
+      "files_index_status_unchanged": true,
+      "dirty_files": 0
+    },
+    {
+      "ref": "refs/heads/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/codex/wip-0.6-consolidated"
+    },
+    {
+      "source_ref": "refs/heads/wip/preservation-20261018-authority-placement",
+      "archive_ref": "refs/archive/bth-20261110/heads/wip/preservation-20261018-authority-placement",
+      "sha": "f2994d1600f970488dd17fc0e2e790b365d54437",
+      "classification": "archive_only",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/wip/preservation-20261018-authority-placement",
+      "sha": "f2994d1600f970488dd17fc0e2e790b365d54437",
+      "outcome": "deleted_local_archived_ref",
+      "archive_ref": "refs/archive/bth-20261110/heads/wip/preservation-20261018-authority-placement"
+    },
+    {
+      "source_ref": "refs/remotes/origin/codex/bth-lan-tls-trust-20261104",
+      "archive_ref": "refs/archive/bth-20261110/remotes/origin/codex/bth-lan-tls-trust-20261104",
+      "sha": "5274623bff638682ec9f41f8d92be489a4505355",
+      "classification": "historical_environment_report",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "source_ref": "refs/remotes/origin/codex/wip-0.6-consolidated",
+      "archive_ref": "refs/archive/bth-20261110/remotes/origin/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "classification": "archive_only",
+      "verified_exact_commit_and_tree": true,
+      "outcome": "created_verified_archive_ref"
+    },
+    {
+      "ref": "refs/heads/codex/bth-lan-tls-trust-20261104",
+      "sha": "5274623bff638682ec9f41f8d92be489a4505355",
+      "outcome": "deleted_remote_archived_ref",
+      "atomic": true,
+      "explicit_lease": true
+    },
+    {
+      "ref": "refs/heads/codex/wip-0.6-consolidated",
+      "sha": "23f6eba4c0c0001aa90f765bbf56b923421729eb",
+      "outcome": "deleted_remote_archived_ref",
+      "atomic": true,
+      "explicit_lease": true
+    }
+  ],
+  "dirty_worktree_preservation_verification": [
+    {
+      "worktree": "D:/Projects/Beat-The-House",
+      "head": "19388e7329ddfd5ceec7f91c4fd808d1fe017abd",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 10
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-7/legacy-source",
+      "head": "d8856cd5c61c5136dfe7d14582b57111af5d40dc",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 3
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-7/motel-source",
+      "head": "79aa4d11ecbc02a1dc79acb503d4c47cb742ff89",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-20/task-7/source",
+      "head": "4d4eb062f3fb3fa547dd61e66c4e3dd9888e4ac8",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-22/task-5/baseline",
+      "head": "04a114c05b5103f54fb29ddd75f4689f143e642c",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source",
+      "head": "4bb67124cfe0c46cf0d483359113ee26390cd089",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 5
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-bth-touch-01-c8",
+      "head": "c23c47febd41bbeba273bfb84e31c0d429e6fd60",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-cage-floor-fare-8b",
+      "head": "f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-count-mainfloor-diagnostic-f98",
+      "head": "f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-count-proof-be4",
+      "head": "be4cd6716e3e1f7614008c9cc70a27cee7b48def",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-explicit-dialogue-intent-661c",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 14
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gas-scratch-room-87a",
+      "head": "87a06b9a4acbe86b0f761d2cd0ab929f5584b716",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 6
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-alias-retry-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 8
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 7
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-retry-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 7
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-catalog-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 8
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 8
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-crewmoney-visit-binding-typed-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 8
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-practice-integration-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-gold-review-retalk-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-mobile-viewport-b124",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 6
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-mobile-viewport-coach-r12",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 7
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-mobile-viewport-stress-web",
+      "head": "b12430136817595e92efb03e5c31881caa21d209",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 14
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-pal-clean-deal-readonly-private-61081",
+      "head": "61081e76535ef3013ae8a2770b05e1af80086b4a",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 9
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-practice-crew-layer-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-punchline-cold-room-de35",
+      "head": "ac9188b7c370dab46acb4a44035692dd3a717a1e",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-punchline-readonly-observer-de35",
+      "head": "de3529c8faee12df3d2671d1ee1812957f0fd734",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 8
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-punchline-repair-readonly-de35",
+      "head": "de3529c8faee12df3d2671d1ee1812957f0fd734",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 10
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-23/task-2/source-video-poker-save-current",
+      "head": "da59be9a2c3091898f7777f0ee86fa0a71e0615b",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-26/task/source-turnover-intersections",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 3
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-2/source-explicit-entry-acceptance",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 26
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-2/source-explicit-entry-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 5
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-card-interest",
+      "head": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-cold-glimpse",
+      "head": "c263597a60c662842398f3e8b77919cc358a7b4f",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-crew-cold-feedback",
+      "head": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-gala-cold-feedback",
+      "head": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-paid-auto-guard",
+      "head": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 59
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-peek-cold-hud-test",
+      "head": "8107039e9fa47b630207971bde62e6ca9c65b0b8",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 1
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-3/source-street-craps-034",
+      "head": "b7c1f5ee72e705904c292a388651fa9f1bfc57a9",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task-4/bth-item-audit-worktree",
+      "head": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 9
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/native-regressions/source-crew-independent-661c",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 19
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/native-regressions/source-CrewMoney-candidate-b549",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 20
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/native-regressions/source-CrewMoney-river-7a09",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 13
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/native-regressions/source-save-float-e747",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/native-regressions/source-stake-loss-e53",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-27/task/source-planning-overflow",
+      "head": "f7e63136d3e5cb57699e91156e252ff285e1d9ad",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/collection-warm-source",
+      "head": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/gala-aftermath-source",
+      "head": "20fcde023f7145d6b5bb3b053fb20e13334c5bd5",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/save-float-source",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 3
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-10-29/task/stake-loss-source",
+      "head": "e53eb65725fb387ed0b97761e23ea6bb77e47713",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 4
+    },
+    {
+      "worktree": "C:/Users/theep/Documents/Codex/2026-11-03/task-13/publication-checkout",
+      "head": "cb5732d033876856be9027f8800fbe926d09e49b",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 2
+    },
+    {
+      "worktree": "D:/Projects/site/.worktrees/bth-crew",
+      "head": "8592d0d89ef394749a594f05ea381282d07ec09a",
+      "status_unchanged": true,
+      "all_changed_file_hashes_unchanged": true,
+      "files": 7
+    }
+  ]
+}
