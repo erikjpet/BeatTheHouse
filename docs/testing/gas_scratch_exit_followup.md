@@ -86,3 +86,8 @@ unverified; it is not an accepted defect or closure basis.
 Ownership claim/evidence commit: `52b5c04a65d272b83c8ddc320a8992b91d5b7eda`.
 The item remains Open for its prior paused owner/coordinator to reconcile scope;
 no lost original save is made a prerequisite.
+
+
+## Later rendered Web qualification
+
+The [10 November rendered Web closeout](gas_exit_web_closeout_20261110.md) adds four declared paid-tray exit and process-cold conditions on unmodified HTTPS 85d, including independent Web-generated Day 1 $117 and 04:00 equivalents. It does not relabel this older evidence, establish the original incident cause or await a missing personal save. Native-active import exposed a separately tracked cross-platform inventory fingerprint defect before Scratchers action.

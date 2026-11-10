@@ -44,3 +44,8 @@ The exact final supervisor invocation was:
 The guarded worker checks the storage manifest before every child, verifies the pinned engine, imports the disposable worktree, runs warm and then cold with the same admitted paths, and retains stage logs. The two engine test commands are recorded verbatim in the JSON companion. Each phase uses `BTH_GAS_PRIVATE_ROOT`, `BTH_GAS_PHASE`, `BTH_TARGET_OUTPUT` and the explicit persistence paths admitted by `bth_qa_storage.py`; cold also uses `BTH_GAS_WARM_REPORT`. No original saves, keys or profiles were opened, migrated or uploaded.
 
 Full local receipt directory: `E:\CodexQA\BTH\runs\close-gas-exit-native-r4-20261110\evidence`. [Machine-readable result and SHA-256 receipt hashes](gas_exit_closeout_20261110.json) preserve the exact test identity, case observations, commands and qualification limits. Saves and authority keys remain outside Git. This does not certify other scenarios, Web rendering, old-save migration or the unavailable original incident. The separate historical scratch-scalper repair remains documented in `scratch_scalper_runtime_compatibility.md`.
+
+
+## Later rendered Web qualification
+
+The [10 November rendered Web closeout](gas_exit_web_closeout_20261110.md) adds four declared paid-tray exit and process-cold conditions on unmodified HTTPS 85d, including independent Web-generated Day 1 $117 and 04:00 equivalents. It does not relabel this older evidence, establish the original incident cause or await a missing personal save. Native-active import exposed a separately tracked cross-platform inventory fingerprint defect before Scratchers action.

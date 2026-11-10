@@ -1,0 +1,612 @@
+{
+  "schema": "bth.gas_exit_web_closeout/v1",
+  "date": "2026-11-10",
+  "objectives": [
+    "BTH-09",
+    "BTH-GAS-SCRATCHER-EXIT-001"
+  ],
+  "disposition": "NOT_REPRODUCED_IN_DECLARED_INDEPENDENT_NATIVE_AND_WEB_EXIT_PATHS",
+  "source_base": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
+  "fixture_test_commit": "b5291a49a60d2830f2fc00038d1a1aa62f142d8f",
+  "product_changed": false,
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f/",
+  "native_runtime": "4.6.stable.official.89cea1439",
+  "browser": {
+    "executable": "C:/Users/theep/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe",
+    "version": "153.0.8010.12",
+    "viewport": [
+      1280,
+      720
+    ],
+    "headless": true,
+    "strict_tls": true,
+    "audio_output_disabled": true,
+    "security_bypass": false
+  },
+  "counts": {
+    "native_paid_fixture_assertions": 84,
+    "Web_generated_Day1_host_assertions": 22,
+    "Web_generated_Open_host_assertions": 24,
+    "rendered_Web_exit_and_cold_conditions": 4,
+    "historical_native_assertions_not_rerun": 154
+  },
+  "cases": [
+    {
+      "id": "close",
+      "boundary": "02:30 closure",
+      "fixture": "native synthetic paid tray",
+      "run_id": "finish-gas-web-r3-20261110",
+      "results": {
+        "continue": 6,
+        "collect": 9,
+        "clear_all": 10,
+        "file": 11,
+        "back": 12,
+        "leave_map": 14,
+        "map_close": 15,
+        "public_save": 16,
+        "idb": 17,
+        "process_restart": 18,
+        "cold_continue": 19,
+        "cold_ticket_custody": 21
+      },
+      "cash": 990,
+      "filed": "1 Dud",
+      "cold_clock": "02:45",
+      "screens": [
+        {
+          "step": "continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-6.png",
+          "sha256": "0d60937a9cf155c8206208343eee81f9e7e016a03efacaafee02a961b216095b"
+        },
+        {
+          "step": "collect",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-9.png",
+          "sha256": "2104219a060df76ce4cedee44cb453b02b1ef0d44778a9eb1dabc8106ad51a5e"
+        },
+        {
+          "step": "clear_all",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-10.png",
+          "sha256": "ace76339485766a314430f5816603a9caa8490a9c7c1f01591587c9355b16b11"
+        },
+        {
+          "step": "file",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-11.png",
+          "sha256": "602df64871d2335cd9aa6b8a2b684e867023ec389946999f3c8192cb3becc902"
+        },
+        {
+          "step": "back",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-12.png",
+          "sha256": "f6d14a8f7178c983556178789c83724cddf0e30395b6f7a1697b0eb8a3f7a4bc"
+        },
+        {
+          "step": "leave_map",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-14.png",
+          "sha256": "b778ab5334ee6dd85cac1cb8f9ea9545ff7050c1a3d30d283899a1c90196f7a0"
+        },
+        {
+          "step": "map_close",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-15.png",
+          "sha256": "21bbdd5df77357a25e6b3e6621b9a1c6a41ca61f3823533b4adbcb9e261d23d0"
+        },
+        {
+          "step": "public_save",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-16.png",
+          "sha256": "1395fcfb76582aaeebb084c8eee97b20a197af49e218600ce840e2b7b8e5969f"
+        },
+        {
+          "step": "idb",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-17.png",
+          "sha256": "a30903d40228d5745654e0707316ffee3e43037c276d51156a144d2604b9b846"
+        },
+        {
+          "step": "process_restart",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-18.png",
+          "sha256": "de12b004f56409e8bf96eb4d7f477f77ccfb9d505041f9924f8ca29ccced2046"
+        },
+        {
+          "step": "cold_continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-19.png",
+          "sha256": "ae37a00f129c1c4f957b810b0a2cbe4e3e85aa0c114cca6c8ba2b083117587c8"
+        },
+        {
+          "step": "cold_ticket_custody",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-21.png",
+          "sha256": "4eb187bf065c89d68223339c027a30a9969a5a32ba251d2a9dba4284615b334d"
+        }
+      ]
+    },
+    {
+      "id": "gap_middle",
+      "boundary": "03:15 gap",
+      "fixture": "native synthetic paid tray",
+      "run_id": "finish-gas-web-r3-20261110",
+      "results": {
+        "continue": 29,
+        "collect": 32,
+        "clear_all": 33,
+        "file": 34,
+        "back": 35,
+        "leave_map": 37,
+        "map_close": 38,
+        "public_save": 39,
+        "idb": 40,
+        "process_restart": 41,
+        "cold_continue": 42,
+        "cold_ticket_custody": 44
+      },
+      "cash": 998,
+      "filed": "1 Dud",
+      "cold_clock": "03:45",
+      "screens": [
+        {
+          "step": "continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-29.png",
+          "sha256": "5bf5e2949d835866f93facfd061d8d0ccc1b5bf70d751dd211fc77a1c2ad8e7a"
+        },
+        {
+          "step": "collect",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-32.png",
+          "sha256": "c16473b33aa3b222d7ff58af4379db51040420c41bab273ec4f90b1066ae4e2a"
+        },
+        {
+          "step": "clear_all",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-33.png",
+          "sha256": "88d31c9593333626e2e0470fcbb90dd86310358a8a27cb4837af3dcc7127a293"
+        },
+        {
+          "step": "file",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-34.png",
+          "sha256": "4d80851de773be31836d904929a43b7b86f79aaf9d8a5d380dd5326269559228"
+        },
+        {
+          "step": "back",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-35.png",
+          "sha256": "ec8e85fc70c865aa2ee9b62cff0cbaf8c78a75564ad502718c0cd5b5510d4bcd"
+        },
+        {
+          "step": "leave_map",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-37.png",
+          "sha256": "9efbfb4da0b92c5a086937b04d219c647a8f3594b3ac2706b47aaa21107b2744"
+        },
+        {
+          "step": "map_close",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-38.png",
+          "sha256": "dc014ec7511ff4600f40b4d57b0f493bf436e122d2cb70db272a76a450e0ab87"
+        },
+        {
+          "step": "public_save",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-39.png",
+          "sha256": "27436b5dd34a7b2e0cf9c296e9b99042707f5e4c190534e24faa00c91200b30b"
+        },
+        {
+          "step": "idb",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-40.png",
+          "sha256": "d1084845ee048e4657cc1dfa8bc63ed8c5f7903b39707210970b155390fa0178"
+        },
+        {
+          "step": "process_restart",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-41.png",
+          "sha256": "94040ad01ab3b086fbd58883f326213252ce842c70085c90ab293fb46fc2046f"
+        },
+        {
+          "step": "cold_continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-42.png",
+          "sha256": "815e6d4c8a6399b3da48d150dca981ab39e4b338fd26c18f25e65498b184ea03"
+        },
+        {
+          "step": "cold_ticket_custody",
+          "path": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\screen-44.png",
+          "sha256": "7edaf6a2be02f3e0b1cd6bc697d78ad2130ea5720c67a0d66590951cc9491bae"
+        }
+      ]
+    },
+    {
+      "id": "day1_1630_117",
+      "boundary": "Day 1 16:30 / $117",
+      "fixture": "Web-generated synthetic paid tray",
+      "run_id": "gas-web-equivalents-r2-20261110",
+      "results": {
+        "continue": 1,
+        "collect": 5,
+        "clear_all": 6,
+        "file": 7,
+        "back": 8,
+        "leave_map": 10,
+        "map_close": 11,
+        "public_save": 12,
+        "idb": 13,
+        "process_restart": 14,
+        "cold_continue": 15,
+        "cold_ticket_custody": 17
+      },
+      "cash": 117,
+      "filed": "1 Dud",
+      "cold_clock": "18:00",
+      "screens": [
+        {
+          "step": "continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-1.png",
+          "sha256": "8b2b5b61ca7b988ad2c59f393fa07665fa77401c2452c3ff9550399b8082cbb3"
+        },
+        {
+          "step": "collect",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-5.png",
+          "sha256": "3ff5ed9c4848b1beb6877cecaa5d6f4fb8d3cdc4ae5b42d6a151ef9cb02f3c8e"
+        },
+        {
+          "step": "clear_all",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-6.png",
+          "sha256": "7f3c9b907bcceb6972b9c9f8bf36edc00ad08f9c8f1d959ddc48245585583bcb"
+        },
+        {
+          "step": "file",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-7.png",
+          "sha256": "7c50933bc193acb12516c8e58737b77144bf9d455fbbcce41071e429f2002dc1"
+        },
+        {
+          "step": "back",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-8.png",
+          "sha256": "da267d3e523e76cb3fd580513ba5c1a72ee3ab7681f5bd6f6832844b95891e0f"
+        },
+        {
+          "step": "leave_map",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-10.png",
+          "sha256": "5a75b491ae1fc816121ca519549327077ea7fbbf98ada240aa2f18a88102c3a4"
+        },
+        {
+          "step": "map_close",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-11.png",
+          "sha256": "6c402ffd9b3fd09f7512edef93cb31b0f2218ad25a359c7fc965b5775484e650"
+        },
+        {
+          "step": "public_save",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-12.png",
+          "sha256": "4f16ecc7591c6ead263c1d060f333d12bdce752950b5e837223119c225a4f75d"
+        },
+        {
+          "step": "idb",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-13.png",
+          "sha256": "c5152bcff5fbb4d33bb968c31227348aadf7c30479e1fddf076b4ad637668be6"
+        },
+        {
+          "step": "process_restart",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-14.png",
+          "sha256": "1d1fc2995f7ff81d8ab4bd201ca5ce9c255e69332566680761543bdb7c1ae6d7"
+        },
+        {
+          "step": "cold_continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-15.png",
+          "sha256": "f1d11e81b469b59150ad9fa1c3f99250b75c40548f7f860aab436a64d529df47"
+        },
+        {
+          "step": "cold_ticket_custody",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-17.png",
+          "sha256": "6608344808435ce794955866061f3062aed232145ef8cb82e42443f552a56e8a"
+        }
+      ]
+    },
+    {
+      "id": "open",
+      "boundary": "04:00 reopening",
+      "fixture": "Web-generated synthetic paid tray",
+      "run_id": "gas-web-equivalents-r2-20261110",
+      "results": {
+        "continue": 21,
+        "collect": 24,
+        "clear_all": 25,
+        "file": 26,
+        "back": 27,
+        "leave_map": 29,
+        "map_close": 30,
+        "public_save": 31,
+        "idb": 32,
+        "process_restart": 33,
+        "cold_continue": 34,
+        "cold_ticket_custody": 36
+      },
+      "cash": 980,
+      "filed": "1 Win; $40 due, not redeemed",
+      "cold_clock": "04:15",
+      "screens": [
+        {
+          "step": "continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-21.png",
+          "sha256": "0fef3188c36b9e5fffadae7647bac5c4106ce328facb186c57e7282aee5738a0"
+        },
+        {
+          "step": "collect",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-24.png",
+          "sha256": "e2063ea5b3b4f836a316074b856dda2abeeafae0005abdeb58fe99febbfd680a"
+        },
+        {
+          "step": "clear_all",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-25.png",
+          "sha256": "4bbfbeca6f671267bb32371ef59333ce396933e75c45afc5c1c9ef47ef48a4d8"
+        },
+        {
+          "step": "file",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-26.png",
+          "sha256": "ea35a2066524656815765bff381f024c6c175318b9bf8078fbc5b6cebae59e52"
+        },
+        {
+          "step": "back",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-27.png",
+          "sha256": "fe4b4359a31056e7bf0ca0df3afa63c82b850954de487f4ca75716b41dee227b"
+        },
+        {
+          "step": "leave_map",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-29.png",
+          "sha256": "a486bd11475d2f4eb679dd65237ce0877d742bf71d632478e434a647d641604c"
+        },
+        {
+          "step": "map_close",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-30.png",
+          "sha256": "876556b4481b9a5a7b0389ec151ea87d05a63f365447b9f41f5d8dce5e565237"
+        },
+        {
+          "step": "public_save",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-31.png",
+          "sha256": "4dcb0d2c4e7b5cd83c5f7bbe1be57d68deff1dd44854f90f94be9ded926ae00b"
+        },
+        {
+          "step": "idb",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-32.png",
+          "sha256": "8613e7f31189d8b62b2fec7805c84646c9e980570eefa3f335172a6f33389368"
+        },
+        {
+          "step": "process_restart",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-33.png",
+          "sha256": "ad76029c108c1c53bca48a6e50ea211aeede46d5658a1200626c72dd73e6368c"
+        },
+        {
+          "step": "cold_continue",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-34.png",
+          "sha256": "8898f0261c72d607b8542bf2b50bf865ceef33076ce1dacc96913d4183a75bcf"
+        },
+        {
+          "step": "cold_ticket_custody",
+          "path": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\screen-36.png",
+          "sha256": "6a9a28ec065f3392e372238d3d42cbf532ede84a820d45394ad8d817d17bf034"
+        }
+      ]
+    }
+  ],
+  "jobs": [
+    {
+      "run_id": "finish-gas-fixtures-r3-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+      "receipt_sha256": "4f32e842f7105881bd27f1af844730c71420b27cdd05e86977f5113b5e927e35",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence\\gas_fixture_worker.py"
+      ],
+      "timeout_seconds": 480,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    {
+      "run_id": "finish-gas-native-cold-probe-r2-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+      "receipt_sha256": "487682c0e3b1cebf2984ffd2cc1a14eb25909b048f64fbeaea7e45aed3d90f99",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence\\gas_cold_worker.py"
+      ],
+      "timeout_seconds": 300,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    {
+      "run_id": "finish-gas-web-r3-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+      "receipt_sha256": "68c952e349f467f9cef2c753359959f3b13f8d77c71640457157197de2b28c70",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--use-system-ca",
+        "tools\\gas_scratch_exit_web_capture.cjs"
+      ],
+      "timeout_seconds": 1200,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    {
+      "run_id": "gas-web-producer-pack-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+      "receipt_sha256": "9713ae4ea09833f5a03938f49c44bc2530d35c46e59e721e06424a87b407da1a",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence\\gas_diag_pack_worker.py"
+      ],
+      "timeout_seconds": 480,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    {
+      "run_id": "gas-web-equivalents-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+      "receipt_sha256": "cc52ea9b87614e6a5fdc419232103fbc4f4e0ac720fb074444b505085dba389b",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--use-system-ca",
+        "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence\\gas_web_equivalents.cjs"
+      ],
+      "timeout_seconds": 1200,
+      "assigned_before_execution": true,
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    {
+      "run_id": "gas-web-equivalents-r2-20261110",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+      "receipt_sha256": "51d79a4a287d5f38a287ce8f3dc0c559387367bcb6fe3ab3e782e1e7978ef448",
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "--use-system-ca",
+        "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence\\gas_web_equivalents_r2.cjs"
+      ],
+      "timeout_seconds": 1200,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    }
+  ],
+  "limits": [
+    "Original personal incident state/build/actions/companions unavailable, not awaited. No original reproduction/cause claim.",
+    "Explicit synthetic Act 1 inputs before sealing: clock/cash/Graveyard/already-visited/stock. No ticket outcome/price/RNG edits; not natural-first-visit.",
+    "Fixture Buy/Back/Save/Continue uses normal host actions. Exact served Web pointer sequence starts at paid tray; physical pointer Buy not qualified.",
+    "Official exit contexts have no PCK override. Producer, logging and candidate contexts are separately identified.",
+    "Normal elapsed Web time advances; no whole-sequence frozen 16:30 claim.",
+    "Headless Chrome for Testing rendered pixels, strict HTTPS. Audio/installed user Chrome not qualified.",
+    "Native-active import reveals separate immutable-inventory numeric serialization defect before Scratchers action; no original Gas attribution.",
+    "154 prior native checks are retained at source2e3b, not fresh85d checks."
+  ],
+  "separate_compatibility_report": "docs/testing/scenario_cross_platform_geometry.md",
+  "preserved_failures": [
+    "finish-gas-fixtures-20261110",
+    "finish-gas-fixtures-r2-20261110",
+    "finish-gas-native-cold-probe-20261110",
+    "finish-gas-web-20261110",
+    "finish-gas-web-r2-20261110",
+    "gas-web-diag-pack-20261110",
+    "gas-web-diag-20261110",
+    "gas-web-equivalents-20261110",
+    "gas-cross-platform-candidate-web-20261110"
+  ],
+  "private_source_root": "E:\\CodexQA\\BTH\\runs\\finish-gas-fixture-setup-20261110\\evidence",
+  "saves_and_keys": "private E QA evidence only; not included",
+  "manual_reconciliation": [
+    {
+      "group": "current",
+      "command_source": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-final-20261110\\evidence\\stages.json",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-final-20261110\\evidence\\current.json",
+      "sha256": "f3e817aaacef81d704f2bc25f91812b34c5b325d500ff11907fbdd2b35cb3b89",
+      "summary": {
+        "objectives_checked": 161,
+        "batches_checked": 9,
+        "open_objectives": 65,
+        "open_batches": 5,
+        "open_work_items": 70,
+        "user_paused_items": 36,
+        "complete_objectives": 96,
+        "errors": 888,
+        "warnings": 0,
+        "tasks_with_errors": 59
+      },
+      "assigned_scope_findings": [],
+      "exit_code": 1,
+      "interpretation": "Inherited/global findings retained; not a whole-backlog pass."
+    },
+    {
+      "group": "all",
+      "command_source": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-final-20261110\\evidence\\stages.json",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-final-20261110\\evidence\\all.json",
+      "sha256": "cae60f63c6a6ec051de6676f37f45d60893be4b1f6edcc7fe3de7cf62a1e8b97",
+      "summary": {
+        "objectives_checked": 305,
+        "batches_checked": 9,
+        "open_objectives": 195,
+        "open_batches": 5,
+        "open_work_items": 200,
+        "user_paused_items": 36,
+        "complete_objectives": 108,
+        "errors": 1504,
+        "warnings": 0,
+        "tasks_with_errors": 199
+      },
+      "assigned_scope_findings": [],
+      "exit_code": 1,
+      "interpretation": "Inherited/global findings retained; not a whole-backlog pass."
+    }
+  ],
+  "tools_units": {
+    "command": [
+      "python",
+      "-B",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tools/tests",
+      "-v"
+    ],
+    "tests": 180,
+    "failures": 0,
+    "receipt": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-checks-20261110\\evidence\\units.log",
+    "sha256": "98bd704c7e4c3f6c1219103201db33d3266506c710f497c2094e151eac1ef71c",
+    "guarded_job": "E:\\CodexQA\\BTH\\runs\\gas-web-ledger-checks-20261110\\evidence\\job.json"
+  }
+}

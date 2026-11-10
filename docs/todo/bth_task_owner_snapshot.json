@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T20:00:50.615305+00:00",
+  "observed_at": "2026-11-10T23:53:20.640584+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -225,6 +225,13 @@
       "state": "active",
       "observed_at": "2026-11-10T20:00:50.615305+00:00",
       "source": "Actual live parent/integration worker during authorized Roulette evidence and ledger integration; original attribution remains open and separate from the completed warm-reveal child."
+    },
+    {
+      "task_ref": "/root/finish_gas_web_tests",
+      "title": "Verify Gas Web exits",
+      "state": "active",
+      "observed_at": "2026-11-10T23:53:20.640584+00:00",
+      "source": "Actual assigned native worker active: four declared original Gas Web exit/cold conditions qualified, scoped report/ledger integration underway; separately assisting exact numeric serialization diagnostic. Other owner observations not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

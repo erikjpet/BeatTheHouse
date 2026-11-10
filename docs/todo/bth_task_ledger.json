@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T23:02:09.797576+00:00",
+  "updated_at": "2026-11-10T23:53:20.640584+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -1478,22 +1478,28 @@
       "group": "current",
       "objective": {
         "text": "Reconcile the historical Gas Casino Day1 16:30/$117 incident from surviving evidence and independently reconstructed conditions without inventing the missing original state.",
-        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": false,
+        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; current assigned independent Day 1 16:30/$117 qualification with explicit original-incident limits (parent /root to /root/finish_gas_web_tests).",
+        "scope_confirmed": true,
         "acceptance": [
           {
             "id": "evidence",
             "description": "Record original personal save unavailable; preserve surviving reports and exact known money/time observations.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_exit_closeout_20261110.json",
+              "docs/testing/gas_exit_web_closeout_20261110.json"
+            ]
           },
           {
             "id": "reconstruction",
             "description": "Reconstruct declared warm/cold conditions independently and label differences and unreproduced historical details.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_exit_closeout_20261110.json",
+              "docs/testing/gas_exit_web_closeout_20261110.json"
+            ]
           },
           {
             "id": "outcome",
@@ -1510,10 +1516,10 @@
         }
       },
       "state": "open",
-      "status": "CURRENT_NATIVE_154_PASS_NOT_REPRODUCED_ORIGINAL_CAUSE_UNKNOWN",
+      "status": "INDEPENDENT_WEB_QUALIFIED_DELIVERY_PENDING",
       "owner": {
-        "name": "Coordinate Gas report disposition",
-        "task_ref": "/root",
+        "name": "Verify Gas Web exits",
+        "task_ref": "/root/finish_gas_web_tests",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -1523,13 +1529,21 @@
             "docs/testing/gas_exit_closeout_20261110.json",
             "Regression/evidence commit only; no product fix."
           ]
+        },
+        {
+          "sha": "b5291a49a60d2830f2fc00038d1a1aa62f142d8f",
+          "evidence": [
+            "docs/testing/gas_exit_web_closeout_20261110.json",
+            "Test-only paid fixture capture; no Gas production fix."
+          ]
         }
       ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
         "commit": null,
-        "evidence": []
+        "evidence": [],
+        "scope": "This diagnostic/test evidence has no Gas product fix to deploy; separately discovered compatibility repair and parent integration/delivery are not closed by this batch."
       },
       "evidence": [
         {
@@ -1546,22 +1560,27 @@
           "kind": "bounded_independent_native",
           "reference": "docs/testing/gas_exit_closeout_20261110.json",
           "summary": "124 warm+30 process-cold=154 checks pass at02:30 closure,03:15gap,04:00reopening and reconstructedDay1 16:30/cash117. Paid Scratchers/Back/Save/Continue/Leave/mapClose retain state/authority/base controls. Expected02:30-03:59scenario absence is not original cause attribution. No product change; not reproduced only in declared native paths; parent remains Open."
+        },
+        {
+          "kind": "bounded_independent_rendered_Web",
+          "reference": "docs/testing/gas_exit_web_closeout_20261110.json",
+          "summary": "Exact unmodified HTTPS85d rendered paid-tray Collect/Clear All/File/Back/Leave/map Close/public Save/new-browser Continue passes at02:30,03:15 and independently Web-generated Day1 16:30/$117 and04:00. Native84 fixture checks plus Web22+24 producer checks are separate. Original incident not reproduced or attributed. Separate native-active cross-platform fingerprint defect remains under its own repair."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review whether the bounded independent not-reproduced evidence provides adequate acceptance/disposition. Preserve original cause as unknown and retain first-failure build/actions/state/generation evidence on a new recurrence. No original replay or gone-save request.",
+      "next_action": "Integrate scoped evidence/test commits and reconcile parent disposition/delivery. Finish the separately discovered native/Web inventory fingerprint repair and its own acceptance without attributing it to the unavailable original Gas incident.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Declared independent native paths do not reproduce the incident; original build/action sequence/generations were not captured. This is an evidence limitation, not a pending user-save request. Parent remains Open for disposition.",
+        "description": "Independent Gas Web exit qualification complete. Parent integration/disposition pending; separate cross-platform inventory compatibility defect has its own active owner. Original incident save unavailable, not awaited.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "observed_at": "2026-11-10T23:53:20.640584+00:00",
         "evidence": [
-          "docs/testing/gas_exit_closeout_20261110.md"
+          "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:44:26.245214+00:00",
+      "updated_at": "2026-11-10T23:53:20.640584+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4203,15 +4222,21 @@
             "id": "reproduce",
             "description": "Use surviving reports and reconstructed exit/time/room-publication conditions to reproduce or explicitly classify the incident; the missing personal save is unavailable, not awaited.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_exit_closeout_20261110.json",
+              "docs/testing/gas_exit_web_closeout_20261110.json"
+            ]
           },
           {
             "id": "boundaries",
             "description": "Check warm/cold exit across the02:30-03:59 scenario gap and distinguish ordinary controls remaining from publication rejection.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_exit_closeout_20261110.json",
+              "docs/testing/gas_exit_web_closeout_20261110.json"
+            ]
           },
           {
             "id": "fix",
@@ -4238,10 +4263,10 @@
         }
       },
       "state": "open",
-      "status": "CURRENT_NATIVE_154_PASS_NOT_REPRODUCED_ORIGINAL_CAUSE_UNKNOWN",
+      "status": "INDEPENDENT_WEB_QUALIFIED_DELIVERY_PENDING",
       "owner": {
-        "name": "Coordinate Gas report disposition",
-        "task_ref": "/root",
+        "name": "Verify Gas Web exits",
+        "task_ref": "/root/finish_gas_web_tests",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4258,6 +4283,13 @@
             "docs/testing/gas_exit_closeout_20261110.json",
             "Regression/evidence commit only; no product fix."
           ]
+        },
+        {
+          "sha": "b5291a49a60d2830f2fc00038d1a1aa62f142d8f",
+          "evidence": [
+            "docs/testing/gas_exit_web_closeout_20261110.json",
+            "Test-only paid fixture capture; no Gas production fix."
+          ]
         }
       ],
       "deployment": {
@@ -4267,7 +4299,7 @@
         "evidence": [
           "docs/testing/gas_scratch_exit_followup.md"
         ],
-        "scope": "Diagnostic/ownership commit only; no product fix is established."
+        "scope": "This diagnostic/test evidence has no Gas product fix to deploy; separately discovered compatibility repair and parent integration/delivery are not closed by this batch."
       },
       "evidence": [
         {
@@ -4284,22 +4316,27 @@
           "kind": "bounded_independent_native",
           "reference": "docs/testing/gas_exit_closeout_20261110.json",
           "summary": "124 warm+30 process-cold=154 checks pass at02:30 closure,03:15gap,04:00reopening and reconstructedDay1 16:30/cash117. Paid Scratchers/Back/Save/Continue/Leave/mapClose retain state/authority/base controls. Expected02:30-03:59scenario absence is not original cause attribution. No product change; not reproduced only in declared native paths; parent remains Open."
+        },
+        {
+          "kind": "bounded_independent_rendered_Web",
+          "reference": "docs/testing/gas_exit_web_closeout_20261110.json",
+          "summary": "Exact unmodified HTTPS85d rendered paid-tray Collect/Clear All/File/Back/Leave/map Close/public Save/new-browser Continue passes at02:30,03:15 and independently Web-generated Day1 16:30/$117 and04:00. Native84 fixture checks plus Web22+24 producer checks are separate. Original incident not reproduced or attributed. Separate native-active cross-platform fingerprint defect remains under its own repair."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review whether the bounded independent not-reproduced evidence provides adequate acceptance/disposition. Preserve original cause as unknown and retain first-failure build/actions/state/generation evidence on a new recurrence. No original replay or gone-save request.",
+      "next_action": "Integrate scoped evidence/test commits and reconcile parent disposition/delivery. Finish the separately discovered native/Web inventory fingerprint repair and its own acceptance without attributing it to the unavailable original Gas incident.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Declared independent native paths do not reproduce the incident; original build/action sequence/generations were not captured. This is an evidence limitation, not a pending user-save request. Parent remains Open for disposition.",
+        "description": "Independent Gas Web exit qualification complete. Parent integration/disposition pending; separate cross-platform inventory compatibility defect has its own active owner. Original incident save unavailable, not awaited.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:44:26.245214+00:00",
+        "observed_at": "2026-11-10T23:53:20.640584+00:00",
         "evidence": [
-          "docs/testing/gas_exit_closeout_20261110.md"
+          "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:44:26.245214+00:00",
+      "updated_at": "2026-11-10T23:53:20.640584+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -21792,7 +21829,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate R08 cash Roulette BET9 on Red: one Spin arms Confirm, one Confirm click returns but no settlement/debit occurs, and Save/refresh/cold entry exposes SEALED ACTION. Preserve the original pending request and all evidence without Retry, Cancel, repeat Confirm, original profile/save/authority/key/RNG access or action replay. Reconstruct independently, classify the exact failure, and fix/test only a confirmed defect while preserving rules, economy, RNG, semantic seals, exactly-once delivery and persistence. A bounded fixture is not the original campaign. Respect item/scenario pause and existing resource/disk gates.",
-        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjack\u2192Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
+        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjack→Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -21964,7 +22001,7 @@
         {
           "kind": "prior_blackjack_continuation",
           "reference": "docs/testing/roulette_sealed_pending_r08.json",
-          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80\u219271\u219280, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71\u219262/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
+          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80→71→80, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71→62/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
         },
         {
           "kind": "seed_b_cold_financial_control",

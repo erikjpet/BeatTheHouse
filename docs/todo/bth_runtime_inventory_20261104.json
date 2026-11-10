@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-10T17:56:45.540517+00:00",
+  "observed_at": "2026-11-10T23:53:49.443811+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed. Plus six actual Gas Web fixture/qualification Job closure receipts, all owned-zero, including retained first Web command-capture failure. Prior records are unchanged and not re-observed; separate compatibility diagnostics are not qualified by these receipts.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -23,7 +23,8 @@
       "docs/testing/deprecated_code_audit_continuation_013.md",
       "docs/testing/deprecated_code_audit_continuation_014.md",
       "docs/testing/deprecated_code_audit_continuation_015.md",
-      "docs/testing/roulette_web_closeout_b6_20261110.json"
+      "docs/testing/roulette_web_closeout_b6_20261110.json",
+      "docs/testing/gas_exit_web_closeout_20261110.json"
     ]
   },
   "instances": [
@@ -22551,6 +22552,492 @@
           "docs/testing/roulette_web_closeout_b6_20261110.json"
         ],
         "limit": "Owned capped Job drained0 with no cleanup errors. Gameplay unverified; setup failure/timeout retained. No global process cleanup. Launch timestamp is the recorded exclusive launch claim immediately before gated suspended-child creation; the receipt binds the creation PID and manifest. It is not an OS process start-time census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:finish-gas-fixtures-r3-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "finish-gas-fixtures-r3-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json:pid:29840",
+        "started_at": "2026-11-10T22:33:02.671990+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T22:33:44.652005+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json:pid:29840",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T22:33:44.652005+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T22:33:44.652005+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "finish-gas-fixtures-r3-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T22:33:44.652005+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-fixtures-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:finish-gas-native-cold-probe-r2-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "finish-gas-native-cold-probe-r2-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json:pid:1884",
+        "started_at": "2026-11-10T22:47:14.679918+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T22:47:49.395413+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json:pid:1884",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T22:47:49.395413+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T22:47:49.395413+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "finish-gas-native-cold-probe-r2-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T22:47:49.395413+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-native-cold-probe-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:finish-gas-web-r3-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "finish-gas-web-r3-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json:pid:8028",
+        "started_at": "2026-11-10T22:42:58.505283+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T22:56:58.793635+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json:pid:8028",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T22:56:58.793635+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T22:56:58.793635+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "finish-gas-web-r3-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T22:56:58.793635+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\finish-gas-web-r3-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:gas-web-producer-pack-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gas-web-producer-pack-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json:pid:25472",
+        "started_at": "2026-11-10T23:05:12.514750+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T23:06:50.301692+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json:pid:25472",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T23:06:50.301692+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T23:06:50.301692+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gas-web-producer-pack-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T23:06:50.301692+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-producer-pack-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:gas-web-equivalents-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gas-web-equivalents-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json:pid:17664",
+        "started_at": "2026-11-10T23:07:10.330681+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T23:08:23.526298+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json:pid:17664",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T23:08:23.526298+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T23:08:23.526298+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gas-web-equivalents-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T23:08:23.526298+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
+      }
+    },
+    {
+      "instance_id": "gas-web-closeout:gas-web-equivalents-r2-20261110",
+      "task_id": "BTH-GAS-SCRATCHER-EXIT-001",
+      "owner_task_ref": "/root/finish_gas_web_tests",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gas-web-equivalents-r2-20261110",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json:pid:12580",
+        "started_at": "2026-11-10T23:09:57.354419+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T23:22:55.145861+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json:pid:12580",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T23:22:55.145861+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T23:22:55.145861+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gas-web-equivalents-r2-20261110",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+            "docs/testing/gas_exit_web_closeout_20261110.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T23:22:55.145861+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-web-equivalents-r2-20261110\\evidence\\job.json",
+          "docs/testing/gas_exit_web_closeout_20261110.json"
+        ],
+        "limit": "Owned capped Job released0 with no cleanup errors. Bounded behavior/setup outcomes remain distinct in report. No global cleanup or other process census. Launch timestamp uses exclusive claim, not OS creation census."
       }
     }
   ],
