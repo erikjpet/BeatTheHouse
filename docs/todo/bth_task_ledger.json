@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T18:39:38.130249+00:00",
+  "updated_at": "2026-11-10T19:06:02.373716+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -665,7 +665,7 @@
         }
       },
       "state": "open",
-      "status": "INCREMENTAL_HINT_NATIVE_PARITY_LIFECYCLE_PASS; MAIN_NEXT_PENDING; WEB_TIMING_OPEN",
+      "status": "INCREMENTAL_HINT_MAIN_NEXT_IDENTITY_STARTUP_VERIFIED; WEB_TIMING_OPEN",
       "owner": {
         "name": "Video Poker hint qualification",
         "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
@@ -688,9 +688,12 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "e410e05c6919e7cf7599552f67946f4e53974cd2",
+        "evidence": [
+          "docs/testing/video_poker_hint_delivery_20261110.json"
+        ],
+        "scope": "Exact source/tree/NEXT metadata, redirect, served PCK/native hashes, unchanged engine receipt/header links and fresh correct-version rendered basic menu verified. Actual NEXT Video Poker timing/gameplay acceptance remains Open."
       },
       "evidence": [
         {
@@ -707,22 +710,28 @@
           "kind": "integration_qualification",
           "reference": "docs/testing/video_poker_hint_integration_20261110.json",
           "summary": "Fresh exact numeric/EV parity, incremental lifecycle and no-pointer liveness pass on integrated main. Historical candidate rendered functional Web pass is separate. Web 188-344 ms outliers and timing setup timeout remain open; no aggregate/full-game pass."
+        },
+        {
+          "kind": "exact_next_delivery",
+          "reference": "docs/testing/video_poker_hint_delivery_20261110.json",
+          "summary": "Exact e410e05c/tree093f0125 delivered 2026-11-10T19:00:56Z; served identity/assets and fresh rendered menu pass. Initial import-admission failure recovered through maintained exact-source cold request and normal retry; first Node CA failure retained. Web timing remains unqualified."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact main/NEXT deployment and basic launch, then qualify real rendered Web timing under the existing controls; preserve outliers/setup timeout and keep the full performance parent Open.",
+      "next_action": "Qualify actual rendered Video Poker Deal/Hold/Draw timing on the exact served NEXT payload under existing controls, explain standalone 188-344 ms outliers and complete the previously unexecuted live timing gate. Keep full performance parent Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Active exact-delivery and timing qualification work. Web wall-time outliers remain unexplained; final rendered timing retry timed out before ready fixture. No missing-user-save dependency.",
+        "state": "active",
+        "kind": "acceptance_evidence",
+        "description": "Exact NEXT delivery/basic launch passed. Web wall-time outliers remain unexplained and final timing-instrumented candidate setup timed out before fixture readiness; actual NEXT timing/gameplay acceptance is unperformed. No user-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T18:39:38.130249+00:00",
+        "observed_at": "2026-11-10T19:06:02.373716+00:00",
         "evidence": [
-          "docs/testing/video_poker_hint_integration_20261110.json"
+          "docs/testing/video_poker_hint_delivery_20261110.json",
+          "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T18:39:38.130249+00:00"
+      "updated_at": "2026-11-10T19:06:02.373716+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",

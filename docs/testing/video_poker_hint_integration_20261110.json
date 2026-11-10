@@ -5,7 +5,7 @@
   "candidate_commit": "18a99d5ec2dc241552d304e96faf6ad429433fd3",
   "integrated_code_commit": "b64344b5a1c89540d7eebbea88fbd110ef1e1337",
   "integrated_code_tree": "a240c6ec712408e54f002bbb73dcc467a6b4dae3",
-  "state": "INTEGRATED_NATIVE_FOCUSED_PASS_MAIN_NEXT_PENDING_WEB_TIMING_OPEN",
+  "state": "EXACT_MAIN_NEXT_IDENTITY_ASSETS_BASIC_STARTUP_VERIFIED_WEB_TIMING_OPEN",
   "checks": [
     {
       "check": "parity",
@@ -92,5 +92,8 @@
     },
     "scoped_findings": [],
     "scope": "No performance-hint ledger inconsistency; unrelated historical scope/owner/runtime findings remain. First attempt alias-launch failure retained; absolute Python rerun completed."
-  }
+  },
+  "delivery_evidence": "docs/testing/video_poker_hint_delivery_20261110.json",
+  "delivery_commit": "e410e05c6919e7cf7599552f67946f4e53974cd2",
+  "delivery_observed_at": "2026-11-10T19:03:31.372Z"
 }
