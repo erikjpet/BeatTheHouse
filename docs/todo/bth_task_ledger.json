@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T18:03:09.646596+00:00",
+  "updated_at": "2026-11-10T18:39:38.130249+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -632,21 +632,30 @@
             "description": "Obtain comparable Web and actual native runtime evidence with source/route/input/window/progress/retention details; distinguish synthetic/module attribution from ordinary rendered gameplay.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/video_poker_hint_integration_20261110.json",
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+            ]
           },
           {
             "id": "invariants",
             "description": "Preserve deterministic outcomes, ticks, input ordering, payment/conservation, RNG/economy, saves/rollback/exit and no-pointer animation.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/video_poker_hint_integration_20261110.json",
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+            ]
           },
           {
             "id": "disposition-delivery",
             "description": "Implement and test a supported material fix or record an evidence-backed candidate/non-defect disposition, associate commit and verify required main/NEXT behavior. Keep full performance parent Open.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/video_poker_hint_integration_20261110.json",
+              "docs/testing/video_poker_hint_incremental_candidate_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -656,10 +665,10 @@
         }
       },
       "state": "open",
-      "status": "PARTIAL_IMPROVEMENT_NATIVE_WEB_TESTED; RESIDUAL_SYNCHRONOUS_HITCH_OPEN",
+      "status": "INCREMENTAL_HINT_NATIVE_PARITY_LIFECYCLE_PASS; MAIN_NEXT_PENDING; WEB_TIMING_OPEN",
       "owner": {
-        "name": "Dedicated performance audit / task-18",
-        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "name": "Video Poker hint qualification",
+        "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -667,6 +676,13 @@
           "sha": "e6fef69a19cf73b4805fda734724652d76e0e141",
           "evidence": [
             "docs/testing/performance_audit_20261104_batch002_003.md"
+          ]
+        },
+        {
+          "sha": "b64344b5a1c89540d7eebbea88fbd110ef1e1337",
+          "evidence": [
+            "docs/testing/video_poker_hint_integration_20261110.json",
+            "docs/testing/video_poker_hint_integration_20261110.md"
           ]
         }
       ],
@@ -686,20 +702,27 @@
           "kind": "branch_integration",
           "reference": "docs/testing/performance_audit_20261104_batch002_003.md",
           "summary": "PR 30 source and retained native/Web evidence reconciled with current main; final merged-source automated checks pending. Broad playtesting remains paused by the current user direction."
+        },
+        {
+          "kind": "integration_qualification",
+          "reference": "docs/testing/video_poker_hint_integration_20261110.json",
+          "summary": "Fresh exact numeric/EV parity, incremental lifecycle and no-pointer liveness pass on integrated main. Historical candidate rendered functional Web pass is separate. Web 188-344 ms outliers and timing setup timeout remain open; no aggregate/full-game pass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish merged-source automated checks and current main/NEXT delivery. Preserve residual synchronous hint latency and broader runtime acceptance as Open.",
+      "next_action": "Verify exact main/NEXT deployment and basic launch, then qualify real rendered Web timing under the existing controls; preserve outliers/setup timeout and keep the full performance parent Open.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
+        "description": "Active exact-delivery and timing qualification work. Web wall-time outliers remain unexplained; final rendered timing retry timed out before ready fixture. No missing-user-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T18:39:38.130249+00:00",
+        "evidence": [
+          "docs/testing/video_poker_hint_integration_20261110.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T06:27:57.161796+00:00"
+      "updated_at": "2026-11-10T18:39:38.130249+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",

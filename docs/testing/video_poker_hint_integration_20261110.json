@@ -1,0 +1,96 @@
+{
+  "schema": "bth.video_poker_hint_integration/v1",
+  "observed_at": "2026-11-10T18:39:38.130249+00:00",
+  "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+  "candidate_commit": "18a99d5ec2dc241552d304e96faf6ad429433fd3",
+  "integrated_code_commit": "b64344b5a1c89540d7eebbea88fbd110ef1e1337",
+  "integrated_code_tree": "a240c6ec712408e54f002bbb73dcc467a6b4dae3",
+  "state": "INTEGRATED_NATIVE_FOCUSED_PASS_MAIN_NEXT_PENDING_WEB_TIMING_OPEN",
+  "checks": [
+    {
+      "check": "parity",
+      "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-integration-parity-20261110\\evidence\\job.json",
+      "sha256": "9acd344c7d9c12e4b3b3f92c2e8175ac28261ff50fbac86eb354183fbf9dcbfc",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_sha256": "9889e5a6b6e21a2a2215315d246e942dd9876a4056d2b4c67ebbec5554c906f0"
+    },
+    {
+      "check": "incremental",
+      "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-integration-incremental-20261110\\evidence\\job.json",
+      "sha256": "c24982417d72f2c2377d1ce5a28f59d88c6cf82a25e5c3dfe75781a45a4a2414",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_sha256": "4a49a6064385e41e683cfde304a1a8a3a22778e122c1abead0b8e967b060b536"
+    },
+    {
+      "check": "liveness",
+      "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-integration-liveness-20261110\\evidence\\job.json",
+      "sha256": "abbcca5e63a78ed32c8fa8129f1d360f6b58564d3f82d7fa5e40c8c45b477cf5",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_sha256": "431d4967a21394b90a3f7e66f3487bb7f062ab5beaa5d00254c0d3d175929ef0"
+    }
+  ],
+  "retained_evidence": "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
+  "qualification_limits": [
+    "Candidate rendered production Web functional flow passed with first Hold painted in 69.8 ms and zero prior advice completions. This is historical candidate evidence, not current NEXT gameplay acceptance.",
+    "Standalone Web wall-time outliers of 188-344 ms remain unexplained. Final timing-instrumented rendered setup timed out before the timing gate. Responsiveness remains unqualified.",
+    "Maintained focused Video Poker suite passed on identical candidate gameplay source. Aggregate validation remains blocked by retained unrelated Get-FileHash launcher failures and content timeout; no aggregate pass claimed.",
+    "Whole-game performance audit remains Open. Stable, itch and audience unchanged."
+  ],
+  "checkpoint_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\vp-hint-integration-reconcile-r2-20261110\\evidence\\reconciliation.json",
+    "exit_code": 1,
+    "findings_total": 889,
+    "counts": {
+      "OBJECTIVE_SCOPE_UNCONFIRMED": 7,
+      "BLOCKER_STALE": 11,
+      "OWNER_OBSERVATION_STALE": 23,
+      "RUNTIME_STALE_OBSERVATION": 805,
+      "OWNER_IDLE_WITH_OPEN_WORK": 2,
+      "COMMIT_NOT_FOUND": 5,
+      "BATCH_NOT_LINKED_BY_PARENT": 1,
+      "RUNTIME_CLEANUP_CONTRACT_INCOMPLETE": 6,
+      "RUNTIME_CLEANUP_UNCERTAIN": 1,
+      "RUNTIME_COVERAGE_INCOMPLETE": 1,
+      "RUNTIME_CURRENT_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_LAUNCH_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_OWNER_UNKNOWN": 2,
+      "OWNER_TASK_REFERENCE_MISSING": 2,
+      "OWNER_NOT_IN_SNAPSHOT": 1
+    },
+    "scoped_findings": [],
+    "scope": "No performance-hint ledger inconsistency; unrelated historical scope/owner/runtime findings remain. First attempt alias-launch failure retained; absolute Python rerun completed."
+  }
+}

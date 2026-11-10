@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T18:02:18.343247+00:00",
+  "observed_at": "2026-11-10T18:39:38.130249+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -204,6 +204,13 @@
       "state": "active",
       "observed_at": "2026-11-10T18:02:18.343247+00:00",
       "source": "Actual active integration worker retaining the latest timeout evidence without closing Roulette acceptance or using the browser resource window."
+    },
+    {
+      "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "title": "Qualify Video Poker hints",
+      "state": "active",
+      "observed_at": "2026-11-10T18:39:38.130249+00:00",
+      "source": "Actual current integration task: native exact parity/lifecycle/liveness passed; authorized main publication and exact NEXT verification underway. Web timing remains open."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
