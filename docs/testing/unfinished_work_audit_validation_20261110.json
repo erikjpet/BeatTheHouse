@@ -1,0 +1,87 @@
+{
+  "schema": "bth.unfinished_work_audit_validation/v1",
+  "checked_at": "2026-11-10T07:18:28.104043+00:00",
+  "state": "PASS",
+  "scope": "Docs/metadata only. Existing game evidence was read, not rerun; no game source/test source, player state, security setting, branch cleanup or publication was changed.",
+  "source_commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+  "ledger_base_commit": "1c76565d2da4c0ee5cddb59bed81c182e970cc31",
+  "consistency_assertions": [
+    "ledger schema valid",
+    "only Slot and top updated_at changed",
+    "entire previous Slot record preserved",
+    "all other rows/policies/pauses/batches/owners byte-semantic identical",
+    "only Slot readable row changed",
+    "Slot remains Open with visible-input acceptance Open",
+    "existing cold/accounting and exact c3 delivery correctly associated",
+    "all 202 Open records inventoried once",
+    "all 72 current rows represented in Markdown",
+    "no locally present current associated commit is outside c3 ancestry",
+    "no new reconciliation findings",
+    "no readable-ledger drift"
+  ],
+  "current_checker_summary": {
+    "objectives_checked": 159,
+    "batches_checked": 9,
+    "open_objectives": 67,
+    "open_batches": 5,
+    "open_work_items": 72,
+    "user_paused_items": 39,
+    "complete_objectives": 92,
+    "errors": 900,
+    "warnings": 0,
+    "tasks_with_errors": 67
+  },
+  "new_reconciliation_findings": 0,
+  "slot_remaining_findings": [
+    {
+      "code": "OWNER_IDLE_WITH_OPEN_WORK",
+      "severity": "error",
+      "task_id": "BTH-SLOT-COLLECT-001",
+      "message": "Owner task is idle while requested work remains open.",
+      "evidence": [
+        "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+        "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
+    },
+    {
+      "code": "OWNER_OBSERVATION_STALE",
+      "severity": "error",
+      "task_id": "BTH-SLOT-COLLECT-001",
+      "message": "Owner task observation is older than the configured freshness limit.",
+      "evidence": [
+        "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+        "2026-11-04T15:55:05Z"
+      ]
+    }
+  ],
+  "metadata_unit_tests": {
+    "file": "tools/tests/test_check_bth_task_ledger.py",
+    "tests": 36,
+    "state": "PASS",
+    "reported_seconds": 0.071
+  },
+  "guarded_runs": [
+    {
+      "run_id": "unfinished-audit-consistency-final-20261110",
+      "job_sha256": "ec6224072ded5c17b59498f31daff62fc04ae91c8b5c23d77e25192b714b6f03",
+      "worker_log_sha256": "e6ba964c2501539fee222169f0c7179339fd2f11ea613707aca9c2ad50424e25",
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "run_id": "unfinished-audit-checker-tests-20261110",
+      "job_sha256": "8fa9a0c8ae26c90dbde05de2ea8dd3e1fe4ab01fc1e5b6c1b32c3b54b476c3d6",
+      "worker_log_sha256": "81ef0d35bfb1f0acda28a5f3c15eec25d859e6e3fc253534697ca2b85a556032",
+      "exit_code": 0,
+      "active_at_release": 0
+    }
+  ],
+  "limits": {
+    "aggregate_cpu_percent": 12,
+    "aggregate_memory_gib": 2,
+    "assigned_before_execution": true,
+    "kill_on_close": true,
+    "breakaway_allowed": false
+  },
+  "earlier_validation_diagnostics": "Earlier audit validation attempts are retained. A Windows default text-decoding mismatch and an incorrect test assumption that every top-level row had kind objective were corrected in the private validation script; neither changed project data. The original failed command-name clone launch also remains retained with zero owned processes. No gameplay test was retried."
+}

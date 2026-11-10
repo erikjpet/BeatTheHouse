@@ -15152,21 +15152,28 @@
             "description": "Complete pointer/touch action routing, actual warning visibility and intentional Nudge versus legal collection regression; preserve hit rectangles and avoid accidental cheat dispatch.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/slot_collect_nudge_label.md"
+            ]
           },
           {
             "id": "accounting-cold",
             "description": "Complete disposable Grand accounting/Heat/Card/Save and separate-process cold tests without replaying or refunding the original2-dollar loss,42Heat or Card closure.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/slot_collect_nudge_label.md"
+            ]
           },
           {
             "id": "delivery",
             "description": "Commit the scoped renderer/input repair and focused regression; verify main/NEXT identity and changed behavior where feasible before completion.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/slot_collect_nudge_label.md",
+              "docs/testing/finalization_next_delivery_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -15176,38 +15183,143 @@
         }
       },
       "state": "open",
-      "status": "BASELINE_REPRODUCED_INPUT_ACCOUNTING_AND_COLD_TESTS_IN_PROGRESS",
+      "status": "FIX_MAIN_NEXT_VERIFIED_NATIVE_INPUT_COLD_PASS_VISIBLE_WEB_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Fix Slot Collect action",
         "task_ref": "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+          "evidence": [
+            "docs/testing/slot_collect_nudge_label.md"
+          ]
+        }
+      ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": []
+        "required": true,
+        "state": "verified",
+        "commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+        "evidence": [
+          "docs/testing/finalization_next_delivery_20261110.json",
+          "docs/testing/slot_collect_nudge_label.md"
+        ],
+        "scope": "Source inclusion, exact served identity/assets and basic menu startup only. Native canvas mouse/touch and separate-process cold behavior are documented existing checks; visible Web warning/pixels and physical-device gameplay are unverified."
       },
       "evidence": [
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Original retained Grand report: one settled2-dollar Slot loss, apparent COLLECT invoked Nudge, Heat0 to42 and Players Card program closed. Preserve that settled loss, Heat and Card outcome. Current owner reproduced the renderer/command alias natively; candidate passes explicit NUDGE/CHEAT label, visible risk/Card consequence and rejection of collect aliases. Actual pointer/touch and separate-process Grand cold/accounting checks are underway. Current-main fetch/new isolated worktree succeeded; earlier ownership/authorization blockers are resolved, not pending. No gameplay fix commit is confirmed. Finish intentional-action/input/accounting/Heat/Save-cold qualification, commit and verify main/NEXT; do not replay or refund the original incident. Source: C:/Users/theep/Documents/Codex/2026-10-27/task-2/evidence/grand-r01-window-131/SLOT-COLLECT-CHEAT-REPORT.md; current thread01a1a3f3-52a8-76d7-951b-423c1bdfd0d4 supersedes stale task20 status wording."
+        },
+        {
+          "kind": "existing_receipts_reconciled",
+          "reference": "docs/testing/unfinished_work_audit_20261110.md",
+          "summary": "Fix 247ebe32 is already on main and exact served c3d16523. Existing native canvas mouse and touch each found the offer on natural spin 14; Save, separate-process cold Continue, one intentional Nudge and settled cold accounting/Heat/Card checks pass. Original incident remains untouched. The old no-fix-commit/in-progress metadata is superseded; visible Web warning and physical-device gameplay are not established."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish actual pointer/touch and separate-process Grand cold/accounting checks, review and commit the scoped fix, publish and verify existing NEXT. Keep current original campaign closed/preserved. Earlier authorization/checkout ownership blockers are resolved and must not be treated as pending.",
+      "next_action": "Do not repeat the landed implementation or passed native mouse/touch and cold accounting checks. Reconcile remaining actual visible warning/input acceptance on the matching deployed build when testing is resumed; preserve the original settled incident and record Web/pixel/physical-device limits. No new exploratory testing was started by this audit.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
+        "description": "No new blocker is established. Existing receipts support the committed native/cold fix and exact NEXT source delivery; actual visible Web warning acceptance remains unverified. Owner heartbeat and prior observations are not restamped by this metadata audit.",
         "requires_user_input": false,
         "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-10T07:15:01.032782+00:00",
+      "evidence_reconciliation_20261110": {
+        "observed_at": "2026-11-10T07:15:01.032782+00:00",
+        "source_commit": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+        "prior_record": {
+          "id": "BTH-SLOT-COLLECT-001",
+          "name": "Slot COLLECT must not silently invoke a cheat",
+          "aliases": [],
+          "kind": "objective",
+          "parent_ids": [],
+          "group": "current",
+          "objective": {
+            "text": "Prevent the ordinary Slot control labelled COLLECT from silently dispatching a Nudge cheat and permanently closing Players Card progression. Before input, correctly label the coin-chain Nudge as cheating and disclose Heat/catch/Card consequences; preserve existing action geometry and intentional Nudge/Spin/accounting/RNG/save semantics and the original settled loss/Heat/Card state.",
+            "source": "Codex task01a1a3f3-52a8-76d7-951b-423c1bdfd0d4 current turn; C:/Users/theep/Documents/Codex/2026-10-27/task-2/evidence/grand-r01-window-131/SLOT-COLLECT-CHEAT-REPORT.md",
+            "scope_confirmed": true,
+            "acceptance": [
+              {
+                "id": "baseline-and-label",
+                "description": "Original retained Grand report and actual native renderer/command baseline reproduce COLLECT to Nudge. Candidate explicit NUDGE/CHEAT/risk/Card wording and rejected collect aliases pass; retain exact source/build limitations.",
+                "required": true,
+                "state": "pass",
+                "evidence": [
+                  "Codex task01a1a3f3-52a8-76d7-951b-423c1bdfd0d4 current turn",
+                  "C:/Users/theep/Documents/Codex/2026-10-27/task-2/evidence/grand-r01-window-131/SLOT-COLLECT-CHEAT-REPORT.md"
+                ]
+              },
+              {
+                "id": "actual-input",
+                "description": "Complete pointer/touch action routing, actual warning visibility and intentional Nudge versus legal collection regression; preserve hit rectangles and avoid accidental cheat dispatch.",
+                "required": true,
+                "state": "open",
+                "evidence": []
+              },
+              {
+                "id": "accounting-cold",
+                "description": "Complete disposable Grand accounting/Heat/Card/Save and separate-process cold tests without replaying or refunding the original2-dollar loss,42Heat or Card closure.",
+                "required": true,
+                "state": "open",
+                "evidence": []
+              },
+              {
+                "id": "delivery",
+                "description": "Commit the scoped renderer/input repair and focused regression; verify main/NEXT identity and changed behavior where feasible before completion.",
+                "required": true,
+                "state": "open",
+                "evidence": []
+              }
+            ],
+            "coverage": {
+              "required": false,
+              "complete": false,
+              "areas": []
+            }
+          },
+          "state": "open",
+          "status": "BASELINE_REPRODUCED_INPUT_ACCOUNTING_AND_COLD_TESTS_IN_PROGRESS",
+          "owner": {
+            "name": "Fix Slot Collect action",
+            "task_ref": "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+            "assignment_state": "assigned"
+          },
+          "commits": [],
+          "deployment": {
+            "required": false,
+            "state": "not_applicable",
+            "commit": null,
+            "evidence": []
+          },
+          "evidence": [
+            {
+              "kind": "named_ledger",
+              "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "summary": "Original retained Grand report: one settled2-dollar Slot loss, apparent COLLECT invoked Nudge, Heat0 to42 and Players Card program closed. Preserve that settled loss, Heat and Card outcome. Current owner reproduced the renderer/command alias natively; candidate passes explicit NUDGE/CHEAT label, visible risk/Card consequence and rejection of collect aliases. Actual pointer/touch and separate-process Grand cold/accounting checks are underway. Current-main fetch/new isolated worktree succeeded; earlier ownership/authorization blockers are resolved, not pending. No gameplay fix commit is confirmed. Finish intentional-action/input/accounting/Heat/Save-cold qualification, commit and verify main/NEXT; do not replay or refund the original incident. Source: C:/Users/theep/Documents/Codex/2026-10-27/task-2/evidence/grand-r01-window-131/SLOT-COLLECT-CHEAT-REPORT.md; current thread01a1a3f3-52a8-76d7-951b-423c1bdfd0d4 supersedes stale task20 status wording."
+            }
+          ],
+          "implementation_batches": [],
+          "next_action": "Finish actual pointer/touch and separate-process Grand cold/accounting checks, review and commit the scoped fix, publish and verify existing NEXT. Keep current original campaign closed/preserved. Earlier authorization/checkout ownership blockers are resolved and must not be treated as pending.",
+          "blocker": {
+            "state": "none",
+            "kind": null,
+            "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
+            "requires_user_input": false,
+            "observed_at": "2026-11-04T16:23:29.672223+00:00",
+            "evidence": []
+          },
+          "planned_app_changes": [],
+          "updated_at": "2026-11-04T16:23:29.672223+00:00"
+        },
+        "new_tests_run": false
+      }
     },
     {
       "id": "BTH-TODO-RELIABILITY-001",
