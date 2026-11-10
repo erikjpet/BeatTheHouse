@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:56:45.540517+00:00",
+  "updated_at": "2026-11-10T18:03:09.646596+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -28873,7 +28873,9 @@
             "description": "Verify the actual correction in exact NEXT identity/changed behavior before completion; no denied main publication retry without new specific approval.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/closeout_meta_delivery_20261110.json"
+            ]
           }
         ],
         "coverage": {
@@ -28883,7 +28885,7 @@
         }
       },
       "state": "open",
-      "status": "INTEGRATED_NATIVE_52_5_PASS_NEXT_BEHAVIOR_ACCEPTANCE_PENDING",
+      "status": "EXACT_NEXT_DEPLOYED_NATIVE_57_PASS_WEB_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Integrate Meta showdown correction",
         "task_ref": "/root/integrate_first_closeouts",
@@ -28908,12 +28910,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "1dd2064d475dd4c6c2391256c7884edaa754d928",
         "evidence": [
+          "docs/testing/closeout_meta_delivery_20261110.json",
           "docs/testing/closeout_meta_integration_20261110.json"
         ],
-        "scope": "Mapped fix 564cebb6 tested on local main. Existing verified NEXT 4aff4073 does not yet contain this fix; exact source publication/NEXT and rendered changed behavior remain."
+        "scope": "Exact source/tree/NEXT metadata, PCK/native full served bytes, unchanged engine receipts and fresh correct-version rendered menu verified. Actual rendered Meta showdown choice acceptance remains Open."
       },
       "evidence": [
         {
@@ -28935,23 +28938,27 @@
           "kind": "current_integrated_native",
           "reference": "docs/testing/closeout_meta_integration_20261110.json",
           "summary": "Mapped scoped correction passes 52 warm + 5 separate-process cold, exact same assertion logs as worker; first-cold custody retained. Canonical offered/direct Meta, selected instance/effects, locks/reservations/live-ticket exclusions, ordinary String/legacy return and exact escrow preserved. Clean 8% CPU / 2 GiB Job exited 0 with zero owned processes. Web acceptance remains open."
+        },
+        {
+          "kind": "exact_next_identity_startup",
+          "reference": "docs/testing/closeout_meta_delivery_20261110.json",
+          "summary": "Exact 1dd2064d promoted 17:58:57Z. Correct-version menu screenshot, metadata/redirect/PCK/native custody and zero page/console/request errors pass. Browser Job exited 0 with zero owned processes. This is basic launch, not rendered Meta choices."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the scoped tested correction, verify exact existing NEXT identity/assets, then obtain permitted rendered Meta showdown choice acceptance. Preserve all broader pauses and original collection ownership.",
+      "next_action": "Obtain permitted rendered Meta showdown choice acceptance on immutable 1dd2064d, keeping normal collection ownership and all broader item/scenario/audit pauses unchanged.",
       "blocker": {
         "state": "active",
-        "kind": "main_next_and_behavior_acceptance_pending",
-        "description": "Integrated 52 warm + 5 cold pass. Actual source publication, exact NEXT and rendered changed-behavior acceptance remain.",
+        "kind": "rendered_changed_behavior_unverified",
+        "description": "Actual tested correction is on main and exact NEXT identity/assets/basic rendered menu are verified. Real rendered Meta showdown choice acceptance remains unverified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:53:33.734243+00:00",
+        "observed_at": "2026-11-10T18:03:09.646596+00:00",
         "evidence": [
-          "docs/testing/meta_choice_resumption_20261110.json",
-          "docs/testing/showdown_meta_choice_closeout_20261110.json"
+          "docs/testing/closeout_meta_delivery_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:53:33.734243+00:00",
+      "updated_at": "2026-11-10T18:03:09.646596+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
