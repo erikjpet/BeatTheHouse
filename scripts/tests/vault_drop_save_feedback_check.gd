@@ -1,6 +1,7 @@
 extends SceneTree
 
 # Independent normal-host regression; never reads/replays the R04 paid drop.
+const Provenance := preload("res://scripts/tests/save_generation_provenance.gd")
 const MainScene := preload("res://scenes/main.tscn")
 # Source-only cabinet-type qualification, not paid-result selection: FNV64
 # abs2798434022198271472 -> RNG seed1781198789 -> roll81 -> Vault (71..100).
@@ -105,9 +106,17 @@ func _verify_loaded(app: Control, expected: Dictionary, label: String) -> void:
 	var game: GameModule = app.call("_game_module_for_id", "coin_pusher")
 	if not _check(game != null, label + " normal production module unavailable"):
 		return
-	var loaded: RunState = SaveService.new().load_run(slot)
+	var service := SaveService.new()
+	var before := Provenance.fingerprints(service, slot)
+	Provenance.record(label + " before_load", service, slot, {})
+	var loaded: RunState = service.load_run(slot)
+	Provenance.record(label + " first_load_return", service, slot, _snapshot(loaded, game) if loaded != null else {})
+	_check(Provenance.fingerprints(service, slot) == before, label + " load changed primary/backup bytes")
+	_check(str(service.last_load_result().get("outcome", "")) == SaveService.LOAD_OUTCOME_PRIMARY, label + " unexpectedly fell back from generated primary")
 	_check(loaded != null and _snapshot(loaded, game) == expected, label + " fresh-service load changed wallet/RNG/clock/full settled Vault/tray")
 	if _check(bool(app.call("load_foundation_run")), label + " normal Continue failed"):
+		Provenance.record(label + " host_continue", app.get("save_service"), slot, _snapshot(app.get("run_state"), game), app)
+		_check(str(app.get("save_service").last_load_result().get("outcome", "")) == SaveService.LOAD_OUTCOME_PRIMARY, label + " host unexpectedly fell back")
 		_check(_snapshot(app.get("run_state"), game) == expected, label + " Continue changed settled state")
 
 func _vault_case() -> void:
@@ -130,6 +139,7 @@ func _vault_case() -> void:
 		await _close_app(app)
 		return
 	var disk_before := _disk(app)
+	Provenance.record("vault baseline", app.get("save_service"), str(app.get("autosave_slot_id")), {})
 	if not _check(bool(app.call("enter_game", "coin_pusher")), "Normal machine entry failed"):
 		await _close_app(app)
 		return
@@ -152,6 +162,7 @@ func _vault_case() -> void:
 	app.call("open_run_menu")
 	var live_before := _snapshot(run, game, true)
 	app.call("save_run_from_menu")
+	Provenance.record("vault unsettled_save_return", app.get("save_service"), str(app.get("autosave_slot_id")), _snapshot(run, game, true), app)
 	var text := str(app.get("run_menu_status_label").text)
 	_check(bool(app.get("run_menu_overlay").visible) and text.contains("Not saved") and text.contains("Resume") and text.contains("Leave"), "Refusal is not visible with recovery instructions: " + text)
 	_check(not bool(app.get("_web_manual_save_pending")) and str(app.get("save_status_message")) != "Saved to Resume Slot." and not text.contains("Saving to Resume Slot"), "Refused Save acknowledged success or pending durability")
@@ -173,6 +184,7 @@ func _vault_case() -> void:
 		app.call("open_run_menu")
 		app.call("save_run_from_menu")
 		_check(not bool(app.get("run_menu_overlay").visible), "Settled floor Save did not succeed")
+		Provenance.record("vault settled_save_return", app.get("save_service"), str(app.get("autosave_slot_id")), expected, app)
 		_verify_loaded(app, expected, "Warm")
 		var file := FileAccess.open(private_root.path_join("vault/expected.json"), FileAccess.WRITE)
 		if _check(file != null, "Could not retain independent cold expectation"):

@@ -5,6 +5,7 @@ extends SceneTree
 # generated naturally priced $2 ticket; no ticket result is selected or altered.
 const MainScene := preload("res://scenes/main.tscn")
 const Fixture := preload("res://scripts/tests/pull_tab_grand_fixture.gd")
+const Provenance := preload("res://scripts/tests/save_generation_provenance.gd")
 const Codec := preload("res://scripts/core/run_save_codec.gd")
 const CASES := ["tray_reload", "floor_reload", "stale_location", "readonly_views"]
 const PLAYER_FIELDS := ["tray_stack", "ticket_stack", "winner_pile", "loser_pile", "loser_archive_count"]
@@ -96,6 +97,7 @@ func _menu_save(app: Control, slot: String, label: String) -> bool:
 	app.set("autosave_slot_id", slot)
 	app.call("open_run_menu")
 	app.call("save_run_from_menu")
+	Provenance.record(label + " menu_save_return", app.get("save_service"), slot, _snapshot(app.get("run_state")), app)
 	return _check(not bool(app.get("run_menu_overlay").visible), label + " Menu Save was not accepted")
 
 
@@ -127,7 +129,12 @@ func _location_storage_audit(value: Variant) -> Dictionary:
 
 func _verify_saved(slot: String, expected: Dictionary, ticket_id: String, label: String) -> void:
 	var service := SaveService.new()
+	var before := Provenance.fingerprints(service, slot)
+	Provenance.record(label + " before_load", service, slot, {})
 	var loaded: RunState = service.load_run(slot)
+	Provenance.record(label + " first_load_return", service, slot, _snapshot(loaded) if loaded != null else {})
+	_check(Provenance.fingerprints(service, slot) == before, label + " load changed primary/backup bytes")
+	_check(str(service.last_load_result().get("outcome", "")) == SaveService.LOAD_OUTCOME_PRIMARY, label + " unexpectedly fell back from generated primary")
 	if not _check(loaded != null, label + " save is not loadable"):
 		return
 	_check(_snapshot(loaded) == expected, label + " saved generation changed protected state/exact clock")
@@ -286,6 +293,8 @@ func _run() -> void:
 				_verify_saved(row["slot"], row["expected"], row["ticket_id"], row["slot"] + " cold")
 				app.set("autosave_slot_id", row["slot"])
 				if _check(bool(app.call("load_foundation_run")), row["slot"] + " cold Continue failed"):
+					Provenance.record(row["slot"] + " first_cold_host_continue", app.get("save_service"), row["slot"], _snapshot(app.get("run_state")), app)
+					_check(str(app.get("save_service").last_load_result().get("outcome", "")) == SaveService.LOAD_OUTCOME_PRIMARY, row["slot"] + " cold host unexpectedly fell back")
 					_check(_snapshot(app.get("run_state")) == row["expected"], row["slot"] + " cold Continue changed exact generation")
 					_reenter_and_repeat(app, row["expected"], row["ticket_id"], row["slot"] + " cold")
 	else:

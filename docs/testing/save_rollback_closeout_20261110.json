@@ -1,0 +1,374 @@
+{
+  "schema": "bth.save_rollback_closeout/v1",
+  "recorded_utc": "2026-11-10T17:31:03.176057+00:00",
+  "source_base": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "source_base_tree": "2bcf6a4c52d6404bbd90d8e20731570b0d58eac7",
+  "change_scope": "Test instrumentation and evidence only; no production save, custody, physics, economy, RNG or authority code changed.",
+  "parent_dispositions": {
+    "BTH061-PULLTABS-SAVE-001": "Open: original two cold clock rollbacks preserved; historical primary/backup/load generation and between-Save ticket custody remain unknown. Current reconstructed paths pass.",
+    "BTH061-VAULTDROP-SAVE-001": "Open: original Save branch and generations remain unknown; the original record did not capture a success acknowledgment. Current unsettled refusal and settled Save/cold paths pass."
+  },
+  "test_source_files": [
+    {
+      "path": "scripts/tests/save_generation_provenance.gd",
+      "sha256": "d14e6fabeec32d5b59663510c03290638edef6723a9a1c2e82e0ced8fc26b4cf",
+      "lf_normalized_sha256": "79fcc5bfbcb415492469edb88c2e6840eddb84a1aed158475f7a51a65632c79a"
+    },
+    {
+      "path": "scripts/tests/pull_tab_custody_restore_matrix_check.gd",
+      "sha256": "9fc6bb324657a8b4e15d898fab262acf0649d72ffdf148e5c9c10038d618bcfb",
+      "lf_normalized_sha256": "c709df578b3a107af5a4948e9651134aefab3ecb39774b9ec381eabb42f5df70"
+    },
+    {
+      "path": "scripts/tests/vault_drop_save_feedback_check.gd",
+      "sha256": "81e13972bc66c14c7aa8b6f19e301220d70dfe43fcc6ce2756ed59474cdfbc86",
+      "lf_normalized_sha256": "e45d63036cae1bd132c46b059fd44c44d471d08bfde040042e41e75f4cbe6a9e"
+    }
+  ],
+  "runtime": {
+    "godot_version": "4.6.stable.official.89cea1439",
+    "debug_dll_sha256": "184bfde4d9697b397f347dc9ab35b8915f59a7d3ca54c8849c7c59914d53f17b",
+    "release_dll_sha256": "858934c054b7dd5be3860fae79458200b460142692d7c8d677bc6162a66b325b",
+    "native_source_match": {
+      "candidate": "E:\\CodexQA\\BTH\\workspaces\\BTH-PERF-005-STANDARD-candidate-r2",
+      "source_files": [
+        {
+          "path": "native\\coin_pusher\\build_profile.json",
+          "sha256": "375661ecd793b7e426a3ddb5ed31aaf28bdffbb94106f6d533e1abebeb267a59"
+        },
+        {
+          "path": "native\\coin_pusher\\coin_pusher_native.gdextension.template",
+          "sha256": "80b9af791b34cfd93a6017ac11cbcbfb3abae10a71189a2db8eb044a0af8fe96"
+        },
+        {
+          "path": "native\\coin_pusher\\godot_web_release_build_profile.json",
+          "sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7"
+        },
+        {
+          "path": "native\\coin_pusher\\SConstruct",
+          "sha256": "f322edb46445855669d894ad11d9b92db531fc93b3991c3fe5b56a02b320d86b"
+        },
+        {
+          "path": "native\\coin_pusher\\toolchain.lock.json",
+          "sha256": "bd0373acd515a7b4613bfc34276006fde91b5b47c8db7baf866783c285c5d6af"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\coin_pusher_native_core.cpp",
+          "sha256": "2702a722b48f15fd6ab4639796e5b1a56d33b3a475325d3a4247fbfe1ef23889"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\coin_pusher_native_core.h",
+          "sha256": "5b55252aebbecd4fcd4cb609570b76e3000e59fb4120f13f88da98cd6d9a84d0"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\coin_pusher_render_batch.cpp",
+          "sha256": "69d5f15058c2fe5540dbf4af799d3f38e3cf13709445650347f477fdfd8637aa"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\coin_pusher_step_kernel.cpp",
+          "sha256": "e7f6fbe31f9e972fd70945ecd3f7e8d746af6f7d4b71a636ad81bc8e38c50856"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\register_types.cpp",
+          "sha256": "6f3d6689f25bae9189701bdb11f053886eb5137d18768a1170b58e2709952889"
+        },
+        {
+          "path": "native\\coin_pusher\\src\\register_types.h",
+          "sha256": "476de6b8afad6b53d7496dc2afa330d19c03062292af7039eb9f1a1cd037b76f"
+        }
+      ],
+      "debug_dll_sha256": "184bfde4d9697b397f347dc9ab35b8915f59a7d3ca54c8849c7c59914d53f17b"
+    },
+    "native_source_match_sha256": "fbf20edc4e2547c823fe7d84ca6ec833172075f6043825b224719064c4471f47",
+    "limit": "Existing accepted candidate artifacts reused after all11 available native/build/toolchain files matched current source bytes. No native rebuild or new native parity claim."
+  },
+  "assertions": {
+    "pull-warm": 129,
+    "pull-cold": 70,
+    "vault-warm": 57,
+    "vault-cold": 15
+  },
+  "web_adapter_contract": {
+    "checks": 16,
+    "failures": [],
+    "log_sha256": "f1524f1f062100070d33de2dea051a43eabdb49c0de230ab7a3c6836059977c5",
+    "bridge_git_blob": "edd5d09a127896335ce7f0d1901fa8b162a6bf3b",
+    "scope": "Exact adapter unchanged since c43c95a9; CLI test moved with only its source lookup path adjusted. Contract run is not rendered Web gameplay."
+  },
+  "first_cold_loads": [
+    {
+      "stage": "pull_tab_custody_tray_reload cold first_load_return",
+      "slot": "pull_tab_custody_tray_reload",
+      "fingerprints": {
+        "backup": {
+          "bytes": 133129,
+          "exists": true,
+          "sha256": "a341dc0c47e2d4e8c9c81733817a3cda4eb0941511fc48a00af5deec7d4daa6d"
+        },
+        "primary": {
+          "bytes": 133139,
+          "exists": true,
+          "sha256": "b86dd30848280c52ea5c66d1acd6911725103fc3ffc813dc1c2ddbd82a1c6504"
+        }
+      },
+      "load_result": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true,
+        "slot_id": "pull_tab_custody_tray_reload"
+      },
+      "snapshot_sha256": "9dc5394cd6d225b3c6bf7b266dfeaafac0323ecc7527d7031fb6f69d672269ba",
+      "clock_minutes": 3120.0,
+      "cash": 94.0,
+      "chips": 13.0,
+      "rng": "46989354"
+    },
+    {
+      "stage": "pull_tab_custody_floor_reload cold first_load_return",
+      "slot": "pull_tab_custody_floor_reload",
+      "fingerprints": {
+        "backup": {
+          "bytes": 132390,
+          "exists": true,
+          "sha256": "8512b4a3fc8b4cf03157adb4c44238c80239aeca62a57a205a4507dadf1df66e"
+        },
+        "primary": {
+          "bytes": 132475,
+          "exists": true,
+          "sha256": "4d410e569a0be412378bc5a88f451778495986359601f384d0348b0130ea3214"
+        }
+      },
+      "load_result": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true,
+        "slot_id": "pull_tab_custody_floor_reload"
+      },
+      "snapshot_sha256": "703a0fe1a8961afacdcc5dbd1814b5584d35fdf2ce33c160089a175cb5c2d6f4",
+      "clock_minutes": 3120.0,
+      "cash": 94.0,
+      "chips": 13.0,
+      "rng": "50497142"
+    },
+    {
+      "stage": "pull_tab_custody_stale_location cold first_load_return",
+      "slot": "pull_tab_custody_stale_location",
+      "fingerprints": {
+        "backup": {
+          "bytes": 132552,
+          "exists": true,
+          "sha256": "1d81f258011da2b4d43825b69adcb83c46d44da84e247e53f48dd472753d95a9"
+        },
+        "primary": {
+          "bytes": 133557,
+          "exists": true,
+          "sha256": "b0967725792d5ab0b93eaebb83fffda5e4f48fcdc24ca8b707be9c7a3deea897"
+        }
+      },
+      "load_result": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true,
+        "slot_id": "pull_tab_custody_stale_location"
+      },
+      "snapshot_sha256": "71c309fd55b9c2f865f443deadd63189cb6467c3fef7b59f592f9f645b67892e",
+      "clock_minutes": 3120.0,
+      "cash": 94.0,
+      "chips": 13.0,
+      "rng": "1811483921"
+    },
+    {
+      "stage": "pull_tab_custody_readonly_views cold first_load_return",
+      "slot": "pull_tab_custody_readonly_views",
+      "fingerprints": {
+        "backup": {
+          "bytes": 132117,
+          "exists": true,
+          "sha256": "3e1ab7a568faebe4f74b2b25394674fd84a5cf8c0fc3d9eab6369881bac80ad6"
+        },
+        "primary": {
+          "bytes": 133132,
+          "exists": true,
+          "sha256": "82dd72b24ce6d5ca88fa5f874cd42c3cca11f6e415e5604311c0834d0c36bef2"
+        }
+      },
+      "load_result": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true,
+        "slot_id": "pull_tab_custody_readonly_views"
+      },
+      "snapshot_sha256": "6acff617802df9e08218a6b9570a9cf784aba90af69ce0c1aa40befabf778a79",
+      "clock_minutes": 3120.0,
+      "cash": 94.0,
+      "chips": 13.0,
+      "rng": "1024184298"
+    },
+    {
+      "stage": "Separate-process cold first_load_return",
+      "slot": "foundation_ui_autosave",
+      "fingerprints": {
+        "backup": {
+          "bytes": 134393,
+          "exists": true,
+          "sha256": "f21181a85dd0532c9e4c65bdae2d7f4bcd1cd2513f65aae040180673352d30e8"
+        },
+        "primary": {
+          "bytes": 135178,
+          "exists": true,
+          "sha256": "cce8dde732196e1cb83ffc7c69b32a6126314dc19103351d5fd975ffc61d0d12"
+        }
+      },
+      "load_result": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true,
+        "slot_id": "foundation_ui_autosave"
+      },
+      "snapshot_sha256": "7e6cf6c248d9fe9d7c1ee0745adddbc6474e03a6de0dc30c25ff8633cf188c27",
+      "clock_minutes": 744.0,
+      "cash": 96.0,
+      "chips": 0.0,
+      "rng": "1141136413"
+    }
+  ],
+  "custody_receipts": [
+    {
+      "path": "pull-before-first-cold/custody.json",
+      "sha256": "09a13833443371191c8196e6062c7a7c2723ba07d785c36ad6dd8ca6adf7d042",
+      "file_count": 11
+    },
+    {
+      "path": "vault-before-first-cold/custody.json",
+      "sha256": "f82acaa439d424f5019e644744db3dc704f2e8d8a02c2017446d48ca58065498",
+      "file_count": 9
+    }
+  ],
+  "job_summary": {
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 800,
+      "aggregate_job_cpu_percent": 8.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "exit_code": 0,
+    "timed_out": false,
+    "active_at_release": 0,
+    "error": null,
+    "cleanup_errors": []
+  },
+  "stages": [
+    {
+      "stage": "identity",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--version"
+      ],
+      "exit_code": 0,
+      "seconds": 1.299492359161377,
+      "log_sha256": "95209544d9b5d2a6e233bd50f0581033177cf79686f0a07aa2d4a71cd30ffc98"
+    },
+    {
+      "stage": "pull-warm",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-save-rollback-20261110",
+        "--script",
+        "res://scripts/tests/pull_tab_custody_restore_matrix_check.gd"
+      ],
+      "exit_code": 0,
+      "seconds": 46.092406272888184,
+      "log_sha256": "46921a0fede9cd91da63bc4f18a88f1e00d7dd06e15de84f9a4c22190f1ae60e"
+    },
+    {
+      "stage": "pull-cold",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-save-rollback-20261110",
+        "--script",
+        "res://scripts/tests/pull_tab_custody_restore_matrix_check.gd",
+        "--",
+        "--cold"
+      ],
+      "exit_code": 0,
+      "seconds": 31.098020315170288,
+      "log_sha256": "dfb2174dc3fc0e24387b661e8e683ebf876df34f319032756fc3b0c1bc240091"
+    },
+    {
+      "stage": "vault-warm",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-save-rollback-20261110",
+        "--script",
+        "res://scripts/tests/vault_drop_save_feedback_check.gd"
+      ],
+      "exit_code": 0,
+      "seconds": 21.17664337158203,
+      "log_sha256": "6f2b96a7d65257fd4a131ee7aaef402b69797b8eb2a77c06cb6a8e2a64c559db"
+    },
+    {
+      "stage": "vault-cold",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\close-save-rollback-20261110",
+        "--script",
+        "res://scripts/tests/vault_drop_save_feedback_check.gd",
+        "--",
+        "--cold"
+      ],
+      "exit_code": 0,
+      "seconds": 14.882242202758789,
+      "log_sha256": "0200e11f07de15748fe7dbcc677fd1255d15f17881a6493ad648dde2d98660f1"
+    }
+  ],
+  "evidence": {
+    "root": "E:\\CodexQA\\BTH\\runs\\save-rollback-current-plugin-20261110\\evidence",
+    "job_sha256": "adfdf27b85b3069346518481c3579160dcda1bace8d69ddc894dc7937e1454d2",
+    "storage_manifest_sha256": "c3c3d43dedccbb7812ee473840f5742d39cec9d098e4298cb6d55a7aebc44366",
+    "provenance_jsonl_sha256": "ad2636e82a0d5bff1f99d6c75940302edea91872ffd04aa26d37579fc4bd9999",
+    "provenance_record_count": 37
+  },
+  "earlier_compatibility_run": {
+    "root": "E:\\CodexQA\\BTH\\runs\\save-rollback-current-20261110\\evidence",
+    "job_sha256": "846c404e8f4873b35c2511e0cb6eaf6d8eb30664960ea5209aca185b11f11cd4",
+    "results": {
+      "pull-warm": 129,
+      "pull-cold": 70,
+      "vault-warm": 57,
+      "vault-cold": 15
+    },
+    "debug_dll_sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82",
+    "limit": "Initial older-plugin pass preserved only as compatibility evidence, superseded for current native qualification by source-matching candidate rerun."
+  },
+  "limits": [
+    "Agent-owned independently generated fixtures, not recovered original personal saves.",
+    "Pull matrix uses the existing generated Grand Audit fixture, with continuous clock disabled; one case intentionally restores captured valid stale room copies. This is not an earned campaign, original dwell replay or new Web visual pass.",
+    "Vault uses the independent normal Corner Store cabinet seed, one ordinary pointer Drop, immediate unsettled Save refusal, normal Leave settlement and floor Save. It does not recover the original R04 13.416-second Save branch.",
+    "A loaded valid primary is authoritative. backup_loadable=false in last_load_result means the backup was deliberately not parsed, not that it is corrupt.",
+    "Raw fixture saves, authority companions, custody copies, logs and storage ownership manifests remain outside Git. Only hashes, aggregate results and non-secret source/test evidence are committed.",
+    "No original failure attribution, whole-game continuation/performance qualification, new production fix, push or deployment is claimed."
+  ],
+  "next_trigger": "A current post-ack cold regression, raw/canonical custody divergence or unexplained backup load. Preserve exact build/origin/slot, acknowledgment state, first-cold state, both generation fingerprints and last_load_result before another Save; do not request the gone original save."
+}
