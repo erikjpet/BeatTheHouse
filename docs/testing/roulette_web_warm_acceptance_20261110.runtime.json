@@ -1,0 +1,94 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-10T20:00:50.615305+00:00",
+  "scope": {
+    "description": "Exact retained successful Roulette warm Web Job only; earlier historical inventories remain unchanged and are not re-observed. Metadata-check Jobs have separate receipts.",
+    "complete": false,
+    "evidence": [
+      "docs/testing/roulette_web_warm_acceptance_20261110.json"
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "roulette-8e-web-stages-20261110",
+      "task_id": "BTH061-ROULETTE-WARM-REVEAL-001",
+      "owner_task_ref": "/root/land_roulette_evidence",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2c1cf4f818f7e25a6172ec2129bf09e0",
+        "key": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\launch-claim.json",
+        "started_at": "2026-11-10T19:50:24.556000+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-10T19:55:01.845000+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_warm_acceptance_20261110.json"
+        ],
+        "limit": "Only the exact retained exclusive capped Job; no global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-10T19:55:01.845000+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_warm_acceptance_20261110.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-10T19:55:01.845000+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+          "docs/testing/roulette_web_warm_acceptance_20261110.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_warm_acceptance_20261110.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_warm_acceptance_20261110.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_warm_acceptance_20261110.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_warm_acceptance_20261110.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-10T19:55:01.845000+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2c1cf4f818f7e25a6172ec2129bf09e0",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+            "docs/testing/roulette_web_warm_acceptance_20261110.json"
+          ]
+        }
+      }
+    }
+  ]
+}

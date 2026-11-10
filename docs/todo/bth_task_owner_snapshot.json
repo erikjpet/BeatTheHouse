@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T19:36:48.757417+00:00",
+  "observed_at": "2026-11-10T20:00:50.615305+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -186,10 +186,10 @@
     },
     {
       "task_ref": "/root",
-      "title": "Coordinate requested closeouts",
+      "title": "Coordinate closeout items",
       "state": "active",
-      "observed_at": "2026-11-10T17:34:16.826901+00:00",
-      "source": "Actual native collaboration list: root running while coordinating the user-requested closeout tasks."
+      "observed_at": "2026-11-10T20:00:50.615305+00:00",
+      "source": "Actual live parent/integration worker during authorized Roulette evidence and ledger integration; original attribution remains open and separate from the completed warm-reveal child."
     },
     {
       "task_ref": "/root/verify_roulette_deployment",
@@ -218,6 +218,13 @@
       "state": "ended",
       "observed_at": "2026-11-10T19:36:48.757417+00:00",
       "source": "Parent confirms diagnostic worker finished. Preserved rendered source-matched timing and eight owned-zero Job receipts; pending exact-deployed and whole-game performance remain Open under BTH-PERF-VIDEO-HINT-20261110, not this ended worker."
+    },
+    {
+      "task_ref": "/root/land_roulette_evidence",
+      "title": "Land Roulette acceptance",
+      "state": "active",
+      "observed_at": "2026-11-10T20:00:50.615305+00:00",
+      "source": "Actual live parent/integration worker during authorized Roulette evidence and ledger integration; original attribution remains open and separate from the completed warm-reveal child."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

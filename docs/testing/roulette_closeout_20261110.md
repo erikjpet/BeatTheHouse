@@ -25,3 +25,7 @@ Commands and individual receipt/manifests hashes are in roulette_closeout_202611
 ## Remaining delivery boundary
 
 The restored child remains Open until the tested scoped fix is associated with main, exact NEXT source/assets are verified and a fresh rendered same-process first-result check passes. The original SEALED pending cause remains unconfirmed because its first rejection was not captured. Preserve that original request and evidence rather than retrying, cancelling, replaying or inventing attribution.
+
+## Delivered independent warm acceptance
+
+The separate warm-reveal child now meets its delivery gate on exact NEXT `8e2addc3c58010afd36b54d0cf584e38ceb91309`. [Rendered same-process localhost acceptance](roulette_web_warm_acceptance_20261110.md) records one ordinary Blackjack Deal/Stand, Machine Jam Wait, Leave and Copper Rotor Red9 Spin/first Confirm, with cash77/red23/Recent23/+9 and the warm Journal visible before any menu or cold reset. Native and earlier b6 evidence above retain their own source identities. The original sealed-pending parent remains Open and unattributed; LAN HTTPS and cold Continue are not qualified by this warm run.

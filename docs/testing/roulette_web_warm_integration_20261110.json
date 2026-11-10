@@ -1,0 +1,257 @@
+{
+  "schema": "bth.roulette_warm_acceptance_integration/v1",
+  "observed_at": "2026-11-10T20:00:50.615305+00:00",
+  "base_main": "8e2addc3c58010afd36b54d0cf584e38ceb91309",
+  "original_evidence_commit": "ba27138ed1e98931a1e8e2f08ae9af11071c2420",
+  "integrated_evidence_commit": "db4e63df2689e93cf4856f8fadfe1e8430ec1de7",
+  "scope": "Evidence and ledger only; no product/runtime source, security, watcher, stable, itch or audience changes.",
+  "verified_local_evidence_identities": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\web_roulette_stages.cjs",
+      "sha256": "49cd59c56542bd49c01a5652cea79d0a0b24f0bc61e8066a3ce6811fb37da4eb",
+      "bytes": 37300
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm10-runtime-pin.json",
+      "sha256": "a9b1f61fd5a1d8d05071cf5bea4777531c71bfa7488063c18ca8d3c2e5f6b659",
+      "bytes": 487
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\state.json",
+      "sha256": "1a4ff44cda964901708f3de8c121725be9311eb2a56af8d148abf898436aa1cd",
+      "bytes": 47385
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\storage-manifest.json",
+      "sha256": "42ef286f23929148fb010df54c27ac7c33c3ec1c5a2ab59fb23e2688f1868912",
+      "bytes": 1334
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+      "sha256": "5668d76d522708c5a180cf5f295807059b59ea83f57f17897128d11714f3743c",
+      "bytes": 7466
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\startup.png",
+      "sha256": "afd150108301ecf9a3424466dbf1c18f39783bc2b1912aa759385cd90bf7a3a5",
+      "bytes": 406306
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\continue-menu.png",
+      "sha256": "a3ab43387babd78fa630413d5b18b05f87b38fe6cacaae74aa6e51f8754ee90a",
+      "bytes": 78576
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-selected.png",
+      "sha256": "831acd7f91fcc62ad295a6d4753c1cf749f3668e2a4f106ef6d77fc57e03bffa",
+      "bytes": 86892
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-dealt.png",
+      "sha256": "e0c2a3d57f510a6ff4c2f5b7e1e393474403c25ca719c934e3e0626fe700148a",
+      "bytes": 94890
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-stood.png",
+      "sha256": "0b6bfe56e0bff991acb7b3b235eb9c31159a577e94cf0c90c7c3cd0cd6f18907",
+      "bytes": 93401
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-settled.png",
+      "sha256": "388e95d1d7298dc851360307eba76714dc78ad50b4a05686a9dd3aacc08ace8a",
+      "bytes": 98625
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-nine-ready.png",
+      "sha256": "916981a1c365850118611d10f8c65a3dfe6534ccc0965819314dd374abae57c0",
+      "bytes": 93149
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-red-nine.png",
+      "sha256": "c0fd1a52e99a3749e05c5db2e53174a5ea38c2aa938d091fd401345d8d6e81d7",
+      "bytes": 95546
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-armed.png",
+      "sha256": "76312fe4c9a34113f5134ce8b524529263a657b0f1a72bc64acd2d7cffead47a",
+      "bytes": 94368
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-first-confirm.png",
+      "sha256": "5e868a946d554067efed81e470b1ca722ac4cbde5f4713524bcf0c4120542e16",
+      "bytes": 96868
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-first-result.png",
+      "sha256": "c579a2fe72cac1d19805c826f28bd8d238031b3d97c872e1e0fc79ca2c170391",
+      "bytes": 98787
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\warm-journal.png",
+      "sha256": "619b267332aea6f96972c68311c5dbeffd7fad6c6b029554801f14f56beeff08",
+      "bytes": 65122
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\warm-journal-final.png",
+      "sha256": "619b267332aea6f96972c68311c5dbeffd7fad6c6b029554801f14f56beeff08",
+      "bytes": 65122
+    }
+  ],
+  "accepted_child": "BTH061-ROULETTE-WARM-REVEAL-001",
+  "original_parent": {
+    "id": "BTH061-ROULETTE-SEALED-PENDING-001",
+    "state": "open",
+    "cause": "unattributed"
+  },
+  "accepted_rendered_build": "8e2addc3c58010afd36b54d0cf584e38ceb91309",
+  "branch_disposition": {
+    "local_heads": [
+      "main"
+    ],
+    "original_commit_retained_in_detached_worktree": "E:\\CodexQA\\BTH\\workspaces\\closeout-roulette-20261110",
+    "new_temporary_branch_created": false
+  },
+  "validation": {
+    "state": "passed_scoped_metadata_with_retained_global_findings",
+    "jobs": [
+      {
+        "run_id": "roulette-docs-tool-tests-20261110",
+        "command": [
+          "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools/tests",
+          "-v"
+        ],
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\roulette-docs-tool-tests-20261110\\evidence\\job.json",
+        "job_receipt_sha256": "5bf63c9a6e1c14215341ef27f02d231d6e03ebb177022630b207e79712324ef3",
+        "exit_code": 0,
+        "active_at_release": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "test_result": "180 tests pass; evidence-only integration. No product/gameplay tests newly run."
+      },
+      {
+        "run_id": "roulette-docs-reconcile-current-20261110",
+        "command": [
+          "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-B",
+          "tools\\check_bth_task_ledger.py",
+          "--owners",
+          "docs/todo/bth_task_owner_snapshot.json",
+          "--runtimes",
+          "docs/testing/roulette_web_warm_acceptance_20261110.runtime.json",
+          "--group",
+          "current",
+          "--now",
+          "2026-11-10T20:00:50.615305+00:00",
+          "--verify-git",
+          "--format",
+          "json",
+          "--output",
+          "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-current-20261110\\evidence\\report.json"
+        ],
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-current-20261110\\evidence\\job.json",
+        "job_receipt_sha256": "f485a0a9b142655132f73bd02acb5a24ba860a058697911202847c9b42a4bfc7",
+        "exit_code": 1,
+        "active_at_release": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-current-20261110\\evidence\\report.json",
+        "report_sha256": "16cdd2f86e79c196a0a5ff112f98e3a97784553e5c2a621b8e8640f56928d653",
+        "summary": {
+          "objectives_checked": 161,
+          "batches_checked": 9,
+          "open_objectives": 65,
+          "open_batches": 5,
+          "open_work_items": 70,
+          "user_paused_items": 36,
+          "complete_objectives": 96,
+          "errors": 53,
+          "warnings": 0,
+          "tasks_with_errors": 28
+        },
+        "findings_by_code": {
+          "OBJECTIVE_SCOPE_UNCONFIRMED": 7,
+          "BLOCKER_STALE": 11,
+          "OWNER_OBSERVATION_STALE": 23,
+          "OWNER_IDLE_WITH_OPEN_WORK": 2,
+          "COMMIT_NOT_FOUND": 5,
+          "BATCH_NOT_LINKED_BY_PARENT": 1,
+          "RUNTIME_COVERAGE_INCOMPLETE": 1,
+          "OWNER_TASK_REFERENCE_MISSING": 2,
+          "OWNER_NOT_IN_SNAPSHOT": 1
+        },
+        "assigned_scope_findings": []
+      },
+      {
+        "run_id": "roulette-docs-reconcile-all-20261110",
+        "command": [
+          "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-B",
+          "tools\\check_bth_task_ledger.py",
+          "--owners",
+          "docs/todo/bth_task_owner_snapshot.json",
+          "--runtimes",
+          "docs/testing/roulette_web_warm_acceptance_20261110.runtime.json",
+          "--group",
+          "all",
+          "--now",
+          "2026-11-10T20:00:50.615305+00:00",
+          "--verify-git",
+          "--format",
+          "json",
+          "--output",
+          "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-all-20261110\\evidence\\report.json"
+        ],
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-all-20261110\\evidence\\job.json",
+        "job_receipt_sha256": "4bf35406aa753e6e8553538dc01b5d863c7c3dd2b46ee49ad6fd93d65b69ce19",
+        "exit_code": 1,
+        "active_at_release": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\roulette-docs-reconcile-all-20261110\\evidence\\report.json",
+        "report_sha256": "1a8be2b2722c5c35565bdac3ad24e8ae64009b1dac6f6f4ab46def731463fafe",
+        "summary": {
+          "objectives_checked": 305,
+          "batches_checked": 9,
+          "open_objectives": 195,
+          "open_batches": 5,
+          "open_work_items": 200,
+          "user_paused_items": 36,
+          "complete_objectives": 108,
+          "errors": 669,
+          "warnings": 0,
+          "tasks_with_errors": 168
+        },
+        "findings_by_code": {
+          "BLOCKER_EVIDENCE_MISSING": 130,
+          "BLOCKER_STALE": 141,
+          "OBJECTIVE_SCOPE_UNCONFIRMED": 101,
+          "OBJECTIVE_SOURCE_MISSING": 94,
+          "OWNER_TASK_REFERENCE_MISSING": 105,
+          "OWNER_NOT_IN_SNAPSHOT": 8,
+          "COMPLETE_WITHOUT_DEPLOYMENT": 9,
+          "COMPLETE_WITH_OPEN_CHILDREN": 4,
+          "OWNER_IDLE_WITH_OPEN_WORK": 22,
+          "OWNER_OBSERVATION_STALE": 43,
+          "COMMIT_NOT_FOUND": 5,
+          "BATCH_NOT_LINKED_BY_PARENT": 1,
+          "RUNTIME_COVERAGE_INCOMPLETE": 1,
+          "COMPLETE_WITH_OPEN_ACCEPTANCE": 5
+        },
+        "assigned_scope_findings": []
+      }
+    ],
+    "diff_check": "pass",
+    "scope_integrity": "All stable IDs/batches/policies and unrelated objective values unchanged. Exact18 retained evidence file identities verified.",
+    "limit": "Current/all checker exits1 are retained other backlog findings, including stale owner/blocker records, five absent historical local commit objects and incomplete scoped runtime coverage; neither assigned Roulette row has findings. This is not a whole-ledger pass."
+  },
+  "next_delivery": {
+    "state": "pending_at_commit_time",
+    "scope": "This documentation-only publication will follow the existing watcher; exact newest main/served identity will be retained in the task delivery receipt after push. The completed child uses the actual historical8e rendered acceptance identity, not a new gameplay claim."
+  }
+}

@@ -1840,7 +1840,38 @@
         }
       ],
       "parent_id": null,
-      "source_next_action": "Qualify the remaining direct same-process Web Blackjack-to-Roulette first-Confirm and warm payout/history progression using an independent legitimate fixture with public result/console/journal captured before cold reset. Preserve the documented cold77 financial control, unknown+0 row and earlier failures. Keep originalR08 pending untouched; capture first public rejection/exception and first unsuccessful host boundary before more financial input or Save, fix only a reproduced responsible contract, then qualify pending persistence/recovery and NEXT."
+      "source_next_action": "Qualify the remaining direct same-process Web Blackjack-to-Roulette first-Confirm and warm payout/history progression using an independent legitimate fixture with public result/console/journal captured before cold reset. Preserve the documented cold77 financial control, unknown+0 row and earlier failures. Keep originalR08 pending untouched; capture first public rejection/exception and first unsuccessful host boundary before more financial input or Save, fix only a reproduced responsible contract, then qualify pending persistence/recovery and NEXT.",
+      "closeout_update": {
+        "observed_at": "2026-11-10T20:00:50.615305+00:00",
+        "state": "open",
+        "recorded_status": "ORIGINAL_PENDING_UNATTRIBUTED_INDEPENDENT_WARM_WEB_PASS",
+        "accepted_child": "BTH061-ROULETTE-WARM-REVEAL-001",
+        "accepted_child_state": "complete",
+        "served_acceptance_commit": "8e2addc3c58010afd36b54d0cf584e38ceb91309",
+        "evidence": [
+          "docs/testing/roulette_web_warm_acceptance_20261110.json"
+        ],
+        "assessment": "Exact deployed 8e2addc3 rendered localhost same-process independent seed B: one Deal/Stand, one ordinary Machine Jam Wait, Leave, Copper Rotor Red9/Spin/first Confirm. Cash80 ->71 ->68 ->59 ->77; red23, Recent23 and +9 visible 10.399s after Confirm before menu/cold reset. Warm Journal has BJ-9, BJ+0, Wait-3, Roulette+9. No second Confirm/spin, captured errors or failed requests; owned Job closed0. No original R08 attribution or LAN HTTPS acceptance.",
+        "remaining_required_acceptance": [
+          {
+            "id": "independent-cause",
+            "state": "open",
+            "description": "Bounded independently generated/staged full-host Roulette reconstruction exercises actual input/Confirm/application guards and records exact failure or supported attribution limit; no outcome filtering."
+          },
+          {
+            "id": "confirmed-fix",
+            "state": "open",
+            "description": "Change only a confirmed responsible contract; preserve cash/chips/RNG/clock, seals, exactly-once settlement and rejection/late/recovery boundaries as materially relevant."
+          },
+          {
+            "id": "focused-persistence",
+            "state": "open",
+            "description": "Test the material Save/fresh-process Continue and pending/committed accounting boundaries without manipulating the original request."
+          }
+        ],
+        "next_action": "Retain the accepted independent same-process warm Web gate and completed presentation child. Preserve original R08 pending request and its missing first rejection. Resolve only supported original-cause and material pending/persistence boundaries; do not retry, cancel or replay the protected original.",
+        "snapshot_limit": "Original inventory fields/counts retain their c3 audit identity; this dated follow-up records new acceptance without rewriting that historical snapshot."
+      }
     },
     {
       "id": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
@@ -4300,7 +4331,7 @@
       "remaining_required_acceptance": [
         {
           "id": "original-scope",
-          "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+          "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
           "state": "unknown"
         }
       ],
@@ -4386,7 +4417,7 @@
       "remaining_required_acceptance": [
         {
           "id": "original-scope",
-          "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+          "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
           "state": "unknown"
         }
       ],
