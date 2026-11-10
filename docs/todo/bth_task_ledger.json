@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:19:45.725799+00:00",
+  "updated_at": "2026-11-10T07:27:28.494025+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -85,7 +85,6 @@
           "BTH061-AUDIT-LAYER-DEFINITION-013",
           "BTH061-AUDIT-PERSISTENCE-PROJECTION-013",
           "BTH061-AUDIT-SCHEMA-VALIDATION-014",
-          "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
           "BTH061-AUDIT-MEMO-CALLBACK-CHECK-018",
           "BTH061-AUDIT-RUNTIME-OWNED-COPY-019",
           "BTH061-AUDIT-CREW-INITIAL-REPUTATION-020",
@@ -100,14 +99,17 @@
           "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
           "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
           "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031",
-          "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
           "BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032"
         ],
         "resume_only_on_user_instruction": true,
         "scope_limit": "This audit owner stops new testing and audit phases. Preserve unfinished findings/candidates and existing access restrictions. Already-tested nearly complete fixes and preservation work may finish main/NEXT publication without new gameplay/native/browser test runs, pipeline bypass, stable/itch/audience changes or cleanup. Other owners reconcile their own work.",
         "finish_publication_authorized": true,
         "prior_main_push_retry": "Specific new main/NEXT instruction addresses prior main rejection; at most one non-force retry if known not executed. A further denial must stop that action.",
-        "no_new_phase033_registered_or_tests": true
+        "no_new_phase033_registered_or_tests": true,
+        "resumed_task_ids": [
+          "BTH061-AUDIT-MEMO-TYPE-SAFETY-014",
+          "BTH061-AUDIT-HOME-LOSS-PROJECTION-032"
+        ]
       }
     ],
     "no_intentional_holds_scope": "No agent-imposed or invented holds. Current explicit user pauses override the earlier zero-holds direction only for their named scope."
@@ -24535,8 +24537,12 @@
             "id": "typed-memo-repair-qualified",
             "description": "Scoped committed repair retains exact ordinary rejection for colliding alternatives after positive warm hits, valid memo behavior, authority/custom-registry/malformed boundaries and meaningful focused compatibility without weakened guards.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/finalize_game_defects_20261110.md",
+              "docs/testing/finalize_game_defects_20261110.json",
+              "31bb55b88fce5890029b9470ceb7548c9ce1bad5"
+            ]
           }
         ],
         "coverage": {
@@ -24546,10 +24552,10 @@
         }
       },
       "state": "open",
-      "status": "FIXED_SUBTREE_CENSUS_PASS_PRODUCTION_REPAIR_UNACCEPTED_018",
+      "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
       "owner": {
-        "name": "Audit validation memo correctness",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Finalize main and NEXT",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -24587,6 +24593,13 @@
             "docs/testing/deprecated_code_audit_continuation_018.md",
             "docs/testing/deprecated_code_audit_continuation_018.json"
           ]
+        },
+        {
+          "sha": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+          "evidence": [
+            "docs/testing/finalize_game_defects_20261110.md",
+            "docs/testing/finalize_game_defects_20261110.json"
+          ]
         }
       ],
       "deployment": {
@@ -24594,7 +24607,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Required exact NEXT verification of any resulting production repair is separately assigned."
+        "scope": "Local tested product fix31bb55b8 exists; exact main/NEXT delivery and changed-behavior evidence are still required. No local check is deployment proof."
       },
       "evidence": [
         {
@@ -24651,24 +24664,30 @@
           "kind": "published_measurement_evidence_commit",
           "reference": "docs/testing/deprecated_code_audit_continuation_018.md",
           "summary": "Evidence commit 9c28def1 successfully pushed and separately verified on remote main. All four parents and callback-check child remain Open; this records measurements/platform restriction rather than a production repair."
+        },
+        {
+          "kind": "local_tested_product_fix",
+          "reference": "docs/testing/finalize_game_defects_20261110.md",
+          "summary": "Scoped native regression checks pass on current-main-based fix31bb55b8. Home production-API/codec restore and memo typed/cycle/authority/FIFO controls are distinct from browser UI Save/cold Continue or deployed NEXT acceptance. Exact matched key-cost ratio0.699; no whole-game speedup claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
+      "next_action": "Integrate fix 31bb55b88fce5890029b9470ceb7548c9ce1bad5 into main, follow the existing NEXT deployment, and record exact deployed source identity and changed-behavior acceptance. Local native checks passed; parent audit scope remains Open.",
       "blocker": {
-        "state": "active",
-        "kind": "user_requested_pause",
-        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "state": "none",
+        "kind": "none",
+        "description": "Local correction is tested and committed; parent is actively coordinating main/NEXT integration.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "observed_at": "2026-11-10T07:27:28.494025+00:00",
         "evidence": [
-          "docs/testing/audit_pause_finish_20261106.json"
+          "docs/testing/finalize_game_defects_20261110.md",
+          "docs/testing/finalize_game_defects_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "updated_at": "2026-11-10T07:27:28.494025+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:56:17.463862+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -24685,7 +24704,9 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_018.md"
           ]
-        }
+        },
+        "resumed_at": "2026-11-10T07:11:10.601723+00:00",
+        "resumption_source": "2026-11-10 user asks to finalize outstanding relevant work in main/NEXT; parent assigns scoped home-loss and memo defect repair."
       }
     },
     {
@@ -28966,15 +28987,23 @@
             "id": "qualified-corrective-behavior",
             "description": "When permitted, establish intended home-loss room projection and preserve item ownership, authority, save/reentry and normal non-loss behavior with focused regressions.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/finalize_game_defects_20261110.md",
+              "docs/testing/finalize_game_defects_20261110.json",
+              "31bb55b88fce5890029b9470ceb7548c9ce1bad5"
+            ]
           },
           {
             "id": "actual-associated-fix-commit",
             "description": "Actual product correction commit; registration/source qualification commits are not a fix.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/finalize_game_defects_20261110.md",
+              "docs/testing/finalize_game_defects_20261110.json",
+              "31bb55b88fce5890029b9470ceb7548c9ce1bad5"
+            ]
           },
           {
             "id": "required-next-delivery",
@@ -28991,10 +29020,10 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_HOME_LOSS_CLEANUP_CONTRADICTION_FOUND_RUNTIME_AND_CORRECTION_OPEN_032",
+      "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
       "owner": {
-        "name": "Audit phase032 source review",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Finalize main and NEXT",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -29004,6 +29033,13 @@
             "docs/testing/deprecated_code_audit_continuation_032.json",
             "docs/testing/deprecated_code_audit_continuation_032.md"
           ]
+        },
+        {
+          "sha": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+          "evidence": [
+            "docs/testing/finalize_game_defects_20261110.md",
+            "docs/testing/finalize_game_defects_20261110.json"
+          ]
         }
       ],
       "deployment": {
@@ -29011,31 +29047,37 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "No correction or NEXT delivery exists; source qualification and pending local documentation are separate from a product fix."
+        "scope": "Local tested product fix31bb55b8 exists; exact main/NEXT delivery and changed-behavior evidence are still required. No local check is deployment proof."
       },
       "evidence": [
         {
           "kind": "phase032_independent_source_body_qualification",
           "reference": "docs/testing/deprecated_code_audit_continuation_032.json",
           "summary": "Complete source bodies and reciprocal independent peers retained; exact scope lapses disclosed and broad caller closure excluded. Source observations are separate from runtime/correction/NEXT."
+        },
+        {
+          "kind": "local_tested_product_fix",
+          "reference": "docs/testing/finalize_game_defects_20261110.md",
+          "summary": "Scoped native regression checks pass on current-main-based fix31bb55b8. Home production-API/codec restore and memo typed/cycle/authority/FIFO controls are distinct from browser UI Save/cold Continue or deployed NEXT acceptance. Exact matched key-cost ratio0.699; no whole-game speedup claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
+      "next_action": "Integrate fix 31bb55b88fce5890029b9470ceb7548c9ce1bad5 into main, follow the existing NEXT deployment, and record exact deployed source identity and changed-behavior acceptance. Local native checks passed; parent audit scope remains Open.",
       "blocker": {
-        "state": "active",
-        "kind": "user_requested_pause",
-        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "state": "none",
+        "kind": "none",
+        "description": "Local correction is tested and committed; parent is actively coordinating main/NEXT integration.",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:56:17.463862+00:00",
+        "observed_at": "2026-11-10T07:27:28.494025+00:00",
         "evidence": [
-          "docs/testing/audit_pause_finish_20261106.json"
+          "docs/testing/finalize_game_defects_20261110.md",
+          "docs/testing/finalize_game_defects_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "updated_at": "2026-11-10T07:27:28.494025+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:56:17.463862+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -29050,7 +29092,9 @@
           "requires_user_input": false,
           "observed_at": "2026-11-06T08:07:38.118874+00:00",
           "evidence": []
-        }
+        },
+        "resumed_at": "2026-11-10T07:11:10.601723+00:00",
+        "resumption_source": "2026-11-10 user asks to finalize outstanding relevant work in main/NEXT; parent assigns scoped home-loss and memo defect repair."
       }
     },
     {
