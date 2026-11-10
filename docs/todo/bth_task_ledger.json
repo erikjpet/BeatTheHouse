@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T17:27:24.738687+00:00",
+  "updated_at": "2026-11-10T17:33:45.358807+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4034,10 +4034,10 @@
         }
       },
       "state": "open",
-      "status": "DEPLOYED_FIX_ALTERNATIVE_EVIDENCE_ACCEPTANCE_IN_PROGRESS",
+      "status": "CURRENT_NATIVE_594_PASS_DEPLOYED_WEB_ACCEPTANCE_OPEN",
       "owner": {
-        "name": "Remove obsolete game fallbacks",
-        "task_ref": "01a1a35e-1c74-7319-bd64-f9d654f2800c",
+        "name": "Coordinate Crew closeout",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4073,20 +4073,27 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "current_native_requalification",
+          "reference": "docs/testing/crew_closeout_20261110.json",
+          "summary": "Baseline2e3b881:329 expired-handoff+105 separate-process cold+133 game-return+27 renderer=594 focused native checks, clean Jobs/owned0. Current normal HTTPS Chromium stops before startup at ERR_CERT_AUTHORITY_INVALID; no Web startup/interaction or original-save claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use retained tester fixtures and existing477+27 qualification to obtain or reconcile independent corrected-NEXT Crew/game-return behavior acceptance; no missing personal-save wait.",
+      "next_action": "Obtain permitted deployed recreated Crew handoff/game-return interaction acceptance. Retain current594 native checks and the strict certificate failure as separate evidence; do not request the gone original personal save.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Exact personal incident state is unavailable and no longer a completion prerequisite; deployed interaction evidence remains separately classified.",
+        "state": "active",
+        "kind": "browser_trust",
+        "description": "Fresh Chromium1243 normal HTTPS failed before startup with ERR_CERT_AUTHORITY_INVALID. No warning bypass or trust-store change was made. A permitted normal trust route and deployed interaction evidence remain.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-10T17:33:45.358807+00:00",
+        "evidence": [
+          "docs/testing/crew_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-10T17:33:45.358807+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7397,10 +7404,10 @@
         }
       },
       "state": "open",
-      "status": "FIX_COMMITTED_CURRENT_RECREATED_NATIVE_509_PASS_WEB_BLOCKED_CERT",
+      "status": "CURRENT_NATIVE_594_PASS_DEPLOYED_WEB_ACCEPTANCE_OPEN",
       "owner": {
-        "name": "Fix expired Crew handoff",
-        "task_ref": "01a1a360-a1b6-733f-a372-b09b3015a03e",
+        "name": "Coordinate Crew closeout",
+        "task_ref": "/root",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -7431,22 +7438,27 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-10\\coordination.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "current_native_requalification",
+          "reference": "docs/testing/crew_closeout_20261110.json",
+          "summary": "Baseline2e3b881:329 expired-handoff+105 separate-process cold+133 game-return+27 renderer=594 focused native checks, clean Jobs/owned0. Current normal HTTPS Chromium stops before startup at ERR_CERT_AUTHORITY_INVALID; no Web startup/interaction or original-save claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use the retained baseline-runtime synthetic stale-save companions and current509 native checks; finish recreated current-NEXT handoff responsiveness through a permitted normal trust route, preserving actual certificate-failure evidence and separate QA R05 Motel failure. Do not request the gone original personal save.",
+      "next_action": "Obtain permitted deployed recreated Crew handoff/game-return interaction acceptance. Retain current594 native checks and the strict certificate failure as separate evidence; do not request the gone original personal save.",
       "blocker": {
         "state": "active",
         "kind": "browser_trust",
-        "description": "Normal HTTPS Web recreation stops before startup with NET::ERR_CERT_AUTHORITY_INVALID. BTH-LAN-TLS-TRUST-001 tracks the actual permitted trust/approval dependency; do not bypass verification. Original personal-save unavailability is not a blocker.",
+        "description": "Fresh Chromium1243 normal HTTPS failed before startup with ERR_CERT_AUTHORITY_INVALID. No warning bypass or trust-store change was made. A permitted normal trust route and deployed interaction evidence remain.",
         "requires_user_input": false,
+        "observed_at": "2026-11-10T17:33:45.358807+00:00",
         "evidence": [
-          "docs/testing/crew_expired_handoff.md"
-        ],
-        "observed_at": "2026-11-04T16:23:29.672223+00:00"
+          "docs/testing/crew_closeout_20261110.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-10T17:33:45.358807+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -29855,22 +29867,30 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_PASS_AWAITING_MAIN_NEXT",
+      "status": "INTEGRATED_NATIVE_98_PASS_NEXT_WEB_ACCEPTANCE_PENDING",
       "owner": {
         "name": "Close Roulette settlement",
         "task_ref": "/root/close_roulette_settlement",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "8b4653d0a390745d05bcd404ba529efc07d0a726",
+          "evidence": [
+            "docs/testing/roulette_closeout_20261110.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [
           "docs/testing/roulette_sealed_pending_r08.md",
-          "docs/testing/roulette_sealed_pending_r08.json"
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "docs/testing/closeout_integration_20261110.json"
         ],
-        "scope": "Current closeout qualification and exact NEXT warm acceptance pending; historical stopped-watcher state is superseded."
+        "scope": "Scoped fix integrated on local main; final current-source native warm98 and no-pointer liveness pass. Remote main/NEXT and rendered warm acceptance pending."
       },
       "evidence": [
         {
@@ -29882,22 +29902,27 @@
           "kind": "live_clock_causal_comparison",
           "reference": "docs/testing/roulette_closeout_20261110.md",
           "summary": "Native baseline -4ms projection freezesmoney/history past9552active ms; candidate -33ms clamps0 and reveals77/history1 at9107ms,76checks0fails. First automaticzero stake0/satouttrue observed with oneConfirm in each. No clock/processing mutation."
+        },
+        {
+          "kind": "current_integrated_native",
+          "reference": "docs/testing/closeout_integration_20261110.json",
+          "summary": "Current integrated source:98 same-process native checks pass with automatic payout/history and one paid Confirm; no-pointer animation liveness pass. Both Jobs exit0/owned0. Prior boundary/cash/chips/cold evidence retained at original identity. Web acceptance remains open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate tested isolated fix, verify exact main/NEXT identity, then run fresh rendered same-process Blackjack-to-Roulette first-result acceptance.",
+      "next_action": "Push scoped tested main, verify exact existing NEXT identity/assets, then obtain fresh rendered same-process first-result acceptance. Original sealed-pending attribution remains separate.",
       "blocker": {
         "state": "active",
         "kind": "exact_main_next_acceptance_pending",
-        "description": "Scoped warm fix passes current native same-process first-result accounting and passive reveal. Main/NEXT integration and exact Web acceptance remain.",
+        "description": "Scoped fix integrated and current native checks pass; remote main/NEXT identity and rendered changed-behavior acceptance remain.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T17:24:57.997934+00:00",
+        "observed_at": "2026-11-10T17:33:45.358807+00:00",
         "evidence": [
           "docs/testing/roulette_closeout_20261110.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T17:24:57.997934+00:00"
+      "updated_at": "2026-11-10T17:33:45.358807+00:00"
     }
   ],
   "batches": [

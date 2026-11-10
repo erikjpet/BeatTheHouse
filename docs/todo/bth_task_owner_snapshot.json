@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-10T17:24:57.997934+00:00",
+  "observed_at": "2026-11-10T17:34:16.826901+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -183,6 +183,13 @@
       "state": "active",
       "observed_at": "2026-11-10T17:24:57.997934+00:00",
       "source": "Native closeout worker actual live state: restored missing scoped warm reveal fix, native same-process gameplay and cash/chip cold compatibility passed; final adjacent checks and exact NEXT acceptance underway."
+    },
+    {
+      "task_ref": "/root",
+      "title": "Coordinate requested closeouts",
+      "state": "active",
+      "observed_at": "2026-11-10T17:34:16.826901+00:00",
+      "source": "Actual native collaboration list: root running while coordinating the user-requested closeout tasks."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

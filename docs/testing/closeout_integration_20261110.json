@@ -1,0 +1,159 @@
+{
+  "schema": "bth.closeout_integration/v1",
+  "observed_at": "2026-11-10T17:33:45.358807+00:00",
+  "tested_source_commit": "a9c2a14d260584e85a32862157dbaa463ec91e24",
+  "tested_source_tree": "36bea692275ff1cfedf5c2c1a16c95b0d607cb76",
+  "baseline": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "integrated": [
+    {
+      "original": "9300a5ae96d1a7e70e98c296ef39f9bdd7d42141",
+      "main": "8b4653d0",
+      "scope": "Roulette six-line elapsed clamp and focused tests/evidence"
+    },
+    {
+      "original": "cf78190112baa354b553e4c2f4ab3d2badc972db",
+      "main": "341db4b5",
+      "scope": "Crew evidence only; both Web acceptance gates remain open"
+    },
+    {
+      "original": "4051d521e032ef492d3d5a1ca0c164598208d323",
+      "main": "2bb8141e",
+      "scope": "Slot narrow warning/input acceptance only"
+    },
+    {
+      "original": "7e4422b8db4cd322908a5705a6f87eace1693613",
+      "main": "a9c2a14d260584e85a32862157dbaa463ec91e24",
+      "scope": "Gas tests/evidence only; original cause unconfirmed"
+    }
+  ],
+  "focused_final_tests": [
+    {
+      "run_id": "native-private-closeout-integration-roulette-live-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/roulette_warm_live_clock_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\native-private-closeout-integration-roulette-live-20261110\\evidence\\job.json",
+      "receipt_sha256": "b29bcd872103fe94a49eee907a5e5f545ce4961c5738bec10ebd75a44378f923",
+      "storage_manifest_sha256": "2d3a0922a984768a9865f1d86adacd0ae636e000662b295ccf2b7b0290389d17",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "worker_log_sha256": "fb426c3b5829e964f9f0dd79c4afad1f9301fcd96615fc5dba45c514ee9584b6",
+      "results": [
+        {
+          "checks": 98,
+          "completed": true,
+          "failures": [],
+          "observation": {
+            "bounded_limit_msec": 65000,
+            "explicit_callbacks": {
+              "chip": 1,
+              "confirm": 1,
+              "deal": 1,
+              "leave": 1,
+              "red": 1,
+              "spin": 1,
+              "stand": 1,
+              "wait": 1
+            },
+            "first_postpaid_zero_spin_observed": true,
+            "paid_reveal_observed": true,
+            "reveal_stall_observed": false,
+            "stop_reason": "first-postpaid-zero-spin",
+            "wall_elapsed_msec": 49232
+          }
+        }
+      ],
+      "liveness_pass": false
+    },
+    {
+      "run_id": "closeout-integration-liveness-20261110",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+      ],
+      "receipt": "E:\\CodexQA\\BTH\\runs\\closeout-integration-liveness-20261110\\evidence\\job.json",
+      "receipt_sha256": "317440da4ba5dd1f8e3feb4747c5f03b7b4241825fec392afd6db7743f725230",
+      "storage_manifest_sha256": "9c738bced3f35b9e878a805290ec70522a7cb1a2e02978276de4ba87acaab6aa",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 600,
+        "aggregate_job_cpu_percent": 6.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "worker_log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "results": [],
+      "liveness_pass": true
+    }
+  ],
+  "retained_setup_attempts": [
+    {
+      "run_id": "closeout-integration-roulette-live-20261110",
+      "result": "Prerequisite refusal before gameplay: missing explicit BTH_R08_ROULETTE_PRIVATE_ROOT. Exit1, no timeout, zero owned processes. Corrected fresh native-private run above."
+    },
+    {
+      "run_id": "closeout-integration-roulette-live2-20261110",
+      "result": "Storage prepared only; no child created. Unused because fixture requires native-private in disposable root."
+    },
+    {
+      "run_id": "closeout-integration-metadata2-20261110",
+      "result": "Bounded metadata worker wrote JSON/receipt then stopped at compact summary-table row before readable-index update. Exit1, owned0. This follow-up repairs only readable rows and owner snapshot; no gameplay rerun or product change."
+    }
+  ],
+  "delivery": {
+    "main_push": "pending",
+    "next_identity": "pending",
+    "rendered_changed_behavior": "unverified"
+  },
+  "scope": "Only Roulette product source changed. Native evidence is distinct from Web gameplay. Existing stable/itch channels, audience, guards, original saves and historical failures retained.",
+  "reconciliation": {
+    "findings_total": 896,
+    "counts": {
+      "OBJECTIVE_SCOPE_UNCONFIRMED": 7,
+      "OWNER_IDLE_WITH_OPEN_WORK": 4,
+      "OWNER_OBSERVATION_STALE": 28,
+      "BLOCKER_STALE": 11,
+      "RUNTIME_STALE_OBSERVATION": 806,
+      "COMMIT_NOT_FOUND": 5,
+      "BATCH_NOT_LINKED_BY_PARENT": 1,
+      "RUNTIME_CLEANUP_CONTRACT_INCOMPLETE": 6,
+      "RUNTIME_CLEANUP_UNCERTAIN": 1,
+      "RUNTIME_COVERAGE_INCOMPLETE": 1,
+      "RUNTIME_CURRENT_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_LAUNCH_IDENTITY_UNKNOWN": 11,
+      "RUNTIME_OWNER_UNKNOWN": 2,
+      "OWNER_TASK_REFERENCE_MISSING": 2
+    },
+    "assigned_ids_findings": 54,
+    "assigned_nonhistorical_runtime_findings": [],
+    "scope": "Historical runtime/owner/scope findings retained; no new readable-ledger drift or current-owner finding for integrated objectives. Checker exit1 is not an aggregate pass."
+  }
+}
