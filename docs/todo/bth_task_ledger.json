@@ -29037,8 +29037,11 @@
             "id": "required-next-delivery",
             "description": "Verify actual correction in exact NEXT identity and changed behavior before completion; no denied publication retry without new specific approval.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/home_loss_web_closeout_20261110.json",
+              "docs/testing/home_loss_web_closeout_20261110.md"
+            ]
           }
         ],
         "coverage": {
@@ -29047,11 +29050,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "MAIN_NEXT_DELIVERED_NATIVE_PASS_WEB_BEHAVIOR_UNVERIFIED",
+      "state": "complete",
+      "status": "NEXT_WEB_HOME_LOSS_SAVE_COLD_CONTINUE_VERIFIED",
       "owner": {
-        "name": "Finalize main and NEXT",
-        "task_ref": "/root/publish_final_stabilization",
+        "name": "Finalize home-loss closeout",
+        "task_ref": "/root/complete_home_loss",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -29073,12 +29076,13 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "cef352890740412769cd4e3c7488763a4262fb67",
+        "commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
         "evidence": [
           "docs/testing/final_stabilization_next_delivery_20261110.json",
-          "docs/testing/final_stabilization_integration_20261110.json"
+          "docs/testing/final_stabilization_integration_20261110.json",
+          "docs/testing/home_loss_web_closeout_20261110.json"
         ],
-        "scope": "Exact source/tree, changed PCK, existing engine/native receipts, redirect and basic rendered Web menu verified. Native changed behavior passed in integrated source. Actual changed Web behavior and UI Save/cold Continue unverified."
+        "scope": "Exact deployed 2e3b8810 rendered Web motel expiry and rent eviction, UI Save, fresh-browser Continue and carried ownership verified with disposable catalog-valid synthetic fixtures. Captured Web primaries validate cleanup and blocked storage/reentry through normal SaveService. No original-personal-save or broad release certification."
       },
       "evidence": [
         {
@@ -29095,22 +29099,27 @@
           "kind": "exact_main_next_delivery",
           "reference": "docs/testing/final_stabilization_next_delivery_20261110.json",
           "summary": "Source31bb55b8 integrated into main cef35289; exact served source/tree/assets/basic menu and owned E cleanup pass. Native home/memo/cycle checks pass separately. Required changed Web behavior remains unverified; objective stays Open."
+        },
+        {
+          "kind": "rendered_web_home_loss_save_cold_continue",
+          "reference": "docs/testing/home_loss_web_closeout_20261110.json",
+          "summary": "Actual immutable NEXT Web payload passes motel expiry and apartment eviction, visible room/storage cleanup, UI Save and fresh-process Continue. Carried Napkin and $100 preserved; Marked Cards remain lost. Normal SaveService reads exact captured primaries and confirms world cleanup, blocked reentry and inert rejected withdrawal. Final catalog-valid native controls also pass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retain committed/delivered fix and passing native regression evidence. Qualify actual changed Web behavior when testing resumes; UI Save/cold Continue and original-personal-save coverage are not established. Keep this objective and parent audits Open.",
+      "next_action": "Complete. Retain scoped runtime evidence; parent serializes only the test/evidence commit into main and follows existing NEXT. No further home-loss product change or broad testing is required.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No pipeline/source blocker. Exact delivery is verified; changed Web behavior acceptance remains unverified and is not replaced by native or menu checks.",
+        "description": "All home-loss acceptance criteria pass. Existing product fix is main/NEXT-delivered; exact deployed changed behavior and UI cold Continue are now verified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T07:40:12.965519+00:00",
+        "observed_at": "2026-11-10T17:33:01.601207+00:00",
         "evidence": [
-          "docs/testing/final_stabilization_next_delivery_20261110.json"
+          "docs/testing/home_loss_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:40:12.965519+00:00",
+      "updated_at": "2026-11-10T17:33:01.601207+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",

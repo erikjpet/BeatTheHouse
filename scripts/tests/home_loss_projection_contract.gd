@@ -44,10 +44,12 @@ func _fixture(archetype_id: String, tenure: Dictionary) -> RunState:
 	run.world_map = WorldMapScript.new(library).build(run, run.create_rng("home_loss_world"))
 	run.town_state.living_world.configure_world(run.world_map)
 	run.enter_world_node(archetype_id, environment)
-	run.inventory = ["bag", "loaded_dice", "four_leaf_clover"]
+	for item_id in ["bag", "marked_cards", "lucky_bar_napkin"]:
+		_expect(not library.item(item_id).is_empty(), "Fixture item exists in the current catalog: " + item_id)
+	run.inventory = ["bag", "marked_cards", "lucky_bar_napkin"]
 	var placement := run.place_home_container("bag", "Test Bag", 3)
 	_expect(bool(placement.get("ok", false)), "Normal home container placement succeeds.")
-	var storage := run.transfer_item_to_home_container(str(placement.get("container_id", "")), "loaded_dice")
+	var storage := run.transfer_item_to_home_container(str(placement.get("container_id", "")), "marked_cards")
 	_expect(bool(storage.get("ok", false)), "Normal storage transfer succeeds.")
 	_expect(run.is_current_home_environment() and run.current_home_containers().size() == 1, "Fixture is the active physical home with one container.")
 	return run
@@ -57,6 +59,7 @@ func _check_loss(archetype_id: String, tenure: Dictionary, reason: String) -> vo
 	var run := _fixture(archetype_id, tenure)
 	var carried := run.inventory.duplicate()
 	var before_cash := run.bankroll
+	var container_id := str(run.current_home_containers()[0].get("id", ""))
 	var slept := run.sleep_at_home()
 	_expect(bool(slept.get("ok", false)) and run.game_day() == 2, "%s sleep crosses the ordinary midnight boundary: %s" % [archetype_id, JSON.stringify(slept)])
 	_expect(not run.home_is_active() and str(run.home_state.get("lost_reason", "")) == reason, "%s loses home through its normal tenure producer." % archetype_id)
@@ -75,7 +78,7 @@ func _check_loss(archetype_id: String, tenure: Dictionary, reason: String) -> vo
 	_expect(bool(publication.get("ok", false)), "Restored home crosses the normal room-publication boundary: %s" % JSON.stringify(publication.get("errors", [])))
 	_check_empty_lost_home(restored, "restored " + archetype_id)
 	_expect(restored.inventory == carried and restored.bankroll == before_cash, "Serialized restore preserves carried ownership and cash.")
-	_expect(not bool(restored.transfer_item_from_home_container("bag_1", "loaded_dice").get("ok", false)), "Lost storage cannot be retrieved after restore.")
+	_expect(not bool(restored.transfer_item_from_home_container(container_id, "marked_cards").get("ok", false)), "Lost storage cannot be retrieved after restore.")
 	_expect(bool(WorldMapScript.node_by_id(restored.world_map, archetype_id).get("home_lost", false)), "Lost home remains inaccessible on the world map.")
 
 

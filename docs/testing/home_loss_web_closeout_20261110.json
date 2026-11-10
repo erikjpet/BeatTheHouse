@@ -1,0 +1,341 @@
+{
+  "schema": "bth.home_loss_web_closeout/v1",
+  "recorded_at": "2026-11-10T17:33:01.601207+00:00",
+  "task_id": "BTH061-AUDIT-HOME-LOSS-PROJECTION-032",
+  "state": "PASS",
+  "product_fix_commit": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+  "tested_served_commit": "2e3b88103d010562788793c17efbcc2f4c91c39b",
+  "tested_served_tree": "2bcf6a4c52d6404bbd90d8e20731570b0d58eac7",
+  "archive_sha256": "1b0f076da3c1ef9f8a5b6685735197f46e0d2f5ab2d7fd47c5949d8e06deadc4",
+  "url": "http://localhost:8088/p/beat-the-house/play/dev/2e3b88103d010562788793c17efbcc2f4c91c39b/",
+  "fidelity": "Actual rendered unmodified deployed Web payload at maintained localhost endpoint; headless Chromium screenshots reviewed. Synthetic native-created pre-loss saves plus their unchanged synthetic authority companion were installed only in a fresh disposable E-drive browser profile. Then normal Continue, ordinary in-game midnight rollover, Run Menu Save, complete browser process close/relaunch and normal Continue. No direct post-load RunState edits or home-loss internal calls. Original personal saves and profiles were not accessed.",
+  "limits": [
+    "No original-personal-save reproduction or broad game certification.",
+    "Visual Web loss producer qualified here is ordinary midnight rollover at a normal UI boundary. Attempted pointer Sleep actions did not establish a Web sleep action; native focused contract separately qualifies normal Sleep expiry and eviction.",
+    "Browser behavior endpoint is maintained localhost serving the exact deployed immutable SHA. No LAN-browser TLS certification, TLS bypass, audience change, stable/itch publication or watcher restart is claimed.",
+    "Initial exploratory fixtures used nonexistent loaded_dice/four_leaf_clover IDs; their empty inventory screen was not accepted as ownership evidence. Acceptance reran both cases with catalog-valid Marked Cards/Lucky Bar Napkin. Early setup/command-file race receipts remain retained separately, not product failures or passes."
+  ],
+  "fixture_inputs": {
+    "generator": "E:\\CodexQA\\BTH\\runs\\home-loss-valid-fixture-script-r2-20261110\\evidence\\producer.gd",
+    "generator_sha256": "4be8e0311e0f6b80ece24d9bea29b09a7be2fc78b0efb2134dffd639ab300eb5",
+    "fixture_receipt": "E:\\CodexQA\\BTH\\runs\\home-loss-valid-fixtures-r2-20261110\\evidence\\job.json",
+    "items": {
+      "placed": "bag",
+      "stored": "marked_cards",
+      "carried": "lucky_bar_napkin"
+    },
+    "initial_bankroll": 100,
+    "initial_clock": 1430,
+    "tenure": {
+      "motel_room": {
+        "type": "stay",
+        "prepaid_days": 1
+      },
+      "apartment": {
+        "type": "rent",
+        "first_due_in_days": 0,
+        "grace_days": 0
+      }
+    },
+    "originals_preserved": true
+  },
+  "web": {
+    "receipt": {
+      "command": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "E:\\CodexQA\\BTH\\runs\\home-loss-browser-script-r2-20261110\\evidence\\browser.cjs"
+      ],
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\storage-manifest.json",
+      "storage_manifest_sha256": "aa523c81a1c07cc6bbb48a7a0d61b68389a0d36ac6e580b8dbd5045fffd3b863",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "finished_epoch": 1794331831.0392115
+    },
+    "session": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\session.json",
+    "session_sha256": "98d6ebf12e9f67d4678d3b73bb7a39b42f449e19c1e34fdec055576992b28f5b",
+    "console_errors": [],
+    "motel_steps": {
+      "fixture_install": 25,
+      "continue_before": 26,
+      "carried_before": 27,
+      "ordinary_rollover_wait": 38,
+      "menu": 39,
+      "save": 40,
+      "browser_process_restart": 42,
+      "cold_continue": 43,
+      "carried_after": 44,
+      "persisted_capture": 45
+    },
+    "apartment_steps": {
+      "fixture_install": 46,
+      "continue_before": 47,
+      "carried_before": 48,
+      "ordinary_rollover_wait": 50,
+      "menu": 51,
+      "save": 52,
+      "save_finished": 53,
+      "browser_process_restart": 55,
+      "cold_continue": 56,
+      "carried_after": 57,
+      "persisted_capture": 58
+    }
+  },
+  "persisted_web_state_inspection": {
+    "receipt": {
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "E:\\CodexQA\\BTH\\runs\\home-loss-reader-script-20261110\\evidence\\inspect.gd"
+      ],
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\home-loss-web-snapshot-inspection-20261110\\evidence\\storage-manifest.json",
+      "storage_manifest_sha256": "d8e1779af3c11b527f66085fc58763e1cf76672c2faf57c1c5e6870a8d6e786c",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "finished_epoch": 1794331849.4289303
+    },
+    "inputs": {
+      "motel_room": {
+        "capture": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\idb-45.json",
+        "capture_sha256": "df4981ec26398d28f1cffc9e4d6816b191d1a3fc81434b3b3aa57571eaf81750",
+        "save_sha256": "10de46c883ec8cbcec8783c2e6b4f7e79adb69bcb01a2c3e2075d002058f5431",
+        "save_bytes": 94672
+      },
+      "apartment": {
+        "capture": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\idb-58.json",
+        "capture_sha256": "79dfc0bb14b1d6a0db8d946ab70cc2d731193e334e1aae740ee54347f6cbccd6",
+        "save_sha256": "ee6dfca4aeeb4913d087e23846dfc0c6d048ec05c2dafa10b67d21bc5ec43136",
+        "save_bytes": 96772
+      }
+    },
+    "result": {
+      "cases": {
+        "apartment": {
+          "bankroll": 100,
+          "clock": 1450,
+          "current_containers": [],
+          "current_home_lost": true,
+          "home": {
+            "act_index": 1,
+            "active": false,
+            "display_name": "Apartment",
+            "home_archetype_id": "apartment",
+            "home_node_id": "apartment",
+            "lost": true,
+            "lost_day": 2,
+            "lost_reason": "evicted",
+            "parent_archetype_id": "",
+            "started_day": 1,
+            "tenure": {
+              "action_label": "Pay Rent",
+              "cycle_days": 7,
+              "due_day": 1,
+              "eviction_message": "",
+              "grace_days": 0,
+              "payment_label": "rent",
+              "rent_amount": 90,
+              "type": "rent"
+            }
+          },
+          "home_reentry_excluded": true,
+          "inventory": [
+            "lucky_bar_napkin"
+          ],
+          "load_outcome": {
+            "backup_exists": false,
+            "backup_loadable": false,
+            "outcome": "loaded-primary",
+            "primary_exists": true,
+            "primary_loadable": true,
+            "slot_id": "foundation_ui_autosave"
+          },
+          "physical_container_rows": [],
+          "withdraw_inert": true,
+          "withdraw_rejected": true,
+          "world_containers": [],
+          "world_home_lost": true
+        },
+        "motel_room": {
+          "bankroll": 100,
+          "clock": 1455,
+          "current_containers": [],
+          "current_home_lost": true,
+          "home": {
+            "act_index": 1,
+            "active": false,
+            "display_name": "Motel Room",
+            "home_archetype_id": "motel_room",
+            "home_node_id": "motel_room",
+            "lost": true,
+            "lost_day": 2,
+            "lost_reason": "stay_expired",
+            "parent_archetype_id": "motel",
+            "started_day": 1,
+            "tenure": {
+              "days_remaining": 0,
+              "expiry_message": "",
+              "renewal_cost": 45,
+              "renewal_days": 1,
+              "type": "stay"
+            }
+          },
+          "home_reentry_excluded": true,
+          "inventory": [
+            "lucky_bar_napkin"
+          ],
+          "load_outcome": {
+            "backup_exists": false,
+            "backup_loadable": false,
+            "outcome": "loaded-primary",
+            "primary_exists": true,
+            "primary_loadable": true,
+            "slot_id": "foundation_ui_autosave"
+          },
+          "physical_container_rows": [],
+          "withdraw_inert": true,
+          "withdraw_rejected": true,
+          "world_containers": [],
+          "world_home_lost": true
+        }
+      },
+      "errors": [],
+      "state": "PASS"
+    },
+    "scope": "Read unchanged captured Web primary bytes through normal SaveService in isolated native process with the matching synthetic authority. This supports persisted semantics, separately from the rendered Web screenshots."
+  },
+  "focused_native_contract": {
+    "receipt": {
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "E:\\CodexQA\\BTH\\workspaces\\home-loss-closeout-20261110\\scripts\\tests\\home_loss_projection_contract.gd"
+      ],
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\home-loss-final-native-contract-20261110\\evidence\\storage-manifest.json",
+      "storage_manifest_sha256": "47fa1c619253057dbd353fbb1a2d9d2e00babc2e3792a2e2e627ab0bf843b3a8",
+      "exit_code": 0,
+      "error": null,
+      "timed_out": false,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "finished_epoch": 1794331907.6724377
+    },
+    "script_sha256": "1ea90fd80f81a8992401bb8fe9ca3c9aa17880b7443640326836885c2a7962e3",
+    "result": "HOME_LOSS_PROJECTION PASS sleep_expiry=true rent_eviction=true native_codec_restore=true storage_rejected=true controls=true",
+    "test_strengthening": "Replace nonexistent fixture item IDs with catalog-valid IDs and assert definitions exist. Retrieval rejection uses the actual original container ID rather than a nonexistent bag_1."
+  },
+  "screenshots": [
+    {
+      "name": "motel-before",
+      "path": "docs/testing/home_loss_web_20261110/motel-before.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-26.png",
+      "sha256": "36613c3b6be720de1e3b2d526ce5a5c6d9ccf63df6a3640ade12c430bf57f2d7"
+    },
+    {
+      "name": "motel-cold-continue",
+      "path": "docs/testing/home_loss_web_20261110/motel-cold-continue.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-43.png",
+      "sha256": "5d2bfec0706a8925ff3599fa8b124776ab148c94d4048b947c6676806a4046d9"
+    },
+    {
+      "name": "motel-carried-after",
+      "path": "docs/testing/home_loss_web_20261110/motel-carried-after.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-44.png",
+      "sha256": "b6f910b63eae6b5f37ffbac6a109a3311518b63f8a92c60f050705922f15c15a"
+    },
+    {
+      "name": "apartment-before",
+      "path": "docs/testing/home_loss_web_20261110/apartment-before.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-47.png",
+      "sha256": "70f5e19ff1ef563778fe8dc98d274095ce82d6555ca2a9991f935413d29bb93d"
+    },
+    {
+      "name": "apartment-cold-continue",
+      "path": "docs/testing/home_loss_web_20261110/apartment-cold-continue.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-56.png",
+      "sha256": "f1f2584ab77b33a6bda4611b8b510ecdfb98096df6b9f2d8d6a4f051b61ea8c2"
+    },
+    {
+      "name": "apartment-carried-after",
+      "path": "docs/testing/home_loss_web_20261110/apartment-carried-after.png",
+      "source": "E:\\CodexQA\\BTH\\runs\\home-loss-web-ui-r4-20261110\\evidence\\screen-57.png",
+      "sha256": "02158eac538009c16cd8f7e0477cf8bbbc19431d97daf010e451981dcc9b03ee"
+    }
+  ],
+  "source_changes": "Only focused test controls and completion records/ledger; no product or deployment machinery changes.",
+  "delivery": "Existing product fix already in exact deployed 2e3b8810. Scoped follow-up commit will be handed to parent for serialized main integration and existing NEXT follow-through; worker does not push.",
+  "scope_preserved": [
+    "All other task rows, policies, batches and current user pauses unchanged.",
+    "Existing watcher, original files/profiles, stable/itch and hosting audience unchanged."
+  ],
+  "ledger_reconciliation": {
+    "command": [
+      "python",
+      "-B",
+      "tools/check_bth_task_ledger.py",
+      "--group",
+      "all",
+      "--format",
+      "json",
+      "--output",
+      "E:\\CodexQA\\BTH\\runs\\home-loss-ledger-reconcile-20261110\\evidence\\report.json"
+    ],
+    "whole_checker_exit_code": 1,
+    "whole_summary": {
+      "objectives_checked": 304,
+      "batches_checked": 9,
+      "open_objectives": 196,
+      "open_batches": 5,
+      "open_work_items": 201,
+      "user_paused_items": 37,
+      "complete_objectives": 106,
+      "errors": 593,
+      "warnings": 1,
+      "tasks_with_errors": 162
+    },
+    "scoped_home_loss_findings": [],
+    "report": "E:\\CodexQA\\BTH\\runs\\home-loss-ledger-reconcile-20261110\\evidence\\report.json",
+    "report_sha256": "480171091593ed38db1f4f1eb07632d016ed440fd18636ce24e44085f08ab8e0",
+    "scope": "Whole report remains nonzero for other open/historical work. No home-loss findings. Only home-loss objective, matching readable row and global update timestamp were changed; policies/batches/other objectives preserved."
+  }
+}
