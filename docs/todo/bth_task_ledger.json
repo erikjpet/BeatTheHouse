@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T07:27:28.494025+00:00",
+  "updated_at": "2026-11-10T07:30:45.465180+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -24555,7 +24555,7 @@
       "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
       "owner": {
         "name": "Finalize main and NEXT",
-        "task_ref": "/root",
+        "task_ref": "/root/publish_final_stabilization",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -24685,7 +24685,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:27:28.494025+00:00",
+      "updated_at": "2026-11-10T07:30:45.465180+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -29023,7 +29023,7 @@
       "status": "LOCAL_TESTED_FIX_COMMITTED_NEXT_PENDING_20261110",
       "owner": {
         "name": "Finalize main and NEXT",
-        "task_ref": "/root",
+        "task_ref": "/root/publish_final_stabilization",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -29075,7 +29075,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T07:27:28.494025+00:00",
+      "updated_at": "2026-11-10T07:30:45.465180+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",

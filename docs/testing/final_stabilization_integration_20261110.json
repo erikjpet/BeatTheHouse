@@ -1,0 +1,104 @@
+{
+  "schema": "bth.final_stabilization_integration/v1",
+  "observed_at": "2026-11-10T07:30:45.465180+00:00",
+  "state": "FOCUSED_INTEGRATED_CHECKS_PASS_NEXT_PENDING",
+  "source_baseline": "c3d16523e6a149ea7f401e5fabbb2703b2758c3e",
+  "reviewed_fix": "31bb55b88fce5890029b9470ceb7548c9ce1bad5",
+  "integrated_checkpoint": "0b5b1852fc466a32846681eed52b9ff573f10107",
+  "source_comparison": "All integrated scripts exactly match reviewed fix31bb55b8; merge conflicts were ledger top-level updated_at only. Audit and branch cleanup receipts retained.",
+  "guarded_checks": [
+    {
+      "run_id": "final-integration-home-20261110",
+      "job_sha256": "470b5cc280fb9a1e83c364e084ac22a00d86cfb5077f833f4cc022d47d4660b2",
+      "worker_log_sha256": "397bebe2a559e6228b8846797b66b8572db64879efbc94ad45edb9f2c43d4777",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/home_loss_projection_contract.gd"
+      ],
+      "exit_code": 0,
+      "active_at_release": 0,
+      "storage_manifest_sha256": "dc3d0307543e65ddefb400f4bca0a4380f2664b24c57123e81466095143b5f15",
+      "assigned_before_execution": true
+    },
+    {
+      "run_id": "final-integration-memo-20261110",
+      "job_sha256": "608fe5f87b77cab1562c0e1fd575b768716e00d062f2522b2d5c06cf4d1db47f",
+      "worker_log_sha256": "238410cb05ee12437660ee0eee82ed1a644392099064527b36bcf805a1154e93",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/foundation/scenario_validation_memo_contract.gd"
+      ],
+      "exit_code": 0,
+      "active_at_release": 0,
+      "storage_manifest_sha256": "088f4c125057c7cf7395d27c0815a7c0eab2fc7535f8257084404dac1788bcb0",
+      "assigned_before_execution": true
+    },
+    {
+      "run_id": "final-integration-cycle-20261110",
+      "job_sha256": "dc1686a39f8b4e97bf42e14da27f135fbae31b8ef40b54819cd0ad06d840178a",
+      "worker_log_sha256": "10962544611f0e1a1514a963acc8d0fb45db25e8984dbf733a7ba72938458230",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--script",
+        "res://scripts/tests/scenario_memo_encoding_failure_check.gd"
+      ],
+      "exit_code": 0,
+      "active_at_release": 0,
+      "storage_manifest_sha256": "6a9772afc132d0ead52e9e9932edf36b6b45cd1eac8ad2ba1bbec8e904d1e7a3",
+      "assigned_before_execution": true
+    },
+    {
+      "run_id": "final-integration-metadata-r2-20261110",
+      "job_sha256": "2637e85446f275886d4e24abca27567c82973aaf30fe7baac0a9eb878e1f1fcf",
+      "worker_log_sha256": "f8dbb31dfeba0a94939826eaad3f16def1a39099411b4462b85a58434a6a285d",
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/tests",
+        "-p",
+        "test_check_bth_task_ledger.py",
+        "-v"
+      ],
+      "exit_code": 0,
+      "active_at_release": 0,
+      "storage_manifest_sha256": "4ebf919781c9c9cbba0273b336a7ec41174277d038fc9d5e9da2e22d37c2e450",
+      "assigned_before_execution": true
+    }
+  ],
+  "scope": "Three focused native checks and36metadata tests only. Cycle probe emits deliberate native recursion errors and ends explicit PASS. No broad gameplay, original-save, UI Save/cold Continue or Web behavior acceptance.",
+  "launch_retry": "First metadata launch did not create child: WindowsApps python alias WinError2. Full resolved interpreter retry passes.",
+  "ledger_reconciliation": {
+    "summary": {
+      "objectives_checked": 160,
+      "batches_checked": 9,
+      "open_objectives": 67,
+      "open_batches": 5,
+      "open_work_items": 72,
+      "user_paused_items": 37,
+      "complete_objectives": 93,
+      "errors": 900,
+      "warnings": 0,
+      "tasks_with_errors": 67
+    },
+    "new_scoped_findings": 0,
+    "retained_inherited_findings": 900,
+    "report_sha256": "71e6f4610252a5e95df02a19e4934f32d13bcb1209d5992a251fe688ab343c77",
+    "report_path": "E:\\CodexQA\\BTH\\runs\\final-integration-reconcile-r2-20261110\\evidence\\reconciliation.json",
+    "scope": "Manual checker ran after actual publisher owner correction; historical findings remain unchanged, not a full ledger pass."
+  }
+}
