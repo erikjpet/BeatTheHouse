@@ -1,0 +1,213 @@
+{
+  "schema": "bth.roulette_web_warm_acceptance/v1",
+  "result": "PASS_RENDERED_LOCALHOST_SAME_PROCESS_FIRST_RESULT",
+  "observed_at": "2026-11-10T19:55:01.845000+00:00",
+  "served_commit": "8e2addc3c58010afd36b54d0cf584e38ceb91309",
+  "served_tree": "113af8750f02426df947c80243579a6978b594ed",
+  "roulette_git_blob": "11c22a1c5b86f2d51529e3c8c63ec5d4dddb0b31",
+  "roulette_source_sha256": "ac2c5bd74ce704201b9266aa4cd85a76bf9c881053dc007d2a2efbbcc274f208",
+  "roulette_source_unchanged_from_b6": true,
+  "fix_integrated_commit": "8b4653d0a390745d05bcd404ba529efc07d0a726",
+  "fidelity": "Rendered Web pixels on immutable deployed 8e2addc3 via documented localhost8088 QA route. Fresh isolated profile and predeclared independent seed-B fixture; bootstrap-only fixture preload. Actual ordinary Deal/Stand, one visible Machine Jam Wait, Leave, Copper Rotor Red9/Spin/Confirm. No cold reset between games or before result/journal. No original R08 state or runtime/RNG probe.",
+  "identity": {
+    "game_url": "http://localhost:8088/p/beat-the-house/play/dev/8e2addc3c58010afd36b54d0cf584e38ceb91309/index.html#fixture",
+    "runtime_pin_sha256": "a9b1f61fd5a1d8d05071cf5bea4777531c71bfa7488063c18ca8d3c2e5f6b659",
+    "official_html_sha256": "37c0babcfcb935f16fa95c850aac06b2d713e707b5997b86f6225b2b7b077315",
+    "official_manifest_sha256": "040a983d05bc12c9a15db609b5a3a09d1a79da16acc130d4d4b73dcd61936bde",
+    "fixture_manifest_sha256": "57f94de7af9e07a7c76583e00d538ff820bfcd1ad07757010588d427716e44a2",
+    "wrapper_sha256": "420a607bdf574a7edd738cc95665dc92f227bf5fe2d2b613527908367f2ced27"
+  },
+  "run": {
+    "run_id": "roulette-8e-web-stages-20261110",
+    "started_at": "2026-11-10T19:50:24.556000+00:00",
+    "finished_at": "2026-11-10T19:55:01.845000+00:00",
+    "duration_seconds": 277.289,
+    "harness": {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\web_roulette_stages.cjs",
+      "sha256": "49cd59c56542bd49c01a5652cea79d0a0b24f0bc61e8066a3ce6811fb37da4eb",
+      "bytes": 37300
+    },
+    "runtime_pin": {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm10-runtime-pin.json",
+      "sha256": "a9b1f61fd5a1d8d05071cf5bea4777531c71bfa7488063c18ca8d3c2e5f6b659",
+      "bytes": 487
+    },
+    "state": {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\state.json",
+      "sha256": "1a4ff44cda964901708f3de8c121725be9311eb2a56af8d148abf898436aa1cd",
+      "bytes": 47385
+    },
+    "storage_manifest": {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\storage-manifest.json",
+      "sha256": "42ef286f23929148fb010df54c27ac7c33c3ec1c5a2ab59fb23e2688f1868912",
+      "bytes": 1334
+    },
+    "job": {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\job.json",
+      "sha256": "5668d76d522708c5a180cf5f295807059b59ea83f57f17897128d11714f3743c",
+      "bytes": 7466
+    }
+  },
+  "stage_boundaries_ms": {
+    "start_to_goto_return": 5274,
+    "goto_to_readiness": 7402,
+    "readiness_to_startup_png": 1205
+  },
+  "paid_inputs": {
+    "deal": 1,
+    "stand": 1,
+    "machine_jam_wait": 1,
+    "red9_chip": 1,
+    "arm_spin": 1,
+    "confirm": 1
+  },
+  "visual_result": {
+    "starting_cash": 80,
+    "cash_after_deal": 71,
+    "cash_after_machine_jam": 68,
+    "cash_before_roulette": 68,
+    "cash_after_confirm": 59,
+    "cash_after_result": 77,
+    "winning_number": "23",
+    "color": "red",
+    "net_bankroll_delta": 9,
+    "recent_numbers": [
+      "23"
+    ],
+    "draft_bet_after_confirm": 0,
+    "first_result_png_started_after_confirm_ms": 10399,
+    "first_result_before_menu_or_cold": true,
+    "sealed_action_visible": false,
+    "journal_rows": [
+      {
+        "title": "Blackjack -9",
+        "bankroll_delta": -9
+      },
+      {
+        "title": "Blackjack +0",
+        "bankroll_delta": 0
+      },
+      {
+        "title": "Play stops. Attention moves on.",
+        "bankroll_delta": -3,
+        "event": "Machine Jam"
+      },
+      {
+        "title": "Roulette +9",
+        "bankroll_delta": 9
+      }
+    ]
+  },
+  "closure": {
+    "exit_code": 0,
+    "timed_out": false,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cleanup_errors": [],
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1500,
+      "aggregate_job_cpu_percent": 15.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    }
+  },
+  "page_errors": [],
+  "console_errors": [],
+  "request_failures": [],
+  "screenshots": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\startup.png",
+      "sha256": "afd150108301ecf9a3424466dbf1c18f39783bc2b1912aa759385cd90bf7a3a5",
+      "bytes": 406306,
+      "observation": "Exact 8e2addc3 Continue menu."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\continue-menu.png",
+      "sha256": "a3ab43387babd78fa630413d5b18b05f87b38fe6cacaae74aa6e51f8754ee90a",
+      "bytes": 78576,
+      "observation": "Independent seed B, starting cash80."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-selected.png",
+      "sha256": "831acd7f91fcc62ad295a6d4753c1cf749f3668e2a4f106ef6d77fc57e03bffa",
+      "bytes": 86892,
+      "observation": "Actual visible Blackjack selection."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-dealt.png",
+      "sha256": "e0c2a3d57f510a6ff4c2f5b7e1e393474403c25ca719c934e3e0626fe700148a",
+      "bytes": 94890,
+      "observation": "Ordinary Deal: cash71, H1 18."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-stood.png",
+      "sha256": "0b6bfe56e0bff991acb7b3b235eb9c31159a577e94cf0c90c7c3cd0cd6f18907",
+      "bytes": 93401,
+      "observation": "One Stand: visible Machine Jam choice."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\blackjack-settled.png",
+      "sha256": "388e95d1d7298dc851360307eba76714dc78ad50b4a05686a9dd3aacc08ace8a",
+      "bytes": 98625,
+      "observation": "One ordinary Wait: cash68, dealer20, H1 loses9."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-nine-ready.png",
+      "sha256": "916981a1c365850118611d10f8c65a3dfe6534ccc0965819314dd374abae57c0",
+      "bytes": 93149,
+      "observation": "Copper Rotor, cash68, bet0, denomination9, no spins."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-red-nine.png",
+      "sha256": "c0fd1a52e99a3749e05c5db2e53174a5ea38c2aa938d091fd401345d8d6e81d7",
+      "bytes": 95546,
+      "observation": "One Red9 draft, cash68."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-armed.png",
+      "sha256": "76312fe4c9a34113f5134ce8b524529263a657b0f1a72bc64acd2d7cffead47a",
+      "bytes": 94368,
+      "observation": "Confirm armed."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-first-confirm.png",
+      "sha256": "5e868a946d554067efed81e470b1ca722ac4cbde5f4713524bcf0c4120542e16",
+      "bytes": 96868,
+      "observation": "First Confirm: cash59, bet0, no more bets."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\roulette-first-result.png",
+      "sha256": "c579a2fe72cac1d19805c826f28bd8d238031b3d97c872e1e0fc79ca2c170391",
+      "bytes": 98787,
+      "observation": "Before any menu/cold reset: cash77, red23, winning box, recent23, +9."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\warm-journal.png",
+      "sha256": "619b267332aea6f96972c68311c5dbeffd7fad6c6b029554801f14f56beeff08",
+      "bytes": 65122,
+      "observation": "Before cold reset: four rows including Roulette +9."
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\roulette-8e-web-stages-20261110\\evidence\\r08-warm-session-10\\warm-journal-final.png",
+      "sha256": "619b267332aea6f96972c68311c5dbeffd7fad6c6b029554801f14f56beeff08",
+      "bytes": 65122,
+      "observation": "Final journal before explicit close."
+    }
+  ],
+  "prior_startup_diagnosis": {
+    "prior_receipt": "docs/testing/roulette_web_closeout_b6_20261110.json",
+    "prior_result": "B6 loaded all runtime assets and logged Godot/WebGL but never reached a captured startup PNG or gameplay. Monolithic navigate stage did not identify the blocked substep.",
+    "bounded_change": "Separated goto, public readiness, DOM metadata and PNG stages with independent outer timers and heartbeat. Fresh profile, current immutable NEXT, 15% capped Job rather than6%, 900-second supervisor rather than490. Browser sandbox and security options unchanged.",
+    "outcome": "Current run reached goto in5.274s, readiness7.402s later and PNG1.205s later. Prior stall did not reproduce. Cause remains unclassified: multiple runtime/resource changes prevent attributing it to CPU quota."
+  },
+  "limits": [
+    "Qualifies this independent seeded same-process first-result path on localhost at the recorded8e build, not a general gameplay sweep.",
+    "LAN HTTPS rendered access was not retried and is not qualified by localhost. No TLS bypass or security-setting change.",
+    "No cold Continue/persistence check was required or claimed in this warm result gate; prior native evidence stays at its own identity.",
+    "Original sealed R08 campaign, pending request and authority were not accessed or changed; original historical first rejection remains unattributed.",
+    "No new product, watcher, hosting, stable, itch or audience change. Raw saves, authority files, browser profile and private runtime evidence remain local and are not committed."
+  ]
+}
