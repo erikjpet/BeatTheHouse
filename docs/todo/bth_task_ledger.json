@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_9_OF_18_ORDERS_DONE_AUD14_NEXT",
+      "status": "IN_PROGRESS_10_OF_18_ORDERS_DELIVERED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30538,22 +30538,22 @@
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/AUD061_baseline_2026-11-10.md",
-          "summary": "OPEN_9_OF_18_ORDERS_DONE_AUD14_NEXT"
+          "reference": "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md",
+          "summary": "IN_PROGRESS_10_OF_18_ORDERS_DELIVERED"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Execute AUD061-14 then all remaining ordered tasks; parent remains Open.",
+      "next_action": "Continue AUD061-08, AUD061-15 item2, QOL-01, AUD061-12, then release candidate stamps/changelog and acceptance/coverage.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T06:28:46.405910+00:00",
+        "observed_at": "2026-11-11T07:37:12.459483+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T06:28:46.405910+00:00"
+      "updated_at": "2026-11-11T07:37:12.459483+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31518,29 +31518,37 @@
             "id": "1",
             "description": "Reproduce six ignored save failures at actual callers.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "No rollback of displayed purchase/packing changes; visible pending warning and bounded retry recover state.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Settings/profile failures log once and retry on a later change; no modal; healthy saves clear pending state.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+            ]
           },
           {
             "id": "4",
             "description": "Focused and Smoke results no worse than baseline; animation liveness if retry scheduling changes; exact NEXT and feasible visible path verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -31549,8 +31557,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_41_UI_19_WEB_PHYSICAL_WARNING_RECOVERY_RELOAD_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31568,37 +31576,45 @@
           "evidence": [
             "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+          "evidence": [
+            "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "evidence": [
+          "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md",
-          "summary": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE_41_UI_19_WEB_PHYSICAL_WARNING_RECOVERY_RELOAD_EXACT_NEXT_VERIFIED"
         }
       ],
       "implementation_batches": [
         "AUD061-14-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T07:28:58.136438+00:00",
+        "observed_at": "2026-11-11T07:37:12.393368+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Check all six listed return values; retain in-memory purchases and pack changes with visible unsaved status and pending retry; log once for settings/coach/discovery and retry on later change without modal."
       ],
-      "updated_at": "2026-11-11T07:28:58.136438+00:00"
+      "updated_at": "2026-11-11T07:37:12.393368+00:00"
     }
   ],
   "batches": [
@@ -32708,8 +32724,8 @@
       "name": "Handle six ignored profile meta and settings save failures implementation",
       "parent_id": "AUD061-14",
       "group": "current",
-      "state": "open",
-      "status": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_41_UI_19_WEB_PHYSICAL_WARNING_RECOVERY_RELOAD_EXACT_NEXT_VERIFIED",
       "scope": [
         "Check all six listed return values; retain in-memory purchases and pack changes with visible unsaved status and pending retry; log once for settings/coach/discovery and retry on later change without modal."
       ],
@@ -32730,31 +32746,39 @@
           "evidence": [
             "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+          "evidence": [
+            "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "evidence": [
+          "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md",
-          "summary": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE_41_UI_19_WEB_PHYSICAL_WARNING_RECOVERY_RELOAD_EXACT_NEXT_VERIFIED"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T07:28:58.136438+00:00",
+        "observed_at": "2026-11-11T07:37:12.393368+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T07:28:58.136438+00:00"
+      "updated_at": "2026-11-11T07:37:12.393368+00:00"
     }
   ]
 }

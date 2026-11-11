@@ -1,0 +1,376 @@
+{
+  "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+  "scope": "Unmodified exact NEXT game assets. Fresh private Web profile seeded only with same-candidate Meta fixture produced by the successful native physical retry check (synthetic gold); normal player UI invokes the purchase. Only this owned Meta temporary-path directory is faulted. No game script/scene/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 12,
+        "type": "seed_meta"
+      },
+      "time": "2026-11-11T07:34:02.193Z",
+      "fixture": {
+        "source_run": "aud061-aud14-result-after-20261111",
+        "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+        "bytes": 5289,
+        "synthetic_gold": true
+      },
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "12-seed_meta.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 13,
+        "type": "click",
+        "x": 946,
+        "y": 523
+      },
+      "time": "2026-11-11T07:34:42.454Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "13-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 14,
+        "type": "click",
+        "x": 1134,
+        "y": 239
+      },
+      "time": "2026-11-11T07:34:54.591Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "14-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 15,
+        "type": "block_meta"
+      },
+      "time": "2026-11-11T07:35:04.271Z",
+      "metaFault": {
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json.tmp",
+        "isDirectory": true
+      },
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": true
+        }
+      },
+      "screenshot": "15-block_meta.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 16,
+        "type": "click",
+        "x": 841,
+        "y": 337
+      },
+      "time": "2026-11-11T07:35:10.793Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": true
+        }
+      },
+      "screenshot": "16-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 17,
+        "type": "unblock_meta"
+      },
+      "time": "2026-11-11T07:35:23.428Z",
+      "metaFault": {
+        "removed": true
+      },
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5289,
+          "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+          "gold": 9940,
+          "housing_tier": "motel_room",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "17-unblock_meta.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 18,
+        "type": "snapshot"
+      },
+      "time": "2026-11-11T07:35:29.180Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5287,
+          "sha256": "7cc32ec43def2f5b3974897ac2591181921d28c696fc837db32bd200434f5afb",
+          "gold": 9690,
+          "housing_tier": "apartment",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "18-snapshot.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 19,
+        "type": "reload"
+      },
+      "time": "2026-11-11T07:35:42.546Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5287,
+          "sha256": "7cc32ec43def2f5b3974897ac2591181921d28c696fc837db32bd200434f5afb",
+          "gold": 9690,
+          "housing_tier": "apartment",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "19-reload.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 20,
+        "type": "click",
+        "x": 946,
+        "y": 523
+      },
+      "time": "2026-11-11T07:35:57.233Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json"
+        ],
+        "meta": {
+          "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+          "bytes": 5287,
+          "sha256": "7cc32ec43def2f5b3974897ac2591181921d28c696fc837db32bd200434f5afb",
+          "gold": 9690,
+          "housing_tier": "apartment",
+          "tmp_exists": false
+        }
+      },
+      "screenshot": "20-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 21,
+        "type": "stop",
+        "visual_review": [
+          "Exact NEXT71e456a36d07 startup visually clean.",
+          "Fresh same-candidate native fixture loads Motel Room/gold9940; synthetic wallet qualifier applies.",
+          "Normal Upgrade Sign purchase costs250, displays Apartment/gold9690 and clear Not saved yet in popup and top Result while actual owned Meta .tmp directory blocks write.",
+          "Removing only the owned empty directory lets scheduled retry clear both warnings and show Collection changes saved; exact paid balance9690 unchanged.",
+          "Meta primary changes from original5289-byte SHA dada2add... to5287-byte SHA7cc32ec43def2f5b3974897ac2591181921d28c696fc837db32bd200434f5afb, gold9690/tierapartment, temporary absent.",
+          "Ordinary page reload and Travel Home display Apartment/gold9690 with same primary hash and temporary absent.",
+          "No game script/scene/path overrides, old/active profile migration, or organic-earned wallet claim."
+        ]
+      },
+      "time": "2026-11-11T07:36:16.443Z"
+    }
+  ],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/71e456a36d079e2aa8c4d8a95d22b325a673973b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "stage": "COMPLETE",
+  "metaFixture": {
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/meta_collection.json",
+    "bytes": 5289
+  },
+  "support": [
+    "BTH support: Home upgrade save failed (12); retry pending."
+  ],
+  "visual_review": [
+    "Exact NEXT71e456a36d07 startup visually clean.",
+    "Fresh same-candidate native fixture loads Motel Room/gold9940; synthetic wallet qualifier applies.",
+    "Normal Upgrade Sign purchase costs250, displays Apartment/gold9690 and clear Not saved yet in popup and top Result while actual owned Meta .tmp directory blocks write.",
+    "Removing only the owned empty directory lets scheduled retry clear both warnings and show Collection changes saved; exact paid balance9690 unchanged.",
+    "Meta primary changes from original5289-byte SHA dada2add... to5287-byte SHA7cc32ec43def2f5b3974897ac2591181921d28c696fc837db32bd200434f5afb, gold9690/tierapartment, temporary absent.",
+    "Ordinary page reload and Travel Home display Apartment/gold9690 with same primary hash and temporary absent.",
+    "No game script/scene/path overrides, old/active profile migration, or organic-earned wallet claim."
+  ],
+  "state": "FINISHED",
+  "finished": "2026-11-11T07:36:17.018Z"
+}
