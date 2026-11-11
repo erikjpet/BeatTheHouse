@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "12_OF_18_ORDERS_COMPLETE_QOL01_NEXT",
+      "status": "13_OF_18_ORDERS_COMPLETE_EXPORT_INVESTIGATION_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30543,7 +30543,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue QOL-01, AUD061-12, AUD061-04/05, then AUD061-11/17 on exact proposed RC.",
+      "next_action": "Continue AUD061-12 investigation, AUD061-04/05 dispositions, then AUD061-11/17 on exact proposed RC.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30553,7 +30553,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T09:53:38.758372+00:00"
+      "updated_at": "2026-11-11T11:04:39.720854+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31863,22 +31863,28 @@
             "id": "1",
             "description": "Loadable save prompts on every menu start route; cancel preserves bytes and current run.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Keyboard default, Escape, touch cancel and explicit start work.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "No loadable save, mandatory tutorial and finished report do not prompt; Smoke no worse than baseline and exact NEXT rendered behavior verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -31887,8 +31893,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "REAL_ENGINE_83_PASS_SMOKE_4P7F_NO_NEW_FAILURES_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_REAL_KEY_83_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_RENDERED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31912,37 +31918,45 @@
           "evidence": [
             "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "054ab4a0d63cf1399180ebbc087097484637ece1",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "054ab4a0d63cf1399180ebbc087097484637ece1",
+        "evidence": [
+          "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
-          "summary": "REAL_ENGINE_83_PASS_SMOKE_4P7F_NO_NEW_FAILURES_NEXT_PENDING"
+          "summary": "COMPLETE_REAL_KEY_83_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_RENDERED"
         }
       ],
       "implementation_batches": [
         "QOL-01-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T10:53:34.603386+00:00",
+        "observed_at": "2026-11-11T11:04:39.660403+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
       ],
-      "updated_at": "2026-11-11T10:53:34.603386+00:00"
+      "updated_at": "2026-11-11T11:04:39.660403+00:00"
     }
   ],
   "batches": [
@@ -33241,8 +33255,8 @@
       "name": "Confirm replacing a loadable saved run implementation",
       "parent_id": "QOL-01",
       "group": "current",
-      "state": "open",
-      "status": "REAL_ENGINE_83_PASS_SMOKE_4P7F_NO_NEW_FAILURES_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_REAL_KEY_83_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_RENDERED",
       "scope": [
         "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
       ],
@@ -33269,31 +33283,39 @@
           "evidence": [
             "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "054ab4a0d63cf1399180ebbc087097484637ece1",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "054ab4a0d63cf1399180ebbc087097484637ece1",
+        "evidence": [
+          "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
-          "summary": "REAL_ENGINE_83_PASS_SMOKE_4P7F_NO_NEW_FAILURES_NEXT_PENDING"
+          "summary": "COMPLETE_REAL_KEY_83_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_RENDERED"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T10:53:34.603386+00:00",
+        "observed_at": "2026-11-11T11:04:39.660403+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T10:53:34.603386+00:00"
+      "updated_at": "2026-11-11T11:04:39.660403+00:00"
     }
   ]
 }

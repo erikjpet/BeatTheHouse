@@ -1,5 +1,7 @@
 # QOL-01 — Confirm saved-run replacement
 
+Accepted NEXT **054ab4a0d63cf1399180ebbc087097484637ece1**, containing final code **412cd9a3690fcd678b54a44c9ae191da5fdac1fe**, tree af4d7804414052263712d1ea77baa41af6eab6f2, archive6e7f5ae584e2ae5af757aebc4f58ccffba106adb65fec9f41f9f386045757c74. Final native83/0; final Smoke4pass7fail versus baseline4/7 with no new categories; exact assets10/10 and rendered browser acceptance PASS. Prior two promoted candidates below are retained failed visual attempts, not accepted delivery.
+
 Started from main 28ece77b93a808c48ddd3388d82867fe965aba4b (AUD15 receipt); preceding accepted NEXT3b36a9c3957fe4b4484d8584d16e971fc743ef93. [Specification](../todo/BTH_0.6.1_audit_work_orders.md#qol-01--start-new-run-replaces-a-saved-run-with-no-confirmation).
 
 ## Before
@@ -58,3 +60,11 @@ Final narrow production correction: new confirmation window_input returns for KE
 Same stronger focused command after:83checks/0failures. This verifies actual frame-settled Tab/Shift-Tab on all five routes, plus the other73 original cancellation, byte preservation, explicit-start and exemption assertions. Final Smoke:
 4pass/7fail versus baseline4/7; performance stderr failures9 versus baseline10; normalized new stderr errors []. Content25/runtime16 retain exactly their old failure sets. Full comparison is linked above.
 No timeout; active processes0. Previous liveness PASS covers unchanged scheduling and pause logic; this four-line native Tab ownership change does not alter either. Final corrected NEXT verification remains pending.
+
+## Accepted exact NEXT delivery
+
+The existing watcher promoted054ab4a0d63cf1399180ebbc087097484637ece1, phasecurrent/errornull. Metadata/REF/HTML/JS/PCK/native GET hashes and engine HEAD length/MIME/pins10/10PASS; normal dev entry resolves to that exact identity. Browser footer0.6.0-dev+054ab4a0d63c, startup visually clean. Fresh E profile, unmodified served game; ordinary mandatory tutorial, Skip Lessons, Daily Challenge setup only. No profile, scene, script or state override was used.
+
+Rendered Run Setup exact prompt and Keep saved run focus PASS. Tab moves to Start new run; Shift-Tab returns Keep saved run. Default Enter, pointer cancel and Escape all preserve primary100302bytes, SHA256352fd174b69f968b8c58bf5cc80a318da8bec6eb52f03419cde56c9606e51217. Action3through13 hash equality is also asserted from actual captured FS observations. Explicit Tab+Enter starts ordinary Back Alley run bankroll100. Run Menu seedRUN-20261111-938900-004. New autosave primary100362bytes SHA0f3d5b597740ddca70a832352e85ca6c480419c23a19bc006c42efe39f3c97a0; actual UI Save then writes100352bytes SHA3b3e4fba2dd19478b22ad7600d48260eeae2d6f068d0ebfe686c971f1a296530, no tmp/rollback residue. All screenshots for prompt/default/Tab/ShiftTab/cancels/new run/Save inspected. Pageerrors0/console0/job0/no timeout/active0.
+
+The final browser exercise covers the generated Run Setup route and ordinary first-tutorial setup, not all five Web routes or every mobile viewport. Native83/0 covers all five production menu entry points, valid backup-only save, unreadable save, automatic tutorial and both finished-report exceptions. Those are source-scene checks, not claims of five rendered Web flows. Storage/caps/guards and live animation scheduling remain unchanged. Reconciliation before delivery retains1683inherited errors/52existing tasks, zero AUD061/QOL findings. Parent remains Open for the five later work orders.
