@@ -31169,6 +31169,100 @@
         "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior."
       ],
       "updated_at": "2026-11-11T05:04:17.596602+00:00"
+    },
+    {
+      "id": "QOL-04",
+      "name": "Shared whole-number display after Continue",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Reproduce trailing decimal from a loaded whole-number value.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Shared whole-number formatter at relevant saved-value display sites.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "All eleven game renderers examined after JSON load; display-only changes.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Focused and Smoke results no worse than baseline; exact NEXT assets/startup and feasible visible check.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2bcea35cc68076235d51e88f4887abd66bad2c51",
+          "evidence": [
+            "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-04_whole_number_display_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "QOL-04-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T05:19:51.384624+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration."
+      ],
+      "updated_at": "2026-11-11T05:19:51.384624+00:00"
     }
   ],
   "batches": [
@@ -32107,6 +32201,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T05:04:17.596602+00:00"
+    },
+    {
+      "id": "QOL-04-BATCH-001",
+      "name": "Shared whole-number display after Continue implementation",
+      "parent_id": "QOL-04",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "scope": [
+        "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2bcea35cc68076235d51e88f4887abd66bad2c51",
+          "evidence": [
+            "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-04_whole_number_display_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T05:19:51.384624+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T05:19:51.384624+00:00"
     }
   ]
 }
