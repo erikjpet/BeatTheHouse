@@ -31743,6 +31743,93 @@
         "Flush pending/in-flight saves synchronously on focus loss/pause and retained Web visibility/pagehide callbacks, through existing readiness/publication/practice/meta guards. Request browser sync through existing durability bridge; preserve debounce and animation."
       ],
       "updated_at": "2026-11-11T09:31:35.368499+00:00"
+    },
+    {
+      "id": "AUD061-15",
+      "name": "Repair wrong-sized Crew install key only",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Wrong-sized key is retained aside and replaced; later pack/unpack works.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Valid keys remain unchanged across cache reloads; old-key capsules retain existing authentication failure.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Focused checks and Smoke no worse than baseline; exact NEXT assets and startup verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "5676a6102b7b9d7a90a59f4d74c4285b3c4e2ccc",
+          "evidence": [
+            "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md",
+          "summary": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-15-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T09:47:15.575299+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior."
+      ],
+      "updated_at": "2026-11-11T09:47:15.575299+00:00"
     }
   ],
   "batches": [
@@ -32980,6 +33067,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T09:31:35.368499+00:00"
+    },
+    {
+      "id": "AUD061-15-BATCH-001",
+      "name": "Repair wrong-sized Crew install key only implementation",
+      "parent_id": "AUD061-15",
+      "group": "current",
+      "state": "open",
+      "status": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "scope": [
+        "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "5676a6102b7b9d7a90a59f4d74c4285b3c4e2ccc",
+          "evidence": [
+            "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md",
+          "summary": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T09:47:15.575299+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T09:47:15.575299+00:00"
     }
   ]
 }
