@@ -1,0 +1,580 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-11T01:15:40.190894+00:00",
+  "scope": {
+    "description": "Only seven exclusive capped Video Poker clone/setup/browser/analysis/documentation/validation Jobs; unrelated runtimes are not re-observed. Preparation-only manifest and rejected worktree attempt spawned no worker. Analysis output remained in owned E-drive evidence but used a prior run directory; that launcher-admission limitation is retained and grants no broader write permission.",
+    "complete": false,
+    "evidence": [
+      "docs/testing/video_poker_deployed_visible_20261111.json"
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "vp-clone-create-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "b1f74c7d93e5c85e4cbfa41c028fad62",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T00:59:26.316362+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T00:59:50.332522+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T00:59:50.332522+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T00:59:50.332522+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T00:59:50.332522+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "b1f74c7d93e5c85e4cbfa41c028fad62",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-clone-create-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-task-prepare-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5dff3aca4d2030ee6cc4e98feec8f22c",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:00:15.861759+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:00:16.332295+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:00:16.332295+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:00:16.332295+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:00:16.332295+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5dff3aca4d2030ee6cc4e98feec8f22c",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-task-prepare-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-deployed-visible-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2e31f71a7254fba154f28839d1bf734b",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:01:15.810293+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:07:05.136271+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:07:05.136271+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:07:05.136271+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:07:05.136271+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2e31f71a7254fba154f28839d1bf734b",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-deployed-trace-analysis-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "bc1747ef7fa254049d98cdfee5161582",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:08:50.377760+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:08:55.666580+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:08:55.666580+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:08:55.666580+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:08:55.666580+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "bc1747ef7fa254049d98cdfee5161582",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-trace-analysis-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-deployed-report-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "de33623a88de78a3abbe9bec87456f0a",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:11:43.650507+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:11:44.876227+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:11:44.876227+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:11:44.876227+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:11:44.876227+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "de33623a88de78a3abbe9bec87456f0a",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-deployed-finish-report-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d681c9d9630d02948e9eeb70a2236308",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:13:08.271420+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:13:08.789170+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:13:08.789170+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:13:08.789170+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:13:08.789170+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d681c9d9630d02948e9eeb70a2236308",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-finish-report-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "vp-deployed-validation-20261111",
+      "task_id": "BTH-PERF-20261104-002",
+      "owner_task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "501dd38a24d76d10b5912299b31455b7",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\launch-claim.json",
+        "started_at": "2026-11-11T01:14:14.630678+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json"
+        ]
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T01:14:42.213215+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ],
+        "limit": "Only this exclusive manifest-bound capped Job, assigned before execution, drained to zero. Test failure and cleanup success are separate. No global process census or cleanup."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T01:14:42.213215+00:00",
+        "key": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\launch-claim.json",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T01:14:42.213215+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T01:14:42.213215+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "501dd38a24d76d10b5912299b31455b7",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\job.json",
+            "docs/testing/video_poker_deployed_visible_20261111.json"
+          ]
+        }
+      }
+    }
+  ]
+}

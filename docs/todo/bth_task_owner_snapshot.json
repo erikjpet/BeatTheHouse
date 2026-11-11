@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-11T00:35:18.870771+00:00",
+  "observed_at": "2026-11-11T01:11:43.957468+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -209,8 +209,8 @@
       "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
       "title": "Qualify Video Poker hints",
       "state": "active",
-      "observed_at": "2026-11-10T19:36:48.757417+00:00",
-      "source": "Actual project checkpoint: scoped timing-evidence integration/publication and exact NEXT follow-through are underway. Diagnostic worker has finished; pending exact-deployed gameplay/performance and outlier attribution remain owned by this project task. No further experimental runtime is underway."
+      "observed_at": "2026-11-11T01:11:43.957468+00:00",
+      "source": "Actual scoped closeout worker preparing evidence/integration after exact17ae deployed normal gameplay sample completed. Owned browser Job exit0/zero. Historical outlier attribution and whole-game performance remain Open."
     },
     {
       "task_ref": "/root/diagnose_hint_outliers",

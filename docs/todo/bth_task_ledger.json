@@ -635,7 +635,8 @@
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
               "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
-              "docs/testing/video_poker_hint_timing_followup_20261110.json"
+              "docs/testing/video_poker_hint_timing_followup_20261110.json",
+              "docs/testing/video_poker_deployed_visible_20261111.json"
             ]
           },
           {
@@ -646,7 +647,8 @@
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
               "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
-              "docs/testing/video_poker_hint_timing_followup_20261110.json"
+              "docs/testing/video_poker_hint_timing_followup_20261110.json",
+              "docs/testing/video_poker_deployed_visible_20261111.json"
             ]
           },
           {
@@ -657,7 +659,8 @@
             "evidence": [
               "docs/testing/video_poker_hint_integration_20261110.json",
               "docs/testing/video_poker_hint_incremental_candidate_20261110.json",
-              "docs/testing/video_poker_hint_timing_followup_20261110.json"
+              "docs/testing/video_poker_hint_timing_followup_20261110.json",
+              "docs/testing/video_poker_deployed_visible_20261111.json"
             ]
           }
         ],
@@ -668,7 +671,7 @@
         }
       },
       "state": "open",
-      "status": "RENDERED_SOURCE_HINT_SLICES_PASS; NEXT_IDENTITY_STARTUP_VERIFIED; DEPLOYED_PERFORMANCE_OPEN",
+      "status": "EXACT_17AE_NORMAL_WEB_SAMPLED; HISTORICAL_OUTLIER_ATTRIBUTION_OPEN",
       "owner": {
         "name": "Video Poker hint qualification",
         "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
@@ -692,14 +695,15 @@
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "e410e05c6919e7cf7599552f67946f4e53974cd2",
+        "commit": "17ae0cb50b5852c232d68e61784f117b1220f84d",
         "evidence": [
           "docs/testing/video_poker_hint_delivery_20261110.json",
-          "docs/testing/video_poker_hint_timing_followup_20261110.json"
+          "docs/testing/video_poker_hint_timing_followup_20261110.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
         ],
-        "scope": "Exact source/tree/NEXT metadata, redirect, served PCK/native hashes, unchanged engine receipt/header links and fresh correct-version rendered basic menu verified. Actual NEXT Video Poker timing/gameplay acceptance remains Open.",
-        "verified_scope": "Retained exact NEXT identity, served payload and menu startup only.",
-        "pending_scope": "Exact deployed ordinary gameplay and performance; rendered timing uses a source-matched test export."
+        "scope": "Exact17ae identity/payload/startup custody retained; new ordinary visible Web Deal/Hold/Draw sampled on all three cabinets without modifying deployed assets. Historical outliers and broader performance remain open.",
+        "verified_scope": "Exact deployed normal Games route; six settled rounds, visible Hold/payout and no-input animation; bounded browser latency/longtasks.",
+        "pending_scope": "Historical188-344ms standalone outlier attribution and broader performance qualification."
       },
       "evidence": [
         {
@@ -726,23 +730,29 @@
           "kind": "rendered_timing_followup",
           "reference": "docs/testing/video_poker_hint_timing_followup_20261110.json",
           "summary": "Three rendered production-host cold Deals pass unchanged 50 ms advice-slice ceiling at 3.010-3.045 ms under 12% aggregate CPU cap. Other 52-222 ms browser/full-host tasks and old 188-344 ms minimal outliers remain; no deployed-PCK timing or whole-game pass."
+        },
+        {
+          "kind": "deployed_normal_gameplay",
+          "reference": "docs/testing/video_poker_deployed_visible_20261111.json",
+          "summary": "Exact HTTPS17ae ordinary practice on all three cabinets: six settled rounds and seven Deals, visible Hold and animation; zero browser errors. Deal/Hold sampled windows have no50ms longtask; Draw59-66ms and entry175-502ms remain wider performance findings. Historical188-344ms attribution remains open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualify exact deployed ordinary gameplay/performance and attribute retained minimal-harness outliers using targeted evidence. Preserve source-matched rendered slice pass and failed5% startup comparison; keep full performance parent Open.",
+      "next_action": "Preserve exact deployed ordinary-flow sample and prior slice/parity evidence. Attribute historical standalone outliers only from correlated CPU/call-stack evidence; investigate repeated Draw/full-host frame and entry costs under the whole-game performance parent. No original-save or user-input dependency.",
       "blocker": {
         "state": "active",
         "kind": "acceptance_evidence",
-        "description": "Exact NEXT identity, payload custody and menu startup passed on e410e05c. Source-matched rendered advice-slice timing passed separately; exact deployed ordinary gameplay/performance remains unexecuted and historical 188-344 ms minimal-harness outliers remain unattributed. Engine scene override is unavailable; no bypass attempted. No user input or original-save dependency.",
+        "description": "Exact17ae ordinary deployed gameplay is now sampled. Historical188-344ms standalone wall-time outliers remain unattributed; current initial trace identifies two60ms CPU MainLoop_runner frame costs without GDScript/advice attribution. Whole-game performance is not qualified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T19:36:48.757417+00:00",
+        "observed_at": "2026-11-11T01:11:43.957468+00:00",
         "evidence": [
           "docs/testing/video_poker_hint_delivery_20261110.json",
-          "docs/testing/video_poker_hint_timing_followup_20261110.json"
+          "docs/testing/video_poker_hint_timing_followup_20261110.json",
+          "docs/testing/video_poker_deployed_visible_20261111.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T19:36:48.757417+00:00"
+      "updated_at": "2026-11-11T01:11:43.957468+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",

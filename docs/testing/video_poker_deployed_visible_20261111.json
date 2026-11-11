@@ -1,0 +1,1004 @@
+{
+  "schema": "bth.video_poker_deployed_visible/v1",
+  "recorded_at": "2026-11-11T01:11:43.957468+00:00",
+  "task_id": "BTH-PERF-20261104-002",
+  "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
+  "state": "EXACT_DEPLOYED_NORMAL_WEB_SAMPLED_HISTORICAL_ATTRIBUTION_OPEN",
+  "product_source_changed": false,
+  "publication_performed": false,
+  "source_commit": "17ae0cb50b5852c232d68e61784f117b1220f84d",
+  "source_tree": "2e71e62a9e4f704254dc88cfab12e24d9c08baaa",
+  "video_poker_gd_sha256": "ac367c3b96ffb068fca63183163b082a0586ef88bdd5b65fc6fb6a01f83bc3c9",
+  "exact_build_startup_custody_receipt": "E:/CodexQA/BTH/runs/gas-seal-final17ae-next-verify-20261111/evidence/startup.json",
+  "fidelity": "Unchanged exact HTTPS deployed PCK; normal menu and pointer route; disposable fresh profile. No game hooks, fixture, source changes or TLS bypass.",
+  "browser": "Chromium 153.0.8010.12 / Playwright 1.63.0; headless rendered 1280x720; 12% aggregate CPU and 2GiB Job",
+  "audio_scope": "--disable-audio-output; no audio quality acceptance",
+  "route": "Main Menu > Games > default practice seed PRACTICE, then normal visible seed input A and B > Video Poker; no generation overrides, direct state calls or production hooks.",
+  "coverage": {
+    "neon_jacks": {
+      "seed": "PRACTICE",
+      "hands": 1,
+      "settled_rounds": 2,
+      "extra": "Third Deal was abandoned through Leave; early clicks during card/payout transitions were not falsely counted as accepted Hold/Deal/Draw."
+    },
+    "double_deuces": {
+      "seed": "A",
+      "hands": 2,
+      "settled_rounds": 2
+    },
+    "triple_double_bonus": {
+      "seed": "B",
+      "hands": 3,
+      "settled_rounds": 2
+    },
+    "holds": "Visible cyan HELD feedback, correct selected cards retained in each settled round; both multi-hand cabinets apply the same hold to every hand.",
+    "animation": "Card-reveal screenshots progress after no further pointer input; settled cabinet lighting changes between steps 47 and 48. Trace also has 19406 animation callbacks in its captured initial window. No scheduling/product change.",
+    "cash_and_chips": "Visible payout/loss and bankroll/chip transitions were sampled; not a fresh exact numeric parity, save/cold Continue or exhaustive economy proof. Practice does not autosave.",
+    "errors": {
+      "page": [
+        "DataCloneError: Failed to execute 'postMessage' on 'MessagePort': Data cannot be cloned, out of memory.",
+        "DataCloneError: Failed to execute 'postMessage' on 'MessagePort': Data cannot be cloned, out of memory."
+      ],
+      "console": [],
+      "request_failed": []
+    },
+    "asset_responses": [
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/index.wasm",
+        "status": 200
+      },
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/index.pck",
+        "status": 200
+      },
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/index.side.wasm",
+        "status": 200
+      },
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "status": 200
+      }
+    ]
+  },
+  "latency_method": "Browser Event Timing dispatch-to-next-paint duration, quantized in 8ms buckets, threshold16ms. Not the completion latency of the deliberate multi-card animation or an internal strategy slice. A missing observation means unavailable, not zero.",
+  "actions": [
+    {
+      "command_index": 4,
+      "observed_action": "Deal 1 / Neon Jacks",
+      "event_duration_ms": 40,
+      "processing_ms": 19.200000000186265,
+      "screenshot": "004-jacks-deal-1.png"
+    },
+    {
+      "command_index": 8,
+      "observed_action": "Hold card 1 / Neon Jacks",
+      "event_duration_ms": 32,
+      "processing_ms": 18.5,
+      "screenshot": "008-jacks-hold-card1.png"
+    },
+    {
+      "command_index": 10,
+      "observed_action": "Draw 1 / Neon Jacks",
+      "event_duration_ms": 96,
+      "processing_ms": 21.09999999962747,
+      "screenshot": "010-jacks-draw-1.png"
+    },
+    {
+      "command_index": 11,
+      "observed_action": "Deal 2 / Neon Jacks",
+      "event_duration_ms": 40,
+      "processing_ms": 19.200000000186265,
+      "screenshot": "011-jacks-deal-2.png"
+    },
+    {
+      "command_index": 12,
+      "observed_action": "Hold card 2 / Neon Jacks",
+      "event_duration_ms": 32,
+      "processing_ms": 18.299999999813735,
+      "screenshot": "012-jacks-hold-card2.png"
+    },
+    {
+      "command_index": 13,
+      "observed_action": "Draw 2 / Neon Jacks",
+      "event_duration_ms": 88,
+      "processing_ms": 22.299999999813735,
+      "screenshot": "013-jacks-draw-2.png"
+    },
+    {
+      "command_index": 16,
+      "observed_action": "Deal 3, later abandoned / Neon Jacks",
+      "event_duration_ms": 40,
+      "processing_ms": 23.09999999962747,
+      "screenshot": "016-jacks-draw-3.png"
+    },
+    {
+      "command_index": 26,
+      "observed_action": "Deal 1 / Double Deuces",
+      "event_duration_ms": 40,
+      "processing_ms": 19.200000000186265,
+      "screenshot": "026-deuces-deal-1.png"
+    },
+    {
+      "command_index": 28,
+      "observed_action": "Hold card 1 / Double Deuces",
+      "event_duration_ms": 32,
+      "processing_ms": 17.700000000186265,
+      "screenshot": "028-deuces-held-card1.png"
+    },
+    {
+      "command_index": 29,
+      "observed_action": "Draw 1 / Double Deuces",
+      "event_duration_ms": 48,
+      "processing_ms": 20.5,
+      "screenshot": "029-deuces-draw-1.png"
+    },
+    {
+      "command_index": 30,
+      "observed_action": "Deal 2 / Double Deuces",
+      "event_duration_ms": 40,
+      "processing_ms": 19.5,
+      "screenshot": "030-deuces-deal-2.png"
+    },
+    {
+      "command_index": 31,
+      "observed_action": "Hold card 3 / Double Deuces",
+      "event_duration_ms": 40,
+      "processing_ms": 20.199999999254942,
+      "screenshot": "031-deuces-held-card3.png"
+    },
+    {
+      "command_index": 32,
+      "observed_action": "Draw 2 / Double Deuces",
+      "event_duration_ms": 48,
+      "processing_ms": 27.200000000186265,
+      "screenshot": "032-deuces-draw-2.png"
+    },
+    {
+      "command_index": 41,
+      "observed_action": "Deal 1 / Triple Double Bonus",
+      "event_duration_ms": 40,
+      "processing_ms": 19.899999999441206,
+      "screenshot": "041-triple-deal-1.png"
+    },
+    {
+      "command_index": 43,
+      "observed_action": "Hold card 1 / Triple Double Bonus",
+      "event_duration_ms": 40,
+      "processing_ms": 18.09999999962747,
+      "screenshot": "043-triple-held-card1.png"
+    },
+    {
+      "command_index": 44,
+      "observed_action": "Draw 1 / Triple Double Bonus",
+      "event_duration_ms": 48,
+      "processing_ms": 23.100000000558794,
+      "screenshot": "044-triple-draw-1.png"
+    },
+    {
+      "command_index": 45,
+      "observed_action": "Deal 2 / Triple Double Bonus",
+      "event_duration_ms": 40,
+      "processing_ms": 19.90000000037253,
+      "screenshot": "045-triple-deal-2.png"
+    },
+    {
+      "command_index": 46,
+      "observed_action": "Hold card 3 / Triple Double Bonus",
+      "event_duration_ms": 40,
+      "processing_ms": 19.59999999962747,
+      "screenshot": "046-triple-held-card3.png"
+    },
+    {
+      "command_index": 47,
+      "observed_action": "Draw 2 / Triple Double Bonus",
+      "event_duration_ms": 96,
+      "processing_ms": 24.700000000186265,
+      "screenshot": "047-triple-draw-2.png"
+    }
+  ],
+  "deal_observation_windows": [
+    {
+      "command_index": 4,
+      "start_ms": 115221,
+      "end_ms": 118721,
+      "longtasks": []
+    },
+    {
+      "command_index": 11,
+      "start_ms": 182473.59999999963,
+      "end_ms": 184252.19999999925,
+      "longtasks": []
+    },
+    {
+      "command_index": 16,
+      "start_ms": 187615,
+      "end_ms": 190339.59999999963,
+      "longtasks": []
+    },
+    {
+      "command_index": 26,
+      "start_ms": 253847.89999999944,
+      "end_ms": 257307.2999999998,
+      "longtasks": []
+    },
+    {
+      "command_index": 30,
+      "start_ms": 260431.7999999998,
+      "end_ms": 263771.0999999996,
+      "longtasks": []
+    },
+    {
+      "command_index": 41,
+      "start_ms": 295400.19999999925,
+      "end_ms": 298900.19999999925,
+      "longtasks": []
+    },
+    {
+      "command_index": 45,
+      "start_ms": 302114.7999999998,
+      "end_ms": 305498,
+      "longtasks": []
+    }
+  ],
+  "other_longtasks": [
+    {
+      "start": 2867.399999999441,
+      "duration": 6432,
+      "name": "self"
+    },
+    {
+      "start": 9352.899999999441,
+      "duration": 540,
+      "name": "self"
+    },
+    {
+      "start": 9893.299999999814,
+      "duration": 102,
+      "name": "self"
+    },
+    {
+      "start": 9995.5,
+      "duration": 77,
+      "name": "self"
+    },
+    {
+      "start": 10072.799999999814,
+      "duration": 52,
+      "name": "self"
+    },
+    {
+      "start": 10125.799999999814,
+      "duration": 375,
+      "name": "self"
+    },
+    {
+      "start": 85328.59999999963,
+      "duration": 259,
+      "name": "self"
+    },
+    {
+      "start": 96875.79999999981,
+      "duration": 502,
+      "name": "self"
+    },
+    {
+      "start": 97378.5,
+      "duration": 107,
+      "name": "self"
+    },
+    {
+      "start": 138512.7999999998,
+      "duration": 66,
+      "name": "self"
+    },
+    {
+      "start": 184279.7999999998,
+      "duration": 62,
+      "name": "self"
+    },
+    {
+      "start": 230100.19999999925,
+      "duration": 62,
+      "name": "self"
+    },
+    {
+      "start": 231867.09999999963,
+      "duration": 175,
+      "name": "self"
+    },
+    {
+      "start": 232043,
+      "duration": 74,
+      "name": "self"
+    },
+    {
+      "start": 258068.7999999998,
+      "duration": 59,
+      "name": "self"
+    },
+    {
+      "start": 264546.2999999998,
+      "duration": 60,
+      "name": "self"
+    },
+    {
+      "start": 268338.2999999998,
+      "duration": 57,
+      "name": "self"
+    },
+    {
+      "start": 269942.5999999996,
+      "duration": 203,
+      "name": "self"
+    },
+    {
+      "start": 270146,
+      "duration": 86,
+      "name": "self"
+    },
+    {
+      "start": 299749.69999999925,
+      "duration": 63,
+      "name": "self"
+    },
+    {
+      "start": 305524.0999999996,
+      "duration": 65,
+      "name": "self"
+    },
+    {
+      "start": 311191.89999999944,
+      "duration": 55,
+      "name": "self"
+    }
+  ],
+  "trace_analysis": {
+    "sha256": "9570e1abe3351daef46755aff01ff477919aa276eed0f7a6f965124c83688bfb",
+    "bytes": 310399477,
+    "event_count": 1227227,
+    "long_trace_events": [
+      {
+        "name": "ThreadPool_RunTask",
+        "pid": 19848,
+        "tid": 6476,
+        "ts": 4472016105,
+        "dur": 76398,
+        "tdur": 934,
+        "tts": 84076,
+        "args": {
+          "src_file": "components/segmentation_platform/internal/database/ukm_database_impl.cc",
+          "src_func": "CleanupOldEntries",
+          "src_line": 66
+        }
+      },
+      {
+        "name": "ThreadControllerImpl::RunTask",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4490743661,
+        "dur": 66315,
+        "tdur": 60053,
+        "tts": 39057280,
+        "args": {
+          "src_file": "cc/trees/proxy_impl.cc",
+          "src_func": "ScheduledActionSendBeginMainFrame",
+          "src_line": 844
+        }
+      },
+      {
+        "name": "FireAnimationFrame",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4490743697,
+        "dur": 66088,
+        "tdur": 59868,
+        "tts": 39057315,
+        "args": {
+          "data": {
+            "frame": "902F0FE4952FD7C5463D8E11F8B78234",
+            "id": 35361
+          }
+        }
+      },
+      {
+        "name": "FunctionCall",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4490743700,
+        "dur": 66080,
+        "tdur": 59861,
+        "tts": 39057317,
+        "args": {
+          "data": {
+            "columnNumber": 127443,
+            "frame": "902F0FE4952FD7C5463D8E11F8B78234",
+            "functionName": "MainLoop_runner",
+            "isolate": "9534243949507094182",
+            "lineNumber": 1,
+            "sampleTraceId": 998821871315626,
+            "scriptId": "5",
+            "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/index.js"
+          }
+        }
+      },
+      {
+        "name": "ThreadControllerImpl::RunTask",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4536510706,
+        "dur": 62078,
+        "tdur": 60056,
+        "tts": 53565871,
+        "args": {
+          "src_file": "cc/trees/proxy_impl.cc",
+          "src_func": "ScheduledActionSendBeginMainFrame",
+          "src_line": 844
+        }
+      },
+      {
+        "name": "FireAnimationFrame",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4536510742,
+        "dur": 61836,
+        "tdur": 59893,
+        "tts": 53565903,
+        "args": {
+          "data": {
+            "frame": "902F0FE4952FD7C5463D8E11F8B78234",
+            "id": 47945
+          }
+        }
+      },
+      {
+        "name": "FunctionCall",
+        "pid": 4728,
+        "tid": 19084,
+        "ts": 4536510744,
+        "dur": 61829,
+        "tdur": 59887,
+        "tts": 53565904,
+        "args": {
+          "data": {
+            "columnNumber": 127443,
+            "frame": "902F0FE4952FD7C5463D8E11F8B78234",
+            "functionName": "MainLoop_runner",
+            "isolate": "9534243949507094182",
+            "lineNumber": 1,
+            "sampleTraceId": 998821870961876,
+            "scriptId": "5",
+            "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/index.js"
+          }
+        }
+      }
+    ],
+    "animation_frames": {
+      "count": 19406,
+      "max_callback_wall_usec": 66088,
+      "max_callback_cpu_usec": 59893,
+      "first": [
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4467375091,
+          "dur": 63,
+          "tdur": 61
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4467375155,
+          "dur": 3891,
+          "tdur": 1918
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4467388029,
+          "dur": 24,
+          "tdur": 21
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4467388053,
+          "dur": 3930,
+          "tdur": 2264
+        }
+      ],
+      "last": [
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4537920485,
+          "dur": 21,
+          "tdur": 20
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4537920507,
+          "dur": 3630,
+          "tdur": 1632
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4537927536,
+          "dur": 23,
+          "tdur": 20
+        },
+        {
+          "pid": 4728,
+          "tid": 19084,
+          "ts": 4537927559,
+          "dur": 3689,
+          "tdur": 1855
+        }
+      ]
+    },
+    "scope_limit": "Record-until-full trace captured only an initial bounded window (not the complete six-minute browser session). Standard PerformanceObserver longtask/event telemetry continued for the whole session. The external requestAnimationFrame array stopped at its 30000-sample bound; later frame cadence is unavailable, not zero."
+  },
+  "historical_outliers": {
+    "retained": "docs/testing/video_poker_hint_incremental_candidate_20261110.json: standalone Web maximum projection188420us; integration report also preserves188-344ms wall-time outliers.",
+    "attribution": "Unresolved. Current trace has two renderer MainLoop_runner animation callbacks66088/61836us wall with59868/59893us thread CPU, but no GDScript/advice call stack. These observed full-host frame costs are not proof of the cause of historical standalone measurements.",
+    "custody_limit": "Named old E-drive raw run directories were not present in the current E:/CodexQA/BTH/runs inventory. Committed reports and exact historical values remain; no historical sample was discarded, rerun under a relaxed threshold or reclassified as pass.",
+    "method": "Time.get_ticks_usec wall elapsed includes scheduling/GC/other full-frame work. Assigning its historical outliers to quota, JIT, GC or advice requires correlated per-thread CPU/call-stack evidence that the retained numeric reports do not supply."
+  },
+  "retained_exact_source_tests": [
+    "docs/testing/video_poker_hint_integration_20261110.json: numeric/EV parity, incremental lifecycle and no-pointer liveness on byte-identical video_poker.gd",
+    "docs/testing/video_poker_hint_timing_followup_20261110.json: source-matched rendered3.010-3.045ms strategy slices against unchanged50ms gate; not deployed-PCK slice instrumentation"
+  ],
+  "qualification_limits": [
+    "No fresh50ms internal advice-slice metric was exposed in the unchanged production PCK; new measurements are normal player visible/browser work, not a fabricated internal slice pass.",
+    "No >=50ms longtask in the seven sampled Deal windows or six accepted Hold windows. Draw telemetry has59-66ms longtasks; menu/cabinet entry tasks up to502ms remain real wider-performance follow-ups.",
+    "Six completed rounds (two per cabinet), not general gameplay or whole-game performance certification.",
+    "Historical188-344ms outliers and whole-game performance parent remain Open. No speculative product optimization."
+  ],
+  "evidence_root": "E:\\CodexQA\\BTH\\runs\\vp-deployed-visible-20261111\\evidence",
+  "evidence_files": {
+    "result.json": "dc5226922a7693fdd1775ab6daac19c4a0d98bb13af0d5886ea4692972459436",
+    "commands.json": "9aec5d7d8cbcb65460f1524f1b512e3899e622d32b6948b5bf7eb4f0bdf41e8b",
+    "trace.json": "9570e1abe3351daef46755aff01ff477919aa276eed0f7a6f965124c83688bfb",
+    "job.json": "936c9e7e49715f81137a2fecf3e940375d11fa123a3baa0c5cd59eb4d6c3cb52",
+    "storage-manifest.json": "ad0cd2ce54e1865d0238fccee23648c3aaa3a591042072074f46c700610adc51"
+  },
+  "harness_sha256": "85e662af1d1acb61baecbe3550dfaa6d505935219f4aa738c1bfda3d54a46939",
+  "working_copy_video_poker_gd_sha256": "1b4301565cc1bc8379807ed3c1e19147b5a04f1155dbab709b445c88d42e203e",
+  "video_poker_git_blob": "9f12db29e89f9735382ce7cb92c20a13ff9107d7",
+  "source_identity_note": "Canonical Git bytes match the preserved ac367c3b96ffb068fca63183163b082a0586ef88bdd5b65fc6fb6a01f83bc3c9 historical source hash; working checkout is CRLF. Historical b643 object is absent from this shallow local clone; no fabricated local ancestry proof.",
+  "validation": {
+    "checks": [
+      {
+        "label": "syntax",
+        "command": [
+          "C:/Program Files/nodejs/node.exe",
+          "--check",
+          "docs/testing/video_poker_deployed_visible_20261111.cjs"
+        ],
+        "exit_code": 0,
+        "log": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\syntax.log"
+      },
+      {
+        "label": "tooling",
+        "command": [
+          "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-B",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tools/tests",
+          "-v"
+        ],
+        "exit_code": 0,
+        "log": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\tooling.log"
+      },
+      {
+        "label": "reconcile",
+        "command": [
+          "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+          "-B",
+          "tools/check_bth_task_ledger.py",
+          "--owners",
+          "docs/todo/bth_task_owner_snapshot.json",
+          "--runtimes",
+          "docs/testing/video_poker_deployed_visible_20261111.runtime.json",
+          "--group",
+          "current",
+          "--format",
+          "json",
+          "--output",
+          "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\reconciliation.json"
+        ],
+        "exit_code": 1,
+        "log": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\reconcile.log"
+      },
+      {
+        "label": "diff",
+        "command": [
+          "C:/Program Files/Git/cmd/git.exe",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "log": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\diff.log"
+      }
+    ],
+    "scoped_findings": [],
+    "reconciliation_summary": {
+      "objectives_checked": 162,
+      "batches_checked": 9,
+      "open_objectives": 63,
+      "open_batches": 5,
+      "open_work_items": 68,
+      "user_paused_items": 36,
+      "complete_objectives": 99,
+      "errors": 47,
+      "warnings": 0,
+      "tasks_with_errors": 27
+    },
+    "report": "E:\\CodexQA\\BTH\\runs\\vp-deployed-validation-20261111\\evidence\\reconciliation.json",
+    "final_reconciliation": {
+      "report": "E:\\CodexQA\\BTH\\runs\\vp-deployed-commit-20261111\\evidence\\reconciliation.json",
+      "report_sha256": "3083b7b2959fff39a43970e7e42f5c1fdc0c2545f92ff6b037bb87553bae3d4c",
+      "summary": {
+        "objectives_checked": 162,
+        "batches_checked": 9,
+        "open_objectives": 63,
+        "open_batches": 5,
+        "open_work_items": 68,
+        "user_paused_items": 36,
+        "complete_objectives": 99,
+        "errors": 47,
+        "warnings": 0,
+        "tasks_with_errors": 27
+      },
+      "scoped_findings": [],
+      "scope": "Seven ended exclusive Jobs only; incomplete host census retained."
+    },
+    "initial_commit_attempt": {
+      "result": "No commit created; isolated HOME lacked Git author identity. Existing HEAD author erikjpet <erikjpet@gmail.com> reused with per-command -c settings only; no global or persistent identity change.",
+      "receipt": "E:\\CodexQA\\BTH\\runs\\vp-deployed-commit-20261111\\evidence\\job.json",
+      "exit_code": 1,
+      "active_at_release": 0
+    }
+  },
+  "pointer_commands": [
+    {
+      "op": "click",
+      "label": "games",
+      "x": 581,
+      "y": 49,
+      "wait": 800
+    },
+    {
+      "op": "click",
+      "label": "video-poker",
+      "x": 941,
+      "y": 567,
+      "wait": 1800
+    },
+    {
+      "op": "trace",
+      "label": "trace-start"
+    },
+    {
+      "op": "click",
+      "x": 640,
+      "wait": 20,
+      "y": 668,
+      "label": "jacks-deal-1"
+    },
+    {
+      "op": "click",
+      "x": 409,
+      "wait": 40,
+      "y": 521,
+      "label": "jacks-hold-pending-1"
+    },
+    {
+      "op": "snapshot",
+      "wait": 900,
+      "label": "jacks-hold-idle-1"
+    },
+    {
+      "op": "snapshot",
+      "label": "jacks-hand-visible",
+      "wait": 1800
+    },
+    {
+      "y": 520,
+      "op": "click",
+      "label": "jacks-hold-card1",
+      "wait": 100,
+      "x": 407
+    },
+    {
+      "op": "snapshot",
+      "label": "jacks-held-advice",
+      "wait": 1800
+    },
+    {
+      "y": 668,
+      "op": "click",
+      "label": "jacks-draw-1",
+      "wait": 1800,
+      "x": 640
+    },
+    {
+      "wait": 1500,
+      "label": "jacks-deal-2",
+      "x": 640,
+      "y": 668,
+      "op": "click"
+    },
+    {
+      "wait": 50,
+      "label": "jacks-hold-card2",
+      "x": 524,
+      "y": 520,
+      "op": "click"
+    },
+    {
+      "wait": 1500,
+      "label": "jacks-draw-2",
+      "x": 640,
+      "y": 668,
+      "op": "click"
+    },
+    {
+      "wait": 1500,
+      "label": "jacks-deal-3",
+      "x": 640,
+      "y": 668,
+      "op": "click"
+    },
+    {
+      "wait": 50,
+      "label": "jacks-hold-card3",
+      "x": 640,
+      "y": 520,
+      "op": "click"
+    },
+    {
+      "wait": 1500,
+      "label": "jacks-draw-3",
+      "x": 640,
+      "y": 668,
+      "op": "click"
+    },
+    {
+      "label": "jacks-no-input-animation",
+      "wait": 1000,
+      "op": "snapshot"
+    },
+    {
+      "wait": 700,
+      "label": "leave-jacks",
+      "x": 1036,
+      "y": 170,
+      "op": "click"
+    },
+    {
+      "x": 875,
+      "label": "practice-menu",
+      "op": "click",
+      "y": 36,
+      "wait": 600
+    },
+    {
+      "y": 491,
+      "label": "main-menu",
+      "x": 512,
+      "op": "click",
+      "wait": 600
+    },
+    {
+      "y": 49,
+      "label": "games-second",
+      "x": 581,
+      "op": "click",
+      "wait": 600
+    },
+    {
+      "y": 213,
+      "label": "seed-focus-a",
+      "x": 283,
+      "op": "click"
+    },
+    {
+      "key": "Control+A",
+      "label": "seed-select-a",
+      "op": "key"
+    },
+    {
+      "key": "A",
+      "label": "seed-a",
+      "op": "key"
+    },
+    {
+      "y": 567,
+      "label": "cabinet-a",
+      "x": 941,
+      "op": "click",
+      "wait": 2200
+    },
+    {
+      "wait": 20,
+      "x": 640,
+      "op": "click",
+      "label": "deuces-deal-1",
+      "y": 668
+    },
+    {
+      "wait": 3000,
+      "op": "snapshot",
+      "label": "deuces-hand-1"
+    },
+    {
+      "wait": 100,
+      "x": 223,
+      "op": "click",
+      "label": "deuces-held-card1",
+      "y": 520
+    },
+    {
+      "wait": 3000,
+      "x": 640,
+      "op": "click",
+      "label": "deuces-draw-1",
+      "y": 668
+    },
+    {
+      "wait": 3000,
+      "x": 640,
+      "op": "click",
+      "label": "deuces-deal-2",
+      "y": 668
+    },
+    {
+      "wait": 100,
+      "x": 401,
+      "op": "click",
+      "label": "deuces-held-card3",
+      "y": 520
+    },
+    {
+      "wait": 3000,
+      "x": 640,
+      "op": "click",
+      "label": "deuces-draw-2",
+      "y": 668
+    },
+    {
+      "wait": 700,
+      "x": 1036,
+      "op": "click",
+      "label": "leave-deuces",
+      "y": 170
+    },
+    {
+      "wait": 500,
+      "x": 875,
+      "op": "click",
+      "label": "practice-menu-2",
+      "y": 36
+    },
+    {
+      "wait": 500,
+      "x": 512,
+      "op": "click",
+      "label": "main-menu-2",
+      "y": 491
+    },
+    {
+      "wait": 500,
+      "x": 581,
+      "op": "click",
+      "label": "games-third",
+      "y": 49
+    },
+    {
+      "x": 283,
+      "op": "click",
+      "label": "seed-focus-b",
+      "y": 213
+    },
+    {
+      "key": "Control+A",
+      "op": "key",
+      "label": "seed-select-b"
+    },
+    {
+      "key": "B",
+      "op": "key",
+      "label": "seed-b"
+    },
+    {
+      "wait": 2200,
+      "x": 941,
+      "op": "click",
+      "label": "cabinet-b",
+      "y": 567
+    },
+    {
+      "wait": 20,
+      "op": "click",
+      "label": "triple-deal-1",
+      "x": 640,
+      "y": 668
+    },
+    {
+      "op": "snapshot",
+      "label": "triple-hand-1",
+      "wait": 3000
+    },
+    {
+      "wait": 100,
+      "op": "click",
+      "label": "triple-held-card1",
+      "x": 315,
+      "y": 474
+    },
+    {
+      "wait": 3000,
+      "op": "click",
+      "label": "triple-draw-1",
+      "x": 640,
+      "y": 668
+    },
+    {
+      "wait": 3000,
+      "op": "click",
+      "label": "triple-deal-2",
+      "x": 640,
+      "y": 668
+    },
+    {
+      "wait": 100,
+      "op": "click",
+      "label": "triple-held-card3",
+      "x": 401,
+      "y": 474
+    },
+    {
+      "wait": 3000,
+      "op": "click",
+      "label": "triple-draw-2",
+      "x": 640,
+      "y": 668
+    },
+    {
+      "op": "snapshot",
+      "label": "triple-no-input-animation",
+      "wait": 1000
+    },
+    {
+      "wait": 700,
+      "op": "click",
+      "label": "leave-triple",
+      "x": 1036,
+      "y": 170
+    },
+    {
+      "wait": 500,
+      "op": "click",
+      "label": "practice-menu-3",
+      "x": 875,
+      "y": 36
+    },
+    {
+      "wait": 500,
+      "op": "click",
+      "label": "final-main-menu",
+      "x": 512,
+      "y": 491
+    },
+    {
+      "label": "controlled-finish",
+      "op": "exit"
+    }
+  ]
+}
