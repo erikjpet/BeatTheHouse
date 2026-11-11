@@ -33375,15 +33375,23 @@
             "id": "2",
             "description": "Associated corrective or qualification commit",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_expectation_precision_20261111.md",
+              "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+              "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
+            ]
           },
           {
             "id": "3",
             "description": "Exact current candidate acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_expectation_precision_20261111.md",
+              "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+              "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
+            ]
           }
         ],
         "coverage": {
@@ -33392,11 +33400,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "TESTED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_EXACT_NEXT",
       "owner": {
-        "name": "Fix Count expectation precision",
-        "task_ref": "/root/fix_count_test_precision",
+        "name": "Record Count completion",
+        "task_ref": "/root/record_count_completion",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -33411,16 +33419,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
+          "evidence": [
+            "docs/testing/count_expectation_precision_20261111.md",
+            "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+            "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
         "evidence": [
-          "docs/testing/count_expectation_precision_20261111.md"
+          "docs/testing/count_expectation_precision_20261111.md",
+          "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+          "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
         ],
-        "scope": "Corrective Count test-reference commit pending existing NEXT; historical report deployment remains recorded in AUD061-17."
+        "scope": "Exact corrective Count test-reference commit verified through existing private LAN NEXT; ten served asset checks and clean browser menu startup. Native synthetic acceptance reused for the unchanged test script; no full RC or Web gameplay qualification inferred."
       },
       "evidence": [
         {
@@ -33432,24 +33450,29 @@
           "kind": "focused_current_main_acceptance",
           "reference": "docs/testing/count_expectation_precision_20261111.md",
           "summary": "Unchanged current-main write20/read7 reproduce exact comparison failure; binary reference write26/cold8 and unchanged synthetic70 pass, no tolerances or production changes. Ledger36 pass;1682 inherited findings unchanged."
+        },
+        {
+          "kind": "exact_next_delivery",
+          "reference": "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+          "summary": "Main/NEXT 1ed18edd616dd14a1e5f32b7fca81a6f13772732; tree d80d8c2daf3e6767638b12478d17e33c6024b487. Ten served asset checks, strict HTTPS metadata, clean browser menu startup and PCK audit1168 pass. Only this Count test-oracle finding closes."
         }
       ],
       "implementation_batches": [
         "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001"
       ],
-      "next_action": "Commit the tested lossless Count expectation fix, verify its exact existing NEXT identity/startup, then associate the corrective commit and close only this finding.",
+      "next_action": "None for this Count test-oracle finding. Other release/version, Riverboat fixture and package qualification failures remain open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.797499+00:00",
+        "observed_at": "2026-11-11T15:56:05.814436+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
-      "updated_at": "2026-11-11T15:00:51.496070+00:00"
+      "updated_at": "2026-11-11T15:56:05.814436+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
@@ -35561,14 +35584,14 @@
       "name": "Count restore expectation loses float precision implementation",
       "parent_id": "BTH061-RC-COUNT-EXPECTATION-001",
       "group": "current",
-      "state": "open",
-      "status": "TESTED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_EXACT_NEXT",
       "scope": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
       "owner": {
-        "name": "Fix Count expectation precision",
-        "task_ref": "/root/fix_count_test_precision",
+        "name": "Record Count completion",
+        "task_ref": "/root/record_count_completion",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -35583,16 +35606,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
+          "evidence": [
+            "docs/testing/count_expectation_precision_20261111.md",
+            "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+            "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
         "evidence": [
-          "docs/testing/count_expectation_precision_20261111.md"
+          "docs/testing/count_expectation_precision_20261111.md",
+          "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+          "docs/testing/evidence/count_expectation_precision_20261111/delivery_startup.json"
         ],
-        "scope": "Corrective Count test-reference commit pending existing NEXT; historical report deployment remains recorded in AUD061-17."
+        "scope": "Exact corrective Count test-reference commit verified through existing private LAN NEXT; ten served asset checks and clean browser menu startup. Native synthetic acceptance reused for the unchanged test script; no full RC or Web gameplay qualification inferred."
       },
       "evidence": [
         {
@@ -35604,18 +35637,23 @@
           "kind": "focused_current_main_acceptance",
           "reference": "docs/testing/count_expectation_precision_20261111.md",
           "summary": "Unchanged current-main write20/read7 reproduce exact comparison failure; binary reference write26/cold8 and unchanged synthetic70 pass, no tolerances or production changes. Ledger36 pass;1682 inherited findings unchanged."
+        },
+        {
+          "kind": "exact_next_delivery",
+          "reference": "docs/testing/evidence/count_expectation_precision_20261111/delivery_assets.json",
+          "summary": "Main/NEXT 1ed18edd616dd14a1e5f32b7fca81a6f13772732; tree d80d8c2daf3e6767638b12478d17e33c6024b487. Ten served asset checks, strict HTTPS metadata, clean browser menu startup and PCK audit1168 pass. Only this Count test-oracle finding closes."
         }
       ],
-      "next_action": "Commit the tested lossless Count expectation fix, verify its exact existing NEXT identity/startup, then associate the corrective commit and close only this finding.",
+      "next_action": "None for this Count test-oracle finding. Other release/version, Riverboat fixture and package qualification failures remain open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.797499+00:00",
+        "observed_at": "2026-11-11T15:56:05.814436+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T15:00:51.496070+00:00"
+      "updated_at": "2026-11-11T15:56:05.814436+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001",

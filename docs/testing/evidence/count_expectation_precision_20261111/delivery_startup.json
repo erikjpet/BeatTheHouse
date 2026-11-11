@@ -1,0 +1,66 @@
+{
+  "expected": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
+  "metadata": {
+    "source_commit": "1ed18edd616dd14a1e5f32b7fca81a6f13772732",
+    "version": "0.6.0-dev+1ed18edd616d",
+    "source_branch": "main",
+    "built_at": "2026-11-11T15:07:01Z",
+    "source_tree": "d80d8c2daf3e6767638b12478d17e33c6024b487",
+    "web_gl_handles": {
+      "schema": "bth.web_gl_handles/v1",
+      "policy_version": 1,
+      "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
+      "source_hash_format": "utf8_lf_v1",
+      "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+      "tool_sha256": "496d770ba2d8509fd3b97ede25a5fc8edce46104c5a258009206815d750c938a",
+      "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
+      "godot_commit": "89cea143987d564363e15d207438530651d943ac",
+      "emscripten_version": "4.0.20",
+      "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+      "build_profile_sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7",
+      "engine_assets": {
+        "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+      },
+      "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+      "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+      "tables": [
+        "buffers",
+        "textures",
+        "vaos",
+        "syncs"
+      ],
+      "rewrites": {
+        "allocator": 1,
+        "delete_buffers": 1,
+        "delete_textures": 1,
+        "delete_vaos": 1,
+        "delete_syncs": 1
+      }
+    },
+    "archive_sha256": "2c9833e405ac68dfc053ede5f2c01684501f4db4d719a7996ea530e632a9a797"
+  },
+  "url": "http://localhost:8088/p/beat-the-house/play/dev/1ed18edd616dd14a1e5f32b7fca81a6f13772732/",
+  "title": "Beat the House",
+  "canvas": 1,
+  "errors": [],
+  "consoleIssues": [],
+  "resources": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/1ed18edd616dd14a1e5f32b7fca81a6f13772732/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/1ed18edd616dd14a1e5f32b7fca81a6f13772732/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/1ed18edd616dd14a1e5f32b7fca81a6f13772732/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/1ed18edd616dd14a1e5f32b7fca81a6f13772732/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ]
+}
