@@ -7995,7 +7995,7 @@ func claim_grand_casino_players_card_tier() -> Dictionary:
 	if next_tier == GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
 		return {"ok": true, "review_required": true, "tier": next_tier, "message": "Linda is ready to complete the Gold review."}
 	if not _grant_grand_casino_players_card_tier(next_tier, true):
-		return {"ok": false, "message": "The Players Card tier sequence is invalid."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The Players Card tier sequence is invalid.")}
 	return {"ok": true, "tier": next_tier, "message": "Linda awards the %s Players Card tier." % next_tier.capitalize(), "status": demo_objective_status()}
 
 

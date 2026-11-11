@@ -1,0 +1,156 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+    "--headless",
+    "--path",
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+    "--script",
+    "res://scripts/tests/qol03_player_wording_contract.gd"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "f2de084c8cdf9e0bd1ea61b87bc381a5d04e9f8e4ed5f86d50906cea25f30b19",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-qol03-before-20261110",
+    "token": "85523ea1174f84b6030d4c013207dc5e",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 180,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\profile",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\temp",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\appdata",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\localappdata",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\home",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\cache",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\save_dir",
+      "available_bytes": 337960738816
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\pycache",
+      "available_bytes": 337960738816
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\profile",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\temp",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\evidence",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\appdata",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\localappdata",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\home",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\cache",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\save_dir",
+      "available_bytes": 337960734720
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol03-before-20261110\\pycache",
+      "available_bytes": 337960734720
+    }
+  },
+  "pid": 20208,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 1,
+  "active_at_release": 0,
+  "finished_epoch": 1794371487.0123823
+}

@@ -4,6 +4,40 @@ extends RefCounted
 # Shared player-facing text boundary. Simulation and authority code may retain
 # detailed diagnostics, while presentation consumes stable keys and parameters.
 
+# Keep support diagnostics at the rejected-action boundary while players see
+# the consequence and a next action. Unknown, already-player-facing text passes through.
+const SUPPORT_MESSAGES := {
+	"Room object authority is invalid.": "That can't be used right now. Try another action.",
+	"The Players Card tier sequence is invalid.": "Linda can't upgrade this card right now. Keep playing and ask her again later.",
+	"The terminal collection receipt is invalid.": "Your collection could not be saved. Keep this run open and choose Save to retry.",
+	"The terminal collection intent is invalid.": "Your collection could not be saved. Keep this run open and choose Save to retry.",
+	"The terminal collection intent is incomplete.": "Your collection could not be saved. Keep this run open and choose Save to retry.",
+	"The terminal collection receipt does not match its outcome.": "Your collection could not be saved. Keep this run open and choose Save to retry.",
+	"The completed run's reward receipt is unavailable.": "Your run's reward couldn't be checked. Keep this run open and choose Save to retry.",
+	"The stored reward receipt could not be verified.": "Your run's reward couldn't be checked. Keep this run open and choose Save to retry.",
+	"Sal stock needs a run receipt.": "Sal can't update the shelf yet. Choose Save to retry.",
+	"The table host rejected an incomplete play transaction.": "The table couldn't finish that play. Try the action again.",
+	"The heist receipt could not be committed.": "The crew couldn't finish that step. Try the action again.",
+	"Save waits for the live machine to settle.": "Finish the current play, then save.",
+	"Room check pending; existing save retained.": "Can't save this room yet. Your last save is safe; try Save again shortly.",
+	"The pawn quote changed before the transaction could commit.": "The pawn price changed. Ask for a new quote.",
+	"The pawn transaction could not settle safely.": "The pawn counter couldn't finish the sale. Nothing was sold; try again.",
+	"The pawn transaction was cancelled because its settlement ended the run.": "That sale would end your run, so it was cancelled. Choose another action.",
+	"The pawn transaction could not publish its completed state.": "The pawn counter couldn't finish the sale. Nothing was sold; try again.",
+	"The service transaction could not settle safely.": "The counter couldn't complete that action. Nothing was changed; try again.",
+	"The service transaction was cancelled because its settlement ended the run.": "That action would end your run, so it was cancelled. Choose another action.",
+	"The transaction could not publish its completed state.": "The counter couldn't complete that action. Nothing was changed; try again.",
+	"The action receipt could not be verified. Nothing was changed.": "The previous action couldn't be checked. Nothing was changed; try the action again."
+}
+
+
+static func support_message(diagnostic: String) -> String:
+	if not SUPPORT_MESSAGES.has(diagnostic):
+		return diagnostic
+	print("BTH support: %s" % diagnostic)
+	return str(SUPPORT_MESSAGES[diagnostic])
+
+
 const COUNT_FORMS := {
 	"ticket": ["ticket", "tickets"],
 	"active_row": ["active row", "active rows"],
@@ -40,7 +74,7 @@ static func resolve(key: String, params: Dictionary = {}) -> String:
 		"sealed_action.stale":
 			return "That action is no longer current. Review the table and try again."
 		"sealed_action.receipt_missing":
-			return "The action receipt could not be verified. Nothing was changed."
+			return support_message("The action receipt could not be verified. Nothing was changed.")
 		"sealed_action.retry_failed":
 			return "That action could not be completed. Nothing was changed."
 		"sealed_action.boundary_failed":

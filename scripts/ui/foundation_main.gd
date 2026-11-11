@@ -7002,7 +7002,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 		return false
 	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
 		_mark_autosave_dirty()
-		save_status_message = "Save waits for the live machine to settle." if force else status_text
+		save_status_message = PlayerTextScript.support_message("Save waits for the live machine to settle.") if force else status_text
 		return not force
 	# Capture the completed action while it is still the active context. This is
 	# deliberately separate from JSON serialization/disk I/O: a later deferred
@@ -7045,7 +7045,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 		return false
 	if _room_publication_save_blocked():
 		if synchronous:
-			save_status_message = "Room check pending; existing save retained."
+			save_status_message = PlayerTextScript.support_message("Room check pending; existing save retained.")
 		return false
 	if synchronous and save_service.async_save_in_flight():
 		var pending_error := save_service.wait_for_async_save()
@@ -12419,7 +12419,7 @@ func _room_action_authority_available() -> bool:
 		return false
 	var proof := run_state.validate_room_action_authority()
 	if not bool(proof.get("ok", false)):
-		_show_message("Room object authority is invalid.")
+		_show_message(PlayerTextScript.support_message("Room object authority is invalid."))
 		return false
 	return true
 

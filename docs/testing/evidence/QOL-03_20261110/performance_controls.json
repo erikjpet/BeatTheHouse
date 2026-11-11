@@ -1,0 +1,51 @@
+{
+  "baseline": {
+    "draw_p95_ms": 3.277,
+    "draw_samples": 12,
+    "liveness_floor": 8,
+    "liveness_measured": 12,
+    "frames": 120,
+    "idle_draw_budget_ms": 5.0
+  },
+  "smoke": {
+    "draw_p95_ms": 12.548,
+    "draw_samples": 12,
+    "liveness_floor": 8,
+    "liveness_measured": 12,
+    "frames": 120,
+    "idle_draw_budget_ms": 5.0
+  },
+  "bounded_repeat": {
+    "draw_p95_ms": 3.051,
+    "draw_samples": 13,
+    "liveness_floor": 8,
+    "liveness_measured": 13,
+    "frames": 120,
+    "idle_draw_budget_ms": 5.0
+  },
+  "baseline_failure_count": 10,
+  "smoke_failure_count": 10,
+  "repeat_failure_count": 9,
+  "repeat_failures": [
+    "Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+    "Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+    "Late-run Crew dialogue performance probe did not open the conversation.",
+    "Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+    "Coin Pusher V3 300-body tick p95 48.967 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+    "Coin Pusher coin_pusher_active_skill_release frame p95 276.928 ms exceeded 22.000 ms.",
+    "Coin Pusher coin_pusher_active_collect frame p95 271.554 ms exceeded 22.000 ms.",
+    "Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+    "Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+  ],
+  "scope": "Same pinned Godot, verbose mode, RUNS0/FRAMES120/RESOLVE24/seedCHECK-GODOT-PERF,12percentCPU/2GiBJob,fresh isolated profiles. Product source unchanged. Original12.55ms outlier retained; no thresholds,cadence,liveness floors or rendering code changed. Earlier paired01/02 also recorded a6.006ms nonreproduced Blackjack outlier before this wording change. No broad performance or native solver qualification claimed.",
+  "candidate_source_sha256_checked_after_repeat": {
+    "scripts/ui/player_text.gd": "1a86435992ea1a09534665b278b5350e53f3ad845ffcd6505d13583a86b8a737",
+    "scripts/ui/foundation_main.gd": "6ed778642b7168b5246f6256762c6ff0f60a2be2abea6031f98229da86e8e679",
+    "scripts/core/run_state.gd": "005481fd92034c5ee98f75aae607f435d623fc123f8e8630520e6173d7e606c6",
+    "scripts/core/event_module.gd": "325b3d00c75f9c09c9aa08316c1dcaf552e5b4f9e13dc528a4eb9eb1dfdca785",
+    "scripts/core/meta_collection_service.gd": "76189a90fde517862eaf1595ea311eb37e3180a0e113ea53ef725edb8955a5a2",
+    "scripts/core/crew_run_facade.gd": "99fbce856405b175a669179d1cee3cbc48a3c34b31d9d8286b7a409922631e72",
+    "scripts/core/collection_drop_service.gd": "93c4ffe83ed97647c0728e553c933b88e713e737d387a5d0e03f7c9dc9a9b94b",
+    "scripts/core/run_action_service.gd": "8dabb9e899c2a9038c447651890babcb2805eec830e05f348b995cb379b87185"
+  }
+}

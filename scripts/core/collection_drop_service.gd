@@ -1,6 +1,8 @@
 class_name CollectionDropService
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 # Run-boundary bridge: run code records pending markers, this service turns
@@ -318,7 +320,7 @@ func reconcile_terminal_bag_claim(run_state: RunState, meta_collection_service: 
 		return {"ok": true, "resolved": false}
 	var receipt := str(run_state.narrative_flags.get(SAL_STOCK_RECEIPT_FLAG, "")).strip_edges()
 	if receipt.is_empty():
-		return {"ok": false, "message": "The completed run's reward receipt is unavailable."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The completed run's reward receipt is unavailable.")}
 	var markers: Array = []
 	for value in run_state.pending_bag_markers():
 		markers.append(_enriched_marker(JsonCoerceScript._copy_dict(value)))

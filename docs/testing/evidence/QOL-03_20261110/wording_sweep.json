@@ -1,0 +1,164 @@
+{
+  "keywords": [
+    "authority",
+    "projection",
+    "publication",
+    "envelope",
+    "transaction",
+    "receipt",
+    "intent"
+  ],
+  "scope": "Message-value and message-fallback source sweep. Original diagnostic literals remain inside support_message or service_error; runtime native checks verify returned player copy. Scenario/item content untouched.",
+  "matches": [
+    {
+      "file": "scripts/core/collection_drop_service.gd",
+      "line": 323,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The completed run's reward receipt is unavailable.\")}"
+    },
+    {
+      "file": "scripts/core/crew_run_facade.gd",
+      "line": 371,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return GameModule.build_action_result({\"ok\": false, \"type\": \"game_action\", \"source_id\": \"crew_plays\", \"game_id\": game_id, \"action_id\": \"crew_play:%s\" % play_id, \"action_kind\": \"unknown\", \"message\": PlayerTextScript.support_message(\"The table host rejected an incomplete play transaction.\")})"
+    },
+    {
+      "file": "scripts/core/crew_run_facade.gd",
+      "line": 887,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The heist receipt could not be committed.\")}"
+    },
+    {
+      "file": "scripts/core/game_ritual_host_authority.gd",
+      "line": 291,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "return {\"ok\": false, \"error_code\": error_code, \"request_key\": request_key, \"message\": message, \"public_projection\": public_projection()}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 249,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The completed run's reward receipt is unavailable.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 254,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The stored reward receipt could not be verified.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 761,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The terminal collection receipt is invalid.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 764,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The terminal collection intent is invalid.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 767,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The terminal collection intent is incomplete.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 772,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"message\": PlayerTextScript.support_message(\"The terminal collection receipt does not match its outcome.\")}"
+    },
+    {
+      "file": "scripts/core/meta_collection_service.gd",
+      "line": 903,
+      "classification": "Translated known diagnostic; original kept for log",
+      "source": "return {\"ok\": false, \"stocked\": false, \"message\": PlayerTextScript.support_message(\"Sal stock needs a run receipt.\")}"
+    },
+    {
+      "file": "scripts/core/run_action_service.gd",
+      "line": 830,
+      "classification": "Selected message translated at _service_error boundary",
+      "source": "return _service_error(str(applied.get(\"message\", \"The pawn transaction could not settle safely.\")))"
+    },
+    {
+      "file": "scripts/core/run_action_service.gd",
+      "line": 1289,
+      "classification": "Selected message translated at _service_error boundary",
+      "source": "return _service_error(str(applied.get(\"message\", \"The service transaction could not settle safely.\")))"
+    },
+    {
+      "file": "scripts/core/run_generator.gd",
+      "line": 157,
+      "classification": "Variable-name match; selected diagnostic is dynamic; fallback literal contains none of requested exact keywords",
+      "source": "return {\"ok\": false, \"message\": str(publication_errors[0]) if not publication_errors.is_empty() else \"The selected starting area could not be published safely.\"}"
+    },
+    {
+      "file": "scripts/core/run_generator.gd",
+      "line": 705,
+      "classification": "Variable-name match; selected diagnostic is dynamic; fallback literal contains none of requested exact keywords",
+      "source": "return {\"ok\": false, \"message\": str(publication_errors[0]) if not publication_errors.is_empty() else \"The room could not be published safely.\"}"
+    },
+    {
+      "file": "scripts/core/run_state.gd",
+      "line": 11887,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "var public_result := {\"ok\": true, \"resolved\": true, \"message\": str(delivery_receipt.get(\"payment_note\", \"The package changes hands. Nothing else does.\")) if succeeded else str(delivery_receipt.get(\"failure_message\", \"The delivery failed.\"))}"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 48,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"publish_feedback\": {\"inputs\": [\"message\"], \"input_specs\": {\"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\", \"fact\"], \"outputs\": [\"last_feedback\", \"semantic_state\"], \"output_paths\": [\"last_feedback\", \"semantic_state.transition_queue\"], \"write_algebra\": \"replace_plus_queue_append\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"dispatch receipt exactly-once\", \"may_trigger_branch_resolution\": [], \"external_effects\": []},"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 50,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"event_bridge\": {\"inputs\": [\"event_id\", \"resolution_id\"], \"optional_inputs\": [\"message\"], \"input_specs\": {\"event_id\": \"EventChoiceRef.event_id\", \"resolution_id\": \"EventChoiceRef.choice_id\", \"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\", \"fact\"], \"outputs\": [\"event_request_queue\", \"last_feedback\", \"event_correlations\"], \"output_paths\": [\"event_request_queue\", \"last_feedback\", \"event_correlations\"], \"write_algebra\": \"replace_plus_ordered_set_union\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"correlation-key state-idempotent\", \"may_trigger_branch_resolution\": [], \"external_effects\": [{\"type\": \"event_correlation\", \"owner\": \"EventModule\"}]},"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 51,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"grant_item\": {\"inputs\": [\"item_id\", \"message\"], \"input_specs\": {\"item_id\": \"CanonicalId\", \"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\"], \"outputs\": [\"event_request_queue\", \"last_feedback\"], \"output_paths\": [\"event_request_queue\", \"last_feedback\"], \"write_algebra\": \"exactly_once_external_request\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"request delivery receipt exactly-once\", \"may_trigger_branch_resolution\": [], \"external_effects\": [{\"type\": \"inventory_grant\", \"owner\": \"RunState\"}]},"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 52,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"grant_cash\": {\"inputs\": [\"amount\", \"message\"], \"input_specs\": {\"amount\": \"bounded_positive_int\", \"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\"], \"outputs\": [\"event_request_queue\", \"last_feedback\"], \"output_paths\": [\"event_request_queue\", \"last_feedback\"], \"write_algebra\": \"exactly_once_external_request\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"request delivery receipt exactly-once\", \"may_trigger_branch_resolution\": [], \"external_effects\": [{\"type\": \"cash_grant\", \"owner\": \"RunState\"}]},"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 53,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"change_scene_object\": {\"inputs\": [\"owner_namespace\", \"stable_object_id\", \"state\", \"message\"], \"input_specs\": {\"owner_namespace\": \"OwnerNamespace\", \"stable_object_id\": \"SemanticObjectId\", \"state\": \"bounded_nonblank_path_safe_string\", \"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\"], \"outputs\": [\"semantic_state\", \"last_feedback\"], \"output_paths\": [\"semantic_state.scene_objects.<identity>.state\", \"semantic_state.transition_queue\", \"last_feedback\"], \"write_algebra\": \"authorized_visible_replace_plus_feedback\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"command receipt exactly-once\", \"may_trigger_branch_resolution\": [], \"external_effects\": []},"
+    },
+    {
+      "file": "scripts/core/scenario_operation_registry.gd",
+      "line": 54,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "\"play_cue\": {\"inputs\": [\"cue_id\", \"message\"], \"input_specs\": {\"cue_id\": \"CanonicalId\", \"message\": \"bounded_nonblank_path_safe_string\"}, \"fact_projection\": \"none\", \"allowed_sources\": [\"command\"], \"outputs\": [\"semantic_state\", \"last_feedback\"], \"output_paths\": [\"semantic_state.transition_queue\", \"last_feedback\"], \"write_algebra\": \"queue_append\", \"persistent\": true, \"rng\": \"none\", \"fallible\": true, \"atomic\": true, \"idempotence\": \"command receipt exactly-once\", \"may_trigger_branch_resolution\": [], \"external_effects\": [{\"type\": \"audio_cue\", \"owner\": \"Foundation\"}]},"
+    },
+    {
+      "file": "scripts/core/scenario_sequence_runtime.gd",
+      "line": 1915,
+      "classification": "Variable name or protocol/registry metadata match; no matching quoted player-message literal",
+      "source": "queue.append({\"family\": \"transition_ops\", \"op\": \"feedback\", \"channel\": \"feedback\", \"message\": message, \"receipt_id\": \"feedback:%s\" % _trigger_receipt(trigger)})"
+    },
+    {
+      "file": "scripts/ui/foundation_main.gd",
+      "line": 17282,
+      "classification": "Ordinary banking term; retained",
+      "source": "_show_message(str(result.get(\"message\", \"The ATM declines the transaction.\")))"
+    },
+    {
+      "file": "scripts/ui/foundation_main.gd",
+      "line": 22840,
+      "classification": "Physical game object; retained",
+      "source": "_render_numbers_surface(str(result.get(\"message\", \"Lucky leaves the envelope facedown.\")))"
+    }
+  ]
+}

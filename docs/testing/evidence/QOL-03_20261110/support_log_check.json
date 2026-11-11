@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "expected_distinct_diagnostics": 21,
+  "observed_distinct_diagnostics": 21,
+  "missing": [],
+  "match": "Exact BTH support: prefix lines; JSON observation fields are not counted."
+}

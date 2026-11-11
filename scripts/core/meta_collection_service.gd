@@ -1,6 +1,8 @@
 class_name MetaCollectionService
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 signal gold_delta_applied(amount: int)
 
 # Owns profile collection persistence and mutations: item instances, bags,
@@ -244,12 +246,12 @@ func terminal_bag_claim(run_receipt: String) -> Dictionary:
 func commit_terminal_bag_claim(run_receipt: String, marker: Dictionary, existing_bag: Dictionary = {}) -> Dictionary:
 	var receipt := run_receipt.strip_edges()
 	if receipt.is_empty():
-		return {"ok": false, "message": "The completed run's reward receipt is unavailable."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The completed run's reward receipt is unavailable.")}
 	var claims := JsonCoerceScript._copy_dict(_store.get("terminal_bag_claims", {}))
 	if claims.has(receipt):
 		var recorded := terminal_bag_claim(receipt)
 		if int(recorded.get("instance_id", 0)) <= 0 or str(recorded.get("marker_id", "")).is_empty():
-			return {"ok": false, "message": "The stored reward receipt could not be verified."}
+			return {"ok": false, "message": PlayerTextScript.support_message("The stored reward receipt could not be verified.")}
 		return {"ok": true, "bag": recorded, "reused": true}
 	if int(marker.get("bagdef_id", -1)) < 0 or str(marker.get("marker_id", "")).is_empty():
 		return {"ok": false, "message": "That bag cannot be extracted."}
@@ -756,18 +758,18 @@ func allocate_terminal_special_receipt() -> String:
 func commit_terminal_special_outcome(receipt: String, intent_json: String) -> Dictionary:
 	var suffix := receipt.trim_prefix("terminal-outcome:")
 	if not receipt.begins_with("terminal-outcome:") or not suffix.is_valid_int() or int(suffix) < 1 or str(int(suffix)) != suffix:
-		return {"ok": false, "message": "The terminal collection receipt is invalid."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The terminal collection receipt is invalid.")}
 	var plan_value: Variant = JSON.parse_string(intent_json)
 	if typeof(plan_value) != TYPE_DICTIONARY or int(plan_value.get("schema_version", 0)) != 1:
-		return {"ok": false, "message": "The terminal collection intent is invalid."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The terminal collection intent is invalid.")}
 	var plan: Dictionary = plan_value
 	if typeof(plan.get("failed")) != TYPE_BOOL or typeof(plan.get("skip_failure_decay")) != TYPE_BOOL or typeof(plan.get("carried_ids")) != TYPE_ARRAY or typeof(plan.get("card_stamp")) != TYPE_DICTIONARY or typeof(plan.get("chip_stamp")) != TYPE_DICTIONARY or typeof(plan.get("prestige_result")) != TYPE_DICTIONARY or typeof(plan.get("prestige")) != TYPE_BOOL:
-		return {"ok": false, "message": "The terminal collection intent is incomplete."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The terminal collection intent is incomplete.")}
 	var receipts := JsonCoerceScript._copy_dict(_store.get("terminal_special_outcomes", {}))
 	if receipts.has(receipt):
 		var recorded := JsonCoerceScript._copy_dict(receipts[receipt])
 		if str(recorded.get("intent_json", "")) != intent_json or typeof(recorded.get("result")) != TYPE_DICTIONARY or not bool(recorded["result"].get("ok", false)):
-			return {"ok": false, "message": "The terminal collection receipt does not match its outcome."}
+			return {"ok": false, "message": PlayerTextScript.support_message("The terminal collection receipt does not match its outcome.")}
 		var reused := _terminal_special_result(JsonCoerceScript._copy_dict(recorded["result"]))
 		reused["reused"] = true
 		return reused
@@ -898,7 +900,7 @@ func generate_and_insert_sal_stock(run_receipt: String) -> Dictionary:
 	_ensure_store_ready()
 	var receipt := run_receipt.strip_edges()
 	if receipt.is_empty():
-		return {"ok": false, "stocked": false, "message": "Sal stock needs a run receipt."}
+		return {"ok": false, "stocked": false, "message": PlayerTextScript.support_message("Sal stock needs a run receipt.")}
 	if sal_run_receipt_processed(receipt):
 		return {"ok": true, "stocked": false, "receipt": receipt, "message": "Sal already stocked this run."}
 	var resale := JsonCoerceScript._copy_dict(_store.get("sal_resale", {}))

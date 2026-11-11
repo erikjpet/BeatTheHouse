@@ -2544,7 +2544,7 @@ func _service_success(result: Dictionary) -> Dictionary:
 
 
 func _service_error(message: String) -> Dictionary:
-	return IoResultScript.failed(FAILED, "service_rejected", message, {"result": {}})
+	return IoResultScript.failed(FAILED, "service_rejected", PlayerTextScript.support_message(message), {"result": {}})
 
 
 static func _inventory_value_id(value: Variant) -> String:

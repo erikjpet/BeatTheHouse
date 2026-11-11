@@ -1,0 +1,141 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: QOL-03: card_tier player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:43)
+ERROR: QOL-03: terminal_receipt player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:46)
+ERROR: QOL-03: terminal_intent player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:47)
+ERROR: QOL-03: terminal_incomplete player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:48)
+ERROR: QOL-03: terminal_mismatch player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:51)
+ERROR: QOL-03: reward_missing player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:52)
+ERROR: QOL-03: reward_invalid player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:54)
+ERROR: QOL-03: sal_missing player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:56)
+ERROR: QOL-03: crew_play player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:62)
+ERROR: QOL-03: heist_step player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:67)
+ERROR: QOL-03: drop_reward_missing player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:72)
+ERROR: QOL-03: busy_save player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:79)
+ERROR: QOL-03: room_save player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:84)
+ERROR: QOL-03: room_action player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:93)
+ERROR: QOL-03: event_room player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:95)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: counter player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:111)
+ERROR: QOL-03: sealed_action player wording
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol03_player_wording_contract.gd:119)
+       [1] _message (res://scripts/tests/qol03_player_wording_contract.gd:37)
+       [2] _run (res://scripts/tests/qol03_player_wording_contract.gd:113)
+QOL03_PLAYER_WORDING {"checks":54,"failures":["card_tier player wording","terminal_receipt player wording","terminal_intent player wording","terminal_incomplete player wording","terminal_mismatch player wording","reward_missing player wording","reward_invalid player wording","sal_missing player wording","crew_play player wording","heist_step player wording","drop_reward_missing player wording","busy_save player wording","room_save player wording","room_action player wording","event_room player wording","counter player wording","counter player wording","counter player wording","counter player wording","counter player wording","counter player wording","counter player wording","sealed_action player wording"],"observations":[{"case":"card_tier","diagnostic":"The Players Card tier sequence is invalid.","error_code":"","message":"The Players Card tier sequence is invalid.","ok":false},{"case":"terminal_receipt","diagnostic":"The terminal collection receipt is invalid.","error_code":"","message":"The terminal collection receipt is invalid.","ok":false},{"case":"terminal_intent","diagnostic":"The terminal collection intent is invalid.","error_code":"","message":"The terminal collection intent is invalid.","ok":false},{"case":"terminal_incomplete","diagnostic":"The terminal collection intent is incomplete.","error_code":"","message":"The terminal collection intent is incomplete.","ok":false},{"case":"terminal_mismatch","diagnostic":"The terminal collection receipt does not match its outcome.","error_code":"","message":"The terminal collection receipt does not match its outcome.","ok":false},{"case":"reward_missing","diagnostic":"The completed run's reward receipt is unavailable.","error_code":"","message":"The completed run's reward receipt is unavailable.","ok":false},{"case":"reward_invalid","diagnostic":"The stored reward receipt could not be verified.","error_code":"","message":"The stored reward receipt could not be verified.","ok":false},{"case":"sal_missing","diagnostic":"Sal stock needs a run receipt.","error_code":"","message":"Sal stock needs a run receipt.","ok":false},{"case":"crew_play","diagnostic":"The table host rejected an incomplete play transaction.","error_code":"","message":"The table host rejected an incomplete play transaction.","ok":false},{"case":"heist_step","diagnostic":"The heist receipt could not be committed.","error_code":"","message":"The heist receipt could not be committed.","ok":false},{"case":"drop_reward_missing","diagnostic":"The completed run's reward receipt is unavailable.","error_code":"","message":"The completed run's reward receipt is unavailable.","ok":false},{"case":"busy_save","diagnostic":"Save waits for the live machine to settle.","error_code":"","message":"Save waits for the live machine to settle.","ok":false},{"case":"room_save","diagnostic":"Room check pending; existing save retained.","error_code":"","message":"Room check pending; existing save retained.","ok":false},{"case":"room_action","diagnostic":"Room object authority is invalid.","error_code":"","message":"Room object authority is invalid.","ok":false},{"case":"event_room","diagnostic":"Room object authority is invalid.","error_code":"","message":"Room object authority is invalid.","ok":false},{"case":"counter","diagnostic":"The pawn quote changed before the transaction could commit.","error_code":"service_rejected","message":"The pawn quote changed before the transaction could commit.","ok":false},{"case":"counter","diagnostic":"The pawn transaction could not settle safely.","error_code":"service_rejected","message":"The pawn transaction could not settle safely.","ok":false},{"case":"counter","diagnostic":"The pawn transaction was cancelled because its settlement ended the run.","error_code":"service_rejected","message":"The pawn transaction was cancelled because its settlement ended the run.","ok":false},{"case":"counter","diagnostic":"The pawn transaction could not publish its completed state.","error_code":"service_rejected","message":"The pawn transaction could not publish its completed state.","ok":false},{"case":"counter","diagnostic":"The service transaction could not settle safely.","error_code":"service_rejected","message":"The service transaction could not settle safely.","ok":false},{"case":"counter","diagnostic":"The service transaction was cancelled because its settlement ended the run.","error_code":"service_rejected","message":"The service transaction was cancelled because its settlement ended the run.","ok":false},{"case":"counter","diagnostic":"The transaction could not publish its completed state.","error_code":"service_rejected","message":"The transaction could not publish its completed state.","ok":false},{"case":"sealed_action","diagnostic":"The action receipt could not be verified. Nothing was changed.","error_code":"","message":"The action receipt could not be verified. Nothing was changed.","ok":false}]}

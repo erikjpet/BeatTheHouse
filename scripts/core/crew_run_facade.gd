@@ -368,7 +368,7 @@ func crew_play_activate(play_id: String, game_id: String, environment: Dictionar
 		and _run.grand_casino_chips == before_chips + int(result.get("chips_delta", 0))
 	if not valid:
 		_run._apply_environment_turn_snapshot(rollback, false)
-		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": "The table host rejected an incomplete play transaction."})
+		return GameModule.build_action_result({"ok": false, "type": "game_action", "source_id": "crew_plays", "game_id": game_id, "action_id": "crew_play:%s" % play_id, "action_kind": "unknown", "message": PlayerTextScript.support_message("The table host rejected an incomplete play transaction.")})
 	return result
 
 
@@ -884,7 +884,7 @@ func crew_heist_event_action(hook: Dictionary, host_capability: Variant = null) 
 	var state = _run.CrewHeistModelScript.record_tombstone(crew_heist_state, _crew_action_index(), int(action_codes.get(action, 99)), int(phase_codes.get(str(crew_heist_state.get("status", "")), 9)))
 	if state.is_empty():
 		_run._apply_environment_turn_snapshot(rollback, false)
-		return {"ok": false, "message": "The heist receipt could not be committed."}
+		return {"ok": false, "message": PlayerTextScript.support_message("The heist receipt could not be committed.")}
 	if action in ["observe_table", "confront", "hedge"]:
 		var private_codes := {"observe_table": 1, "confront": 2, "hedge": 3}
 		state["x"] = CrewTurnModelScript.record_tombstone(state.get("x", {}), _crew_action_index(), int(private_codes.get(action, 99)), CrewStateModelScript.MEMBER_IDS)
