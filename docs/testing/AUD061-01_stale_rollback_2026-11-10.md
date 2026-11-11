@@ -56,9 +56,15 @@ Baseline: Smoke 4 pass / 7 fail; Python 180 pass / 0 fail; animation liveness 1 
 
 ## NEXT
 
-Pending: paired code/proof and associated-SHA ledger commits have not been pushed yet. After tests compare no worse than baseline, push together through existing main watcher and record exact promoted/served identity, startup and visible Web behavior here. Native window close remains native-only evidence.
+**Verified** on pushed main `18af19ac2878855e18588b8a618ff58cb2002290`, containing code commit `1996d6bec0725081c5f873d32ab26ad93eb22e18`. Exact source tree `c6b18e300ac15dc6f3b443c827a1879b09cf243a`; archive SHA-256 `8f1a44d2561b68cac451619dfb3ac24098c33978d55619b464020f7ac14269ca`. Existing watcher promoted at `2026-11-11T02:28:19Z`, phase current/error null; `PCK AUDIT PASS files=1166`.
 
-Unverified: deployed behavior and storage-denial cleanup failure under a real OS file lock. No read-side recovery, save migration, manual export/deployment, guard change or item/scenario content change.
+The ordinary NEXT entry resolves to the exact immutable SHA URL. BUILD, REF, VERSION and embedded manifest agree. Eight served metadata/HTML/JS/PCK/native files were fetched and hashed against exact pipeline stage receipts; the two unchanged engine WASM pins were reused with HTTP200, MIME and length checks. PCK SHA-256 `0f2ba0413aaba0ad6ae098cdeace60750bcb743579f51f492e6b93d31b7e2a0f`. Unmodified browser startup visibly reached the main menu with `Version 0.6.0-dev+18af19ac2878` (version bump is a later order), with no page/console errors.
+
+Changed behavior was checked through the **unmodified deployed game**: normal Daily Challenge, normal Run Menu Save with each abandoned rollback name, then a real temporary-path directory obstruction in the fresh browser profile. Both stale files disappeared after Save and the primary digest changed. The failed Main Menu save displayed the loss warning, known successful-save UTC time and focused Keep playing. Pointer cancel kept the53cash Quiet House run and restored Run Menu focus. ArrowUp visibly focused Leave without saving; Enter reached the start screen. Normal Continue restored Quiet House,53cash,Day1 1PM. The prior primary digest stayed `5a1d0163cd24ce7d9266b13fa7f4f287e81f4c9c93dd02b92c7191566f538432` across the fault and every navigation boundary.
+
+Evidence: `evidence/AUD061-01-02_20261110/next_delivery/` includes served-assets and pipeline hash receipts, sanitized normal-UI action/observation record, six visually reviewed screenshots and closed Job/storage gates (exit0, active0). This is normal-input rendered Web verification with an external filesystem fault; no scene/script override, replayed save or personal profile. An earlier external-scene probe was rejected by the template's `disable_path_overrides` guard and is retained as a failed setup attempt; that guard was not changed. Tab/ShiftTab screenshots remain retained without claiming a separate Tab-to-leave pass. Window-close behavior was verified natively, not inferred from Web.
+
+Unverified: deletion failure under an actual OS file lock, native solver qualification, broader gameplay/performance and the remaining16 audit orders. No migration, item/scenario content, deployment guard, stable/itch/audience or tag change.
 
 ## Performance control custody
 

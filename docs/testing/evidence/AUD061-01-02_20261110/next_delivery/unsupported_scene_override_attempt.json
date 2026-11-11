@@ -1,0 +1,77 @@
+{
+  "sha": "18af19ac2878855e18588b8a618ff58cb2002290",
+  "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/",
+  "scope": "Exact served PCK/engine/native; unmodified startup then external synthetic fresh-run fixture, real storage obstruction and ordinary pointer choices. Native close is separately tested.",
+  "checks": [
+    {
+      "label": "unmodified exact NEXT startup has no page errors",
+      "pass": true
+    },
+    {
+      "label": "engine/PCK/native downloads succeed",
+      "pass": true
+    }
+  ],
+  "errors": [],
+  "console": [
+    {
+      "type": "error",
+      "text": "ERROR: Scene path was specified on the command line, but this Godot binary was compiled without support for path overrides. Aborting."
+    },
+    {
+      "type": "error",
+      "text": "To be able to use it, use the `disable_path_overrides=no` SCons option when compiling Godot."
+    },
+    {
+      "type": "error",
+      "text": ""
+    },
+    {
+      "type": "error",
+      "text": "   at: start (main\\main.cpp:3978)"
+    },
+    {
+      "type": "error",
+      "text": "RuntimeError: null function\n    at wasm://wasm/0532b5da:wasm-function[820]:0x1c7200\n    at __Z14godot_web_mainiPPc (http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.js:1:72277)\n    at wasm://wasm/005c0e36:wasm-function[100]:0x77b0b\n    at Object.callMain (http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.js:108:2479452)\n    at http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.js:905:27\n    at new Promise (<anonymous>)\n    at http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.js:900:13"
+    }
+  ],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/18af19ac2878855e18588b8a618ff58cb2002290/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "original_html_sha256": "53e1b00a97e512451240b2420bdc3f47e96b18a185297eb71b0107f6ac76dc73",
+  "state": "FAIL",
+  "failure": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.",
+  "pass_count": 2,
+  "fail_count": 0
+}

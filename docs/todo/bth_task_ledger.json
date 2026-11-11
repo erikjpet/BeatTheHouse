@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-11T02:23:50.226609+00:00",
+  "updated_at": "2026-11-11T02:43:46.564626+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -30367,15 +30367,19 @@
             "id": "2",
             "description": "AUD061-02",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "AUD061-01",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+            ]
           },
           {
             "id": "4",
@@ -30490,7 +30494,7 @@
         }
       },
       "state": "open",
-      "status": "PAIRED_01_02_NATIVE_VERIFIED_NEXT_PENDING",
+      "status": "PAIRED_01_02_DELIVERED_16_ORDERS_REMAIN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30519,7 +30523,7 @@
       },
       "evidence": [],
       "implementation_batches": [],
-      "next_action": "Deliver the first paired task through existing NEXT, then continue the remaining16 work orders in the authorized sequence.",
+      "next_action": "Register and reproduce AUD061-09, then continue the remaining orders sequentially; parent remains Open until all18 orders have truthful dispositions and final qualification.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30529,7 +30533,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+      "updated_at": "2026-11-11T02:43:46.564626+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30567,8 +30571,10 @@
             "id": "3",
             "description": "Existing shutdown/save-failure checks and Smoke are no worse than baseline; exact NEXT identity/startup and visible behavior verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -30577,8 +30583,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_AND_EXACT_NEXT_BEHAVIOR",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30590,28 +30596,39 @@
           "evidence": [
             "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "18af19ac2878855e18588b8a618ff58cb2002290",
+          "evidence": [
+            "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "state": "verified",
+        "commit": "18af19ac2878855e18588b8a618ff58cb2002290",
         "evidence": [
           "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
         ],
-        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+        "scope": "Exact immutable NEXT identity/tree/assets and clean startup; ordinary Daily Challenge/Save rollback recovery, real isolated file obstruction, Keep playing, keyboard leave, Continue and saved-byte preservation. Native window close separately verified."
       },
       "evidence": [
         {
           "kind": "native_reproduction_and_fix",
           "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
           "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        },
+        {
+          "kind": "exact_next_behavior",
+          "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
+          "summary": "NEXT18af/treec6b18 promoted02:28:19Z, PCK1166. Normal rendered Web Save cleared both stale names; explicit failure modal/default cancel/ArrowUp+Enter leave/Continue passed with original saved hash retained. Browser errors0, console0, closed Job0active."
         }
       ],
       "implementation_batches": [
         "AUD061-02-BATCH-001"
       ],
-      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "next_action": "Completed scoped fix and exact NEXT verification; retain stated native-solver/performance/original-state limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30623,7 +30640,7 @@
       "planned_app_changes": [
         "Add the specified safe-default ConfirmationDialog for Exit and Main Menu failures, modal focus ownership, decisive repeated native close, and owned prewarm/save joins. Preserve tutorial/meta branches and pending Web Save guard."
       ],
-      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+      "updated_at": "2026-11-11T02:43:46.564626+00:00"
     },
     {
       "id": "AUD061-01",
@@ -30652,8 +30669,10 @@
             "id": "2",
             "description": "All durable-store contract cases and Smoke no worse than baseline; exact NEXT delivered and starts.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -30662,8 +30681,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_AND_EXACT_NEXT_BEHAVIOR",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30675,28 +30694,39 @@
           "evidence": [
             "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "18af19ac2878855e18588b8a618ff58cb2002290",
+          "evidence": [
+            "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "state": "verified",
+        "commit": "18af19ac2878855e18588b8a618ff58cb2002290",
         "evidence": [
           "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
         ],
-        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+        "scope": "Exact immutable NEXT identity/tree/assets and clean startup; ordinary Daily Challenge/Save rollback recovery, real isolated file obstruction, Keep playing, keyboard leave, Continue and saved-byte preservation. Native window close separately verified."
       },
       "evidence": [
         {
           "kind": "native_reproduction_and_fix",
           "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
           "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        },
+        {
+          "kind": "exact_next_behavior",
+          "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+          "summary": "NEXT18af/treec6b18 promoted02:28:19Z, PCK1166. Normal rendered Web Save cleared both stale names; explicit failure modal/default cancel/ArrowUp+Enter leave/Continue passed with original saved hash retained. Browser errors0, console0, closed Job0active."
         }
       ],
       "implementation_batches": [
         "AUD061-01-BATCH-001"
       ],
-      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "next_action": "Completed scoped fix and exact NEXT verification; retain stated native-solver/performance/original-state limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30708,7 +30738,7 @@
       "planned_app_changes": [
         "Delete stale .rollback/.bak.rollback before installation; fail distinctly as stale_rollback_undeletable only if cleanup fails. Retry final cleanup once and retain success for validated installed primary. Preserve rename ordering, validators and exact-digest reuse; no read-side recovery."
       ],
-      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+      "updated_at": "2026-11-11T02:43:46.564626+00:00"
     }
   ],
   "batches": [
@@ -31305,8 +31335,8 @@
       "name": "Allow confirmed leaving after a failed save implementation",
       "parent_id": "AUD061-02",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_AND_EXACT_NEXT_BEHAVIOR",
       "scope": [
         "Add the specified safe-default ConfirmationDialog for Exit and Main Menu failures, modal focus ownership, decisive repeated native close, and owned prewarm/save joins. Preserve tutorial/meta branches and pending Web Save guard."
       ],
@@ -31321,25 +31351,36 @@
           "evidence": [
             "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "18af19ac2878855e18588b8a618ff58cb2002290",
+          "evidence": [
+            "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "state": "verified",
+        "commit": "18af19ac2878855e18588b8a618ff58cb2002290",
         "evidence": [
           "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
         ],
-        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+        "scope": "Exact immutable NEXT identity/tree/assets and clean startup; ordinary Daily Challenge/Save rollback recovery, real isolated file obstruction, Keep playing, keyboard leave, Continue and saved-byte preservation. Native window close separately verified."
       },
       "evidence": [
         {
           "kind": "native_reproduction_and_fix",
           "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
           "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        },
+        {
+          "kind": "exact_next_behavior",
+          "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
+          "summary": "NEXT18af/treec6b18 promoted02:28:19Z, PCK1166. Normal rendered Web Save cleared both stale names; explicit failure modal/default cancel/ArrowUp+Enter leave/Continue passed with original saved hash retained. Browser errors0, console0, closed Job0active."
         }
       ],
-      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "next_action": "Completed scoped fix and exact NEXT verification; retain stated native-solver/performance/original-state limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -31348,15 +31389,15 @@
         "observed_at": "2026-11-11T01:37:01.628976+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+      "updated_at": "2026-11-11T02:43:46.564626+00:00"
     },
     {
       "id": "AUD061-01-BATCH-001",
       "name": "Clear stale rollback files before saving implementation",
       "parent_id": "AUD061-01",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_AND_EXACT_NEXT_BEHAVIOR",
       "scope": [
         "Delete stale .rollback/.bak.rollback before installation; fail distinctly as stale_rollback_undeletable only if cleanup fails. Retry final cleanup once and retain success for validated installed primary. Preserve rename ordering, validators and exact-digest reuse; no read-side recovery."
       ],
@@ -31371,25 +31412,36 @@
           "evidence": [
             "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "18af19ac2878855e18588b8a618ff58cb2002290",
+          "evidence": [
+            "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "state": "verified",
+        "commit": "18af19ac2878855e18588b8a618ff58cb2002290",
         "evidence": [
           "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
         ],
-        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+        "scope": "Exact immutable NEXT identity/tree/assets and clean startup; ordinary Daily Challenge/Save rollback recovery, real isolated file obstruction, Keep playing, keyboard leave, Continue and saved-byte preservation. Native window close separately verified."
       },
       "evidence": [
         {
           "kind": "native_reproduction_and_fix",
           "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
           "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        },
+        {
+          "kind": "exact_next_behavior",
+          "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+          "summary": "NEXT18af/treec6b18 promoted02:28:19Z, PCK1166. Normal rendered Web Save cleared both stale names; explicit failure modal/default cancel/ArrowUp+Enter leave/Continue passed with original saved hash retained. Browser errors0, console0, closed Job0active."
         }
       ],
-      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "next_action": "Completed scoped fix and exact NEXT verification; retain stated native-solver/performance/original-state limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -31398,7 +31450,7 @@
         "observed_at": "2026-11-11T01:37:01.628976+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+      "updated_at": "2026-11-11T02:43:46.564626+00:00"
     }
   ]
 }
