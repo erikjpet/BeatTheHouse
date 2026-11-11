@@ -244,8 +244,8 @@
       "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
       "title": "Execute 0.6.1 audit work orders",
       "state": "active",
-      "observed_at": "2026-11-11T02:43:46.564626+00:00",
-      "source": "Current audit chat has verified paired01/02 exact NEXT through normal rendered UI and closed owned browser Job; continuing AUD061-09. Other owners not refreshed."
+      "observed_at": "2026-11-11T03:03:07.017531+00:00",
+      "source": "Actual current audit chat is active on AUD061-09; CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING. Other owners not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
