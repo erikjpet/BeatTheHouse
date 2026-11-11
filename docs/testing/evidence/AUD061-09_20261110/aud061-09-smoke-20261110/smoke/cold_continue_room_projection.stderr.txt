@@ -1,0 +1,20 @@
+ERROR: Damaged sealed geometry was published as a room.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/cold_continue_room_projection_contract.gd:82)
+       [1] _close_app (res://scripts/tests/cold_continue_room_projection_contract.gd:109)
+ERROR: Damaged sealed geometry passed strict authority validation.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/cold_continue_room_projection_contract.gd:82)
+       [1] _close_app (res://scripts/tests/cold_continue_room_projection_contract.gd:109)
+ERROR: Damaged sealed geometry did not preserve the previous save.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/cold_continue_room_projection_contract.gd:82)
+       [1] _close_app (res://scripts/tests/cold_continue_room_projection_contract.gd:109)
+ERROR: Reconstruction re-signed damaged geometry.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/cold_continue_room_projection_contract.gd:82)
+       [1] _close_app (res://scripts/tests/cold_continue_room_projection_contract.gd:109)

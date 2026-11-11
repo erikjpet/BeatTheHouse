@@ -1,0 +1,38 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: AUD061-09: explicit save tries current write after old async failure
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:24)
+ERROR: AUD061-09: older async failure retained for diagnostics
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:27)
+ERROR: AUD061-09: two failures report second write error rather than older ERR_BUSY
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:35)
+ERROR: AUD061-09: clear removes both generations after old worker failure
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:44)
+ERROR: AUD061-09: host synchronous save writes current state after old failure
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:62)
+ERROR: AUD061-09: successful new write clears current failure state
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:63)
+ERROR: AUD061-09: host retains older drain failure separately
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_async_failure_retry_contract.gd:75)
+       [1] _run (res://scripts/tests/aud061_async_failure_retry_contract.gd:65)
+AUD061_ASYNC_RETRY {"checks":17,"failures":["explicit save tries current write after old async failure","older async failure retained for diagnostics","two failures report second write error rather than older ERR_BUSY","clear removes both generations after old worker failure","host synchronous save writes current state after old failure","successful new write clears current failure state","host retains older drain failure separately"],"observations":[{"case":"retry","file_exists":false,"outcome":{"completed":true,"error":44,"in_flight":false,"ok":false,"slot_id":"retry"},"result":44,"task_drained":true},{"case":"both_fail","outcome":{"completed":true,"error":44,"in_flight":false,"ok":false,"slot_id":"both_fail"},"result":44,"task_drained":true},{"backup_exists":true,"case":"clear","primary_exists":true,"result":44,"task_drained":true},{"case":"host","cash":99,"loaded_cash":100,"outcome":{"completed":true,"error":44,"in_flight":false,"ok":false,"slot_id":"foundation_ui_autosave"},"saved":false,"task_drained":true}]}

@@ -32,6 +32,8 @@ var _web_save_job: Dictionary = {}
 var _web_save_step_frame: int = -1
 var io_mutex := Mutex.new()
 var last_save_outcome: Dictionary = {"ok": true, "error": OK, "error_code": ""}
+# An explicit operation may succeed after draining an older failed generation.
+var last_async_failure_outcome: Dictionary = {}
 
 
 # Checks whether a run save exists.
@@ -53,7 +55,9 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
-			return async_error
+			last_async_failure_outcome = last_save_outcome.duplicate(true)
+			last_async_failure_outcome["drained_for"] = "save_run"
+		# The requested current write, not the older worker, decides this result.
 	var clean_slot := _slot_id(slot_id)
 	# Use the same immutable environment compilations as begin_save_run. The
 	# codec owns its encoded output; synchronous durability still completes here.
@@ -364,7 +368,9 @@ func clear_run(slot_id: String = "autosave") -> Error:
 	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
-			return async_error
+			last_async_failure_outcome = last_save_outcome.duplicate(true)
+			last_async_failure_outcome["drained_for"] = "clear_run"
+		# The owned worker is joined; its failure does not prevent deletion.
 	var clean_slot := _slot_id(slot_id)
 	for path in [run_save_path(clean_slot), backup_save_path(clean_slot)]:
 		var absolute_path := ProjectSettings.globalize_path(path)

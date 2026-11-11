@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+AUD061_ASYNC_RETRY {"checks":17,"failures":[],"observations":[{"case":"retry","file_exists":true,"outcome":{"error":0,"error_code":"","ok":true,"slot_id":"retry"},"result":0,"task_drained":true},{"case":"both_fail","outcome":{"data":{},"error":20,"error_code":"debug_forced_write_failure","message":"Debug Forced Write Failure","ok":false,"outcome":"nothing-loadable","slot_id":"both_fail"},"result":20,"task_drained":true},{"backup_exists":false,"case":"clear","primary_exists":false,"result":0,"task_drained":true},{"case":"host","cash":99,"loaded_cash":99,"outcome":{"error":0,"error_code":"","ok":true,"slot_id":"foundation_ui_autosave"},"saved":true,"task_drained":true}]}

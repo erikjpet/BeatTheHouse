@@ -7048,9 +7048,11 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 	if synchronous and save_service.async_save_in_flight():
 		var pending_error := save_service.wait_for_async_save()
 		if pending_error != OK:
+			save_service.last_async_failure_outcome = save_service.last_save_outcome.duplicate(true)
+			save_service.last_async_failure_outcome["drained_for"] = "foundation_explicit_save"
 			_record_autosave_failure(pending_error, "async_wait_failed", autosave_inflight_generation)
 			autosave_inflight_generation = 0
-			return false
+		# Always attempt this explicit generation after the previous task drains.
 	var requested_generation := autosave_dirty_generation
 	var error := save_service.save_run(run_state, autosave_slot_id) if synchronous else save_service.begin_save_run(run_state, autosave_slot_id)
 	if error == OK:
