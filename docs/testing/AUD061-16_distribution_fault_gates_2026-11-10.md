@@ -46,4 +46,10 @@ Smoke4stages pass/7fail versus baseline4/7; content25/runtime16exact old asserti
 
 ## NEXT
 
-Pending finished code/ledger push and existing-pipeline promotion. Native matrix directly verifies switch properties; no browser mutation of runtime test flags is claimed. Exact deployed assets/startup and feasible ordinary save/diagnostics will be checked after promotion.
+Verified **e05ceb6bd64f3ddec44804752aaa32d88600c622**, containing code **12216a7d489ebd96b49af047d0586d4818b1cf66**, tree dd3944cff6b911b81bd712c312f16675c4919b86, archive9ea630f7bb08108a28c131e7ca5c966f5d34fe22808d0e479f2d024973f4708c. Existing watcher promoted at2026-11-11T06:26:01Z,phasecurrent,errornull. Exact metadata/REF/HTML/JS/PCK/native GET hashes and engine HEAD length/MIME/pins:10/10PASS; ordinary /dev/entry resolves to this identity.
+
+Fresh approved browser profile; unmodified served build. Startup visually clean, footerVersion0.6.0-dev+e05ceb6bd64f. Ordinary Daily Challenge enters House, bankroll68,creates a100312-byte primary save, SHA2564faeb3d627893cba607639724a89c59c994f4afc1d9cf2e8a18532b24dbc6b0e; no .tmp/rollback residue. Screenshots00startup/01daily/02HouseAfterEscape inspected. Despite its generic filename,02-run-menu.png shows House, not an open Run Menu, so no Menu acceptance is claimed. Pageerrors0,consolewarnings/errors0,jobexit0/no timeout/zero active processes.
+
+The switches have no normal player control. Their enabled/ignored behavior is directly verified by the native58-check matrix in both actual predicate modes; no script/scene/path override or mutation of test flags in the deployed Web runtime was attempted. A separate release-template test export is not claimed. Generic startup helper's legacy result.testScope settlement phrase is not an AUD16 settlement assertion; deployed_startup_assessment.json states the accepted observations.
+
+No source swap remains. Native58/0,durability129/0,livenessPASS,Smoke4pass7fail versus baseline4/7(no new categories),additionalaccessibility57candidate/57exactpre-task-controlerrors retained with no additions. Ledger prepush1683inherited errors across52existing tasks,zero new AUD061/QOL findings. Parent stays Open for9remaining work orders.
