@@ -34166,7 +34166,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING",
+      "status": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34181,6 +34181,12 @@
         },
         {
           "sha": "4fe2c5095d241e2847e9b580417005a56fc55a18",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "d40fe6de8dd833c289d7db7013da8507b9762e83",
           "evidence": [
             "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
           ]
@@ -34212,24 +34218,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING"
         }
       ],
       "implementation_batches": [
         "CLOSE-01-BATCH-001"
       ],
-      "next_action": "Verify exact served NEXT identity/assets and rendered Slot/Back Alley/closed-route room behavior after the existing watcher promotes this push.",
+      "next_action": "Deliver the exact two approved C5 data edits through the unchanged one-shot cold-import qualification; verify served NEXT identity and behavior.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T20:44:00.656395+00:00",
+        "observed_at": "2026-11-11T20:54:36.199945+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Classify and correct Smoke failures; tutorial first"
       ],
-      "updated_at": "2026-11-11T20:44:00.656395+00:00"
+      "updated_at": "2026-11-11T20:54:36.199945+00:00"
     },
     {
       "id": "CLOSE-02",
@@ -36900,7 +36911,7 @@
       "parent_id": "CLOSE-01",
       "group": "current",
       "state": "open",
-      "status": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING",
+      "status": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING",
       "scope": [
         "Classify and correct Smoke failures; tutorial first"
       ],
@@ -36918,6 +36929,12 @@
         },
         {
           "sha": "4fe2c5095d241e2847e9b580417005a56fc55a18",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "d40fe6de8dd833c289d7db7013da8507b9762e83",
           "evidence": [
             "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
           ]
@@ -36949,18 +36966,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING"
         }
       ],
-      "next_action": "Verify exact served NEXT identity/assets and rendered Slot/Back Alley/closed-route room behavior after the existing watcher promotes this push.",
+      "next_action": "Deliver the exact two approved C5 data edits through the unchanged one-shot cold-import qualification; verify served NEXT identity and behavior.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T20:44:00.656395+00:00",
+        "observed_at": "2026-11-11T20:54:36.199945+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T20:44:00.656395+00:00"
+      "updated_at": "2026-11-11T20:54:36.199945+00:00"
     },
     {
       "id": "CLOSE-02-BATCH-001",
