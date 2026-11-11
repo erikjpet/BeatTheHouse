@@ -1,0 +1,173 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "tools/check_bth_task_ledger.py",
+    "--owners",
+    "docs/todo/bth_task_owner_snapshot.json",
+    "--runtimes",
+    "docs/todo/bth_runtime_inventory_20261104.json",
+    "--group",
+    "current",
+    "--now",
+    "2026-11-04T17:06:20.728100Z",
+    "--format",
+    "json",
+    "--output",
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence\\ledger.json"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "b022880ef6a9f08adc246469e15591cf8dc1eb5e22dc685ac954c8d664270f9c",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud12-ledger-delivered-20261111",
+    "token": "2599db3bb892670a9b0370c787899d4f",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\profile",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\temp",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\appdata",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\localappdata",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\home",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\cache",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\save_dir",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\pycache",
+      "available_bytes": 334161661952
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence\\ledger.json": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence",
+      "available_bytes": 334161661952
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\profile",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\temp",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\appdata",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\localappdata",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\home",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\cache",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\save_dir",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\pycache",
+      "available_bytes": 334161653760
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence\\ledger.json": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-ledger-delivered-20261111\\evidence",
+      "available_bytes": 334161653760
+    }
+  },
+  "pid": 19168,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 1,
+  "active_at_release": 0,
+  "finished_epoch": 1794398035.6123335
+}

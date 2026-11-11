@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "13_OF_18_ORDERS_COMPLETE_EXPORT_INVESTIGATION_NEXT",
+      "status": "14_OF_18_ORDERS_PROCESSED_13_DONE_AUD12_NOT_REPRODUCED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30543,7 +30543,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue AUD061-12 investigation, AUD061-04/05 dispositions, then AUD061-11/17 on exact proposed RC.",
+      "next_action": "Process AUD061-04 version-stamp/pipeline compatibility, AUD061-05 changelog, then exact proposed-RC AUD061-11/17; carry AUD12 exact-RC export pair.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30553,7 +30553,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T11:04:39.720854+00:00"
+      "updated_at": "2026-11-11T11:53:51.956080+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31976,15 +31976,19 @@
             "id": "1",
             "description": "Retained49-percent resource and distinct failure types identified from raw evidence.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Bounded same-memory-cap reproduction/isolation recorded; no speculative GC or asset fix claimed.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
@@ -32001,7 +32005,7 @@
         }
       },
       "state": "open",
-      "status": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING",
+      "status": "NOT_REPRODUCED_REPORT_NEXT_VERIFIED_ORIGINAL_CAUSE_AND_EXACT_RC_PAIR_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32013,37 +32017,45 @@
           "evidence": [
             "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+        "evidence": [
+          "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
-          "summary": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING"
+          "summary": "NOT_REPRODUCED_REPORT_NEXT_VERIFIED_ORIGINAL_CAUSE_AND_EXACT_RC_PAIR_OPEN"
         }
       ],
       "implementation_batches": [
         "AUD061-12-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT report delivery, then final frozen-RC export pair; retain unresolved original causal acceptance.",
+      "next_action": "Run two exact frozen-RC private exports and compare manifests during final qualification; retain original causal objective open, with bounded investigation disposition recorded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T11:45:30.207639+00:00",
+        "observed_at": "2026-11-11T11:53:51.886562+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
-      "updated_at": "2026-11-11T11:45:30.207639+00:00"
+      "updated_at": "2026-11-11T11:53:51.886562+00:00"
     }
   ],
   "batches": [
@@ -33409,8 +33421,8 @@
       "name": "Investigate retained 49-percent Web export failures implementation",
       "parent_id": "AUD061-12",
       "group": "current",
-      "state": "open",
-      "status": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING",
+      "state": "complete",
+      "status": "BOUNDED_INVESTIGATION_COMPLETE_NOT_REPRODUCED_PARENT_CAUSE_RC_OPEN",
       "scope": [
         "Bounded retained-log investigation, exact historical/current same-limit private exports, resource isolation and pre-RC manifest comparison; report a factual disposition without closing the parent causal/RC acceptance."
       ],
@@ -33425,31 +33437,39 @@
           "evidence": [
             "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+        "evidence": [
+          "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
-          "summary": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING"
+          "summary": "NOT_REPRODUCED_REPORT_NEXT_VERIFIED_ORIGINAL_CAUSE_AND_EXACT_RC_PAIR_OPEN"
         }
       ],
-      "next_action": "Verify exact NEXT report delivery, then final frozen-RC export pair; retain unresolved original causal acceptance.",
+      "next_action": "None for this bounded investigation batch; full parent remains open as recorded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T11:45:30.207639+00:00",
+        "observed_at": "2026-11-11T11:53:51.886562+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T11:45:30.207639+00:00"
+      "updated_at": "2026-11-11T11:53:51.886562+00:00"
     }
   ]
 }

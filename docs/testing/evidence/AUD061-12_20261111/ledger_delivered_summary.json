@@ -1,0 +1,15 @@
+{
+  "summary": {
+    "objectives_checked": 177,
+    "batches_checked": 23,
+    "open_objectives": 65,
+    "open_batches": 5,
+    "open_work_items": 70,
+    "user_paused_items": 36,
+    "complete_objectives": 112,
+    "errors": 1683,
+    "warnings": 0,
+    "tasks_with_errors": 52
+  },
+  "audit_findings": []
+}
