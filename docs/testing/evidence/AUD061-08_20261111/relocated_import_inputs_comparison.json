@@ -1,0 +1,12 @@
+{
+  "baseline_commit": "23326f534823da8c5175f835f958ee55e7f1605e",
+  "candidate_commit": "d45f5c02d76767ac149e667cb54ef66a4d625539",
+  "baseline_count": 1420,
+  "candidate_count": 1420,
+  "baseline_inputs_sha256": "8e97a24171b5692169f247c107e2c7c037b5232f5788f8f0299963241348074c",
+  "candidate_inputs_sha256": "8e97a24171b5692169f247c107e2c7c037b5232f5788f8f0299963241348074c",
+  "changed_classified_paths": [],
+  "classification_match": true,
+  "classifier_source_sha256": "ecd61102233c74384121bc3b4dfd72aa451695295b050fa4acea17a032426b63",
+  "scope": "Unmodified actual inputs() and RUNTIME_DATA_PATHS AST from current pipeline source, evaluated with its Git text dependency supplied by the two full recorded ls-tree outputs. No pipeline source/state mutation or child launch. Actual watcher remains authority and will rerun classification after push."
+}
