@@ -31550,7 +31550,7 @@
         }
       },
       "state": "open",
-      "status": "CODE_COMMITTED_41_UI_PHYSICAL_17_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "status": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31559,6 +31559,12 @@
       "commits": [
         {
           "sha": "bc1ee0c9d1e4c8c161c64aa3da95ee08a0ffc4d6",
+          "evidence": [
+            "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "7a2c0f82b076c2b38047b496f01950cbf0ece41d",
           "evidence": [
             "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
           ]
@@ -31574,7 +31580,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md",
-          "summary": "CODE_COMMITTED_41_UI_PHYSICAL_17_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
@@ -31586,13 +31592,13 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T07:04:22.824644+00:00",
+        "observed_at": "2026-11-11T07:28:58.136438+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Check all six listed return values; retain in-memory purchases and pack changes with visible unsaved status and pending retry; log once for settings/coach/discovery and retry on later change without modal."
       ],
-      "updated_at": "2026-11-11T07:04:22.824644+00:00"
+      "updated_at": "2026-11-11T07:28:58.136438+00:00"
     }
   ],
   "batches": [
@@ -32703,7 +32709,7 @@
       "parent_id": "AUD061-14",
       "group": "current",
       "state": "open",
-      "status": "CODE_COMMITTED_41_UI_PHYSICAL_17_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "status": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING",
       "scope": [
         "Check all six listed return values; retain in-memory purchases and pack changes with visible unsaved status and pending retry; log once for settings/coach/discovery and retry on later change without modal."
       ],
@@ -32715,6 +32721,12 @@
       "commits": [
         {
           "sha": "bc1ee0c9d1e4c8c161c64aa3da95ee08a0ffc4d6",
+          "evidence": [
+            "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "7a2c0f82b076c2b38047b496f01950cbf0ece41d",
           "evidence": [
             "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
           ]
@@ -32730,7 +32742,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md",
-          "summary": "CODE_COMMITTED_41_UI_PHYSICAL_17_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "FINAL_19_UI_41_CALLERS_LIVENESS_PASS_SMOKE_FUNCTIONAL_BASELINE_PERF_REPEAT_2_914MS_NEXT_PENDING"
         }
       ],
       "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
@@ -32739,10 +32751,10 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T07:04:22.824644+00:00",
+        "observed_at": "2026-11-11T07:28:58.136438+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T07:04:22.824644+00:00"
+      "updated_at": "2026-11-11T07:28:58.136438+00:00"
     }
   ]
 }
