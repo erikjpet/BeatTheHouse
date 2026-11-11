@@ -89,11 +89,15 @@
       "baseline_exit": 1,
       "after_exit": 1,
       "baseline_error_lines": 10,
-      "after_error_lines": 9,
-      "new": []
+      "after_error_lines": 10,
+      "new": [
+        "ERROR: Idle blackjack surface animated idle draw p95 <number> ms exceeded <number> ms."
+      ]
     }
   ],
-  "new_errors": [],
+  "new_errors": [
+    "ERROR: Idle blackjack surface animated idle draw p95 <number> ms exceeded <number> ms."
+  ],
   "foundation_smoke_content.json": {
     "baseline_failures": 25,
     "after_failures": 25,

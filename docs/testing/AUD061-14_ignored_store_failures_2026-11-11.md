@@ -47,4 +47,8 @@ Animation-liveness command res://scripts/tests/animation_liveness_without_pointe
 
 ## NEXT
 
-Pending finished code and ledger push through existing pipeline. No manual deployment.
+Initial delivery **d7034cf137805e6af325adbac988bfcd2597347b** containing bc1ee0c9d1e4c8c161c64aa3da95ee08a0ffc4d6 promoted2026-11-11T07:08:45Z, tree1fa28f4dc1f1596c90605aab3991a19f80bffe35, archive5ed4de9896f21d0ef7c159a1eaf4f4bcbc59edc77712d6e25799cbe29c113128. Exact10assetsPASS; startup clean, pageerrors0/consolewarnings-errors0. This is **not final accepted delivery** because visible verification found stale Result feedback after recovery.
+
+First browser fixture setup wrote outside the actual app_userdata folder; Home gold0 confirmed it was not loaded. Retained as unaccepted, no purchase/fault attempted. New fresh-profile corrected setup loads same-candidate native Meta fixture (synthetic gold9940/Motel Room, SHA256dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6); normal Upgrade Sign Buy250 changes to Apartment/gold9690. Actual owned Meta .tmp directory rejects write; popup and Result clearly say not saved. Removing only that empty fault allows timer recovery, clears popup warning and leavesgold9690 unchanged. Top Result retained old warning; screenshots08/10 demonstrate it. This is a seeded new QA profile, not an organically earned wallet or migrated active/old profile. No game script/scene/path overrides.
+
+Follow-up: one targeted _refresh_environment_result_feedback call after recovery, plus two assertions in actual UI fixture. Same native UI command before:19checks/1failure (Actual visible Result clears recovered warning); after:19/0, recovered_result=Collection changes saved. Exact paid gold9940 retained. Caller41/0 and livenessPASS again. Raw logs and screenshots retained. Final Smoke running; final NEXT delivery pending. No manual deployment.

@@ -57,6 +57,7 @@ func _run()->void:
 	var popup:Label=app.event_choice_popup_summary_label
 	_check(popup.is_visible_in_tree() and popup.text.contains(app.STORE_SAVE_PENDING_MESSAGE),"Actual visible purchase popup shows unsaved status")
 	facts["purchase_warning"]=popup.text
+	_check(app.environment_result_body_label.is_visible_in_tree() and app.environment_result_body_label.text.contains(app.STORE_SAVE_PENDING_MESSAGE),"Actual visible Result shows unsaved status")
 	app._hide_event_choice_popup()
 	app.open_meta_container()
 	await _frames(4)
@@ -77,6 +78,8 @@ func _run()->void:
 	var loaded:=fresh.snapshot()
 	_check(str(loaded.get("housing_tier",""))==str(quote.get("tier","")),"Fresh service loads upgraded home from actual disk")
 	_check(int(loaded.get("gold_balance",-1))==expected_gold,"Fresh service loads exact paid balance with no second charge")
+	_check(not app.environment_result_body_label.text.contains(app.STORE_SAVE_PENDING_MESSAGE) and app.environment_result_body_label.text.contains("saved"),"Actual visible Result clears recovered warning")
+	facts["recovered_result"]=app.environment_result_body_label.text
 	facts["recovered_summary"]=summary.text
 	facts["gold_before"]=gold_before
 	facts["upgrade_price"]=int(quote.get("price",0))

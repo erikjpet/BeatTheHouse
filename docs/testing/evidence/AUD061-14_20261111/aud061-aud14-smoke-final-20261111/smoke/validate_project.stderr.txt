@@ -1,0 +1,24 @@
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.028s
+
+OK
+.........................
+----------------------------------------------------------------------
+Ran 25 tests in 5.010s
+
+OK
+environment scenario layout breakdown is missing or stale; run python tools/generate_environment_scenario_layout_breakdown.py
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 4.812s
+
+OK
+E:\CodexQA\BTH\workspaces\aud061-20261110\tools\validate_project.ps1 : Scenario-instance slot layout validation 
+failed: Environment scenario layout breakdown check exited with code 1.
+At E:\CodexQA\BTH\workspaces\aud061-20261110\tools\validate_project.ps1:3538 char:9
++         Write-Error $failure
++         ~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Write-Error], WriteErrorException
+    + FullyQualifiedErrorId : Microsoft.PowerShell.Commands.WriteErrorException,validate_project.ps1
+ 

@@ -1,0 +1,118 @@
+{
+  "sha": "d7034cf137805e6af325adbac988bfcd2597347b",
+  "scope": "Unmodified exact NEXT game assets. Fresh private Web profile seeded only with same-candidate Meta fixture produced by the successful native physical retry check (synthetic gold); normal player UI invokes the purchase. Only this owned Meta temporary-path directory is faulted. No game script/scene/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [
+    {
+      "command": {
+        "sha": "d7034cf137805e6af325adbac988bfcd2597347b",
+        "id": 1,
+        "type": "seed_meta"
+      },
+      "time": "2026-11-11T07:10:21.049Z",
+      "fixture": {
+        "source_run": "aud061-aud14-ui-physical-final-20261111",
+        "sha256": "dada2add223fdef7b9d79f45ee27a81cb62ae06fbb5607e4e26ae5c3fcd710c6",
+        "bytes": 5289,
+        "synthetic_gold": true
+      },
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": []
+      },
+      "screenshot": "01-seed_meta.png"
+    },
+    {
+      "command": {
+        "sha": "d7034cf137805e6af325adbac988bfcd2597347b",
+        "id": 2,
+        "type": "click",
+        "x": 946,
+        "y": 523
+      },
+      "time": "2026-11-11T07:11:01.531Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": []
+      },
+      "screenshot": "02-click.png"
+    },
+    {
+      "command": {
+        "sha": "d7034cf137805e6af325adbac988bfcd2597347b",
+        "id": 3,
+        "type": "stop",
+        "visual_review": [
+          "Startup visually clean; version exact d7034cf13780.",
+          "Fixture was written outside Godot app_userdata path and was not loaded (Home remained Back Alley, gold0). This attempt is not accepted as purchase-warning evidence. No purchase/fault attempted. Correct helper path and use a new fresh profile."
+        ]
+      },
+      "time": "2026-11-11T07:11:54.147Z"
+    }
+  ],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d7034cf137805e6af325adbac988bfcd2597347b/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "stage": "COMPLETE",
+  "metaFixture": {
+    "path": "/userfs/godot/distribution/web_0_6_1/meta_collection.json",
+    "bytes": 5289
+  },
+  "visual_review": [
+    "Startup visually clean; version exact d7034cf13780.",
+    "Fixture was written outside Godot app_userdata path and was not loaded (Home remained Back Alley, gold0). This attempt is not accepted as purchase-warning evidence. No purchase/fault attempted. Correct helper path and use a new fresh profile."
+  ],
+  "state": "FINISHED",
+  "finished": "2026-11-11T07:11:54.779Z"
+}

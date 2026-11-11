@@ -1,0 +1,107 @@
+{
+  "baseline_pass": 4,
+  "baseline_fail": 7,
+  "after_pass": 4,
+  "after_fail": 7,
+  "stages": [
+    {
+      "stage": "validate_project",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 0,
+      "after_error_lines": 0,
+      "new": []
+    },
+    {
+      "stage": "godot_import",
+      "baseline_exit": 0,
+      "after_exit": 0,
+      "baseline_error_lines": 0,
+      "after_error_lines": 0,
+      "new": []
+    },
+    {
+      "stage": "gdscript_load_check",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 4,
+      "after_error_lines": 4,
+      "new": []
+    },
+    {
+      "stage": "foundation_smoke_content",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 25,
+      "after_error_lines": 25,
+      "new": []
+    },
+    {
+      "stage": "foundation_smoke_runtime",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 16,
+      "after_error_lines": 16,
+      "new": []
+    },
+    {
+      "stage": "ui_scene_compile",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 1,
+      "after_error_lines": 1,
+      "new": []
+    },
+    {
+      "stage": "cold_continue_room_projection",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 4,
+      "after_error_lines": 4,
+      "new": []
+    },
+    {
+      "stage": "game_library_launchers",
+      "baseline_exit": 0,
+      "after_exit": 0,
+      "baseline_error_lines": 0,
+      "after_error_lines": 0,
+      "new": []
+    },
+    {
+      "stage": "dave_bus_encounter",
+      "baseline_exit": 0,
+      "after_exit": 0,
+      "baseline_error_lines": 0,
+      "after_error_lines": 0,
+      "new": []
+    },
+    {
+      "stage": "roulette_audio_audit",
+      "baseline_exit": 0,
+      "after_exit": 0,
+      "baseline_error_lines": 0,
+      "after_error_lines": 0,
+      "new": []
+    },
+    {
+      "stage": "foundation_perf_smoke",
+      "baseline_exit": 1,
+      "after_exit": 1,
+      "baseline_error_lines": 10,
+      "after_error_lines": 9,
+      "new": []
+    }
+  ],
+  "new_errors": [],
+  "foundation_smoke_content.json": {
+    "baseline_failures": 25,
+    "after_failures": 25,
+    "new": []
+  },
+  "foundation_smoke_runtime.json": {
+    "baseline_failures": 16,
+    "after_failures": 16,
+    "new": []
+  }
+}

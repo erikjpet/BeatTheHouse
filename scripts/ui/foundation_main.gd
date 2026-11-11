@@ -9579,6 +9579,7 @@ func _meta_store_save_recovered() -> void:
 		if event_choice_popup_summary_label != null:
 			event_choice_popup_summary_label.text = summary
 	_refresh_meta_item_interaction()
+	_refresh_environment_result_feedback()
 
 
 func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
