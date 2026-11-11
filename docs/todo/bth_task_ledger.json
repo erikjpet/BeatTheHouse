@@ -30494,7 +30494,7 @@
         }
       },
       "state": "open",
-      "status": "AUD061_09_TESTED_COMMITTED_NEXT_PENDING",
+      "status": "THREE_ORDERS_DELIVERED_15_REMAIN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30523,7 +30523,7 @@
       },
       "evidence": [],
       "implementation_batches": [],
-      "next_action": "Verify AUD061-09 on exact NEXT, then register AUD061-10 and continue the remaining orders sequentially.",
+      "next_action": "Register AUD061-10, then execute the remaining15 orders in the requested sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30533,7 +30533,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T03:03:07.082504+00:00"
+      "updated_at": "2026-11-11T03:10:33.371707+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30758,22 +30758,28 @@
             "id": "1",
             "description": "An async failure followed by healthy explicit save attempts and saves current state; two failures return the second error with older diagnostics retained.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "clear_run drains a failed task and removes primary and backup; FoundationMain explicit Save also attempts current state after failed drain.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "Focused checks and Smoke compare no worse than baseline; exact NEXT identity/startup and visible manual-save behavior verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -30782,8 +30788,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_RETRY_AND_EXACT_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30795,37 +30801,45 @@
           "evidence": [
             "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+          "evidence": [
+            "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+        "evidence": [
+          "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_RETRY_AND_EXACT_NEXT"
         }
       ],
       "implementation_batches": [
         "AUD061-09-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:03:07.017531+00:00",
+        "observed_at": "2026-11-11T03:10:33.308954+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Only explicit-save/clear drain behavior and prior-failure diagnostics."
       ],
-      "updated_at": "2026-11-11T03:03:07.017531+00:00"
+      "updated_at": "2026-11-11T03:10:33.308954+00:00"
     }
   ],
   "batches": [
@@ -31544,8 +31558,8 @@
       "name": "Retry explicit save after draining an older async failure implementation",
       "parent_id": "AUD061-09",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_RETRY_AND_EXACT_NEXT",
       "scope": [
         "AUD061-09: Keep waiting for owned async work, but continue the requested synchronous write after an older failure and let the new write decide its result. Retain the older failure for diagnostics. clear_run must drain and remove despite old async error. Keep current validation, save format, mutex/thread ownership and generation attribution."
       ],
@@ -31560,31 +31574,39 @@
           "evidence": [
             "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+          "evidence": [
+            "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+        "evidence": [
+          "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_RETRY_AND_EXACT_NEXT"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:03:07.017531+00:00",
+        "observed_at": "2026-11-11T03:10:33.308954+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T03:03:07.017531+00:00"
+      "updated_at": "2026-11-11T03:10:33.308954+00:00"
     }
   ]
 }

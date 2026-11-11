@@ -1,0 +1,126 @@
+{
+  "sha": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+  "scope": "Unmodified exact NEXT HTML/PCK/engine/native; ordinary Daily Challenge, Run Menu and confirmation pointer/keyboard actions. Filesystem fault only in this fresh isolated browser profile; no scene/script/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/93f3df02d8fabeb3a05faacca6c366d21331c33c/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/93f3df02d8fabeb3a05faacca6c366d21331c33c/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/93f3df02d8fabeb3a05faacca6c366d21331c33c/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/93f3df02d8fabeb3a05faacca6c366d21331c33c/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107742,
+    "sha256": "765f4e2005fd2d0a36ff405826d05cc9e34abc8de3c6db1f4bc88c4a73a2a70c",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "menu": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107742,
+    "sha256": "765f4e2005fd2d0a36ff405826d05cc9e34abc8de3c6db1f4bc88c4a73a2a70c",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "stage": "COMPLETE",
+  "beforeFault": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107742,
+    "sha256": "765f4e2005fd2d0a36ff405826d05cc9e34abc8de3c6db1f4bc88c4a73a2a70c",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "injectedFault": true,
+  "failedSave": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107742,
+    "sha256": "765f4e2005fd2d0a36ff405826d05cc9e34abc8de3c6db1f4bc88c4a73a2a70c",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": true
+  },
+  "removedFault": true,
+  "recoveredSave": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107747,
+    "sha256": "74d03c2f2ceeb801ed26f6a51803e459f6b35a8a15a10c70ac4cb0b294da8eab",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "state": "FINISHED",
+  "testScope": "Normal rendered Web manual Save fails against own temporary-path directory fault, preserves prior primary, then retries after fault removal. Exact older-worker/current-save branch verified separately by native actual-worker contract, not inferred from this UI path.",
+  "finished": "2026-11-11T03:09:45.848Z"
+}

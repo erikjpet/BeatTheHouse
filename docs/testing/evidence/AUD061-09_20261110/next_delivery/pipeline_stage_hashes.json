@@ -1,0 +1,126 @@
+{
+  "archive": {
+    "bytes": 41683427,
+    "filename": "93f3df02d8fabeb3a05faacca6c366d21331c33c-1794366428313776400.zip",
+    "sha256": "dab10e402fa853628f978a049ff62926f92ab357a855b8acad28c2ac48285528"
+  },
+  "built_at": "2026-11-11T03:08:38Z",
+  "files": [
+    {
+      "bytes": 238,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "BUILD.json",
+      "sha256": "b8e400474b1c695a279db2bcd5a713095b144aedb2d262a0f3fc93a75ae218e1"
+    },
+    {
+      "bytes": 42,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "REF",
+      "sha256": "bc743badcd3f4797fd757c6004f57570a77b1fb166d86609d503194f1c949b6b"
+    },
+    {
+      "bytes": 24,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "VERSION",
+      "sha256": "1d943bd1f01148cd5a9ef13523b2fe67048ad07fd52efb02c226eec13b133690"
+    },
+    {
+      "bytes": 773,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "build_manifest.json",
+      "sha256": "8c46a98c73e470318ee33338f2a92339fe132e7e60612bddde969301c1aef750"
+    },
+    {
+      "bytes": 340415,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "sha256": "d69e05739e3243da077d4b67a0ca7b611828b3ee9b3c214fa2e76b46d3992a7c"
+    },
+    {
+      "bytes": 4099,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.apple-touch-icon.png",
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b"
+    },
+    {
+      "bytes": 2973,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.position.worklet.js",
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "bytes": 7298,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.worklet.js",
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "bytes": 5514,
+      "isolation_headers": {},
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "32aa18d500099cd3c30f5c7c5d55c6da9768a32c414f1f66365ca1ca1af413da"
+    },
+    {
+      "bytes": 14818,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.icon.png",
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a"
+    },
+    {
+      "bytes": 2828608,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.js",
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+    },
+    {
+      "bytes": 47224680,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "index.pck",
+      "sha256": "d39fffef21ccb2702dd2a572bea9c0c515129dbddfee9a08455e270d8783e03c"
+    },
+    {
+      "bytes": 21443,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.png",
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "bytes": 21802358,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.side.wasm",
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+    },
+    {
+      "bytes": 1508237,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.wasm",
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+    },
+    {
+      "bytes": 1295,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "web-gl-handles.json",
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd"
+    }
+  ],
+  "schema": "beat_the_house.served_handoff_stage/v2",
+  "source_commit": "93f3df02d8fabeb3a05faacca6c366d21331c33c",
+  "source_tree": "89dfc3f282370ee19e66a9578eda0aef531166e7",
+  "version": "0.6.0-dev+93f3df02d8fa"
+}
