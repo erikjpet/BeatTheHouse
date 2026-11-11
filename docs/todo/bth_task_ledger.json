@@ -5723,7 +5723,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -5760,7 +5767,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "updated_at": "2026-11-11T14:28:39.237109+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -5877,7 +5884,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -5919,7 +5933,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "updated_at": "2026-11-11T14:28:39.237109+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -5961,7 +5975,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -5998,7 +6019,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "updated_at": "2026-11-11T14:28:39.237109+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -6316,6 +6337,12 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -6354,7 +6381,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "updated_at": "2026-11-11T14:28:39.237109+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -30838,6 +30865,12 @@
           "evidence": [
             "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -30866,7 +30899,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "AUD061-02",
@@ -32338,6 +32371,12 @@
           "evidence": [
             "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -32376,7 +32415,7 @@
       "planned_app_changes": [
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
-      "updated_at": "2026-11-11T14:25:38.735003+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "AUD061-04",
@@ -33242,15 +33281,19 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
-        "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+        "state": "pending",
+        "commit": null,
+        "evidence": []
       },
       "evidence": [
         {
@@ -33276,7 +33319,7 @@
       "planned_app_changes": [
         "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
       ],
-      "updated_at": "2026-11-11T14:19:16.983412+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-COUNT-EXPECTATION-001",
@@ -33321,24 +33364,37 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Count restore expectation loses float precision"
+        }
+      ],
       "implementation_batches": [
         "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001"
       ],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -33350,7 +33406,7 @@
       "planned_app_changes": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
-      "updated_at": "2026-11-11T14:19:16.797499+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
@@ -33395,24 +33451,37 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Riverboat closing callback fixture is unmounted"
+        }
+      ],
       "implementation_batches": [
         "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001"
       ],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -33424,7 +33493,7 @@
       "planned_app_changes": [
         "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
       ],
-      "updated_at": "2026-11-11T14:19:16.847885+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001",
@@ -33469,24 +33538,37 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Final 0.6.1 package qualification remains blocked"
+        }
+      ],
       "implementation_batches": [
         "BTH061-RC-PACKAGING-001-BATCH-001"
       ],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -33498,7 +33580,7 @@
       "planned_app_changes": [
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
-      "updated_at": "2026-11-11T14:19:16.913895+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     }
   ],
   "batches": [
@@ -35375,15 +35457,19 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
-        "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+        "state": "pending",
+        "commit": null,
+        "evidence": []
       },
       "evidence": [
         {
@@ -35403,7 +35489,7 @@
           "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
         ]
       },
-      "updated_at": "2026-11-11T14:19:16.983412+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001",
@@ -35411,7 +35497,7 @@
       "parent_id": "BTH061-RC-COUNT-EXPECTATION-001",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "scope": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
@@ -35420,15 +35506,28 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Count restore expectation loses float precision implementation"
+        }
+      ],
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -35437,7 +35536,7 @@
         "observed_at": "2026-11-11T14:19:16.797499+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:19:16.797499+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001",
@@ -35445,7 +35544,7 @@
       "parent_id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "scope": [
         "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
       ],
@@ -35454,15 +35553,28 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Riverboat closing callback fixture is unmounted implementation"
+        }
+      ],
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -35471,7 +35583,7 @@
         "observed_at": "2026-11-11T14:19:16.847885+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:19:16.847885+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001-BATCH-001",
@@ -35479,7 +35591,7 @@
       "parent_id": "BTH061-RC-PACKAGING-001",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
       "scope": [
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
@@ -35488,15 +35600,28 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "evidence": [
+        {
+          "kind": "audit_finding",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Final 0.6.1 package qualification remains blocked implementation"
+        }
+      ],
+      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -35505,7 +35630,7 @@
         "observed_at": "2026-11-11T14:19:16.913895+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:19:16.913895+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     },
     {
       "id": "AUD061-12-BATCH-002",
@@ -35522,7 +35647,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "97099e563b22ecc450f4e17852d51bb6cd9b3ad2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -35545,7 +35677,7 @@
         "observed_at": "2026-11-11T11:53:51.886562+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:25:38.735003+00:00"
+      "updated_at": "2026-11-11T14:28:39.237109+00:00"
     }
   ]
 }

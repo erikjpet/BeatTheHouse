@@ -77,3 +77,5 @@ This order's finished results/ledger association will be pushed through that sam
 ## Ledger reconciliation before report push
 
 The documented fixed reference-time command in docs/todo/bth_task_ledger_checks.md was run with current owner/runtime inputs and --group current. Result:1,682 inherited findings; compared canonically to AUD061-11 final1,683, zero added and one resolved by actual current-owner assignment. The eight newly registered RC findings and current audit/batch rows add no reconciliation finding. Reconciliation remains globally failing on inherited work; it is not reported as a clean ledger. Raw command/result and delta are retained with this order.
+
+Report commit:97099e563b22ecc450f4e17852d51bb6cd9b3ad2. This is a docs/evidence-only descendant of the frozen tested source; acceptance is not relabeled to this commit. The report and SHA-association ledger commit will be pushed together after pull/rebase. Actual delivery receipt follows observation of that exact promoted commit.
