@@ -445,7 +445,7 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 
 
 static func exact_collections(inventory: Dictionary) -> Dictionary:
-	if int(inventory.get("schema_version", 0)) != SCHEMA_VERSION or str(inventory.get("kind", "")) != "instance" or str(inventory.get("digest", "")) != _digest(inventory) or not validate(inventory).is_empty(): return {}
+	if int(inventory.get("schema_version", 0)) != SCHEMA_VERSION or str(inventory.get("kind", "")) != "instance" or not validate(inventory).is_empty(): return {}
 	return _dict(inventory.get("guaranteed", {}))
 
 
@@ -594,7 +594,8 @@ static func validate(inventory: Dictionary) -> Array:
 	if environment_id.is_empty() or environment_id != environment_id.strip_edges(): errors.append("semantic inventory environment_id is invalid.")
 	var layer_id := str(inventory.get("layer_id", "")) if typeof(inventory.get("layer_id")) == TYPE_STRING else ""
 	if typeof(inventory.get("layer_id")) != TYPE_STRING or layer_id != layer_id.strip_edges(): errors.append("semantic inventory layer_id is invalid.")
-	if typeof(inventory.get("digest")) != TYPE_STRING or str(inventory.get("digest", "")) != _digest(inventory): errors.append("semantic inventory digest does not match immutable content.")
+	var digest_error_index := errors.size()
+	var current_digest_matches := _valid_inventory_digest_literal(inventory.get("digest")) and str(inventory.get("digest", "")) == _digest(inventory)
 	if typeof(inventory.get("errors")) != TYPE_ARRAY:
 		errors.append("semantic inventory errors must be an array of strings.")
 	else:
@@ -679,6 +680,11 @@ static func validate(inventory: Dictionary) -> Array:
 	if seen_records.size() != expected_records.size(): errors.append("semantic inventory records do not cover every target exactly once.")
 	if provenance.size() != expected_records.size(): errors.append("semantic inventory provenance does not cover every target exactly once.")
 	if kind == "instance": _validate_source_provenance(inventory.get("source_provenance"), errors)
+	# Compatibility cannot make a malformed proof valid. Only after every normal
+	# envelope, identity and source check passes may an exact historical hash be
+	# recognized. Keep the saved body/version/reference untouched.
+	if not current_digest_matches and (not errors.is_empty() or not _legacy_layout_digest_matches(inventory)):
+		errors.insert(digest_error_index, "semantic inventory digest does not match immutable content.")
 	return errors
 
 
@@ -1006,6 +1012,111 @@ static func _digest(inventory: Dictionary) -> String:
 	var body := inventory.duplicate(true)
 	body.erase("digest")
 	return JSON.stringify(_canonical(body)).sha256_text()
+
+
+# Schema-2 native/Web builds used different 15-significant-digit tie rounding.
+# These are bounded compatibility candidates for normalized layout rectangles,
+# not replacements for the historical formatter in arbitrary JSON. Unchanged
+# full-body SHA-256 equality is mandatory; unsupported cases decline. All other
+# body fields retain their current canonical bytes, and proof generation stays
+# on _digest(). Frozen golden bytes cover the observed IEEE-754 rounding tie.
+static func _valid_inventory_digest_literal(value: Variant) -> bool:
+	if typeof(value) != TYPE_STRING or (value as String).length() != 64: return false
+	for character in value as String:
+		if character not in "0123456789abcdef": return false
+	return true
+
+
+static func _legacy_layout_digest_matches(inventory: Dictionary) -> bool:
+	if not _valid_inventory_digest_literal(inventory.get("digest")): return false
+	var expected := str(inventory.get("digest"))
+	for half_up in [true, false]:
+		var candidate := _legacy_layout_digest(inventory, half_up)
+		if not candidate.is_empty() and candidate == expected: return true
+	return false
+
+
+static func _legacy_layout_digest(inventory: Dictionary, half_up: bool) -> String:
+	if typeof(inventory.get("schema_version")) != TYPE_INT or int(inventory.get("schema_version",0)) != SCHEMA_VERSION or typeof(inventory.get("kind")) != TYPE_STRING or str(inventory.get("kind","")) != "instance": return ""
+	var body: Dictionary = _canonical(inventory)
+	body.erase("digest")
+	var source_value: Variant = body.get("source_provenance")
+	if typeof(source_value) != TYPE_DICTIONARY: return ""
+	var source := source_value as Dictionary
+	var rects_value: Variant = source.get("layout_object_rects")
+	if typeof(rects_value) != TYPE_DICTIONARY: return ""
+	var rects_text := _legacy_layout_rects_json(rects_value as Dictionary,half_up)
+	if rects_text.is_empty(): return ""
+	var original_text := JSON.stringify(body)
+	var marker := "__bth_legacy_normalized_layout_v1__"
+	for attempt in range(8):
+		if not original_text.contains(JSON.stringify(marker)): break
+		marker += "_"
+	var quoted := JSON.stringify(marker)
+	if original_text.contains(quoted): return ""
+	source["layout_object_rects"] = marker
+	var marked := JSON.stringify(body)
+	if marked.count(quoted) != 1: return ""
+	return marked.replace(quoted,rects_text).sha256_text()
+
+static func _legacy_layout_rects_json(rects: Dictionary, half_up: bool) -> String:
+	var rows := PackedStringArray()
+	var keys := rects.keys();keys.sort()
+	for identity in keys:
+		if typeof(identity) != TYPE_STRING: return ""
+		var errors: Array=[]
+		_validate_normalized_rect(rects.get(identity),"legacy layout",errors)
+		if not errors.is_empty(): return ""
+		var rect := rects.get(identity) as Dictionary
+		var fields := PackedStringArray()
+		for axis in ["h","w","x","y"]:
+			var value: Variant=rect.get(axis)
+			var number := JSON.stringify(value) if typeof(value)==TYPE_INT else _legacy_layout_float_text(float(value),half_up)
+			if number.is_empty(): return ""
+			fields.append(JSON.stringify(axis)+":"+number)
+		rows.append(JSON.stringify(identity)+":{"+",".join(fields)+"}")
+	return "{"+",".join(rows)+"}"
+
+static func _legacy_layout_float_text(value: float, half_up: bool) -> String:
+	if not is_finite(value): return ""
+	# Negative-zero fallback is unsupported; normal digest verification still applies.
+	if value == 0.0 and (PackedFloat64Array([value]).to_byte_array()[7] & 0x80) != 0: return ""
+	var token := JSON.stringify(value,"",true,true)
+	# Unsupported magnitudes decline the compatibility path; normal hashing is unchanged.
+	if token.contains("e") or token.contains("E"): return ""
+	var negative := token.begins_with("-")
+	if negative:token=token.substr(1)
+	var point := token.find(".")
+	if point < 0: return ""
+	var decimal_position := point
+	var digits := token.replace(".","")
+	while digits.begins_with("0"):
+		digits=digits.substr(1);decimal_position-=1
+	if digits.is_empty():return "0.0"
+	if decimal_position < -12 or decimal_position > 13:return ""
+	if digits.length()>15:
+		var retained:=digits.left(15)
+		var next_digit:=int(digits[15])
+		var remaining:=digits.substr(16)
+		var tail_nonzero:=false
+		for character in remaining:
+			if character!="0":tail_nonzero=true;break
+		var increase:=next_digit>5 or next_digit==5 and (tail_nonzero or half_up or int(retained[14])%2==1)
+		if increase:
+			var index:=14
+			while index>=0 and retained[index]=="9":
+				retained[index]="0";index-=1
+			if index<0:retained="1"+retained;decimal_position+=1
+			else:retained[index]=str(int(retained[index])+1)
+		digits=retained.left(15)
+	var result := ""
+	if decimal_position<=0:result="0."+"0".repeat(-decimal_position)+digits
+	elif decimal_position>=digits.length():result=digits+"0".repeat(decimal_position-digits.length())+".0"
+	else:result=digits.left(decimal_position)+"."+digits.substr(decimal_position)
+	if result.contains("."):
+		while result.ends_with("0"):result=result.left(-1)
+		if result.ends_with("."):result+="0"
+	return ("-" if negative else "")+result
 
 
 static func _diagnostic(code: String, collection: String, owned_identity: String, catalog_identity: String, actual_collection: String, layer_id: String, message: String) -> Dictionary:

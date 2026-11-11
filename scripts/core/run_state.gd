@@ -4161,7 +4161,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# immutable inventory. During non-terminal refreshes, require exact source
 	# provenance equality before doing the same.
 	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
-	var refresh_source_match := _scenario_refresh_source_matches_prior(JsonCoerceScript._copy_dict(prior_sealed.get("source_provenance", {})), JsonCoerceScript._copy_dict(sealed.get("source_provenance", {}))) if valid_prior_identity else false
+	var refresh_source_match := _scenario_refresh_source_matches_prior(JsonCoerceScript._copy_dict(prior_sealed.get("source_provenance", {})), JsonCoerceScript._copy_dict(sealed.get("source_provenance", {}))) if valid_prior_identity and EnvironmentSemanticInventoryScript.validate(sealed).is_empty() else false
 	var legacy_scratch_source_match := valid_prior_identity and _scenario_scratch_scalper_prior_source_matches(prior_sealed, sealed)
 	if valid_prior_identity and (terminal_refresh or refresh_source_match or legacy_scratch_source_match):
 		sealed = prior_sealed
@@ -4599,7 +4599,43 @@ func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_sourc
 				break
 		if additive_routes_only:
 			comparable_next["route_ids"] = prior_route_ids
+	# An old complete inventory has already passed its exact SHA-256 and room/
+	# layer binding above. Native and Web slot normalization can differ at the
+	# final double digit (division versus reciprocal multiplication). Compare
+	# only that representation at a fixed integer precision, then keep the old
+	# inventory and digest unchanged. This is 1000x finer than the existing
+	# 1e-9 interaction seal precision; no source identity or other authority is
+	# normalized, and material geometry changes still fail closed.
+	if _scenario_source_layout_geometry_matches(prior_source.get("layout_object_rects"), comparable_next.get("layout_object_rects")):
+		comparable_next["layout_object_rects"] = JsonCoerceScript._copy_dict(prior_source.get("layout_object_rects", {}))
 	return JSON.stringify(prior_source) == JSON.stringify(comparable_next)
+
+
+func _scenario_source_layout_geometry_matches(prior_value: Variant, next_value: Variant) -> bool:
+	if typeof(prior_value) != TYPE_DICTIONARY or typeof(next_value) != TYPE_DICTIONARY:
+		return false
+	var prior := prior_value as Dictionary
+	var next := next_value as Dictionary
+	if prior.size() != next.size(): return false
+	for identity in prior:
+		if not next.has(identity) or typeof(prior.get(identity)) != TYPE_DICTIONARY or typeof(next.get(identity)) != TYPE_DICTIONARY:
+			return false
+		var prior_rect := prior.get(identity) as Dictionary
+		var next_rect := next.get(identity) as Dictionary
+		if prior_rect.size() != 4 or next_rect.size() != 4: return false
+		for key in ["x", "y", "w", "h"]:
+			if typeof(prior_rect.get(key)) not in [TYPE_INT, TYPE_FLOAT] or typeof(next_rect.get(key)) not in [TYPE_INT, TYPE_FLOAT]:
+				return false
+			var left := float(prior_rect.get(key))
+			var right := float(next_rect.get(key))
+			if not is_finite(left) or not is_finite(right) or left < 0.0 or right < 0.0 or left > 1.00001 or right > 1.00001:
+				return false
+			if roundi(left * 1000000000000.0) != roundi(right * 1000000000000.0):
+				return false
+		for rect in [prior_rect, next_rect]:
+			if float(rect.w) <= 0.0 or float(rect.h) <= 0.0 or float(rect.x) + float(rect.w) > 1.00001 or float(rect.y) + float(rect.h) > 1.00001:
+				return false
+	return true
 
 
 func _persisted_scenario_inventory_matches_environment(environment: Dictionary) -> bool:
