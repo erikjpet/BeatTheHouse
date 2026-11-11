@@ -1,0 +1,36 @@
+ERROR: Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Slot environment icon runtime state did not expose a status label for seed practice:slot.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Late-run Crew dialogue performance probe did not open the conversation.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Coin Pusher V3 300-body tick p95 49.038 ms exceeded 12.000 ms and left insufficient renderer headroom.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Coin Pusher coin_pusher_active_skill_release frame p95 268.398 ms exceeded 22.000 ms.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Coin Pusher coin_pusher_active_collect frame p95 271.139 ms exceeded 22.000 ms.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)
+ERROR: Performance probe did not report raw 300-body Coin Pusher solver stress timing.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://tools/foundation_performance_probe.gd:245)

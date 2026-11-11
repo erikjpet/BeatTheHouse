@@ -1,0 +1,18 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: AUD061-10: abort immediately refreshes economy
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_crew_bankroll_contract.gd:58)
+       [1] _run (res://scripts/tests/aud061_crew_bankroll_contract.gd:23)
+ERROR: AUD061-10: Whale immediately refreshes economy
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_crew_bankroll_contract.gd:58)
+       [1] _run (res://scripts/tests/aud061_crew_bankroll_contract.gd:33)
+ERROR: AUD061-10: getaway immediately refreshes economy
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/aud061_crew_bankroll_contract.gd:58)
+       [1] _run (res://scripts/tests/aud061_crew_bankroll_contract.gd:42)
+AUD061_CREW_BANKROLL {"checks":11,"failures":["abort immediately refreshes economy","Whale immediately refreshes economy","getaway immediately refreshes economy"],"observations":[{"case":"abort","cash":35,"economy":"stable","result":{"cost":25,"message":"The crew folds the map. Preparation costs $25; the run stays yours.","ok":true,"run_ended":false}},{"case":"whale","cash":228,"economy":"volatile","result":{"message":"The front door becomes a race. The money keeps up.","ok":true,"outcome":"out_hot","payout":227,"resolved":true}},{"case":"getaway","cash":721,"economy":"volatile","expected_payout":720,"ok":true}]}

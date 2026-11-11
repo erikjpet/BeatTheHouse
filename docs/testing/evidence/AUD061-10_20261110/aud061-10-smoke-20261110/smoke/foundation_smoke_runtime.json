@@ -1,0 +1,119 @@
+{
+	"checks": [
+		{
+			"duration_msec": 63,
+			"failure_count": 1,
+			"failures": [
+				"The tutorial wager lesson did not accept the real on-felt blackjack chip action."
+			],
+			"id": "coach_engine_foundation",
+			"passed": false
+		},
+		{
+			"duration_msec": 4139,
+			"failure_count": 0,
+			"failures": [],
+			"id": "onboarding_tutorial_arc",
+			"passed": true
+		},
+		{
+			"duration_msec": 63,
+			"failure_count": 0,
+			"failures": [],
+			"id": "profile_inventory_boundary",
+			"passed": true
+		},
+		{
+			"duration_msec": 23354,
+			"failure_count": 5,
+			"failures": [
+				"EnvironmentInstance layout is missing sealed event presentation authority.",
+				"ActionResult leaked UI state key: ui_state.",
+				"ActionResult leaked UI state key: ui_state.",
+				"Foundation UI shell contains game-specific token 'pull_tab'; route this through the GameModule contract instead.",
+				"Foundation UI shell contains game-specific token 'blackjack_'; route this through the GameModule contract instead."
+			],
+			"id": "foundation_contract_smoke",
+			"passed": false
+		},
+		{
+			"duration_msec": 151,
+			"failure_count": 4,
+			"failures": [
+				"RNG twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+				"RNG twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+				"game-result twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+				"game-result twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]"
+			],
+			"id": "fixture_rng",
+			"passed": false
+		},
+		{
+			"duration_msec": 72,
+			"failure_count": 6,
+			"failures": [
+				"foundation contracts initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+				"Environment contract did not include debt/lender hooks.",
+				"Environment contract did not include behavior-first suspicion cues.",
+				"Environment contract did not include local narrative flags.",
+				"EventModule returned an unsuccessful result.",
+				"Event module did not apply flag consequences."
+			],
+			"id": "fixture_contracts",
+			"passed": false
+		}
+	],
+	"duration_msec": 39003,
+	"executed_check_ids": [
+		"coach_engine_foundation",
+		"onboarding_tutorial_arc",
+		"profile_inventory_boundary",
+		"foundation_contract_smoke",
+		"fixture_rng",
+		"fixture_contracts"
+	],
+	"failure_count": 16,
+	"failures": [
+		"The tutorial wager lesson did not accept the real on-felt blackjack chip action.",
+		"EnvironmentInstance layout is missing sealed event presentation authority.",
+		"ActionResult leaked UI state key: ui_state.",
+		"ActionResult leaked UI state key: ui_state.",
+		"Foundation UI shell contains game-specific token 'pull_tab'; route this through the GameModule contract instead.",
+		"Foundation UI shell contains game-specific token 'blackjack_'; route this through the GameModule contract instead.",
+		"RNG twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+		"RNG twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+		"game-result twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+		"game-result twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+		"foundation contracts initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: [\"Object manifest is missing.\",\"Persisted base slot authority has no layout dictionary.\"]",
+		"Environment contract did not include debt/lender hooks.",
+		"Environment contract did not include behavior-first suspicion cues.",
+		"Environment contract did not include local narrative flags.",
+		"EventModule returned an unsuccessful result.",
+		"Event module did not apply flag consequences."
+	],
+	"last_started_check": "fixture_contracts",
+	"passed": false,
+	"registered_check_ids": [
+		"content",
+		"coach_engine_foundation",
+		"onboarding_tutorial_arc",
+		"profile_inventory_boundary",
+		"foundation_contract_smoke",
+		"fixture_rng",
+		"fixture_contracts"
+	],
+	"requested_check_ids": [
+		"coach_engine_foundation",
+		"onboarding_tutorial_arc",
+		"profile_inventory_boundary",
+		"foundation_contract_smoke",
+		"fixture_rng",
+		"fixture_contracts"
+	],
+	"skipped": [
+		"content"
+	],
+	"started_msec": 14180,
+	"suite": "smoke",
+	"tool": "foundation_check"
+}

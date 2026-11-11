@@ -1079,7 +1079,7 @@ func crew_heist_abort(reason: String = "retreated", host_capability: Variant = n
 	var setup_count := JsonCoerceScript._copy_dict(state.get("setup", {})).size()
 	var requested_cost := 15 + setup_count * 10
 	var paid := mini(requested_cost, maxi(0, _run.bankroll - 1))
-	_run.bankroll -= paid
+	_run.change_bankroll(-paid, true)
 	if reason == "planning_table":
 		_crew_heist_clear_setup_delivery(str(state.get("plan_id", "")))
 	state["status"] = _run.CrewHeistModelScript.STATUS_ABORTED
@@ -1384,7 +1384,7 @@ func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int
 		scar_id = "rig_exposure"
 		_run.add_suspicion("heist_whale_rig_exposed", 25, "contraband", true, {}, true)
 	_run.grand_casino_chips = 0
-	_run.bankroll += payout
+	_run.change_bankroll(payout, true)
 	state["status"] = _run.CrewHeistModelScript.STATUS_COMPLETED
 	state["outcome"] = outcome
 	state["payout"] = payout
@@ -1795,7 +1795,7 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 			scar_id = "corridor_breach" if str(state.get("plan_id", "")) == _run.CrewHeistModelScript.PLAN_COUNT else "rig_exposure"
 	if str(state.get("plan_id", "")) == _run.CrewHeistModelScript.PLAN_WHALE:
 		_run.grand_casino_chips = 0
-	_run.bankroll += payout
+	_run.change_bankroll(payout, true)
 	state["status"] = _run.CrewHeistModelScript.STATUS_COMPLETED
 	state["outcome"] = outcome
 	state["payout"] = payout

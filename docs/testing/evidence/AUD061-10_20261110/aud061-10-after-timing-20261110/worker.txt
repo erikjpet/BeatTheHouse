@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+AUD061_CREW_BANKROLL {"checks":13,"failures":[],"observations":[{"case":"abort","cash":35,"economy":"volatile","result":{"cost":25,"message":"The crew folds the map. Preparation costs $25; the run stays yours.","ok":true,"run_ended":false}},{"case":"whale","cash":228,"economy":"growing","result":{"message":"The front door becomes a race. The money keeps up.","ok":true,"outcome":"out_hot","payout":227,"resolved":true}},{"case":"getaway","cash":721,"economy":"growing","expected_payout":720,"ok":true},{"case":"whale_zero","cash":0,"economy":"insolvent","premature_failures":0,"status":"ended"},{"case":"getaway_zero","cash":0,"economy":"insolvent","premature_failures":0,"status":"ended"}]}
