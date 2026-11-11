@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "14_OF_18_ORDERS_PROCESSED_13_DONE_AUD12_NOT_REPRODUCED",
+      "status": "15_OF_18_PROCESSED_13_DONE_AUD12_NOT_REPRODUCED_AUD04_BLOCKED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30543,7 +30543,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Process AUD061-04 version-stamp/pipeline compatibility, AUD061-05 changelog, then exact proposed-RC AUD061-11/17; carry AUD12 exact-RC export pair.",
+      "next_action": "Continue AUD061-05 changelog/proposed source candidate, then AUD061-11/17 with explicit version qualification blocker and AUD12 exact-RC export pair.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30553,7 +30553,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T11:53:51.956080+00:00"
+      "updated_at": "2026-11-11T12:07:52.070201+00:00"
     },
     {
       "id": "AUD061-02",
@@ -32056,6 +32056,95 @@
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
       "updated_at": "2026-11-11T11:53:51.886562+00:00"
+    },
+    {
+      "id": "AUD061-04",
+      "name": "Qualify requested 0.6.1 version-stamp update",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Current source/export/preset/menu stamps reproduced.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Requested0.6.1/Win0.6.1.0/Android10, project-derived identity and release+commit display delivered, or concrete incompatible pipeline requirement recorded per user stop rule.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "No telemetry/schema/migration/README release-asset claim or pipeline guard/cap change.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "94734e74fed1c64cc938a51a49d721285e1cde99",
+          "evidence": [
+            "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md",
+          "summary": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-04-BATCH-001"
+      ],
+      "next_action": "Carry this evidence-only blocked report with the next finished changelog push; separately reviewed0.6.1 input qualification is required before the version change.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required project/preset/exporter edits conflict with fixed existing NEXT object qualification; changing guards is forbidden in this run. No0.6.1 stamp/display change delivered.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T12:12:26.062457+00:00",
+        "evidence": [
+          "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+        ]
+      },
+      "planned_app_changes": [
+        "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution."
+      ],
+      "updated_at": "2026-11-11T12:12:26.062457+00:00"
     }
   ],
   "batches": [
@@ -33470,6 +33559,55 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T11:53:51.886562+00:00"
+    },
+    {
+      "id": "AUD061-04-BATCH-001",
+      "name": "Qualify requested 0.6.1 version-stamp update implementation",
+      "parent_id": "AUD061-04",
+      "group": "current",
+      "state": "open",
+      "status": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING",
+      "scope": [
+        "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "94734e74fed1c64cc938a51a49d721285e1cde99",
+          "evidence": [
+            "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md",
+          "summary": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Carry this evidence-only blocked report with the next finished changelog push; separately reviewed0.6.1 input qualification is required before the version change.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required project/preset/exporter edits conflict with fixed existing NEXT object qualification; changing guards is forbidden in this run. No0.6.1 stamp/display change delivered.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T12:12:26.062457+00:00",
+        "evidence": [
+          "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+        ]
+      },
+      "updated_at": "2026-11-11T12:12:26.062457+00:00"
     }
   ]
 }
