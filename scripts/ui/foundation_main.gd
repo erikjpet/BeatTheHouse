@@ -970,6 +970,10 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	# The embedded confirmation Window owns navigation in its own viewport.
+	# Root handling would move focus a second time for the same gesture.
+	if new_run_confirmation != null and new_run_confirmation.visible:
+		return
 	if _web_manual_save_pending:
 		get_viewport().set_input_as_handled()
 		return

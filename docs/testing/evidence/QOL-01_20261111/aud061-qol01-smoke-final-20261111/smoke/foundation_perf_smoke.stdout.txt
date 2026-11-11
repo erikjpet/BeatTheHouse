@@ -1,0 +1,3080 @@
+WorkerThreadPool: 16 threads, 4 max low-priority.
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+Unrecognized output string "misc2" in mapping:
+030000000d0f00000202000000000000,Horipad O Nintendo Switch 2 Controller,a:b1,b:b0,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,misc1:b13,misc2:b14,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b3,y:b2,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000000d0f00009601000000000000,Horipad Steam,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,misc2:b2,paddle1:b5,paddle2:b15,paddle3:b18,paddle4:b19,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a3,righty:a4,start:b11,x:b3,y:b4,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
+Using "default" pen tablet driver...
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+Loading resource: res://default_bus_layout.tres
+CORE API HASH: 3663110324
+EDITOR API HASH: 835956462
+Loading resource: res://tools/foundation_performance_probe.gd
+Loading resource: res://scenes/main.tscn
+Loading resource: res://scripts/ui/foundation_main.gd
+Loading resource: res://assets/art/ui/icons/controls/settings.svg
+Loading resource: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex
+Loading resource: res://assets/art/ui/icons/controls/run_setup.svg
+Loading resource: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex
+Loading resource: res://assets/art/ui/icons/controls/close.svg
+Loading resource: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex
+Loading resource: res://assets/art/ui/icons/controls/previous.svg
+Loading resource: res://.godot/imported/previous.svg-386380160f1134570f2618b788ef81d2.ctex
+Loading resource: res://assets/art/ui/icons/controls/next.svg
+Loading resource: res://.godot/imported/next.svg-7c48c0f9fa15b5fbce7977ebc7444810.ctex
+Loading resource: res://assets/art/ui/icons/controls/decrease.svg
+Loading resource: res://.godot/imported/decrease.svg-7944374030b32ec275f1911815262cc4.ctex
+Loading resource: res://assets/art/ui/icons/controls/increase.svg
+Loading resource: res://.godot/imported/increase.svg-1b940f08d890d4e4a960a31d82581340.ctex
+Loading resource: res://assets/art/ui/icons/controls/play.svg
+Loading resource: res://.godot/imported/play.svg-46b9dd326f06286e19a0c887abe8e938.ctex
+Loading resource: res://assets/art/ui/icons/controls/replay.svg
+Loading resource: res://.godot/imported/replay.svg-85c5c767877dd5a8ce54db284cf341b3.ctex
+Loading resource: res://assets/art/ui/icons/controls/selected.svg
+Loading resource: res://.godot/imported/selected.svg-f2db6233ee07c52f856c1d27705a419e.ctex
+Loading resource: res://assets/art/ui/icons/controls/focused.svg
+Loading resource: res://.godot/imported/focused.svg-764689e1fd63b614f7c676b57dba6332.ctex
+Loading resource: res://assets/art/ui/icons/controls/hovered.svg
+Loading resource: res://.godot/imported/hovered.svg-03b8f32857c2e99b4b725c9293c0b7d9.ctex
+Loading resource: res://assets/art/ui/icons/controls/cash_transfer.svg
+Loading resource: res://.godot/imported/cash_transfer.svg-b08298150c2b5cbd11e3cedeb22f5c99.ctex
+SceneTreeFTI: traversal method DEFAULT
+Loaded system CA certificates
+Loading resource: res://assets/art/environments/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-00bd9899cd2ba81fecfd85921cb3b0c2.ctex
+Loading resource: res://assets/art/ui/main_menu_button_plate.png
+Loading resource: res://.godot/imported/main_menu_button_plate.png-c97f94d811309c346dc6d5687b4f58f2.ctex
+Loading resource: res://assets/art/ui/beat_the_house_logo.png
+Loading resource: res://.godot/imported/beat_the_house_logo.png-098dcd7e40b55374409601ccca10946c.ctex
+Loading resource: res://assets/art/ui/travel.png
+Loading resource: res://.godot/imported/travel.png-d422b097ffbf324c553e652f735ba982.ctex
+Loading resource: res://scripts/ui/foundation_hud_bar.gd
+Loading resource: res://scripts/ui/environment_header.gd
+Loading resource: res://scripts/ui/cheat_dock.gd
+Loading resource: res://scripts/ui/run_report_screen.gd
+Loading resource: res://scripts/ui/heat_gain_feedback_overlay.gd
+Loading resource: res://scripts/ui/environment_interaction_view_model.gd
+Loading resource: res://scripts/ui/environment_interaction_controller.gd
+Loading resource: res://scripts/ui/foundation_action_view_model.gd
+Loading resource: res://scripts/ui/terminal_consequence_view_model.gd
+Loading resource: res://scripts/ui/foundation_hud_view_model.gd
+Loading resource: res://scripts/ui/cage_counter_view_model.gd
+Loading resource: res://scripts/ui/cage_atm_view_model.gd
+Loading resource: res://assets/art/ui/icons/wallet.png
+Loading resource: res://.godot/imported/wallet.png-b89fa93aec764e99386098ae4bc871b0.ctex
+Loading resource: res://assets/art/ui/icons/casino_chips.png
+Loading resource: res://.godot/imported/casino_chips.png-b5c57e52b52b739747eb053df60a1bc2.ctex
+Loading resource: res://assets/art/ui/icons/heat.png
+Loading resource: res://.godot/imported/heat.png-0b146ee6cf09aff5e51d984cd0a6449e.ctex
+Loading resource: res://assets/art/ui/icons/drink.png
+Loading resource: res://.godot/imported/drink.png-287228756de8270b703e9fd14b97204e.ctex
+Loading resource: res://assets/art/ui/icons/home.png
+Loading resource: res://.godot/imported/home.png-429a191626e0bb61648467d96787b79e.ctex
+Loading resource: res://assets/art/ui/icons/luck.png
+Loading resource: res://.godot/imported/luck.png-00af16ba02e1ce8c93f6c13b99f0f163.ctex
+Loading resource: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png
+Loading resource: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex
+Loading resource: res://assets/art/map_icons/apartment.png
+Loading resource: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex
+Loading resource: res://assets/art/map_icons/back_alley.png
+Loading resource: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex
+Loading resource: res://assets/art/map_icons/bar.png
+Loading resource: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex
+Loading resource: res://assets/art/map_icons/beach.png
+Loading resource: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex
+Loading resource: res://assets/art/map_icons/corner_store.png
+Loading resource: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex
+Loading resource: res://assets/art/map_icons/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex
+Loading resource: res://assets/art/map_icons/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex
+Loading resource: res://assets/art/map_icons/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex
+Loading resource: res://assets/art/map_icons/house.png
+Loading resource: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex
+Loading resource: res://assets/art/map_icons/jazz_club.png
+Loading resource: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex
+Loading resource: res://assets/art/map_icons/kitty_cat_lounge.png
+Loading resource: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex
+Loading resource: res://assets/art/map_icons/motel.png
+Loading resource: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex
+Loading resource: res://assets/art/map_icons/motel_room.png
+Loading resource: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex
+Loading resource: res://assets/art/map_icons/pawn_shop.png
+Loading resource: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex
+Loading resource: res://assets/art/map_icons/small_underground_casino.png
+Loading resource: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex
+Loading resource: res://scripts/ui/wager_confirmation_controller.gd
+Loading resource: res://assets/art/ui/icons/alert.png
+Loading resource: res://.godot/imported/alert.png-448aa02e5f39962ca3d6755d04b69be1.ctex
+Loading resource: res://scripts/ui/run_inventory_screen.gd
+Loading resource: res://scripts/ui/run_inventory_view_model.gd
+Loading resource: res://scripts/ui/meta_item_interaction_screen.gd
+Loading resource: res://scripts/ui/bag_open_reel.gd
+Loading resource: res://scripts/ui/meta_item_interaction_view_model.gd
+Loading resource: res://scripts/ui/run_journal_view_model.gd
+Loading resource: res://scripts/ui/world_map_overlay_controller.gd
+Loading resource: res://scripts/ui/foundation_travel_view_model.gd
+Loading resource: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png
+Loading resource: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex
+Loading resource: res://assets/art/map_icons/apartment.png
+Loading resource: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex
+Loading resource: res://assets/art/map_icons/back_alley.png
+Loading resource: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex
+Loading resource: res://assets/art/map_icons/bar.png
+Loading resource: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex
+Loading resource: res://assets/art/map_icons/beach.png
+Loading resource: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex
+Loading resource: res://assets/art/map_icons/corner_store.png
+Loading resource: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex
+Loading resource: res://assets/art/map_icons/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex
+Loading resource: res://assets/art/map_icons/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex
+Loading resource: res://assets/art/map_icons/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex
+Loading resource: res://assets/art/map_icons/house.png
+Loading resource: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex
+Loading resource: res://assets/art/map_icons/jazz_club.png
+Loading resource: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex
+Loading resource: res://assets/art/map_icons/kitty_cat_lounge.png
+Loading resource: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex
+Loading resource: res://assets/art/map_icons/motel.png
+Loading resource: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex
+Loading resource: res://assets/art/map_icons/motel_room.png
+Loading resource: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex
+Loading resource: res://assets/art/map_icons/pawn_shop.png
+Loading resource: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex
+Loading resource: res://assets/art/map_icons/small_underground_casino.png
+Loading resource: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex
+Loading resource: res://scripts/ui/item_found_popup.gd
+Loading resource: res://scripts/ui/coach_overlay.gd
+Loading resource: res://scripts/games/coin_pusher.gd
+Loading resource: res://scripts/core/scenario_handlers/bars_road.gd
+Loading resource: res://scripts/ui/scenario_renderers/bars_road.gd
+Loading resource: res://scripts/core/scenario_handlers/queen_public.gd
+Loading resource: res://scripts/ui/scenario_renderers/queen_public.gd
+Loading resource: res://scripts/core/scenario_handlers/roadside_shelter.gd
+Loading resource: res://scripts/ui/scenario_renderers/roadside_shelter.gd
+Loading resource: res://scripts/core/scenario_handlers/shops_streets.gd
+Loading resource: res://scripts/ui/scenario_renderers/shops_streets.gd
+Loading resource: res://scripts/core/scenario_handlers/punchline_clubs.gd
+Loading resource: res://scripts/ui/scenario_renderers/punchline_clubs.gd
+Loading resource: res://assets/art/ui/inventory_containers/loose_carry.png
+Loading resource: res://.godot/imported/loose_carry.png-43c6b15767ca69ed8f8b4fa4ccda9082.ctex
+Loading resource: res://assets/art/ui/icons/save.png
+Loading resource: res://.godot/imported/save.png-70305506e9911c4e8a30d48c1592e8ba.ctex
+Loading resource: res://assets/art/events/side_door.png
+Loading resource: res://.godot/imported/side_door.png-903813bd2144350f094a76d96767b688.ctex
+Loading resource: res://assets/art/events/late_shift_discount.png
+Loading resource: res://.godot/imported/late_shift_discount.png-14f5b46a8b067bb218ffd111360cf848.ctex
+Loading resource: res://scripts/games/pull_tabs.gd
+Loading resource: res://assets/art/ui/environment_titles/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-84299afc97504e4cc3bca7848925322c.ctex
+Loading resource: res://assets/art/events/pit_boss_sweep.png
+Loading resource: res://.godot/imported/pit_boss_sweep.png-45ebb12e74cf05b496ccc24b8de58a98.ctex
+Loading resource: res://scripts/games/scratch_tickets.gd
+Loading resource: res://assets/art/scratch_tickets/layers/two_fer_background_pro.png
+Loading resource: res://.godot/imported/two_fer_background_pro.png-d415101f9b162b6636e046fe4248e359.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/lucky_7s_background_pro.png
+Loading resource: res://.godot/imported/lucky_7s_background_pro.png-5ceef3616ea7baabe69a2c3c6a24a42b.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/tic_tac_gold_background_pro.png
+Loading resource: res://.godot/imported/tic_tac_gold_background_pro.png-15fd05e776714d42db1e2f07d41f8534.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/crossword_corner_background_pro.png
+Loading resource: res://.godot/imported/crossword_corner_background_pro.png-c603a9b0c462da8bc314e209416359d7.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/bonus_bingo_background_pro.png
+Loading resource: res://.godot/imported/bonus_bingo_background_pro.png-1637c69083e5aea2d94936ed76fe7def.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/high_roller_holdem_background_pro.png
+Loading resource: res://.godot/imported/high_roller_holdem_background_pro.png-a123199f8d9125f3a02697bcddbd0fff.ctex
+Loading resource: res://assets/art/scratch_tickets/layers/golden_vault_background_pro.png
+Loading resource: res://.godot/imported/golden_vault_background_pro.png-ef1081fa3c9c64caf67f79378e07a3ec.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_twofer.png
+Loading resource: res://.godot/imported/pro_twofer.png-cd8744cab8125e3ba30dc061d6a033b6.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_clover.png
+Loading resource: res://.godot/imported/pro_clover.png-0ad213e9660c6a755bfc531902676094.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_bell.png
+Loading resource: res://.godot/imported/pro_bell.png-f0681f73b046cfacf41872c02d47dc50.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_star.png
+Loading resource: res://.godot/imported/pro_star.png-695fbb6d4e13afd29b6cd1e207d9eabe.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_circle.png
+Loading resource: res://.godot/imported/pro_tic_circle.png-48edd62a8278e2dad9c12c48c199084e.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_star.png
+Loading resource: res://.godot/imported/pro_tic_star.png-b180a454d49c06214150e05f58ef09f8.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_diamond.png
+Loading resource: res://.godot/imported/pro_tic_diamond.png-46642ba56006a697206cbae4ee079ee5.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_miss.png
+Loading resource: res://.godot/imported/pro_tic_miss.png-6c1df80ac58a159193e02afa18d45949.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/lucky_seven.png
+Loading resource: res://.godot/imported/lucky_seven.png-d20ecb2052572dee6eb90904cca6b186.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/number_coin.png
+Loading resource: res://.godot/imported/number_coin.png-941e655ba908e811054e48010faa0fa4.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/bingo_ball.png
+Loading resource: res://.godot/imported/bingo_ball.png-1609a36a21127a749f55404e81d52472.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/multiplier_coin.png
+Loading resource: res://.godot/imported/multiplier_coin.png-105874f7fa7fb3ed97e492350107477a.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/gold_bar.png
+Loading resource: res://.godot/imported/gold_bar.png-afd013e75c17d31e4bc88beabe8ab8d6.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/brass_bar.png
+Loading resource: res://.godot/imported/brass_bar.png-51797e1c60126ab79f6481b9c815c9f0.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/vault_open.png
+Loading resource: res://.godot/imported/vault_open.png-92ef486b0ac4bfcbb12bf64e23d247ff.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/vault_sealed.png
+Loading resource: res://.godot/imported/vault_sealed.png-7d3354c15ae3dfdd57ce43ea57f60f9b.ctex
+Loading resource: res://assets/art/scratch_tickets/reveal_symbols/wild_card.png
+Loading resource: res://.godot/imported/wild_card.png-10bb5be74ba0ac52977e8d6ff147c0e8.ctex
+Loading resource: res://scripts/games/slot.gd
+Loading resource: res://assets/art/slots/pinball_classic_3_reel_em_bumper_drop.png
+Loading resource: res://.godot/imported/pinball_classic_3_reel_em_bumper_drop.png-7095e64dc391853df063c1ff02dc4585.ctex
+Loading resource: res://scripts/games/bar_dice.gd
+Loading resource: res://scripts/games/craps.gd
+Loading resource: res://scripts/games/blackjack.gd
+Loading resource: res://assets/art/games/blackjack.png
+Loading resource: res://.godot/imported/blackjack.png-ffacfa2f00d89659422a95a79461c5b4.ctex
+Loading resource: res://scripts/games/baccarat.gd
+Loading resource: res://scripts/games/roulette.gd
+Loading resource: res://assets/art/games/roulette.png
+Loading resource: res://.godot/imported/roulette.png-abf6ff84ae04b2c921010330185bf886.ctex
+Loading resource: res://scripts/games/crew_draw_poker.gd
+Loading resource: res://assets/art/games/poker.png
+Loading resource: res://.godot/imported/poker.png-7ede59761c68756466fe3cdf3e29d2cd.ctex
+Loading resource: res://scripts/games/video_poker.gd
+Loading resource: res://assets/art/events/late_shift_discount.png
+Loading resource: res://.godot/imported/late_shift_discount.png-14f5b46a8b067bb218ffd111360cf848.ctex
+Loading resource: res://assets/art/games/blackjack.png
+Loading resource: res://.godot/imported/blackjack.png-ffacfa2f00d89659422a95a79461c5b4.ctex
+Loading resource: res://assets/art/events/side_door.png
+Loading resource: res://.godot/imported/side_door.png-903813bd2144350f094a76d96767b688.ctex
+Loading resource: res://assets/art/ui/environment_titles/back_alley.png
+Loading resource: res://.godot/imported/back_alley.png-16022896abb792ecd90e21fe8b06ec2a.ctex
+Loading resource: res://assets/art/items/basic_strategy_card.png
+Loading resource: res://.godot/imported/basic_strategy_card.png-21a1d7e4159f2388cb7a39515e54776c.ctex
+Loading resource: res://assets/art/items/tilt_dampener.png
+Loading resource: res://.godot/imported/tilt_dampener.png-939359323aa384b7ad199b6d980d5838.ctex
+Loading resource: res://assets/art/items/foil_sleeve.png
+Loading resource: res://.godot/imported/foil_sleeve.png-717c5ab47e44e80e7ff2003d70e51107.ctex
+Loading resource: res://assets/art/items/splitter_token.png
+Loading resource: res://.godot/imported/splitter_token.png-6e4c60f69f82f1b84939677feb7bb4ef.ctex
+Loading resource: res://assets/art/events/parking_lot_tip.png
+Loading resource: res://.godot/imported/parking_lot_tip.png-c1e200d0a1e0686ff4d995ef5cacb1f4.ctex
+Loading resource: res://assets/art/ui/environment_titles/bar.png
+Loading resource: res://.godot/imported/bar.png-17160e3e003cc4e263a5d63493d563d7.ctex
+Loading resource: res://assets/art/items/instant_coffee.png
+Loading resource: res://.godot/imported/instant_coffee.png-ed9fc478c6c512d4b6fb296fe874bb9e.ctex
+Loading resource: res://assets/art/items/cold_quarters.png
+Loading resource: res://.godot/imported/cold_quarters.png-63e34fa5b012099099f3fd25cd8259c9.ctex
+Loading resource: res://assets/art/events/back_alley_offer.png
+Loading resource: res://.godot/imported/back_alley_offer.png-a44e4f0439f578be0b2bf689c157cb18.ctex
+Loading resource: res://assets/art/ui/environment_titles/corner_store.png
+Loading resource: res://.godot/imported/corner_store.png-9a0c0a59508d438947dcb5fc947ff249.ctex
+Loading resource: res://assets/art/items/coin_return_shim.png
+Loading resource: res://.godot/imported/coin_return_shim.png-065d6ac8660ff6d0433bb6540c863eda.ctex
+Loading resource: res://assets/art/items/chip_slide_wax.png
+Loading resource: res://.godot/imported/chip_slide_wax.png-8c6466b911eb412829aba36d64a4691d.ctex
+Loading resource: res://assets/art/items/jackpot_magnet.png
+Loading resource: res://.godot/imported/jackpot_magnet.png-b4d53f65d305a39c808d4d9ab17e9a3e.ctex
+Loading resource: res://assets/art/ui/environment_titles/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-38623c2a41f238678a6c49d2408a90ff.ctex
+Loading resource: res://assets/art/items/chip_slide_wax.png
+Loading resource: res://.godot/imported/chip_slide_wax.png-8c6466b911eb412829aba36d64a4691d.ctex
+Loading resource: res://assets/art/items/coin_return_shim.png
+Loading resource: res://.godot/imported/coin_return_shim.png-065d6ac8660ff6d0433bb6540c863eda.ctex
+Loading resource: res://assets/art/items/jackpot_magnet.png
+Loading resource: res://.godot/imported/jackpot_magnet.png-b4d53f65d305a39c808d4d9ab17e9a3e.ctex
+BTH support: Room object authority is invalid.
+Loading resource: res://assets/art/items/roadside_map.png
+Loading resource: res://.godot/imported/roadside_map.png-5220d07fd8a98b025aa9277792361a4e.ctex
+Loading resource: res://assets/art/items/bag.png
+Loading resource: res://.godot/imported/bag.png-3f2000707a41905a36d9e05b4375c154.ctex
+Loading resource: res://assets/art/items/neon_players_charm.png
+Loading resource: res://.godot/imported/neon_players_charm.png-0c3f99cfadfdfa9561d29aaf28b5054d.ctex
+Loading resource: res://assets/art/items/lucky_ladies_compact.png
+Loading resource: res://.godot/imported/lucky_ladies_compact.png-fd9970fd86e1619926e76f70feb59a46.ctex
+Loading resource: res://assets/art/events/back_alley_offer.png
+Loading resource: res://.godot/imported/back_alley_offer.png-a44e4f0439f578be0b2bf689c157cb18.ctex
+Loading resource: res://assets/art/items/return_spring.png
+Loading resource: res://.godot/imported/return_spring.png-eb36e591cb546bacf347fce2ef1f1b5e.ctex
+Loading resource: res://assets/art/items/holdout_wax.png
+Loading resource: res://.godot/imported/holdout_wax.png-decf4af5cbe722eb9ea1e4d8b09e029d.ctex
+Loading resource: res://assets/art/items/flask_of_courage.png
+Loading resource: res://.godot/imported/flask_of_courage.png-edc0149e277c5fd00e227fac53d7d59e.ctex
+Loading resource: res://assets/art/events/parking_lot_tip.png
+Loading resource: res://.godot/imported/parking_lot_tip.png-c1e200d0a1e0686ff4d995ef5cacb1f4.ctex
+Loading resource: res://assets/art/run_outcomes/walked_away.png
+Loading resource: res://.godot/imported/walked_away.png-8268058703d5424b8283f9945ca8fbb7.ctex
+Loading resource: res://assets/art/ui/icons/danger.png
+Loading resource: res://.godot/imported/danger.png-4fecbc18d7ba76ce062971a295ae28ef.ctex
+Loading resource: res://assets/art/items/cashout_envelope.png
+Loading resource: res://.godot/imported/cashout_envelope.png-edebb15050bc31fdb478eff4be1bc396.ctex
+Loading resource: res://assets/art/items/shoe_cut_marker.png
+Loading resource: res://.godot/imported/shoe_cut_marker.png-25c4c909db2a54d136816ebfd28cf4fd.ctex
+Loading resource: res://assets/art/items/foil_sleeve.png
+Loading resource: res://.godot/imported/foil_sleeve.png-717c5ab47e44e80e7ff2003d70e51107.ctex
+Loading resource: res://assets/art/items/rubber_pegs.png
+Loading resource: res://.godot/imported/rubber_pegs.png-13f7aca5213357a5fffec259a99d9470.ctex
+BTH_PERF_SCENARIO {"name":"overlay_cost_probe","phase":"begin","ticks_msec":46960}
+Loading resource: res://scripts/games/coin_pusher/coin_pusher_renderer.gd
+Loading resource: res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd
+Loading resource: res://assets/art/items/rubber_pegs.png
+Loading resource: res://.godot/imported/rubber_pegs.png-13f7aca5213357a5fffec259a99d9470.ctex
+Loading resource: res://assets/art/items/jackpot_magnet.png
+Loading resource: res://.godot/imported/jackpot_magnet.png-b4d53f65d305a39c808d4d9ab17e9a3e.ctex
+Loading resource: res://assets/art/items/cashout_envelope.png
+Loading resource: res://.godot/imported/cashout_envelope.png-edebb15050bc31fdb478eff4be1bc396.ctex
+Loading resource: res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd
+Loading resource: res://assets/art/events/pit_boss_sweep.png
+Loading resource: res://.godot/imported/pit_boss_sweep.png-45ebb12e74cf05b496ccc24b8de58a98.ctex
+{
+	"budget_headroom_checks": [
+		{
+			"dev_budget_ms": 1.5,
+			"label": "Idle surface draw p95",
+			"low_end_frame_budget_ms": 16.6,
+			"low_end_scale_factor": 10.2,
+			"metric_id": "idle_surface_draw_p95",
+			"scaled_budget_ms": 15.3,
+			"under_scaled_budget": true,
+			"waived": false,
+			"waiver_reason": "",
+			"waiver_web_gate": ""
+		},
+		{
+			"dev_budget_ms": 1.5,
+			"label": "Blackjack idle surface draw p95",
+			"low_end_frame_budget_ms": 16.6,
+			"low_end_scale_factor": 10.2,
+			"metric_id": "blackjack_idle_surface_draw_p95",
+			"scaled_budget_ms": 15.3,
+			"under_scaled_budget": true,
+			"waived": false,
+			"waiver_reason": "",
+			"waiver_web_gate": ""
+		},
+		{
+			"dev_budget_ms": 5.0,
+			"label": "Slot autoplay active draw p95",
+			"low_end_frame_budget_ms": 16.6,
+			"low_end_scale_factor": 10.2,
+			"metric_id": "slot_autoplay_draw_p95",
+			"scaled_budget_ms": 51.0,
+			"under_scaled_budget": false,
+			"waived": true,
+			"waiver_reason": "Active slot autoplay renderer is still above the 10.2x min-spec proxy headroom on the dev-box draw timer. The LD.1 web smoke gates the exported WebGL path directly while LD.2 keeps this as a release-gate row.",
+			"waiver_web_gate": "tools/web_perf_smoke.ps1 slot_autoplay_active frame p95 budget"
+		}
+	],
+	"candidate_commit": "",
+	"casino_slot_preview_checked": true,
+	"coin_pusher_active_sequence_checked": false,
+	"coin_pusher_ceiling_refusal_checked": true,
+	"coin_pusher_full_cap_checked": true,
+	"coin_pusher_performance_status": {
+		"active_sequence_checked": false,
+		"ceiling_refusal": {
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"body_count": 600,
+			"ceiling": 600,
+			"checked": true,
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"host_full_snapshot_fallbacks": 0,
+			"input_trace_after": 0,
+			"input_trace_before": 0,
+			"story_entries_after": 2,
+			"story_entries_before": 2,
+			"surface_ui_preserved": true
+		},
+		"coin_pusher_active_carriage": {
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.8395,
+			"draw_max_ms": 2.419,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.171,
+			"draw_samples": 26,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.87241666666667,
+				"max_ms": 10.836,
+				"p95_ms": 8.688,
+				"trimmed_avg_ms": 6.69957894736842
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 2,
+			"live_liveness_ticks": 50,
+			"mode": "coin_pusher_active_carriage",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.992,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.152,
+				"outer_surface_command": 0.248,
+				"outer_total": 0.987,
+				"outer_ui_state": 0.005,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		"coin_pusher_active_collect": {
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.74349180327869,
+			"draw_max_ms": 1.992,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 1.91,
+			"draw_samples": 61,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 60.1363666666667,
+				"max_ms": 290.378,
+				"p95_ms": 272.41,
+				"trimmed_avg_ms": 48.5404736842105
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 5,
+			"live_liveness_ticks": 378,
+			"mode": "coin_pusher_active_collect",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 1.658,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.165,
+				"outer_surface_command": 0.835,
+				"outer_total": 1.652,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 2,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		"coin_pusher_active_drop": {
+			"bankroll_after": 99999,
+			"bankroll_before": 100000,
+			"draw_avg_ms": 1.95274074074074,
+			"draw_max_ms": 2.448,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.389,
+			"draw_samples": 27,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 0,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.91941666666666,
+				"max_ms": 15.323,
+				"p95_ms": 10.172,
+				"trimmed_avg_ms": 6.58629824561403
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 1,
+			"live_liveness_ticks": 26,
+			"mode": "coin_pusher_active_drop",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 5.093,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 4.478,
+				"outer_surface_command": 0.057,
+				"outer_total": 5.087,
+				"outer_ui_state": 0.005,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 0,
+			"surface_ui_preserved": true
+		},
+		"coin_pusher_active_skill_release": {
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.82617647058824,
+			"draw_max_ms": 2.113,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.096,
+			"draw_samples": 34,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 46.6284666666667,
+				"max_ms": 289.164,
+				"p95_ms": 263.282,
+				"trimmed_avg_ms": 34.683649122807
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 4,
+			"live_liveness_ticks": 138,
+			"mode": "coin_pusher_active_skill_release",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.979,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.146,
+				"outer_surface_command": 0.234,
+				"outer_total": 0.974,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		"coin_pusher_active_skill_stop": {
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.85396153846154,
+			"draw_max_ms": 2.309,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.195,
+			"draw_samples": 26,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.89128333333333,
+				"max_ms": 14.673,
+				"p95_ms": 11.895,
+				"trimmed_avg_ms": 6.53950877192982
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 3,
+			"live_liveness_ticks": 75,
+			"mode": "coin_pusher_active_skill_stop",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.98,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.145,
+				"outer_surface_command": 0.237,
+				"outer_total": 0.976,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		"loaded_coin_count": 160,
+		"machine_ceiling": 600,
+		"raw_solver_stress_body_count": 300,
+		"raw_solver_timing": {
+			"action_id": "continuous_tick",
+			"avg_ms": 17.2098666666667,
+			"capped_samples": 60,
+			"final_body_count": 291,
+			"fixed_tick_samples": 60,
+			"game_id": "coin_pusher",
+			"initial_body_count": 300,
+			"machine_ceiling": 600,
+			"max_ms": 52.326,
+			"mode": "coin_pusher_solver_tick_300_body_stress",
+			"p95_budget_ms": 12.0,
+			"p95_ms": 49.372,
+			"run_index": -1,
+			"sample_count": 60,
+			"seed": "practice:coin_pusher_solver_stress",
+			"solver_backend": "gdscript_v3",
+			"solver_fixed_hz": 60,
+			"stress_body_count": 300,
+			"trimmed_avg_ms": 15.4580877192982
+		},
+		"reported_shipped_coin_cap": 160,
+		"shipped_live_body_count": 160,
+		"solver_fixed_hz": 60
+	},
+	"coin_pusher_solver_timing_checked": false,
+	"environment_idle_liveness_floors": {
+		"meta_home_idle": {
+			"counter": "scene_idle_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		}
+	},
+	"evidence_profile": "",
+	"failures": [
+		"Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+		"Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+		"Late-run Crew dialogue performance probe did not open the conversation.",
+		"Idle coin_pusher surface averaged 47.67 ms per frame, above 45.00 ms.",
+		"Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+		"Coin Pusher V3 300-body tick p95 49.372 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+		"Coin Pusher coin_pusher_active_skill_release frame p95 263.282 ms exceeded 22.000 ms.",
+		"Coin Pusher coin_pusher_active_collect frame p95 272.410 ms exceeded 22.000 ms.",
+		"Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+		"Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+	],
+	"frames_per_surface": 120,
+	"game_idle_liveness_floors": {
+		"baccarat": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"bar_dice": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"blackjack": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"coin_pusher": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"craps": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"crew_draw_poker": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"pull_tabs": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"roulette": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"scratch_tickets": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"slot": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		},
+		"video_poker": {
+			"counter": "surface_animation_redraw_count",
+			"minimum_per_120_frames": 8
+		}
+	},
+	"game_surface_coverage": {
+		"baccarat": 1,
+		"bar_dice": 1,
+		"blackjack": 1,
+		"coin_pusher": 1,
+		"craps": 1,
+		"crew_draw_poker": 1,
+		"pull_tabs": 1,
+		"roulette": 1,
+		"scratch_tickets": 1,
+		"slot": 1,
+		"video_poker": 1
+	},
+	"generated_game_environment_count": 0,
+	"grand_casino_living_floor_idle_checked": true,
+	"liveness_guard_proof": {
+		"counter": "surface_animation_redraw_count",
+		"restored_measured": 49,
+		"restored_passed": true,
+		"suppressed_failure_message": "Synthetic blackjack idle surface liveness counter surface_animation_redraw_count advanced 0 time(s), below floor 1.",
+		"suppressed_measured": 0,
+		"suppressed_passed": false,
+		"surface": "Synthetic blackjack idle surface"
+	},
+	"liveness_observations": [
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Idle pull_tab_machine surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Idle scratch_tickets surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Idle slot_machine surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Idle dice_table surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 49,
+			"message": "",
+			"passed": true,
+			"surface": "Idle craps surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 13,
+			"message": "",
+			"passed": true,
+			"surface": "Idle blackjack surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Idle baccarat surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 51,
+			"message": "",
+			"passed": true,
+			"surface": "Idle roulette surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 49,
+			"message": "",
+			"passed": true,
+			"surface": "Idle crew_draw_poker surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 49,
+			"message": "",
+			"passed": true,
+			"surface": "Idle card_machine surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "scene_idle_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Grand Casino living floor",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 50,
+			"message": "",
+			"passed": true,
+			"surface": "Synthetic blackjack idle surface",
+			"zero_reason": ""
+		},
+		{
+			"counter": "scene_idle_animation_redraw_count",
+			"floor": 8,
+			"measured": 49,
+			"message": "",
+			"passed": true,
+			"surface": "Meta home idle",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 49,
+			"message": "",
+			"passed": true,
+			"surface": "Grand Casino Rourke duel idle",
+			"zero_reason": ""
+		},
+		{
+			"counter": "surface_animation_redraw_count",
+			"floor": 8,
+			"measured": 87,
+			"message": "",
+			"passed": true,
+			"surface": "Idle coin_pusher surface",
+			"zero_reason": ""
+		}
+	],
+	"low_end_frame_budget_ms": 16.6,
+	"low_end_scale_factor": 10.2,
+	"native_plugin_sha256": "",
+	"new_surface_budgets": {
+		"dialogue_active": {
+			"frame_p95_ms": 16.0,
+			"sample_frames": 120
+		},
+		"eviction_map_transition": {
+			"frame_p95_ms": 16.0,
+			"sample_frames": 120
+		},
+		"grand_casino_duel_idle": {
+			"draw_p95_ms": 5.0,
+			"sample_frames": 120
+		},
+		"late_run_crew_dialogue_open": {
+			"call_ms": 16.0
+		},
+		"meta_home_idle": {
+			"frame_p95_ms": 16.0,
+			"sample_frames": 120
+		},
+		"meta_home_open": {
+			"call_ms": 700.0
+		},
+		"run_report_replay": {
+			"frame_p95_ms": 16.0,
+			"sample_frames": 120
+		},
+		"talk_dock_active": {
+			"frame_p95_ms": 16.0,
+			"sample_frames": 120
+		}
+	},
+	"new_surface_coverage": {
+		"dialogue_active": 1,
+		"eviction_map_transition": 1,
+		"grand_casino_duel_idle": 1,
+		"late_run_crew_dialogue_open": 1,
+		"meta_home_idle": 1,
+		"meta_home_open": 1,
+		"run_report_replay": 1,
+		"talk_dock_active": 1
+	},
+	"observations": [
+		{
+			"avg_frame_ms": 6.42133333333333,
+			"camera_target_refresh_count": 4,
+			"elapsed_ms": 115.584,
+			"environment_id": "small_underground_casino_001",
+			"focus_call_ms": 0.737,
+			"frames": 18,
+			"hover_call_ms": 0.319,
+			"mode": "environment_focus",
+			"object_id": "event:side_door",
+			"object_type": "event",
+			"run_index": -1,
+			"seed": "CHECK-GODOT-PERF-focus",
+			"target_recalculated_during_glide": false
+		},
+		{
+			"avg_frame_ms": 11.1106666666667,
+			"camera_target_refresh_count": 6,
+			"elapsed_ms": 199.992,
+			"environment_id": "small_underground_casino_001",
+			"focus_call_ms": 1.231,
+			"frames": 18,
+			"hover_call_ms": 0.381,
+			"mode": "environment_focus",
+			"object_id": "event:town_rumor_staff",
+			"object_type": "event",
+			"run_index": -1,
+			"seed": "CHECK-GODOT-PERF-focus",
+			"target_recalculated_during_glide": false
+		},
+		{
+			"avg_frame_ms": 6.66872222222222,
+			"camera_target_refresh_count": 8,
+			"elapsed_ms": 120.037,
+			"environment_id": "small_underground_casino_001",
+			"focus_call_ms": 1.088,
+			"frames": 18,
+			"hover_call_ms": 0.455,
+			"mode": "environment_focus",
+			"object_id": "environment_layer:ambient",
+			"object_type": "environment_layer",
+			"run_index": -1,
+			"seed": "CHECK-GODOT-PERF-focus",
+			"target_recalculated_during_glide": false
+		},
+		{
+			"avg_frame_ms": 6.41833333333333,
+			"camera_target_refresh_count": 10,
+			"elapsed_ms": 115.53,
+			"environment_id": "small_underground_casino_001",
+			"focus_call_ms": 8.296,
+			"frames": 18,
+			"hover_call_ms": 0.327,
+			"mode": "environment_focus",
+			"object_id": "numbers:book",
+			"object_type": "numbers",
+			"run_index": -1,
+			"seed": "CHECK-GODOT-PERF-focus",
+			"target_recalculated_during_glide": false
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.869275,
+			"draw_avg_ms": 0.5806,
+			"draw_max_ms": 0.705,
+			"draw_p95_ms": 0.691,
+			"draw_samples": 50,
+			"elapsed_ms": 824.313,
+			"environment_id": "practice_pull_tabs",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "pull_tabs",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "pull_tab_machine",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:pull_tabs"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.880225,
+			"draw_avg_ms": 0.97588,
+			"draw_max_ms": 1.045,
+			"draw_p95_ms": 0.997,
+			"draw_samples": 50,
+			"elapsed_ms": 825.627,
+			"environment_id": "practice_scratch_tickets",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "scratch_tickets",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "scratch_tickets",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:scratch_tickets"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.89065833333333,
+			"draw_avg_ms": 0.58454,
+			"draw_max_ms": 0.629,
+			"draw_p95_ms": 0.599,
+			"draw_samples": 50,
+			"elapsed_ms": 826.879,
+			"environment_id": "practice_slot",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "slot",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "slot_machine",
+			"run_index": -1,
+			"runtime_status_calls": 40,
+			"seed": "practice:slot"
+		},
+		{
+			"avg_frame_ms": 6.88095,
+			"draw_avg_ms": 0.599776470588235,
+			"draw_max_ms": 0.736,
+			"draw_p95_ms": 0.652,
+			"draw_samples": 85,
+			"elapsed_ms": 412.857,
+			"environment_id": "practice_slot",
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "slot",
+			"mode": "slot_autoplay",
+			"renderer": "slot_machine",
+			"run_index": -1,
+			"runtime_status_calls": 20,
+			"seed": "practice:slot"
+		},
+		{
+			"autoplay_active": true,
+			"environment_id": "practice_slot",
+			"game_id": "slot",
+			"mode": "slot_offscreen_autoplay",
+			"renderer": "slot_machine",
+			"seed": "practice:slot",
+			"spin_count_after": 1,
+			"spin_count_before": 0
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.87061666666667,
+			"draw_avg_ms": 1.4219,
+			"draw_max_ms": 1.593,
+			"draw_p95_ms": 1.542,
+			"draw_samples": 50,
+			"elapsed_ms": 824.474,
+			"environment_id": "practice_bar_dice",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "bar_dice",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "dice_table",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:bar_dice"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.85848333333333,
+			"draw_avg_ms": 0.849775510204082,
+			"draw_max_ms": 0.92,
+			"draw_p95_ms": 0.881,
+			"draw_samples": 49,
+			"elapsed_ms": 823.018,
+			"environment_id": "practice_craps",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "craps",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 49,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "craps",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:craps"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.8082,
+			"draw_avg_ms": 2.83130769230769,
+			"draw_max_ms": 3.443,
+			"draw_p95_ms": 3.443,
+			"draw_samples": 13,
+			"elapsed_ms": 816.984,
+			"environment_id": "practice_blackjack",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "blackjack",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 13,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "blackjack",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:blackjack"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.86281666666667,
+			"draw_avg_ms": 1.70462,
+			"draw_max_ms": 2.429,
+			"draw_p95_ms": 2.017,
+			"draw_samples": 50,
+			"elapsed_ms": 823.538,
+			"environment_id": "practice_baccarat",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "baccarat",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "baccarat",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:baccarat"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.80836666666667,
+			"draw_avg_ms": 2.87617647058824,
+			"draw_max_ms": 11.163,
+			"draw_p95_ms": 4.067,
+			"draw_samples": 51,
+			"elapsed_ms": 817.004,
+			"environment_id": "practice_roulette",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "roulette",
+			"idle_draw_budget_ms": 7.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 51,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "roulette",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:roulette"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.88843333333333,
+			"draw_avg_ms": 1.49810204081633,
+			"draw_max_ms": 4.063,
+			"draw_p95_ms": 2.808,
+			"draw_samples": 49,
+			"elapsed_ms": 826.612,
+			"environment_id": "practice_crew_draw_poker",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "crew_draw_poker",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 49,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "crew_draw_poker",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:crew_draw_poker"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.86036666666667,
+			"draw_avg_ms": 1.78502040816327,
+			"draw_max_ms": 1.905,
+			"draw_p95_ms": 1.848,
+			"draw_samples": 49,
+			"elapsed_ms": 823.244,
+			"environment_id": "practice_video_poker",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "video_poker",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 49,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "card_machine",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:video_poker"
+		},
+		{
+			"environment_id": "small_underground_casino_001",
+			"game_id": "slot",
+			"kind": "casino",
+			"mode": "casino_slot_preview",
+			"preview_active": true,
+			"renderer": "slot_machine",
+			"run_index": -1,
+			"runtime_state": {
+				"active": false,
+				"slot_autoplay_active": false,
+				"slot_bonus_active": false,
+				"slot_bonus_family": "buffalo",
+				"slot_feature_audio_cue": "",
+				"slot_feature_audio_volume_db": -1.0,
+				"slot_free_spins": 0,
+				"slot_last_classification": "idle",
+				"slot_last_payout": 0,
+				"slot_nudge_chain_active": false,
+				"slot_pending_feature": false,
+				"slot_pending_feature_alert": false,
+				"slot_preview_caption": "Ready",
+				"slot_preview_phase": "idle",
+				"spin_count": 0,
+				"status_label": "",
+				"status_summary": "Slot spins 0, coin in $0, coin out $0."
+			},
+			"seed": "CHECK-GODOT-PERF-slot-preview",
+			"visual_state": {
+				"active_bonus_family": "",
+				"cabinet_background_path": "res://assets/art/slots/buffalo_line_5x3_ways.png",
+				"cabinet_identity": "ways",
+				"cabinet_material": "copper_sunset_glass",
+				"cabinet_motion_style": "herd_stampede_wipe",
+				"cabinet_palette": {
+					"accent": "#47ff88",
+					"glass": "#ffba68",
+					"light": "#ff3f75",
+					"primary": "#092526",
+					"secondary": "#050a0d",
+					"shadow": "#050201",
+					"trim": "#f4c15d"
+				},
+				"cabinet_title": "Ways",
+				"cabinet_topper_style": "day_dusk_backbox",
+				"cabinet_variant_id": "toxic_teal",
+				"feature_name": "Gold Stampede Lock",
+				"free_spins": 0,
+				"last_classification": "idle",
+				"last_payout": 0,
+				"machine_family": "buffalo",
+				"machine_format": "line_5x3",
+				"machine_key": "line_5x3:buffalo:steady:jackpot_chase:toxic_teal",
+				"pay_model": "ways_1024",
+				"reel_count": 5,
+				"row_count": 4,
+				"slot_preview": {
+					"active": false,
+					"autoplay_active": false,
+					"autoplay_delay_msec": 0,
+					"autoplay_next_msec": 0,
+					"autoplay_remaining_msec": 0,
+					"bonus": {
+						"active": false,
+						"family": "buffalo",
+						"feature_total": 0,
+						"free_spins": 0,
+						"jackpot_tier": "",
+						"mode": "",
+						"remaining_steps": 0,
+						"step_index": 0,
+						"total_steps": 0
+					},
+					"caption": "Ready",
+					"celebration_tier": "none",
+					"classification": "idle",
+					"family": "buffalo",
+					"format_id": "line_5x3",
+					"grid": [
+						[
+							"K",
+							"BLANK",
+							"A",
+							"K"
+						],
+						[
+							"BLANK",
+							"A",
+							"K",
+							"Q"
+						],
+						[
+							"SUNSET_2X",
+							"BLANK",
+							"A",
+							"K"
+						],
+						[
+							"BUFFALO",
+							"SUNSET",
+							"A",
+							"K"
+						],
+						[
+							"GOLD_TOKEN",
+							"CASH",
+							"A",
+							"K"
+						]
+					],
+					"machine_key": "line_5x3:buffalo:steady:jackpot_chase:toxic_teal",
+					"net": 0,
+					"nudge_chain": {
+						"active": false,
+						"active_index": 0,
+						"banked_payout": 0,
+						"coin_count": 0,
+						"coins": [],
+						"collected_count": 0,
+						"last_award": 0,
+						"last_grade": "",
+						"last_spawned": false,
+						"type": ""
+					},
+					"payout": 0,
+					"pending_feature": false,
+					"pending_feature_alert": false,
+					"phase": "idle",
+					"preview_elapsed_msec": 0,
+					"previous_grid": [
+						[
+							"BLANK",
+							"BLANK",
+							"BLANK",
+							"BLANK"
+						],
+						[
+							"BLANK",
+							"BLANK",
+							"BLANK",
+							"BLANK"
+						],
+						[
+							"BLANK",
+							"BLANK",
+							"BLANK",
+							"BLANK"
+						],
+						[
+							"BLANK",
+							"BLANK",
+							"BLANK",
+							"BLANK"
+						],
+						[
+							"BLANK",
+							"BLANK",
+							"BLANK",
+							"BLANK"
+						]
+					],
+					"reel_count": 5,
+					"row_count": 4,
+					"schema_version": 1,
+					"selected_bet": 2,
+					"spin": {
+						"animation_id": "",
+						"duration_msec": 0,
+						"timeline": []
+					},
+					"spin_count": 0,
+					"status_label": "",
+					"win_cells": [],
+					"win_reason": "",
+					"win_symbol": ""
+				}
+			}
+		},
+		{
+			"character_count": 5,
+			"environment_id": "grand_casino",
+			"frame_p95_budget_ms": 16.0,
+			"frame_time": {
+				"avg_ms": 7.6752,
+				"max_ms": 106.983,
+				"p95_ms": 6.914,
+				"trimmed_avg_ms": 6.83714912280702
+			},
+			"frames": 120,
+			"liveness_counter": "scene_idle_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"mode": "grand_casino_living_floor_idle",
+			"run_index": -1,
+			"seed": "synthetic:grand_casino_living_floor"
+		},
+		{
+			"action_id": "buy_tab",
+			"avg_ms": 1.011625,
+			"budget": {
+				"avg_ms": 1.5,
+				"max_ms": 4.0,
+				"p95_ms": 2.5
+			},
+			"failure_messages": [],
+			"game_id": "pull_tabs",
+			"max_ms": 1.081,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.075,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:pull_tabs",
+			"trimmed_avg_ms": 1.00860869565217
+		},
+		{
+			"action_id": "buy_scratch_ticket",
+			"avg_ms": 1.353125,
+			"budget": {
+				"avg_ms": 3.0,
+				"max_ms": 6.0,
+				"p95_ms": 5.0
+			},
+			"failure_messages": [],
+			"game_id": "scratch_tickets",
+			"max_ms": 3.309,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 3.228,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:scratch_tickets",
+			"trimmed_avg_ms": 1.26808695652174
+		},
+		{
+			"action_id": "spin",
+			"avg_ms": 0.718541666666667,
+			"budget": {
+				"avg_ms": 6.0,
+				"max_ms": 10.0,
+				"p95_ms": 8.0
+			},
+			"failure_messages": [],
+			"game_id": "slot",
+			"max_ms": 1.847,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.297,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:slot",
+			"trimmed_avg_ms": 0.669478260869565
+		},
+		{
+			"action_id": "roll",
+			"avg_ms": 0.603166666666667,
+			"budget": {
+				"avg_ms": 1.5,
+				"max_ms": 4.0,
+				"p95_ms": 3.0
+			},
+			"failure_messages": [],
+			"game_id": "bar_dice",
+			"max_ms": 0.684,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 0.648,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:bar_dice",
+			"trimmed_avg_ms": 0.599652173913043
+		},
+		{
+			"action_id": "roll_craps",
+			"avg_ms": 1.435125,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "craps",
+			"max_ms": 1.554,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.503,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:craps",
+			"trimmed_avg_ms": 1.42995652173913
+		},
+		{
+			"action_id": "play_basic",
+			"avg_ms": 2.57670833333333,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "blackjack",
+			"max_ms": 2.694,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 2.693,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:blackjack",
+			"trimmed_avg_ms": 2.57160869565217
+		},
+		{
+			"action_id": "deal_baccarat",
+			"avg_ms": 0.784291666666667,
+			"budget": {
+				"avg_ms": 1.25,
+				"max_ms": 3.0,
+				"p95_ms": 1.75
+			},
+			"failure_messages": [],
+			"game_id": "baccarat",
+			"max_ms": 0.899,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 0.827,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:baccarat",
+			"trimmed_avg_ms": 0.779304347826087
+		},
+		{
+			"action_id": "spin_roulette",
+			"avg_ms": 1.47904166666667,
+			"budget": {
+				"avg_ms": 2.0,
+				"max_ms": 4.0,
+				"p95_ms": 3.0
+			},
+			"failure_messages": [],
+			"game_id": "roulette",
+			"max_ms": 1.608,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.531,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:roulette",
+			"trimmed_avg_ms": 1.4734347826087
+		},
+		{
+			"action_id": "deal",
+			"avg_ms": 1.66429166666667,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "crew_draw_poker",
+			"max_ms": 1.781,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.778,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:crew_draw_poker",
+			"trimmed_avg_ms": 1.65921739130435
+		},
+		{
+			"action_id": "draw",
+			"avg_ms": 1.13916666666667,
+			"budget": {
+				"avg_ms": 2.5,
+				"max_ms": 5.0,
+				"p95_ms": 4.5
+			},
+			"failure_messages": [],
+			"game_id": "video_poker",
+			"max_ms": 1.278,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.228,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:video_poker",
+			"trimmed_avg_ms": 1.13313043478261
+		},
+		{
+			"avg_ms": 0.119216666666667,
+			"budget": {
+				"avg_ms": 0.75,
+				"max_ms": 5.0,
+				"p95_ms": 1.5
+			},
+			"game_id": "scratch_tickets",
+			"max_ms": 0.151,
+			"mode": "scratch_pointer_path",
+			"p95_ms": 0.123,
+			"run_index": -1,
+			"sample_count": 60,
+			"seed": "practice:scratch_pointer",
+			"trimmed_avg_ms": 0.118315789473684
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.86433333333333,
+			"draw_avg_ms": 0.0670083333333333,
+			"draw_max_ms": 0.073,
+			"draw_p95_ms": 0.068,
+			"draw_samples": 120,
+			"elapsed_ms": 823.72,
+			"environment_id": "synthetic_idle_surface",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "blackjack",
+			"idle_draw_budget_ms": 5.0,
+			"mode": "synthetic_forced_draw",
+			"renderer": "blackjack",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "synthetic:idle_surface"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 6.89995833333333,
+			"draw_avg_ms": 0.06026,
+			"draw_max_ms": 0.066,
+			"draw_p95_ms": 0.064,
+			"draw_samples": 50,
+			"elapsed_ms": 827.995,
+			"environment_id": "synthetic_idle_surface",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "blackjack",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 50,
+			"mode": "synthetic_idle_surface_liveness",
+			"renderer": "blackjack",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "synthetic:idle_surface_liveness"
+		},
+		{
+			"budget": {
+				"call_ms": 700.0
+			},
+			"environment_id": "meta_home_back_alley",
+			"mode": "meta_home_open",
+			"object_count": 3,
+			"open_call_ms": 76.842,
+			"run_index": -1,
+			"seed": "new_surface:meta_home_open"
+		},
+		{
+			"avg_frame_ms": 6.89031666666667,
+			"budget": {
+				"frame_p95_ms": 16.0,
+				"sample_frames": 120
+			},
+			"environment_id": "meta_home_back_alley",
+			"frames": 120,
+			"label": "Meta home idle",
+			"liveness_counter": "scene_idle_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 49,
+			"max_frame_ms": 6.926,
+			"mode": "meta_home_idle",
+			"p95_frame_ms": 6.917,
+			"run_index": -1,
+			"seed": "new_surface:meta_home_idle"
+		},
+		{
+			"avg_frame_ms": 8.96793333333333,
+			"budget": {
+				"frame_p95_ms": 16.0,
+				"sample_frames": 120
+			},
+			"environment_id": "perf_talk_table",
+			"frames": 120,
+			"label": "Talk dock active",
+			"max_frame_ms": 267.526,
+			"mode": "talk_dock_active",
+			"p95_frame_ms": 6.909,
+			"run_index": -1,
+			"seed": "new_surface:talk_dock_active"
+		},
+		{
+			"avg_frame_ms": 9.49976666666666,
+			"budget": {
+				"frame_p95_ms": 16.0,
+				"sample_frames": 120
+			},
+			"environment_id": "perf_dialogue_pull_tabs",
+			"frames": 120,
+			"label": "Dialogue active",
+			"max_frame_ms": 298.537,
+			"mode": "dialogue_active",
+			"p95_frame_ms": 6.915,
+			"run_index": -1,
+			"seed": "new_surface:dialogue_active"
+		},
+		{
+			"budget": {
+				"call_ms": 16.0
+			},
+			"compacted_build_serialize_ms": 37.129,
+			"compacted_save_chars": 534897,
+			"compacted_ticket_chars": 1363,
+			"conversation_opened": false,
+			"environment_id": "perf_delta_queen_late_run",
+			"legacy_build_serialize_ms": 123.915,
+			"legacy_save_chars": 1724777,
+			"legacy_ticket_chars": 1191243,
+			"mode": "late_run_crew_dialogue_open",
+			"open_call_ms": 8.61,
+			"pending_talk_entry": {
+
+			},
+			"queued_authority_payload_present": false,
+			"queued_context_chars": 2,
+			"queued_environment_chars": 2,
+			"run_failure_reason": "",
+			"run_index": -1,
+			"run_status": "active",
+			"seed": "new_surface:late_run_crew_dialogue_open",
+			"selection_available": true,
+			"selection_call_ms": 1.412,
+			"talk_snapshot": {
+				"anchored_bottom": true,
+				"anchored_bottom_left": true,
+				"avoid_rect": "[P: (0.0, 0.0), S: (0.0, 0.0)]",
+				"body_character_count": 0,
+				"body_line_count": 1,
+				"body_text_clipped": false,
+				"body_visible_line_count": 1,
+				"character_encounter": {
+					"context": "shop_greeting",
+					"line_key": "shop_greeting"
+				},
+				"character_ids": [
+					"tomas_market_merchant"
+				],
+				"character_names": [
+					"Tomas Reed"
+				],
+				"character_pool_id": "shop_staff",
+				"choice_button_height": 0.0,
+				"choice_count": 0,
+				"choice_effects_visible": false,
+				"choice_ids": [],
+				"click_to_skip": true,
+				"environment_rect": {
+					"h": 564.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 156.0
+				},
+				"environment_reserved_rect": "[P: (30.0, 452.0), S: (558.0, 250.0)]",
+				"event_id": "",
+				"expanded": false,
+				"game_surface_rect": {
+					"h": 594.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 126.0
+				},
+				"ignore_penalty_heat": 5,
+				"layout_boundary_key": "dialogue:pull_tab_clerk|none|ENVIRONMENT",
+				"layout_position_change_count": 2,
+				"layout_side": "left",
+				"layout_side_change_count": 0,
+				"layout_vertical": "bottom",
+				"name_plate": true,
+				"occupied_rect": "[P: (0.0, 0.0), S: (0.0, 0.0)]",
+				"package_terms_rect": "[P: (196.0, 497.0), S: (9.0, 0.0)]",
+				"package_terms_scroll": 0,
+				"package_terms_text": "",
+				"package_terms_visible": false,
+				"panel_rect": {
+					"h": 211.0,
+					"w": 400.0,
+					"x": 188.0,
+					"y": 491.0
+				},
+				"portrait_animation_active": false,
+				"portrait_animation_redraw_count": 25,
+				"portrait_count": 1,
+				"portrait_outer_edge": true,
+				"portrait_presentation": "",
+				"portrait_rect": {
+					"h": 250.0,
+					"w": 170.0,
+					"x": 30.0,
+					"y": 452.0
+				},
+				"portrait_renderer": "animated_character_model",
+				"presentation": "environment_overlay",
+				"queue_count": 0,
+				"reduce_motion": false,
+				"response_icon_kinds": [
+					"heat_up",
+					"uncertain",
+					"route",
+					"leave"
+				],
+				"screen_rect": {
+					"h": 720.0,
+					"w": 1280.0,
+					"x": 0.0,
+					"y": 0.0
+				},
+				"speaker": "Stranger",
+				"speaker_label_visible": false,
+				"speaker_text": "Tomas Reed ΓÇö Market Merchant",
+				"speaking_character_id": "tomas_market_merchant",
+				"speaking_character_name": "Tomas Reed",
+				"speaking_character_title": "Market Merchant",
+				"summary": "",
+				"timing": {
+
+				},
+				"topic": "Pull-Tab Counter",
+				"topic_visible": false,
+				"typewriter_active": false,
+				"urgency_bar_visible": false,
+				"visible": false,
+				"visible_characters": -1,
+				"voice_line": "Market is open. Regret has aisle two.",
+				"voice_line_key": "shop_greeting",
+				"z_index": 100
+			},
+			"ticketless_save_chars": 533534
+		},
+		{
+			"avg_frame_ms": 7.17588333333333,
+			"budget": {
+				"frame_p95_ms": 16.0,
+				"sample_frames": 120
+			},
+			"environment_id": "back_alley_001",
+			"frames": 120,
+			"label": "Eviction map transition",
+			"max_frame_ms": 48.733,
+			"mode": "eviction_map_transition",
+			"p95_frame_ms": 6.905,
+			"run_index": -1,
+			"seed": "new_surface:eviction_map_transition"
+		},
+		{
+			"avg_frame_ms": 6.89759166666667,
+			"budget": {
+				"frame_p95_ms": 16.0,
+				"sample_frames": 120
+			},
+			"environment_id": "back_alley_001",
+			"frames": 120,
+			"label": "Run report replay",
+			"max_frame_ms": 6.976,
+			"mode": "run_report_replay",
+			"p95_frame_ms": 6.904,
+			"run_index": -1,
+			"seed": "new_surface:run_report_replay"
+		},
+		{
+			"budget": {
+				"draw_p95_ms": 5.0,
+				"sample_frames": 120
+			},
+			"draw_avg_ms": 0.062734693877551,
+			"draw_max_ms": 0.069,
+			"draw_p95_ms": 0.066,
+			"draw_samples": 49,
+			"environment_id": "grand_casino_back_room",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "blackjack",
+			"label": "Grand Casino Rourke duel idle",
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 49,
+			"mode": "grand_casino_duel_idle",
+			"run_index": -1,
+			"seed": "new_surface:grand_casino_duel_idle"
+		},
+		{
+			"animation_liveness_active": true,
+			"avg_frame_ms": 47.6744,
+			"draw_avg_ms": 1.93629885057471,
+			"draw_max_ms": 2.797,
+			"draw_p95_ms": 2.179,
+			"draw_samples": 87,
+			"elapsed_ms": 5720.928,
+			"environment_id": "practice_coin_pusher",
+			"frames": 120,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"idle_draw_budget_ms": 5.0,
+			"liveness_counter": "surface_animation_redraw_count",
+			"liveness_floor": 8,
+			"liveness_measured": 87,
+			"liveness_zero_reason": "",
+			"mode": "idle_surface",
+			"renderer": "coin_pusher",
+			"run_index": -1,
+			"runtime_status_calls": 0,
+			"seed": "practice:coin_pusher_full_cap"
+		},
+		{
+			"action_id": "continuous_tick",
+			"avg_ms": 17.2098666666667,
+			"capped_samples": 60,
+			"final_body_count": 291,
+			"fixed_tick_samples": 60,
+			"game_id": "coin_pusher",
+			"initial_body_count": 300,
+			"machine_ceiling": 600,
+			"max_ms": 52.326,
+			"mode": "coin_pusher_solver_tick_300_body_stress",
+			"p95_budget_ms": 12.0,
+			"p95_ms": 49.372,
+			"run_index": -1,
+			"sample_count": 60,
+			"seed": "practice:coin_pusher_solver_stress",
+			"solver_backend": "gdscript_v3",
+			"solver_fixed_hz": 60,
+			"stress_body_count": 300,
+			"trimmed_avg_ms": 15.4580877192982
+		},
+		{
+			"bankroll_after": 99999,
+			"bankroll_before": 100000,
+			"draw_avg_ms": 1.95274074074074,
+			"draw_max_ms": 2.448,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.389,
+			"draw_samples": 27,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 0,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.91941666666666,
+				"max_ms": 15.323,
+				"p95_ms": 10.172,
+				"trimmed_avg_ms": 6.58629824561403
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 1,
+			"live_liveness_ticks": 26,
+			"mode": "coin_pusher_active_drop",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 5.093,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 4.478,
+				"outer_surface_command": 0.057,
+				"outer_total": 5.087,
+				"outer_ui_state": 0.005,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 0,
+			"surface_ui_preserved": true
+		},
+		{
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.8395,
+			"draw_max_ms": 2.419,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.171,
+			"draw_samples": 26,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.87241666666667,
+				"max_ms": 10.836,
+				"p95_ms": 8.688,
+				"trimmed_avg_ms": 6.69957894736842
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 2,
+			"live_liveness_ticks": 50,
+			"mode": "coin_pusher_active_carriage",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.992,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.152,
+				"outer_surface_command": 0.248,
+				"outer_total": 0.987,
+				"outer_ui_state": 0.005,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		{
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.85396153846154,
+			"draw_max_ms": 2.309,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.195,
+			"draw_samples": 26,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 6.89128333333333,
+				"max_ms": 14.673,
+				"p95_ms": 11.895,
+				"trimmed_avg_ms": 6.53950877192982
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 3,
+			"live_liveness_ticks": 75,
+			"mode": "coin_pusher_active_skill_stop",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.98,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.145,
+				"outer_surface_command": 0.237,
+				"outer_total": 0.976,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		{
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.82617647058824,
+			"draw_max_ms": 2.113,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 2.096,
+			"draw_samples": 34,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 46.6284666666667,
+				"max_ms": 289.164,
+				"p95_ms": 263.282,
+				"trimmed_avg_ms": 34.683649122807
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 4,
+			"live_liveness_ticks": 138,
+			"mode": "coin_pusher_active_skill_release",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 0.979,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.146,
+				"outer_surface_command": 0.234,
+				"outer_total": 0.974,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 1,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		},
+		{
+			"bankroll_after": 99999,
+			"bankroll_before": 99999,
+			"draw_avg_ms": 1.74349180327869,
+			"draw_max_ms": 1.992,
+			"draw_p95_budget_ms": 7.0,
+			"draw_p95_ms": 1.91,
+			"draw_samples": 61,
+			"environment_id": "practice_coin_pusher",
+			"environment_turns_after": 1,
+			"environment_turns_before": 1,
+			"frame_p95_budget_ms": 22.0,
+			"frame_time": {
+				"avg_ms": 60.1363666666667,
+				"max_ms": 290.378,
+				"p95_ms": 272.41,
+				"trimmed_avg_ms": 48.5404736842105
+			},
+			"frames": 60,
+			"full_snapshot_calls": 0,
+			"game_id": "coin_pusher",
+			"host_full_snapshot_fallbacks": 0,
+			"live_input_trace_count": 5,
+			"live_liveness_ticks": 378,
+			"mode": "coin_pusher_active_collect",
+			"physical_motion_seen": true,
+			"renderer": "coin_pusher",
+			"resolve_call_budget_ms": 16.0,
+			"resolve_call_ms": 1.658,
+			"run_index": -1,
+			"seed": "practice:coin_pusher_full_cap",
+			"solver_backend": "gdscript_v3",
+			"solver_metrics": {
+
+			},
+			"stage_timing_ms": {
+				"host_advance_turn": 0.997,
+				"host_apply_result": 0.368,
+				"host_autosave_prepare": 0.008,
+				"host_deferred_embedded_refresh": 0.505,
+				"host_embedded_refresh": 0.08,
+				"host_module_resolve": 0.259,
+				"host_post_action_checks": 0.213,
+				"host_pre_module": 2.082,
+				"host_result_preapply": 0.005,
+				"host_result_routing": 0.173,
+				"host_rollback_snapshot": 1.923,
+				"host_total": 4.188,
+				"host_turn_and_apply": 1.367,
+				"host_turn_transaction_usec": {
+					"candidate_advance": 0.987,
+					"candidate_create": 0.0,
+					"publish": 0.0,
+					"total": 0.987
+				},
+				"interrupt_advance_talk": 0.009,
+				"interrupt_closing_time": 0.15,
+				"interrupt_enqueue_talk": 0.015,
+				"interrupt_forced_travel": 0.006,
+				"interrupt_unavoidable_event": 0.026,
+				"outer_apply_command": 0.165,
+				"outer_surface_command": 0.835,
+				"outer_total": 1.652,
+				"outer_ui_state": 0.004,
+				"refresh_deferred_hud_bankroll": 0.02,
+				"refresh_deferred_hud_finish": 0.218,
+				"refresh_deferred_hud_model": 0.229,
+				"refresh_deferred_hud_objective": 0.008,
+				"refresh_deferred_hud_status": 0.004,
+				"refresh_deferred_hud_structured_rest": 0.061,
+				"refresh_deferred_talk_music_coach": 0.838,
+				"refresh_feedback": 0.001,
+				"refresh_hud": 0.002,
+				"refresh_patch_catalog": 0.01,
+				"refresh_patch_presentation_merge": 0.001,
+				"refresh_patch_result_surface": 0.041,
+				"refresh_patch_stake_and_scalars": 0.032,
+				"refresh_snapshot_canvas_apply": 0.045,
+				"refresh_snapshot_cheat_dock": 0.012,
+				"refresh_snapshot_full_fallback": 0.0,
+				"refresh_snapshot_model": 0.111,
+				"refresh_snapshot_patch": 0.234,
+				"refresh_snapshot_realtime": 0.051,
+				"refresh_snapshots": 0.234,
+				"refresh_talk_music_coach": 0.253,
+				"refresh_terminal": 0.006
+			},
+			"story_entries_after": 2,
+			"story_entries_before": 1,
+			"surface_ui_preserved": true
+		}
+	],
+	"overlay_cost_observations": [
+		{
+			"frame_time": {
+				"avg_ms": 7.17080833333333,
+				"max_ms": 46.429,
+				"p95_ms": 6.906,
+				"trimmed_avg_ms": 6.83827826086956
+			},
+			"frames": 120,
+			"mode": "removed"
+		},
+		{
+			"avg_delta_vs_removed_ms": 0.059772159298503,
+			"frame_time": {
+				"avg_ms": 6.89810833333333,
+				"max_ms": 6.905,
+				"p95_ms": 6.904,
+				"trimmed_avg_ms": 6.89805042016807
+			},
+			"frames": 120,
+			"mode": "disabled"
+		},
+		{
+			"foundation_attribution": {
+				"autosave_flush": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"coin_pusher_native_step": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"environment_runtime": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"layout": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"snapshot_builds": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"surface_automation": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"surface_realtime": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"surface_realtime_augment": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"surface_realtime_module": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				},
+				"surface_realtime_ui": {
+					"avg": 0.0,
+					"count": 120,
+					"max": 0,
+					"p50": 0,
+					"p95": 0
+				}
+			},
+			"frame_time": {
+				"avg_ms": 6.89564999999999,
+				"max_ms": 6.917,
+				"p95_ms": 6.905,
+				"trimmed_avg_ms": 6.89504310344827
+			},
+			"frames": 120,
+			"mode": "enabled",
+			"telemetry_overhead": {
+				"avg": 0.00740833333333333,
+				"avg_ms": 0.00740833333333333,
+				"budget_ms": 0.1,
+				"count": 120,
+				"frames": 120,
+				"max": 0.109,
+				"max_ms": 0.109,
+				"p50": 0.002,
+				"p95": 0.073,
+				"under_budget": true
+			}
+		}
+	],
+	"profile_manifest_sha256": "",
+	"renderer_coverage": {
+		"baccarat": 1,
+		"blackjack": 1,
+		"card_machine": 1,
+		"coin_pusher": 1,
+		"craps": 1,
+		"crew_draw_poker": 1,
+		"dice_table": 1,
+		"pull_tab_machine": 1,
+		"roulette": 1,
+		"scratch_tickets": 1,
+		"slot_machine": 1
+	},
+	"resolve_budgets": {
+		"baccarat": {
+			"avg_ms": 1.25,
+			"max_ms": 3.0,
+			"p95_ms": 1.75
+		},
+		"bar_dice": {
+			"avg_ms": 1.5,
+			"max_ms": 4.0,
+			"p95_ms": 3.0
+		},
+		"blackjack": {
+			"avg_ms": 4.5,
+			"max_ms": 7.0,
+			"p95_ms": 5.5
+		},
+		"craps": {
+			"avg_ms": 4.5,
+			"max_ms": 7.0,
+			"p95_ms": 5.5
+		},
+		"crew_draw_poker": {
+			"avg_ms": 4.5,
+			"max_ms": 7.0,
+			"p95_ms": 5.5
+		},
+		"pull_tabs": {
+			"avg_ms": 1.5,
+			"max_ms": 4.0,
+			"p95_ms": 2.5
+		},
+		"roulette": {
+			"avg_ms": 2.0,
+			"max_ms": 4.0,
+			"p95_ms": 3.0
+		},
+		"scratch_tickets": {
+			"avg_ms": 3.0,
+			"max_ms": 6.0,
+			"p95_ms": 5.0
+		},
+		"slot": {
+			"avg_ms": 6.0,
+			"max_ms": 10.0,
+			"p95_ms": 8.0
+		},
+		"video_poker": {
+			"avg_ms": 2.5,
+			"max_ms": 5.0,
+			"p95_ms": 4.5
+		}
+	},
+	"resolve_coverage": {
+		"baccarat": 1,
+		"bar_dice": 1,
+		"blackjack": 1,
+		"craps": 1,
+		"crew_draw_poker": 1,
+		"pull_tabs": 1,
+		"roulette": 1,
+		"scratch_tickets": 1,
+		"slot": 1,
+		"video_poker": 1
+	},
+	"resolve_observations": [
+		{
+			"action_id": "buy_tab",
+			"avg_ms": 1.011625,
+			"budget": {
+				"avg_ms": 1.5,
+				"max_ms": 4.0,
+				"p95_ms": 2.5
+			},
+			"failure_messages": [],
+			"game_id": "pull_tabs",
+			"max_ms": 1.081,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.075,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:pull_tabs",
+			"trimmed_avg_ms": 1.00860869565217
+		},
+		{
+			"action_id": "buy_scratch_ticket",
+			"avg_ms": 1.353125,
+			"budget": {
+				"avg_ms": 3.0,
+				"max_ms": 6.0,
+				"p95_ms": 5.0
+			},
+			"failure_messages": [],
+			"game_id": "scratch_tickets",
+			"max_ms": 3.309,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 3.228,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:scratch_tickets",
+			"trimmed_avg_ms": 1.26808695652174
+		},
+		{
+			"action_id": "spin",
+			"avg_ms": 0.718541666666667,
+			"budget": {
+				"avg_ms": 6.0,
+				"max_ms": 10.0,
+				"p95_ms": 8.0
+			},
+			"failure_messages": [],
+			"game_id": "slot",
+			"max_ms": 1.847,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.297,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:slot",
+			"trimmed_avg_ms": 0.669478260869565
+		},
+		{
+			"action_id": "roll",
+			"avg_ms": 0.603166666666667,
+			"budget": {
+				"avg_ms": 1.5,
+				"max_ms": 4.0,
+				"p95_ms": 3.0
+			},
+			"failure_messages": [],
+			"game_id": "bar_dice",
+			"max_ms": 0.684,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 0.648,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:bar_dice",
+			"trimmed_avg_ms": 0.599652173913043
+		},
+		{
+			"action_id": "roll_craps",
+			"avg_ms": 1.435125,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "craps",
+			"max_ms": 1.554,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.503,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:craps",
+			"trimmed_avg_ms": 1.42995652173913
+		},
+		{
+			"action_id": "play_basic",
+			"avg_ms": 2.57670833333333,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "blackjack",
+			"max_ms": 2.694,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 2.693,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:blackjack",
+			"trimmed_avg_ms": 2.57160869565217
+		},
+		{
+			"action_id": "deal_baccarat",
+			"avg_ms": 0.784291666666667,
+			"budget": {
+				"avg_ms": 1.25,
+				"max_ms": 3.0,
+				"p95_ms": 1.75
+			},
+			"failure_messages": [],
+			"game_id": "baccarat",
+			"max_ms": 0.899,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 0.827,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:baccarat",
+			"trimmed_avg_ms": 0.779304347826087
+		},
+		{
+			"action_id": "spin_roulette",
+			"avg_ms": 1.47904166666667,
+			"budget": {
+				"avg_ms": 2.0,
+				"max_ms": 4.0,
+				"p95_ms": 3.0
+			},
+			"failure_messages": [],
+			"game_id": "roulette",
+			"max_ms": 1.608,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.531,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:roulette",
+			"trimmed_avg_ms": 1.4734347826087
+		},
+		{
+			"action_id": "deal",
+			"avg_ms": 1.66429166666667,
+			"budget": {
+				"avg_ms": 4.5,
+				"max_ms": 7.0,
+				"p95_ms": 5.5
+			},
+			"failure_messages": [],
+			"game_id": "crew_draw_poker",
+			"max_ms": 1.781,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.778,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:crew_draw_poker",
+			"trimmed_avg_ms": 1.65921739130435
+		},
+		{
+			"action_id": "draw",
+			"avg_ms": 1.13916666666667,
+			"budget": {
+				"avg_ms": 2.5,
+				"max_ms": 5.0,
+				"p95_ms": 4.5
+			},
+			"failure_messages": [],
+			"game_id": "video_poker",
+			"max_ms": 1.278,
+			"mode": "resolve_path",
+			"ok_count": 24,
+			"p95_ms": 1.228,
+			"progress_count": 24,
+			"run_index": -1,
+			"sample_count": 24,
+			"seed": "practice:video_poker",
+			"trimmed_avg_ms": 1.13313043478261
+		}
+	],
+	"resolve_sample_count": 24,
+	"run_count": 0,
+	"scratch_pointer_budget": {
+		"avg_ms": 0.75,
+		"max_ms": 5.0,
+		"p95_ms": 1.5
+	},
+	"scratch_pointer_checked": true,
+	"seed_prefix": "CHECK-GODOT-PERF",
+	"slot_autoplay_checked": true,
+	"tool": "foundation_performance_probe",
+	"warnings": []
+}
+Foundation performance probe report written to E:/CodexQA/BTH/runs/aud061-qol01-smoke-final-20261111/appdata/Godot/app_userdata/Beat the House/foundation_performance_probe_report.json
+Foundation performance probe checked 46 observations across 0 seed(s).
+Renderer coverage: {"baccarat":1,"blackjack":1,"card_machine":1,"coin_pusher":1,"craps":1,"crew_draw_poker":1,"dice_table":1,"pull_tab_machine":1,"roulette":1,"scratch_tickets":1,"slot_machine":1}
+Game surface coverage: {"baccarat":1,"bar_dice":1,"blackjack":1,"coin_pusher":1,"craps":1,"crew_draw_poker":1,"pull_tabs":1,"roulette":1,"scratch_tickets":1,"slot":1,"video_poker":1}
+Resolve coverage: {"baccarat":1,"bar_dice":1,"blackjack":1,"craps":1,"crew_draw_poker":1,"pull_tabs":1,"roulette":1,"scratch_tickets":1,"slot":1,"video_poker":1}
+New surface coverage: {"dialogue_active":1,"eviction_map_transition":1,"grand_casino_duel_idle":1,"late_run_crew_dialogue_open":1,"meta_home_idle":1,"meta_home_open":1,"run_report_replay":1,"talk_dock_active":1}
+Foundation performance probe failed with 10 failure(s).
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"

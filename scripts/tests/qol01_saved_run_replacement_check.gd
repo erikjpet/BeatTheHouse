@@ -35,6 +35,20 @@ func run() -> void:
 		check(dialog.dialog_text == "Start a new run? Your saved run will be replaced.", route + " exact prompt")
 		check(dialog.get_cancel_button().text == "Keep saved run", route + " safe cancel label")
 		check(dialog.get_cancel_button().has_focus(), route + " safe default focus")
+		# Root input and embedded Window input both observe the same browser gesture.
+		var tab := InputEventKey.new()
+		tab.keycode = KEY_TAB
+		tab.pressed = true
+		app._input(tab)
+		dialog.window_input.emit(tab)
+		check(dialog.get_ok_button().has_focus(), route + " Tab reaches explicit start once")
+		var back := InputEventKey.new()
+		back.keycode = KEY_TAB
+		back.shift_pressed = true
+		back.pressed = true
+		app._input(back)
+		dialog.window_input.emit(back)
+		check(dialog.get_cancel_button().has_focus(), route + " Shift-Tab returns to safe choice once")
 		# Use the shared keyboard scope and actual dialog cancel-button signal.
 		var enter := InputEventAction.new()
 		enter.action = "ui_accept"

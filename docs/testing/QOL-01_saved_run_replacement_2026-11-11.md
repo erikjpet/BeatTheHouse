@@ -31,7 +31,7 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 {"checks":73,"failure_count":0,"failures":[]}
 
 ```
-73 checks / 0 failures: five menu routes ask; primary bytes and current RunState remain untouched before consent; default focus is Keep saved run; default Enter, Escape and actual cancel-button signal retain bytes; explicit start proceeds once; duplicate confirmation cannot start twice. A real loadable backup alone also prompts and survives cancellation. No save and a deliberately unreadable current-build fixture start immediately. Mandatory automatic tutorial and both tutorial/ordinary finished-report New Run remain immediate.
+Initial73 checks / 0 failures (before duplicate root/window-dispatch coverage was added): five menu routes ask; primary bytes and current RunState remain untouched before consent; default focus is Keep saved run; default Enter, Escape and actual cancel-button signal retain bytes; explicit start proceeds once; duplicate confirmation cannot start twice. A real loadable backup alone also prompts and survives cancellation. No save and a deliberately unreadable current-build fixture start immediately. Mandatory automatic tutorial and both tutorial/ordinary finished-report New Run remain immediate.
 
 First candidate test36/2 is retained: alternating cases reopened the dialog before the previous native button event finished closing it. Test fixture now waits actual frame boundaries between independent interactions; no assertion was removed or weakened. Intermediate four-route check56/0, expanded final73/0. This was a QA sequencing correction, not a waived game failure.
 
@@ -41,4 +41,8 @@ Observed after4pass7fail versus baseline4/7; content25/runtime16 identical old s
 
 ## NEXT
 
-Pending finished task push and exact existing-pipeline served identity, startup and rendered confirmation/cancellation verification.
+First promotion a398302308be0f3f2380620450ba8f6111dfcfd7 (code b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434), tree a66021737262fcd90f4bc57a7b50b91911746d48, archive4e9eb6ff81b0c53557734f610c7c684891f67a8700d80ffc394741c9d199d102: ten served-asset checks PASS and clean browser startup. This is NOT accepted QOL delivery: rendered default/cancel worked but Tab/Shift+Tab moved focus twice. All screenshots and raw output retained. Browser job0/pageerrors0/console0 did not override visual failure. Fresh Daily profile first entered the mandatory-tutorial exemption as specified; ordinary Skip Lessons then established the normal completed-profile boundary, without a profile override. Normal Run Setup prompt exact wording and Keep saved run focus then appeared. Enter, Escape and pointer cancellation retained primary100307bytes SHA2569f50fec672237d65f5b84866af552219d6b8cf32b2fafa7af36e2127e88d8c1b; explicit pointer replacement entered Back Alley with bankroll100.
+
+Focused root/window Tab reproduction83checks/5failures (one per route). Final correction: root Main input returns while this embedded confirmation Window is visible, leaving its existing window_input handler the sole navigation owner. No shared ModalFocusScope behavior was changed. Same83checks/0failures. Final liveness PASS. Final Smoke4pass7fail versus initial4/7; content25/runtime16 exact old sets; performance9 inherited failures versus baseline10; normalized new stderr errors []. No timeout, active processes0. Corrected exact NEXT delivery pending.
+
+Final source command remains the focused production-scene check above: 83checks/0failures. The added ten checks exercise root+Window Tab and Shift-Tab dispatch across all five routes; the other73 assertions remain. No skip/waiver or shared-focus behavior change.

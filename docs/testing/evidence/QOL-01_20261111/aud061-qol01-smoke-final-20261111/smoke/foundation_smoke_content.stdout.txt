@@ -1,0 +1,185 @@
+WorkerThreadPool: 16 threads, 4 max low-priority.
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+Unrecognized output string "misc2" in mapping:
+030000000d0f00000202000000000000,Horipad O Nintendo Switch 2 Controller,a:b1,b:b0,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,misc1:b13,misc2:b14,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b3,y:b2,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000000d0f00009601000000000000,Horipad Steam,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,misc2:b2,paddle1:b5,paddle2:b15,paddle3:b18,paddle4:b19,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a3,righty:a4,start:b11,x:b3,y:b4,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
+Using "default" pen tablet driver...
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+Loading resource: res://default_bus_layout.tres
+CORE API HASH: 3663110324
+EDITOR API HASH: 835956462
+Loading resource: res://.tmp/generated_tests/foundation_check_split_runner.gd
+Loading resource: res://scenes/main.tscn
+Loading resource: res://scripts/ui/foundation_main.gd
+Loading resource: res://assets/art/ui/icons/controls/settings.svg
+Loading resource: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex
+Loading resource: res://assets/art/ui/icons/controls/run_setup.svg
+Loading resource: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex
+Loading resource: res://assets/art/ui/icons/controls/close.svg
+Loading resource: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex
+Loading resource: res://assets/art/ui/icons/controls/previous.svg
+Loading resource: res://.godot/imported/previous.svg-386380160f1134570f2618b788ef81d2.ctex
+Loading resource: res://assets/art/ui/icons/controls/next.svg
+Loading resource: res://.godot/imported/next.svg-7c48c0f9fa15b5fbce7977ebc7444810.ctex
+Loading resource: res://assets/art/ui/icons/controls/decrease.svg
+Loading resource: res://.godot/imported/decrease.svg-7944374030b32ec275f1911815262cc4.ctex
+Loading resource: res://assets/art/ui/icons/controls/increase.svg
+Loading resource: res://.godot/imported/increase.svg-1b940f08d890d4e4a960a31d82581340.ctex
+Loading resource: res://assets/art/ui/icons/controls/play.svg
+Loading resource: res://.godot/imported/play.svg-46b9dd326f06286e19a0c887abe8e938.ctex
+Loading resource: res://assets/art/ui/icons/controls/replay.svg
+Loading resource: res://.godot/imported/replay.svg-85c5c767877dd5a8ce54db284cf341b3.ctex
+Loading resource: res://assets/art/ui/icons/controls/selected.svg
+Loading resource: res://.godot/imported/selected.svg-f2db6233ee07c52f856c1d27705a419e.ctex
+Loading resource: res://assets/art/ui/icons/controls/focused.svg
+Loading resource: res://.godot/imported/focused.svg-764689e1fd63b614f7c676b57dba6332.ctex
+Loading resource: res://assets/art/ui/icons/controls/hovered.svg
+Loading resource: res://.godot/imported/hovered.svg-03b8f32857c2e99b4b725c9293c0b7d9.ctex
+Loading resource: res://assets/art/ui/icons/controls/cash_transfer.svg
+Loading resource: res://.godot/imported/cash_transfer.svg-b08298150c2b5cbd11e3cedeb22f5c99.ctex
+SceneTreeFTI: traversal method DEFAULT
+Loaded system CA certificates
+Loading resource: res://scripts/core/scenario_handlers/bars_road.gd
+Loading resource: res://scripts/ui/scenario_renderers/bars_road.gd
+Loading resource: res://scripts/core/scenario_handlers/queen_public.gd
+Loading resource: res://scripts/ui/scenario_renderers/queen_public.gd
+Loading resource: res://scripts/core/scenario_handlers/roadside_shelter.gd
+Loading resource: res://scripts/ui/scenario_renderers/roadside_shelter.gd
+Loading resource: res://scripts/core/scenario_handlers/shops_streets.gd
+Loading resource: res://scripts/ui/scenario_renderers/shops_streets.gd
+Loading resource: res://scripts/core/scenario_handlers/punchline_clubs.gd
+Loading resource: res://scripts/ui/scenario_renderers/punchline_clubs.gd
+FOUNDATION_CHECK_START id=content suite=smoke
+Loading resource: res://assets/art/environments/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-00bd9899cd2ba81fecfd85921cb3b0c2.ctex
+Loading resource: res://assets/art/ui/main_menu_button_plate.png
+Loading resource: res://.godot/imported/main_menu_button_plate.png-c97f94d811309c346dc6d5687b4f58f2.ctex
+Loading resource: res://assets/art/ui/beat_the_house_logo.png
+Loading resource: res://.godot/imported/beat_the_house_logo.png-098dcd7e40b55374409601ccca10946c.ctex
+Loading resource: res://assets/art/ui/travel.png
+Loading resource: res://.godot/imported/travel.png-d422b097ffbf324c553e652f735ba982.ctex
+Loading resource: res://scripts/ui/foundation_hud_bar.gd
+Loading resource: res://scripts/ui/environment_header.gd
+Loading resource: res://scripts/ui/cheat_dock.gd
+Loading resource: res://scripts/ui/run_report_screen.gd
+Loading resource: res://scripts/ui/heat_gain_feedback_overlay.gd
+Loading resource: res://scripts/ui/terminal_consequence_view_model.gd
+Loading resource: res://scripts/ui/cage_atm_view_model.gd
+Loading resource: res://scripts/ui/wager_confirmation_controller.gd
+Loading resource: res://scripts/ui/run_inventory_screen.gd
+Loading resource: res://scripts/ui/meta_item_interaction_screen.gd
+Loading resource: res://scripts/ui/bag_open_reel.gd
+Loading resource: res://scripts/ui/meta_item_interaction_view_model.gd
+Loading resource: res://scripts/ui/run_journal_view_model.gd
+Loading resource: res://scripts/ui/world_map_overlay_controller.gd
+Loading resource: res://assets/art/ui/icons/wallet.png
+Loading resource: res://.godot/imported/wallet.png-b89fa93aec764e99386098ae4bc871b0.ctex
+Loading resource: res://assets/art/ui/icons/casino_chips.png
+Loading resource: res://.godot/imported/casino_chips.png-b5c57e52b52b739747eb053df60a1bc2.ctex
+Loading resource: res://assets/art/ui/icons/heat.png
+Loading resource: res://.godot/imported/heat.png-0b146ee6cf09aff5e51d984cd0a6449e.ctex
+Loading resource: res://assets/art/ui/icons/drink.png
+Loading resource: res://.godot/imported/drink.png-287228756de8270b703e9fd14b97204e.ctex
+Loading resource: res://assets/art/ui/icons/home.png
+Loading resource: res://.godot/imported/home.png-429a191626e0bb61648467d96787b79e.ctex
+Loading resource: res://assets/art/ui/icons/luck.png
+Loading resource: res://.godot/imported/luck.png-00af16ba02e1ce8c93f6c13b99f0f163.ctex
+Loading resource: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png
+Loading resource: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex
+Loading resource: res://assets/art/map_icons/apartment.png
+Loading resource: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex
+Loading resource: res://assets/art/map_icons/back_alley.png
+Loading resource: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex
+Loading resource: res://assets/art/map_icons/bar.png
+Loading resource: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex
+Loading resource: res://assets/art/map_icons/beach.png
+Loading resource: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex
+Loading resource: res://assets/art/map_icons/corner_store.png
+Loading resource: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex
+Loading resource: res://assets/art/map_icons/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex
+Loading resource: res://assets/art/map_icons/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex
+Loading resource: res://assets/art/map_icons/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex
+Loading resource: res://assets/art/map_icons/house.png
+Loading resource: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex
+Loading resource: res://assets/art/map_icons/jazz_club.png
+Loading resource: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex
+Loading resource: res://assets/art/map_icons/kitty_cat_lounge.png
+Loading resource: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex
+Loading resource: res://assets/art/map_icons/motel.png
+Loading resource: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex
+Loading resource: res://assets/art/map_icons/motel_room.png
+Loading resource: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex
+Loading resource: res://assets/art/map_icons/pawn_shop.png
+Loading resource: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex
+Loading resource: res://assets/art/map_icons/small_underground_casino.png
+Loading resource: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex
+Loading resource: res://assets/art/ui/icons/alert.png
+Loading resource: res://.godot/imported/alert.png-448aa02e5f39962ca3d6755d04b69be1.ctex
+Loading resource: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png
+Loading resource: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex
+Loading resource: res://assets/art/map_icons/apartment.png
+Loading resource: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex
+Loading resource: res://assets/art/map_icons/back_alley.png
+Loading resource: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex
+Loading resource: res://assets/art/map_icons/bar.png
+Loading resource: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex
+Loading resource: res://assets/art/map_icons/beach.png
+Loading resource: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex
+Loading resource: res://assets/art/map_icons/corner_store.png
+Loading resource: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex
+Loading resource: res://assets/art/map_icons/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex
+Loading resource: res://assets/art/map_icons/gas_station_casino.png
+Loading resource: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex
+Loading resource: res://assets/art/map_icons/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex
+Loading resource: res://assets/art/map_icons/house.png
+Loading resource: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex
+Loading resource: res://assets/art/map_icons/jazz_club.png
+Loading resource: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex
+Loading resource: res://assets/art/map_icons/kitty_cat_lounge.png
+Loading resource: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex
+Loading resource: res://assets/art/map_icons/motel.png
+Loading resource: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex
+Loading resource: res://assets/art/map_icons/motel_room.png
+Loading resource: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex
+Loading resource: res://assets/art/map_icons/pawn_shop.png
+Loading resource: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex
+Loading resource: res://assets/art/map_icons/small_underground_casino.png
+Loading resource: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex
+Loading resource: res://scripts/ui/item_found_popup.gd
+Loading resource: res://scripts/games/video_poker.gd
+Loading resource: res://assets/art/ui/icons/save.png
+Loading resource: res://.godot/imported/save.png-70305506e9911c4e8a30d48c1592e8ba.ctex
+Loading resource: res://assets/art/ui/environment_titles/delta_queen.png
+Loading resource: res://.godot/imported/delta_queen.png-38623c2a41f238678a6c49d2408a90ff.ctex
+Loading resource: res://assets/art/ui/environment_titles/bar.png
+Loading resource: res://.godot/imported/bar.png-17160e3e003cc4e263a5d63493d563d7.ctex
+Loading resource: res://assets/art/ui/inventory_containers/loose_carry.png
+Loading resource: res://.godot/imported/loose_carry.png-43c6b15767ca69ed8f8b4fa4ccda9082.ctex
+Loading resource: res://assets/art/ui/environment_titles/grand_casino.png
+Loading resource: res://.godot/imported/grand_casino.png-84299afc97504e4cc3bca7848925322c.ctex
+BTH support: Room object authority is invalid.
+BTH support: Room object authority is invalid.
+BTH support: Room object authority is invalid.
+Loading resource: res://assets/art/environments/motel.png
+Loading resource: res://.godot/imported/motel.png-2999df4faa244d28c844263b7b327da0.ctex
+Loading resource: res://assets/art/ui/main_menu_button_plate.png
+Loading resource: res://.godot/imported/main_menu_button_plate.png-c97f94d811309c346dc6d5687b4f58f2.ctex
+Loading resource: res://assets/art/ui/beat_the_house_logo.png
+Loading resource: res://.godot/imported/beat_the_house_logo.png-098dcd7e40b55374409601ccca10946c.ctex
+Loading resource: res://assets/art/ui/travel.png
+Loading resource: res://.godot/imported/travel.png-d422b097ffbf324c553e652f735ba982.ctex
+FOUNDATION_CHECK_DONE id=content duration_msec=10553 failures=25
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"

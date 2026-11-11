@@ -1,0 +1,126 @@
+{
+  "archive": {
+    "bytes": 41697539,
+    "filename": "a398302308be0f3f2380620450ba8f6111dfcfd7-1794391937342636600.zip",
+    "sha256": "4e9eb6ff81b0c53557734f610c7c684891f67a8700d80ffc394741c9d199d102"
+  },
+  "built_at": "2026-11-11T10:13:48Z",
+  "files": [
+    {
+      "bytes": 238,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "BUILD.json",
+      "sha256": "08ee37c0c94ae0ea62f40d5ea98e47abaee934ef276967c89efdbc29f53bc84f"
+    },
+    {
+      "bytes": 42,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "REF",
+      "sha256": "679c7125fdfd2414757fde944f92685ddef21964e54860d443379645f3ea4eb1"
+    },
+    {
+      "bytes": 24,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "VERSION",
+      "sha256": "d68229a8ca96ad27b32b59f2890780e0bb3db91edc586766136a79e23b0e5f65"
+    },
+    {
+      "bytes": 773,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "build_manifest.json",
+      "sha256": "d01c71657e38ce6cc38bf1ae45fae973e116f43f82ff52cb6531fe5d61a1a11c"
+    },
+    {
+      "bytes": 340415,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "sha256": "6680e4bb2fb3ac5ff318c5d610e925153d090296f0d572a25e86ed0f2e72b783"
+    },
+    {
+      "bytes": 4099,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.apple-touch-icon.png",
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b"
+    },
+    {
+      "bytes": 2973,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.position.worklet.js",
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "bytes": 7298,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.worklet.js",
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "bytes": 5514,
+      "isolation_headers": {},
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "289b994ed6f926f8c873780b8e4be9646c6581df6398c3cef9b822b3fb7f9b22"
+    },
+    {
+      "bytes": 14818,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.icon.png",
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a"
+    },
+    {
+      "bytes": 2828608,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.js",
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+    },
+    {
+      "bytes": 47242468,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "index.pck",
+      "sha256": "af0c4d1847f2877523d992dc5832f78b3464b0f22307c2bd9ce8a2122e32ba0e"
+    },
+    {
+      "bytes": 21443,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.png",
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "bytes": 21802358,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.side.wasm",
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+    },
+    {
+      "bytes": 1508237,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.wasm",
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+    },
+    {
+      "bytes": 1295,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "web-gl-handles.json",
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd"
+    }
+  ],
+  "schema": "beat_the_house.served_handoff_stage/v2",
+  "source_commit": "a398302308be0f3f2380620450ba8f6111dfcfd7",
+  "source_tree": "a66021737262fcd90f4bc57a7b50b91911746d48",
+  "version": "0.6.0-dev+a398302308be"
+}

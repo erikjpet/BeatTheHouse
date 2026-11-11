@@ -89,7 +89,7 @@
       "baseline_exit": 1,
       "after_exit": 1,
       "baseline_error_lines": 10,
-      "after_error_lines": 9,
+      "after_error_lines": 10,
       "new": []
     }
   ],
