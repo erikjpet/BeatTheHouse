@@ -1,0 +1,61 @@
+# Compare actual tracked objects, not timestamps. Any native/addon/build-lock
+# change refuses this fastpath; a separately authorized full build is required.
+$guardPaths = @(
+    'native', 'addons', 'export_presets.cfg', 'project.godot',
+    'tools/build_native_solver.ps1', 'tools/bootstrap_native_toolchain.ps1',
+    'tools/bootstrap_native_solver.ps1', 'tools/verify_native_solver_runtime.ps1',
+    'tools/build_godot_web_release_template.ps1', 'tools/export_tree_identity.ps1',
+    'tools/audit_pck_manifest.py'
+)
+$baseArgs = @('-C', $root, 'ls-tree', '-r', '--full-tree', $qualifiedBase, '--') + $guardPaths
+$baseObjects = @(& git @baseArgs)
+if ($LASTEXITCODE -ne 0 -or $baseObjects.Count -eq 0) { throw 'Cannot resolve qualified input objects.' }
+$targetArgs = @('-C', $root, 'ls-tree', '-r', '--full-tree', $ExpectedSha, '--') + $guardPaths
+$targetObjects = @(& git @targetArgs)
+if ($LASTEXITCODE -ne 0) { throw 'Cannot resolve target guarded input objects.' }
+$fullNativeBuild = $false
+if (($baseObjects -join "`n") -cne ($targetObjects -join "`n")) {
+    $oldKernel = "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75`tnative/coin_pusher/src/coin_pusher_step_kernel.cpp"
+    $newKernel = "100644 blob c504249c306e8a2cd502b933a46453e5d41416e1`tnative/coin_pusher/src/coin_pusher_step_kernel.cpp"
+    $oldRows = @($baseObjects | Where-Object { $_ -ceq $oldKernel })
+    $expectedObjects = @($baseObjects | ForEach-Object { if ($_ -ceq $oldKernel) { $newKernel } else { $_ } })
+    & git -C $root merge-base --is-ancestor '245ca4f6f483043a4a3b9ec394b1d76f3ba2af43' $ExpectedSha
+    if ($LASTEXITCODE -ne 0 -or $oldRows.Count -ne 1 -or
+        (($expectedObjects -join "`n") -cne ($targetObjects -join "`n"))) {
+        throw 'Guarded native, addon, engine/template or unchanged exporter inputs changed; native reuse refused.'
+    }
+    $fullNativeBuild = $true
+}
+
+# BEGIN REVIEWED WEB EXPORTER POLICY
+# This narrowly reviewed exporter exception does not change qualifiedBase or any
+# native/addon/project/engine/template/unchanged exporter input guard above.
+# API-created integration commits may have a new SHA, but the tested whole-source
+# tree must be an ancestor tree and all executable exporter/policy blobs must match.
+$reviewedExporterSource = 'a08ee4a6e9888a5f2e8425474a86182ceab5fcc0'
+$reviewedExporterTree = 'bb0f0e404689b5b7cdafccfce9cac225027fbc2d'
+$reviewedExporterObjects = @(
+    "100644 blob c2f40edc369191825862127271a515f884480fe9`ttools/export_itch.ps1",
+    "100644 blob ba7c0e7870be317b1a1ef91454405c6405e74377`ttools/export_itch_helpers.ps1",
+    "100644 blob 4684f9cc19e79eceb0b49c7aef713737bee7fb0e`ttools/web_gl_handles.lock.json",
+    "100644 blob 01a830c481e4bd4836b11d1d2a2dc406bccee22b`ttools/web_gl_handles.mjs",
+    "100644 blob 4b09ae12846d070425ad5031152d28440701952a`ttools/web_gl_handles_allocator.txt"
+)
+$exporterPaths = @($reviewedExporterObjects | ForEach-Object { ($_ -split "`t", 2)[1] })
+$exporterArgs = @('-C', $root, 'ls-tree', '-r', '--full-tree', $ExpectedSha, '--') + $exporterPaths
+$actualExporterObjects = @(& git @exporterArgs)
+if ($LASTEXITCODE -ne 0 -or (($actualExporterObjects -join "`n") -cne ($reviewedExporterObjects -join "`n"))) {
+    throw 'Web exporter/policy objects differ from the exact reviewed finding009 set.'
+}
+$anchorRows = @(& git -C $root log '--format=%H %T' "$qualifiedBase..$ExpectedSha")
+if ($LASTEXITCODE -ne 0) { throw 'Cannot establish reviewed exporter source-tree ancestry.' }
+$matchingAnchors = @($anchorRows | Where-Object { $_ -cmatch ('^[0-9a-f]{40} ' + $reviewedExporterTree + '$') })
+if ($matchingAnchors.Count -eq 0) { throw 'Exact reviewed exporter whole-source tree is absent from target ancestry.' }
+$exporterQualification = [ordered]@{
+    schema = 'beat_the_house.reviewed_web_exporter/v1'
+    reviewed_source_commit = $reviewedExporterSource
+    reviewed_source_tree = $reviewedExporterTree
+    actual_anchor_commit = ($matchingAnchors[0] -split ' ', 2)[0]
+    qualified_git_objects = $reviewedExporterObjects
+    target_git_objects = $actualExporterObjects
+    policy_sha256 = '1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0'

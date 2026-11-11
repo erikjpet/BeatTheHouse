@@ -1,0 +1,30 @@
+{
+  "checks": 6,
+  "failure_count": 0,
+  "mode": "Read-only counterfactual object/predicate evaluation; no builder invoked, no project/exporter bytes written, no broken commit created.",
+  "qualified_base": "b46fabb2853c312b67399606f59804eaefa62d47",
+  "current_objects_match_actual_qualified_metadata": true,
+  "required_project_preset_edits_rejected": true,
+  "required_exporter_edit_rejected": true,
+  "exact_rejection_messages": [
+    "Guarded native, addon, engine/template or unchanged exporter inputs changed; native reuse refused.",
+    "Web exporter/policy objects differ from the exact reviewed finding009 set."
+  ],
+  "preview": {
+    "project.godot": {
+      "current_git_blob": "7c80d4e964583372398be6da0ff504ff6074f395",
+      "minimal_required_edit_git_blob": "7d7531811417498141b4542de1f2d4260eeef0fa"
+    },
+    "export_presets.cfg": {
+      "current_git_blob": "b9d92cd7c6b9a0e013fc5f33da611321babacd93",
+      "minimal_required_edit_git_blob": "0812491fe9c732cbeacb5fd03b7799dd43f0b18c"
+    },
+    "tools/export_itch.ps1": {
+      "current_git_blob": "c2f40edc369191825862127271a515f884480fe9",
+      "minimal_required_edit_git_blob": "c2afc804393fb90a331462ccef5675d63c630bc8"
+    }
+  },
+  "policy_path": "D:\\Projects\\site\\scripts\\build-bth-next-gdscript.ps1",
+  "policy_sha256": "80aa73a254b499e9b53a92288a74a3d6d1ff68dd4f76e2e83e300a4df7e031c0",
+  "limitation": "Exporter preview is the smallest mandatory identity-literal change, not an applied or complete proposed implementation. Any required exporter change violates the exact current pin independently of the rest of the requested design."
+}
