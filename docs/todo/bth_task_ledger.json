@@ -33178,22 +33178,28 @@
             "id": "1",
             "description": "Actual scoped diagnosis and evidence",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Associated corrective or qualification commit where required",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Exact deployed acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -33202,8 +33208,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "state": "complete",
+      "status": "DONE_FULL_NUMERIC_CASH_CHIPS_HEADER_NEXT_VERIFIED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33221,14 +33227,26 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3a120bce2cd0273c445084f837c5f98f2b023b1c",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -33236,24 +33254,29 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "DONE_FULL_NUMERIC_CASH_CHIPS_HEADER_NEXT_VERIFIED"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-BARDICE-COVER-CLIP-001-BATCH-001"
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.320999+00:00",
+        "observed_at": "2026-11-11T22:31:20.186030+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Qualify and correct rendered cash/chip label width without changing values or ownership."
       ],
-      "updated_at": "2026-11-11T13:22:42.320999+00:00"
+      "updated_at": "2026-11-11T22:31:20.186030+00:00"
     },
     {
       "id": "BTH061-RC-ACCEPTANCE-COVERAGE-001",
@@ -34335,22 +34358,28 @@
             "id": "1",
             "description": "Cash/chip labels untruncated; currency once",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "One/three/four-digit RET fits1280x720",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Grand Casino Practice NEXT; liveness",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34359,8 +34388,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_119_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_EXACT_NEXT_CHIP_HEADER_AND_NATIVE_119_PASS",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34378,13 +34407,21 @@
           "evidence": [
             "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -34396,24 +34433,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
           "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "DONE_EXACT_NEXT_CHIP_HEADER_AND_NATIVE_119_PASS"
         }
       ],
       "implementation_batches": [
         "CLOSE-02-BATCH-001"
       ],
-      "next_action": "Push and verify Grand Casino practice after CLOSE-01 exact NEXT delivery; no rendered Web claim yet.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:06:03.761085+00:00",
+        "observed_at": "2026-11-11T22:31:20.101401+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Fit complete Bar Dice financial values"
       ],
-      "updated_at": "2026-11-11T21:06:03.761085+00:00"
+      "updated_at": "2026-11-11T22:31:20.101401+00:00"
     },
     {
       "id": "CLOSE-03",
@@ -37143,8 +37185,8 @@
       "name": "Fit complete Bar Dice financial values bounded execution",
       "parent_id": "CLOSE-02",
       "group": "current",
-      "state": "open",
-      "status": "LOCAL_119_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_EXACT_NEXT_CHIP_HEADER_AND_NATIVE_119_PASS",
       "scope": [
         "Fit complete Bar Dice financial values"
       ],
@@ -37165,13 +37207,21 @@
           "evidence": [
             "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -37183,18 +37233,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
           "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "DONE_EXACT_NEXT_CHIP_HEADER_AND_NATIVE_119_PASS"
         }
       ],
-      "next_action": "Push and verify Grand Casino practice after CLOSE-01 exact NEXT delivery; no rendered Web claim yet.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:06:03.761085+00:00",
+        "observed_at": "2026-11-11T22:31:20.101401+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T21:06:03.761085+00:00"
+      "updated_at": "2026-11-11T22:31:20.101401+00:00"
     },
     {
       "id": "CLOSE-03-BATCH-001",
