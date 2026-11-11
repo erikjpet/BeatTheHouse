@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-10T23:53:20.640584+00:00",
+  "updated_at": "2026-11-11T00:15:23.394875+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -614,7 +614,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -705,7 +705,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         },
         {
           "kind": "branch_integration",
@@ -5297,13 +5297,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5514,13 +5514,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13304,7 +13304,7 @@
                 "docs/testing/deprecated_code_audit_continuation_025.json",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44\u21920. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
@@ -13315,7 +13315,7 @@
                 "docs/testing/incremental_cleanup.md",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44\u21920. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
@@ -14464,13 +14464,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -22374,7 +22374,7 @@
         {
           "kind": "private_substantive_cause_proposal",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947\u2192candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
+          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947→candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
         },
         {
           "kind": "canonical_fix_qualified",
@@ -22384,7 +22384,7 @@
         {
           "kind": "canonical_and_full_sequence_nonregression",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947\u219217.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
+          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947→17.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
         },
         {
           "kind": "exact_next_delivery_and_basic_task_browser_launch",
@@ -25138,7 +25138,7 @@
       "group": "current",
       "objective": {
         "text": "Qualify a narrowly measured generic Runtime normalization optimization: cached command results are already deep-owned before scalar normalization and pure shape validation, so the final second deep copy may be redundant. Preserve the initial ownership clone, complete caller isolation, exact values/type flags, saved-float behavior, receipt membership/fingerprint checks, all bounds and default public APIs. No production adoption without substantive measured benefit and compatibility evidence.",
-        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806\u20131829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
+        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806–1829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -27012,7 +27012,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -27149,7 +27149,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -27550,7 +27550,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44\u21920,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -28784,7 +28784,7 @@
         {
           "kind": "precise_current_source_dominance_proof031",
           "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
-          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint\u2192entry\u2192classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
+          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint→entry→classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
         }
       ],
       "implementation_batches": [],
@@ -29938,7 +29938,7 @@
       "group": "current",
       "objective": {
         "text": "Reconcile remaining branch and dirty worktree contents with current main/NEXT and clean obsolete integrated branches before the next large feature workspace. Preserve all unique work, dirty files, historical diagnostics and active worker branches. Branch cleanup does not close unfinished product objectives or restart paused work.",
-        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we don\u00e2\u20ac\u2122t have any merge issues later",
+        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we donâ€™t have any merge issues later",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -30178,6 +30178,104 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-10T20:00:50.615305+00:00"
+    },
+    {
+      "id": "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001",
+      "name": "Preserve native and Web scenario inventory seals",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Fix the independently reproduced native/Web scenario inventory compatibility boundary while preserving the original complete body, numeric bits, schema, exact stored digest, expected reference and all structural, identity and authority validation. Do not attribute the unavailable original Gas incidents to this independent defect.",
+        "source": "Authorized closeout handoff to /root/publish_gas_compatibility, 2026-11-11; independently reviewed commit 4acc046f269b27ccfa5de2bcdaae95ab99e2fd8f; docs/testing/scenario_cross_platform_geometry.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-integrity",
+            "description": "Keep complete proof integrity and reject changed authority, geometry, expected digest and malformed input; recognize only bounded historical normalized-layout serialization.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/scenario_cross_platform_geometry.md",
+              "4acc046f269b27ccfa5de2bcdaae95ab99e2fd8f: 60 legacy serialization +20 geometry +23 event binding checks, full-finalization tamper rejection."
+            ]
+          },
+          {
+            "id": "cross-platform-normal-actions",
+            "description": "Normal native/Web Day-1 and Open paid Scratchers, Save and cold Continue preserve complete original inventory and exact digest.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/scenario_cross_platform_geometry.md",
+              "Final candidate PCK dfc34142bfd347d088d209e5d0f791da1d44d56c25b16883ec7baea6b54cf5d5; 43 Web action results and native/Web roundtrip body+var_to_bytes equality."
+            ]
+          },
+          {
+            "id": "integration",
+            "description": "Run focused checks on integrated source and reconcile both tracking views without erasing prior validation or pauses.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "next-delivery",
+            "description": "Push scoped integrated main and verify exact NEXT identity, served assets and basic launch through the existing watcher.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INDEPENDENT_FIX_QUALIFIED_INTEGRATION_AND_NEXT_PENDING",
+      "owner": {
+        "name": "Publish Gas compatibility closeout",
+        "task_ref": "/root/publish_gas_compatibility",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "4acc046f269b27ccfa5de2bcdaae95ab99e2fd8f",
+          "evidence": [
+            "docs/testing/scenario_cross_platform_geometry.md",
+            "Independently reviewed final source and candidate-PCK/native compatibility receipts."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing private LAN NEXT only; no stable, itch, audience, infrastructure, credential or security changes."
+      },
+      "evidence": [
+        {
+          "kind": "focused_native_and_candidate_web",
+          "reference": "docs/testing/scenario_cross_platform_geometry.md",
+          "summary": "60+20+23 native checks, same-platform four-fixture Continue, finalization tamper rejection, native Day-1/Open to Web normal paid-action/Save/cold Continue and Web-to-native exact-body/numeric-bit roundtrip. Historical compact/layer paths without full inventory body are not newly qualified. Candidate override is not exact-commit NEXT proof."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Integrate approved 4acc046f, run focused integrated-source checks and existing manual reconciliation, push tested main and verify the exact existing NEXT watcher result.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "No current blocker; exact integrated source and NEXT delivery not yet verified.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T00:15:23.394875+00:00",
+        "evidence": [
+          "docs/testing/scenario_cross_platform_geometry.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-11T00:15:23.394875+00:00"
     }
   ],
   "batches": [
