@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+{"checks":18,"failure_count":8,"failures":["_on_start_pressed asks before replacement","_on_start_pressed keeps current run before consent","start_generated_foundation_run asks before replacement","start_generated_foundation_run keeps current run before consent","start_meta_quick_run asks before replacement","start_meta_quick_run keeps current run before consent","start_daily_challenge_run asks before replacement","start_daily_challenge_run keeps current run before consent"]}

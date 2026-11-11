@@ -138,7 +138,7 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	UIArtScript.apply_control_icon(host.run_config_button, "run_setup", "Run setup", 28)
 	host.run_config_button.custom_minimum_size = Vector2(296, 106)
 	secondary_row.add_child(host.run_config_button)
-	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "start_tutorial_run"))
+	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "request_tutorial_replay"))
 	host.replay_tutorial_button.custom_minimum_size = Vector2(296, 106)
 	secondary_row.add_child(host.replay_tutorial_button)
 	host.collections_button = host._main_menu_button("TRAVEL HOME", "Enter your persistent home", Callable(host, "open_collection_browser"))
@@ -247,6 +247,16 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.release_version_label.clip_text = true
 	host._set_control_font_color(host.release_version_label, VisualStyle.CYAN_2)
 	footer.add_child(host.release_version_label)
+
+	host.new_run_confirmation = ConfirmationDialog.new()
+	host.new_run_confirmation.title = "Start a new run?"
+	host.new_run_confirmation.dialog_text = "Start a new run? Your saved run will be replaced."
+	host.new_run_confirmation.ok_button_text = "Start new run"
+	host.new_run_confirmation.cancel_button_text = "Keep saved run"
+	host.new_run_confirmation.confirmed.connect(host._confirm_new_run_start)
+	host.new_run_confirmation.canceled.connect(host._cancel_new_run_start)
+	host.new_run_confirmation.window_input.connect(host._on_new_run_confirmation_input)
+	host.add_child(host.new_run_confirmation)
 
 	host.save_delete_confirmation = ConfirmationDialog.new()
 	host.save_delete_confirmation.title = "Delete saved run?"

@@ -507,6 +507,8 @@ var run_config_panel: PanelContainer
 var run_config_content_stack: VBoxContainer
 var run_config_start_button: Button
 var delete_saved_run_button: Button
+var new_run_confirmation: ConfirmationDialog
+var _pending_new_run_start := Callable()
 var save_delete_confirmation: ConfirmationDialog
 var leave_without_saving_confirmation: ConfirmationDialog
 var leave_without_saving_action := ""
@@ -1425,6 +1427,10 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 
 
 func start_daily_challenge_run() -> bool:
+	return _request_new_run_start(Callable(self, "_start_daily_challenge_run_confirmed"))
+
+
+func _start_daily_challenge_run_confirmed() -> bool:
 	var today: Dictionary = Time.get_datetime_dict_from_system()
 	var day := int(today.get("day", 1))
 	var month := int(today.get("month", 1))
@@ -19212,7 +19218,62 @@ func _on_start_pressed() -> bool:
 		return start_tutorial_run()
 	if seed_text.is_empty() or seed_text == generated_menu_seed_text:
 		return start_generated_foundation_run()
-	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+	return _request_new_run_start(Callable(self, "start_foundation_run").bind(seed_text, _new_run_challenge_for_seed(seed_text)))
+
+
+func _request_new_run_start(action: Callable) -> bool:
+	if not _has_foundation_save():
+		return bool(action.call())
+	if new_run_confirmation == null:
+		return false
+	if new_run_confirmation.visible:
+		return true
+	_pending_new_run_start = action
+	var dialog := new_run_confirmation
+	dialog.popup_centered(Vector2i(590, 210))
+	var controls: Array = [dialog.get_cancel_button(), dialog.get_ok_button()]
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", dialog.get_cancel_button().get_parent(), dialog.get_cancel_button(), null, controls)
+	dialog.get_cancel_button().grab_focus()
+	return true
+
+
+func _on_new_run_confirmation_input(event: InputEvent) -> void:
+	if new_run_confirmation == null or not new_run_confirmation.visible:
+		return
+	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
+		new_run_confirmation.set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
+		new_run_confirmation.set_input_as_handled()
+		_cancel_new_run_start()
+	elif event.is_action_pressed("ui_accept"):
+		new_run_confirmation.set_input_as_handled()
+		if new_run_confirmation.get_ok_button().has_focus():
+			_confirm_new_run_start()
+		else:
+			_cancel_new_run_start()
+
+
+func _close_new_run_confirmation() -> void:
+	if new_run_confirmation != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", new_run_confirmation.get_cancel_button().get_parent())
+			var previous_root: Control = modal_focus_scope.call("active_root")
+			if previous_root != null:
+				modal_focus_scope.call("push_scope", previous_root)
+		new_run_confirmation.hide()
+	_pending_new_run_start = Callable()
+
+
+func _cancel_new_run_start() -> void:
+	_close_new_run_confirmation()
+
+
+func _confirm_new_run_start() -> void:
+	var action := _pending_new_run_start
+	_close_new_run_confirmation()
+	if action.is_valid():
+		action.call()
 
 
 func start_or_continue_primary() -> bool:
@@ -19246,6 +19307,10 @@ func confirm_delete_saved_run() -> void:
 	save_status_message = "Saved run deleted."
 	_refresh_start_screen()
 	_show_message("Saved run deleted.")
+
+
+func request_tutorial_replay() -> bool:
+	return _request_new_run_start(Callable(self, "start_tutorial_run"))
 
 
 func start_tutorial_run() -> bool:
@@ -19300,6 +19365,10 @@ func _confirm_skip_tutorial() -> void:
 
 
 func start_generated_foundation_run() -> bool:
+	return _request_new_run_start(Callable(self, "_start_generated_foundation_run_confirmed"))
+
+
+func _start_generated_foundation_run_confirmed() -> bool:
 	if not _ensure_run_ui_built():
 		return false
 	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
@@ -19313,6 +19382,10 @@ func start_generated_foundation_run() -> bool:
 
 
 func start_meta_quick_run() -> bool:
+	return _request_new_run_start(Callable(self, "_start_meta_quick_run_confirmed"))
+
+
+func _start_meta_quick_run_confirmed() -> bool:
 	if not _ensure_run_ui_built():
 		return false
 	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
@@ -19334,7 +19407,7 @@ func _on_run_report_new_run_requested() -> void:
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		start_tutorial_run()
 		return
-	start_generated_foundation_run()
+	_start_generated_foundation_run_confirmed()
 
 
 func _on_run_report_home_requested() -> void:
@@ -19344,7 +19417,7 @@ func _on_run_report_home_requested() -> void:
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		if not _save_foundation_run_before_leaving("Lesson completion saved."):
 			return
-		start_generated_foundation_run()
+		_start_generated_foundation_run_confirmed()
 		return
 	if return_to_main_menu():
 		open_collection_browser()
