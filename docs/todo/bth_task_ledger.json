@@ -31666,7 +31666,7 @@
         }
       },
       "state": "open",
-      "status": "QA_TEST_RELOCATION_21_PASS_EXACT_IMPORT_INPUTS_MATCH_NEXT_PENDING",
+      "status": "COORDINATED_SYNC_COMMITTED_30_BRIDGE_77_NATIVE_LIVENESS_SMOKE_BASELINE_NEXT_PENDING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31690,6 +31690,12 @@
           "evidence": [
             "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "138880bbed6999aa21264b72acdace61036535af",
+          "evidence": [
+            "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -31702,7 +31708,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-08_background_save_flush_2026-11-11.md",
-          "summary": "QA_TEST_RELOCATION_21_PASS_EXACT_IMPORT_INPUTS_MATCH_NEXT_PENDING"
+          "summary": "COORDINATED_SYNC_COMMITTED_30_BRIDGE_77_NATIVE_LIVENESS_SMOKE_BASELINE_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
@@ -31714,13 +31720,13 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T08:54:36.230401+00:00",
+        "observed_at": "2026-11-11T09:21:50.089251+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Flush pending/in-flight saves synchronously on focus loss/pause and retained Web visibility/pagehide callbacks, through existing readiness/publication/practice/meta guards. Request browser sync through existing durability bridge; preserve debounce and animation."
       ],
-      "updated_at": "2026-11-11T08:54:36.230401+00:00"
+      "updated_at": "2026-11-11T09:21:50.089251+00:00"
     }
   ],
   "batches": [
@@ -32892,7 +32898,7 @@
       "parent_id": "AUD061-08",
       "group": "current",
       "state": "open",
-      "status": "QA_TEST_RELOCATION_21_PASS_EXACT_IMPORT_INPUTS_MATCH_NEXT_PENDING",
+      "status": "COORDINATED_SYNC_COMMITTED_30_BRIDGE_77_NATIVE_LIVENESS_SMOKE_BASELINE_NEXT_PENDING",
       "scope": [
         "Flush pending/in-flight saves synchronously on focus loss/pause and retained Web visibility/pagehide callbacks, through existing readiness/publication/practice/meta guards. Request browser sync through existing durability bridge; preserve debounce and animation."
       ],
@@ -32919,6 +32925,12 @@
           "evidence": [
             "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "138880bbed6999aa21264b72acdace61036535af",
+          "evidence": [
+            "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -32931,7 +32943,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-08_background_save_flush_2026-11-11.md",
-          "summary": "QA_TEST_RELOCATION_21_PASS_EXACT_IMPORT_INPUTS_MATCH_NEXT_PENDING"
+          "summary": "COORDINATED_SYNC_COMMITTED_30_BRIDGE_77_NATIVE_LIVENESS_SMOKE_BASELINE_NEXT_PENDING"
         }
       ],
       "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
@@ -32940,10 +32952,10 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T08:54:36.230401+00:00",
+        "observed_at": "2026-11-11T09:21:50.089251+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T08:54:36.230401+00:00"
+      "updated_at": "2026-11-11T09:21:50.089251+00:00"
     }
   ]
 }
