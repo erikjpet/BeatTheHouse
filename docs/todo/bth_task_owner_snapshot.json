@@ -244,8 +244,8 @@
       "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
       "title": "Execute 0.6.1 audit work orders",
       "state": "active",
-      "observed_at": "2026-11-11T05:30:18.738023+00:00",
-      "source": "Actual current audit chat is active on AUD061-EXECUTION; OPEN_7_OF_18_ORDERS_DONE_QOL05_NEXT. Other owners not refreshed."
+      "observed_at": "2026-11-11T05:45:13.227832+00:00",
+      "source": "Actual current audit chat is active on QOL-05; CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING. Other owners not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

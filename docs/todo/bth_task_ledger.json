@@ -31279,6 +31279,100 @@
         "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration."
       ],
       "updated_at": "2026-11-11T05:30:18.687571+00:00"
+    },
+    {
+      "id": "QOL-05",
+      "name": "Copy build and save diagnostics in Settings",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Reproduce missing Settings support actions.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Copy diagnostics reads current build/platform/save/load/autosave codes through a strict allowlist with no paths or save contents.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Desktop-only save-folder action targets actual save directory; keyboard/focus and settings draft semantics preserved.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Focused and Smoke results no worse than baseline; exact NEXT identity/startup and deployed copy action verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "25822cff6d0f7debb2f9db688515a77f4655cc49",
+          "evidence": [
+            "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-05_support_diagnostics_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "QOL-05-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T05:45:13.227832+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop."
+      ],
+      "updated_at": "2026-11-11T05:45:13.227832+00:00"
     }
   ],
   "batches": [
@@ -32272,6 +32366,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T05:30:18.687571+00:00"
+    },
+    {
+      "id": "QOL-05-BATCH-001",
+      "name": "Copy build and save diagnostics in Settings implementation",
+      "parent_id": "QOL-05",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "scope": [
+        "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "25822cff6d0f7debb2f9db688515a77f4655cc49",
+          "evidence": [
+            "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-05_support_diagnostics_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T05:45:13.227832+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T05:45:13.227832+00:00"
     }
   ]
 }
