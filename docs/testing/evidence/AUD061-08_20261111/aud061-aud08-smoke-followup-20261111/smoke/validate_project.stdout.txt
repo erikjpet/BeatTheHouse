@@ -1,0 +1,6 @@
+Developer placement catalog recovery: corner_store::__base raw_saved=true effective_saved=false; shared_complete=False. Existing valid coordinates retained; layout is incomplete.
+Developer placement catalog recovery: delta_queen::delta_queen_whale_aboard raw_saved=true effective_saved=false; shared_complete=False, scenario_complete=True. Existing valid coordinates retained; layout is incomplete.
+Developer placement catalog recovery: gas_station_casino::gas_station_road_crew_payday raw_saved=true effective_saved=false; shared_complete=False, scenario_complete=True. Existing valid coordinates retained; layout is incomplete.
+Developer placement catalog recovery: kitty_cat_lounge::kitty_cat_lounge_amateur_night raw_saved=true effective_saved=false; shared_complete=False, scenario_complete=True. Existing valid coordinates retained; layout is incomplete.
+Developer placement catalog recovery: pawn_shop::pawn_shop_serial_check_day raw_saved=true effective_saved=false; shared_complete=False, scenario_complete=True. Existing valid coordinates retained; layout is incomplete.
+Developer placement catalog recovery: small_underground_casino:club::punchline_raid_jitters raw_saved=true effective_saved=false; shared_complete=True, scenario_complete=False. Existing valid coordinates retained; layout is incomplete.

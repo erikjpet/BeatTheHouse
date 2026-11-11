@@ -2,8 +2,9 @@ class_name WebSaveDurabilityBridge
 extends RefCounted
 
 # Godot 4.6's public force_fs_sync marks a pending sync; it does not acknowledge
-# persistence. Observe its next engine-owned promise, without issuing a second
-# FS.syncfs or depending on the IndexedDB schema. Unsupported engines fail shut.
+# persistence. Manual Save observes its next engine-owned promise. Lifecycle
+# requests queue the same engine sync directly because hidden-page RAF can stop.
+# Neither path calls FS.syncfs directly or depends on the IndexedDB schema.
 const SUPPORTED_ENGINE_HASH_PREFIX := "89cea1439"
 const TIMEOUT_MSEC := 15000
 const WEB_ADAPTER_SCRIPT := """
@@ -26,6 +27,14 @@ const WEB_ADAPTER_SCRIPT := """
     };
     globalThis.BTHWebSaveDurability = {
         protocol: 1,
+        request_lifecycle_sync() {
+            if (!supported() || typeof GodotFS.sync !== 'function') return false;
+            const previous = GodotOS._fs_sync_promise;
+            GodotOS._fs_sync_promise = Promise.resolve(previous)
+                .catch(() => undefined)
+                .then(() => GodotFS.sync());
+            return true;
+        },
         begin(timeout) {
             if (request && request.status === 'pending')
                 return JSON.stringify({request_id: 0, status: 'failed', error_code: 'browser_sync_busy'});
@@ -90,10 +99,12 @@ func begin() -> Dictionary:
 
 
 # A background/pagehide boundary cannot await the manual Save acknowledgement.
-# Request the engine-owned sync after the synchronous VFS generation is installed.
-func request_lifecycle_sync() -> void:
-	if OS.has_feature("web"):
-		JavaScriptBridge.force_fs_sync()
+# Start an engine-owned sync without waiting for another animation frame.
+func request_lifecycle_sync() -> bool:
+	if not OS.has_feature("web") or not bool(JavaScriptBridge.eval(WEB_ADAPTER_SCRIPT, false)):
+		return false
+	var lifecycle_interface: Variant = JavaScriptBridge.get_interface("BTHWebSaveDurability")
+	return lifecycle_interface != null and bool(lifecycle_interface.request_lifecycle_sync())
 
 
 func poll() -> Dictionary:

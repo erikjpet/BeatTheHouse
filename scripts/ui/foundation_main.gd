@@ -1049,7 +1049,9 @@ func _flush_pending_autosave_for_lifecycle() -> bool:
 	if saved and OS.has_feature("web"):
 		if _web_save_durability_bridge == null:
 			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
-		_web_save_durability_bridge.request_lifecycle_sync()
+		if not _web_save_durability_bridge.request_lifecycle_sync():
+			_record_autosave_failure(ERR_UNAVAILABLE, "browser_sync_request_failed", autosave_dirty_generation)
+			saved = false
 	_lifecycle_save_flush_active = false
 	return saved
 
