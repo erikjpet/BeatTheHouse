@@ -5583,7 +5583,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / partial, coverage remains",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -5606,20 +5606,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-003, then carry out the named remaining acceptance without repeating delivered implementation. Source record: High / partial, coverage remains; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-004",
@@ -5650,7 +5663,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / coverage in progress",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -5673,20 +5686,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-004, then carry out the named remaining acceptance without repeating delivered implementation. Source record: High / coverage in progress; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-005",
@@ -6055,7 +6081,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: P2 / coverage pending",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -6078,20 +6104,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-008, then carry out the named remaining acceptance without repeating delivered implementation. Source record: P2 / coverage pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-009",
@@ -6122,7 +6161,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: P2 / measurement pending",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -6145,20 +6184,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-009, then carry out the named remaining acceptance without repeating delivered implementation. Source record: P2 / measurement pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-010",
@@ -6189,7 +6241,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: P2 / conditional on measurements",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -6212,20 +6264,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-010, then carry out the named remaining acceptance without repeating delivered implementation. Source record: P2 / conditional on measurements; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-011",
@@ -6256,7 +6321,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: P2 / coverage pending",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Original stability/release owner; current assignment to reconcile",
         "task_ref": null,
@@ -6279,20 +6344,33 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-011, then carry out the named remaining acceptance without repeating delivered implementation. Source record: P2 / coverage pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "BTH061-012",
@@ -15267,34 +15345,13 @@
         "scope_confirmed": true,
         "acceptance": [
           {
-            "id": "cause",
-            "description": "Preserve the near2GiB failure and matched A/B evidence; identify a real cause/mitigation.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "qualification",
-            "description": "Validate the chosen mitigation under unchanged Job/resource/import/export guards.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "commit",
-            "description": "Commit the durable fix and verify the existing NEXT pipeline; local uncommitted or causally disproved changes are not completion.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "diagnostic-telemetry",
-            "description": "Site5bfe3b6a adds tested current-memory telemetry and was activated by graceful guardian restart with exact committed files, full samples and unchanged10%CPU/2GiB cap. This is diagnostic evidence only, with served game assets unchanged.",
+            "id": "owner-disposition",
+            "description": "Record completed investigation not reproducible; reopen on recurrence.",
             "required": true,
             "state": "pass",
             "evidence": [
-              "https://github.com/erikjpet/site/commit/5bfe3b6af4385c9cf837e8bcb1f5bc5b377338e5",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/todo/BTH_0.6.1_closeout_plan.md",
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
             ]
           }
         ],
@@ -15304,8 +15361,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "OWNED_JOB_TELEMETRY_COMMITTED_ROOT_UNRESOLVED",
+      "state": "complete",
+      "status": "NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE",
       "owner": {
         "name": "Primary implementation / site watcher",
         "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
@@ -15336,22 +15393,60 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open.  Additional observed export failure345f9414 at2026-11-04T16:10:25Z: Stack overflow, exit3221225725 (0xC00000FD),49% pack stage. This is not proven to share the allocation root cause. Priorf305 retained; raw log/status preserved in task-6 evidence. No cap/trust/guard change or mitigation claim."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open.  Additional observed export failure345f9414 at2026-11-04T16:10:25Z: Stack overflow, exit3221225725 (0xC00000FD),49% pack stage. This is not proven to share the allocation root cause. Priorf305 retained; raw log/status preserved in task-6 evidence. No cap/trust/guard change or mitigation claim.",
+      "next_action": "Reopen only on recurrence, retaining exact failing build and resource context.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
         "evidence": [
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-        ],
-        "observed_at": "2026-11-04T16:23:29.672223+00:00"
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "closure_previous_acceptance": [
+        {
+          "id": "cause",
+          "description": "Preserve the near2GiB failure and matched A/B evidence; identify a real cause/mitigation.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "qualification",
+          "description": "Validate the chosen mitigation under unchanged Job/resource/import/export guards.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "commit",
+          "description": "Commit the durable fix and verify the existing NEXT pipeline; local uncommitted or causally disproved changes are not completion.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "diagnostic-telemetry",
+          "description": "Site5bfe3b6a adds tested current-memory telemetry and was activated by graceful guardian restart with exact committed files, full samples and unchanged10%CPU/2GiB cap. This is diagnostic evidence only, with served game assets unchanged.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "https://github.com/erikjpet/site/commit/5bfe3b6af4385c9cf837e8bcb1f5bc5b377338e5",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ]
     },
     {
       "id": "BTH-RUNTIME-CLEANUP-001",
@@ -18343,7 +18438,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_COMMIT_PUBLISHED_CURRENT94_PASS_NEXT_EXPORT_STACK_OVERFLOW",
+      "status": "EXPORT_NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE_GAMEPLAY_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Fix Back Alley travel",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -18369,22 +18464,36 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Exact implementation preserved and published345f94149609e828c76c7a9df6b2cffaff5862b9. Current-main warm69+cold25 pass, original166+liveness evidence retained. Existing NEXT exporter failed16:10:25UTC at49% with Stack overflow/exit3221225725; previousf305 retained, so BarDice is not live-accepted. Preserve failure log and original cup, keep taskOpen pending ordinary watcher promotion/served startup. No cap bypass, manual builder or original replay. See docs/testing/bar_dice_warm_progression.md."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "EXPORT_NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE_GAMEPLAY_ACCEPTANCE_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Exact implementation preserved and published345f94149609e828c76c7a9df6b2cffaff5862b9. Current-main warm69+cold25 pass, original166+liveness evidence retained. Existing NEXT exporter failed16:10:25UTC at49% with Stack overflow/exit3221225725; previousf305 retained, so BarDice is not live-accepted. Preserve failure log and original cup, keep taskOpen pending ordinary watcher promotion/served startup. No cap bypass, manual builder or original replay. See docs/testing/bar_dice_warm_progression.md.",
+      "next_action": "Export investigation closed by C3; retain and qualify the separate original warm/cold gameplay acceptance without redesign.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
         "evidence": [
-          "docs/testing/bar_dice_warm_progression.md"
-        ],
-        "observed_at": "2026-11-04T16:23:29.672223+00:00"
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "export_disposition": {
+        "state": "closed",
+        "status": "not reproducible; reopen on recurrence",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ],
+        "gameplay_acceptance_unchanged": true
+      }
     },
     {
       "id": "BTH-NEXT-DISK-RESERVE-001",
@@ -32332,30 +32441,13 @@
         "scope_confirmed": true,
         "acceptance": [
           {
-            "id": "1",
-            "description": "Retained49-percent resource and distinct failure types identified from raw evidence.",
+            "id": "owner-disposition",
+            "description": "Record completed investigation not reproducible; reopen on recurrence.",
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "2",
-            "description": "Bounded same-memory-cap reproduction/isolation recorded; no speculative GC or asset fix claimed.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "3",
-            "description": "Current approved-storage reserve and actual existing-pipeline delivery recorded; two same-RC manifests compared or exact remaining blocker recorded.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+              "docs/todo/BTH_0.6.1_closeout_plan.md",
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
             ]
           }
         ],
@@ -32365,8 +32457,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "NOT_REPRODUCED_EXACT_RC_TWO_EXPORTS_PASS_ORIGINAL_CAUSE_OPEN",
+      "state": "complete",
+      "status": "NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32416,25 +32508,61 @@
           "kind": "exact_rc_export_pair",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Two full exact fcfe exports0/0;1165-file manifests and all payload MD5s pass; only218-class cache list ordering differs."
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "NOT_REPRODUCIBLE_REOPEN_ON_RECURRENCE"
         }
       ],
       "implementation_batches": [
         "AUD061-12-BATCH-001",
         "AUD061-12-BATCH-002"
       ],
-      "next_action": "Retain historical allocation/stack cause as not reproduced. If failure recurs, capture exact next resource/allocation boundary under unchanged limits; no speculative workaround.",
+      "next_action": "Reopen only on recurrence, retaining exact failing build and resource context.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T11:53:51.886562+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "closure_previous_acceptance": [
+        {
+          "id": "1",
+          "description": "Retained49-percent resource and distinct failure types identified from raw evidence.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "2",
+          "description": "Bounded same-memory-cap reproduction/isolation recorded; no speculative GC or asset fix claimed.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "3",
+          "description": "Current approved-storage reserve and actual existing-pipeline delivery recorded; two same-RC manifests compared or exact remaining blocker recorded.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ]
     },
     {
       "id": "AUD061-04",
@@ -32641,39 +32769,14 @@
         "scope_confirmed": true,
         "acceptance": [
           {
-            "id": "1",
-            "description": "Eleven-game unfinished same-build Continue",
+            "id": "owner-disposition",
+            "description": "Complete the requested audit execution and separately record all findings and qualification limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "2",
-            "description": "Crew return and expired handoff",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "3",
-            "description": "Rendered Meta choice and terminal delivery",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "4",
-            "description": "Normal-play performance and Bar Dice",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          },
-          {
-            "id": "5",
-            "description": "Preserve approval-specific blockers and actual native/Web limits",
-            "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/BTH_0.6.1_closeout_plan.md",
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -32682,8 +32785,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN",
+      "state": "complete",
+      "status": "DONE_FINDINGS_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32716,26 +32819,68 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN"
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DONE_FINDINGS_OPEN"
         }
       ],
       "implementation_batches": [
         "AUD061-11-BATCH-001"
       ],
-      "next_action": "Resolve separately registered cold/coverage findings; do not tag this candidate.",
+      "next_action": "Resolve separately registered findings under CLOSE-02/03/04/06/05; audit execution itself is done.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required cold/coverage qualification is incomplete; see the five diagnosed follow-ups.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.119274+00:00",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
         "evidence": [
-          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
         ]
       },
       "planned_app_changes": [
         "Run each recorded acceptance on exact frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; failures become separate findings; no unrelated fixes."
       ],
-      "updated_at": "2026-11-11T13:22:42.119274+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "closure_previous_acceptance": [
+        {
+          "id": "1",
+          "description": "Eleven-game unfinished same-build Continue",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "2",
+          "description": "Crew return and expired handoff",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "3",
+          "description": "Rendered Meta choice and terminal delivery",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "4",
+          "description": "Normal-play performance and Bar Dice",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "5",
+          "description": "Preserve approval-specific blockers and actual native/Web limits",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ]
     },
     {
       "id": "BTH061-RC-BARDICE-COLD-001",
@@ -33160,7 +33305,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33193,24 +33338,37 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-NATIVE-RETENTION-001-BATCH-001"
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.466196+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [
         "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements."
       ],
-      "updated_at": "2026-11-11T13:22:42.466196+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "AUD061-17",
@@ -33227,57 +33385,13 @@
         "scope_confirmed": true,
         "acceptance": [
           {
-            "id": "1",
-            "description": "BTH061-005 money/item conservation",
-            "required": true,
-            "state": "open",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "2",
-            "description": "BTH061-006 all-eleven same-build paid/pending/settled continuation",
-            "required": true,
-            "state": "open",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "3",
-            "description": "BTH061-007 closing, interruptions and terminal cleanup",
-            "required": true,
-            "state": "open",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "4",
-            "description": "BTH061-012 final packaging without cross-version save compatibility",
-            "required": true,
-            "state": "open",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "5",
-            "description": "Two exact frozen-candidate PCK exports and manifest comparison",
+            "id": "owner-disposition",
+            "description": "Complete the requested audit execution and separately record all findings and qualification limits.",
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-            ]
-          },
-          {
-            "id": "6",
-            "description": "Declare optional003/004/008/011 scope and009/010 measurement limits",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+              "docs/todo/BTH_0.6.1_closeout_plan.md",
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
             ]
           }
         ],
@@ -33287,8 +33401,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY",
+      "state": "complete",
+      "status": "DONE_FINDINGS_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33327,26 +33441,87 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY"
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DONE_FINDINGS_OPEN"
         }
       ],
       "implementation_batches": [
         "AUD061-17-BATCH-001"
       ],
-      "next_action": "Resolve diagnosed qualification gaps and AUD061-04 version admission, then choose and fully qualify a new exact release candidate before owner tagging.",
+      "next_action": "Resolve separately registered findings under CLOSE-02/03/04/06/05; audit execution itself is done.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required same-build/money/closing coverage is incomplete or fails its oracle/fixture checks; final0.6.1 packaging is blocked by AUD061-04.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.983412+00:00",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
         ]
       },
       "planned_app_changes": [
         "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
       ],
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "closure_previous_acceptance": [
+        {
+          "id": "1",
+          "description": "BTH061-005 money/item conservation",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "2",
+          "description": "BTH061-006 all-eleven same-build paid/pending/settled continuation",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "3",
+          "description": "BTH061-007 closing, interruptions and terminal cleanup",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "4",
+          "description": "BTH061-012 final packaging without cross-version save compatibility",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "5",
+          "description": "Two exact frozen-candidate PCK exports and manifest comparison",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "id": "6",
+          "description": "Declare optional003/004/008/011 scope and009/010 measurement limits",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ]
     },
     {
       "id": "BTH061-RC-COUNT-EXPECTATION-001",
@@ -33663,6 +33838,650 @@
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
       "updated_at": "2026-11-11T14:36:47.177714+00:00"
+    },
+    {
+      "id": "CLOSEOUT-061",
+      "name": "Finish accepted0.6.1 audit closeout per owner decisions",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Finish accepted0.6.1 audit closeout per owner decisions",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "CLOSE-01 green Smoke and tutorial progression",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "CLOSE-02 financial display",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "CLOSE-03 four evidence-led test repairs",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "CLOSE-04 one displayed version variable",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "5",
+            "description": "CLOSE-06 rendered acceptance with explicit not-reached cases",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "6",
+            "description": "CLOSE-05 exact candidate and packages",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.623643+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Finish accepted0.6.1 audit closeout per owner decisions"
+      ],
+      "updated_at": "2026-11-11T16:12:33.623643+00:00"
+    },
+    {
+      "id": "CLOSE-LEDGER",
+      "name": "Apply accepted audit dispositions",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Apply accepted audit dispositions",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Close export investigation not reproducible; recurrence reopens",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Defer native retention/P2 past release without closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Mark completed audit execution done; findings open",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-LEDGER-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.705170+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Apply accepted audit dispositions"
+      ],
+      "updated_at": "2026-11-11T16:12:33.705170+00:00"
+    },
+    {
+      "id": "CLOSE-01",
+      "name": "Classify and correct Smoke failures; tutorial first",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Classify and correct Smoke failures; tutorial first",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Fresh NEXT first-night Blackjack wager lesson and Pull Tabs redemption",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Classify each failure before changing product/test/harness",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Smoke exit0 without weakening checks",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "No-pointer liveness and Python comparison",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-01-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.774683+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Classify and correct Smoke failures; tutorial first"
+      ],
+      "updated_at": "2026-11-11T16:12:33.774683+00:00"
+    },
+    {
+      "id": "CLOSE-02",
+      "name": "Fit complete Bar Dice financial values",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Fit complete Bar Dice financial values",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Cash/chip labels untruncated; currency once",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "One/three/four-digit RET fits1280x720",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Grand Casino Practice NEXT; liveness",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-02-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.853211+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Fit complete Bar Dice financial values"
+      ],
+      "updated_at": "2026-11-11T16:12:33.853211+00:00"
+    },
+    {
+      "id": "CLOSE-03",
+      "name": "Repair four diagnosed test discrepancies",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repair four diagnosed test discrepancies",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Bar Dice normal popup dismissal and separate account/tumble checks",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Reuse/verify already delivered Count exact expectation correction",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Real Riverboat dialogue fixture and rendered Delta Queen closing ride",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "First Scratch leaf+types; no real values normalized away",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-03-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.925739+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Repair four diagnosed test discrepancies"
+      ],
+      "updated_at": "2026-11-11T16:12:33.925739+00:00"
+    },
+    {
+      "id": "CLOSE-04",
+      "name": "Single player-visible release version constant",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Single player-visible release version constant",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Source displays RELEASE_VERSION",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Export displays RELEASE_VERSION and12-char manifest commit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Changing constant alone changes source display; restore0.6.0",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Pinned/internal identities untouched",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-04-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.007389+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Single player-visible release version constant"
+      ],
+      "updated_at": "2026-11-11T16:12:34.007389+00:00"
+    },
+    {
+      "id": "CLOSE-06",
+      "name": "Rendered browser acceptance through normal controls",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Rendered browser acceptance through normal controls",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Crew offer/return",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Expired Jazz handoff",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Offered showdown Meta choice",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "All11 games paid unfinished save/reload/Continue/one settlement",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "5",
+            "description": "Wallet/inventory recorded; not-reached distinct from pass",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-06-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.076786+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Rendered browser acceptance through normal controls"
+      ],
+      "updated_at": "2026-11-11T16:12:34.076786+00:00"
+    },
+    {
+      "id": "CLOSE-05",
+      "name": "Freeze and package final candidate",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSEOUT-061"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Freeze and package final candidate",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Exact candidate Smoke/liveness/Python",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Windows and Web export_itch builds and fresh startup",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Paths and SHA256 hashes; no tag/rename/upload",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "CLOSE-05-BATCH-001"
+      ],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.158509+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Freeze and package final candidate"
+      ],
+      "updated_at": "2026-11-11T16:12:34.158509+00:00"
     }
   ],
   "batches": [
@@ -35469,7 +36288,7 @@
       "parent_id": "BTH061-RC-NATIVE-RETENTION-001",
       "group": "current",
       "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "status": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4",
       "scope": [
         "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements."
       ],
@@ -35505,18 +36324,31 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "owner_closeout_disposition",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DEFERRED_PAST_0_6_1_OWNER_DECISION_C4"
         }
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Resume after0.6.1 release under a separately scoped measurement/coverage task; no work in this closeout.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.466196+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T16:12:34.228024+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
-      "updated_at": "2026-11-11T13:22:42.466196+00:00"
+      "updated_at": "2026-11-11T16:12:34.228024+00:00",
+      "owner_decision": {
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "decision": "C4",
+        "scope": "Deferred beyond0.6.1; remains open, no acceptance pass claimed.",
+        "observed_at": "2026-11-11T16:12:34.228024+00:00"
+      }
     },
     {
       "id": "AUD061-17-BATCH-001",
@@ -35819,6 +36651,244 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T14:36:47.177714+00:00"
+    },
+    {
+      "id": "CLOSE-LEDGER-BATCH-001",
+      "name": "Apply accepted audit dispositions bounded execution",
+      "parent_id": "CLOSE-LEDGER",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Apply accepted audit dispositions"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.705170+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:33.705170+00:00"
+    },
+    {
+      "id": "CLOSE-01-BATCH-001",
+      "name": "Classify and correct Smoke failures; tutorial first bounded execution",
+      "parent_id": "CLOSE-01",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Classify and correct Smoke failures; tutorial first"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.774683+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:33.774683+00:00"
+    },
+    {
+      "id": "CLOSE-02-BATCH-001",
+      "name": "Fit complete Bar Dice financial values bounded execution",
+      "parent_id": "CLOSE-02",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Fit complete Bar Dice financial values"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.853211+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:33.853211+00:00"
+    },
+    {
+      "id": "CLOSE-03-BATCH-001",
+      "name": "Repair four diagnosed test discrepancies bounded execution",
+      "parent_id": "CLOSE-03",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Repair four diagnosed test discrepancies"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:33.925739+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:33.925739+00:00"
+    },
+    {
+      "id": "CLOSE-04-BATCH-001",
+      "name": "Single player-visible release version constant bounded execution",
+      "parent_id": "CLOSE-04",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Single player-visible release version constant"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.007389+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:34.007389+00:00"
+    },
+    {
+      "id": "CLOSE-06-BATCH-001",
+      "name": "Rendered browser acceptance through normal controls bounded execution",
+      "parent_id": "CLOSE-06",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Rendered browser acceptance through normal controls"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.076786+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:34.076786+00:00"
+    },
+    {
+      "id": "CLOSE-05-BATCH-001",
+      "name": "Freeze and package final candidate bounded execution",
+      "parent_id": "CLOSE-05",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Freeze and package final candidate"
+      ],
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T16:12:34.158509+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T16:12:34.158509+00:00"
     }
   ]
 }
