@@ -63,6 +63,8 @@ var _status_icons_key := ""
 var _heat_feedback_elapsed_sec := HeatFeedbackVisualsScript.GAIN_DURATION_SEC
 var _heat_feedback_amount := 0
 var _heat_feedback_intensity := 0.0
+var save_warning_notice: Label
+var _save_warning_notice_timer: Timer
 var status_button: Button
 var meta_details_button: Button
 var details_overlay: Control
@@ -676,6 +678,37 @@ func present_money_feedback(entries: Array) -> void:
 
 # Save completion/failure is a scalar mutation boundary, independent of the
 # heavier objective/room model and of autonomous animation scheduling.
+func show_save_warning_notice(text: String) -> void:
+	if not is_instance_valid(save_warning_notice):
+		save_warning_notice = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
+		save_warning_notice.name = "AutosaveNotice"
+		save_warning_notice.set_as_top_level(true)
+		save_warning_notice.z_as_relative = false
+		save_warning_notice.z_index = 4094
+		save_warning_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		save_warning_notice.focus_mode = Control.FOCUS_NONE
+		save_warning_notice.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		save_warning_notice.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817"), VisualStyle.PINK_2, 1))
+		add_child(save_warning_notice)
+		_save_warning_notice_timer = Timer.new()
+		_save_warning_notice_timer.one_shot = true
+		_save_warning_notice_timer.wait_time = 6.0
+		save_warning_notice.add_child(_save_warning_notice_timer)
+		_save_warning_notice_timer.timeout.connect(save_warning_notice.hide)
+	var status_rect := status_button.get_global_rect()
+	save_warning_notice.position = Vector2(status_rect.position.x, status_rect.end.y + 4.0)
+	save_warning_notice.size = Vector2(maxf(320.0, status_rect.size.x), 48.0)
+	save_warning_notice.text = text
+	save_warning_notice.show()
+	_save_warning_notice_timer.start()
+
+
+func hide_save_warning_notice() -> void:
+	if is_instance_valid(save_warning_notice):
+		save_warning_notice.hide()
+		_save_warning_notice_timer.stop()
+
+
 func render_save_status(status: Dictionary, warning: bool) -> void:
 	var statuses: Array = []
 	for existing in _status_details:
@@ -688,10 +721,18 @@ func render_save_status(status: Dictionary, warning: bool) -> void:
 	_render_status_icons(statuses)
 
 
+func _clear_status_tray() -> void:
+	# Detach now so the two-icon limit counts only replacement controls.
+	# Their destruction still follows the normal deferred ownership boundary.
+	for child in status_tray.get_children():
+		status_tray.remove_child(child)
+		child.queue_free()
+
+
 func _render_status_icons(statuses_value: Variant) -> void:
 	if typeof(statuses_value) != TYPE_ARRAY:
 		if not _status_icons_key.is_empty():
-			FoundationWidgets.clear(status_tray)
+			_clear_status_tray()
 			_status_icons_key = ""
 		_status_details.clear()
 		status_button.text = "Info"
@@ -711,7 +752,7 @@ func _render_status_icons(statuses_value: Variant) -> void:
 	if next_key == _status_icons_key:
 		return
 	_status_icons_key = next_key
-	FoundationWidgets.clear(status_tray)
+	_clear_status_tray()
 	_status_details.clear()
 	for status_value in statuses:
 		if typeof(status_value) != TYPE_DICTIONARY:
@@ -730,7 +771,8 @@ func _render_status_icons(statuses_value: Variant) -> void:
 		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		status_tray.add_child(icon_rect)
 	status_button.text = "Info" if _status_details.is_empty() else ""
-	status_button.tooltip_text = "Run details: %d status effects. Read all exact values and effects." % _status_details.size()
+	var save_warning := not _status_details.is_empty() and str(_status_details[0].get("id", "")) == "save" and str(_status_details[0].get("icon", "")) == "danger"
+	status_button.tooltip_text = str(_status_details[0].get("tooltip", "")) if save_warning else "Run details: %d status effects. Read all exact values and effects." % _status_details.size()
 	status_button.accessibility_name = "Run details, %d status effects" % _status_details.size()
 
 

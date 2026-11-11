@@ -1,0 +1,13 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: QOL-02: actual warning TextureRect exists visibly after replacement
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:99)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:55)
+ERROR: QOL-02: actual healthy TextureRect exists visibly after recovery
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:99)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:73)
+QOL02_SAVE_WARNING {"checks":24,"failures":["actual warning TextureRect exists visibly after replacement","actual healthy TextureRect exists visibly after recovery"],"observations":[{"case":"explicit_failure","first_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"},"save_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"}},{"blocked":true,"case":"host_failure","message":"Not saving — open Run Menu to retry.","save_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"}},{"case":"warning_visible_icons","icons":[]},{"case":"recovered","rendered":[{"icon":"home","id":"home","label":"Home","tooltip":"Home: Home: tenure active."},{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Recovered."}],"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Recovered."}},{"case":"recovered_visible_icons","icons":[]},{"case":"async_recovered","in_flight":false,"rendered":[{"icon":"home","id":"home","label":"Home","tooltip":"Home: Home: tenure active."},{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosaved."}],"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosaved."}},{"case":"async_visible_icons","icons":[{"id":"home","tooltip":"Home: Home: tenure active."},{"id":"save","tooltip":"Autosave On · Autosaved."}]}]}

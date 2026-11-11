@@ -1,0 +1,4 @@
+ERROR: The real Pull Tabs counter result could not satisfy Pal's redemption lesson: context={ "last_result_type": "game_hook", "last_action_id": "redeem_pull_tab_winners" } lesson={ "type": "state_predicate", "state_predicates": [{ "path": "screen", "op": "equals", "value": "ENVIRONMENT" }, { "path": "environment_archetype", "op": "equals", "value": "gas_station_casino" }, { "path": "game.scripted_target_redeemed", "op": "equals", "value": true }] }.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check_onboarding_tutorial_ui_flow (res://scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd:1452)

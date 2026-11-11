@@ -1,0 +1,10 @@
+{
+  "result": "FAIL",
+  "exact_commit": "8ae197d3dd30624c7a71d9e9379697b7b1a962f7",
+  "observed": "Initial healthy home/save glyphs visible; after failure the tray is empty; touch-opened details correctly says Not saving; recovery writes new primary but tray remains empty.",
+  "cause": "Queued-for-deletion old TextureRect children still count against two-icon cap when new status is rendered.",
+  "native_control": "Strengthened24check contract fails2 visible-control assertions before fix, passes24/0 after detach-before-queue_free.",
+  "job_exit_is_visual_acceptance": false,
+  "page_errors": 0,
+  "console_errors": 0
+}

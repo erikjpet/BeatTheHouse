@@ -7249,7 +7249,10 @@ func _record_autosave_failure(error: Error, error_code: String, failed_generatio
 
 	if autosave_retry_blocked and not autosave_blocked_notice_shown:
 		autosave_blocked_notice_shown = true
-		_show_message("Not saving — open Run Menu to retry.")
+		var notice_text := "Not saving — open Run Menu to retry."
+		_show_message(notice_text)
+		if structured_hud != null:
+			structured_hud.show_save_warning_notice(notice_text)
 	if not warning_was_active:
 		_publish_autosave_warning_hud()
 
@@ -7280,6 +7283,8 @@ func _clear_autosave_failure_state(clear_warning: bool = true) -> void:
 	if clear_warning:
 		autosave_warning_active = false
 		autosave_blocked_notice_shown = false
+		if structured_hud != null:
+			structured_hud.hide_save_warning_notice()
 	autosave_failure_generation = 0
 	autosave_failure_count = 0
 	autosave_last_error = OK
