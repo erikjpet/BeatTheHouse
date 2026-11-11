@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "IN_PROGRESS_11_OF_18_ORDERS_DELIVERED",
+      "status": "12_OF_18_ORDERS_COMPLETE_QOL01_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30543,7 +30543,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue AUD061-15 item2, QOL-01, AUD061-12, then release stamps/changelog and acceptance/coverage on proposed RC.",
+      "next_action": "Continue QOL-01, AUD061-12, AUD061-04/05, then AUD061-11/17 on exact proposed RC.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -30553,7 +30553,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T09:31:35.422481+00:00"
+      "updated_at": "2026-11-11T09:53:38.758372+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31762,22 +31762,28 @@
             "id": "1",
             "description": "Wrong-sized key is retained aside and replaced; later pack/unpack works.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Valid keys remain unchanged across cache reloads; old-key capsules retain existing authentication failure.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Focused checks and Smoke no worse than baseline; exact NEXT assets and startup verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -31786,8 +31792,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_45_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_STARTUP",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31799,37 +31805,45 @@
           "evidence": [
             "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3b36a9c3957fe4b4484d8584d16e971fc743ef93",
+          "evidence": [
+            "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "3b36a9c3957fe4b4484d8584d16e971fc743ef93",
+        "evidence": [
+          "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md",
-          "summary": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_45_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_STARTUP"
         }
       ],
       "implementation_batches": [
         "AUD061-15-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T09:47:15.575299+00:00",
+        "observed_at": "2026-11-11T09:53:38.688762+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior."
       ],
-      "updated_at": "2026-11-11T09:47:15.575299+00:00"
+      "updated_at": "2026-11-11T09:53:38.688762+00:00"
     }
   ],
   "batches": [
@@ -33073,8 +33087,8 @@
       "name": "Repair wrong-sized Crew install key only implementation",
       "parent_id": "AUD061-15",
       "group": "current",
-      "state": "open",
-      "status": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_45_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_STARTUP",
       "scope": [
         "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior."
       ],
@@ -33089,31 +33103,39 @@
           "evidence": [
             "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3b36a9c3957fe4b4484d8584d16e971fc743ef93",
+          "evidence": [
+            "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "3b36a9c3957fe4b4484d8584d16e971fc743ef93",
+        "evidence": [
+          "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md",
-          "summary": "45_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_45_PASS_SMOKE_BASELINE_MATCH_EXACT_NEXT_STARTUP"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T09:47:15.575299+00:00",
+        "observed_at": "2026-11-11T09:53:38.688762+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T09:47:15.575299+00:00"
+      "updated_at": "2026-11-11T09:53:38.688762+00:00"
     }
   ]
 }

@@ -35,4 +35,4 @@ All manifests, launch gates and raw outputs are retained in evidence/AUD061-15_2
 
 ## NEXT
 
-Pending finished code/ledger push and exact existing-pipeline delivery; no manual publish.
+Verified NEXT 3b36a9c3957fe4b4484d8584d16e971fc743ef93 containing code 5676a6102b7b9d7a90a59f4d74c4285b3c4e2ccc; tree bf5dd2b94e52df79195369cb880c8b6dab5aafbf; archive b0eb655ae9db4cea2698547d3cb7be0916c24ff89ffee995571e919fd276d00e. Existing watcher phase current/error null. Ten served asset checks PASS, including metadata/REF/HTML/JS/PCK/native hashes and engine HEAD length/MIME/pins. Fresh-profile unmodified browser startup visually clean; footer 0.6.0-dev+3b36a9c3957f. Daily Challenge enters House with bankroll68 and creates primary100302bytes, SHA256 b1ac8d466dc0e355b04bfda454f67a4a797a95a1de61858964655714c1c2a8a4; no tmp/rollback residue. Screenshots00startup/01Daily/02House inspected (02 name says Menu but shows House). Pageerrors0/console0/job0/no timeout/active0. Key-repair fault matrix was native, not injected into the served browser. No manual publish.
