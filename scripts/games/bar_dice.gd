@@ -3293,8 +3293,9 @@ func _bar_dice_surface_amount(state: Dictionary, amount: int) -> String:
 func _draw_bar_room(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_room(surface, state, "BAR DICE", "%s / %s" % [str(state.get("bar_name", "bar top")), str(state.get("edge_label", "Bar Rake"))])
 	var ritual_phase := str(state.get("bar_dice_ritual_phase", "agree_wager")).replace("_", " ").to_upper()
-	surface.surface_label(("%s  ·  OPP %s" % [ritual_phase, _bar_dice_surface_amount(state, int(state.get("opponent_available_cash", 0)))]).left(29), Vector2(344, 38), 8, C_SOFT)
-	surface.surface_label(("COV %s  ·  RISK %s  ·  RET %s" % [_bar_dice_surface_amount(state, int(state.get("covered_total", 0))), _bar_dice_surface_amount(state, int(state.get("at_risk_total", 0))), _bar_dice_surface_amount(state, int(state.get("returned_stake", 0)))]).left(34), Vector2(344, 56), 7, C_AMBER)
+	surface.surface_label("%s  ·  OPP %s" % [ritual_phase, _bar_dice_surface_amount(state, int(state.get("opponent_available_cash", 0)))], Vector2(344, 38), 8, C_SOFT)
+	var financial_line := "CHIPS  ·  COV %d  ·  RISK %d  ·  RET %d" % [int(state.get("covered_total", 0)), int(state.get("at_risk_total", 0)), int(state.get("returned_stake", 0))] if str(state.get("wager_currency", "cash")) == "chips" else "COV %s  ·  RISK %s  ·  RET %s" % [_bar_dice_surface_amount(state, int(state.get("covered_total", 0))), _bar_dice_surface_amount(state, int(state.get("at_risk_total", 0))), _bar_dice_surface_amount(state, int(state.get("returned_stake", 0)))]
+	surface.surface_label(financial_line, Vector2(344, 56), 7, C_AMBER)
 
 
 func _draw_bar_top(surface, _state: Dictionary) -> void:

@@ -12,14 +12,20 @@ const COVER_SLOT := "bar_dice_cover_display"
 class LabelCaptureCanvas extends "res://scripts/ui/game_surface_canvas.gd":
 	var cov_draw_count: int = 0
 	var latest_cov: Dictionary = {}
+	var latest_opponent: Dictionary = {}
 
 	func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
-		if text.begins_with("COV ") and pos.is_equal_approx(Vector2(344, 56)):
+		var font := get_theme_default_font()
+		var ink := Rect2(pos - Vector2(0, font.get_ascent(font_size)), Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + 1.0, font.get_height(font_size) + 1.0))
+		if pos.is_equal_approx(Vector2(344, 38)):
+			latest_opponent = {"text": text, "ink": ink}
+		if pos.is_equal_approx(Vector2(344, 56)):
 			cov_draw_count += 1
 			var projection: Dictionary = state.get("bar_dice_ritual_projection", {})
 			var money: Dictionary = projection.get("money", {})
 			latest_cov = {
 				"text_argument": text,
+				"ink": ink,
 				"font_size": font_size,
 				"process_frame": Engine.get_process_frames(),
 				"draw_count": cov_draw_count,
@@ -82,7 +88,50 @@ func _cover_case() -> void:
 			if not await _idle_tumble(): return
 	if not _check(_phase() == "reveal" and app.run_state.bankroll == 94 and int(_table(app.run_state.to_dict()).get("rounds_played", -1)) == 0, "Diagnostic ends on the same unfunded Reveal without Call or Save"): return
 	if not _check(_guard(app.run_state.to_dict()).account == initial_account, "All ordinary unfunded cup controls preserve account and root RNG"): return
+	await _numeric_header_cases()
 	facts["completed"] = failures.is_empty()
+
+
+func _numeric_header_cases() -> void:
+	var protected_before: Dictionary = _guard(app.run_state.to_dict()).account
+	var canvas := LabelCaptureCanvas.new()
+	app.add_child(canvas)
+	canvas.size = Vector2(1280, 720)
+	var renderer := BarDice.new()
+	renderer.setup(app.library.game("bar_dice"), app.library)
+	canvas.set_game_module(renderer)
+	facts["numeric_header_cases"] = []
+	for values in [[9, 6, 3], [999, 666, 333], [9999, 6666, 3333], [9999, 6666, 3333]]:
+		var currency := "cash" if facts.numeric_header_cases.size() == 3 else "chips"
+		var snapshot: Dictionary = app._game_view_snapshot().duplicate(true)
+		snapshot["wager_currency"] = currency
+		snapshot["bar_dice_ritual_phase"] = "agree_wager"
+		snapshot["opponent_available_cash"] = int(values[0])
+		for index in range(3):
+			var field: String = ["covered_total", "at_risk_total", "returned_stake"][index]
+			snapshot[field] = int(values[index])
+			snapshot["bar_dice_ritual_projection"]["money"][field] = int(values[index])
+		var before_draws := canvas.cov_draw_count
+		canvas.render_game_snapshot(snapshot)
+		for frame in range(12):
+			await process_frame
+			if canvas.cov_draw_count > before_draws: break
+		var text := str(canvas.latest_cov.get("text_argument", ""))
+		var expected := "CHIPS  ·  COV %d  ·  RISK %d  ·  RET %d" % values if currency == "chips" else "COV $%d  ·  RISK $%d  ·  RET $%d" % values
+		var box := Rect2(332, 18, 236, 48)
+		var ink: Rect2 = canvas.latest_cov.get("ink", Rect2())
+		var opponent_ink: Rect2 = canvas.latest_opponent.get("ink", Rect2())
+		var opponent := str(canvas.latest_opponent.get("text", ""))
+		facts.numeric_header_cases.append({"currency": currency, "values": values, "text": text, "expected": expected, "opponent": opponent, "ink": str(ink), "box": str(box), "bounds_inside": box.encloses(ink) and box.encloses(opponent_ink), "new_draw": canvas.cov_draw_count > before_draws})
+		_check(canvas.cov_draw_count > before_draws, "Numeric case receives an autonomous actual Canvas draw")
+		_check(text == expected, "Complete numeric %s header for %s" % [currency, str(values)])
+		_check(text.ends_with("RET %d" % int(values[2]) if currency == "chips" else "RET $%d" % int(values[2])), "Full RET value reaches the real draw call")
+		_check(opponent.ends_with("%d CHIPS" % int(values[0]) if currency == "chips" else "$%d" % int(values[0])), "Full opponent amount reaches the real draw call")
+		_check(box.encloses(ink) and box.encloses(opponent_ink), "Themed font and shadow stay inside both authored header lines at1280x720")
+		_check(canvas.is_processing(), "Numeric header keeps ordinary autonomous processing")
+	canvas.queue_free()
+	await process_frame
+	_check(_guard(app.run_state.to_dict()).account == protected_before, "Presentation-only numeric cases preserve live account and root RNG")
 
 
 func _trace(label: String, expected_phase: String) -> bool:
@@ -142,7 +191,7 @@ func _visible_totals(value: Dictionary) -> Dictionary:
 
 
 func _finish() -> void:
-	facts["scope"] = "Fresh supported Practice cash94/ante6; actual MainScene screen-builder Canvas factory with surface_label-only observation, real renderer hit-region callbacks, no Call/Save/Continue or financial settlement. Authority/module/host snapshot/retained Canvas/actual draw-text trace. No original state, cold/closing/Web or raster-pixel interpretation claim. Native shutdown outcome remains separately recorded by owned runner."
+	facts["scope"] = "Fresh supported Practice cash94/ante6; actual MainScene screen-builder Canvas factory with surface_label-only observation, real renderer hit-region callbacks, no Call/Save/Continue or financial settlement. Authority/module/host snapshot/retained Canvas/actual draw-text trace; separate real-Canvas presentation-only1/3/4-digit chips and cash headers with exact font/shadow bounds at1280x720. No original state, cold/closing/Web or raster-pixel interpretation claim. Native shutdown outcome remains separately recorded by owned runner."
 	facts["actions"] = actions
 	facts["blocked"] = blocks
 	facts["financial_calls"] = 0
