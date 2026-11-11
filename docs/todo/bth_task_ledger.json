@@ -32197,7 +32197,7 @@
       },
       "commits": [
         {
-          "sha": "6c6a3571",
+          "sha": "6c6a3571740ac0ae20ebf9809e15d9b3ea0c3e29",
           "evidence": [
             "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
           ]
@@ -33713,7 +33713,7 @@
       },
       "commits": [
         {
-          "sha": "6c6a3571",
+          "sha": "6c6a3571740ac0ae20ebf9809e15d9b3ea0c3e29",
           "evidence": [
             "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
           ]
