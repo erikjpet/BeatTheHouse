@@ -5589,7 +5589,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -5669,7 +5676,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -6087,7 +6101,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -6167,7 +6188,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -6247,7 +6275,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -6327,7 +6362,14 @@
         "task_ref": null,
         "assignment_state": "unassigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -15377,6 +15419,12 @@
           ],
           "repository": "erikjpet/site",
           "relationship": "external diagnostic only; not a Beat the House product fix"
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -18450,6 +18498,12 @@
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
         }
       ],
@@ -32488,6 +32542,12 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -32803,6 +32863,12 @@
           "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
           "evidence": [
             "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
         }
       ],
@@ -33323,6 +33389,12 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -33425,6 +33497,12 @@
           "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
         }
       ],
@@ -33907,7 +33985,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -33979,7 +34064,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34060,7 +34152,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34134,7 +34233,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34215,7 +34321,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34296,7 +34409,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34384,7 +34504,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -34458,7 +34585,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36309,6 +36443,12 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -36667,7 +36807,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36701,7 +36848,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36735,7 +36889,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36769,7 +36930,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36803,7 +36971,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36837,7 +37012,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -36871,7 +37053,14 @@
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "668aaccfdbb28d1ef66ef43b9787c77755be7a02",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
