@@ -52,3 +52,17 @@ Reconciliation:1,681 inherited findings versus preceding1,682, zero added. Owner
 | E:\CodexQA\BTH\runs\close061-ledger-disposition-delta-20261111\evidence\launch-claim.json | c5bc0c10c0ffcf6f10e534f83d2b62c9456a96df2da34be67634b9503620d5df |
 | E:\CodexQA\BTH\runs\close061-ledger-disposition-delta-20261111\evidence\storage-manifest.json | c92749907e78084cd157afe8b5550759a0c6a43c379274f4edf0666ca9431c36 |
 | E:\CodexQA\BTH\runs\close061-ledger-disposition-delta-20261111\evidence\worker.log | c3132c0a6c1e2d87d355d44564d837f2fdf26e1f81f3c47c7d309cb71e9e818a |
+
+## NEXT delivery
+
+Existing watcher promoted f00a686f082a3b4ca277d5541755616320e5264c, tree1d02d18e798a5f8a387e681f5139b85ecde1e254.10 assets pass; archiveSHA2560d6f483762dd3616b36e07cbe43f7ccbfb493292a8b0750d09095941bd7a2797. Fresh unmodified Daily startup passes at68cash,4assets200,0page/consoleerrors, workerexit0 andactive0. No runtime change is claimed for bookkeeping.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: close061-ledger-next-assets-20261111, close061-ledger-next-startup-20261111.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\close061-record-fixture-and-ledger-delivery-20261111\evidence\raw-evidence-index.json | 2b3a7ea5862c35d55746bc80f893d6d13f2da3eafd36d6df16c15edc98f53b36 |
+| E:\CodexQA\BTH\runs\close061-ledger-next-assets-20261111\evidence\served-assets.json | d86f9e1338944c98e0a7024031dfd9456f18f4729a2abf116b9e2d0c14e7556e |
+| E:\CodexQA\BTH\runs\close061-ledger-next-startup-20261111\evidence\result.json | e0177b0a72173ec3518453e4a025c3dafbac9539d355481e9756646c6d61ef0e |

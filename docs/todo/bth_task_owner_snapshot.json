@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-11T02:43:46.564626+00:00",
+  "observed_at": "2026-11-11T20:44:25.718993+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -244,8 +244,8 @@
       "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
       "title": "Execute 0.6.1 audit work orders",
       "state": "active",
-      "observed_at": "2026-11-11T14:38:08.512802+00:00",
-      "source": "Actual current audit chat is finishing the18-order report and exact final NEXT delivery; release qualification remains open."
+      "observed_at": "2026-11-11T20:44:25.718993+00:00",
+      "source": "Actual closeout owner: CLOSE-01 scoped code4fe2c509 committed after complete Smoke11/11 and animation liveness pass; separate ledger association and existing NEXT delivery verification underway. No other owner or protected resource re-observed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

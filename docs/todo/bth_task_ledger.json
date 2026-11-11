@@ -34033,22 +34033,28 @@
             "id": "1",
             "description": "Close export investigation not reproducible; recurrence reopens",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Defer native retention/P2 past release without closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Mark completed audit execution done; findings open",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34057,8 +34063,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "state": "complete",
+      "status": "DONE_ACCEPTED_DISPOSITIONS_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34070,31 +34076,45 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "f00a686f082a3b4ca277d5541755616320e5264c",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "f00a686f082a3b4ca277d5541755616320e5264c",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DONE_ACCEPTED_DISPOSITIONS_EXACT_NEXT_VERIFIED"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-LEDGER-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.705170+00:00",
+        "observed_at": "2026-11-11T16:54:56.203832+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Apply accepted audit dispositions"
       ],
-      "updated_at": "2026-11-11T16:12:33.705170+00:00"
+      "updated_at": "2026-11-11T16:54:56.203832+00:00"
     },
     {
       "id": "CLOSE-01",
@@ -34146,7 +34166,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34158,6 +34178,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "4fe2c5095d241e2847e9b580417005a56fc55a18",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -34166,23 +34192,44 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "IN_PROGRESS_TUTORIALS_ADVANCE_CLASSIFIED_SMOKE_REPAIRS_UNDER_TEST"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "IN_PROGRESS_10_GODOT_STAGES_PASS_QA_PATH_RETRY"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-01-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Verify exact served NEXT identity/assets and rendered Slot/Back Alley/closed-route room behavior after the existing watcher promotes this push.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.774683+00:00",
+        "observed_at": "2026-11-11T20:44:00.656395+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Classify and correct Smoke failures; tutorial first"
       ],
-      "updated_at": "2026-11-11T16:12:33.774683+00:00"
+      "updated_at": "2026-11-11T20:44:00.656395+00:00"
     },
     {
       "id": "CLOSE-02",
@@ -36797,8 +36844,8 @@
       "name": "Apply accepted audit dispositions bounded execution",
       "parent_id": "CLOSE-LEDGER",
       "group": "current",
-      "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "state": "complete",
+      "status": "DONE_ACCEPTED_DISPOSITIONS_EXACT_NEXT_VERIFIED",
       "scope": [
         "Apply accepted audit dispositions"
       ],
@@ -36813,25 +36860,39 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "f00a686f082a3b4ca277d5541755616320e5264c",
+          "evidence": [
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "f00a686f082a3b4ca277d5541755616320e5264c",
+        "evidence": [
+          "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+        ]
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md",
+          "summary": "DONE_ACCEPTED_DISPOSITIONS_EXACT_NEXT_VERIFIED"
+        }
+      ],
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.705170+00:00",
+        "observed_at": "2026-11-11T16:54:56.203832+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:33.705170+00:00"
+      "updated_at": "2026-11-11T16:54:56.203832+00:00"
     },
     {
       "id": "CLOSE-01-BATCH-001",
@@ -36839,7 +36900,7 @@
       "parent_id": "CLOSE-01",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING",
       "scope": [
         "Classify and correct Smoke failures; tutorial first"
       ],
@@ -36854,6 +36915,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "4fe2c5095d241e2847e9b580417005a56fc55a18",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -36862,17 +36929,38 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "IN_PROGRESS_TUTORIALS_ADVANCE_CLASSIFIED_SMOKE_REPAIRS_UNDER_TEST"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "IN_PROGRESS_10_GODOT_STAGES_PASS_QA_PATH_RETRY"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_OF_11_PASS_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact served NEXT identity/assets and rendered Slot/Back Alley/closed-route room behavior after the existing watcher promotes this push.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.774683+00:00",
+        "observed_at": "2026-11-11T20:44:00.656395+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:33.774683+00:00"
+      "updated_at": "2026-11-11T20:44:00.656395+00:00"
     },
     {
       "id": "CLOSE-02-BATCH-001",
