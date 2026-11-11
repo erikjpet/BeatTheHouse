@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+{"checks":83,"failure_count":5,"failures":["_on_start_pressed Tab reaches explicit start once","start_generated_foundation_run Tab reaches explicit start once","start_meta_quick_run Tab reaches explicit start once","start_daily_challenge_run Tab reaches explicit start once","request_tutorial_replay Tab reaches explicit start once"]}

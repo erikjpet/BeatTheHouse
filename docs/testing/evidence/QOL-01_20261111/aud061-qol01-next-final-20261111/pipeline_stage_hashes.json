@@ -1,0 +1,126 @@
+{
+  "archive": {
+    "bytes": 41697904,
+    "filename": "4ca0bd470a2fa39c2a38e5bcbb846831f4958a44-1794393280952168000.zip",
+    "sha256": "ccafee60e95385514058ff0ad12f26da7926d224d59b7234456642a5d4b6deea"
+  },
+  "built_at": "2026-11-11T10:36:09Z",
+  "files": [
+    {
+      "bytes": 238,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "BUILD.json",
+      "sha256": "a9de07aacd272246ba381255c8a0bf9dde4bbbede54bd3e3539280ee0f9f3db9"
+    },
+    {
+      "bytes": 42,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "REF",
+      "sha256": "183972060e8a05a5738ace65fdc19ca9492943eac831dc15b4921e95f20f7640"
+    },
+    {
+      "bytes": 24,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "VERSION",
+      "sha256": "0ab53c82acb667fba5957768fce34cca8154a42987e103c8d7683c77e801b89c"
+    },
+    {
+      "bytes": 773,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "build_manifest.json",
+      "sha256": "ffc0f04da2792dd2f9adb1c6a20f75c578e029a60b30dc1994bd7ac6a57f48c8"
+    },
+    {
+      "bytes": 340415,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "sha256": "6bb34e3abe0789b5763e73efe5b960e7bd7bf7b57ae2b77e46ee627413ab6578"
+    },
+    {
+      "bytes": 4099,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.apple-touch-icon.png",
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b"
+    },
+    {
+      "bytes": 2973,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.position.worklet.js",
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "bytes": 7298,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.worklet.js",
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "bytes": 5514,
+      "isolation_headers": {},
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "25e34f880a70cbac36299975166baa3101b72ace0828bb6e431a7270393c7c32"
+    },
+    {
+      "bytes": 14818,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.icon.png",
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a"
+    },
+    {
+      "bytes": 2828608,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.js",
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+    },
+    {
+      "bytes": 47242660,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "index.pck",
+      "sha256": "acedc95e198e5da8c2b5b14737596b7ecbddf9bd8c9bf1e2467c0b5d4349b3fb"
+    },
+    {
+      "bytes": 21443,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.png",
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "bytes": 21802358,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.side.wasm",
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+    },
+    {
+      "bytes": 1508237,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.wasm",
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+    },
+    {
+      "bytes": 1295,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "web-gl-handles.json",
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd"
+    }
+  ],
+  "schema": "beat_the_house.served_handoff_stage/v2",
+  "source_commit": "4ca0bd470a2fa39c2a38e5bcbb846831f4958a44",
+  "source_tree": "9016df827bf3dccf30a04819339637c54fea8d08",
+  "version": "0.6.0-dev+4ca0bd470a2f"
+}

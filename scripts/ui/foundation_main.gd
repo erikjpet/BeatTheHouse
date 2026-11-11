@@ -19245,6 +19245,10 @@ func _request_new_run_start(action: Callable) -> bool:
 func _on_new_run_confirmation_input(event: InputEvent) -> void:
 	if new_run_confirmation == null or not new_run_confirmation.visible:
 		return
+	# ConfirmationDialog already traverses its button row on Tab.
+	# Let the native Window own that gesture, as the delete-save dialog does.
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
+		return
 	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
 		new_run_confirmation.set_input_as_handled()
 	elif event.is_action_pressed("ui_cancel"):

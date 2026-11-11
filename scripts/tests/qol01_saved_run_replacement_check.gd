@@ -39,15 +39,21 @@ func run() -> void:
 		var tab := InputEventKey.new()
 		tab.keycode = KEY_TAB
 		tab.pressed = true
-		app._input(tab)
-		dialog.window_input.emit(tab)
+		Input.parse_input_event(tab)
+		await process_frame
+		tab.pressed = false
+		Input.parse_input_event(tab)
+		await process_frame
 		check(dialog.get_ok_button().has_focus(), route + " Tab reaches explicit start once")
 		var back := InputEventKey.new()
 		back.keycode = KEY_TAB
 		back.shift_pressed = true
 		back.pressed = true
-		app._input(back)
-		dialog.window_input.emit(back)
+		Input.parse_input_event(back)
+		await process_frame
+		back.pressed = false
+		Input.parse_input_event(back)
+		await process_frame
 		check(dialog.get_cancel_button().has_focus(), route + " Shift-Tab returns to safe choice once")
 		# Use the shared keyboard scope and actual dialog cancel-button signal.
 		var enter := InputEventAction.new()
