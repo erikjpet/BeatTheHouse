@@ -450,6 +450,11 @@ var environment_test_refresh_counter := 0
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
+const STORE_SAVE_PENDING_MESSAGE := "Not saved yet. Keep this game open; saving will retry."
+const META_STORE_RETRY_SECONDS := 3.0
+var _pending_store_saves: Dictionary = {}
+var _meta_store_retry_scheduled := false
+
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -9516,6 +9521,66 @@ func _sync_scratch_ticket_discovery_to_run() -> void:
 	run_state.narrative_flags["scratch_ticket_types_discovered"] = profile_inventory.scratch_ticket_types_discovered.duplicate()
 
 
+func _persist_or_warn(store: Object, context: String, player_warning: bool = false) -> bool:
+	if store == null:
+		return false
+	var identity := store.get_instance_id()
+	var error: Error = int(store.call("save"))
+	if error == OK:
+		var was_pending := _pending_store_saves.has(identity)
+		_pending_store_saves.erase(identity)
+		if was_pending and store == meta_collection_service:
+			_meta_store_save_recovered()
+		return true
+	var first_failure := not _pending_store_saves.has(identity)
+	_pending_store_saves[identity] = {"store": store, "context": context, "error": error}
+	if first_failure:
+		_log_store_save_failure(context, error)
+	if player_warning:
+		if first_failure:
+			_show_message(STORE_SAVE_PENDING_MESSAGE)
+		_schedule_meta_store_retry()
+	return false
+
+
+func _log_store_save_failure(context: String, error: Error) -> void:
+	print("BTH support: %s save failed (%d); retry pending." % [context, int(error)])
+
+
+func _meta_store_save_pending() -> bool:
+	return meta_collection_service != null and _pending_store_saves.has(meta_collection_service.get_instance_id())
+
+
+func _schedule_meta_store_retry() -> void:
+	if _meta_store_retry_scheduled or not is_inside_tree():
+		return
+	_meta_store_retry_scheduled = true
+	get_tree().create_timer(META_STORE_RETRY_SECONDS, true, false, true).timeout.connect(_retry_pending_meta_store)
+
+
+func _retry_pending_meta_store() -> void:
+	_meta_store_retry_scheduled = false
+	if not _meta_store_save_pending() or is_queued_for_deletion():
+		return
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
+		_schedule_meta_store_retry()
+		return
+	var pending: Dictionary = _pending_store_saves[meta_collection_service.get_instance_id()]
+	_persist_or_warn(meta_collection_service, str(pending.get("context", "Collection")), true)
+
+
+func _meta_store_save_recovered() -> void:
+	meta_last_panel_message = meta_last_panel_message.replace("\n" + STORE_SAVE_PENDING_MESSAGE, "")
+	if message_label != null and message_label.text.contains(STORE_SAVE_PENDING_MESSAGE):
+		_show_message("Collection changes saved.")
+	if str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "meta_upgrade":
+		var summary := str(pending_event_choice_popup_snapshot.get("summary", "")).replace("\n" + STORE_SAVE_PENDING_MESSAGE, "")
+		pending_event_choice_popup_snapshot["summary"] = summary
+		if event_choice_popup_summary_label != null:
+			event_choice_popup_summary_label.text = summary
+	_refresh_meta_item_interaction()
+
+
 func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
 	var normalized := type_id.strip_edges()
 	if normalized.is_empty() or profile_inventory == null:
@@ -9541,7 +9606,7 @@ func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
 					"collection_count": int(completion_event.get("collection_count", 0)),
 					"collection_total": int(completion_event.get("collection_total", 0)),
 				})
-		profile_inventory.save()
+		_persist_or_warn(profile_inventory, "Scratch collection")
 	_sync_scratch_ticket_discovery_to_run()
 	return completion_event
 
@@ -10267,7 +10332,7 @@ func _on_home_type_selected(index: int) -> void:
 	selected_home_type_id = _normalize_home_type_id(selected_id)
 	if user_settings != null:
 		user_settings.selected_home_type_id = selected_home_type_id
-		user_settings.save()
+		_persist_or_warn(user_settings, "Home selection")
 	_refresh_home_type_controls()
 
 
@@ -19968,7 +20033,7 @@ func _on_reset_coach_tips_requested() -> void:
 	if profile_inventory == null:
 		return
 	profile_inventory.reset_tips()
-	profile_inventory.save()
+	_persist_or_warn(profile_inventory, "Coach tips")
 	if coach_overlay != null:
 		coach_overlay.reset_seen()
 
@@ -19978,7 +20043,7 @@ func _on_coach_lesson_seen(lesson_id: String) -> void:
 		return
 	if profile_inventory == null or not profile_inventory.mark_tip_seen(lesson_id):
 		return
-	profile_inventory.save()
+	_persist_or_warn(profile_inventory, "Coach progress")
 
 
 func _on_coach_lesson_completed(lesson_id: String) -> void:
@@ -20356,12 +20421,16 @@ func open_meta_bag(instance_id: int) -> void:
 func buy_meta_home_upgrade() -> void:
 	var result: Dictionary = meta_collection_service.purchase_housing_upgrade()
 	if bool(result.get("ok", false)):
-		meta_collection_service.save()
+		_persist_or_warn(meta_collection_service, "Home upgrade", true)
 		if not bool(_apply_meta_environment(META_LOCATION_HOME).get("ok", false)):
 			_refresh()
 			return
 		meta_last_panel_message = str(result.get("message", "Home upgraded."))
-	_show_meta_popup("Upgrade Home", str(result.get("message", "Upgrade unavailable.")), "meta_upgrade")
+	var message := str(result.get("message", "Upgrade unavailable."))
+	if _meta_store_save_pending():
+		message += "\n" + STORE_SAVE_PENDING_MESSAGE
+		meta_last_panel_message = message
+	_show_meta_popup("Upgrade Home", message, "meta_upgrade")
 	_add_meta_close_card()
 	_refresh()
 
@@ -20480,11 +20549,13 @@ func open_meta_sell_counter() -> void:
 func _toggle_meta_item_pack(instance_id: int, should_pack: bool) -> void:
 	var result: Dictionary = meta_collection_service.pack_instance(instance_id) if should_pack else meta_collection_service.unpack_instance(instance_id)
 	if bool(result.get("ok", false)):
-		meta_collection_service.save()
+		_persist_or_warn(meta_collection_service, "Packing", true)
 		if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
 			_refresh()
 			return
 	meta_last_panel_message = str(result.get("message", "Packing unchanged."))
+	if _meta_store_save_pending():
+		meta_last_panel_message += "\n" + STORE_SAVE_PENDING_MESSAGE
 	selected_meta_item_key = "meta:item:%d" % instance_id
 	_refresh_meta_item_interaction()
 	_refresh()
@@ -20509,6 +20580,8 @@ func _open_meta_item_interaction(mode: String, focus_key: String = "", container
 			selected_meta_item_key = container_focus
 			model = MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
 			model["focus_explicit"] = true
+	if _meta_store_save_pending():
+		model["summary"] = str(model.get("summary", "")) + "\n" + STORE_SAVE_PENDING_MESSAGE
 	selected_meta_item_key = str(model.get("selected_key", ""))
 	meta_trade_selected_instance_ids = JsonCoerceScript._copy_array(model.get("trade_selected_ids", []))
 	meta_item_interaction_screen.open(model)
@@ -20518,6 +20591,8 @@ func _refresh_meta_item_interaction() -> void:
 	if meta_item_interaction_screen == null or not meta_item_interaction_screen.is_open() or meta_item_interaction_mode.is_empty():
 		return
 	var model: Dictionary = MetaItemInteractionViewModelScript.build(meta_collection_service, meta_item_interaction_mode, selected_meta_item_key, meta_trade_selected_instance_ids)
+	if _meta_store_save_pending():
+		model["summary"] = str(model.get("summary", "")) + "\n" + STORE_SAVE_PENDING_MESSAGE
 	selected_meta_item_key = str(model.get("selected_key", ""))
 	meta_trade_selected_instance_ids = JsonCoerceScript._copy_array(model.get("trade_selected_ids", []))
 	meta_item_interaction_screen.update_model(model)
