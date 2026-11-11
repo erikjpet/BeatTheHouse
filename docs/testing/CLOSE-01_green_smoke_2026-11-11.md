@@ -937,3 +937,30 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\close061-s01-commit-original-input-preservation\evidence\raw-evidence-index.json | ca3027a19aa73b4f32d2bc709d89b6bcb2f2f1d944b63ae39d4cbea6b0085729 |
 | E:\CodexQA\BTH\runs\close061-s01-preserve-guard-and-remove-extra-input\evidence\failed-watcher-status.json | 6acc770d8db87708aca33bd9b34e6b1ceb4dd7b5aa53474e93ef0c4651b89ec2 |
 | E:\CodexQA\BTH\runs\close061-s01-strict-guide-check\evidence\worker.log | ecb2ead4cb3437c61c7775bdb44aec94ee551eca3b08fffde8f083a8805e2a60 |
+
+## Storage launch stopped before request submission
+
+The prepared exact request targets973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c/tree
+f08f58cd96a2a39190f397d9044dece08ca20d5d, with only data/debt/lenders.json and
+data/events/events.json changed among guarded inputs. The original attributes
+and all pipeline code/settings/pins/limits are unchanged.
+
+The attempted guarded administrative worker stops in plan_layout, before any
+new directory, child or site write: root_escape: D:\Projects\site: workspace
+must be strictly below approved root E:\CodexQA\BTH. This is a storage validation
+failure, not an automatic approval-review rejection. No alternate root or
+security change is attempted. The owner has been asked for an explicit exception
+for only the exact existing NEXT control file, or owner submission of the prepared
+request. The payload and its full input comparison remain on E. NEXT stays f00.
+Independent code/test work continues; no delivery success is claimed.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: close061-s01-prepare-exact-cold-request, close061-s02-register-rendered-regression.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\close061-s02-commit-local-scope\evidence\raw-evidence-index.json | 49bdb067f0ed519da9458222ee52ce926b5ff001914e1a4faf2dcb51a709561c |
+| E:\CodexQA\BTH\runs\close061-s01-prepare-exact-cold-request\evidence\qualification-request.json | ae586957174c7e06af02784b032b62bdbd4c073981be5bc49197ba37740f8643 |
+| E:\CodexQA\BTH\runs\close061-s01-prepare-exact-cold-request\evidence\exact-input-comparison.json | 5d2ec09d4c6c3c4febc5738de6d9750d2a3c0ff3e07572ec6f2109d4a0b2ff17 |
+| E:\CodexQA\BTH\runs\close061-s02-register-rendered-regression\evidence\storage-launch-stop.json | a48df3a90cfec620ae648d633a66f16734c5bd37313ecf63ebbbd5dd484f77ca |

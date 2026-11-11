@@ -34166,7 +34166,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING",
+      "status": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34223,24 +34223,31 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED"
         }
       ],
       "implementation_batches": [
         "CLOSE-01-BATCH-001"
       ],
-      "next_action": "Deliver the exact two approved C5 data edits through the unchanged one-shot cold-import qualification; verify served NEXT identity and behavior.",
+      "next_action": "Await explicit one-file storage exception or owner submission of the prepared exact NEXT request; continue independent closeout repairs.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-11T20:54:36.199945+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "root_escape: D:\\Projects\\site workspace must be strictly below approved root E:\\CodexQA\\BTH. Submission stopped before directory/write/child; one-file exception requested.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-11T21:00:32.672694+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [
         "Classify and correct Smoke failures; tutorial first"
       ],
-      "updated_at": "2026-11-11T20:54:36.199945+00:00"
+      "updated_at": "2026-11-11T21:00:32.672694+00:00"
     },
     {
       "id": "CLOSE-02",
@@ -34285,7 +34292,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_119_PASS_NEXT_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34297,6 +34304,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3a120bce2cd0273c445084f837c5f98f2b023b1c",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -34305,23 +34318,34 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-02-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Push and verify Grand Casino practice after CLOSE-01 exact NEXT delivery; no rendered Web claim yet.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.853211+00:00",
+        "observed_at": "2026-11-11T21:06:03.761085+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Fit complete Bar Dice financial values"
       ],
-      "updated_at": "2026-11-11T16:12:33.853211+00:00"
+      "updated_at": "2026-11-11T21:06:03.761085+00:00"
     },
     {
       "id": "CLOSE-03",
@@ -36911,7 +36935,7 @@
       "parent_id": "CLOSE-01",
       "group": "current",
       "state": "open",
-      "status": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING",
+      "status": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED",
       "scope": [
         "Classify and correct Smoke failures; tutorial first"
       ],
@@ -36971,18 +36995,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_PASS_EXACT_COLD_IMPORT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED"
         }
       ],
-      "next_action": "Deliver the exact two approved C5 data edits through the unchanged one-shot cold-import qualification; verify served NEXT identity and behavior.",
+      "next_action": "Await explicit one-file storage exception or owner submission of the prepared exact NEXT request; continue independent closeout repairs.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-11T20:54:36.199945+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "root_escape: D:\\Projects\\site workspace must be strictly below approved root E:\\CodexQA\\BTH. Submission stopped before directory/write/child; one-file exception requested.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-11T21:00:32.672694+00:00",
+        "evidence": [
+          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+        ]
       },
-      "updated_at": "2026-11-11T20:54:36.199945+00:00"
+      "updated_at": "2026-11-11T21:00:32.672694+00:00"
     },
     {
       "id": "CLOSE-02-BATCH-001",
@@ -36990,7 +37021,7 @@
       "parent_id": "CLOSE-02",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_119_PASS_NEXT_PENDING",
       "scope": [
         "Fit complete Bar Dice financial values"
       ],
@@ -37005,6 +37036,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3a120bce2cd0273c445084f837c5f98f2b023b1c",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -37013,17 +37050,28 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "LOCAL_119_PASS_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Push and verify Grand Casino practice after CLOSE-01 exact NEXT delivery; no rendered Web claim yet.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.853211+00:00",
+        "observed_at": "2026-11-11T21:06:03.761085+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:33.853211+00:00"
+      "updated_at": "2026-11-11T21:06:03.761085+00:00"
     },
     {
       "id": "CLOSE-03-BATCH-001",
