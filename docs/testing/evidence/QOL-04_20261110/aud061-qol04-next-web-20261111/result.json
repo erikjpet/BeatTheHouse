@@ -1,0 +1,547 @@
+{
+  "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+  "scope": "Unmodified exact NEXT HTML/PCK/engine/native; ordinary Games/Practice, Run Menu, Save and Continue inputs; no scene/script/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 1,
+        "type": "click",
+        "x": 337,
+        "y": 520
+      },
+      "time": "2026-11-11T05:26:40.516Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": []
+      },
+      "screenshot": "01-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 2,
+        "type": "click",
+        "x": 877,
+        "y": 35
+      },
+      "time": "2026-11-11T05:26:54.832Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": []
+      },
+      "screenshot": "02-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 3,
+        "type": "click",
+        "x": 513,
+        "y": 478
+      },
+      "time": "2026-11-11T05:27:20.574Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": []
+      },
+      "screenshot": "03-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 4,
+        "type": "click",
+        "x": 940,
+        "y": 405
+      },
+      "time": "2026-11-11T05:27:35.140Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 107777,
+        "sha256": "ed7fe0475aef28dde9adf2215e7a751a9c9718b643543c6e0f9ce297c0e4ee14",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "04-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 5,
+        "type": "click",
+        "x": 1200,
+        "y": 600
+      },
+      "time": "2026-11-11T05:27:41.070Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 107777,
+        "sha256": "ed7fe0475aef28dde9adf2215e7a751a9c9718b643543c6e0f9ce297c0e4ee14",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "05-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 6,
+        "type": "click",
+        "x": 892,
+        "y": 659
+      },
+      "time": "2026-11-11T05:27:45.779Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 107777,
+        "sha256": "ed7fe0475aef28dde9adf2215e7a751a9c9718b643543c6e0f9ce297c0e4ee14",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "06-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 7,
+        "type": "click",
+        "x": 783,
+        "y": 220
+      },
+      "time": "2026-11-11T05:27:57.106Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 107777,
+        "sha256": "ed7fe0475aef28dde9adf2215e7a751a9c9718b643543c6e0f9ce297c0e4ee14",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "07-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 8,
+        "type": "click",
+        "x": 735,
+        "y": 444
+      },
+      "time": "2026-11-11T05:28:02.614Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128723,
+        "sha256": "45022632d89934ceafb606a4d0cfd864d25aceae567b9183d4bb335de5220e9f",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "08-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 9,
+        "type": "click",
+        "x": 790,
+        "y": 683
+      },
+      "time": "2026-11-11T05:28:10.143Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128723,
+        "sha256": "45022632d89934ceafb606a4d0cfd864d25aceae567b9183d4bb335de5220e9f",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "09-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 10,
+        "type": "click",
+        "x": 650,
+        "y": 340
+      },
+      "time": "2026-11-11T05:28:19.853Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128723,
+        "sha256": "45022632d89934ceafb606a4d0cfd864d25aceae567b9183d4bb335de5220e9f",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "10-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 11,
+        "type": "click",
+        "x": 984,
+        "y": 519
+      },
+      "time": "2026-11-11T05:28:25.360Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128723,
+        "sha256": "45022632d89934ceafb606a4d0cfd864d25aceae567b9183d4bb335de5220e9f",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "11-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 12,
+        "type": "click",
+        "x": 877,
+        "y": 35
+      },
+      "time": "2026-11-11T05:28:32.801Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128723,
+        "sha256": "45022632d89934ceafb606a4d0cfd864d25aceae567b9183d4bb335de5220e9f",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "12-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 13,
+        "type": "click",
+        "x": 756,
+        "y": 293
+      },
+      "time": "2026-11-11T05:28:43.044Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "13-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 14,
+        "type": "click",
+        "x": 513,
+        "y": 355
+      },
+      "time": "2026-11-11T05:28:48.333Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "14-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 15,
+        "type": "click",
+        "x": 877,
+        "y": 35
+      },
+      "time": "2026-11-11T05:28:59.955Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "15-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 16,
+        "type": "click",
+        "x": 513,
+        "y": 355
+      },
+      "time": "2026-11-11T05:29:05.200Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "16-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 17,
+        "type": "click",
+        "x": 650,
+        "y": 340
+      },
+      "time": "2026-11-11T05:29:17.971Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "17-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 18,
+        "type": "click",
+        "x": 984,
+        "y": 519
+      },
+      "time": "2026-11-11T05:29:23.182Z",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 128733,
+        "sha256": "15822a0cd18bb818d43793481185ffadeec033c36ce267fb2473bc55e5aa3d00",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "18-click.png"
+    },
+    {
+      "command": {
+        "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "id": 19,
+        "type": "stop",
+        "visual_review": [
+          "Exact d258 startup and Games page visually checked; Craps Practice screen shows whole-number controls but intentionally disables Save/Load.",
+          "Normal Daily Challenge House->Gas Casino->Slot->Menu Save successful. Save closed the menu; an early attempted Load click therefore did not invoke Load. Menu reopened, then actual enabled Load restored the saved 1:45 state and returned to the room.",
+          "Re-entered Slot after actual Load: bankroll46, heat1,bet2,feature138,card symbols10 and zero-result text display whole numbers with no .0. Native88/0 covers11 resume models/renderers plus loaded squeeze fixture. Web does not cover all11 afterContinue or rare squeezed-card/counter branches."
+        ]
+      },
+      "time": "2026-11-11T05:29:35.992Z"
+    }
+  ],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d258f3dc14866f2e8bfd9ee35e3e707507acea95/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d258f3dc14866f2e8bfd9ee35e3e707507acea95/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d258f3dc14866f2e8bfd9ee35e3e707507acea95/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/d258f3dc14866f2e8bfd9ee35e3e707507acea95/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "stage": "COMPLETE",
+  "visual_review": [
+    "Exact d258 startup and Games page visually checked; Craps Practice screen shows whole-number controls but intentionally disables Save/Load.",
+    "Normal Daily Challenge House->Gas Casino->Slot->Menu Save successful. Save closed the menu; an early attempted Load click therefore did not invoke Load. Menu reopened, then actual enabled Load restored the saved 1:45 state and returned to the room.",
+    "Re-entered Slot after actual Load: bankroll46, heat1,bet2,feature138,card symbols10 and zero-result text display whole numbers with no .0. Native88/0 covers11 resume models/renderers plus loaded squeeze fixture. Web does not cover all11 afterContinue or rare squeezed-card/counter branches."
+  ],
+  "state": "FINISHED",
+  "finished": "2026-11-11T05:29:36.643Z"
+}

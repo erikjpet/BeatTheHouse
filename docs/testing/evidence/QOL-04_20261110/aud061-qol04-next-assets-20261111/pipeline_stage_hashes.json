@@ -1,0 +1,126 @@
+{
+  "archive": {
+    "bytes": 41688055,
+    "filename": "d258f3dc14866f2e8bfd9ee35e3e707507acea95-1794374618606745300.zip",
+    "sha256": "a1467fabc7a31bdf753d6a419411444402cc4850b8bffb5143aa2e876fe91003"
+  },
+  "built_at": "2026-11-11T05:25:09Z",
+  "files": [
+    {
+      "bytes": 238,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "BUILD.json",
+      "sha256": "9eb8a5cec54f8e77e740762088f8383eafa638bf9c13cbbaf4baa410041e6643"
+    },
+    {
+      "bytes": 42,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "REF",
+      "sha256": "6cb72b5a6dbd1353eff391f8654ba9493ba2886e13e714db88d7bd90999f35eb"
+    },
+    {
+      "bytes": 24,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "VERSION",
+      "sha256": "9a36f09e5547b6dd24edb14cbcf8803435a52da5221376e9cb08bb177a02217d"
+    },
+    {
+      "bytes": 773,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "build_manifest.json",
+      "sha256": "18ff7588a3b2544937bd9a7ff3b86bb6f2a181b4de80625426b290d5935a22f7"
+    },
+    {
+      "bytes": 340415,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "sha256": "c9c91e4a7465e952aa2278cee53dee141e1d02877fb1a81be67e991df7777fe5"
+    },
+    {
+      "bytes": 4099,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.apple-touch-icon.png",
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b"
+    },
+    {
+      "bytes": 2973,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.position.worklet.js",
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "bytes": 7298,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.worklet.js",
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "bytes": 5514,
+      "isolation_headers": {},
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "256af63f7a50913a1377320dcc894cdeaecc57f47a96edc2dd0edf2b2ddc98cd"
+    },
+    {
+      "bytes": 14818,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.icon.png",
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a"
+    },
+    {
+      "bytes": 2828608,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.js",
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+    },
+    {
+      "bytes": 47230408,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "index.pck",
+      "sha256": "d07c30f05096028f7878b043e7a73417a6103e7930317db3926ceffe055cfaed"
+    },
+    {
+      "bytes": 21443,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.png",
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "bytes": 21802358,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.side.wasm",
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+    },
+    {
+      "bytes": 1508237,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.wasm",
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+    },
+    {
+      "bytes": 1295,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "web-gl-handles.json",
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd"
+    }
+  ],
+  "schema": "beat_the_house.served_handoff_stage/v2",
+  "source_commit": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+  "source_tree": "d27886bfff97c7331bec61e1b7c319b682524975",
+  "version": "0.6.0-dev+d258f3dc1486"
+}

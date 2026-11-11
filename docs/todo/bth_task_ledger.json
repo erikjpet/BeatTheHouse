@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_6_OF_18_ORDERS_DONE_QOL04_NEXT",
+      "status": "OPEN_7_OF_18_ORDERS_DONE_QOL05_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30539,21 +30539,21 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_baseline_2026-11-10.md",
-          "summary": "OPEN_6_OF_18_ORDERS_DONE_QOL04_NEXT"
+          "summary": "OPEN_7_OF_18_ORDERS_DONE_QOL05_NEXT"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Execute QOL-04, then remaining ordered work; parent stays open.",
+      "next_action": "Execute QOL-05 then the remaining ordered audit work; parent stays Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:04:17.659086+00:00",
+        "observed_at": "2026-11-11T05:30:18.738023+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T05:04:17.659086+00:00"
+      "updated_at": "2026-11-11T05:30:18.738023+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31188,29 +31188,37 @@
             "id": "1",
             "description": "Reproduce trailing decimal from a loaded whole-number value.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "Shared whole-number formatter at relevant saved-value display sites.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "All eleven game renderers examined after JSON load; display-only changes.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+            ]
           },
           {
             "id": "4",
             "description": "Focused and Smoke results no worse than baseline; exact NEXT assets/startup and feasible visible check.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -31219,8 +31227,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE88_DICE24_LIVENESS_PASS_EXACT_NEXT_NORMAL_SAVE_LOAD_DISPLAY",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31232,37 +31240,45 @@
           "evidence": [
             "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+          "evidence": [
+            "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "evidence": [
+          "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-04_whole_number_display_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE88_DICE24_LIVENESS_PASS_EXACT_NEXT_NORMAL_SAVE_LOAD_DISPLAY"
         }
       ],
       "implementation_batches": [
         "QOL-04-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:19:51.384624+00:00",
+        "observed_at": "2026-11-11T05:30:18.687571+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration."
       ],
-      "updated_at": "2026-11-11T05:19:51.384624+00:00"
+      "updated_at": "2026-11-11T05:30:18.687571+00:00"
     }
   ],
   "batches": [
@@ -32207,8 +32223,8 @@
       "name": "Shared whole-number display after Continue implementation",
       "parent_id": "QOL-04",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE88_DICE24_LIVENESS_PASS_EXACT_NEXT_NORMAL_SAVE_LOAD_DISPLAY",
       "scope": [
         "Confirm saved numeric display, add a shared whole-number formatter and use it at saved integer display boundaries without schema/type migration."
       ],
@@ -32223,31 +32239,39 @@
           "evidence": [
             "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+          "evidence": [
+            "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "d258f3dc14866f2e8bfd9ee35e3e707507acea95",
+        "evidence": [
+          "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-04_whole_number_display_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE88_DICE24_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE88_DICE24_LIVENESS_PASS_EXACT_NEXT_NORMAL_SAVE_LOAD_DISPLAY"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:19:51.384624+00:00",
+        "observed_at": "2026-11-11T05:30:18.687571+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T05:19:51.384624+00:00"
+      "updated_at": "2026-11-11T05:30:18.687571+00:00"
     }
   ]
 }

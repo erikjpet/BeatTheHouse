@@ -1,0 +1,5 @@
+{
+  "scope": "Only startup and Games-page screenshots observed for this attempt. No QOL-04 before-save display was reached.",
+  "termination": "Helper consumed a stale id13 stop command from the earlier same-SHA QOL-03 worker. Its visual_review text belongs to that older attempt and is not accepted as evidence here.",
+  "correction": "New helper initializes its command cursor from the existing same-SHA inbox before waiting; after-build worker uses d258 identity."
+}
