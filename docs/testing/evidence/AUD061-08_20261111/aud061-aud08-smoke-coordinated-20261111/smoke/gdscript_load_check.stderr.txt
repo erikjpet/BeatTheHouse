@@ -1,0 +1,20 @@
+SCRIPT ERROR: Parse Error: The function signature doesn't match the parent. Parent signature is "select_game_action(String, String, bool = <default>, bool = <default>) -> void".
+   at: GDScript::reload (res://scripts/tests/rourke_prepared_surface_route_check.gd:28)
+   GDScript backtrace (most recent call first):
+       [0] _check_script (res://tools/gdscript_load_check.gd:101)
+       [1] _init (res://tools/gdscript_load_check.gd:22)
+ERROR: Failed to load script "res://scripts/tests/rourke_prepared_surface_route_check.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:2907)
+   GDScript backtrace (most recent call first):
+       [0] _check_script (res://tools/gdscript_load_check.gd:101)
+       [1] _init (res://tools/gdscript_load_check.gd:22)
+SCRIPT ERROR: Parse Error: Too few arguments for "check()" call. Expected at least 2 but received 1.
+   at: GDScript::reload (res://tools/scenario_presentation_probe.gd:12)
+   GDScript backtrace (most recent call first):
+       [0] _check_script (res://tools/gdscript_load_check.gd:101)
+       [1] _init (res://tools/gdscript_load_check.gd:22)
+ERROR: Failed to load script "res://tools/scenario_presentation_probe.gd" with error "Parse error".
+   at: load (modules/gdscript/gdscript.cpp:2907)
+   GDScript backtrace (most recent call first):
+       [0] _check_script (res://tools/gdscript_load_check.gd:101)
+       [1] _init (res://tools/gdscript_load_check.gd:22)

@@ -4,8 +4,8 @@ const script=source.match(/const WEB_ADAPTER_SCRIPT := """([\s\S]*?)"""/)[1];
 let checks=0;const failures=[];const observations=[];
 function check(ok,label){checks++;if(!ok)failures.push(label)}
 function setup(previous=Promise.resolve(null)){
- const state={generation:1,persisted:0,calls:0,persistent:true};
- const context={GodotOS:{_fs_sync_promise:previous},GodotFS:{is_persistent:()=>state.persistent,sync:()=>{state.calls++;const generation=state.generation;return Promise.resolve().then(()=>{state.persisted=generation;return null})}},performance:{now:()=>0}};
+ const state={generation:1,persisted:0,calls:0,persistent:true,busy:false,overlaps:0,hold:false,releases:[],syncError:null};
+ const context={GodotOS:{_fs_sync_promise:previous},GodotFS:{is_persistent:()=>state.persistent,sync:()=>{if(state.busy){state.overlaps++;return Promise.resolve(new Error('Already syncing!'))}state.busy=true;state.calls++;const generation=state.generation;const finish=()=>{state.persisted=generation;state.busy=false;return state.syncError};return state.hold?new Promise(resolve=>state.releases.push(()=>resolve(finish()))):Promise.resolve().then(finish)}},performance:{now:()=>0}};
  vm.createContext(context);check(vm.runInContext(script,context)===true,'Actual adapter installs');
  return {state,context,bridge:context.BTHWebSaveDurability};
 }
@@ -27,7 +27,7 @@ function setup(previous=Promise.resolve(null)){
  let poll=JSON.parse(x.bridge.poll(manual.request_id));await Promise.resolve();poll=JSON.parse(x.bridge.poll(manual.request_id));
  check(poll.status==='succeeded','Manual acknowledgement observes exact future engine promise');
  manual=JSON.parse(x.bridge.begin(15000));check(manual.status==='pending','Later manual Save remains usable');
- x.context.GodotFS.sync=()=>Promise.resolve(new Error('controlled IDB failure'));
+ x.state.syncError=new Error('controlled IDB failure');
  check(x.bridge.request_lifecycle_sync()===true,'Failing asynchronous request is still submitted');
  await x.context.GodotOS._fs_sync_promise;x.bridge.poll(manual.request_id);await Promise.resolve();
  check(JSON.parse(x.bridge.poll(manual.request_id)).error_code==='browser_sync_failed','Existing manual ack does not report failed sync as success');
@@ -35,6 +35,23 @@ function setup(previous=Promise.resolve(null)){
  check(x.bridge.request_lifecycle_sync()===true,'Request retries after older rejected engine promise');
  await x.context.GodotOS._fs_sync_promise;
  check(x.state.calls===1&&x.state.persisted===1,'Older rejection does not prevent current sync');
+ x=setup();x.state.hold=true;x.state.generation=2;
+ check(x.bridge.request_lifecycle_sync()===true,'Immediate lifecycle request submitted before automatic engine request');
+ const life=x.context.GodotOS._fs_sync_promise;
+ await new Promise(setImmediate);
+ check(x.state.calls===1&&x.state.busy,'Lifecycle sync actually starts');
+ manual=JSON.parse(x.bridge.begin(15000));check(manual.status==='pending','Manual Save can begin while lifecycle sync is active');
+ x.state.generation=3;
+ const automatic=x.context.GodotFS.sync();x.context.GodotOS._fs_sync_promise=automatic;
+ check(automatic!==life,'Automatic caller gets its own future-generation promise');
+ check(x.state.calls===1&&x.state.overlaps===0,'Automatic engine request waits without Already syncing');
+ x.state.releases.shift()();await life;await new Promise(setImmediate);
+ check(x.state.calls===2&&x.state.overlaps===0,'Automatic engine sync starts only after lifecycle sync completes');
+ if(x.state.releases.length)x.state.releases.shift()();
+ const automaticError=await automatic;
+ check((automaticError===null||automaticError===undefined)&&x.state.persisted===3,'Automatic request persists its newer generation and acknowledges correctly');
+ x.bridge.poll(manual.request_id);await Promise.resolve();check(JSON.parse(x.bridge.poll(manual.request_id)).status==='succeeded','Interleaved manual acknowledgement follows its newer generation');
+ observations.push({case:'automatic_interleaves_lifecycle',calls:x.state.calls,overlaps:x.state.overlaps,persisted:x.state.persisted});
  x=setup();x.state.persistent=false;const unchanged=x.context.GodotOS._fs_sync_promise;
  check(x.bridge.request_lifecycle_sync()===false,'Unavailable persistence rejects request');
  check(x.context.GodotOS._fs_sync_promise===unchanged&&x.state.calls===0,'Rejected request leaves engine queue unchanged');

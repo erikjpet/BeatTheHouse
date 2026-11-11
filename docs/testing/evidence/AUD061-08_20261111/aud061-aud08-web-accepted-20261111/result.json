@@ -1,0 +1,374 @@
+{
+  "sha": "eb48bb98364966324813e2b7a1c6516c32ecf86e",
+  "scope": "Exact unmodified NEXT assets, ordinary Daily/Sleep/Continue controls. Fresh owned Chrome, public noDefaults attachment, real minimized hidden events. DOM-only trusted-pointer/lifecycle observation; no game state/scene/path override, no helper filesystem sync.",
+  "errors": [],
+  "console": [
+    {
+      "type": "error",
+      "text": "Already syncing!"
+    }
+  ],
+  "actions": [
+    {
+      "command": {
+        "sha": "eb48bb98364966324813e2b7a1c6516c32ecf86e",
+        "id": 30,
+        "type": "click",
+        "x": 368,
+        "y": 348
+      },
+      "time": "2026-11-11T09:00:18.765Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100302,
+        "sha256": "7ea8271815d80dda4a2923bfca8885ea8fb76a63d356499e42763ca6ec8dbc3c",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794387618778,
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100302,
+        "sha256": "7ea8271815d80dda4a2923bfca8885ea8fb76a63d356499e42763ca6ec8dbc3c",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "30-click.png"
+    },
+    {
+      "command": {
+        "sha": "eb48bb98364966324813e2b7a1c6516c32ecf86e",
+        "id": 31,
+        "type": "click_hide_reload",
+        "x": 913,
+        "y": 465,
+        "delay": 0
+      },
+      "time": "2026-11-11T09:00:24.111Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100302,
+        "sha256": "7ea8271815d80dda4a2923bfca8885ea8fb76a63d356499e42763ca6ec8dbc3c",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794387624191,
+      "minimizeRequestedEpoch": 1794387624204,
+      "minimizeCompletedEpoch": 1794387624217,
+      "hiddenState": {
+        "hidden": true,
+        "visibility": "hidden",
+        "events": [
+          {
+            "event": "visibilitychange",
+            "time": 63338.699999999255,
+            "listener_time": 63338.800000000745,
+            "hidden": true,
+            "visibility": "hidden",
+            "pointer": {
+              "time": 63165.199999999255,
+              "trusted": true
+            },
+            "persisted": false
+          }
+        ],
+        "pointer": {
+          "time": 63165.199999999255,
+          "trusted": true
+        }
+      },
+      "afterHidden": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100432,
+        "sha256": "e407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "hiddenCapture": "capture-31-hidden-primary.json",
+      "hideWithin200ms": true,
+      "eventDeltaMs": 173.5,
+      "hostMinimizeAfterClickMs": 26,
+      "afterReload": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100432,
+        "sha256": "e407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "reloadCapture": "capture-31-reloaded-primary.json",
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100432,
+        "sha256": "e407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "31-click_hide_reload.png"
+    },
+    {
+      "command": {
+        "sha": "eb48bb98364966324813e2b7a1c6516c32ecf86e",
+        "id": 32,
+        "type": "click",
+        "x": 492,
+        "y": 405
+      },
+      "time": "2026-11-11T09:03:22.226Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100432,
+        "sha256": "e407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794387802756,
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 100432,
+        "sha256": "e407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "32-click.png"
+    },
+    {
+      "command": {
+        "sha": "eb48bb98364966324813e2b7a1c6516c32ecf86e",
+        "id": 33,
+        "type": "stop",
+        "visual_review": [
+          "Exacteb48bb983649 startup/Daily clean; real visibility/pagehide bubble listeners each1, DOM observer capture each1.",
+          "Normal Sleep card at1PM, trusted Sleep click followed by actualhidden173.5ms; hostminimizecompletion26ms afterclickACK, strict200msPASS.",
+          "Whilehiddenprimarychanged100302bytes7ea827...->100432bytesSHAe407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480. Reloadrestoressame100432/e407...; no tmp/rollback.",
+          "Continuevisiblyrestores9:15PMandYou sleep for8hours..., confirmingactualactionretained.",
+          "ConsolecontainsoneAlready syncing! errorfromautomaticengineoverlap; not finalaccepteduntilcoordinationcorrected. Pageerrors0; persistentactionanddeadlinepass retained aspartialverification. No helperFSsyncorhiddenscreenshot."
+        ]
+      },
+      "time": "2026-11-11T09:04:00.646Z"
+    }
+  ],
+  "assets": [],
+  "browserArguments": [
+    "C:/Users/theep/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe",
+    "--user-data-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-accepted-20261111\\profile",
+    "--disk-cache-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-accepted-20261111\\cache",
+    "--crash-dumps-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-accepted-20261111\\temp",
+    "--remote-debugging-port=0",
+    "--remote-debugging-address=127.0.0.1",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-component-update",
+    "--disable-background-networking",
+    "--disable-sync",
+    "--enable-unsafe-swiftshader",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--window-position=-32000,-32000",
+    "--window-size=1280,720",
+    "about:blank"
+  ],
+  "frameworkMode": "Fresh owned full Chrome; connectOverCDP noDefaults=true, no framework focus/media emulation",
+  "beforeNavigation": {
+    "url": "about:blank",
+    "pages": [
+      "about:blank",
+      "about:blank"
+    ]
+  },
+  "navigationResponses": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/eb48bb98364966324813e2b7a1c6516c32ecf86e/",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "content-length": "5514",
+        "content-type": "text/html",
+        "date": "Wed, 11 Nov 2026 08:59:23 GMT",
+        "server": "BaseHTTP/0.6 Python/3.12.10"
+      }
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/eb48bb98364966324813e2b7a1c6516c32ecf86e/",
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "content-length": "5514",
+        "content-type": "text/html",
+        "date": "Wed, 11 Nov 2026 09:00:24 GMT",
+        "server": "BaseHTTP/0.6 Python/3.12.10"
+      }
+    }
+  ],
+  "frameUrls": [
+    "http://localhost:8088/p/beat-the-house/play/dev/eb48bb98364966324813e2b7a1c6516c32ecf86e/",
+    "http://localhost:8088/p/beat-the-house/play/dev/eb48bb98364966324813e2b7a1c6516c32ecf86e/"
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 100302,
+    "sha256": "7ea8271815d80dda4a2923bfca8885ea8fb76a63d356499e42763ca6ec8dbc3c",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "window": {
+    "windowId": 1670782023,
+    "bounds": {
+      "left": -26214,
+      "top": -26214,
+      "width": 1281,
+      "height": 721,
+      "windowState": "normal"
+    }
+  },
+  "listenerCounts": {
+    "document_visibility": {
+      "capture": 1,
+      "bubble": 1
+    },
+    "window_pagehide": {
+      "capture": 1,
+      "bubble": 1
+    }
+  },
+  "stage": "COMPLETE",
+  "lifecycleEvents": [
+    {
+      "event": "visibilitychange",
+      "time": 63338.699999999255,
+      "listener_time": 63338.800000000745,
+      "hidden": true,
+      "visibility": "hidden",
+      "pointer": {
+        "time": 63165.199999999255,
+        "trusted": true
+      },
+      "persisted": false
+    }
+  ],
+  "visual_review": [
+    "Exacteb48bb983649 startup/Daily clean; real visibility/pagehide bubble listeners each1, DOM observer capture each1.",
+    "Normal Sleep card at1PM, trusted Sleep click followed by actualhidden173.5ms; hostminimizecompletion26ms afterclickACK, strict200msPASS.",
+    "Whilehiddenprimarychanged100302bytes7ea827...->100432bytesSHAe407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480. Reloadrestoressame100432/e407...; no tmp/rollback.",
+    "Continuevisiblyrestores9:15PMandYou sleep for8hours..., confirmingactualactionretained.",
+    "ConsolecontainsoneAlready syncing! errorfromautomaticengineoverlap; not finalaccepteduntilcoordinationcorrected. Pageerrors0; persistentactionanddeadlinepass retained aspartialverification. No helperFSsyncorhiddenscreenshot."
+  ],
+  "state": "FINISHED",
+  "finished": "2026-11-11T09:04:01.668Z"
+}

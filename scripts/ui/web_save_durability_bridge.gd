@@ -4,6 +4,7 @@ extends RefCounted
 # Godot 4.6's public force_fs_sync marks a pending sync; it does not acknowledge
 # persistence. Manual Save observes its next engine-owned promise. Lifecycle
 # requests queue the same engine sync directly because hidden-page RAF can stop.
+# Serialize automatic engine callers too, preserving a distinct promise per call.
 # Neither path calls FS.syncfs directly or depends on the IndexedDB schema.
 const SUPPORTED_ENGINE_HASH_PREFIX := "89cea1439"
 const TIMEOUT_MSEC := 15000
@@ -19,6 +20,7 @@ const WEB_ADAPTER_SCRIPT := """
     if (globalThis.BTHWebSaveDurability) return globalThis.BTHWebSaveDurability.protocol === 1;
     let sequence = 0;
     let request = null;
+    let syncQueueInstalled = false;
     const result = (state) => JSON.stringify({
         request_id: state.id, status: state.status, error_code: state.error || ''
     });
@@ -29,10 +31,19 @@ const WEB_ADAPTER_SCRIPT := """
         protocol: 1,
         request_lifecycle_sync() {
             if (!supported() || typeof GodotFS.sync !== 'function') return false;
-            const previous = GodotOS._fs_sync_promise;
-            GodotOS._fs_sync_promise = Promise.resolve(previous)
-                .catch(() => undefined)
-                .then(() => GodotFS.sync());
+            if (!syncQueueInstalled) {
+                const engineSync = GodotFS.sync.bind(GodotFS);
+                let tail = GodotOS._fs_sync_promise;
+                GodotFS.sync = () => {
+                    const next = Promise.resolve(tail)
+                        .catch(() => undefined)
+                        .then(() => engineSync());
+                    tail = next;
+                    return next;
+                };
+                syncQueueInstalled = true;
+            }
+            GodotOS._fs_sync_promise = GodotFS.sync();
             return true;
         },
         begin(timeout) {

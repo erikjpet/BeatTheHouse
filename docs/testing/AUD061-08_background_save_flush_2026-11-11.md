@@ -85,3 +85,26 @@ Existing bth_e_ephemeral.classify uses bth_import_cache.inputs: docs/ and tools/
 No pipeline code, guard/pin, cold-qualification request, cap, reserve, security setting, retained evidence or profile changed. Runtime .gd bytes remain those already checked77native/21bridge/liveness/Smoke. The unchanged check is rerun at its correct location, and exact classified Git inputs are compared before the next push.
 
 Relocated Node check21/21 again, SHA256unchanged5b461c75ced25bf6b913af33d8e7098b5172ccffa8ffde145215a872d1808d5a. Exact actual classifier on recorded Git rows: 1420inputs in both baseline23326f53 and candidate d45f5c02, identical SHA2568e97a24171b5692169f247c107e2c7c037b5232f5788f8f0299963241348074c, changed classified paths[]. Classifier source and dependency scope in relocated_import_inputs_comparison.json; normal watcher still performs the actual admission/export after push. No runtime code changed after native77/bridge21/liveness/Smoke verification.
+
+
+### Guard-admitted deployment, persisted action and overlap finding
+
+The unmodified watcher admits and promotes **eb48bb98364966324813e2b7a1c6516c32ecf86e**, tree0949bf9a185acb3a96eea0d59dab60632aa248af, archive16724079d8d759cf3c27dc092cb42e78ac623aea49c5d04ce141cd05ce4d1f45. Exact10assetchecksPASS; no cold qualification request or guard/cap/reserve change. This resolves the Node-test placement classification stop through the ordinary pipeline.
+
+Fresh real-visibility capture aud061-aud08-web-accepted-20261111: actual DOM listener presence for document.visibilitychange and window.pagehide each shows1bubble game listener plus1capture observation listener. Ordinary Sleep card1PM; trusted Sleep input followed by genuine hidden event**173.5ms**, minimize completion26ms after click acknowledgement. Strict200ms targetPASS. Primary changes100302bytes/SHA7ea8271815d80dda4a2923bfca8885ea8fb76a63d356499e42763ca6ec8dbc3c to100432bytes/SHAe407d09a0fdeffd2b6621857ad941936bd2a1e9ff6128d0d0fb660de8ed2f480 while hidden. After reload primary is the same new100432bytes/e407...; no .tmp/rollback. Normal Continue visibly restores9:15PM and You sleep for8hours... (screenshot32).
+
+Read-only actual Codec validation/decode of hidden/reloaded primary captures:
+Godot --headless --path . --script res://.tmp/aud08_capture_readback.gd -- <owned-hidden-capture> <owned-reloaded-capture> eb48bb98364966324813e2b7a1c6516c32ecf86e
+**19checks/0failures**. Both havegame_clock_minutes1275, bankroll68, onehome_sleep entryhours8/minutes480/clock1275, exact identical byte hash e407.... No save write/profile migration/schema-version addition or game-state override. Emits only requested clock/wallet/action/hash facts.
+
+However browser console records1error: **Already syncing!**, pageerrors0. Jobexit0 did not itself reject console output; this is explicitly **not final accepted delivery**. Capture helper now fails on any console warning/error as well, so a clean job is required along with visual review.
+
+### Coordinate automatic and lifecycle engine sync requests
+
+Official pinned-version source confirms public force_fs_sync only marks idb_needs_sync, while main_loop_iterate later starts the automatic sync and its callback clears idb_is_syncing. [Godot4.6 OS Web source](https://raw.githubusercontent.com/godotengine/godot/4.6-stable/platform/web/os_web.cpp). The public bridge delegates to that flag setter. [Godot4.6 JavaScript bridge source](https://raw.githubusercontent.com/godotengine/godot/4.6-stable/platform/web/javascript_bridge_singleton.cpp). Exact served JS inspection above establishes the underlying busy guard. The immediate lifecycle request can overlap the later C++ automatic request, producing the observed error.
+
+Actual adapter test first expanded28checks/3failures, then30checks/4failures including a manual Save begun during the active lifecycle sync. Observedcalls1/overlaps1/persistedgeneration2: the automatic newer generation was refused. No thresholds or existing assertions were removed.
+
+After the first lifecycle request, the bridge now serializes calls to the unchanged GodotFS.sync primitive with one promise tail. Automatic and lifecycle callers each receive a distinct later promise; original engine sync/busy/IDB implementation and native callback acknowledgement are preserved. This coordinates existing callers rather than coalescing a newer manual write into an older promise. No engine asset rewrite, direct FS.syncfs/IndexedDB access, frame pump, debounce/canvas scheduling change or new version check. Queue installation occurs once in this engine module; existing manual begin/poll code stays unchanged.
+
+Same full adapter test after: **30/0**, automatic/lifecycle interleavingcalls2/overlaps0/persistedgeneration3, newer manual acknowledgement succeeds. This is controlled engine-promise VM evidence, not real IndexedDB. Native77/0 again, queued flush113.000/115.097/120.759ms with no frames. LivenessPASS again. Coordinated Smoke4pass/7fail matches baseline4/7, exact content25/runtime16 inherited assertions, normalized new errors[], performance9inherited versus baseline10, no timeout/activeprocesses0; exact deployed clean-console/within200ms/reload proof still pending.
