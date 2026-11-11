@@ -1,0 +1,11 @@
+{
+  "history_command": "git log --reverse --format=%H%x09%s v0.6.0..HEAD",
+  "start_commit": "cf4a5ffdf975f6f3f404af770951664fa48638fd",
+  "all_history_rows": 970,
+  "runtime_history_rows": 448,
+  "player_bullets": 40,
+  "historical_changelog_unchanged": true,
+  "code_freeze_runtime_tip": "412cd9a3690fcd678b54a44c9ae191da5fdac1fe",
+  "version_qualification": "AUD061-04 blocked; no source version change",
+  "tags_created": false
+}

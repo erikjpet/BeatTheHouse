@@ -2,15 +2,126 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.6.1 - Unreleased stability fixes
+## 0.6.1 - Unreleased stability candidate
 
-- Preserves paid Coin Pusher drops and settled machine progress when returning
-  to Main Menu or closing the game.
-- Keeps the current run open when its final save fails, including native window
-  close and run-report Home/New Run navigation. Saving can be retried after
-  storage recovers; deferred or busy saves no longer count as durable success.
-- Keeps Run Menu open when a manual save is still waiting for a live machine
-  to settle, and cancels obsolete exit/HUD work before recovery.
+These changes are being qualified on NEXT. The official published release remains 0.6.0.
+
+### Saving, Continue and leaving a run
+
+- Preserves paid Coin Pusher drops, machine contents and settled progress across
+  feature updates, Continue, Main Menu and closing the game.
+- Restores saved table hands, Bar Dice cups, Craps dice and timing windows;
+  keeps paid Pull Tabs, Scratch Tickets and Blackjack checkpoints through Continue.
+- Keeps final saves honest: a pending or busy save is not reported as complete.
+  A failed save leaves the run available for retry, with an explicit choice to
+  leave without saving. Obsolete rollback files cannot replace a newer save.
+- Retries the current run after an older background save fails, and shows a
+  persistent HUD warning plus a one-time notice when autosaving fails.
+- Flushes queued run progress when the app loses focus or the browser page
+  becomes hidden, and orders browser storage requests to avoid overlapping syncs.
+- Retains failed profile and collection changes for retry, with visible recovery
+  feedback. Wrong-sized Crew installation keys are quarantined and regenerated.
+- Asks before a menu action replaces a saved run; Keep Saved Run is the safe
+  default, with consistent pointer and keyboard controls.
+- Preserves unfinished tutorial progress, accepted rewards, terminal bag claims,
+  money-flow history and completed outcomes through same-build Continue.
+- Starts updated Web builds with fresh storage. Save portability between
+  different versions is not promised.
+
+### Game tables and machines
+
+- Roulette resumes warm reveals across clock changes, consumes wagers before
+  the next round, delays money outcomes until the reveal, and quotes the actual
+  WITH and FADE additions.
+- Video Poker computes hints incrementally while preserving strategy results,
+  validates cabinet funding, restores wager preferences, reveals results after
+  replacement cards, and records the correct cash or chip units.
+- Bar Dice restores accepted cups and antes across entry and venue changes,
+  recovers interrupted deliveries without replaying wagers, advances tumbles on
+  the surface clock, and shows the correct cover, ante and receipt labels.
+- Coin Pusher shows the actual Drop and Hold prices, handles each physical
+  gesture once, bounds repeated consumed input, and finishes paid drops before
+  deciding that a run has no money.
+- Blackjack refreshes risk notices after wager edits, explains minimums and
+  conditional Peek penalties, funds split doubles once, and keeps dealer totals
+  and wallet returns behind their reveals. Hand actions stay dimmed during dealing.
+- Craps preserves working stakes before bankruptcy, clears settled drafts,
+  releases controls after the roll, and records wager and payout currency correctly.
+- Baccarat restores sequential dealing, reveal readiness, saved timing and
+  currency labels. Table results finish before the run report replaces the table.
+- Slots confirms Auto bankroll before sealing wagers, previews adjusted nudge
+  risk and identifies cheating, restores authoritative bonus state, and preserves
+  nearby character clicks. Pinball and Link Arena idle previews leave result
+  and READY panels clear.
+- Pull Tabs waits for browser persistence before reporting Menu Save complete,
+  keeps dispenser receipts current after Continue, and uses the correct redemption
+  currency. Numbers keeps recent slips, purchases and settled payouts visible.
+- Games retain paid assets through generic bankruptcy checks. Chip-funded runs,
+  final chip redemption, journal currencies and round-net feedback stay consistent.
+
+### Crew, events and endings
+
+- Crew deliveries show terms before confirmation, keep early handoffs retryable,
+  retire settled and expired handoffs, restore waiting contacts in destination
+  rooms, and return cleanly from games. Package obligations and shared reputation
+  remain consistent across venue cycles.
+- Crew heists refresh the wallet at cost and payout boundaries, record payouts in
+  Money Flow, preserve instance escrow, and keep planning responses scrollable.
+- Count and Crew room controls remain available across publication and reopening;
+  neutral shared reputation and room credentials are applied consistently.
+- Showdown inventory choices use readable instance labels; Home choices and
+  terminal rewards remain usable and durably settle before acknowledgement.
+- Rourke settlement and report work advances in bounded phases while keeping the
+  table visible. Movement receipts report applied amounts; summons preserves
+  internal casino routes while restricting world travel.
+- Existing event fixes keep concurrent contacts and physical choices reachable,
+  preserve live actors and ordered feedback through Continue, and retire consumed
+  events at closing and reopening. Raid, delivery and room controls use their
+  intended physical hosts.
+- Existing character offers cover watch sales, cufflink repair, route advice and
+  rides; availability refreshes as access changes. Loan repayments, pawn tickets,
+  Sal services and Jazz services remain reachable from their room cards.
+- Home Quick Start carries the equipped loadout. Players Card rules, comp
+  feedback, marker repayment, room-key clues and inventory choices are clearer.
+
+### Tutorial, travel and room recovery
+
+- Tutorial travel no longer incurs the penalty for following instructions.
+  Coach cards and Pal stay clear of menus and selected destinations; Pull Tabs,
+  Blackjack lessons and casino-door fares use the intended machines and routes.
+- Continue recognizes tutorial room returns and paid progress, recovers a missed
+  first Blackjack hand, and retains unfinished coach cards across menu relayout.
+- Closing-time travel retains a free exit and finishes Riverboat docking waits;
+  engine restart releases travel and impeller controls bind to their benches.
+- Unavailable destinations explain why they are locked instead of offering a
+  free walk. Rejected-room recovery is bounded, and Back Alley rooms survive
+  travel and loans.
+- Restored rooms refresh trusted bindings, preserve venue cycles and game-owned
+  controls, and settle initial objects before the first run render. Existing
+  accepted room placements and character corridors are retained.
+
+### Interface, accessibility and responsiveness
+
+- Loaded whole numbers display without unwanted decimal suffixes; fractional
+  values and meaningful text formatting remain intact.
+- Rejected actions use player-facing explanations. Settings can copy a concise
+  build and save diagnostic report; desktop builds can open the data folder.
+- Run Menu puts actions before reference help; Home pause controls stay separate
+  from saved-run controls. HUD information stays on one row with readable detail
+  and deadline tooltips, and wallet feedback reflects the actual applied amount.
+- Room cards show full risk, keep selected text legible, preserve manual Talk and
+  authored neutral Close choices, and present action consequences before prose.
+- Inventory popups reflow after resizing; modal focus, touch selection and lost
+  pointer releases recover cleanly. Portrait layouts keep controls reachable.
+- Room and game input consumes each gesture once, clears outgoing focus on
+  arrival, and prevents dismissing a coach card from activating covered controls.
+- Autosave validation, room publication, Video Poker hints and Rourke settlement
+  do less repeated work and spread expensive work across existing phases.
+  Environment and game animation continues without pointer movement, including
+  while placement overlays are open.
+- Reuses unchanged room and asset data, retains bounded caches, and removes
+  superseded code and art paths. Test-only fault controls have no effect in
+  distribution builds.
 
 ## 0.6.0 - Feature-complete source
 

@@ -1,0 +1,970 @@
+395990c68ebc6428bf8e1fbe49890ee4299b3252	Document the 0.6 release and download packages
+018c241b7d612d080b484458228dbed65818636f	Restore shipped manual environment placements
+e445efc2f0d97b1c8c77ed3dddb3498ec64a5b2b	Add 0.6 itch branding package
+2509ab074e7b194c9102680df5d568b61ca49ffc	Stabilize replay save acknowledgments
+1ff5b22c3317aa40c7b830587df245b9bb71b8b8	Ignore hover-derived replay info cards
+8fc254fb2bcc24a423bf8f6d87e370c3abcd3792	Align Crew fixture with released state
+e40cc0e59c82866184943d10592a68f69d6a089e	Prevent scenario journals from blocking long play
+0575eb2d5535f9947cb9bc985d4bd617167458cd	Keep House Calls reachable with concurrent events
+edc940f323ce40f5b5d357eb3d267889ed6db6de	Start updated web builds with fresh storage
+92d7d7fe4077ca330dafc575982f782d10cc8d25	Record reproduced 0.6 save failures and stability release plan
+32a83993b20ce2779c418d7ca8608faaa25d36a4	Preserve live progress until exit saves complete successfully
+7b38763565098aed2f988e30257985df0d5e809e	Record verified save fixes and remaining 0.6.1 coverage
+bd0bf164cb6e97fb3751ef2ecf51f6a0f2debd3e	Retain completed 0.6 promotional capture sources
+35829f0583cdd21b3af28b2a52e7bf714122cd4f	Keep completed 0.6 social poster and editorial source
+aeed3a1a7e87cc1759d82f4743c8c9fc37a83080	Record the accepted House Calls placement in manual layout data
+be7c3b3ff355587cec77aee1aab30894afa79710	Document every consolidated WIP graduation and hold
+1c51e09c12e54307b32f30d339ab4afa83a9bbb6	Close remaining WIP decisions by player benefit
+78e52f8047d0cdcadea63c590b76170820afcf7b	Record three-seed normal-input stability batch B03
+f0bdc406af525ed132c816d06aea6c9ddde6f60b	Record B04 route coverage and Lounge reproduction handoff
+a739826cd679b034ab2b64ac6fcea0bfe6e7ad47	Preserve consumed offers when rebuilding scenario proofs
+32460f244bf240daf273c14e0c8c4ed2f0fd855e	Keep room props in the input coordinate transform
+d80ac0fc36352abc974b48d4d3bed1eb076096f3	Record three-seed B05 normal playtest coverage
+bf63e433b122e99d8ea4f2db62235382571e5414	Expose ticket cashout on counter NPCs and require redemption hosts
+26d399aa7ed98f892ad228a9e8d7e82f28205a93	Enforce Crew room credentials and preserve safe recovery
+87a19ead4b8a7737da5b60c7b59363d112c8142c	Refresh restored room bindings from trusted catalog
+8264fc5c7a1ebcf00505ce3b1bfc4d5ab89559e3	Reconstruct already sealed Crew baseline geometry
+bfd33933d73b34ecc6cc593aafeb60792e7336a1	Coalesce background cabinet saves behind other game surfaces
+13e7e59e6a1d3bfdb89997da86da200ecd37a13a	Reuse byte-identical validated autosave image
+94bcba72b2744ef89dc01fc90d3c6e6102fe4078	Use direct digit lookup for packed save decoding
+ef6c734988251f9f7f031d3ea3bf1ae126e48e1a	Guard autosaves against unplayable published rooms
+7d297ce053502e34cdad5e93b1742b2bb32797b6	Avoid redundant room projection reads and terminal save hold
+cdfedca6614532e39d484209386bcee6b4941578	Fix stale pull-tab dispenser receipt after Continue
+6ccbb629f0d31af7b926eccc92d7d6b5c4b6f728	Avoid punishing instructed tutorial room travel
+673bd0dbf286abbbd42bec8cf3a279515dcc079c	Point Pull Tabs tutorial at the machine
+2991e9bdec370edbf3d0f7e5257a5a9ff8632af6	Keep guided event cards readable beside Pal's pointer
+e0d0ddf007921cbbc4c9ea3bd52a3400e77b1acc	WIP: Load authored Sal dialogue on cold shop entry
+cea6ded63f55b6ccf3dd6a65aeb1e851355ee22f	Keep selected room cards legible over scene art
+cd1b726c7691e0736b588281cbcdcc5c8b9ac59b	WIP: Show actual video-poker coin cost beside cabinet label
+701d38c513207e2ccbbf14de094a7ecf47873330	Fix Crew event slot families in Punchline layers
+39a3547d112b7f529acb0542c7d70640fde027c0	Show full game risk on selected room cards
+46474bc8ab22685f3ea86a73b4267fb5180bed90	Bind Riverboat impeller key action to benches
+56fbc62cee446901a1e8006ac3122fb19fc67d78	Release Riverboat travel after authenticated engine restart
+f66d57dea8413f8c958826aa9ac53b8179f8ad72	fix(playtest): bound session helper result processing
+32708794db6fa72de56e516b6a0d770aada822d5	fix(ui): clarify pending save with ready resume slot
+c2d1c91de2fb1d9c64a55cba1c75fdd108437fe6	Reuse exact validated primary bytes during save rotation
+6143be7d25f23e210c0d51078fc0da02b8e8369c	test(save): prove exact primary digest fallback and rollback
+fb4145100cc8e8206f3ff0c4b302750c9a47f71e	Restore saved table hands and align Crew loan wording
+b46fabb2853c312b67399606f59804eaefa62d47	perf(ui): avoid refocusing an already focused event response
+a67d84bebad24f03761a1c9097359d6d18279dec	perf(ui): avoid cloning catalog rows for slot lookup
+25e3ba125205570bf097af7689f99430964fe839	Validate Video Poker wagers against cabinet funding
+75d92f8325c31a2c087be28199dad992b41cea27	Restore validated Video Poker wager preferences on entry
+0dfe1c79af70f9bb7667c1b67c9a6c7eb660105c	Retire settled Video Poker authority sessions
+071de35a4ce9d22056d3baa4e81315e8e04b7edc	perf(layout): copy only the selected placement hint
+542196005583030bb3a094b8116385c03da317ef	Keep dialogue choices stable during text reveal
+6b93db92351bd4783ad6848d5f9f6e3851cbdf46	Recognize tutorial room return after Continue
+27368b993e23851efa411fb422cf7881ad7c7236	Recover paid tutorial progress after Continue
+4080cd832497d73b792c05d8be6d210557f82c62	Reduce manifest canonicalization comparator overhead
+81c0396fd248bc16a204416e36594087414c5409	feat(offers): preserve cloud-qualified optional character offers
+687fd1723ba0c134d050db12b46c434346031a12	feat: add June watch sale and Sable cufflink repair offers
+e01bdcb2572704a777111f2ae3a0c74eca21f505	feat: add Ox route advice and Rafi casino ride offers
+7d4a9c9e18b7c03f297dd62d4eb9bd506745dbe2	fix: refresh cached ride offers when route access changes
+c60e393a2e3849ade343a234aba627b16931fc46	test: preserve sealed Bar fixture in offer cache regression
+d8856cd5c61c5136dfe7d14582b57111af5d40dc	docs: record qualified nine-offer integration
+1bb68ce7d2c7a6d38f60ea4643a60bff10a52702	fix: preserve scratch scalper runtime membership and legacy seals
+4d4eb062f3fb3fa547dd61e66c4e3dd9888e4ac8	Fix Punchline recovery and pending Collector results
+16d73614e7e19ef966149cda1bd90a1e77daa344	Avoid collecting every PCK directory candidate
+42c0a0c15a536d498ba5c76215eb54323d7649c6	Retain qualified PCK auditor for NEXT native reuse
+7680b2f0370e1b2718bfa122898122f4ebb91fbf	Remove unused art-generator imports
+c3f972f811d71e6b92a8bd2e57c1cedee01dabef	Remove redundant route-distance label helper
+2f205b9f9e361499245d26bf8a382910f46eb4c6	Avoid deep-copying read-only badge inputs
+5751d7482a67fd3f62856c6278ccee115c1783fe	Share game-script cache insertion policy
+e47b341bc45fd599ec36fcb55e9323bd05f4e3b9	Share badge tooltip and panel-style builders
+23802d3ac81a504d3fde139c4d439da4f2846388	Reject compile failures in GDScript load audit
+40f4aa16724d6b7409f33d5c9674a696a3efbe9a	Record cleanup coverage and refresh source census
+bb363e02f1d66763b39100f982b9fef852e798fd	Mark non-text cleanup inventory rows explicitly
+82ab54ea36c53ac79dec3493dfeb330a2865fcc6	Share card dictionary copy coercion
+81e93c0413ad8bc899215c79d0f6cacbf4ac4ef5	Avoid duplicating owned Crew poker patterns
+4257158e72e9b7d274dc83dd20a91f3acea29d74	Avoid redundant duel projection copies
+1c20bcaedd4eca63531db21a81a23967cecf0cd4	Follow delegated shuffle sites in hot-path contract
+e171e083e304a7aa04b37a9d4cbb7ffb54dad54e	Keep one durable-result payload copy boundary
+fa94f452d288a01335af4cbe61cc6a3c858f49db	Share distribution path joining policy
+b30f1b5bc1ba2defca446617622eb9a69002152a	Snapshot per-run game tallies once
+412ac75f596f4247ef3b7feabfabc05e3291acde	Borrow read-only career row inputs
+a736a7b90036a76f39629bfbf7fdb4ea728700b8	Clip icon raster loops to the image bounds
+615a1d369ca67e7c0aaa73c42fd5729689310fed	Prepare bag reel visual weights once
+9fc7e82067189b84c5599a6bb807d73363c883be	Check journal array presence without copying
+d271dd11d8d9152fc0f85a14c81ccc89baa33e1b	Inspect consequence delta presence without copying
+fac463ed53423c0788bcc893a0b8bc08bc3b03d5	Remove unused HUD candidate adapter
+c7750a1b5139ae62a29de90190a73b3425d7603f	Remove discarded ritual host serialization
+d037f91f9b3b71cefe749dd0df7bc9165b52a0c8	Copy only the selected scenario overlay
+54ff1dc5a5cc7fad8dec77935b84f2c7fcb9f98f	Reuse detached Crew heist plan definitions
+085b86eca2ffb786c0b051ce103a654eea61eb17	Remove repeated item-domain membership search
+ea9eb7c2654c2507af7adcb18c7b47c9e3e9401f	Copy only selected Crew recruitment definitions
+4a0f0bfe16031841790346fe586c69af24ec2852	Remove unreachable duplicate person classification
+be7333e2830e85be09f0c0761a7d1f7bfd925eca	Avoid normalizing delivery cargo input twice
+85b19281af9543ce4d9b0f98ff335f4761e0bf98	Advance sweep path queue with a cursor
+833c88a24910775d98b682cd0837f39cbff70d88	Retain owned music stem selections
+6a42c2ced1e26c0b705ee07c2da34db79318b8bc	Reuse prepared trade selection membership
+3c1eba46610956b0b93dc50b40bd19a0bb1bb4bc	Share identical slot symbol matrix coercion
+f84bc5b956abd85c6de3bad0a5e40acaee5d10e6	Avoid cloning the report game catalog for one label
+3fd3ec30407400544fbd6f3c352f97108ca59e27	Read meta-home scalar summaries without cloning records
+1d8c5cf932d29b798f86957494c2e23aecd6786d	Reuse owned inventory records while filtering
+a1381995faeab768d3d546596151eeecb1791a7f	Add hash-verified recovery for reconciled historical copies
+756690c66d1376c9af78e9fe4017f460a44aa5b4	docs: reconcile preserved source and private evidence
+ae64271f6cdb98804026f463aa0ab1327da3290b	Prepare inventory container geometry once per layout pass
+784d4df4c4dd6b37ebc97dd04af0d71959f2ecda	Share deterministic Grand Casino staffing generation
+c6c5da98de340cc11c78ee8083d97a62ced87bec	Remove unread slot presentation locals
+c647aad543f39f5bd1278d3ae61f679d7f2fb29b	Drop the unused recovery-fixture time import
+c2c9e3da61224ea13e7d1c176666d0e25fab6116	Copy only the selected Numbers venue definition
+71c3f0a63c55ab99b940c2be036853f502b551ff	Reuse exact validated primary bytes after Continue
+6bb31bb798d6715b5257046c63b424d73a80dcf6	Show Run Menu actions before reference help
+fe2d7c38bebd81ec60a76844a928d7bbe1c1c631	Reuse TalkDock's reserved rectangle transform
+33a0f907931de40b6d69f79022f5c0616025605e	Share Pinball's read-only event award fold
+abd3525fe73c838f9d8b564cb912e38fb4b7f4d9	Copy only the retained meta history tail
+158718f28481afe3210177894aaacbba3f987d6d	Strip immutable slot definition keys once
+de037dbb8091efcb647eef7a03bf5833973b54df	Remove unreachable offscreen slot branch
+d1e12fd5a5fc42fc92e7711b8ca2b108e9d44d1e	Read Crew rank perks from one detached table
+38992a64c4ef47d01ae9e50694050a47dfc23026	Read node state without copying the saved room
+0b29c2c9cbc63be038a944335de98660f0292660	Share identical Craps roll command handling
+7993166ee35f001ff6c20be192d3e46e7e94cb83	Defer unused Coin Pusher audio body-count copy
+9e69250aee26f613d379e06c03233c5068c27eb2	Drop the write-only Coin Pusher feature index
+93c8f9d64eb2b2afb84d46b73130d0bbdb6410d8	Reuse the slot audit takeover predicate
+3dccb29476b072b90799a19bf4f36115d51b6511	Read item offer views without copying their input tree
+be0180f4fee021ecfa9663e6b05c957940199a3b	Inspect delta array presence without copying nested payloads
+742d216a6b87b2dcc720cdb2f5d08e411fd679c9	Reuse the detached poker banter configuration per query
+7ef5163e545c491cf4123c65e8798826868b178d	Reuse the detached Roulette rebet layout in its full view
+e41f7b2de3cb88b1ddd1681d9e851ac3588fb445	Drop the write-only Roulette reveal local
+4217115437556f2afbc068010edad31db2be1e6d	Share the identical Bar Dice automatic-hand fallback
+cc8d77399954d596fca2899a6a782e38e852777e	Reuse Bar Dice shake eligibility already computed for its view
+b36f627474b630f7c0edf4b41ca22c3d8b6e9241	Avoid cloning Pull Tabs stock before its owning normalizer
+3ef0a48c1254339fc0e7dff47c5c15e8817ee2be	Sum Pull Tabs counter stock once per projection
+f81f5aca2bda345c369f7b8f27ecb03e656e6698	Reuse the detached Baccarat rebet map in its full view
+38aec3ffd01604320d22d13e728f5eb42005663e	Sum scratch-counter stock once per presentation query
+917adf2c20e63161309be8a1c80e2d1dadd271d5	Reuse the natural Video Poker rank-frequency maximum
+3e5a676f042ac1f576d3f262b1d11fd66a51761f	Remove discarded video poker affordability write
+ee89425658d3e98439f4db33efbaf890e2d19430	Avoid deep copying video poker affordability UI payloads
+dacc8de5bf1d2938cc104500ef40c25babd4c08e	Reuse scenario fact envelope during read-only preflight
+02065e34e2d1896497c2c758c43881bede145224	Share identical scenario reentry feedback branches
+394ed85def137a9dee9d661f4b48e4ec4a50134f	Drop the unused scenario cleanup original-state local
+dfc78eaa20b24278a33d7df0f88245d9bdb60c55	Reuse the established procedural-music output directory
+2c0a842b314f7ffb510c9fa1d84e89d0beb40d2a	Pack authored Web audio nibbles directly into their final buffer
+1a4e72b723e43cc4a35942da8799e89787d63bcd	Reuse one immutable PCM float conversion for audio SNR
+ee570ffb702ba710f8333c1b47e084c1be433f7f	Reuse placement report room-key set
+8f4676194990308b58ba4f5515e54816f90bf86f	Avoid recopying detached catalog diagnostics for read-only formatting
+6e637fff5b1388bc0c39eb810d7429ba9e83bcca	Reuse the detached event-choice consequence validation snapshot
+8a38424f2ef8a37c3ad9f99cb74bc25ab8b8a149	Remove the overwritten blank alpha image in the retained art helper
+9863624c5de708517876f9107510bf30f52cd8da	Avoid marking telemetry system allocation roots twice
+59efdee672391d83074b734f3a04526dd80cac78	Remove the retired terminal-presentation probe accumulator
+27902ed0ec405ce9bb61f93082339cbcc14612ac	refactor: remove discarded PCM budget tail condition
+8fff1f2d8ec85065b5ef6080cee4b522dfcf38fb	refactor: reuse the detached feature contract profile
+a5510556b1c3d80ba2c0b5c2e8d1d9f5e34177e1	refactor: reset derived placement caches once
+3d31ebfa48247d8155c7fd1098e7b7d6801d0cbc	refactor: construct only the selected named character style
+4c029832edef3870b6e1082652704825a0fd097b	refactor: read IDs from detached keyboard candidates
+4d8ec46815543374a538d523f15ab17b3f456d74	refactor: collapse identical slot color fallbacks
+acf3958cac61ed025f4867ad01d0462493384a70	refactor: simplify the nudge highlight rectangle
+55d781ddd6db571f84956f4463f697a4c5883fb5	refactor: reuse each feature panel palette lookup
+ec28a06b4d1ef2f20e86bbbec722e2a5c7f5ec6d	refactor: reuse the idle liveness counter field list
+4fa4d212e49ad06e2526d84b80e0bcfeb04cfbbb	refactor: reuse the native wrapper budget source snapshot
+d9a774c262b1f3d3b101b4a43230fc37c3cf6938	docs: record audio and presentation catalog review
+30156c3a57c877d9cf4a8f655907603f10479ac2	fix: keep Pal beside the selected map destination
+d5e6ee674839bd0574e45d869feb6823feb1d752	docs: record capture launcher and continuation test review
+461722c96b4e968a01f4d0a4d7a1ebd5007ccd64	refactor: remove an unused Jazz probe recipe lookup
+97ed71b87f17b5816c42fa76693c380c452a2e77	refactor: reuse the authored recruitment test input
+83ff1ff670bafcf29319c80ded61d7527fc279f8	refactor: reuse scratch preview region geometry
+5463478a5f8c6a2adb88b47529bc59e28c829799	docs: record authored world policy and historical tool review
+44ec0a860bbd2524a23c992efcc7de287d7fc6ae	refactor: return already owned character chain tuning
+2b32f68d9bb2d426eb98f75ad7fc5113adf421ef	refactor: reuse final Pinball probe report signatures
+f9c94ad40a94900cdc44bc08851d62e8fad7ec52	fix: enforce the local Web workspace directory boundary
+f134eb34685bc7f4e60310e00cba3930332bc3a7	fix: keep bus driver count guidance within compact card
+914408b40d26998ef4e18ffdf13b82d07cb04b6a	fix: reject refused Video Poker probe startup
+3ef73169c585130488972833bbe64f25c001dd83	refactor: remove unread Pinball item audit list
+f252eca09f96aae90ce330c6f6d8efbd58bf858c	docs: record build and capture contract source review
+82c19d6589aaf62511e664a4b0b9e20ba5b7c7bc	fix: require a boolean Crew capture pass flag
+c7799f04b7bd0b578d9199fec9605994fd0a378b	docs: record parity and payout audit source review
+b0c2f0cd58fbb5a5d95019d816676a5bcd653f98	docs: record parity and determinism wrapper review
+708159b464c8f2527b720592b0c794f368154598	refactor: reuse live-batch assertion diagnostics
+6f1249837f189833060e5325ffefcea0189c0d99	docs: record capture and server ownership review
+a23a7dbd0576f04348c84d2b78d818d4942f9e77	fix: keep motel room-key clue within compact card
+9ff1ffb882a2968e23551c3f20dc58a9b7822be0	docs: record authority and UI contract review
+cad414e14a39bcefff18e7360cf9bbbab480290d	docs: record content and fidelity contract review
+409dfd40094614715e5cda406aa345c6ef755cb6	fix: reject artifact cleanup source aliases
+a71e5f2dffcb92150a63d30c3cc36e85a00984c1	docs: record rollback and lifecycle contract review
+57290da58199d7c9a343d4f3d942dfa6397672eb	refactor: share census output construction
+647cf13211b3ec7ad01a595da230b60640de6dc0	docs: record Crew and packaged audio contract review
+c3703272d02f335d27abcb2d53e362fd00d47500	refactor: remove unused Crew test preload
+55a3e2139424735bd9ddea5c09ba28bbee41f3fa	refactor: publish owned room catalogs at state boundaries
+b92a93f5ef11b399c2f88913cbb55aa42c62b747	docs: record real Web room publication response and parity limits
+08bd5a4c52505f7764fb32dade5b7525dce01262	fix: stop capture success after manifest failure
+67dc5bd40785b68cf57484f6f1417ab352f0c78e	fix: exit capture when its definition is missing
+3303ebe6f7491e4a82aec27dcc3030826beb9dae	fix: report review capture manifest errors
+e4151fa23c1c908d4422a4b0bce353f6eb88b1df	docs: record coexistence and custody gate review
+8ce13f738bc4cd3e6da7871f41c3ac3fd6db710f	refactor: discard unused shelf-arm test result
+ca7e6309d2b21c24a3862f228cea272eb57d3989	docs: record slot travel and storage probe review
+46268ec344b880d35a00679e914e53e7ac8dbf85	refactor: reuse final slot probe spin counts
+bbbdd8941a035635ca3c69550499a26f0f73f413	refactor: sample pointer audit positions lazily
+79aa4d11ecbc02a1dc79acb503d4c47cb742ff89	fix: restore roadside scenario replay after clue edits
+9fbdc5f5e4d4b4895c9c5d6938a962cd3ce26ad5	fix: bound no-thread Web autosave work across owned phases
+333a8cf452828ce560a0efa5efd2124c47516a6a	docs: record semantic authority and golden updater review
+d3701087a74075043a1180dc34392942d1cdf338	refactor: reuse detached capture axis counts
+9f6c7b7a453facae83a8c3f731cf802782ff2b94	docs: record capture session and release tool review
+8d6af8e87d2ed5829f8525ef70eef7661f9e1067	docs: record holdem and runner audit boundaries
+edf8883cd24999e9be57dc331202b0b84fea131f	docs: record blackjack and scenario integration review
+577c9f50a018f1006f9f46a8ca430248b4aeafe1	docs: complete native solver source audit
+158391b67dcc9c2ae190dbbbf58f106da4008598	refactor: drop unused tutorial command binding
+4463ead03e8967097324bf7c8fbf771f63522282	refactor: skip unused default trailer captures
+3db7cc9b4114b099dc59eb22b5880ea5112ca728	refactor: drop discarded holdem audit snapshot
+dfb2f8a45558179c56562ad5b7b98a1a53f57c9a	Skip authenticated unchanged scenario fact republication
+45eefeba7f3e7b9e0e9c15b6b79fa2ea57e054b1	Reuse fixed label indexes within layout guide tables
+b474d72e727c3c84cea4449a5a7ee1e20eb67dc4	Remove unused mouse playtest wrapper path
+a2d6e033cff473926f7dbc7c5cf61cd6cccf6c92	Document export and historical capture source reviews
+8e2a30792ad6036f64a0b8ee2f979cdb79037c3d	Reuse source slot index within exact mapping contract
+220cf3522777577e9745b5e13d76a3b56b3c128c	Remove unused catalog map set from placement test
+ad2593d723a0799bd8f56685fcb36d5658e35a0a	Record recent save and recovery contract audit
+0c3fa0ef52c506fe7b3ce47d08b81535bc26fefb	Record character catalog and offer contract audit
+031e4692b55dd5ca68c2129caedb87433b9ffc01	Complete cold save probe reviews and current deferral triage
+77366511ae86233f8bbdfd33a4a4d6e39daf06ad	Reuse ordered occupancy during scenario placement search
+0021b26ad3cd4269dbe98e46b95e3ecd9214b913	Record full manifest and environment instance audit
+faee106785fec6642efc79861aafa5fb321b500f	Document complete semantic inventory authority review
+2fdc9f609cbf77fd1f1cf430c19e993fa8f687a8	Record interaction and historical custody contract reviews
+0a8762987cd7d344eab55de6828ccefebcc032ef	Audit authenticated empty flush change and its contract
+ec5856dff77577049e30e701abd7545c633878be	Fix stale Web smoke probe path after archive move
+37a3f206fe36a479aec22d6a75c3b656efeffb0a	Document complete scenario layout resolver audit
+b0a43358072db480f1cdd7ab2626490aee167ea8	Review tutorial records and delivery provenance
+8eefe65008d6c3c34c9bca9e1d1319674964bfa4	Show recent Numbers slips and settled payouts
+fec1187642da652c48371c138c5af043e3077b60	Reuse owned inactive-room projections across save generations
+8ce75e05c565239a50a8bc9c91b5ae21cfc05484	Review Numbers receipt and save projection ownership
+ce455cb0863c0f871036aafd73bb8cfaf9f637d4	Avoid a second deep copy of the scenario audit report
+16f1598288247af7ea78bf80bb6a976a8c59a113	Retain validated room compilation across empty turn boundaries
+dcc5c84ddd82cfc36251589e5cefa8e8705a258e	Review Cage compatibility and retained scenario evidence
+eecd17f5252ac1ef715a24c3630c9959030feed0	Remove abandoned scenario audit recomputation helper
+17b7043760550df12e342455ed3c4ac24c66b8d4	Review authenticated turn-counter publication boundaries
+e7da79923ecaf287902c31b5421a8e7f19ac4875	Keep loan repayment contacts visible after borrowing
+5f24ef8fff859b3f477c5e749a7f819e63ad19df	Reuse accepted room authority for unchanged live action inputs
+56968142b528c83d2b266cc9f8578b4fb4a3e3ab	Expose local family loan repayment in Run Menu
+f008e1281faf427ce940316c1a4c99c21cc437e0	Review Package C runtime contract and gate history
+0b2d8db16dbe33dbe5df71b26d732dc6d1e08b2b	Complete full RunState semantic review
+a2b90a44d0855b636c01d2268e67d95237a8ae4b	Review onboarding and retained music platform probes
+11c0a9f2c6318a1d5c2545b0ff1f5e3d26f00f3d	Remove unread meta-map bounds binding from UI test
+01ad03cd13aad8bacb4f936da653772c3b030e60	Review repayment contact and recovery evidence boundaries
+24ab3c62abe61b3200ecc22fa84427b343e62448	Review placement authoring and map input contracts
+6251b5d59981b56fdc3e8e1d0d9e68ac323323c1	Fail room audit when requested base dump cannot open
+e0913242e2830826e0ff8066b57fae80c7b33a22	Review exact live room authority reuse boundaries
+e02680b34d9f459234631975b8e065b98a654539	Review retained package probes and low-end matrix routing
+9d10d5ffa8e4950b4e85205a3fc4a8931202d731	Fail static cache contract when its report cannot open
+2470fc366452a92bdd5ee1d455e076840fd9c19f	Show heard rumors in destination map cards
+ed4e929647000f23439e0317eeda9cef08cdc1e9	Remove superseded Package E synthetic inventory helper
+4402f26ceacc35e94ca23119bf2ae42b6a623896	Remove unread Package D hit-size accumulator
+dd121f4988a4c3d548714e9643eb91939dd13429	Review roadside lifecycle and observer contract
+87f7319685f1e91539d180f9f5ed3f95c45bda83	Update Road Crew Payday layout
+12dd37bd70ee6a05140ff6d1370ac731fcb8c5c2	Reuse owned room authority for exact event removal
+4c759dadbd0926a3ce52a4c56b950f874a98412e	docs(cleanup): complete Foundation host semantic review
+96dc3b689bac93dfa58aed828729af74318e55ac	docs(cleanup): review scenario and private-state contracts
+64054fa1b71800efa587362ef3079603fd216582	docs(cleanup): review patrol and layered-room regressions
+f8ebe8d3cc02ef6cd6bcdb35191d57e51783f54c	docs(cleanup): review authoring and evidence custody
+2503c470f1047d485ca92903697cf7121a9e3386	refactor(ui): stop nearby-object scan at its existing cap
+aca1bc4d3193ac737213c59e24214e82f5f62931	refactor(ui): remove unreachable save-label fallback
+8807f311cb1c1155e84bf7a09dd6094408e511c8	docs(cleanup): review tutorial and player regression contracts
+9ba8ce833b4f7763a742fa808bcab8ee4354095d	docs(cleanup): review event publication and physical Slot input
+2751fced1d6f5d95ace85c975671ccc87878b0ab	refactor(tools): copy only the mutable seed-selector array
+1a0306cfbe341f59ec9318b0239d89d22286e30f	docs(cleanup): review archived audio and evidence custody checks
+9ad9d76e77cee5359badd0b1ba6efc981364dd90	docs(cleanup): review historical surface-audio design and evidence
+7cbc0fca19b8848f96e24463cc7405dcfd26a80c	refactor(tools): remove unread audio-audit preload alias
+274cf5132c1bcf35b81d0ab6a5a1c0e24f3b0386	refactor(tests): avoid discarded delivery pickup snapshot copy
+8729e4e02c2602246159f80124a99073ffb14013	Rebuild pending scenario projection on cold Continue
+0baaf6d4d86400480fbca1e06c828decd9340086	docs(cleanup): review historical playtest candidate and intake authority
+9bb12678b82f53cedd0e0b73a4af27e4596bc58f	docs(cleanup): review Video Poker physical-input proof boundaries
+c889aa6ed0dfc641e24a8b000d0f83c2008a7696	docs(cleanup): preserve cold-Continue scenario rebuild authority
+3c7ef7ca71fc7c473672c6b5dad0a527b39eb8ec	docs(cleanup): review Package A authoring boundaries
+e707a347cc994549f31ebe5e3804b557c23787b5	docs(cleanup): review remaining scenario authoring tools
+095a072ad62ee1ec513304c5d95126dcdf5a38e5	refactor(tools): remove unreachable Package E service branch
+ab1c0d2adf58baec03ca5c8da9a89de1caf2639a	docs(cleanup): review historical save capture contracts
+9831d0988d2b4ec7b15a3d78be4712c6d67d11ed	docs(cleanup): review fixture and remediation evidence limits
+ce4ea5bae7d02acc0ab0240e5c5f47175deeb9d0	refactor(tests): drop unused Numbers TownState preload
+af91def6e763fc8dae59fc391a0040a44bfaef99	feat(ui): polish authoritative wallet change feedback
+a6905082c60c596652de46fca0e39c9a82f4961f	docs(cleanup): review historical integration failure ledgers
+10b3d9ef70390bbd458361dd6c2a398e7a5c3951	docs(cleanup): review archived capture and composition runners
+afa14f57eced8c178da4d3a5e123edaf854bd5f7	docs(cleanup): preserve and review wallet feedback successor
+eadcf82049e3c9d47933ab640ee712845468597b	docs(cleanup): review spatial inventory interaction contracts
+3760be0087241f733a0b288008fbe88fd51ce6b4	docs(cleanup): review public observation and replay boundaries
+b264f94b1d3b1187c0a70e3c568e65177d380b62	docs(cleanup): review production-input playtest bridge
+13c776618f4db75b3d94530d2dbbb2eba8899ca5	docs(cleanup): review public observation redaction contract
+63c4318cdf15218f311957eb5121e038f94b14e2	refactor(tools): reuse identical Baccarat array helper
+1441376681bd7d50388a11ffe4cda10794705043	refactor(tools): remove unused Blackjack audit wrapper
+de0828de9d4f54e8e169f129583276fc382f1cdb	docs(cleanup): review release and teaching evidence boundaries
+d0183d110b29cc938de805956ba578137f20b6e2	docs(cleanup): review historical custody and normal-input evidence
+9f8dff193d14b85a734b4d531ef92e046b8d2ff9	docs(cleanup): review compatibility and release audio provenance
+9a5c1f9c5d90edf49fdd5761cab3e06b7564f7ce	docs(cleanup): review bootstrap and launcher ownership boundaries
+6d891ee173ca69beeeebe8be724739fb57a8ef2e	docs(cleanup): review release music and world-state records
+fa0e0c87408437f9245af83ec8ad4bd87d67bdf0	Preserve settled Numbers receipts across JSON restore
+822d85b22b49616d134b1d1ba8b9b4ff4d5bcba6	docs(cleanup): review Coin Pusher capture ownership
+467f8acbc4498556d33a07eb0189cfbfb9020e37	refactor(tools): reuse identical EV kind counter
+d1787275a63a6b6ae1d18103acc80c224ffa2492	docs: record completed historical prompt reviews
+fcad680fd478268e6ff1dc23b5387b95fdc06571	docs(cleanup): review pusher custody and historical gates
+b56866ba5df94f996a4517a51f4ba91a3dc13bbd	docs(cleanup): review Holdem validation and custody
+1accd5f16dfb2676f06dd326d99d853053a0e578	docs(cleanup): review WIP dispositions and correctness records
+e261781c14a8be39703746619210debaf13940c3	docs(cleanup): review compatibility fixtures and archived soak
+38cbde725c5f32169d52dcf9e8f1c9c43580b335	docs(cleanup): review phase acceptance and integration history
+e870495ce3a027520cb4db5b17f7197c6f7ace04	docs(cleanup): review archived room authoring and captures
+086c9741c3d5c4d5ac2971bab6690c7679b02e1a	docs(cleanup): finish historical tool review and retain capture findings
+5c6cf04a4428371544dd3c70664cc6b5786553ac	docs(cleanup): review lifecycle evidence and grounding contracts
+4b0c63e1ac09e67b5da4119d20f702e359376812	docs(cleanup): review compatibility and historical program boundaries
+400f7295916e52612686965f981b115aa2877c84	docs(cleanup): review capture failures and retained solver custody
+a6d6b28ffb122fba2b1199f7df39fbc13c990c46	docs: record contracts and historical audit batches 229-235
+9490f3a3b1676bbcc3f1cd9871cbb0b6039f31e7	docs: distinguish the old release snapshot from publication
+b426575c69abf720af95a5b88c144a2571688d21	docs: record historical contracts and presentation audit
+eab6d7ae31729efd716800f485d25cb25ad9f967	refactor(tests): remove unused delivery fixture bindings
+8534ae858e3d568d7d560039eeb2f9570552e691	docs: preserve historical scope and offer audit boundaries
+21d36d3a4468eb426009b188ebe7fbda035daa00	docs: audit historical fixture contracts and provenance
+d6142b74b88eadb7601e65893cb908db784daf81	refactor(tools): remove duplicate mouse-report array branch
+62267e7541103c97eddcc6a7d0644b2e659dfe38	docs: record runtime catalog and historical design review
+8755e079128fa26d4a40f4fd138edc1b5e98f08e	fix(tools): scan all runs for heist plan coverage
+0b3e7682b05459999704c8f552fd9b8676413101	fix(tools): keep canonical shard registration immutable
+964d0295fc94922b50a996c31e7b2308724e7102	docs: record historical contracts and release boundary reviews
+4e30a17a616beeb980e4f5b7b89d607cc7bdab00	refactor(tools): remove unused stuck sweep declarations
+9e8dfe12cf854deef868b7da38a7af0b93537b6e	Bound inline room responses across owned model and presentation phases
+b41625f5d35c267f5eae6b3e5fbb290ab0cbbe40	docs: record scenario evidence and determinism driver review
+457caf62dfb1115c58473157c768591846fdd214	docs: record authority and player evidence audit
+53488b19376c83f90a6a49b38e53bbe3ff6555b4	docs: reconcile coverage and review retained item contracts
+854c87d802b2ff94a119d7c6ac92fe6bb3293165	docs: record composition and historical contract reviews
+6937058c3d21660d745ff97ff4150bae24c4bce0	docs: record manifest, soak and interaction audit coverage
+791c0b11faa8af7ed0d8a7e00244195ee3e85009	docs: reconcile preservation and platform audit coverage
+11520715a3090e2943f937b0341dc452798d92fd	docs: record completed historical specification reviews
+2475f2df48ea2c33655c122aa9751a6cbc2dabb3	docs: align ritual pointer example with closed schema
+0a194666fb81567eaa669b15609b80ca7571b0e9	docs: reconcile historical health and route evidence
+34ede31e0e8f5f2b0c47d779be0f78ed197019c3	docs: review decision custody and exact placement catalogue
+27b3263bcab3abd95649d5b61fffab09315e1ff1	docs: review placement and transaction contract boundaries
+c1d43b56b5f071f3167ac6200b96e3a8bd7aec0c	docs: audit semantic authority and retained art tooling
+142cd758aedc998a727be052a6b45cd5d6c66e13	docs: review placement serializer and scenario presentation
+96de33b7595ef00c7a97e2f44bb6a3d16dab1fe0	docs: review Scratch and cross-economy audit contracts
+4723c6788ddf027b794e97eb8ec9f7430a9b51a2	docs: review performance and endgame probe authority
+6aaaa538125fd3c6e0affd6e2ad52297a74c019d	refactor(tools): remove unused snap graph bookkeeping
+9bdf9d6c31817e76be40e42f456806816f50bafb	docs: review Scratch geometry and generation evidence
+9e85db61e5e23688a84af77229e97dad8acf29b6	refactor(tools): remove identical JSON reader branch
+567b781e8ef671edfe5ec6945e1f21b2188d0ca9	docs: account for new peer ownership contract
+9e9362b63f4b5e01179c58fa21702ba8cb991af9	docs(cleanup): review placement and Coin Pusher contracts
+b6a793112cb4796960423404d7874b78f9b6ab7a	docs(cleanup): review process and evidence custody
+b1a40b81ce386915b70288b2d61f60a5e7f55894	docs(cleanup): review game and heist data contracts
+01059d67b125c30662c7f16f27ab11b481c39b4c	refactor(tools): remove unused scenario binding scan
+f0df6087447fbf9f1b219a498cfadc60ad1ec321	docs(cleanup): review event and shared UI contracts
+951f2d897b1195eb694245bda825ccf8672b051f	docs(cleanup): review layered environment placement catalogs
+197fe95a6e9a47612bdf82ea1c6d07364ae5b1c0	docs(cleanup): review visual QA and world foundation contracts
+6dcb9ee5d7961db3fa2ebb146c53c4cfa67615e4	docs(cleanup): review replay evidence authority contracts
+7c3eec8bc835730824cbbef0bc80026591621001	test(foundation): remove unused fixture allocations
+ba139f46185cfceec26421ef35056567b926871b	chore(slots): remove unread consolidation index
+c1eee62c1939b2eca810469e3c195c80192acd4c	docs(audit): record table-game and launcher reviews
+eef6c69c2be3057bcb688d38c9987dba56cb4bd9	test: avoid overwritten scenario revisit snapshot
+d1bab36ca4374bd20364a0dfa042be6298026dde	docs(audit): complete authored-file coverage and findings
+c43391adefadc929c9de019608ae153eb0dffcce	Fix action freezes caused by false runtime membership changes
+53ebaede1401b94b38e953e68ac7b32942f90aad	Fix idle Web game props using obsolete art painters
+b537213101208a4ca81368b9b4eddf5182f04807	Preserve table character detail during hand decisions
+04a114c05b5103f54fb29ddd75f4689f143e642c	Swap underground casino slot and blackjack placements
+6137ae7c32e683f4c3805f5abacd8e2c054fb1c1	Keep roulette cast consistent across idle and selection
+7508210fdb04d5267f4bb260801563131ed72ab0	Fix Cage entry when Bishop recruitment is available
+04b3520571c38d243216ec68f025794289ee7f59	Enforce Crew package appointments and limit solicitations
+5401462aaf1550b4d1a5883cb35d5813a3f66586	Hold roulette money outcomes until result presentation
+4b04333391c862a2d29535e4595075bf0de4fc75	Restore sequential Baccarat dealing and reveal timing
+398546e319b391cdf25b65e3b4888d83d7c74bb5	Update saved gas station, pawn shop, and Punchline positions
+3cbb46faee72d64ecb8f0fa6a9af9350df7bcb67	fix(ui): accumulate active wallet feedback amounts
+907fb14063c64cda774f163d0b64146e97588826	Reduce Rourke settlement proof serialization
+d5c9c56870a08910057abe461a0e389eb8cfa309	Reduce terminal Rourke report snapshot work
+4db2b90f95979e836ff5d526914558a10de1c32a	Reduce synchronous Rourke proof and terminal save work
+34b4c88221ad65552d254183b4bcb9410eff514b	Reuse prepared Rourke settlement and canonical proof encoding
+95c9a7c8074c33c38003e0e1e9a15fbabc1edab3	Spread Rourke settlement and report across draw frames
+af364b4b2f36079238cebc323babe01a7d913686	Keep Rourke presentation live while settling
+287aa0cca2ba55b6ffc0435d7416e0117c786b4f	Stage Rourke proof executions before atomic publication
+ec2dfbe68b0f03e56edb989a99d2904ef8fe22ac	Reuse immutable encoded rooms during post-duel autosave
+9804a19a850322389f306e5ef1fdc9011329414a	Keep legacy integer repair at the real save-load boundary
+9a1a733bccad7a8b9ae6398d20eb597efdfff4cc	Reuse inactive casino room compilations during autosave
+0faaeb3440ce01ff0ad4d4419171decdf52b072c	Validate Web save content without rebuilding a Godot graph
+d6ce029f389fb72d1641abd60c06adcaffc5aa36	Keep the Node save-validator check in non-runtime tooling
+6444bd0cddd3749cd1041ee832529503f7c94eb2	Pass save JSON directly to a retained browser validator
+e5954a482b99fdb8fd5da8d8ec0e0e2d8b22c3f6	Validate owned Web saves across frames before atomic install
+00c0a176b5f6ba8d28b6a728c7edbb5ed59b785c	Restore meta-room interactions outside run publication
+663fb77671cdd2faef99277079e4bb451f6b80fd	Expose Sal sell action on the visible room card
+04abf83feeaa1faa3157466a1e7bb2856d5c5785	Keep scratch vending settled across Continue
+eed1572d5017f910ca2957abfcff5e82dca682c5	Hold blackjack table notice until dealer reveal completes
+f8df4205835f582fa7b3281995506f6a32199a86	Keep Craps continuation throws free of unstaged wagers
+1ba3d0bd5aa0b1900b38900331eba1b5aeb5e5a7	Keep casino room buy-ins at their authored price
+a9260a833bfa893cd52e0b84058bbac3f8a1b827	Preserve working craps stakes before declaring a bust
+415d07aa6246b1c18a382efb28ccfcc99f967cc3	Keep Full Table idle feature text clear
+3d2401af0d78bf5aa556b395a5c7f196209461c5	Consume roulette wagers before the next automatic round
+2e13a9dc9a84cbb7c1347b8e29c0eadd808eaaf0	Rebase restored roulette timers onto the current clock
+d7d23a0f3e89097c5e6bb8e140667bfe206ea217	Keep coach dismiss clicks off covered menu actions
+5ccbf5302ff77decf7b1f7a4a9d3a486f1d88dd8	Preserve venue cycles across layered room changes
+e1dbf9564458cc978d39ad419ae5e3203dc9c5fa	Keep idle Link Arena previews out of the READY panel
+6fb91011805279eda9b4c05840863b63945af1aa	Handle each physical game-surface pointer gesture once
+4724824b6e359a62abcd4da7b0d25407f6372146	Ignore duplicate emulated pointer commands in room cards
+0c9b0eac739f53fef637e9c2aa26fc313f08abf0	Keep idle pinball previews clear of the result strip
+bcd76dc514054ed6f92606ea8681d06cae7b0721	Expose existing cash loan repayment in room cards
+44e94bbdbdb17f9e8e8d00e6bc41b845aefc3749	Keep active delivery terms inside the HUD
+06dbe16b165427d1c4b6f9e3c0d8fa597ed20e6e	Clear room focus and outgoing gestures on every arrival
+1180b47f2ba4cff019947feff60ffbe632362f4b	Keep Lounge playable when Sal address notes appear
+9e8f9fe3c0cfbfdfbaf57db048f9e96d2a829e78	Guard arrival pointer capture before canvas attachment
+89106aa1880e76e73292a4843be2e35d4176aefe	Keep Store playable when Lucky and Dave visit together
+06c08c054a805842694c1d228932b728a6b50f39	Expose pawn ticket navigation in inventory card view
+d2a0124e86014e8c7912fcfe7c7c66d5128161e9	Keep item quotes in sync with container navigation
+8ee7222ed759020afd2fb913b2a238fe0d481153	Keep Home pause menu separate from saved run controls
+051f256165050043678b03e0f7431aec18a128b0	Fix repeat delivery contacts and saved room recovery
+b92b79a5d0ca6195782f83cb97606e3380c5b275	Fix Open Mic signup lectern phase placement
+7d3ee7c3189d68a25802e6e490d525cd558946bc	Explain unavailable map destinations instead of a free walk
+af4c82c815eebe952a4618d793cdee7ca6eacfa7	Preserve original room targets during double-click focus
+3a7dc11e9c4f687d919a2f080b22b50f86168d87	Clear consumed Craps drafts after successful settlement
+9cc2a01fbbb65d20a4efed7e3170f02f0c1149f8	Block Bar Dice cups without an affordable authored ante
+9d1bc84613ab2960c2baffc23ef7660297999667	Recover uncommitted Bar Dice deliveries without replaying wagers
+04965ffaea60a7c947003c8ad09caaca1bcca92c	Use authored event seats for Bar patron placement hints
+e7484382dfe0fa6e459de235b0f42859680edd6f	Refresh Silas tip dialogue availability and result feedback
+f1726c456e3b2cd93c1cfef283a75faf02e359d8	Explain unaffordable Blackjack minimums on the table
+f05728512be519d0b84f3b05a68d07522c6975fa	Invalidate HUD drawing when the wallet text changes
+5f215b818a463ca1d435c163c1a572f4e28b9fd5	Refresh wallet label allocation when the amount changes
+a5390d4179e3b14e4e257fa05822b5da241cb944	Keep early delivery handoffs retryable and recover pending owners
+868187e3cb7180785a94e2ca5a9b54046bebf388	Wrap locked-room explanations without losing access alternatives
+04e3beeeb6b7ce7b04de4cea9621e176d8fc08bf	Let the inspector last move begin after its response
+df6860b1adf73ceb194f623806a49783b24f2a16	Keep interrupt test probes compatible with last-move allowance
+fedfc5cbbdf5fe94250e8b861ae9f07b99802a18	Show rejected active-item use above the previous result
+5f53325943e3133a64026705ad27786dbbeb581b	Keep ticket cashout available after venue closing
+d782a45bca7ed701134fe0e0bdad3f554fb43703	Finish Riverboat docking wait when closing forces departure
+ffc47943e8b696c4dbf749ab2234746e4953ef0e	Wrap HUD status tooltips to keep debt deadlines readable
+8713068f034ca1df11d59775558274ca9a424ed2	Preserve complete debt deadlines in HUD tooltips
+3ea0f1b872ea3d13b575ecc12ab215b5f8ce3754	Reserve Pawn Shop space for concurrent delivery contacts
+0b4827be2e2fbb66163b8c78654caa8ba0516f8e	Bind Pawn delivery contact to its clear authored reserve
+46a51d016a2ea98de83a09b5c6a0bba9d7233252	Keep waiting delivery contacts immediately interactive
+7ccc95167aa182b6a1f654f35110d224b1704413	Draw waiting delivery contacts without roster portraits
+29b50e36c1176cf818e85b1b998550e585d8ef08	Hold Blackjack wallet returns until the final card
+b28f5c72b6c704546ad465c9f25ae42bd8a21698	Keep Blackjack table totals private during dealer reveal
+b5c8659332391451773092b7856c95b19b8873f3	Reveal Video Poker outcomes after replacement cards
+a06419d09dd379d837528719c805854004721174	Unblock Bar follow-ups after Fight Night book choices
+cbd72764a4a4ab9015e4d9fa99b27fbe0edf5ac9	Keep slot margins from stealing nearby contact clicks
+693393836066afd9602abbe3be888c05afca5d1e	Track adjustment-mode object bounds mismatch
+0c7bb04383e2c604cfcf0e6a40cb282fb5bad8b0	Mount delivery contacts in ordinary destination rooms
+aef895edcdbf4a6c416858a6560a0878b7690f63	Record verified ordinary-room delivery repair
+bf894fcd740cfbb8b4c77ffc5e11000b98291a58	Give Punchline raid moves distinct phase positions
+9cfb2ad75d368bad90bb90381d2a5052241bee3c	Expose raid reopening on the surviving clear bins
+4678a8bcc9dba653ab7f59c93fc18ac05c96f125	Align Slot placement bounds and literal cabinet scale
+8e55a261fcb5fac9981bd2d589c10611af6077f7	Record NEXT qualification of Slot placement bounds
+4f7778a230abb70dae98491b35f31f6647820a98	Attach Lock In tasks to their intended room controls
+0de4ed4376762862a4e7b43daea420a784f08368	Record NEXT qualification of Lock In room controls
+863e1c6ab3c2e68707e5cdcc9ec385c5e5a35071	Keep Lock In qualification inside the backlog table
+1c3c736768057488a578a8cf71f98b6d9bfb1381	Restore saved Bar Dice cups on game entry
+d82b3b13994a19b1716de5489308fb6fb67568d0	Record NEXT qualification of saved Bar Dice cup restoration
+74dc3edd8f8138d57f489728ab0415c925d283f5	Preserve live event membership through scenario room restoration
+36e4c3e42396ad3a6b2c3ede3407cc557608d0b9	Record NEXT qualification of event membership and room restore repairs
+da941037502ed33776e7ffcbe5528201c981b35b	Retire consumed events consistently during live scenario advancement
+994d3b63f41215d4af63bb35ec0eada730e66095	Record NEXT Web qualification of live scenario room repair
+ded24ecedc528919efbe1817a2722710d687651c	Show Host Desk inspection guidance in the visible Result panel
+0d85af2afc2ad06c960f19b0fbf4af34702ce175	Record NEXT Web qualification of Host Desk guidance
+943866a2b6e51e891411bfbd1054e31742e63235	Reflow grouped inventory pages after popup resizing
+63729d37c2dce2fe5b17e0e88404e224441bd157	Record inventory paging reproduction and NEXT qualification
+644af3a8441ea9b45333dacaffa42e2098968a5d	Release Craps controls when roll animation ends
+ea8da1832798d11eddde44d01042f6f899692a4c	Record Craps roll-unlock Web qualification
+a893cb07ef22213e551cc8d8ad473c0578ab0048	Show completed lender repayment in room feedback
+58feb42c98032422e2d37e979b5029d2c4834ced	Record lender repayment Web feedback qualification
+e72434dab3f1d60f89fa53917b18ce76fb8989fc	Fix missing suite rest from accepted casino comp
+cd769f1881a94cbfd84a2375fb784ed867964433	Implement Crew delivery obligations and shared reputation
+8b369ffe0a0301a13c517d52ec59932e11f77706	Preserve Crew post-miss context for voluntary deliveries
+3e6587522b8038e7103f3602fb3328d45c74a02f	Keep modal focus safe across inventory rebuilds
+9c30163d60b463ecea46ad95b13fb8073fd53a5c	Preserve unfinished tutorial progress on Main Menu
+c458224b8e65fb6a7f1f5415f0f86f587c837e1a	Complete Blackjack raise lesson from durable wager state
+94aea01918a938958941eb4042020790796f4142	Render saved Craps dice faces as whole numbers
+94a55cd934952d36d2a47393a06cbbf210904bd2	Fix repaid casino marker status in run report
+e997dc3006577ef562715f0c4a98531fd8fc4278	Expose all physical scenario choices in mouse cards
+86e1487e84487820e57240ef8c611c5799d68159	Keep repeated pointer presses on their consumed card action
+be24ffff7b19ac14890083a749daec79b792cb04	Close consumed scenario phase cards before later presses
+d2b4ccd65c4b4acb1c11faf43be5293c6c182ecf	Preserve paid Pull Tabs through zero-cash restore
+84cf2a5195a8e61725660e2ebdf8b5bf25f95a67	Award25 Crew reputation per successful package and cap100
+24a06be5a0ba42f9726fc2b92ce2a36865bc201f	Preview adjusted slot nudge Heat in cabinet warning
+205465e00c1f4db1ed2fe7f91023447b66c7da45	Keep paid Blackjack checkpoint current through trusted events
+8921b7c5d45f7f9d124d144b4a21193d9f600319	Describe Players Card prestige and permanent carried-loss rules
+a141752182a3c3be5869aa5d1881c8f616eafecc	Keep Home usable when rewards exceed authored display slots
+41fed082f7352659dbc3469a9cdf1f79f40c54ba	Settle paid Coin Pusher drops before zero-cash failure
+bbc76eac07619e82a286563625e76a765e4086a8	Report actual clamped movement in Rourke hand receipts
+c1ae1a920692d786e20556811597200affe1015d	Fix Clean Walkout chip redemption at duel completion
+7b673ac22aa9f996953ea7f32c28daf8fa7f0b71	Publish Rourke terminal report only after its model is ready
+6973dbc243bda2d88bde0b77be8252519d54b354	Retain the Rourke table until terminal report replacement
+d882cd967c49fbdef243dd2f9d4b0a58bd222c41	Carry equipped loadout through Home Quick Start
+3dcf2c7c0dd055c95be0d26d5373ef489c6f6a5a	Refresh the Pawn Counter after an interrupted sale
+631f0d26c36d88e2a15e89bd8f8b437e88d1f457	Block world travel during Rourke summons and duel
+aebcc367e4a3c7581daab157ddc988e152556939	Preserve internal Grand Casino routes during Rourke summons
+7ba3f40988e2d65c65a44cd4f4593fde63101e3b	fix: give Jazz paper leads a slot and propagate publication failure
+380896e1f9e09ebc5efe2840b2238eddac29b9d2	Bound rejected-room travel recovery to one automatic retry
+9adf460d1ad0d716e91049bda0d9477483e7aebe	Show readable instance labels for showdown inventory choices
+9f9606b1f857e55e97badf9441aa9a15aa0dd38e	Persist terminal bag claims across Continue and safe retries
+3c56ba363499d4a678ae718192252ef790dacbc2	Save the reviewed item audit as offline repository documents
+197310ac6f57eec52eaf3012117b2bdb9828d0db	Reconcile Crew room membership before validating layer entry
+03e54ec9525f3fc05369627fe558d58a583794a0	fix: describe conditional Blackjack Peek consequences truthfully
+5dd74f641d349f68ea785fe2252197bc1734f59b	fix: keep chip-funded Grand runs active after paid settlement
+76a76995f3b98b6f442a0370161b25771bcf20c5	fix: reject duplicate carried runtime item purchases atomically
+5added2d2eeba115655a157322fa74422cfe4897	fix: advance pause-safe input time under reduced motion
+20acecd182d518e2fd8194b932b8db42c1b85b70	fix: preserve committed room controls and provide neutral dialogue close
+8ce16e6c117a2178960d3db99db4255511b8baad	Record actual applied watched Peek chip loss
+f44ddadb9433d0286262696ac9c6414c034d3801	fix: retain applied chip units in cold receipts and profile totals
+7cdd082ea5e95c51cff4ebc5ad1e4a7172e5eef9	Restore Motel Stakeout actor corridor positions
+d36570d72e8f415fe5d6ed1ba19e36ac156ed896	Fit Blackjack Peek warning within inspector card
+b1dc27749e05efde6beaee951d55f295a3dfe32c	fix: preserve paid game assets across generic bankruptcy checks
+8107039e9fa47b630207971bde62e6ca9c65b0b8	fix: keep Health Inspector last-move allowance in its venue
+7100836f920114343ddb9710ab08ade648d3f910	Preserve archived Money Flow totals with explicit history coverage
+fa3de446a532ef44aed84470f53cf3cd236f62c0	Persist Money Flow archive across RunState saves
+8df89e07f66d61ddcd26fd2d893aa1bc0f2eb5f1	Report applied Blackjack penalties before narrative text
+3beb657fea699cefd14775b312398fbcea85909e	Clear expired quote feedback after accepted Crew delivery
+edc9fa5387cfbb7d3529678e4e301679443003bf	Honor authored neutral dismissal in TalkDock
+9a74e9744470aa7b29f2af9bd0eb908235cf7507	Reconcile live actor slots with sealed room occupancy
+774668e2cd9780ad01ceb87b9e6bff14ab22a15e	Fix Baccarat readiness and currency display records
+c263597a60c662842398f3e8b77919cc358a7b4f	Restore Baccarat chip units in saved result summaries
+accef469bd2cde1677bf20379ea0cdac64137507	Restore timing windows in their saved clock epoch
+70ec8e7f2ad5d2df8318e6794f0811f4715da978	Display legacy Baccarat notices in the recorded table currency
+9dd11f81c94b5a752d5e9a9bcf9e759da5bc0364	Place the Stakeout false balcony marker in its authored left zone
+9db6793be26dfddba04eeeaedfb69eb2e6a5ddbd	Commit game-owned physical presence before room catalog publication
+4be014f5298ce235a279ee3348423a6b0e8e4f8a	Preserve authored dialogue answers in the TalkDock
+bfcc5639e8ecc6d86aadb228c2e2a4b090440bc7	Distinguish deliberate room Talk from automatic reopening
+183a11d4626fe263c1f8682816e4559f35443a60	Publish attached scenario tasks alongside live host actions
+387013ac2a48a66688d74c3d35b56773e9171798	Rotate venue scenarios at closing and reopening boundaries
+6180646e155faa08cc12c7a79cb113f5d1d3a52e	Preserve atomic travel across saved venue scenario rollover
+e82f41b1c4598274bcaa1bf5e22503f697cd383c	Use the authenticated attention-only Blackjack surface path
+6f386b2915195f9011be4874a91d0ddfe4c8ef4a	Coalesce sealed game room publication within its owned rollback
+6e68785b9a1030c24b75dda3e8bd308c1d7d2535	Fund split doubles once and preserve responsive Blackjack reveals
+ab57f8fa01a0b08e62b7c9049433ffaeffeaadd8	Correct saved chip units, live Card interest and final travel receipts
+20fcde023f7145d6b5bb3b053fb20e13334c5bd5	Reconcile Crew venue-cycle room authority before publication
+6c77759f80862f411ee12c4a3703563e6de3f876	Keep mounted world actors in warm scenario publications
+664b105937670cf07f80e2486b5e0412222d7bfd	Persist ordered informational Crew handoff acknowledgements
+b7c1f5ee72e705904c292a388651fa9f1bfc57a9	Correct Gala aftermath routing while preserving accepted legacy outcomes
+963a472067ced2537a5b3a88de7c657f885810b4	Persist ordered scenario action feedback across Continue
+7588b81a615d316c04d739251a9045da37462417	Expose authored Street Craps limits to the action host
+f7e63136d3e5cb57699e91156e252ff285e1d9ad	Disclose public event consequences before action prose
+234e86474711c3d591df9c3719313d1af4224674	Record Crew heist payouts in Money Flow
+d68b49ccf4fb90389686628d68b0e9c56a8e6f53	Keep Crew planning responses in a scrollable window
+4bb67124cfe0c46cf0d483359113ee26390cd089	Preserve Players Card comp feedback on Continue
+27efd3ac94e6c59977f3fc0ec5d66ebcd159c6cf	Restore warm collection decision placement
+e53eb65725fb387ed0b97761e23ea6bb77e47713	Allow deliberate Cage Inspect after neutral Close
+a7464c13285c3102e9bd82719f223ae603e3f61c	Fix explicit dialogue entry, Crew room publication and save precision
+f7360e5c45d9053eae8de97e1a4fa481a735bc30	Bundle local assets for UI control icons
+43971e6b74022cdc60e870a72f83c482e3a3e61d	Keep tutorial coach cards clear of Run Menu controls
+c8cccdba1dda5ddd5d4a7afd0c331edb1c04b24e	Preserve manual intent when reopening lender conversations
+c23c47febd41bbeba273bfb84e31c0d429e6fd60	Recover room touch selection after lost pointer releases
+3a98ab2b5c1f2bccd7b5cea0bd1d8055d181010f	Retain unfinished coach cards across Menu relayout
+9ae03983c680b9fcc698426ced20e7f7a1892d0e	Respect recorded cash and chip units in run journal
+8e01f4ff60a249566591d64a831c83fc80117c67	Show Crew package terms before confirmation
+b12430136817595e92efb03e5c31881caa21d209	Preserve Crew package terms through the UI choice projection
+8a87c8070424b6c2dc6a93ef60990c9cd81f3faf	Use the full phone portrait viewport and keep controls reachable
+de3529c8faee12df3d2671d1ee1812957f0fd734	Fix Slot Auto bankroll confirmation before sealing wagers
+38defb7271e0cedb006f8e0ca3424cb7d1a80fb2	Keep tutorial tables on their configured Punchline floor
+7e26586d05fa45d4aa8fead6edf13585a2656f83	Preserve authenticated historical custody bytes
+61081e76535ef3013ae8a2770b05e1af80086b4a	Restore 0.6 environment framing and pointer interaction
+7529939470719e9bc4b95fda1849f71868bf5979	Recover missed first Blackjack tutorial hand
+8defad0a4e3c04320a651520c93e368a3a185c78	Settle initial room objects before first run render
+8b2ff3d25b59b388d761fb45950b57a11b9842fc	Expose authored Jazz services on their room cards
+3755739cb640b6ddb7a7a477e24af27cc4076b27	Keep tutorial venue fares off interior casino doors
+f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f	Keep Count room controls authoritative across venue cycles
+124ee1677dadfc49ae845d90365cfc6ee918602c	Keep consumed events out of world-only host seals
+87a06b9a4acbe86b0f761d2cd0ab929f5584b716	Keep selection popups focused on authored narrative
+6a784623bdedd6b253d41ef42110adbfd4d67a12	BTH061-AUDIT-001: Remove confirmed superseded code and art
+8d3c52756d99a315050e62601b5da3531ddef0c4	BTH061-AUDIT-001: Record removal commit and verification status
+be4cd6716e3e1f7614008c9cc70a27cee7b48def	BTH061-AUDIT-001: Track exact-input import qualification
+29ba65a8531e3d260574ddb217f72d36b3df98df	Preserve Back Alley rooms across travel and loans
+a7f95cc0ae842eeeca4d03e5e64af6a0baa9a6e1	Link Back Alley task IDs to tested implementation
+4355f5611f0f77f546d898e39524f6b8e974c161	Fix Crew delivery return and remove obsolete game screens
+e4cbcf8a816e714b04d8164fb233c644dacd0466	Merge remote-tracking branch 'upstream/main' into HEAD
+5f01c8f0b21cab1e598fc00e187753102e970325	Associate BTH-GAME-RETURN-001 with its tested fix
+b29d9b3985b5676aac2439f2f08aae359729a3e3	BTH061-CREW-EXPIRED-HANDOFF: Retire settled delivery handoffs
+c6fef9b0063b2084c4b3bab04990e8e8e893133d	BTH061-AUDIT-001: Record verified NEXT completion
+adca96948d9e09bbd9017495c93fa1dfbce8d28c	Merge remote-tracking branch 'upstream/main' into HEAD
+f3a2f0b1930813a34553054c966c965a5ee13bff	Merge remote-tracking branch 'upstream/main' into HEAD
+8a0f7276ed2ba575de0b481eb913e004ce598f22	Record BTH061-CREW-EXPIRED-HANDOFF commit and qualification
+776a819d0420c8801708b20b5e9376c5fd0d15fe	BTH061-TABLE-ENDING: Finish table result presentation before run report
+5e054f51b439028fd8417a0dc7bca97ca4e1d179	Merge remote-tracking branch 'origin/main' into codex/crew-expired-handoff-20261103
+60d8855191bc204a38ac390c1b8af2656f087aca	BTH061-HUD-001: Keep the run information banner on one fixed row
+29931ab9706df2dc45955f52fa1125fe77b78079	Record Crew expiry qualification with current room publication
+afc16f440695b7a83e7eaf5fe91c064b341813bc	BTH061-TABLE-ENDING: Record implementation and integrated checks
+b5a06142abeee1d2c83c8e437ee27775f415cd6a	BTH061-TABLE-ENDING: Record publication approval blocker
+a8941ccf94b2916ba772e9f7a4752bde454f1731	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+8d3b1d29f3f0e4ff42745a9f2f11a7790973892c	BTH061-HUD-001: Track fixed banner commit and focused verification
+b31b323d15b0e04f8d4aaed50f48514ca13abba2	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+c54496f604c4c561dabbb47cacd7ac74ab0a2ee2	BTH061-HUD-001: Record integrated checks and pending NEXT status
+22ae5fa22ad60f4eac8c3295e65e1e39c7cd9832	Restore stable BTH task IDs and commit-gated playtest tracking
+e641f0c81af36c399d5fea5c1504963455f63cc2	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+f6295bf9afb7f5afac5ba6f347cae3a8c922da1b	Close BTH061-CREW-EXPIRED-HANDOFF with NEXT verification
+8335d7183286a060d204631f54af19235fa216ab	BTH061-TABLE-ENDING: Record verified NEXT completion
+92b97d9a3cbc99c166eab164bb72f8e36c237e7d	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+fa66ab72c6d7bf32f77709ea9dcc878795774486	Merge remote-tracking branch 'origin/main' into codex/crew-expired-handoff-20261103
+3c25a4aac0a41f182aa525b5f919d7822150d6fc	Record verified Crew expiry delivery and original-state acceptance gap
+33a7347b9b54abcb8c9a690cd18e49fc8e86011e	Merge remote-tracking branch 'origin/main' into codex/crew-expired-handoff-20261103
+57c9110fdc16d7eec17115465163669c24c6d225	Record superseding NEXT verification for Crew expiry fix
+69f0b4ed8fca6970c3bed69f56cf1a0544de2001	Record deployed Web HUD parse blocker and correct startup qualification
+8c56147e96d34091a26a2ce1d5b53f4e14fa686c	BTH061-HUD-001: Record NEXT asset verification and browser startup limit
+62e131d72fb7ad00ccd240434c869d07de3115ff	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+8f330c51c858ac6e82f3e307c6009bf330cfcd81	BTH061-HUD-001-WEB-CANVASLAYER: Use supported Controls for HUD details
+2041585d42ae5f9f609d351a7aa0bdd48b1ae094	BTH061-HUD-001-WEB-CANVASLAYER: Use a Web-safe HUD disclosure
+d75d36fdc0889c92106131404c6c4ec5d8ec1d3c	Associate Web HUD repair and keep current acceptance open
+dcdebad6bff42a99da47d9ae34e78fd7285056ad	BTH061-HUD-001: Track Web correction commit and qualification
+05f5b9ccfd64dea958f4ad00f42ccaa89718304f	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+da24704d7a5b037a9b3771e68133553c054a393b	BTH061-TABLE-ENDING: Preserve existing machine terminal timing
+72945567dda09bff4feb236e44885a7850211a19	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+0c71fdad33ebdcdecb4aa78e9e7dc9e3f6d0bd80	CREW-COUNT-ROOM-PUBLICATION-057: Exclude Crew live table from base seal
+4cb8c0913892097edec42a4298311a3512b409b9	Close table-hand and Web HUD acceptance with verified commits
+3b4bd90d70754c9b9ded0ce61c7c69bea2e5e5d4	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+e194813a3695cc4333a6568ab51a387f681a8815	BTH061-HUD-001: Verify full details keyboard traversal
+6021ece8fb4e9d2b8248e4543e27b1a651ea6275	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+3fd56aebde05182a02a6babf096ae8b7fe430f7f	BTH061-HUD-001: Record exact NEXT gameplay acceptance
+226e25833dc8e863f940011fee6cb275cdd73097	UX-ROULETTE-SOCIAL-QUOTE-001: Quote actual WITH and FADE additions
+8bdfdbedb98e37eaf781952439df3877b80b6c46	Associate roulette social quote fix with native qualification
+ecdccee418c2297a0fb864d00c902a4c159dfd5c	Record roulette quote NEXT identity and browser acceptance blocker
+dc15b7d369f435d50fbf16e37af33952a4c58760	BTH061-ALLEY: Close acceptance using retained and independent evidence
+436a707f8ed1ca6b5464e083326d9d1fb6bb7de7	BTH061-PULLTABS-SAVE-001: Track open report and test save custody
+0ae2d2ceaa6e5b04b77e6bb3ea687f1f0e9f5f47	Associate Pull Tabs investigation commit without closing report
+467459090bd4ee2bdacd7674370b1742f8453150	BTH061-CREW-EXPIRED-HANDOFF: Verify current warm and process-cold outcomes
+adb75dbe7f97e2b96279fbf401f7d7b8913072b3	BTH-15/BTH-17: restore active item rework scope and decisions
+ebd667392e896be776c6d84c1ce654e20fd86dc4	UX-ROULETTE-SOCIAL-QUOTE-001: Record localhost Nix quote acceptance
+ea136553ce3f33236aa3ea22d23921e6f957e7a2	Track full performance audit and fix continuous Web coin publication starvation
+1c201c9e341ac6f3e068c4d498fd00bf7298880e	Fix delayed arrival pressure in Wedding scenario progression
+de9459035149d41727e25893d9f7380938428214	Keep scenario work active and record Wedding NEXT dependency
+247ebe3277cee8bc46fc3cff084607441fa296d4	BTH-SLOT-COLLECT-001: label Slot Nudge as cheating before input
+b63342bbdf04cfb799ba5405f3d4f4d0c416485e	BTH-15/BTH-17: describe actual item effects and game scope
+9b3e4db273b91ebf2eea071d3bd54393f3caccaf	Associate factual item help batch without closing parent reworks
+f8271e9fd01aafa59bdcb62b586f47984d0d2b5f	Merge factual item help without closing parent reworks
+75b491df2410b90a65c72160bd433a37389099f7	Record verified Wedding NEXT delivery and concrete Bringer follow-up
+66cd97dd18c78350b0194f824186772b30039938	Qualify Bringer probe by normal route admission requirements
+d641ce2d36cd353730f69f4360f619f295333ff3	Remove superseded backdrop subsystem and unused runtime paths
+dec71ae8b267e9adb27bd408b10cbad9f4644b82	Repair stale audit fixtures and current validation contracts
+e6fef69a19cf73b4805fda734724652d76e0e141	BTH-PERF-20261104-002/003: bound consumed pusher inputs and reduce poker hint work
+7502ba860908fdc76e6163bcbdf6fadabc72e063	Associate performance findings with tested source while keeping whole-game scope Open
+71aa69d92fe78e1600dd2743120e0f1df5e30f27	Preserve full task objectives and check manual reconciliation
+4b9499f5cedb2aea9d63f7fd1c723b00cd5e7404	Reopen full audit scope and track inherited follow-up failures
+b33374061f1be396e1c6a73a6af690d618fc4b64	Restore canceled-touch and Package popup scrolling contracts
+c43c95a9da3a7d1c4ff595619cb3c6614ef5bb30	BTH061-PULLTABS-SAVE-001: await browser persistence for Menu Save
+a1079b0f722965d4145ad4639f239b1959fc7bde	Merge remote-tracking branch 'origin/main' into fix/bth061-pulltabs-save-001
+c612db0a7a3fb6e4f6edc21bf8ffebb6aae64f38	Associate Grand Save acknowledgment fix and retain original open task
+b94f39382c8e181014140ae2600f13eef63a60f5	Associate audit repairs with current native acceptance
+d74d9987721000d17a643e5f366d6de106be536c	Record rejected main publication without closing pending tasks
+0ebbb9c862a0c813a9ab1bb78583107acff62094	Record explicit main push approval blocker without closing Pull Tabs task
+98f20449f4cfc3657edb35389c1a74a7aad43121	Merge remote-tracking branch 'origin/main' into fix/bth061-pulltabs-save-001
+da0fb8ed90a66caee152182c384335c663cafa7d	Resume authorized Pull Tabs Save delivery after concurrent main integration
+255bbfc53c69b3dd4dd4944fc98719e99c671376	Preserve Blackjack round net in floor and saved feedback
+d1e777739ab660679ac07e228ac5cb436b1b134a	Reconcile current audit queue while keeping publication blocked
+f3c3107e25d749e3d50981e3f4c6152a2fc12d57	Merge commit 'b94f39382c8e181014140ae2600f13eef63a60f5' into codex/table-ending-presentation-20261103
+4b5390c9243be703ae90d97a076d31f0bf8c0754	Record exact NEXT acceptance for scoped audit deliverables
+da59be9a2c3091898f7777f0ee86fa0a71e0615b	Merge remote-tracking branch 'origin/main' into fix/bth061-pulltabs-save-001
+06021a2b573c3c8ffb2883a81ed860bd2e5c52de	Record Blackjack net feedback native and cold acceptance
+ec94c1e9d90dc3e863022f257e4757a877251f07	Record Video Poker journal currency at action time (GRAND-VIDEO-POKER-NEW-UNIT-001)
+2be90a037d41f8058b468c8dd0d4cbde46025678	Retain Blackjack publication blocker and Web diagnostic limits
+01aaac3256f88634a7498e56497f9d63960f14ea	BTH-COUNT-SIT-SEMANTIC-001: finalize heist room before turn
+1fda9e8eca7a4fcddfb4606dd51b5a28152e3c49	Track BTH-COUNT-SIT-SEMANTIC-001 pending original-save acceptance
+2d62e3c04837d4ca3bc7158f1821abb2f2dd3afa	Keep Web Save CLI contract under tools for normal NEXT import reuse
+f2992a978de1c1f55b3e0d4eda47b107d2d69d86	Record Count Sit NEXT delivery; keep original R06 acceptance open
+d7954274fc4aa1032aea568f49a31f0f50924c09	Record exact NEXT Save acceptance while retaining original Pull Tabs task open
+8e9951c3228f28843c0576bb29ff3323f1894b0e	Retire superseded slot writer and preserve historical migration authority
+0adf3925fc3d816ea818e84a9afa41b29acf8c29	BTH-TRAVEL-MOTEL-SEED-001: Retire stored scenarios after town priming
+70d3ec31f0e2a4e9aa83ff589d6c2b016dec52c8	Merge remote-tracking branch 'upstream/main' into HEAD
+22ff5e4f9348460dc617853901cfd373520e408f	Associate BTH-TRAVEL-MOTEL-SEED-001 with its tested fix
+4dbbb54cedf310b8778ccd175f1b4e3e49bd85ea	Track obsolete-writer removal and aggregate validator qualification limits
+47323f2973ac1e0cfd209ad36b62ca4fb5ccac48	Merge remote-tracking branch 'origin/main' into codex/deprecated-code-audit
+788224c2b719141c17145e1d939ede72fba52aca	Merge remote-tracking branch 'origin/main' into codex/deprecated-code-audit
+d00a37629587445629f527eb57d20799b65a6a11	Record explicit user pause for item and scenario work
+810e97d52648e0996570af2084c0f1d65a4a4e0f	Associate verified local pause update with its commit
+32052d05fe24b1c29623bdecd561f2f654f784ad	BTH-TRAVEL-MOTEL-SEED-001: Reject retirement without scenario identity
+7a9acf3f544cdb7d212980f3eaa482b0bb48fb95	Merge remote-tracking branch 'upstream/main' into HEAD
+4ec87e9183bbc65ce95a2fd34e56e391b91477ff	Accept original R06 Count Sit Save and cold NEXT evidence
+14d532f353334e7635800b93743c33d91a7a6fc3	Track BTH-NEXT-ALLOC-001 telemetry and unresolved NEXT export crash
+432fbc7e9a5f007ce6ae5660f85bfa361f1e5558	Record final audit NEXT evidence and prospective item-scenario pause
+87395b95a1d9439a3eadb7a4982f84011f9608bd	BTH-TRAVEL-MOTEL-SEED-001: Record exact NEXT acceptance and completion
+0e6831250a712dabd6c491593ad33def8060eb59	Merge remote-tracking branch 'upstream/main' into HEAD
+506f6fe87e20739b5c2b7604fe6070b527747ab5	Record BTH-NEXT-ALLOC-001 owned-job telemetry activation; keep crash open
+d18586d11c9321bd1caf7582d0d9c94db467232f	BTH061-PULLTABS-SAVE-001: qualify reconstructed custody and correct chronology
+474855071a618f8272fb86d2b8f03b2b678c2c3b	Associate custody reconstruction evidence without closing original report
+cc39dd5081df178484f24e786a919bd259724d2b	Fix DEPARTING_OBSERVER_CLIP during person transit
+77272db8800045e7d69d3367f34c2a79335743fe	Associate departure bounds fix and native acceptance with task ID
+79ace22c2e508134c3ab4c5698b14426688ab6f6	Close DEPARTING_OBSERVER_CLIP with fix and NEXT acceptance
+52b5c04a65d272b83c8ddc320a8992b91d5b7eda	Claim BTH-GAS-SCRATCHER-EXIT-001 and preserve reproduction limits
+be3f1b2d99d6d6f36ee65637f9e8e75a788ecbe8	BTH-BARDICE-WARM-PROGRESSION-001: Use surface clock for tumble gating
+5687768cd1569149f8e2ae2efb010bbfdfb4ba17	Keep Gas Scratchers report open after recovering paused owner
+d11103d582ac2e6f4b2c63967d232bd0dec23400	Restore CARD-INTEREST-DISPLAY-001 accepted fix association
+e0cb231b12bd99da8c6093509b235339024ccc19	Track independent audit evidence outside paused code areas
+8ba8ba8aee4d75e099d77dc554e20740473bb563	Remove orphan tooltip helper and unused wager signals
+88cb119bfb1ede48525a7015fe6619f1215a9e2c	Remove unused generator helper palettes and capture preload
+f3ca682507961aa9cf8713573339d39fb2167973	Associate independent audit tasks with local qualified commits
+2954398c011ed4a01d6894b8fe129dba5bb213f6	Dim Blackjack hand actions until deal reveal completes
+3a9056120879fdabb91098e8612fb38e36a594db	BTH061-PULLTABS-SAVE-001: Record remaining provenance limit and next triggers
+be4afc1558242dcbd483568a39da68ab1e331a88	BTH-CRAPS-JOURNAL-CURRENCY-001: Record new receipt currency at action time
+b5d24ea936fed55c59393678e057cbc3d85e3207	BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT: Stamp new Slot cash receipts
+85c1782be759d4e50c50219945231312c2287640	BTH061-VAULTDROP-SAVE-FEEDBACK-001: Show refused Save in Run Menu
+f876fe41cb8df993d79de4cd02b21f34b7c21dbf	BTH061-VAULTDROP-SAVE-001: Record accepted feedback fix and original evidence limit
+eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a	BTH-NUMBERS-PURCHASE-JOURNAL-001: Record accepted Numbers purchases
+5e04e409546ecc9c8c3d04087bddacbd316c818c	Associate Numbers journal task with tested isolated fix
+9894795bfc71690ef49c25baa6c50702920e7ac9	Close Numbers journal task after scoped native and NEXT acceptance
+e0afd47f0836875ad6048aa120f3915cc2a4bc1e	Record independent Web Numbers purchase journal acceptance
+ed9242d6b572db568a971e8e65276f6a667ba680	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+0ea1a52ed2f4c982cfd894e619d2fca47175b452	Integrate reviewed nonpaused audit cleanup for NEXT
+b5fb8d1979552f98cc4c8080e617ccf9384b4ad8	Preserve trusted tutorial fixture authority across reviewed state extensions
+a735b135ac3c79b0125419b83f17b9c94b2f687e	Repair synthetic tutorial cadence after completion and state replacement
+ee02497f95183b61155b4a1357cc9346bf0815af	Record authorized Blackjack current-main requalification
+2376202f5a3624acea84ff76bb9203e6eaf42c33	Integrate BTH-CRAPS-JOURNAL-CURRENCY-001 for authorized NEXT publication
+61189c6b40d398f18d9b6f3392171e049124c9c8	Bound Web GL handle registries during normal gameplay
+1a888277f4d71d4bd8f0f4eda5d1390e7cc03167	Record approved audit publication scope and combined qualification
+df7d77a820b59f787701fb578cdd4a3b08bbb974	Preserve concurrent main work before approved audit NEXT publication
+e3a470f387a45d35ed7216c3ac3a20e5052a3863	Reconcile current main before Craps journal publication
+7f03921e584a0fadcd1143be3db4a3461270e7e9	Preserve concurrent audit main before Craps journal publication
+88008ca4a2d1c3aebc615cdb1198a5b378fdbbbd	Close scoped audit repairs with exact NEXT delivery evidence
+bb8d4ea0015b9b3e013911bd6fbd232edfcce445	Preserve concurrent main before audit evidence closeout
+2b2db17ecedb3dcf02e9c58c381c48a2cba685f7	Integrate separate Slot journal fix for authorized NEXT publication
+f3058b6daab820e9d747c4c4aabc2d983e9ae32e	Reconcile public tracking closeout before Slot journal publication
+345f94149609e828c76c7a9df6b2cffaff5862b9	Integrate separate Bar Dice clock fix for authorized NEXT publication
+8b93658286732e77da035468c48ba5f3c6fca83c	Track continued host controller audit and aggregate recheck
+550c2b26f4c78ade7792b353937a35c32df7f386	Close Blackjack net feedback with exact NEXT acceptance
+0324b475f424115cb8a731119fa53ca5b5e3f61c	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+40272a2c65f84090be3b8a1ec30287064eab8711	Record controller review and fresh aggregate validator failures
+bca8c70d7d9e621489450759356f7d6b98044d91	Record journal NEXT acceptance and Bar Dice export blocker
+9c6f1e23a902ae4b707ff64b0db0f2692c8d4fa6	Preserve concurrent Blackjack acceptance before journal closeout
+319faec818dfa9a01945d041ce8fd494b9f6c20b	Reconcile finished work and preserve explicit user pauses
+43a3901b8054b1a839d4ef93dd7423e578cd0e5d	Preserve current main acceptance and unfinished work for publication
+948722e1d18c078328d7bda6cf7175745f426d07	Classify reviewed Blackjack feedback predicates with hostile coverage
+cd1ce774b94083c193d95ea881ee0a3b5a051f4c	Remove superseded menu sizing and unread bankroll marker
+4f1d0adaa68a2414b0300f90a9e88ba296258b4f	Assert original money popup identity under current HUD owner
+f21dc7b2a981ed9aed9bfe945bf147721cdee760	Associate qualified continuation fixes and bounded review commits
+9d20b10345db553816ad1a0d0502d3ef368e0998	Merge tested Web GL registry reuse into main
+488d86fa5f25efc460a74847305fe301f374017b	Merge current main and reconcile audit continuation task records
+1e38b7885db21c5bee1d19a897c129ddf680b1f6	BTH-BARDICE-JOURNAL-CURRENCY-001: Record Bar Dice receipt units
+15476f2c0a57a7b626ccf0e933ddfaed11edd164	Associate Bar Dice journal task with tested metadata fix
+c0e94c361ca2000c229f815eb628d1bacf45d9c8	Track authorized Bar Dice journal publication and gated NEXT acceptance
+7f39b5d415bd3804d7ebbb0d5d6044e10b592844	Track pending NEXT disk admission and remaining performance scopes
+09c204b5bd953cd4c04b46cb6cb004d482888d09	Record full aggregate acceptance and bounded audit coverage
+0ff545d585ab7836694110a28609d12e2188673f	Preserve published Web GL exporter work before audit NEXT delivery
+e1e71f26d37040142c5f851b3bbd3d1f89d61355	Record Bar Dice journal publication with NEXT admission pending
+4bc4fec26befde500bfa76909029bcfb98bb1b94	Record existing NEXT reserve blocker without closing delivery tasks
+d65bcef92c365f29ca1178564d152fc3e3b7197d	Preserve concurrent journal work and scoped audit ledger evidence
+cb5732d033876856be9027f8800fbe926d09e49b	Preserve concurrent Bar Dice task with NEXT progress and open scopes
+9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f	Preserve concurrent NEXT metadata and audit continuation evidence
+ff8eb28c95f1b5dfc26ab3e5dad1b641914923aa	Record published audit source and observed NEXT admission blocker
+b319294f9b39102d2fe313228bbaeff9d6ed5420	Track next production-path obsolete-code reviews
+62490ab186657cbfff49839589863e851eef7bcd	fix(coin-pusher): show canonical Drop and Hold prices
+d536a1a93cd33b8826a8bbb7aed15de5d61a5b55	Merge remote-tracking branch 'upstream/main' into fix/coinpusher-drop-price-20261104
+de6ed444cb8bfe63d661dfb39e43073dc976b0f5	docs: associate Quarter Falls price fix and qualification
+61e77b909b0ca2cb496df54066ba13ffb68ea755	fix(roulette): record journal settlement currency
+f1e249bd2e56324a46a3352f037bb240eb532efe	Track phase 004 removals and inherited contract findings
+d1f03773ebc3f6d4306bcabf11482dcb5ffede09	BTH061-AUDIT-GENERIC-CONTROLS-004 remove retired canvas controls
+6711b1adafa053debe07262f76d5e22f639e5586	BTH061-AUDIT-SLOT-TICK-004 retire action runtime tick mode
+51b7315664ef34a55521cf88bde681ac387ded7d	BTH061-AUDIT-REPORT-FALLBACK-004 remove unreachable replay branch
+3f81238b64c64d5c11b0587112bed6cfc546cf47	docs: associate Roulette currency fix and qualification
+e3fd55cad883a67e40000a90b15549b62eadeb1b	Record phase 004 cleanup evidence and exact baseline failures
+55c31b0d91dcf678326dfe39e516cccda728aae2	Associate bounded audit reviews with committed evidence
+828f55c24e1edc47520ff83e214cd8542b74e1ba	Record phase 004 publication and unchanged NEXT reserve blocker
+7f6f9cdd5bc942f07f174ad1de877f4e892a8be9	docs: track authorized Quarter Falls and Roulette NEXT delivery
+d361c21e47990cf50222242e07dca2568c33d3d4	Merge remote-tracking branch 'upstream/main' into fix/coinpusher-drop-price-20261104
+c54a4018a7ec5e1b979e3d33eff52dc1c432c6b3	docs: record published fixes and pending NEXT admission
+b83d0909588b75a5f197326d4b18d631e7da1f62	BTH061-AUDIT-SLOT-LEGACY-FAMILY-004 recover authoritative bonus tags
+4bf7b928eea0140d65e6711f7e22f84c9e25a27b	fix: remove qualified legacy Slot bonus controls (BTH061-AUDIT-SLOT-LEGACY-FAMILY-004)
+55d1c1eb312d1c0203dd0df746bec0ad749d713d	docs: qualify Slot legacy recovery and track aggregate timeout
+81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+b70b52f134f17345e29f812778e86f90fa5a2e3b	docs: record Slot source publication and open NEXT capacity gate
+3292cc0dd866d3c4b60e94d345d3471aa69b5822	BTH061-ROULETTE-SEALED-PENDING-001: Preserve R08 evidence and independent controls
+6c66475146d980a01dd1a07fa64a600cb68549ac	BTH061-ROULETTE-SEALED-PENDING-001: Associate investigation commit and retain open cause
+25b2f152cc7d82ddf86990c94e290fb401efa5e7	Merge upstream Slot work while preserving R08 investigation
+17e8eb390f3fd8f9785bf4fc5f591034f9820150	perf: index census records without changing guard output (BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005)
+42eafd35655dd6779fcba2ba55d1c426fcade5cf	refactor: remove retired audio bridge and loader branches (BTH061-AUDIT-AUDIO-LEGACY-006)
+7648f1d908468fd783cd19bc5c4562ab69573be1	BTH061-ROULETTE-SEALED-PENDING-001: Test prior-Blackjack path and preserve open cause
+05a9e79808d2520583507312a6ffe17ef4ff9621	BTH061-ROULETTE-SEALED-PENDING-001: Associate tested continuation without closing incident
+fabd74951bc75ad832832da96b11afeea6acf2d9	refactor: remove retired Crossword hold policy (BTH061-AUDIT-SCRATCH-HELD-SALE-006)
+e7891755e9ed4b085b4d535a0b73bfecd03204b7	docs: record qualified audit removals and unresolved guard evidence
+253454b7ff0449fcb216248bbeaaa3c53d23cdd2	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+a67a95d5926600b27908f375590e31123122740d	BTH061-ROULETTE-SEALED-PENDING-001: Record seed-B settlement and retain warm Web gap
+f175a4d7cfb38f439007484b7a9e5741c3470c7e	BTH061-ROULETTE-SEALED-PENDING-001: Associate seed-B evidence without closing warm scope
+9f1e2e17897351773df5da5da1a3fa09fd0d948f	Merge upstream audit work while preserving R08 seed-B evidence
+df3d1e7fb1703507de6fcc949e4a1f5f173624e8	docs: associate audit evidence and retain stopped NEXT delivery gates
+ec67b38b9235ff2ed12477398ec1d87b6b4d2ca2	BTH061-ROULETTE-SEALED-PENDING-001: Record merged validation and preserve all task IDs
+11f4070e7f17e917b8f76109f0db5b679e4f04f2	Merge concurrent audit associations with qualified R08 evidence
+aece9cffa8c17c53f90943e108e1194403a496db	BTH061-ROULETTE-SEALED-PENDING-001: Record stopped NEXT and current capacity observation
+9e0de522d25c3774c84ad7d73f83c44438b75e4c	Document bounded catalog profile and reconcile semantic audit coverage
+5647e6a8ababa00bde8b1f1507895438221b5272	Associate completed bounded audit reviews with evidence commit
+069734374cf935ed14130eaa79eea900a34f966c	Track NEXT donor lifecycle admission blocker for audit delivery
+6eba32814477ae7d379d8eb13e7c16ccdf6fa950	Avoid redundant full-state comparisons for accepted scenario commands
+0c0952594ec93fb892db807bbeaffef801a9f6a0	Associate measured command cleanup and inherited sequence findings
+50ae45824d79fdefb13b0c0ce1cd814c9108db37	Record exact NEXT launch and reconcile scoped audit delivery
+41c6384f5da1b7b9df4707c105ea1fce052fd027	Restore lifecycle presentation and replace obsolete sequence fixtures
+af2609246170978782e1b2b19f83cff544196976	fix(blackjack): refresh notices after draft wager edits (BTH-BLACKJACK-DRAFT-RISK-NOTICE-001)
+740c9d6727743fbb31c9f0b8f5df0a621deec3fc	docs: associate Blackjack draft notice fix and qualification
+e5f4f624233e6495d33019c908bc6ca5d867482d	docs: track authorized Blackjack notice NEXT delivery
+ed3cdcc69dc8d2c1b5c3c500455a435f2f8feff8	docs: record Blackjack notice publication and NEXT reserve blocker
+0e93f761f864a3bb844fabda48efe05f63792a98	docs: retain stopped NEXT and current capacity evidence
+192d8c2a31c97a71c200afeaf8a8e391e20d7100	Remove superseded UI projection implementations and migrate their callers
+32eb2eca9deacb2b55ccfa6ae2c3dafd2142366e	Align actor motion with physical route distances and current geometry owners
+2e33f54fbfb9b70141e0bc775231b43aa2a653f5	fix: record Pull Tabs journal currency (BTH-JOURNAL-PULLTABS-CURRENCY-001)
+ba8d6bc61fa2cefb9552893dd048432bd88d3277	Record qualified audit removals, baseline repairs and pending NEXT delivery
+4095ae0f86b1439378a2d49b29c148969a961189	docs: record Pull Tabs journal qualification and practice follow-up
+28f27a92c6ce3f9997e55810c4518f1f22cd6228	docs: track authorized Pull Tabs publication and practice investigation
+ed6a8e6157af3cc27bb7b1d0e6fe652dc4ef123e	Merge current main while preserving qualified audit and Blackjack work
+a208b61a556382d1c35f1070e562e41a40d2259a	fix: route default Pull Tabs practice prizes to chips (BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001)
+486d0465b845ec817ca62eb53936d53362912275	Preserve concurrent Pull Tabs qualification during audit publication
+a7e8c71f97f24011124f8a3897bf7c1c840a2c47	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+995fa97b4a623a2015dfbecd502fbcc42aaaa559	Record published audit commits and exact NEXT reserve blocker
+3612c2d4a5ab6ff3269d2c4a5fa5928ff574b505	docs: accept both Pull Tabs fixes on NEXT a208
+7ac1b6b2df897c83e24464a3954ffa30416564d6	Merge concurrent audit records and preserve verified Pull Tabs acceptance
+9b8ef678b95a86ef8bac57d16b383dfb9521c546	Reuse Coin Pusher export dictionary keys per synchronization
+546dfe48e3a4c04e118d1055ec7624ec91da2dbc	Prepare duel tables before publishing event success
+45af92d9c8e663094cd322165aeafbe2a046da1f	Record duel qualification and exact catalog timeout evidence
+245ca4f6f483043a4a3b9ec394b1d76f3ba2af43	Record guarded catalog profiling and NEXT qualification dependency
+838016895d03a16b2ed060185cf6312fe82bc348	fix: retain the free closing exit in public travel (BTH-TRAVEL-CLOSING-FALLBACK-R11-1067)
+e979719909d0c31bef2664f21f4792b0b4d826f5	docs: qualify R11 closing fallback and reopening behavior
+5d1f92e239f06d6b17d7e1d5446d1c115f50badf	Merge current main and track authorized closing-fallback NEXT delivery
+7c604f1a2e2e218411437de03677a6fc497cbd11	Measure nested room finalization and layer entry costs
+bc0a7f329e014282fca55e90d3bad6d146200a07	docs: track closing-fallback publication and NEXT qualification dependency
+72490101c15deb770ba29cac88e948a93290bcac	Associate measured catalog evidence with its open task IDs
+a11607ee93829734b271308617324d0ca0682aa3	Merge current main preserving closing fallback and audit evidence
+bc04d0049ebc97931ecbba1f68849c7ef159d861	Harden audit source restoration across failure paths
+d241e3b4ac18f7862396acdc80f12d8787624bda	Record finer catalog ownership and guarded restoration qualification
+e37fa06b6939b2acb7b5744b9e8ece7ab5e279d6	Associate phase012 measurements with audit task IDs
+3feaf0bb2b89194928106ecca5cdcd7cb77f261b	Preserve ledger UTF-8 and complete phase012 task associations
+3c0fd716946f56cec0350d7ad43164bc29d14c28	Resolve sequence registration without copying the whole catalog
+468dd78d878392ff22dc407403b5f37be858b4eb	Record catalog lookup repair and rejected projection experiment
+86213665dd66ac25ed32d3ed459e021630d4e128	Associate phase013 evidence with open audit task IDs
+5e9e06bd32452758dbc4d3a4a01f77be23b76244	BTH061-AUDIT-SOURCE-OWNER-DEADLINE-014: qualify focused 180-second probes
+6e193c6779da47a708f032405dd040a71d79c773	Record phase014 attribution, memo defect, and guarded probe evidence
+f228f65cdea261535b024f582ec8378e236d913a	Associate phase014 evidence with audit task IDs
+c6875e54b87d79c1a5cdf4d6a95ce4d42ee6a012	Reuse material-path fingerprints during sequence validation
+69bd0f7e3270d87d436d6a39b71fda1f392f67f1	Bound material-path fingerprint retention per validation
+94b6508d2c193ed80727ba801c6a9c2309d084d3	Record bounded validation repair and remaining Systems timeout
+1b2b56d61d5ccb24b4d12083d0bf1e648d825748	Associate phase015 evidence with open audit tasks
+d3401ef375335de2815148d5655b666d489304ca	Record typed memo cost rejections and qualified layout profiling
+f0bbd02091f70ec9a55051989934fec295536210	Associate phase016 evidence with open audit objectives
+3aaee724a63ca37b5942ef45349f32e1707a2dcd	test: reconcile exact scenario authority reference fixtures
+8e3367e391d4bbe913be90e6f262bb89f4eda603	docs: associate authority fixture repair with published commit
+9c28def1634365d26fdec4b0bd451a8eca4af67e	docs: record canonical audit measurements and platform blocker
+b9b6497fa72566a603bb1b1c0b396c3a3f60ab79	docs: associate audit measurements with published evidence
+8d80355a514e151a91ab719e2598fe13d7db2209	docs: record Runtime copy comparison audit
+7f0f60b1ac217b27ff444bd883becdde7a0a2fa8	docs: associate Runtime audit evidence with task IDs
+e772560f4249313e1a9bea0652af605bb3f8e57d	test: repair inherited game contract boundaries
+363ece78f55ba4bbccf78a67ad6f54c75e521e13	fix: initialize neutral shared Crew reputation
+d070fdc0459b64cb0cdf5d487e751a0b52ba42c1	docs: record audit contract repairs and Crew save fix
+92483c02f246f70e6bb8e01739e3df0da8b584ce	docs: qualify four current core audit dispositions
+c66a9c1e1046b81c80996d7e171a7d267cc1b84b	docs: associate core audit review with its evidence commit
+eebb8aa13957ea3ef705095cb1b7589a0592a646	Preserve Coin Pusher state across feature updates and settlement
+c9449ddd52ca28c1d986661b9f09f61937cafc6c	Fix short-stack duel callout movement receipts (BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022)
+40d4ac78e7ee695b08e0e6e1eb5904e0152c397e	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+5f9ba1727eb10dde0b7fe7459100a221c34b80f0	Record storage and duel core audit evidence (BTH061-AUDIT-STORAGE-DUEL-COVERAGE-022)
+ae4ace8364e5a166779caf70087d7c387dd732eb	Associate phase022 audit coverage with evidence commit
+88efa6e419872007a8ba446bbcdf5f65ae39178f	Preserve exact numeric identity across saved and compiled rooms
+ac877121d68561c818f39fe3c81b892e8a13b932	Record qualified numeric storage and cache audit fixes
+dd4ff350d31705fe1e91347cac21f27197968eb7	Audit remaining venue and character core bodies
+89e58b376573e7cfc53bc337ad57a6c8edad3e8d	Associate venue character audit coverage with evidence commit
+104da4254c5f422fae01711b77ed6747f571543a	Track denied main publication of audit evidence
+f99792e9dc35c28db3f378a095eb4f4196c25005	Audit delivery cycle publication and ritual source coverage
+3e9a9ab8ad8e03d09c20d0f60d5fd6a9c06bd037	Associate phase025 audit review and inventory evidence
+fbd95aae983f6e99c4431b31d830f550bd993e3d	Honor ritual identifier grammar and canonical position anchors
+711c3b7dea800d5efd5ec00ed80b323a2a784281	Record qualified ritual fixes and publication retention evidence
+5995a6de5244bdf28355e7fa710bcdb96279f1a3	Associate phase026 qualification and retention evidence
+eba4663b52b6152eff814231c76ce093bf7d4afa	BTH061-BAR-DICE-REVEAL-RESTORE-001: Preserve an accepted cup ante across venue changes
+1adcf4f9980f0f14c2d46d4c31b30a024c688982	Associate Bar Dice accepted-ante fix and retain full acceptance gaps
+4c7ebff9161624c5dd0c72e3dd7ef7e5d9ae2507	Record terminal storage retry qualification and two core reviews
+c2654696e47adc25001853ddcfc178b298af57cf	Associate phase027 audit evidence and retain persistence follow-up
+dff23f66e6ecf60a31b5b4c65b7509dc8e0df883	Record Bar Dice NEXT cold Reveal verification and remaining acceptance
+7d4b121fe8448d9a66ce6366218b470533424ed7	Track BTH061-BAR-DICE-COVER-DISPLAY-001 and final restore release evidence
+1b2f12c1495159871432c87bffdd16b7f64a616b	Handle save-status snapshots before run UI is loaded
+6e3ba05f0cfe033ecf656fd7418c9daefd22fca5	Qualify cold terminal persistence and review two core models
+7b45be1422a7343edc021d830d5b0799dbae5ae7	Associate phase028 qualification and snapshot fix evidence
+753d6eb5d832695901fad640af3c6b557efbdc48	BTH061-BAR-DICE-SHUTDOWN-001: reclaim autosave before scene exit
+44ea53510d2d282b35089f6b2bf0482822b7bd2a	Associate Bar Dice shutdown fix and qualification evidence
+a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358	fix(meta): durably settle terminal outcomes before run acknowledgement
+cbc90bd417c862fa4fc8ce2f586a40185b93d4a7	Record Bar Dice publisher recovery and keep acceptance open
+dc022052f10bcd9e5686012b19f95a0f4ebdd3bf	docs(audit): record terminal durability qualification and two core reviews
+705cef676c021904679d7bcae578bf6b24429e88	docs(audit): associate phase029 evidence and retain NEXT requirement
+99b497765cb8b95c41d7e55f55c37c59581ecc0b	Record repeated NEXT publisher blocker for Bar Dice acceptance
+ab84de42e65f051e3c92e6ebc3387a79b4b660a6	docs(audit): review four core bodies and current code universe
+1f7ef8572539008559e4aedd05ec374dc101bf4f	docs(audit): associate phase030 evidence and retain source findings
+62e1989e5f921b6418f70876a1d3010f10266156	docs(audit): qualify model identity mismatch and three core bodies
+4fc0e804bb0660ffce9b882530aa3b8ce2fff142	docs(audit): associate phase031 qualification and preserve corrective work
+c5c4a7467428af438d64b01c35abaa09b6ac06f9	docs(audit): review final core bodies and track source findings
+9d7b360b3cd97a38bdbc171c675288e603fd5dd5	docs(audit): associate final core review and preserve open findings
+6b43aa6ad8f951ae46c8a4732716201a3bbca421	Preserve Bar Dice progress and record user testing pause
+e5d11fecba939ffb7d89dc63115c1038d42a2c1c	Preserve audit progress and finish tested publication under user pause
+b2a9cef8156c993391e44bcef75dec42558c41eb	Merge tested audit fixes and preserve paused progress with current main
+9794d07a440ceaa11c4410d1ec4fcbaefe83886c	Finalize existing saved room layout edits
+f44eb1b8c29cb27cb0e98e175bb66c1d328dcc47	Record validated saved layout and historical work reconciliation
+71981e7928276cb4bca657c2e7d0f1d5a8809c5b	Integrate tested Coin Pusher retention and Video Poker hint fixes
+b4577aebd506c451dcfd86f509743da704738f29	Integrate validated existing saved room layouts
+a64b3e28294d8fafd2eaa86200594d2a5d49ba37	Finalize guarded QA storage tooling and qualified helper evidence
+085494c8412ec0a2bd027b2e891bd837188a14a3	Track full outstanding-work finalization and NEXT acceptance
+0bc62179263fb86def188c0f5bc3a27ea3c308e7	Integrate tested future QA storage and resident tooling
+c3d16523e6a149ea7f401e5fabbb2703b2758c3e	Record final integrated validation and retained acceptance limits
+1c76565d2da4c0ee5cddb59bed81c182e970cc31	Record verified finalization NEXT delivery and scoped ledger closure
+c72b17ff6f688042235780c0c082cc96200d6669	Preserve and clean obsolete Beat the House branch history
+13de89e287dce7109c597acaa65a348d44394676	Close verified branch cleanup while retaining active integration work
+846ba6f29949bfe98cd83b0fecad4f54668ca46e	Audit unfinished BTH work and reconcile delivered Slot fix evidence
+31bb55b88fce5890029b9470ceb7548c9ce1bad5	Fix home-loss projection and typed validation memo identity
+ff80b8f5ade8940f1fad28e098c03a17135285d7	Integrate unfinished-work audit while preserving branch cleanup receipts
+a50f5669d1e554c1b6f50d8ce7f16f0e471914cc	Integrate reviewed home-loss and typed memo fixes
+a928b90c53c0041dc5835cfef34174efe4f1b433	Record local qualification of finalized game defects
+0b5b1852fc466a32846681eed52b9ff573f10107	Integrate scoped defect continuity and acceptance records
+cef352890740412769cd4e3c7488763a4262fb67	Record integrated focused stabilization checks and current owner
+2e3b88103d010562788793c17efbcc2f4c91c39b	Record final stabilization delivery and clean main ownership
+8b4653d0a390745d05bcd404ba529efc07d0a726	fix(roulette): recover warm reveal progression across clock lead
+341db4b5962484c8707120544a65af8cb252ccf6	Record current Crew handoff and game-return qualification
+2bb8141ecf0ce4a7e3403129d033bb61bf758eb8	BTH-SLOT-COLLECT-001: close visible Web warning acceptance
+a9c2a14d260584e85a32862157dbaa463ec91e24	Qualify Gas Scratchers exit and historical cash boundaries
+b6c1602d9b3e67a2146b39eb2dadc66fb98b9e5b	Record scoped closeout integration and pending Web gates
+37f0aa4979aeb8ec7d61c0a81da234d19bae367e	test: retain first-cold save generation provenance
+3729a1b91ef49f1a1bb8002eef6abc687a9d768c	Qualify deployed home-loss Save and cold Continue
+785b9013040030919a5128e1fd7cf82ab1dc4f4d	BTH061-MEMO-014: qualify Web types and retain callback gap
+4aff4073f7fa85bd9aaf5b760ead94c276c182f4	Record exact closeout delivery and remaining investigation gates
+564cebb69d009faaa1e1fc84b549e4e76026ad42	Fix Meta showdown choices and preserve Crew instance escrow
+1dd2064d475dd4c6c2391256c7884edaa754d928	Record scoped Meta resumption and integrated compatibility qualification
+2e4da611a252d8af7e16009eaf629e85fc78f42f	Record bounded Roulette b6 Web startup acceptance blocker
+ec28968738b391cbb25b0894ba0382473373fa84	Record verified Meta NEXT delivery with rendered acceptance open
+b64344b5a1c89540d7eebbea88fbd110ef1e1337	Advance Video Poker hints incrementally with exact strategy parity
+e410e05c6919e7cf7599552f67946f4e53974cd2	Record scoped Video Poker integration and open timing gate
+7a6cdfa3150f92be414fece815e4604bfa7fed46	Record exact Video Poker NEXT delivery with timing qualification open
+8e2addc3c58010afd36b54d0cf584e38ceb91309	Record scoped Video Poker rendered hint timing qualification
+db4e63df2689e93cf4856f8fadfe1e8430ec1de7	Record rendered warm Roulette first-result acceptance
+85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f	Close independent Roulette warm Web acceptance gate
+50984841102fa4bc3d78bc1a0d10b93e119dcc1e	Close Crew recreated Web acceptance
+53002e118a8fa67c260e0cc5b9c54d1945e0264e	Capture isolated paid Gas Web fixtures
+035819f836d389d9938fc5e798bef48ebaee1bab	Record scoped Gas Web exit qualification
+3e54cee44f711913e84000331219a679810ae5b8	Track independent cross-platform seal closeout
+c3bc398e99763faaedf1aae566713f44246939f0	Fix cross-platform scenario inventory seals
+b039cc42e78eb56b5d0e1b835050053c0764ee57	Record tested Gas and independent seal integration
+17ae0cb50b5852c232d68e61784f117b1220f84d	Close independent seal delivery with exact NEXT receipt
+b454aaa78c8a4198f1e765de0a02823140a9e64f	docs: qualify deployed Video Poker ordinary play sample
+06e5492116b2f4aac78ffbc3d41ed15be64833a9	Correct Video Poker browser error disposition
+ca2302b6bbe36f9b2d6b2af7fbcd8728de9ab968	AUD061: preserve unchanged 0.6.1 audit work orders
+1996d6bec0725081c5f873d32ab26ad93eb22e18	AUD061-02/AUD061-01: allow confirmed leaving and clear stale rollbacks
+18af19ac2878855e18588b8a618ff58cb2002290	AUD061-02/AUD061-01: associate native proof and pending NEXT delivery
+9bfba25bb2923740b96a6ae430c0d66d0b9b79b6	AUD061-02/AUD061-01: record exact NEXT delivery and normal UI acceptance
+901c1d65cd44d10e709afe4f82b470ddc5db1eab	AUD061-09: retry the current save after an older async failure
+93f3df02d8fabeb3a05faacca6c366d21331c33c	AUD061-09: associate tested retry commit and pending NEXT delivery
+75f90ca841dce23b7d890079074a7bde686be600	AUD061-09: record exact NEXT delivery and native retry scope
+7f0e61f1240146ad4e22911a528b99ddc0b85a47	AUD061-10: refresh economy at Crew heist money boundaries
+bcd22342148d2ee12a5b95bd2649b39ca83d7635	AUD061-10: associate tested Crew economy fix and pending NEXT
+4a53053c1533a117ef4025e8e50e2be69e6c428d	AUD061-10: record exact NEXT startup and native settlement acceptance
+3e11f59a1096a7e4e7749d877dadd9bc743f7819	QOL-02: show a persistent autosave failure warning in the HUD
+8ae197d3dd30624c7a71d9e9379697b7b1a962f7	QOL-02: associate tested warning commit and pending NEXT acceptance
+134b42024e58d26213abe8a642860cf4bbaeeaa0	QOL-02: render warning replacements and the visible one-time notice
+ed245d0327462ed7a0ee5b51fc0335a224091509	QOL-02: associate visible HUD correction and pending exact NEXT
+01a4548f9a1cf7e55762aebb79f3f8db69926572	QOL-02: record exact NEXT visible warning and recovery acceptance
+384c7a84869861f0f61b52099aacef376f8e3504	QOL-03: explain rejected actions in player language
+49f0b2931b14ac139273b4ec54166fa709f7c21a	QOL-03: associate wording proof and pending NEXT delivery
+28cc9bf93d8201bd5d9ef43904be9845a6d9dc2e	QOL-03: record exact NEXT delivery and observed coverage limits
+2bcea35cc68076235d51e88f4887abd66bad2c51	QOL-04: format loaded whole numbers at display boundaries
+d258f3dc14866f2e8bfd9ee35e3e707507acea95	QOL-04: associate display evidence and pending NEXT delivery
+1874c946d0b379410f99c70104e2d798be1640c0	QOL-04: record exact NEXT display and normal Save Load verification
+25822cff6d0f7debb2f9db688515a77f4655cc49	QOL-05: add private-safe build and save diagnostics in Settings
+d389abcf59c682ba02d378ec4c7ff4d94f20de25	QOL-05: associate diagnostics evidence and pending NEXT delivery
+20b6ff23aeac080ff20d487a51e1b5ea274f4a9d	QOL-05: record exact NEXT diagnostics copy and live outcome checks
+12216a7d489ebd96b49af047d0586d4818b1cf66	AUD061-16: ignore test fault switches in distribution builds
+e05ceb6bd64f3ddec44804752aaa32d88600c622	AUD061-16: associate fault gate evidence and pending NEXT delivery
+494c5db53e9ca0a39b55e0955f58f65e7ee7524d	AUD061-16: record exact NEXT startup and native mode qualification
+bc1ee0c9d1e4c8c161c64aa3da95ee08a0ffc4d6	AUD061-14: retain and retry failed profile and collection saves
+d7034cf137805e6af325adbac988bfcd2597347b	AUD061-14: associate tested save-result commit with both ledgers
+7a2c0f82b076c2b38047b496f01950cbf0ece41d	AUD061-14: refresh Result after collection save recovery
+71e456a36d079e2aa8c4d8a95d22b325a673973b	AUD061-14: record recovery follow-up SHA and bounded timing evidence
+602030abf81154c337f0a47f1253122ac381c9a6	AUD061-14: record exact NEXT warning recovery and reload persistence
+30ac66e48f7abe0d5ddfcdc2f8d97a2dbd940c84	AUD061-08: flush queued run saves at background boundaries
+23326f534823da8c5175f835f958ee55e7f1605e	AUD061-08: associate tested lifecycle flush with both ledgers
+9d7d9c4a2c09f9ba6063160f25c93e86770c0c9f	AUD061-08: start engine storage sync while the page is hidden
+33904c0b5f0e887704a6f712c23658b6d2a22b78	AUD061-08: associate immediate-sync correction and focused evidence
+d45f5c02d76767ac149e667cb54ef66a4d625539	AUD061-08: keep the Node bridge check in QA tools
+eb48bb98364966324813e2b7a1c6516c32ecf86e	AUD061-08: record unchanged import inputs and relocated check SHA
+138880bbed6999aa21264b72acdace61036535af	AUD061-08: serialize automatic and lifecycle engine sync requests
+facf757e9520800f4212266e42b4dedc6f3ad32b	AUD061-08: associate coordinated sync commit and regression proof
+26f326ef64f7e8e63f69a9e29efb1270692a6b5a	AUD061-08: record clean exact NEXT hidden-tab persistence proof
+5676a6102b7b9d7a90a59f4d74c4285b3c4e2ccc	AUD061-15: repair wrong-sized Crew install keys
+3b36a9c3957fe4b4484d8584d16e971fc743ef93	AUD061-15: associate tested repair and pending NEXT delivery
+a328d6d7582cebd5b166259d226c04e8ba63f5e2	AUD061-15: record exact NEXT delivery and completed checks
+5960613ae5a648615b3ec5b6894568b1a1a6c9a9	AUD061-15: preserve complete release plan in delivery receipt
+28ece77b93a808c48ddd3388d82867fe965aba4b	AUD061-15: restore full plan and retain completed delivery rows
+b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434	QOL-01: confirm menu starts that replace a saved run
+a398302308be0f3f2380620450ba8f6111dfcfd7	QOL-01: associate verified local checks and pending NEXT
+adacdc0414a3c41db59cd5708e814ea766175891	QOL-01: give replacement dialog sole keyboard ownership
+4ca0bd470a2fa39c2a38e5bcbb846831f4958a44	QOL-01: associate final keyboard checks and pending NEXT
+412cd9a3690fcd678b54a44c9ae191da5fdac1fe	QOL-01: preserve native Tab traversal in replacement dialog
+054ab4a0d63cf1399180ebbc087097484637ece1	QOL-01: associate real-key checks and final NEXT verification pending
+413ebe822b557f8997b6b7a78e2bc56e153ea40d	QOL-01: record successful rendered NEXT acceptance and completed order
+7b4de496596f4a47ef114d11b0e103cf25b88001	AUD061-12: record bounded historical export investigation
+bdaa9b337d3fae076a9ee623051acc2af2e6a7d9	AUD061-12: associate investigation evidence and unresolved qualification
+854b12568d0a53ccb3c9dde9f14f5f99fc23bfbb	AUD061-12: record exact NEXT report and byte-preserved evidence
+94734e74fed1c64cc938a51a49d721285e1cde99	AUD061-04: document version-input qualification blocker
+cf4a5ffdf975f6f3f404af770951664fa48638fd	AUD061-04: associate blocked qualification assessment

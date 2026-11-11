@@ -1,0 +1,448 @@
+018c241b	Restore shipped manual environment placements
+e40cc0e5	Prevent scenario journals from blocking long play
+0575eb2d	Keep House Calls reachable with concurrent events
+edc940f3	Start updated web builds with fresh storage
+32a83993	Preserve live progress until exit saves complete successfully
+aeed3a1a	Record the accepted House Calls placement in manual layout data
+a739826c	Preserve consumed offers when rebuilding scenario proofs
+32460f24	Keep room props in the input coordinate transform
+bf63e433	Expose ticket cashout on counter NPCs and require redemption hosts
+26d399aa	Enforce Crew room credentials and preserve safe recovery
+87a19ead	Refresh restored room bindings from trusted catalog
+8264fc5c	Reconstruct already sealed Crew baseline geometry
+bfd33933	Coalesce background cabinet saves behind other game surfaces
+13e7e59e	Reuse byte-identical validated autosave image
+94bcba72	Use direct digit lookup for packed save decoding
+ef6c7349	Guard autosaves against unplayable published rooms
+7d297ce0	Avoid redundant room projection reads and terminal save hold
+cdfedca6	Fix stale pull-tab dispenser receipt after Continue
+6ccbb629	Avoid punishing instructed tutorial room travel
+673bd0db	Point Pull Tabs tutorial at the machine
+2991e9bd	Keep guided event cards readable beside Pal's pointer
+e0d0ddf0	WIP: Load authored Sal dialogue on cold shop entry
+cea6ded6	Keep selected room cards legible over scene art
+cd1b726c	WIP: Show actual video-poker coin cost beside cabinet label
+701d38c5	Fix Crew event slot families in Punchline layers
+39a3547d	Show full game risk on selected room cards
+46474bc8	Bind Riverboat impeller key action to benches
+56fbc62c	Release Riverboat travel after authenticated engine restart
+32708794	fix(ui): clarify pending save with ready resume slot
+c2d1c91d	Reuse exact validated primary bytes during save rotation
+fb414510	Restore saved table hands and align Crew loan wording
+b46fabb2	perf(ui): avoid refocusing an already focused event response
+a67d84be	perf(ui): avoid cloning catalog rows for slot lookup
+25e3ba12	Validate Video Poker wagers against cabinet funding
+75d92f83	Restore validated Video Poker wager preferences on entry
+0dfe1c79	Retire settled Video Poker authority sessions
+071de35a	perf(layout): copy only the selected placement hint
+54219600	Keep dialogue choices stable during text reveal
+6b93db92	Recognize tutorial room return after Continue
+27368b99	Recover paid tutorial progress after Continue
+4080cd83	Reduce manifest canonicalization comparator overhead
+81c0396f	feat(offers): preserve cloud-qualified optional character offers
+687fd172	feat: add June watch sale and Sable cufflink repair offers
+e01bdcb2	feat: add Ox route advice and Rafi casino ride offers
+7d4a9c9e	fix: refresh cached ride offers when route access changes
+1bb68ce7	fix: preserve scratch scalper runtime membership and legacy seals
+4d4eb062	Fix Punchline recovery and pending Collector results
+c3f972f8	Remove redundant route-distance label helper
+2f205b9f	Avoid deep-copying read-only badge inputs
+5751d748	Share game-script cache insertion policy
+e47b341b	Share badge tooltip and panel-style builders
+82ab54ea	Share card dictionary copy coercion
+81e93c04	Avoid duplicating owned Crew poker patterns
+4257158e	Avoid redundant duel projection copies
+e171e083	Keep one durable-result payload copy boundary
+fa94f452	Share distribution path joining policy
+b30f1b5b	Snapshot per-run game tallies once
+412ac75f	Borrow read-only career row inputs
+a736a7b9	Clip icon raster loops to the image bounds
+615a1d36	Prepare bag reel visual weights once
+9fc7e820	Check journal array presence without copying
+d271dd11	Inspect consequence delta presence without copying
+fac463ed	Remove unused HUD candidate adapter
+c7750a1b	Remove discarded ritual host serialization
+d037f91f	Copy only the selected scenario overlay
+54ff1dc5	Reuse detached Crew heist plan definitions
+085b86ec	Remove repeated item-domain membership search
+ea9eb7c2	Copy only selected Crew recruitment definitions
+4a0f0bfe	Remove unreachable duplicate person classification
+be7333e2	Avoid normalizing delivery cargo input twice
+85b19281	Advance sweep path queue with a cursor
+833c88a2	Retain owned music stem selections
+6a42c2ce	Reuse prepared trade selection membership
+3c1eba46	Share identical slot symbol matrix coercion
+f84bc5b9	Avoid cloning the report game catalog for one label
+3fd3ec30	Read meta-home scalar summaries without cloning records
+1d8c5cf9	Reuse owned inventory records while filtering
+ae64271f	Prepare inventory container geometry once per layout pass
+784d4df4	Share deterministic Grand Casino staffing generation
+c6c5da98	Remove unread slot presentation locals
+c2c9e3da	Copy only the selected Numbers venue definition
+71c3f0a6	Reuse exact validated primary bytes after Continue
+6bb31bb7	Show Run Menu actions before reference help
+fe2d7c38	Reuse TalkDock's reserved rectangle transform
+33a0f907	Share Pinball's read-only event award fold
+abd3525f	Copy only the retained meta history tail
+158718f2	Strip immutable slot definition keys once
+de037dbb	Remove unreachable offscreen slot branch
+d1e12fd5	Read Crew rank perks from one detached table
+38992a64	Read node state without copying the saved room
+0b29c2c9	Share identical Craps roll command handling
+7993166e	Defer unused Coin Pusher audio body-count copy
+9e69250a	Drop the write-only Coin Pusher feature index
+93c8f9d6	Reuse the slot audit takeover predicate
+3dccb294	Read item offer views without copying their input tree
+be0180f4	Inspect delta array presence without copying nested payloads
+742d216a	Reuse the detached poker banter configuration per query
+7ef5163e	Reuse the detached Roulette rebet layout in its full view
+e41f7b2d	Drop the write-only Roulette reveal local
+42171154	Share the identical Bar Dice automatic-hand fallback
+cc8d7739	Reuse Bar Dice shake eligibility already computed for its view
+b36f6274	Avoid cloning Pull Tabs stock before its owning normalizer
+3ef0a48c	Sum Pull Tabs counter stock once per projection
+f81f5aca	Reuse the detached Baccarat rebet map in its full view
+38aec3ff	Sum scratch-counter stock once per presentation query
+917adf2c	Reuse the natural Video Poker rank-frequency maximum
+3e5a676f	Remove discarded video poker affordability write
+ee894256	Avoid deep copying video poker affordability UI payloads
+dacc8de5	Reuse scenario fact envelope during read-only preflight
+02065e34	Share identical scenario reentry feedback branches
+394ed85d	Drop the unused scenario cleanup original-state local
+8f467619	Avoid recopying detached catalog diagnostics for read-only formatting
+6e637fff	Reuse the detached event-choice consequence validation snapshot
+9863624c	Avoid marking telemetry system allocation roots twice
+27902ed0	refactor: remove discarded PCM budget tail condition
+8fff1f2d	refactor: reuse the detached feature contract profile
+a5510556	refactor: reset derived placement caches once
+3d31ebfa	refactor: construct only the selected named character style
+4c029832	refactor: read IDs from detached keyboard candidates
+4d8ec468	refactor: collapse identical slot color fallbacks
+acf3958c	refactor: simplify the nudge highlight rectangle
+55d781dd	refactor: reuse each feature panel palette lookup
+30156c3a	fix: keep Pal beside the selected map destination
+44ec0a86	refactor: return already owned character chain tuning
+f134eb34	fix: keep bus driver count guidance within compact card
+a23a7dbd	fix: keep motel room-key clue within compact card
+55a3e213	refactor: publish owned room catalogs at state boundaries
+79aa4d11	fix: restore roadside scenario replay after clue edits
+9fbdc5f5	fix: bound no-thread Web autosave work across owned phases
+dfb2f8a4	Skip authenticated unchanged scenario fact republication
+8eefe650	Show recent Numbers slips and settled payouts
+fec11876	Reuse owned inactive-room projections across save generations
+16f15982	Retain validated room compilation across empty turn boundaries
+e7da7992	Keep loan repayment contacts visible after borrowing
+5f24ef8f	Reuse accepted room authority for unchanged live action inputs
+56968142	Expose local family loan repayment in Run Menu
+2470fc36	Show heard rumors in destination map cards
+87f73196	Update Road Crew Payday layout
+12dd37bd	Reuse owned room authority for exact event removal
+2503c470	refactor(ui): stop nearby-object scan at its existing cap
+aca1bc4d	refactor(ui): remove unreachable save-label fallback
+8729e4e0	Rebuild pending scenario projection on cold Continue
+af91def6	feat(ui): polish authoritative wallet change feedback
+fa0e0c87	Preserve settled Numbers receipts across JSON restore
+9e8dfe12	Bound inline room responses across owned model and presentation phases
+c43391ad	Fix action freezes caused by false runtime membership changes
+53ebaede	Fix idle Web game props using obsolete art painters
+b5372131	Preserve table character detail during hand decisions
+04a114c0	Swap underground casino slot and blackjack placements
+6137ae7c	Keep roulette cast consistent across idle and selection
+7508210f	Fix Cage entry when Bishop recruitment is available
+04b35205	Enforce Crew package appointments and limit solicitations
+5401462a	Hold roulette money outcomes until result presentation
+4b043333	Restore sequential Baccarat dealing and reveal timing
+398546e3	Update saved gas station, pawn shop, and Punchline positions
+3cbb46fa	fix(ui): accumulate active wallet feedback amounts
+907fb140	Reduce Rourke settlement proof serialization
+d5c9c568	Reduce terminal Rourke report snapshot work
+4db2b90f	Reduce synchronous Rourke proof and terminal save work
+34b4c882	Reuse prepared Rourke settlement and canonical proof encoding
+95c9a7c8	Spread Rourke settlement and report across draw frames
+af364b4b	Keep Rourke presentation live while settling
+287aa0cc	Stage Rourke proof executions before atomic publication
+ec2dfbe6	Reuse immutable encoded rooms during post-duel autosave
+9804a19a	Keep legacy integer repair at the real save-load boundary
+9a1a733b	Reuse inactive casino room compilations during autosave
+0faaeb34	Validate Web save content without rebuilding a Godot graph
+6444bd0c	Pass save JSON directly to a retained browser validator
+e5954a48	Validate owned Web saves across frames before atomic install
+00c0a176	Restore meta-room interactions outside run publication
+663fb776	Expose Sal sell action on the visible room card
+04abf83f	Keep scratch vending settled across Continue
+eed1572d	Hold blackjack table notice until dealer reveal completes
+f8df4205	Keep Craps continuation throws free of unstaged wagers
+1ba3d0bd	Keep casino room buy-ins at their authored price
+a9260a83	Preserve working craps stakes before declaring a bust
+415d07aa	Keep Full Table idle feature text clear
+3d2401af	Consume roulette wagers before the next automatic round
+2e13a9dc	Rebase restored roulette timers onto the current clock
+d7d23a0f	Keep coach dismiss clicks off covered menu actions
+5ccbf530	Preserve venue cycles across layered room changes
+e1dbf956	Keep idle Link Arena previews out of the READY panel
+6fb91011	Handle each physical game-surface pointer gesture once
+4724824b	Ignore duplicate emulated pointer commands in room cards
+0c9b0eac	Keep idle pinball previews clear of the result strip
+bcd76dc5	Expose existing cash loan repayment in room cards
+44e94bbd	Keep active delivery terms inside the HUD
+06dbe16b	Clear room focus and outgoing gestures on every arrival
+1180b47f	Keep Lounge playable when Sal address notes appear
+9e8f9fe3	Guard arrival pointer capture before canvas attachment
+89106aa1	Keep Store playable when Lucky and Dave visit together
+06c08c05	Expose pawn ticket navigation in inventory card view
+d2a0124e	Keep item quotes in sync with container navigation
+8ee7222e	Keep Home pause menu separate from saved run controls
+051f2561	Fix repeat delivery contacts and saved room recovery
+b92b79a5	Fix Open Mic signup lectern phase placement
+7d3ee7c3	Explain unavailable map destinations instead of a free walk
+af4c82c8	Preserve original room targets during double-click focus
+3a7dc11e	Clear consumed Craps drafts after successful settlement
+9cc2a01f	Block Bar Dice cups without an affordable authored ante
+9d1bc846	Recover uncommitted Bar Dice deliveries without replaying wagers
+04965ffa	Use authored event seats for Bar patron placement hints
+e7484382	Refresh Silas tip dialogue availability and result feedback
+f1726c45	Explain unaffordable Blackjack minimums on the table
+f0572851	Invalidate HUD drawing when the wallet text changes
+5f215b81	Refresh wallet label allocation when the amount changes
+a5390d41	Keep early delivery handoffs retryable and recover pending owners
+868187e3	Wrap locked-room explanations without losing access alternatives
+04e3beee	Let the inspector last move begin after its response
+fedfc5cb	Show rejected active-item use above the previous result
+5f533259	Keep ticket cashout available after venue closing
+d782a45b	Finish Riverboat docking wait when closing forces departure
+ffc47943	Wrap HUD status tooltips to keep debt deadlines readable
+8713068f	Preserve complete debt deadlines in HUD tooltips
+3ea0f1b8	Reserve Pawn Shop space for concurrent delivery contacts
+0b4827be	Bind Pawn delivery contact to its clear authored reserve
+46a51d01	Keep waiting delivery contacts immediately interactive
+7ccc9516	Draw waiting delivery contacts without roster portraits
+29b50e36	Hold Blackjack wallet returns until the final card
+b28f5c72	Keep Blackjack table totals private during dealer reveal
+b5c86593	Reveal Video Poker outcomes after replacement cards
+a06419d0	Unblock Bar follow-ups after Fight Night book choices
+cbd72764	Keep slot margins from stealing nearby contact clicks
+0c7bb043	Mount delivery contacts in ordinary destination rooms
+bf894fcd	Give Punchline raid moves distinct phase positions
+9cfb2ad7	Expose raid reopening on the surviving clear bins
+4678a8bc	Align Slot placement bounds and literal cabinet scale
+4f7778a2	Attach Lock In tasks to their intended room controls
+1c3c7367	Restore saved Bar Dice cups on game entry
+74dc3edd	Preserve live event membership through scenario room restoration
+da941037	Retire consumed events consistently during live scenario advancement
+ded24ece	Show Host Desk inspection guidance in the visible Result panel
+943866a2	Reflow grouped inventory pages after popup resizing
+644af3a8	Release Craps controls when roll animation ends
+a893cb07	Show completed lender repayment in room feedback
+e72434da	Fix missing suite rest from accepted casino comp
+cd769f18	Implement Crew delivery obligations and shared reputation
+8b369ffe	Preserve Crew post-miss context for voluntary deliveries
+3e658752	Keep modal focus safe across inventory rebuilds
+9c30163d	Preserve unfinished tutorial progress on Main Menu
+c458224b	Complete Blackjack raise lesson from durable wager state
+94aea019	Render saved Craps dice faces as whole numbers
+94a55cd9	Fix repaid casino marker status in run report
+e997dc30	Expose all physical scenario choices in mouse cards
+86e1487e	Keep repeated pointer presses on their consumed card action
+be24ffff	Close consumed scenario phase cards before later presses
+d2b4ccd6	Preserve paid Pull Tabs through zero-cash restore
+84cf2a51	Award25 Crew reputation per successful package and cap100
+24a06be5	Preview adjusted slot nudge Heat in cabinet warning
+205465e0	Keep paid Blackjack checkpoint current through trusted events
+8921b7c5	Describe Players Card prestige and permanent carried-loss rules
+a1417521	Keep Home usable when rewards exceed authored display slots
+41fed082	Settle paid Coin Pusher drops before zero-cash failure
+bbc76eac	Report actual clamped movement in Rourke hand receipts
+c1ae1a92	Fix Clean Walkout chip redemption at duel completion
+7b673ac2	Publish Rourke terminal report only after its model is ready
+6973dbc2	Retain the Rourke table until terminal report replacement
+d882cd96	Carry equipped loadout through Home Quick Start
+3dcf2c7c	Refresh the Pawn Counter after an interrupted sale
+631f0d26	Block world travel during Rourke summons and duel
+aebcc367	Preserve internal Grand Casino routes during Rourke summons
+7ba3f409	fix: give Jazz paper leads a slot and propagate publication failure
+380896e1	Bound rejected-room travel recovery to one automatic retry
+9adf460d	Show readable instance labels for showdown inventory choices
+9f9606b1	Persist terminal bag claims across Continue and safe retries
+197310ac	Reconcile Crew room membership before validating layer entry
+03e54ec9	fix: describe conditional Blackjack Peek consequences truthfully
+5dd74f64	fix: keep chip-funded Grand runs active after paid settlement
+76a76995	fix: reject duplicate carried runtime item purchases atomically
+5added2d	fix: advance pause-safe input time under reduced motion
+20acecd1	fix: preserve committed room controls and provide neutral dialogue close
+8ce16e6c	Record actual applied watched Peek chip loss
+f44ddadb	fix: retain applied chip units in cold receipts and profile totals
+7cdd082e	Restore Motel Stakeout actor corridor positions
+d36570d7	Fit Blackjack Peek warning within inspector card
+b1dc2774	fix: preserve paid game assets across generic bankruptcy checks
+8107039e	fix: keep Health Inspector last-move allowance in its venue
+7100836f	Preserve archived Money Flow totals with explicit history coverage
+fa3de446	Persist Money Flow archive across RunState saves
+8df89e07	Report applied Blackjack penalties before narrative text
+3beb657f	Clear expired quote feedback after accepted Crew delivery
+edc9fa53	Honor authored neutral dismissal in TalkDock
+9a74e974	Reconcile live actor slots with sealed room occupancy
+774668e2	Fix Baccarat readiness and currency display records
+c263597a	Restore Baccarat chip units in saved result summaries
+accef469	Restore timing windows in their saved clock epoch
+70ec8e7f	Display legacy Baccarat notices in the recorded table currency
+9dd11f81	Place the Stakeout false balcony marker in its authored left zone
+9db6793b	Commit game-owned physical presence before room catalog publication
+4be014f5	Preserve authored dialogue answers in the TalkDock
+bfcc5639	Distinguish deliberate room Talk from automatic reopening
+183a11d4	Publish attached scenario tasks alongside live host actions
+387013ac	Rotate venue scenarios at closing and reopening boundaries
+6180646e	Preserve atomic travel across saved venue scenario rollover
+e82f41b1	Use the authenticated attention-only Blackjack surface path
+6f386b29	Coalesce sealed game room publication within its owned rollback
+6e68785b	Fund split doubles once and preserve responsive Blackjack reveals
+ab57f8fa	Correct saved chip units, live Card interest and final travel receipts
+20fcde02	Reconcile Crew venue-cycle room authority before publication
+6c77759f	Keep mounted world actors in warm scenario publications
+664b1059	Persist ordered informational Crew handoff acknowledgements
+b7c1f5ee	Correct Gala aftermath routing while preserving accepted legacy outcomes
+963a4720	Persist ordered scenario action feedback across Continue
+7588b81a	Expose authored Street Craps limits to the action host
+f7e63136	Disclose public event consequences before action prose
+234e8647	Record Crew heist payouts in Money Flow
+d68b49cc	Keep Crew planning responses in a scrollable window
+4bb67124	Preserve Players Card comp feedback on Continue
+27efd3ac	Restore warm collection decision placement
+e53eb657	Allow deliberate Cage Inspect after neutral Close
+a7464c13	Fix explicit dialogue entry, Crew room publication and save precision
+f7360e5c	Bundle local assets for UI control icons
+43971e6b	Keep tutorial coach cards clear of Run Menu controls
+c8cccdba	Preserve manual intent when reopening lender conversations
+c23c47fe	Recover room touch selection after lost pointer releases
+3a98ab2b	Retain unfinished coach cards across Menu relayout
+9ae03983	Respect recorded cash and chip units in run journal
+8e01f4ff	Show Crew package terms before confirmation
+b1243013	Preserve Crew package terms through the UI choice projection
+8a87c807	Use the full phone portrait viewport and keep controls reachable
+de3529c8	Fix Slot Auto bankroll confirmation before sealing wagers
+38defb72	Keep tutorial tables on their configured Punchline floor
+61081e76	Restore 0.6 environment framing and pointer interaction
+75299394	Recover missed first Blackjack tutorial hand
+8defad0a	Settle initial room objects before first run render
+8b2ff3d2	Expose authored Jazz services on their room cards
+3755739c	Keep tutorial venue fares off interior casino doors
+f98f2076	Keep Count room controls authoritative across venue cycles
+124ee167	Keep consumed events out of world-only host seals
+87a06b9a	Keep selection popups focused on authored narrative
+6a784623	BTH061-AUDIT-001: Remove confirmed superseded code and art
+29ba65a8	Preserve Back Alley rooms across travel and loans
+4355f561	Fix Crew delivery return and remove obsolete game screens
+e4cbcf8a	Merge remote-tracking branch 'upstream/main' into HEAD
+b29d9b39	BTH061-CREW-EXPIRED-HANDOFF: Retire settled delivery handoffs
+adca9694	Merge remote-tracking branch 'upstream/main' into HEAD
+776a819d	BTH061-TABLE-ENDING: Finish table result presentation before run report
+5e054f51	Merge remote-tracking branch 'origin/main' into codex/crew-expired-handoff-20261103
+60d88551	BTH061-HUD-001: Keep the run information banner on one fixed row
+a8941ccf	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+b31b323d	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+8f330c51	BTH061-HUD-001-WEB-CANVASLAYER: Use supported Controls for HUD details
+2041585d	BTH061-HUD-001-WEB-CANVASLAYER: Use a Web-safe HUD disclosure
+05f5b9cc	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+da24704d	BTH061-TABLE-ENDING: Preserve existing machine terminal timing
+72945567	Merge remote-tracking branch 'origin/main' into codex/fixed-hud-banner-20261103
+0c71fdad	CREW-COUNT-ROOM-PUBLICATION-057: Exclude Crew live table from base seal
+226e2583	UX-ROULETTE-SOCIAL-QUOTE-001: Quote actual WITH and FADE additions
+ea136553	Track full performance audit and fix continuous Web coin publication starvation
+1c201c9e	Fix delayed arrival pressure in Wedding scenario progression
+247ebe32	BTH-SLOT-COLLECT-001: label Slot Nudge as cheating before input
+b63342bb	BTH-15/BTH-17: describe actual item effects and game scope
+f8271e9f	Merge factual item help without closing parent reworks
+d641ce2d	Remove superseded backdrop subsystem and unused runtime paths
+dec71ae8	Repair stale audit fixtures and current validation contracts
+e6fef69a	BTH-PERF-20261104-002/003: bound consumed pusher inputs and reduce poker hint work
+b3337406	Restore canceled-touch and Package popup scrolling contracts
+c43c95a9	BTH061-PULLTABS-SAVE-001: await browser persistence for Menu Save
+98f20449	Merge remote-tracking branch 'origin/main' into fix/bth061-pulltabs-save-001
+255bbfc5	Preserve Blackjack round net in floor and saved feedback
+f3c3107e	Merge commit 'b94f39382c8e181014140ae2600f13eef63a60f5' into codex/table-ending-presentation-20261103
+ec94c1e9	Record Video Poker journal currency at action time (GRAND-VIDEO-POKER-NEW-UNIT-001)
+01aaac32	BTH-COUNT-SIT-SEMANTIC-001: finalize heist room before turn
+0adf3925	BTH-TRAVEL-MOTEL-SEED-001: Retire stored scenarios after town priming
+32052d05	BTH-TRAVEL-MOTEL-SEED-001: Reject retirement without scenario identity
+cc39dd50	Fix DEPARTING_OBSERVER_CLIP during person transit
+be3f1b2d	BTH-BARDICE-WARM-PROGRESSION-001: Use surface clock for tumble gating
+8ba8ba8a	Remove orphan tooltip helper and unused wager signals
+2954398c	Dim Blackjack hand actions until deal reveal completes
+be4afc15	BTH-CRAPS-JOURNAL-CURRENCY-001: Record new receipt currency at action time
+b5d24ea9	BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT: Stamp new Slot cash receipts
+85c1782b	BTH061-VAULTDROP-SAVE-FEEDBACK-001: Show refused Save in Run Menu
+eb4e66bb	BTH-NUMBERS-PURCHASE-JOURNAL-001: Record accepted Numbers purchases
+ed9242d6	Merge remote-tracking branch 'origin/main' into codex/table-ending-presentation-20261103
+0ea1a52e	Integrate reviewed nonpaused audit cleanup for NEXT
+2376202f	Integrate BTH-CRAPS-JOURNAL-CURRENCY-001 for authorized NEXT publication
+df7d77a8	Preserve concurrent main work before approved audit NEXT publication
+e3a470f3	Reconcile current main before Craps journal publication
+7f03921e	Preserve concurrent audit main before Craps journal publication
+2b2db17e	Integrate separate Slot journal fix for authorized NEXT publication
+345f9414	Integrate separate Bar Dice clock fix for authorized NEXT publication
+cd1ce774	Remove superseded menu sizing and unread bankroll marker
+488d86fa	Merge current main and reconcile audit continuation task records
+1e38b788	BTH-BARDICE-JOURNAL-CURRENCY-001: Record Bar Dice receipt units
+d65bcef9	Preserve concurrent journal work and scoped audit ledger evidence
+62490ab1	fix(coin-pusher): show canonical Drop and Hold prices
+61e77b90	fix(roulette): record journal settlement currency
+d1f03773	BTH061-AUDIT-GENERIC-CONTROLS-004 remove retired canvas controls
+6711b1ad	BTH061-AUDIT-SLOT-TICK-004 retire action runtime tick mode
+51b73156	BTH061-AUDIT-REPORT-FALLBACK-004 remove unreachable replay branch
+d361c21e	Merge remote-tracking branch 'upstream/main' into fix/coinpusher-drop-price-20261104
+b83d0909	BTH061-AUDIT-SLOT-LEGACY-FAMILY-004 recover authoritative bonus tags
+4bf7b928	fix: remove qualified legacy Slot bonus controls (BTH061-AUDIT-SLOT-LEGACY-FAMILY-004)
+81f3ecf6	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+42eafd35	refactor: remove retired audio bridge and loader branches (BTH061-AUDIT-AUDIO-LEGACY-006)
+fabd7495	refactor: remove retired Crossword hold policy (BTH061-AUDIT-SCRATCH-HELD-SALE-006)
+6eba3281	Avoid redundant full-state comparisons for accepted scenario commands
+41c6384f	Restore lifecycle presentation and replace obsolete sequence fixtures
+af260924	fix(blackjack): refresh notices after draft wager edits (BTH-BLACKJACK-DRAFT-RISK-NOTICE-001)
+192d8c2a	Remove superseded UI projection implementations and migrate their callers
+32eb2eca	Align actor motion with physical route distances and current geometry owners
+2e33f54f	fix: record Pull Tabs journal currency (BTH-JOURNAL-PULLTABS-CURRENCY-001)
+ed6a8e61	Merge current main while preserving qualified audit and Blackjack work
+a208b61a	fix: route default Pull Tabs practice prizes to chips (BTH-PULLTABS-PRACTICE-REDEEM-CURRENCY-001)
+486d0465	Preserve concurrent Pull Tabs qualification during audit publication
+a7e8c71f	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+546dfe48	Prepare duel tables before publishing event success
+83801689	fix: retain the free closing exit in public travel (BTH-TRAVEL-CLOSING-FALLBACK-R11-1067)
+3c0fd716	Resolve sequence registration without copying the whole catalog
+c6875e54	Reuse material-path fingerprints during sequence validation
+69bd0f7e	Bound material-path fingerprint retention per validation
+363ece78	fix: initialize neutral shared Crew reputation
+eebb8aa1	Preserve Coin Pusher state across feature updates and settlement
+c9449ddd	Fix short-stack duel callout movement receipts (BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022)
+40d4ac78	Merge remote-tracking branch 'origin/main' into codex/audit-publish-next
+88efa6e4	Preserve exact numeric identity across saved and compiled rooms
+fbd95aae	Honor ritual identifier grammar and canonical position anchors
+eba4663b	BTH061-BAR-DICE-REVEAL-RESTORE-001: Preserve an accepted cup ante across venue changes
+1b2f12c1	Handle save-status snapshots before run UI is loaded
+753d6eb5	BTH061-BAR-DICE-SHUTDOWN-001: reclaim autosave before scene exit
+a3a29fdb	fix(meta): durably settle terminal outcomes before run acknowledgement
+b2a9cef8	Merge tested audit fixes and preserve paused progress with current main
+9794d07a	Finalize existing saved room layout edits
+71981e79	Integrate tested Coin Pusher retention and Video Poker hint fixes
+b4577aeb	Integrate validated existing saved room layouts
+31bb55b8	Fix home-loss projection and typed validation memo identity
+8b4653d0	fix(roulette): recover warm reveal progression across clock lead
+564cebb6	Fix Meta showdown choices and preserve Crew instance escrow
+b64344b5	Advance Video Poker hints incrementally with exact strategy parity
+c3bc398e	Fix cross-platform scenario inventory seals
+1996d6be	AUD061-02/AUD061-01: allow confirmed leaving and clear stale rollbacks
+901c1d65	AUD061-09: retry the current save after an older async failure
+7f0e61f1	AUD061-10: refresh economy at Crew heist money boundaries
+3e11f59a	QOL-02: show a persistent autosave failure warning in the HUD
+134b4202	QOL-02: render warning replacements and the visible one-time notice
+384c7a84	QOL-03: explain rejected actions in player language
+2bcea35c	QOL-04: format loaded whole numbers at display boundaries
+25822cff	QOL-05: add private-safe build and save diagnostics in Settings
+12216a7d	AUD061-16: ignore test fault switches in distribution builds
+bc1ee0c9	AUD061-14: retain and retry failed profile and collection saves
+7a2c0f82	AUD061-14: refresh Result after collection save recovery
+30ac66e4	AUD061-08: flush queued run saves at background boundaries
+9d7d9c4a	AUD061-08: start engine storage sync while the page is hidden
+138880bb	AUD061-08: serialize automatic and lifecycle engine sync requests
+5676a610	AUD061-15: repair wrong-sized Crew install keys
+b0cb51df	QOL-01: confirm menu starts that replace a saved run
+adacdc04	QOL-01: give replacement dialog sole keyboard ownership
+412cd9a3	QOL-01: preserve native Tab traversal in replacement dialog
