@@ -32145,6 +32145,93 @@
         "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution."
       ],
       "updated_at": "2026-11-11T12:12:26.062457+00:00"
+    },
+    {
+      "id": "AUD061-05",
+      "name": "Write full unreleased changelog and propose exact source candidate",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Every player-visible change in the reviewed commit range is represented or explicitly dispositioned with evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Exact proposed candidate SHA and served NEXT identity recorded, with code freeze and release blockers stated.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "No tags/releases/uploads/README released-asset claim; final acceptance/coverage uses the exact candidate.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "6c6a3571",
+          "evidence": [
+            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md",
+          "summary": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-05-BATCH-001"
+      ],
+      "next_action": "Deliver code-plus-ledger identity through existing NEXT watcher, then run AUD061-11/17 on that exact candidate.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T12:21:38.109938+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations."
+      ],
+      "updated_at": "2026-11-11T12:21:38.109938+00:00"
     }
   ],
   "batches": [
@@ -33608,6 +33695,53 @@
         ]
       },
       "updated_at": "2026-11-11T12:12:26.062457+00:00"
+    },
+    {
+      "id": "AUD061-05-BATCH-001",
+      "name": "Write full unreleased changelog and propose exact source candidate implementation",
+      "parent_id": "AUD061-05",
+      "group": "current",
+      "state": "open",
+      "status": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING",
+      "scope": [
+        "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "6c6a3571",
+          "evidence": [
+            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md",
+          "summary": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Deliver code-plus-ledger identity through existing NEXT watcher, then run AUD061-11/17 on that exact candidate.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T12:21:38.109938+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T12:21:38.109938+00:00"
     }
   ]
 }
