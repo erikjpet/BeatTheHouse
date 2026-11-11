@@ -44,8 +44,6 @@
         "requested_by": "user",
         "state": "active",
         "task_ids": [
-          "BTH061-BAR-DICE-REVEAL-RESTORE-001",
-          "BTH061-BAR-DICE-COVER-DISPLAY-001",
           "BTH061-BAR-DICE-SHUTDOWN-001"
         ],
         "resume_only_on_user_instruction": true,
@@ -63,7 +61,20 @@
           "deployed_commit": "7d4b121fe8448d9a66ce6366218b470533424ed7",
           "error": "refusing to replace an existing immutable build"
         },
-        "remaining": "All3Open; associated753 alreadyonmain. Publish remaining preservation/tracking checkpoint and observe existing watcher. Exact NEXT acceptance remains required; launch not newly tested duringpause. Prior originalac877/direct1ad read denials untouched."
+        "remaining": "All3Open; associated753 alreadyonmain. Publish remaining preservation/tracking checkpoint and observe existing watcher. Exact NEXT acceptance remains required; launch not newly tested duringpause. Prior originalac877/direct1ad read denials untouched.",
+        "scoped_resumptions": [
+          {
+            "task_ids": [
+              "BTH061-BAR-DICE-REVEAL-RESTORE-001",
+              "BTH061-BAR-DICE-COVER-DISPLAY-001"
+            ],
+            "recorded_at": "2026-11-11T13:26:14.045136+00:00",
+            "source": "Current explicit owner audit request: AUD061-11 repeats the named frozen-RC acceptances; item/scenario content remains paused.",
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
+          }
+        ]
       },
       {
         "schema": "bth.user_work_pause/v1",
@@ -94,7 +105,6 @@
           "BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024",
           "BTH061-AUDIT-RITUAL-ID-GRAMMAR-025",
           "BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025",
-          "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026",
           "BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028",
           "BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030",
           "BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030",
@@ -112,7 +122,19 @@
         ],
         "scoped_resumption_evidence": {
           "BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031": "docs/testing/meta_choice_resumption_20261110.json"
-        }
+        },
+        "scoped_resumptions": [
+          {
+            "task_ids": [
+              "BTH061-AUDIT-TERMINAL-META-PERSISTENCE-026"
+            ],
+            "recorded_at": "2026-11-11T13:26:14.045136+00:00",
+            "source": "Current explicit owner audit request: AUD061-11 repeats the named frozen-RC acceptances; item/scenario content remains paused.",
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
+          }
+        ]
       }
     ],
     "no_intentional_holds_scope": "No agent-imposed or invented holds. Current explicit user pauses override the earlier zero-holds direction only for their named scope."
@@ -589,6 +611,11 @@
           "kind": "historical_next_identity_startup",
           "reference": "docs/testing/evidence/performance_audit_20261104/next247-served-identity.json",
           "summary": "Retained PR30 evidence for historical NEXT247ebe32 includes Coin001; not a fresh acceptance pass on the current merged candidate."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
@@ -602,7 +629,13 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T06:33:15.814125+00:00"
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      }
     },
     {
       "id": "BTH-PERF-20261104-002",
@@ -735,6 +768,11 @@
           "kind": "deployed_normal_gameplay",
           "reference": "docs/testing/video_poker_deployed_visible_20261111.json",
           "summary": "Exact HTTPS17ae ordinary practice on all three cabinets: six settled rounds and seven Deals, visible Hold and animation; two preserved DataCloneError out-of-memory page errors; no console errors or failed requests, with error phase/cause unknown. Deal/Hold sampled windows have no50ms longtask; Draw59-66ms and entry175-502ms remain wider performance findings. Historical188-344ms attribution remains open."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
@@ -752,7 +790,13 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T01:20:31.259799+00:00"
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      }
     },
     {
       "id": "BTH-PERF-20261104-003",
@@ -827,6 +871,11 @@
           "kind": "branch_integration",
           "reference": "docs/testing/performance_audit_20261104_batch002_003.md",
           "summary": "PR 30 source and retained native/Web evidence reconciled with current main; final merged-source automated checks pending. Broad playtesting remains paused by the current user direction."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
@@ -840,7 +889,13 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T06:27:57.161796+00:00"
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      }
     },
     {
       "id": "BTH061-PULLTABS-SAVE-001",
@@ -4144,6 +4199,15 @@
               "docs/testing/crew_web_acceptance_20261110.md",
               "docs/testing/crew_web_acceptance_20261110.json"
             ]
+          },
+          {
+            "id": "frozen-rc-exact-web-repeat",
+            "description": "Repeat the named changed-behavior and cold rendered cases on the proposed frozen candidate, preserving prior85d acceptance as historical.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -4152,11 +4216,11 @@
           "areas": []
         }
       },
-      "state": "complete",
-      "status": "COMPLETE_RECREATED_WEB_BEHAVIOR_AND_COLD_RETURN",
+      "state": "open",
+      "status": "HISTORICAL_WEB_COMPLETE_FROZEN_RC_NATIVE_REPEAT_PASS_RENDERED_REPEAT_OPEN",
       "owner": {
-        "name": "Finish Crew Web tests",
-        "task_ref": "/root/finish_crew_web_tests",
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4203,10 +4267,15 @@
           "kind": "deployed_recreated_web_acceptance",
           "reference": "docs/testing/crew_web_acceptance_20261110.json",
           "summary": "Eight qualifying recreated Web flows pass: Jazz expiry/cold map responsiveness; paid Roulette/Coin Pusher acceptance, neutral Close and accepted-run cold reentry. Final owned Job exit 0 / active 0. No production changes or original-save claim."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "None. Recreated current-NEXT Web acceptance completed; retain original-save and focused-scope limits.",
+      "next_action": "Finish the exact candidate Web cases in BTH061-RC-ACCEPTANCE-COVERAGE-001; no new product defect inferred.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -4218,12 +4287,24 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T23:02:09.797576+00:00",
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
         "required_for_completion": false,
         "retained_agent_or_captured_state_not_declared_lost": true
+      },
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      },
+      "historical_85d38b96_complete": true,
+      "prior_owner_before_frozen_rc": {
+        "name": "Finish Crew Web tests",
+        "task_ref": "/root/finish_crew_web_tests",
+        "assignment_state": "assigned"
       }
     },
     {
@@ -5801,6 +5882,11 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
@@ -5814,7 +5900,13 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      }
     },
     {
       "id": "BTH061-007",
@@ -7567,6 +7659,15 @@
               "docs/testing/crew_web_acceptance_20261110.md",
               "docs/testing/crew_web_acceptance_20261110.json"
             ]
+          },
+          {
+            "id": "frozen-rc-exact-web-repeat",
+            "description": "Repeat the named changed-behavior and cold rendered cases on the proposed frozen candidate, preserving prior85d acceptance as historical.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -7575,11 +7676,11 @@
           "areas": []
         }
       },
-      "state": "complete",
-      "status": "COMPLETE_RECREATED_WEB_BEHAVIOR_AND_COLD_RETURN",
+      "state": "open",
+      "status": "HISTORICAL_WEB_COMPLETE_FROZEN_RC_NATIVE_REPEAT_PASS_RENDERED_REPEAT_OPEN",
       "owner": {
-        "name": "Finish Crew Web tests",
-        "task_ref": "/root/finish_crew_web_tests",
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -7621,10 +7722,15 @@
           "kind": "deployed_recreated_web_acceptance",
           "reference": "docs/testing/crew_web_acceptance_20261110.json",
           "summary": "Eight qualifying recreated Web flows pass: Jazz expiry/cold map responsiveness; paid Roulette/Coin Pusher acceptance, neutral Close and accepted-run cold reentry. Final owned Job exit 0 / active 0. No production changes or original-save claim."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "None. Recreated current-NEXT Web acceptance completed; retain original-save and focused-scope limits.",
+      "next_action": "Finish the exact candidate Web cases in BTH061-RC-ACCEPTANCE-COVERAGE-001; no new product defect inferred.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -7636,12 +7742,24 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T23:02:09.797576+00:00",
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
         "required_for_completion": false,
         "retained_agent_or_captured_state_not_declared_lost": true
+      },
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      },
+      "historical_85d38b96_complete": true,
+      "prior_owner_before_frozen_rc": {
+        "name": "Finish Crew Web tests",
+        "task_ref": "/root/finish_crew_web_tests",
+        "assignment_state": "assigned"
       }
     },
     {
@@ -15020,7 +15138,7 @@
         }
       },
       "state": "open",
-      "status": "ACTIVE_TRUST_APPROVAL_DEPENDENCY",
+      "status": "STRICT_NORMAL_HTTPS_FROZEN_RC_STARTUP_PASSES_NO_TRUST_ACTION; historical approval record retained",
       "owner": {
         "name": "Resolve testing certificate",
         "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
@@ -15038,23 +15156,33 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Valid private-CA leaf and strict explicit-CA HTTPS/normal localhost metadata checks pass. Browser trust remains a concrete security/approval dependency, not an intentional hold. Preserve verification and audience; do not bypass certificate validation or silently change permanent trust. Owner records permitted resolution and actual deployed Web acceptance."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain/record the actual required trust approval or permitted verified route, then finish normal-browser acceptance without disabling certificate validation.",
+      "next_action": "No trust change needed for this observed route; retain historical approval record and finish outstanding changed-behavior acceptance through the permitted route.",
       "blocker": {
-        "state": "active",
-        "kind": "security_approval",
-        "description": "Permanent trust action is awaiting actual approval; strict browser reports NET::ERR_CERT_AUTHORITY_INVALID. This is a specific security dependency, not an intentional hold.",
-        "requires_user_input": true,
+        "state": "none",
+        "kind": "none",
+        "description": "Current strict browser startup/Daily/assets succeed. No permanent trust or security change made. Historical affected behavioral acceptances remain separately tracked.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:23:50.313407+00:00",
         "evidence": [
-          "Codex task01a1a3e1-a613-7284-8bba-092f690190c9; observed2026-11-04T00:20:56Z",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-        ],
-        "observed_at": "2026-11-04T16:23:29.672223+00:00"
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      }
     },
     {
       "id": "BTH-NEXT-ALLOC-001",
@@ -26215,10 +26343,10 @@
         }
       },
       "state": "open",
-      "status": "TESTING_PAUSED_PRESERVED_FIX_MAIN_FINISHING_NEXT",
+      "status": "FROZEN_RC_WARM72_PASS_COLD44_1_ANIMATION_QUALIFICATION_OPEN",
       "owner": {
-        "name": "Bar Dice Reveal restoration (task-14)",
-        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -26301,12 +26429,17 @@
           "kind": "explicit_user_finish_then_testing_pause",
           "reference": "docs/todo/bth_task14_testing_pause_20261106.json",
           "summary": "Userrequests preserveprogress, finishlastinprogressmain/NEXT andpausetesting. All41ownedJobsalreadyended/0; no new native/browserjobs. Keep3IDsOpen/associated753; publishremainingtrackingandreportactualpublisheroutcome."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [
         "BTH061-BAR-DICE-SHUTDOWN-001"
       ],
-      "next_action": "Finish publishing preserved source/tracking checkpoint through main and observe existing NEXT machinery without new tests; record actual result, then pause. Keep Open until exact required acceptance is supported. Preserve immutable builds/provenance/denied-read boundaries; no pipeline restart or substitute export.",
+      "next_action": "Diagnose BTH061-RC-BARDICE-COLD-001; preserve exact-once accounting and source/native limits.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
@@ -26320,9 +26453,9 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:44:42.036719+00:00",
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:44:42.036719+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -26342,7 +26475,45 @@
             "docs/testing/bar_dice_reveal_restore_r17b.md",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
           ]
+        },
+        "resumed_at": "2026-11-11T13:26:14.045136+00:00",
+        "resumption_source": "Current owner AUD061-11 frozen-candidate acceptance instruction; no broader item/scenario resumption."
+      },
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      },
+      "pause_history": [
+        {
+          "state": "active",
+          "requested_by": "user",
+          "requested_at": "2026-11-06T08:44:42.036719+00:00",
+          "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+          "source": "docs/todo/bth_task14_testing_pause_20261106.json",
+          "resume_only_on_user_instruction": true,
+          "previous_status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+          "scope_limit": "No new testing. Preservation and already-authorized main/NEXT publication follow-through continue as final in-progress work.",
+          "resume_next_action": "After user resumes testing and the existing publisher is recovered, verify actual qualified descendant NEXT identity/basic launch if not already independently qualified; complete required acceptance and reconciliation before closing all3.",
+          "previous_blocker": {
+            "state": "active",
+            "kind": "next_promotion",
+            "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+            "requires_user_input": false,
+            "observed_at": "2026-11-06T06:07:21.202382+00:00",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+            ]
+          }
         }
+      ],
+      "prior_owner_before_frozen_rc": {
+        "name": "Bar Dice Reveal restoration (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
       }
     },
     {
@@ -26410,10 +26581,10 @@
         }
       },
       "state": "open",
-      "status": "TESTING_PAUSED_PRESERVED_FIX_MAIN_FINISHING_NEXT",
+      "status": "FROZEN_RC_NATIVE_DRAW94_PASS_WEB_CHIPS_RETURN_FIELD_CLIPPED",
       "owner": {
-        "name": "Bar Dice cover/risk display investigation (task-14)",
-        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -26466,10 +26637,15 @@
           "kind": "explicit_user_finish_then_testing_pause",
           "reference": "docs/todo/bth_task14_testing_pause_20261106.json",
           "summary": "Userrequests preserveprogress, finishlastinprogressmain/NEXT andpausetesting. All41ownedJobsalreadyended/0; no new native/browserjobs. Keep3IDsOpen/associated753; publishremainingtrackingandreportactualpublisheroutcome."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish publishing preserved source/tracking checkpoint through main and observe existing NEXT machinery without new tests; record actual result, then pause. Keep Open until exact required acceptance is supported. Preserve immutable builds/provenance/denied-read boundaries; no pipeline restart or substitute export.",
+      "next_action": "Qualify the retained value/readability scope and separate BTH061-RC-BARDICE-COVER-CLIP-001; no wrong-value claim.",
       "blocker": {
         "state": "active",
         "kind": "next_promotion",
@@ -26483,9 +26659,9 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-06T08:44:42.036719+00:00",
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:44:42.036719+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -26505,7 +26681,45 @@
             "docs/testing/bar_dice_reveal_restore_r17b.md",
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
           ]
+        },
+        "resumed_at": "2026-11-11T13:26:14.045136+00:00",
+        "resumption_source": "Current owner AUD061-11 frozen-candidate acceptance instruction; no broader item/scenario resumption."
+      },
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+      },
+      "pause_history": [
+        {
+          "state": "active",
+          "requested_by": "user",
+          "requested_at": "2026-11-06T08:44:42.036719+00:00",
+          "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+          "source": "docs/todo/bth_task14_testing_pause_20261106.json",
+          "resume_only_on_user_instruction": true,
+          "previous_status": "FOCUSED_ACCEPTANCE_COMMITTED_MAIN_NEXT_PUBLISHER_BLOCKED",
+          "scope_limit": "No new testing. Preservation and already-authorized main/NEXT publication follow-through continue as final in-progress work.",
+          "resume_next_action": "After user resumes testing and the existing publisher is recovered, verify actual qualified descendant NEXT identity/basic launch if not already independently qualified; complete required acceptance and reconciliation before closing all3.",
+          "previous_blocker": {
+            "state": "active",
+            "kind": "next_promotion",
+            "description": "Existing automated NEXT publisher QA read-grant command returned1 again forCBC at06:04:09Z after successful export/PCK1166; retains7d. Initial helper stderr was not retained. One original44ea exact helper retry verifiedRX18items but did not promote. No further rebuild loop/manual substitute or pipeline change.",
+            "requires_user_input": false,
+            "observed_at": "2026-11-06T06:07:21.202382+00:00",
+            "evidence": [
+              "docs/testing/bar_dice_reveal_restore_r17b.json",
+              "docs/testing/bar_dice_reveal_restore_r17b.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\bar-dice-final-publisher-block.json"
+            ]
+          }
         }
+      ],
+      "prior_owner_before_frozen_rc": {
+        "name": "Bar Dice cover/risk display investigation (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
       }
     },
     {
@@ -27620,8 +27834,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-two-body-review-r1.json",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json"
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
             ]
           },
           {
@@ -27630,8 +27843,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R3-root-postcheck.json",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json"
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
             ]
           },
           {
@@ -27640,10 +27852,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_029.json",
-              "docs/testing/deprecated_code_audit_continuation_029.md",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-native-results-peer-r5.json",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-native-results-peer-r2.json"
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
             ]
           },
           {
@@ -27652,18 +27861,17 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_029.json",
-              "docs/testing/deprecated_code_audit_continuation_029.md",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-host-native-results-peer-r5.json",
-              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog029-domain-native-results-peer-r2.json"
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
             ]
           },
           {
             "id": "required-next-delivery",
             "description": "Actual tested corrective commit is verified in exact NEXT delivery before completing this corrective task; do not retry denied main publication without new relevant approval.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -27672,11 +27880,11 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_FIX_COMMITTED_343_FINAL_CHECKS_PASS_REQUIRED_NEXT_APPROVAL_PENDING_029",
+      "state": "complete",
+      "status": "COMPLETE_FROZEN_RC_391_PASS_CORRECTIVE_ANCESTOR_EXACT_NEXT_VERIFIED",
       "owner": {
-        "name": "Audit phase026 qualification",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -27716,63 +27924,44 @@
             "docs/testing/deprecated_code_audit_continuation_029.json",
             "docs/testing/deprecated_code_audit_continuation_029.md"
           ]
+        },
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "a3a29fdba82c2dfe8b8eff90b0fbc17b46a23358",
-        "evidence": [],
-        "scope": "Final source locally committed and tested. Exact NEXT delivery remains unverified behind the prior denied main publication; no retry made."
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
-          "kind": "conditional_terminal_meta_persistence_source_lead026",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-collection-peer-review-r1.json",
-          "summary": "Independent trace retains crossstore retrylead; latermeta save canpersistdirtymemory, no current loss/dup/restore bug demonstrated."
-        },
-        {
-          "kind": "detached_public_module_real_filesystem_failure027",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-root-postcheck-r2.json",
-          "summary": "Unchanged native guard26healthychecks0failures; actual temp-directory obstruction gives saveerror12, preservesprimary, live destroyedcard0/processedflags true, repeat skips; freshMeta oldcard1 and sameprocessedliveRun skips. Later explicitsave persists0. Full host/checkpoint/serializedrun/Continue/player scope remains unqualified; all generatedfiles preserved."
-        },
-        {
-          "kind": "independent_detached_storage_fault_results027",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog027-meta-native-results-peer-r2.json",
-          "summary": "Independent originalfooter/26healthycontrols/raw2observations/custody/guard review confirms bounded retry-suppression gap and later-save recovery. Actual terminal UI/checkpoint/serializedRun/Continue remains unqualified; no production correction."
-        },
-        {
-          "kind": "public_host_baseline_and_necessary_path_test_correction028",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R1-root-postcheck.json",
-          "summary": "R1normalgeneratedroom/publication/initialSave succeeded;21checks then sole testcontainment failure beforefault/Continue because actualdata/saves vs expected/saves. Exit1/Job0 and originalfailedfooter preserved. Independent R2 corrects onlyowned distributionpath test, same code/seed/publicactions/guard; no readiness repair."
-        },
-        {
-          "kind": "actual_host_checkpoint_gap_and_cold_observer_failure028",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-R2-root-postcheck.json",
-          "summary": "ActualnativepublicAbandon/Save producer33checks0fail withprocessed/decay/checkpoint true anddiskcard1/live0. Freshprocess beforeContinue hitseparateNoRun snapshotNil. NewSnapshot028 onefieldguard independentlyreviewed/applied; no originaldomain/save/authority/gameplay code altered; R3fullcold qualificationpending."
-        },
-        {
-          "kind": "qualified_real_public_host_cold_continue_durability_failure028",
-          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog028-host-native-results-peer-r3.json",
-          "summary": "ActualnativepublicStart/Abandon/terminalcheckpoint/Save thenseparatefreshprocessContinue/Save: livecard0 vsdiskcard1 beforeexit; savedprocessed/decay/checkpoint true andcard1reloads, retrySave leavescard1. 33+24=57healthychecks0fail. FullroutequalifiedforcarriedPlayersCardfailure only; underlyingpersistencebugNOTfixed. OriginalR1/R2failures and4PSstatusTextencodingdifferences preserved; exactrawengineUTF8 used."
-        },
-        {
-          "kind": "final_native_corrective_qualification029",
-          "reference": "docs/testing/deprecated_code_audit_continuation_029.json",
-          "summary": "Finalsource1250manifestc31125f; native sixprocess171 plusDTO172 allpass; actual physical faults/rollback/retry/coldContinue/ack/tutorial andSal-before-card order qualified. Legacy processed without receipt retained because prior application ambiguous; no speculative replay. Sourcea3a29fdb local; requiredNEXT Open."
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "COMPLETE_FROZEN_RC_391_PASS_CORRECTIVE_ANCESTOR_EXACT_NEXT_VERIFIED"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve this unfinished scope and its exact existing evidence/commits. New testing/audit phases are paused until user resumption; finish only the already-tested publication tracked by BTH061-AUDIT-FINISH-PUBLISH-20261106. Resume the preserved next action after the user resumes this work; prior access/diagnostic and item/scenario restrictions remain.",
+      "next_action": "None for this scoped terminal persistence correction; broader audit/item/scenario pauses and required release coverage remain.",
       "blocker": {
-        "state": "active",
-        "kind": "user_requested_pause",
-        "description": "Explicit user pause of new testing/audit phases while nearly complete preservation/main/NEXT publication finishes. Prior blocker and next action are retained in pause metadata; no underlying finding or required acceptance is erased.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-06T08:56:17.463862+00:00",
-        "evidence": [
-          "docs/testing/audit_pause_finish_20261106.json"
-        ]
+        "observed_at": "2026-11-11T13:22:42.538308+00:00",
+        "evidence": []
       },
       "planned_app_changes": [
         {
@@ -27788,9 +27977,9 @@
           "scope": "Scoped durable terminal special-outcome receipt, rollback/retry/ack integration only; preserve other behavior and paused implementations."
         }
       ],
-      "updated_at": "2026-11-06T08:56:17.463862+00:00",
+      "updated_at": "2026-11-11T13:22:42.538308+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-06T08:56:17.463862+00:00",
         "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
@@ -27807,7 +27996,36 @@
           "evidence": [
             "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
           ]
+        },
+        "resumed_at": "2026-11-11T13:26:14.045136+00:00",
+        "resumption_source": "Current owner AUD061-11 frozen-candidate acceptance instruction; no broader item/scenario resumption."
+      },
+      "pause_history": [
+        {
+          "state": "active",
+          "requested_by": "user",
+          "requested_at": "2026-11-06T08:56:17.463862+00:00",
+          "instruction": "please pause testing and finish any last in progress work on bth for now and ensure we do not lose progress. get what is almost done to main and next",
+          "source": "docs/testing/audit_pause_finish_20261106.json",
+          "resume_only_on_user_instruction": true,
+          "previous_status": "LOCAL_FIX_COMMITTED_343_FINAL_CHECKS_PASS_REQUIRED_NEXT_APPROVAL_PENDING_029",
+          "resume_next_action": "Retain local a3a29fdb and independently qualified final evidence. Await new relevant publication approval before any main push, then integrate and verify exact NEXT identity/assets/changed behavior. Do not mark Complete before required NEXT acceptance.",
+          "previous_blocker": {
+            "state": "active",
+            "kind": "approval_review_rejection",
+            "description": "Automatic approval review rejected exactmainpublication: available approval coveredNEXT but notspecificmain. External shared-branch commitment is the stated risk. Actiondidnotexecute, no retry; explicitmainapprovalpending.",
+            "requires_user_input": true,
+            "observed_at": "2026-11-06T00:46:25.366143+00:00",
+            "evidence": [
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog024-main-publication-denied-r1.json"
+            ]
+          }
         }
+      ],
+      "prior_owner_before_frozen_rc": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
       }
     },
     {
@@ -29089,6 +29307,11 @@
           "kind": "exact_next_identity_startup",
           "reference": "docs/testing/closeout_meta_delivery_20261110.json",
           "summary": "Exact 1dd2064d promoted 17:58:57Z. Correct-version menu screenshot, metadata/redirect/PCK/native custody and zero page/console/request errors pass. Browser Job exited 0 with zero owned processes. This is basic launch, not rendered Meta choices."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
         }
       ],
       "implementation_batches": [],
@@ -29104,7 +29327,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T18:03:09.646596+00:00",
+      "updated_at": "2026-11-11T13:23:50.313407+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -29128,6 +29351,12 @@
         "resumed_at": "2026-11-10T17:52:06.744137+00:00",
         "resumed_source": "docs/testing/meta_choice_resumption_20261110.json",
         "scope": "Only this named item 12 correction resumed. Original pause details retained for provenance; other paused rows remain unchanged."
+      },
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
       }
     },
     {
@@ -32164,19 +32393,134 @@
             "id": "1",
             "description": "Every player-visible change in the reviewed commit range is represented or explicitly dispositioned with evidence.",
             "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "Exact proposed candidate SHA and served NEXT identity recorded, with code freeze and release blockers stated.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "No tags/releases/uploads/README released-asset claim; final acceptance/coverage uses the exact candidate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "DONE_CHANGELOG_FROZEN_CANDIDATE_EXACT_NEXT_VERIFIED",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "6c6a3571740ac0ae20ebf9809e15d9b3ea0c3e29",
+          "evidence": [
+            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md",
+          "summary": "DONE_CHANGELOG_FROZEN_CANDIDATE_EXACT_NEXT_VERIFIED"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-05-BATCH-001"
+      ],
+      "next_action": "None for this order; continue remaining audit work orders.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T12:32:37.773775+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations."
+      ],
+      "updated_at": "2026-11-11T12:32:37.773775+00:00"
+    },
+    {
+      "id": "AUD061-11",
+      "name": "Frozen candidate acceptance runs",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Run each recorded acceptance on exact frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; failures become separate findings; no unrelated fixes.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Eleven-game unfinished same-build Continue",
+            "required": true,
             "state": "open",
             "evidence": []
           },
           {
             "id": "2",
-            "description": "Exact proposed candidate SHA and served NEXT identity recorded, with code freeze and release blockers stated.",
+            "description": "Crew return and expired handoff",
             "required": true,
             "state": "open",
             "evidence": []
           },
           {
             "id": "3",
-            "description": "No tags/releases/uploads/README released-asset claim; final acceptance/coverage uses the exact candidate.",
+            "description": "Rendered Meta choice and terminal delivery",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Normal-play performance and Bar Dice",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "5",
+            "description": "Preserve approval-specific blockers and actual native/Web limits",
             "required": true,
             "state": "open",
             "evidence": []
@@ -32189,7 +32533,7 @@
         }
       },
       "state": "open",
-      "status": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING",
+      "status": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32197,41 +32541,526 @@
       },
       "commits": [
         {
-          "sha": "6c6a3571740ac0ae20ebf9809e15d9b3ea0c3e29",
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
           "evidence": [
-            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
           ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md",
-          "summary": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING"
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN"
         }
       ],
       "implementation_batches": [
-        "AUD061-05-BATCH-001"
+        "AUD061-11-BATCH-001"
       ],
-      "next_action": "Deliver code-plus-ledger identity through existing NEXT watcher, then run AUD061-11/17 on that exact candidate.",
+      "next_action": "Resolve separately registered cold/coverage findings; do not tag this candidate.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required cold/coverage qualification is incomplete; see the five diagnosed follow-ups.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.119274+00:00",
+        "evidence": [
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
+      },
+      "planned_app_changes": [
+        "Run each recorded acceptance on exact frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; failures become separate findings; no unrelated fixes."
+      ],
+      "updated_at": "2026-11-11T13:22:42.119274+00:00"
+    },
+    {
+      "id": "BTH061-RC-BARDICE-COLD-001",
+      "name": "Bar Dice cold post-Call animation/account qualification",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Diagnose the failed post-Call passive-tumble assertion without inferring lost money.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped diagnosis and evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit where required",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact deployed acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "implementation_batches": [
+        "BTH061-RC-BARDICE-COLD-001-BATCH-001"
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T12:21:38.109938+00:00",
+        "observed_at": "2026-11-11T13:22:42.185344+00:00",
         "evidence": []
       },
       "planned_app_changes": [
-        "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations."
+        "Diagnose the failed post-Call passive-tumble assertion without inferring lost money."
       ],
-      "updated_at": "2026-11-11T12:21:38.109938+00:00"
+      "updated_at": "2026-11-11T13:22:42.185344+00:00"
+    },
+    {
+      "id": "BTH061-RC-SCRATCH-STATE-001",
+      "name": "Scratch current-build cold state discrepancy",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Capture the failing in-memory leaf/type difference and qualify paid ticket boundaries; no loss currently proven.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped diagnosis and evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit where required",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact deployed acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "implementation_batches": [
+        "BTH061-RC-SCRATCH-STATE-001-BATCH-001"
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.254978+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Capture the failing in-memory leaf/type difference and qualify paid ticket boundaries; no loss currently proven."
+      ],
+      "updated_at": "2026-11-11T13:22:42.254978+00:00"
+    },
+    {
+      "id": "BTH061-RC-BARDICE-COVER-CLIP-001",
+      "name": "Bar Dice chips financial label clips return field",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify and correct rendered cash/chip label width without changing values or ownership.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped diagnosis and evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit where required",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact deployed acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "implementation_batches": [
+        "BTH061-RC-BARDICE-COVER-CLIP-001-BATCH-001"
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.320999+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Qualify and correct rendered cash/chip label width without changing values or ownership."
+      ],
+      "updated_at": "2026-11-11T13:22:42.320999+00:00"
+    },
+    {
+      "id": "BTH061-RC-ACCEPTANCE-COVERAGE-001",
+      "name": "Complete missing frozen candidate acceptance",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Finish exact Web Crew/Jazz/Meta and all-eleven paid/pending/settled Save/Continue matrix.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped diagnosis and evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit where required",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact deployed acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "implementation_batches": [
+        "BTH061-RC-ACCEPTANCE-COVERAGE-001-BATCH-001"
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.402695+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Finish exact Web Crew/Jazz/Meta and all-eleven paid/pending/settled Save/Continue matrix."
+      ],
+      "updated_at": "2026-11-11T13:22:42.402695+00:00"
+    },
+    {
+      "id": "BTH061-RC-NATIVE-RETENTION-001",
+      "name": "Qualify native runtime input-retention measurement",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped diagnosis and evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit where required",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact deployed acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "implementation_batches": [
+        "BTH061-RC-NATIVE-RETENTION-001-BATCH-001"
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.466196+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements."
+      ],
+      "updated_at": "2026-11-11T13:22:42.466196+00:00"
     }
   ],
   "batches": [
@@ -33701,8 +34530,8 @@
       "name": "Write full unreleased changelog and propose exact source candidate implementation",
       "parent_id": "AUD061-05",
       "group": "current",
-      "state": "open",
-      "status": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_CHANGELOG_FROZEN_CANDIDATE_EXACT_NEXT_VERIFIED",
       "scope": [
         "Build the0.6.1 player-facing changelog from git log v0.6.0..HEAD, freeze application code after prior dispositions, identify the exact proposed source candidate and verify existing NEXT. No tag/release/manual upload; retain AUD04 version-qualification and AUD12 causal/RC limitations."
       ],
@@ -33717,31 +34546,371 @@
           "evidence": [
             "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md",
-          "summary": "CHANGELOG_REVIEWED_CODE_FROZEN_PROPOSED_RC_NEXT_PENDING"
+          "summary": "DONE_CHANGELOG_FROZEN_CANDIDATE_EXACT_NEXT_VERIFIED"
         }
       ],
-      "next_action": "Deliver code-plus-ledger identity through existing NEXT watcher, then run AUD061-11/17 on that exact candidate.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T12:21:38.109938+00:00",
+        "observed_at": "2026-11-11T12:32:37.773775+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T12:21:38.109938+00:00"
+      "updated_at": "2026-11-11T12:32:37.773775+00:00"
+    },
+    {
+      "id": "AUD061-11-BATCH-001",
+      "name": "Frozen candidate acceptance runs implementation",
+      "parent_id": "AUD061-11",
+      "group": "current",
+      "state": "open",
+      "status": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN",
+      "scope": [
+        "Run each recorded acceptance on exact frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; failures become separate findings; no unrelated fixes."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
+          "summary": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN"
+        }
+      ],
+      "next_action": "Resolve separately registered cold/coverage findings; do not tag this candidate.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required cold/coverage qualification is incomplete; see the five diagnosed follow-ups.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.119274+00:00",
+        "evidence": [
+          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+        ]
+      },
+      "updated_at": "2026-11-11T13:22:42.119274+00:00"
+    },
+    {
+      "id": "BTH061-RC-BARDICE-COLD-001-BATCH-001",
+      "name": "Bar Dice cold post-Call animation/account qualification implementation",
+      "parent_id": "BTH061-RC-BARDICE-COLD-001",
+      "group": "current",
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "scope": [
+        "Diagnose the failed post-Call passive-tumble assertion without inferring lost money."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.185344+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T13:22:42.185344+00:00"
+    },
+    {
+      "id": "BTH061-RC-SCRATCH-STATE-001-BATCH-001",
+      "name": "Scratch current-build cold state discrepancy implementation",
+      "parent_id": "BTH061-RC-SCRATCH-STATE-001",
+      "group": "current",
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "scope": [
+        "Capture the failing in-memory leaf/type difference and qualify paid ticket boundaries; no loss currently proven."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.254978+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T13:22:42.254978+00:00"
+    },
+    {
+      "id": "BTH061-RC-BARDICE-COVER-CLIP-001-BATCH-001",
+      "name": "Bar Dice chips financial label clips return field implementation",
+      "parent_id": "BTH061-RC-BARDICE-COVER-CLIP-001",
+      "group": "current",
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "scope": [
+        "Qualify and correct rendered cash/chip label width without changing values or ownership."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.320999+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T13:22:42.320999+00:00"
+    },
+    {
+      "id": "BTH061-RC-ACCEPTANCE-COVERAGE-001-BATCH-001",
+      "name": "Complete missing frozen candidate acceptance implementation",
+      "parent_id": "BTH061-RC-ACCEPTANCE-COVERAGE-001",
+      "group": "current",
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "scope": [
+        "Finish exact Web Crew/Jazz/Meta and all-eleven paid/pending/settled Save/Continue matrix."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.402695+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T13:22:42.402695+00:00"
+    },
+    {
+      "id": "BTH061-RC-NATIVE-RETENTION-001-BATCH-001",
+      "name": "Qualify native runtime input-retention measurement implementation",
+      "parent_id": "BTH061-RC-NATIVE-RETENTION-001",
+      "group": "current",
+      "state": "open",
+      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "scope": [
+        "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
+          "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        }
+      ],
+      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T13:22:42.466196+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T13:22:42.466196+00:00"
     }
   ]
 }
