@@ -6,6 +6,7 @@ const Archive := preload("res://scripts/core/run_money_flow_archive.gd")
 const Report := preload("res://scripts/ui/run_report_view_model.gd")
 const Screen := preload("res://scripts/ui/run_report_screen.gd")
 const Heist := preload("res://scripts/core/crew_heist_model.gd")
+const EXPECTATION_PATH := "user://count-money-expected.bin"
 var checks := 0
 var failures: Array[String] = []
 var facts: Dictionary = {}
@@ -157,11 +158,29 @@ func _prospective_write() -> void:
 	for index in range(241): run.log_story({"type": "synthetic_nonfinancial", "id": str(index)})
 	check(_net(Report.build(Report.snapshot_run(run)).money_rows) == 720, "actual compaction preserves exactly one payout")
 	if check(SaveService.new().save_run(run, "count_money_prospective") == OK, "official Save persists prospective payout and archive"):
-		FileAccess.open("user://count-money-expected.json", FileAccess.WRITE).store_string(JSON.stringify({"snapshot": _comparison_snapshot(run), "rows": Report.build(Report.snapshot_run(run)).money_rows}))
+		# Ordinary JSON.stringify rounds some layout/map/audio doubles. Keep an
+		# independent, lossless test reference rather than rounding production
+		# state or relaxing the exact ending/receipt/RNG comparison below.
+		var expected := {"snapshot": _comparison_snapshot(run), "rows": Report.build(Report.snapshot_run(run)).money_rows}
+		var reference := FileAccess.open(EXPECTATION_PATH, FileAccess.WRITE)
+		if not check(reference != null, "binary expectation opens for writing"): return
+		reference.store_var(expected, false)
+		var write_error := reference.get_error()
+		reference.close()
+		if not check(write_error == OK, "lossless expectation writes successfully"): return
+		var round_trip := FileAccess.open(EXPECTATION_PATH, FileAccess.READ)
+		if not check(round_trip != null, "binary expectation opens for readback"): return
+		var persisted: Variant = round_trip.get_var(false)
+		round_trip.close()
+		check(_equal(expected, persisted), "test reference preserves every original snapshot number exactly")
+		check(not _equal(0.14883720930232558, 0.148837209302326), "exact comparison still rejects ordinary-JSON float rounding")
 		_prospective_read()
 
 func _prospective_read() -> void:
-	var expected: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://count-money-expected.json"))
+	var reference := FileAccess.open(EXPECTATION_PATH, FileAccess.READ)
+	if not check(reference != null, "previous synthetic binary expectation exists"): return
+	var expected: Variant = reference.get_var(false)
+	reference.close()
 	if not check(typeof(expected) == TYPE_DICTIONARY, "previous synthetic save expectation exists"): return
 	var run: Variant = SaveService.new().load_run("count_money_prospective")
 	if not check(run is RunState, "fresh SaveService loads prospective synthetic ending"): return

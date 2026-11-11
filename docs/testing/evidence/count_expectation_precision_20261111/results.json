@@ -1,0 +1,196 @@
+{
+  "schema": "bth.count_expectation_precision/v1",
+  "base_main": "2113db415ce3639eb546caaaf58d582782e30bc7",
+  "engine": "4.6.stable.official.89cea1439",
+  "test_script_sha256": "c5c0d135bbb055b12912189c5bb64d4faca2b74a45e0be313d856b651c633951",
+  "results": [
+    {
+      "phase": "before",
+      "mode": "prospective_write",
+      "command": [
+        "D:/Projects/Beat-the-house/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\fix-count-oracle-20261111",
+        "--script",
+        "res://scripts/tests/count_heist_money_flow_check.gd"
+      ],
+      "checks": 20,
+      "failures": [
+        "official restore preserves full ending/receipts/RNG state"
+      ],
+      "restore_differences_count": 40,
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\count-native-private-before-20261111\\evidence\\storage-manifest.json",
+      "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-native-private-before-20261111\\evidence",
+      "started_epoch": 1794408952.6384387,
+      "finished_epoch": 1794408958.9231327
+    },
+    {
+      "phase": "before",
+      "mode": "prospective_read",
+      "command": [
+        "D:/Projects/Beat-the-house/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\fix-count-oracle-20261111",
+        "--script",
+        "res://scripts/tests/count_heist_money_flow_check.gd"
+      ],
+      "checks": 7,
+      "failures": [
+        "official restore preserves full ending/receipts/RNG state"
+      ],
+      "restore_differences_count": 40,
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\count-native-private-before-20261111\\evidence\\storage-manifest.json",
+      "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-native-private-before-20261111\\evidence",
+      "started_epoch": 1794408958.9231327,
+      "finished_epoch": 1794408964.7392945
+    },
+    {
+      "phase": "after",
+      "mode": "prospective_write",
+      "command": [
+        "D:/Projects/Beat-the-house/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\fix-count-oracle-20261111",
+        "--script",
+        "res://scripts/tests/count_heist_money_flow_check.gd"
+      ],
+      "checks": 26,
+      "failures": [],
+      "restore_differences_count": 0,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\count-native-private-after-20261111\\evidence\\storage-manifest.json",
+      "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-native-private-after-20261111\\evidence",
+      "started_epoch": 1794409014.2440608,
+      "finished_epoch": 1794409020.524631
+    },
+    {
+      "phase": "after",
+      "mode": "prospective_read",
+      "command": [
+        "D:/Projects/Beat-the-house/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\fix-count-oracle-20261111",
+        "--script",
+        "res://scripts/tests/count_heist_money_flow_check.gd"
+      ],
+      "checks": 8,
+      "failures": [],
+      "restore_differences_count": 0,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\count-native-private-after-20261111\\evidence\\storage-manifest.json",
+      "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-native-private-after-20261111\\evidence",
+      "started_epoch": 1794409020.524631,
+      "finished_epoch": 1794409026.3382747
+    },
+    {
+      "phase": "synthetic",
+      "mode": "synthetic",
+      "command": [
+        "D:/Projects/Beat-the-house/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\fix-count-oracle-20261111",
+        "--script",
+        "res://scripts/tests/count_heist_money_flow_check.gd"
+      ],
+      "checks": 70,
+      "failures": [],
+      "restore_differences_count": 0,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\count-native-private-synthetic-20261111\\evidence\\storage-manifest.json",
+      "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-native-private-synthetic-20261111\\evidence",
+      "started_epoch": 1794409047.0834107,
+      "finished_epoch": 1794409052.2881103
+    }
+  ],
+  "ledger_unit_tests": {
+    "count": 36,
+    "failures": 0,
+    "raw_evidence": "E:\\CodexQA\\BTH\\runs\\count-oracle-ledger-tests-20261111\\evidence"
+  },
+  "reconciliation": {
+    "reference_time": "2026-11-04T17:06:20.728100Z",
+    "baseline_findings": 1682,
+    "current_findings": 1682,
+    "added": [],
+    "removed": [],
+    "scoped_findings": []
+  },
+  "scope": "Test-reference persistence only. No production values, equality tolerance, gameplay, builder guards, pins or portrait-mode application changes. Fresh synthetic private state only; not historical or complete release qualification."
+}

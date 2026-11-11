@@ -33366,8 +33366,10 @@
             "id": "1",
             "description": "Actual scoped reproduction/diagnosis",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_expectation_precision_20261111.md"
+            ]
           },
           {
             "id": "2",
@@ -33391,10 +33393,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
+      "status": "TESTED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_NEXT_PENDING",
       "owner": {
-        "name": "Execute 0.6.1 audit work orders",
-        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "name": "Fix Count expectation precision",
+        "task_ref": "/root/fix_count_test_precision",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -33413,23 +33415,29 @@
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "state": "pending",
+        "commit": null,
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+          "docs/testing/count_expectation_precision_20261111.md"
+        ],
+        "scope": "Corrective Count test-reference commit pending existing NEXT; historical report deployment remains recorded in AUD061-17."
       },
       "evidence": [
         {
           "kind": "audit_finding",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Count restore expectation loses float precision"
+        },
+        {
+          "kind": "focused_current_main_acceptance",
+          "reference": "docs/testing/count_expectation_precision_20261111.md",
+          "summary": "Unchanged current-main write20/read7 reproduce exact comparison failure; binary reference write26/cold8 and unchanged synthetic70 pass, no tolerances or production changes. Ledger36 pass;1682 inherited findings unchanged."
         }
       ],
       "implementation_batches": [
         "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001"
       ],
-      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
+      "next_action": "Commit the tested lossless Count expectation fix, verify its exact existing NEXT identity/startup, then associate the corrective commit and close only this finding.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -33441,7 +33449,7 @@
       "planned_app_changes": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-11T15:00:51.496070+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
@@ -35554,13 +35562,13 @@
       "parent_id": "BTH061-RC-COUNT-EXPECTATION-001",
       "group": "current",
       "state": "open",
-      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
+      "status": "TESTED_LOSSLESS_REFERENCE_WRITE26_COLD8_SYNTHETIC70_NEXT_PENDING",
       "scope": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
       "owner": {
-        "name": "Execute 0.6.1 audit work orders",
-        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "name": "Fix Count expectation precision",
+        "task_ref": "/root/fix_count_test_precision",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -35579,20 +35587,26 @@
       ],
       "deployment": {
         "required": true,
-        "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "state": "pending",
+        "commit": null,
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+          "docs/testing/count_expectation_precision_20261111.md"
+        ],
+        "scope": "Corrective Count test-reference commit pending existing NEXT; historical report deployment remains recorded in AUD061-17."
       },
       "evidence": [
         {
           "kind": "audit_finding",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Count restore expectation loses float precision implementation"
+        },
+        {
+          "kind": "focused_current_main_acceptance",
+          "reference": "docs/testing/count_expectation_precision_20261111.md",
+          "summary": "Unchanged current-main write20/read7 reproduce exact comparison failure; binary reference write26/cold8 and unchanged synthetic70 pass, no tolerances or production changes. Ledger36 pass;1682 inherited findings unchanged."
         }
       ],
-      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
+      "next_action": "Commit the tested lossless Count expectation fix, verify its exact existing NEXT identity/startup, then associate the corrective commit and close only this finding.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -35601,7 +35615,7 @@
         "observed_at": "2026-11-11T14:19:16.797499+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-11T15:00:51.496070+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001",
