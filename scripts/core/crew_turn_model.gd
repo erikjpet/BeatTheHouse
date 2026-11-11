@@ -376,6 +376,10 @@ static func _private_install_key() -> PackedByteArray:
 		if existing.size() == 32:
 			_private_key_cache = existing
 			return _private_key_cache
+		# Keep damaged bytes for diagnosis, then allow saving with a fresh key.
+		var corrupt_path := "%s.corrupt.%d.%d" % [absolute_path, OS.get_process_id(), Time.get_ticks_usec()]
+		if DirAccess.rename_absolute(absolute_path, corrupt_path) != OK:
+			return PackedByteArray()
 	var generated := Crypto.new().generate_random_bytes(32)
 	if generated.size() != 32:
 		return PackedByteArray()
