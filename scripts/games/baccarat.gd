@@ -3603,7 +3603,7 @@ func _draw_squeezed_card(surface, card_value: Variant, pos: Vector2, progress_va
 	surface.draw_rect(reveal, Color(0.96, 0.94, 0.84, 1.0))
 	surface.draw_rect(reveal, C_DARK, false, 1)
 	if progress >= 0.24:
-		var rank := str(card.get("rank", "?"))
+		var rank := PlayerTextScript.whole_number(card.get("rank", "?"))
 		var suit := str(card.get("suit", "?")).left(1).to_upper()
 		surface.surface_label_centered_plain("%s%s" % [rank, suit], Rect2(pos + Vector2(2, 2), Vector2(CARD_SIZE.x - 4, minf(18.0, peel_height - 2.0))), 9, C_DARK)
 

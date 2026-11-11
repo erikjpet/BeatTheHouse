@@ -1,0 +1,14 @@
+{
+  "changed_files": [
+    "scripts/ui/player_text.gd",
+    "scripts/games/craps.gd",
+    "scripts/games/baccarat.gd",
+    "scripts/games/bar_dice.gd",
+    "scripts/games/video_poker_renderer.gd",
+    "scripts/games/table_game_visuals.gd",
+    "scripts/games/slots/slot_renderer.gd"
+  ],
+  "saved_loose_numeric_display": "Craps point/energy/dice; Baccarat squeeze rank; Bar Dice numeric die/index labels; video-poker paytable; slot feature counts/payouts; shared stake/chip-stack/whole-second timer text.",
+  "existing_safe_formatting": "%d/int and domain card-rank labels retained for blackjack, roulette, crew, tickets, coin-pusher and other already-safe boundaries. Identity keys and textual 00 unchanged.",
+  "scope_limits": "11 fresh Practice games saved, continued and reopened through production host; actual rendered idle/resume text observed. Not every outcome/feature/card phase. Separate loaded squeeze-card draw covers one non-idle branch. AUD061-17 owns broader coverage."
+}

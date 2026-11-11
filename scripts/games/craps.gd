@@ -207,9 +207,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		},
 		"native_selected_surface_actions": _selected_surface_actions(setting_challenge, switching_challenge),
 		"surface_state_labels": [
-			{"label": "Point", "value": "OFF" if int(table.get("point", 0)) == 0 else str(table.get("point", 0))},
+			{"label": "Point", "value": "OFF" if int(table.get("point", 0)) == 0 else PlayerTextScript.whole_number(table.get("point", 0))},
 			{"label": "New wagers", "value": "%d cash" % total_wager if street else "%d chips" % total_wager},
-			{"label": "Circle", "value": "SCATTERED" if dispersed else "LIVE"} if street else {"label": "Energy", "value": str(table.get("table_energy", 0))},
+			{"label": "Circle", "value": "SCATTERED" if dispersed else "LIVE"} if street else {"label": "Energy", "value": PlayerTextScript.whole_number(table.get("table_energy", 0))},
 		],
 		# Keep the shipped surface phase stable for existing legal-boundary and
 		# animation consumers; ritual_phase carries the finer authored sequence.
@@ -310,7 +310,7 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 		return _draw_street_surface(surface, state)
 	var board := Vector2(900, 474)
 	surface.surface_begin_design_space(board)
-	var room_note := "POINT %s" % ("OFF" if int(state.get("point", 0)) == 0 else str(state.get("point", 0)))
+	var room_note := "POINT %s" % ("OFF" if int(state.get("point", 0)) == 0 else PlayerTextScript.whole_number(state.get("point", 0)))
 	TableGameVisualsScript.draw_room(surface, state, str(state.get("table_name", "CRAPS")), "FULL TABLE CRAPS", room_note)
 	TableGameVisualsScript.draw_table(surface)
 	_draw_idle_rail_motion(surface)
@@ -2064,7 +2064,7 @@ func _draw_street_dice(surface, state: Dictionary) -> void:
 		var rect := Rect2(center - Vector2(14, 14), Vector2(28, 28))
 		surface.draw_rect(rect, Color("#d7c9ad"))
 		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
-		surface.surface_label_centered(str(int(dice[index])), rect, 14, Color("#171717"))
+		surface.surface_label_centered(PlayerTextScript.whole_number(dice[index]), rect, 14, Color("#171717"))
 
 
 func _draw_street_side_panel(surface, state: Dictionary) -> void:
@@ -2274,7 +2274,7 @@ func _draw_point_puck(surface, state: Dictionary) -> void:
 	var center := Vector2(726, 112)
 	surface.draw_circle(center, 18.0, Color("#f3eee0") if point != 0 else Color("#222a28"))
 	surface.draw_circle(center, 18.0, Color("#d6af4b"), false, 2)
-	surface.surface_label_centered("OFF" if point == 0 else str(point), Rect2(center - Vector2(18, 7), Vector2(36, 14)), 10, Color("#071713") if point != 0 else Color("#f3eee0"))
+	surface.surface_label_centered("OFF" if point == 0 else PlayerTextScript.whole_number(point), Rect2(center - Vector2(18, 7), Vector2(36, 14)), 10, Color("#071713") if point != 0 else Color("#f3eee0"))
 
 
 func _draw_dice(surface, state: Dictionary) -> void:
@@ -2292,7 +2292,7 @@ func _draw_dice(surface, state: Dictionary) -> void:
 		var rect := Rect2(center - Vector2(18, 18), Vector2(36, 36))
 		surface.draw_rect(rect, Color("#eee7d2"))
 		surface.draw_rect(rect, Color("#9a7735"), false, 2)
-		surface.surface_label_centered(str(int(dice[index])), rect, 16, Color("#171b19"))
+		surface.surface_label_centered(PlayerTextScript.whole_number(dice[index]), rect, 16, Color("#171b19"))
 
 
 func _draw_history(surface, state: Dictionary) -> void:
@@ -2379,7 +2379,7 @@ func _draw_denomination_controls(surface, state: Dictionary, start_x: float, y: 
 		var active := amount == selected
 		surface.draw_rect(rect, Color("#9c7138") if active and enabled else Color("#3b493f"))
 		surface.draw_rect(rect, Color("#fff0d0") if active and enabled else Color("#64776f"), false, 1.0)
-		surface.surface_label_centered(("$" if street else "") + str(amount), rect, 10, Color("#fff5d2") if enabled else Color("#80978f"))
+		surface.surface_label_centered(("$" if street else "") + PlayerTextScript.whole_number(amount), rect, 10, Color("#fff5d2") if enabled else Color("#80978f"))
 		if enabled:
 			surface.surface_add_exact_hit(rect, "craps_chip", index)
 

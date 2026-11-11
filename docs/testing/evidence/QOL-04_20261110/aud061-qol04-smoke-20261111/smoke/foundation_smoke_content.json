@@ -1,0 +1,94 @@
+{
+	"checks": [
+		{
+			"duration_msec": 10566,
+			"failure_count": 25,
+			"failures": [
+				"lender the_crew description should be 8 words or fewer: Cash for two package deliveries. No repayment or interest.",
+				"event crew_favor_delivery summary should be 8 words or fewer: The Crew wants a package delivered. No cash repayment.",
+				"Grand Casino production-order layout overlaps: casino_fixture:host_desk and staff:grand_casino_host.",
+				"Talk content migrated event suspicious_patron/talk_down changed heat consequence.",
+				"Talk content migrated event motel_knock/borrow changed bankroll consequence.",
+				"Talk content migrated event the_collector/pay_now changed bankroll consequence.",
+				"Talk content migrated event the_collector/pay_now changed heat consequence.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: character:dot and shopkeeper:merchant.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and shopkeeper:merchant.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and staff:kitty_bar_host.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and event:rowdy_regular.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and game:bar_dice.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: service:house_drink and shopkeeper:merchant.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: service:house_drink and staff:kitty_bar_host.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: shopkeeper:merchant and staff:kitty_bar_host.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and event:rowdy_regular.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and game:bar_dice.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and item:jackpot_magnet.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: travel:leave and event:side_door.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:rowdy_regular and game:bar_dice.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: event:rowdy_regular and game:video_poker.",
+				"S0.2 Kitty Cat Lounge generated layout overlaps: game:bar_dice and game:video_poker.",
+				"SA.2/LB.2 per-frame cost tripwire: res://scripts/games/blackjack.gd:1485 _draw_blackjack_ritual_layer contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason.",
+				"SA.2/LB.2 per-frame cost tripwire: res://scripts/ui/game_props/street_craps_circle_prop.gd:89 _draw_chalk_game contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason.",
+				"SA.2/LB.2 per-frame cost tripwire: res://scripts/ui/game_props/street_craps_circle_prop.gd:90 _draw_chalk_game contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason."
+			],
+			"id": "content",
+			"passed": false
+		}
+	],
+	"duration_msec": 21708,
+	"executed_check_ids": [
+		"content"
+	],
+	"failure_count": 25,
+	"failures": [
+		"lender the_crew description should be 8 words or fewer: Cash for two package deliveries. No repayment or interest.",
+		"event crew_favor_delivery summary should be 8 words or fewer: The Crew wants a package delivered. No cash repayment.",
+		"Grand Casino production-order layout overlaps: casino_fixture:host_desk and staff:grand_casino_host.",
+		"Talk content migrated event suspicious_patron/talk_down changed heat consequence.",
+		"Talk content migrated event motel_knock/borrow changed bankroll consequence.",
+		"Talk content migrated event the_collector/pay_now changed bankroll consequence.",
+		"Talk content migrated event the_collector/pay_now changed heat consequence.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: character:dot and shopkeeper:merchant.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and shopkeeper:merchant.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and staff:kitty_bar_host.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and event:rowdy_regular.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:grand_casino_invite and game:bar_dice.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: service:house_drink and shopkeeper:merchant.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: service:house_drink and staff:kitty_bar_host.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: shopkeeper:merchant and staff:kitty_bar_host.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and event:rowdy_regular.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and game:bar_dice.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: staff:kitty_bar_host and item:jackpot_magnet.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: travel:leave and event:side_door.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:rowdy_regular and game:bar_dice.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: event:rowdy_regular and game:video_poker.",
+		"S0.2 Kitty Cat Lounge generated layout overlaps: game:bar_dice and game:video_poker.",
+		"SA.2/LB.2 per-frame cost tripwire: res://scripts/games/blackjack.gd:1485 _draw_blackjack_ritual_layer contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason.",
+		"SA.2/LB.2 per-frame cost tripwire: res://scripts/ui/game_props/street_craps_circle_prop.gd:89 _draw_chalk_game contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason.",
+		"SA.2/LB.2 per-frame cost tripwire: res://scripts/ui/game_props/street_craps_circle_prop.gd:90 _draw_chalk_game contains duplicate()/JSON.stringify/OS.delay_*/Callable/PackedArray/Vector2-array/draw_string % formatting without SA2_PER_FRAME_OK reason."
+	],
+	"last_started_check": "content",
+	"passed": false,
+	"registered_check_ids": [
+		"content",
+		"coach_engine_foundation",
+		"onboarding_tutorial_arc",
+		"profile_inventory_boundary",
+		"foundation_contract_smoke",
+		"fixture_rng",
+		"fixture_contracts"
+	],
+	"requested_check_ids": [
+		"content"
+	],
+	"skipped": [
+		"coach_engine_foundation",
+		"onboarding_tutorial_arc",
+		"profile_inventory_boundary",
+		"foundation_contract_smoke",
+		"fixture_rng",
+		"fixture_contracts"
+	],
+	"started_msec": 14167,
+	"suite": "smoke",
+	"tool": "foundation_check"
+}

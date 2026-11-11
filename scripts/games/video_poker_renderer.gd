@@ -276,7 +276,7 @@ func _paytable_render_rows(source: Variant) -> Array:
 		var values: Array = []
 		for coin in range(1, 6):
 			var value := int(row.get("max_mult", row.get("mult", 0))) * coin if coin == 5 and row.has("max_mult") else int(row.get("mult", 0)) * coin
-			values.append(str(value))
+			values.append(PlayerTextScript.whole_number(value))
 		_paytable_cache_rows.append({
 			"key": str(row.get("key", "")),
 			"label": str(row.get("label", "")).to_upper().left(28),

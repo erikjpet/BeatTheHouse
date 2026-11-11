@@ -3860,12 +3860,12 @@ func _reroll_summary(marks: Array) -> String:
 		return "auto locks"
 	var labels: Array = []
 	for mark in marks:
-		labels.append(str(int(mark) + 1))
+		labels.append(PlayerTextScript.whole_number(int(mark) + 1))
 	return ", ".join(labels)
 
 
 func _word_single(value: int) -> String:
-	return str(DIE_WORD.get(value, str(value)))
+	return str(DIE_WORD.get(value, PlayerTextScript.whole_number(value)))
 
 
 func _patron_banter_line(patron: Dictionary, selector: int, outcome: String) -> String:

@@ -1,0 +1,16 @@
+{
+  "summary": {
+    "objectives_checked": 170,
+    "batches_checked": 16,
+    "open_objectives": 65,
+    "open_batches": 6,
+    "open_work_items": 71,
+    "user_paused_items": 36,
+    "complete_objectives": 105,
+    "errors": 1683,
+    "warnings": 0,
+    "tasks_with_errors": 52
+  },
+  "scope_findings": [],
+  "source": "E:\\CodexQA\\BTH\\runs\\aud061-qol04-ledger-checkpoint-20261111\\evidence\\ledger.json"
+}

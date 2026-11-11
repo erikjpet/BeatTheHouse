@@ -1,6 +1,8 @@
 class_name TableGameVisuals
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 # Shared retained-mode drawing helpers for table-game rooms, patrons, and
 # presentation effects. Game rules and authoritative state remain in each game.
 
@@ -219,7 +221,7 @@ static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictiona
 	surface.surface_label("THEM", rect.position + Vector2(5, 11), 7, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.72))
 	surface.surface_label(str(wager.get("label", "bet")).to_upper().left(11), rect.position + Vector2(28, 12), 8, C_WHITE)
 	_draw_mini_chip(surface, rect.position + Vector2(14, 25), chip_color, int(wager.get("stake", patron.get("chip_stack", 0))))
-	surface.surface_label("$%d" % int(wager.get("stake", 0)), rect.position + Vector2(26, 29), 8, C_YELLOW)
+	surface.surface_label("$" + PlayerTextScript.whole_number(wager.get("stake", 0)), rect.position + Vector2(26, 29), 8, C_YELLOW)
 	var meter := Rect2(rect.position + Vector2(5, 32), Vector2(70, 3))
 	surface.draw_rect(meter, Color("#070810"))
 	surface.draw_rect(Rect2(meter.position, Vector2(meter.size.x * float(rapport) / 100.0, meter.size.y)), rapport_color)
@@ -256,7 +258,7 @@ static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, a
 	var label := (label_override if not label_override.is_empty() else str(timer.get("label", "Next round"))).to_upper().left(20)
 	var seconds := maxi(0, int(ceil(float(remaining_msec) / 1000.0)))
 	surface.surface_label(label, rect.position + Vector2(8, 13), 8, C_SOFT)
-	surface.surface_label("%02ds" % seconds, rect.position + Vector2(rect.size.x - 44.0, 15), 14, color)
+	surface.surface_label(PlayerTextScript.whole_number(seconds).pad_zeros(2) + "s", rect.position + Vector2(rect.size.x - 44.0, 15), 14, color)
 	var bar_rect := Rect2(rect.position + Vector2(8, rect.size.y - 12.0), Vector2(maxf(1.0, rect.size.x - 16.0), 4.0))
 	surface.draw_rect(bar_rect, Color("#070810"))
 	surface.draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), color)
@@ -546,7 +548,7 @@ static func _draw_mini_chip(surface, center: Vector2, color: Color, value: int =
 	surface.draw_circle(center, 4.8, color)
 	surface.draw_circle(center, 2.4, Color("#f8f4dc"))
 	if value > 0:
-		surface.surface_label_centered("%d" % mini(99, value), Rect2(center - Vector2(5, 3), Vector2(10, 6)), 5, C_DARK)
+		surface.surface_label_centered(PlayerTextScript.whole_number(mini(99, value)), Rect2(center - Vector2(5, 3), Vector2(10, 6)), 5, C_DARK)
 
 
 static func _chip_color_name(name: String) -> Color:

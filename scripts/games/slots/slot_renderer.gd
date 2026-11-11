@@ -1,6 +1,8 @@
 class_name SlotRenderer
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 # Procedural renderer for slot cabinets, reels, feature boards, meters, controls,
 # and celebrations, with content-keyed caches that do not own gameplay state.
 
@@ -1755,8 +1757,8 @@ func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity:
 	var feature_total := int(active.get("feature_total", active.get("awarded", 0)))
 	if identity == "em_bumper_drop":
 		surface.draw_rect(panel, Color(trim.r, trim.g, trim.b, 0.10))
-		surface.surface_label(title.to_upper().left(18) + "  X" + str(multiplier), panel.position + Vector2(16, 20), 12, trim)
-		surface.surface_label("BANK " + str(feature_total), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
+		surface.surface_label(title.to_upper().left(18) + "  X" + PlayerTextScript.whole_number(multiplier), panel.position + Vector2(16, 20), 12, trim)
+		surface.surface_label("BANK " + PlayerTextScript.whole_number(feature_total), panel.position + Vector2(panel.size.x - 150, 20), 12, trim)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(22), panel.position + Vector2(210, 20), 10, light)
 	elif identity == "lane_multiball":
@@ -1764,14 +1766,14 @@ func _draw_pinball_backglass(surface, rect: Rect2, active: Dictionary, identity:
 		for x in range(32):
 			var lit := posmod(bucket + x, 5) == 0
 			surface.draw_circle(panel.position + Vector2(8 + x * 7, 14), 1.8, Color(trim.r, trim.g, trim.b, 0.68 if lit else 0.18))
-		surface.surface_label(title.to_upper().left(14) + "  LOCK " + str(int(active.get("lane_locks", 0))) + "  X" + str(multiplier), panel.position + Vector2(176, 20), 12, trim)
-		surface.surface_label("$" + str(feature_total), panel.position + Vector2(panel.size.x - 90, 20), 12, trim)
+		surface.surface_label(title.to_upper().left(14) + "  LOCK " + PlayerTextScript.whole_number(int(active.get("lane_locks", 0))) + "  X" + PlayerTextScript.whole_number(multiplier), panel.position + Vector2(176, 20), 12, trim)
+		surface.surface_label("$" + PlayerTextScript.whole_number(feature_total), panel.position + Vector2(panel.size.x - 90, 20), 12, trim)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(22), panel.position + Vector2(430, 20), 10, light)
 	else:
 		surface.draw_rect(panel, Color("#07192d"))
 		surface.draw_rect(panel, Color(accent.r, light.g, light.b, 0.18), false, 2)
-		surface.surface_label(title.to_upper().left(16) + "  X" + str(multiplier) + "  $" + str(feature_total), panel.position + Vector2(12, 20), 12, light)
+		surface.surface_label(title.to_upper().left(16) + "  X" + PlayerTextScript.whole_number(multiplier) + "  $" + PlayerTextScript.whole_number(feature_total), panel.position + Vector2(12, 20), 12, light)
 		if not combo_label.is_empty():
 			surface.surface_label(combo_label.left(26), panel.position + Vector2(panel.size.x - 220, 20), 10, trim)
 
@@ -2242,27 +2244,27 @@ func _draw_buffalo_free_games(surface, rect: Rect2, state: Dictionary, definitio
 	var feature_total := int(active.get("feature_total", 0))
 	var coin_collect_total := int(active.get("coin_collect_total", 0))
 	var coin_reveal_total := int(active.get("coin_reveal_total", coin_collect_total))
-	surface.surface_label("FREE " + str(remaining_steps) + "  RETRIG " + str(retrigger_count), header_rect.position + Vector2(8, 19), 12, light)
-	var coin_header := "COINS HELD " + str(coins_collected)
+	surface.surface_label("FREE " + PlayerTextScript.whole_number(remaining_steps) + "  RETRIG " + PlayerTextScript.whole_number(retrigger_count), header_rect.position + Vector2(8, 19), 12, light)
+	var coin_header := "COINS HELD " + PlayerTextScript.whole_number(coins_collected)
 	if str(active.get("feature_phase", "")) == "coin_collect" or _array_read_size(active.get("coin_reveals", [])) > 0:
-		coin_header = "REVEAL $" + str(coin_reveal_total)
-	surface.surface_label("$" + str(int(active.get("spin_win_total", feature_total))) + " + " + coin_header, header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
+		coin_header = "REVEAL $" + PlayerTextScript.whole_number(coin_reveal_total)
+	surface.surface_label("$" + PlayerTextScript.whole_number(int(active.get("spin_win_total", feature_total))) + " + " + coin_header, header_rect.position + Vector2(header_rect.size.x - 210, 19), 12, trim)
 	var grid_rect := Rect2(rect.position + Vector2(8, 42), Vector2(rect.size.x - 16, rect.size.y - 92))
 	_draw_buffalo_free_games_reel_grid(surface, grid_rect, state, definition, active, accent, light, trim, spin_msec, feature_msec)
 	var meter: Dictionary = _read_dict(active.get("collection_meter", {}))
 	var cycle := maxi(0, int(meter.get("cycle", active.get("coins_since_retrigger", 0))))
 	var threshold := maxi(1, int(meter.get("threshold", 3)))
 	var meter_rect := Rect2(rect.position + Vector2(10, rect.size.y - 34), Vector2(rect.size.x - 20, 14))
-	_draw_buffalo_meter(surface, meter_rect, _buffalo_collection_ratio(active), trim, light, "COINS " + str(cycle) + "/" + str(threshold) + "  HELD " + str(coins_collected) + "  $" + str(int(active.get("coin_total", 0))))
+	_draw_buffalo_meter(surface, meter_rect, _buffalo_collection_ratio(active), trim, light, "COINS " + PlayerTextScript.whole_number(cycle) + "/" + PlayerTextScript.whole_number(threshold) + "  HELD " + PlayerTextScript.whole_number(coins_collected) + "  $" + str(int(active.get("coin_total", 0))))
 	if int(active.get("last_retrigger_grant", 0)) > 0:
-		surface.surface_label_centered("+" + str(int(active.get("last_retrigger_grant", 0))) + " FREE GAMES", Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y - 64), Vector2(rect.size.x * 0.52, 24)), 18, accent)
+		surface.surface_label_centered("+" + PlayerTextScript.whole_number(int(active.get("last_retrigger_grant", 0))) + " FREE GAMES", Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y - 64), Vector2(rect.size.x * 0.52, 24)), 18, accent)
 	if bool(active.get("coin_collect_awarded", false)) or str(active.get("feature_phase", "")) == "coin_collect":
 		var pulse := 0.35 + 0.16 * sin(float(feature_msec) * 0.010)
 		var collect_rect := Rect2(rect.position + Vector2(rect.size.x * 0.18, rect.size.y * 0.38), Vector2(rect.size.x * 0.64, 46))
 		surface.draw_rect(collect_rect, Color(trim.r, trim.g, trim.b, pulse))
 		surface.draw_rect(collect_rect, Color(light.r, light.g, light.b, 0.80), false, 2)
 		var revealed_total := _buffalo_revealed_coin_total(active, feature_msec)
-		surface.surface_label_centered("COIN PRIZES +$" + str(revealed_total) + " / $" + str(coin_reveal_total), collect_rect.grow(-4), 20, Color("#130907"))
+		surface.surface_label_centered("COIN PRIZES +$" + PlayerTextScript.whole_number(revealed_total) + " / $" + PlayerTextScript.whole_number(coin_reveal_total), collect_rect.grow(-4), 20, Color("#130907"))
 
 
 func _draw_buffalo_free_games_reel_grid(surface, rect: Rect2, state: Dictionary, definition: Dictionary, active: Dictionary, accent: Color, light: Color, trim: Color, time_msec: int, feature_msec: int) -> void:
@@ -2396,7 +2398,7 @@ func _draw_buffalo_coin_cell(surface, cell_rect: Rect2, coin: Dictionary, has_co
 	surface.draw_circle(center, radius, trim)
 	surface.draw_circle(center + Vector2(-radius * 0.30, -radius * 0.30), radius * 0.36, Color(1.0, 1.0, 1.0, 0.48))
 	surface.draw_circle(center, radius * 0.74, Color("#f8c94a"), false, 2)
-	var label := "$" + str(int(coin.get("value", 0))) if revealed else "?"
+	var label := "$" + PlayerTextScript.whole_number(int(coin.get("value", 0))) if revealed else "?"
 	var label_size := int(clampf(cell_rect.size.y * 0.22, 8.0, 18.0))
 	surface.surface_label_centered(label, cell_rect.grow(-2), label_size, Color("#130907"))
 	if slam:
@@ -2574,15 +2576,15 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 	var left := _rect_from_dict(skin.get("tease_panel", {}))
 	var right := _rect_from_dict(skin.get("feature_panel", {}))
 	_draw_panel(surface, left, "BANKROLL", accent)
-	surface.surface_label("$" + str(int(state.get("bankroll", 0))), left.position + Vector2(14, 52), 18, light)
-	surface.surface_label("HEAT " + str(int(state.get("suspicion_level", 0))), left.position + Vector2(14, 80), 13, accent)
-	surface.surface_label("BET $" + str(int(state.get("slot_selected_bet", 10))), left.position + Vector2(14, 106), 13, trim)
+	surface.surface_label("$" + PlayerTextScript.whole_number(int(state.get("bankroll", 0))), left.position + Vector2(14, 52), 18, light)
+	surface.surface_label("HEAT " + PlayerTextScript.whole_number(int(state.get("suspicion_level", 0))), left.position + Vector2(14, 80), 13, accent)
+	surface.surface_label("BET $" + PlayerTextScript.whole_number(int(state.get("slot_selected_bet", 10))), left.position + Vector2(14, 106), 13, trim)
 	if bool(state.get("slot_nudge_available", false)):
 		var nudge_label := "COIN CHAIN" if bool(state.get("slot_nudge_chain_active", false)) else "NUDGE WINDOW" if bool(state.get("slot_nudge_tease_window_active", false)) else "NUDGE"
 		surface.surface_label(nudge_label, left.position + Vector2(14, 134), 13, Color("#ff3f75"))
 		var hint := str(state.get("slot_nudge_tease_outcome_hint", ""))
 		if bool(state.get("slot_nudge_chain_active", false)):
-			hint = str(int(state.get("slot_nudge_chain_collected_count", 0))) + "/" + str(_array_read_size(state.get("slot_nudge_chain_coins", []))) + " BANK $" + str(int(state.get("slot_nudge_chain_banked_payout", 0)))
+			hint = PlayerTextScript.whole_number(int(state.get("slot_nudge_chain_collected_count", 0))) + "/" + str(_array_read_size(state.get("slot_nudge_chain_coins", []))) + " BANK $" + PlayerTextScript.whole_number(int(state.get("slot_nudge_chain_banked_payout", 0)))
 		if not hint.is_empty():
 			surface.surface_label(hint.to_upper().left(16), left.position + Vector2(14, 154), 10, trim)
 		surface.surface_label("HEAT / CATCH RISK", left.position + Vector2(14, 172), 9, Color("#ff3f75"))
@@ -2593,8 +2595,8 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if bool(active.get("active", false)) and not bool(active.get("complete", false)):
 		surface.surface_label(str(active.get("display_mode", active.get("mode", "bonus"))).replace("_", " ").to_upper().left(18), right.position + Vector2(14, 50), 12, light)
-		surface.surface_label("$" + str(int(active.get("feature_total", active.get("pending_award", 0)))), right.position + Vector2(14, 78), 18, trim)
-		surface.surface_label("LEFT " + str(int(active.get("remaining_steps", 0))), right.position + Vector2(14, 106), 13, accent)
+		surface.surface_label("$" + PlayerTextScript.whole_number(int(active.get("feature_total", active.get("pending_award", 0)))), right.position + Vector2(14, 78), 18, trim)
+		surface.surface_label("LEFT " + PlayerTextScript.whole_number(int(active.get("remaining_steps", 0))), right.position + Vector2(14, 106), 13, accent)
 	else:
 		surface.surface_label(str(skin.get("feature_name", "")).to_upper().left(18), right.position + Vector2(14, 50), 12, trim)
 		surface.surface_label("READY", right.position + Vector2(14, 78), 16, light)

@@ -99,6 +99,16 @@ static func resolve(key: String, params: Dictionary = {}) -> String:
 	return str(params.get("fallback", key))
 
 
+# JSON represents whole numbers as floats. Format at the display boundary;
+# keep fractional values and textual codes (including roulette "00") intact.
+static func whole_number(value: Variant) -> String:
+	if typeof(value) == TYPE_FLOAT:
+		var number := float(value)
+		if is_finite(number) and number == floor(number) and number >= -9223372036854775808.0 and number < 9223372036854775808.0:
+			return str(int(number))
+	return str(value)
+
+
 static func count_text(noun_key: String, count: int) -> String:
 	var forms: Array = COUNT_FORMS.get(noun_key, [noun_key.replace("_", " "), "%ss" % noun_key.replace("_", " ")])
 	return "%d %s" % [count, str(forms[0] if count == 1 else forms[1])]
