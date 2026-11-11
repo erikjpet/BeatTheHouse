@@ -1,0 +1,45 @@
+[
+  {
+    "script": "aud061_rc_resume",
+    "args": [],
+    "exit": 1,
+    "seconds": 28.31,
+    "source_sha256": "625e9c1ee4674d02d87e63529694fdd071c0ddd28acf9c84e971df42264cdeac",
+    "tail": [
+      "ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.",
+      "WARNING: ObjectDB instances leaked at exit (run with --verbose for details).",
+      "   at: cleanup (core/object/object.cpp:2641)",
+      "ERROR: 17 resources still in use at exit (run with --verbose for details).",
+      "   at: clear (core/io/resource.cpp:810)"
+    ],
+    "errors": [
+      "SCRIPT ERROR: Invalid access to property or key 'bankroll' on a base object of type 'Nil'.",
+      "SCRIPT ERROR: Invalid access to property or key 'bankroll' on a base object of type 'Nil'.",
+      "ERROR: 27 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.",
+      "ERROR: 1 RID allocations of type 'N13RendererDummy11MeshStorage14DummyMultiMeshE' were leaked at exit.",
+      "ERROR: 1 RID allocations of type 'N13RendererDummy9DummyMeshE' were leaked at exit.",
+      "ERROR: 64 RID allocations of type 'PN18TextServerAdvanced22ShapedTextDataAdvancedE' were leaked at exit.",
+      "ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.",
+      "ERROR: 17 resources still in use at exit (run with --verbose for details)."
+    ]
+  },
+  {
+    "script": "aud061_rc_resume",
+    "args": [
+      "--cold"
+    ],
+    "exit": 1,
+    "seconds": 23.62,
+    "source_sha256": "625e9c1ee4674d02d87e63529694fdd071c0ddd28acf9c84e971df42264cdeac",
+    "tail": [
+      "   GDScript backtrace (most recent call first):",
+      "       [0] _account (res://.tmp/aud061_rc_resume.gd:14)",
+      "       [1] _run (res://.tmp/aud061_rc_resume.gd:35)",
+      "       [2] _frames (res://.tmp/aud061_rc_resume.gd:12)",
+      "AUD061_RC_RESUME11 {\"checks\":44,\"cold\":true,\"failures\":[\"scratch_tickets cold wallet/RNG/inventory\",\"scratch_tickets cold owned game state\",\"pull_tabs cold wallet/RNG/inventory\",\"pull_tabs cold owned game state\",\"slot cold wallet/RNG/inventory\",\"bar_dice cold wallet/RNG/inventory\",\"bar_dice cold owned game state\",\"blackjack cold wallet/RNG/inventory\",\"blackjack cold owned game state\",\"baccarat cold wallet/RNG/inventory\",\"baccarat cold owned game state\",\"craps cold wallet/RNG/inventory\",\"roulette cold wallet/RNG/inventory\",\"roulette cold owned game state\",\"crew_draw_poker cold wallet/RNG/inventory\",\"video_poker cold wallet/RNG/inventory\",\"video_poker cold owned game state\",\"coin_pusher cold wallet/RNG/inventory\"],\"rows\":[{\"account\":{\"cash\":99998,\"chips\":0,\"inventory\":[\"pile_of_scratch_tickets\"],\"rng\":69724058},\"canvas_bound\":true,\"cold\":true,\"game\":\"scratch_tickets\",\"surface_phase\":\"\"},{\"account\":{\"cash\":99998,\"chips\":0,\"inventory\":[\"pile_of_pull_tabs\"],\"rng\":803397641},\"canvas_bound\":true,\"cold\":true,\"game\":\"pull_tabs\",\"surface_phase\":\"\"},{\"account\":{},\"canvas_bound\":true,\"cold\":true,\"game\":\"slot\",\"surface_phase\":\"\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":1090653084},\"canvas_bound\":true,\"cold\":true,\"game\":\"bar_dice\",\"surface_phase\":\"select\"},{\"account\":{\"cash\":99999,\"chips\":0,\"inventory\":[],\"rng\":1973289589},\"canvas_bound\":true,\"cold\":true,\"game\":\"blackjack\",\"surface_phase\":\"decision\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":398704292},\"canvas_bound\":true,\"cold\":true,\"game\":\"baccarat\",\"surface_phase\":\"betting\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":1381416770},\"canvas_bound\":true,\"cold\":true,\"game\":\"craps\",\"surface_phase\":\"betting\"},{\"account\":{\"cash\":99999,\"chips\":0,\"inventory\":[],\"rng\":443865917},\"canvas_bound\":true,\"cold\":true,\"game\":\"roulette\",\"surface_phase\":\"betting\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":349719388},\"canvas_bound\":true,\"cold\":true,\"game\":\"crew_draw_poker\",\"surface_phase\":\"preflop\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":1737472386},\"canvas_bound\":true,\"cold\":true,\"game\":\"video_poker\",\"surface_phase\":\"hold\"},{\"account\":{\"cash\":100000,\"chips\":0,\"inventory\":[],\"rng\":1350731454},\"canvas_bound\":true,\"cold\":true,\"game\":\"coin_pusher\",\"surface_phase\":\"\"}],\"scope\":\"Fresh current-build Practice bootstrap followed by real Continue and host surface callbacks; public Save, separate-process Continue; not ordinary-pointer Web or all pending/settlement boundaries.\"}"
+    ],
+    "errors": [
+      "SCRIPT ERROR: Invalid access to property or key 'bankroll' on a base object of type 'Nil'."
+    ]
+  }
+]

@@ -1,0 +1,90 @@
+[
+  {
+    "script": "crew_delivery_game_return_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 38.44,
+    "source_sha256": "dfe1dc25a291cd1081c329174d30440bda97a9dc1b7a50123316c0c46ffdab52",
+    "tail": [
+      "CREW_RETURN_PROGRESS choice_begin coin_pusher:run_package:paid",
+      "CREW_RETURN_PROGRESS choice_end coin_pusher:run_package:paid ok=true screen=GAME native=true",
+      "CREW_RETURN_PROGRESS save_continue_begin coin_pusher:run_package:paid",
+      "CREW_RETURN_PROGRESS save_continue_end coin_pusher:run_package:paid",
+      "CREW_DELIVERY_GAME_RETURN {\"cases\":[{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"scratch_tickets\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"scratch_tickets\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"scratch_tickets\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"scratch_tickets\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"pull_tabs\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"pull_tabs\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"pull_tabs\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"pull_tabs\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"slot\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"slot\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"slot\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"slot\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"bar_dice\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"bar_dice\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"bar_dice\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"bar_dice\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"blackjack\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"blackjack\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"blackjack\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"blackjack\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"blackjack\",\"paid\":true,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"blackjack\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"baccarat\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"baccarat\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"baccarat\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"baccarat\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"craps\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"craps\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"craps\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"craps\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"roulette\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"roulette\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"roulette\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"roulette\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"roulette\",\"paid\":true,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"roulette\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"crew_draw_poker\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"crew_draw_poker\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"crew_draw_poker\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"crew_draw_poker\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"video_poker\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"video_poker\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"video_poker\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"video_poker\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"coin_pusher\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"coin_pusher\"},{\"choice\":\"refuse\",\"final_screen\":\"GAME\",\"game\":\"coin_pusher\",\"paid\":false,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"coin_pusher\"},{\"choice\":\"run_package\",\"final_screen\":\"GAME\",\"game\":\"coin_pusher\",\"paid\":true,\"response_native_bound\":true,\"response_screen\":\"GAME\",\"result_ok\":true,\"state_key\":\"coin_pusher\"}],\"checks\":477,\"failures\":[],\"fidelity\":\"Synthetic seeded fixtures: complete production-generated Gas Casino campaign rooms for cabinet games, practice games with generated map for table/physical games; explicit Crew eligibility precedes generation. Real native game entry, TalkDock confirmation callback and event resolution; selected real Save/Continue. Optional paid cases use actual Deal, RED bet/Spin and Coin Drop through the native host. No player/browser profile capture, physical pointer injection or deployed Web gameplay.\"}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "crew_expired_handoff_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 23.16,
+    "source_sha256": "ab981e608d319ede11ead96f9809a34713bdffaae014e358a65200a6c55aca16",
+    "tail": [
+      "CREW_HANDOFF_SCENARIO_FLUSH inactive: mounted exact closing after host-refresh finalization",
+      "CREW_HANDOFF_STALE_UI elapsed_usec=26172 refreshes=1 message=world sequence command is not bound to a sealed interaction action",
+      "CREW_HANDOFF_SCENARIO_VISUALS {\"context\":\"room finalization\",\"expected\":[],\"rendered\":[],\"scenario_present\":false}",
+      "CREW_HANDOFF_PROJECTION {\"checkpoint\":true,\"context\":\"mounted expiry cold Continue\",\"lifecycle\":\"cleaned\",\"missed\":1,\"raw_handoff\":{},\"status\":\"resolved\",\"world_applied\":true}",
+      "CREW_EXPIRED_HANDOFF checks=305 failures=[]"
+    ],
+    "errors": []
+  },
+  {
+    "script": "crew_handoff_cold_continue_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 11.22,
+    "source_sha256": "70cada796b99b25b28a807f2b25f70f625903a3b5c08dda6f3b390bad8d4445b",
+    "tail": [
+      "CREW_HANDOFF_PROCESS_COLD {\"cash\":88,\"checkpoint_inactive\":true,\"missed\":0,\"owed\":1,\"pending\":0,\"slot\":\"crew_expired_handoff_success_open\",\"trust\":55}",
+      "CREW_HANDOFF_SCENARIO_VISUALS {\"context\":\"room finalization\",\"expected\":[],\"rendered\":[],\"scenario_present\":false}",
+      "CREW_HANDOFF_PROJECTION {\"checkpoint\":true,\"context\":\"process-cold crew_expired_handoff_success\",\"lifecycle\":\"cleaned\",\"missed\":0,\"raw_handoff\":{},\"status\":\"resolved\",\"world_applied\":true}",
+      "CREW_HANDOFF_PROCESS_COLD {\"cash\":88,\"checkpoint_inactive\":true,\"missed\":0,\"owed\":1,\"pending\":0,\"slot\":\"crew_expired_handoff_success\",\"trust\":55}",
+      "CREW_HANDOFF_PROCESS_COLD_RESULT checks=105 failures=[]"
+    ],
+    "errors": []
+  },
+  {
+    "script": "showdown_meta_inventory_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 8.0,
+    "source_sha256": "0a97be75d07aeeb2bcbeef616722c4ec6f89ecb468ae63828a5eb71b23d98de7",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "SHOWDOWN_META_INVENTORY {\"checks\":52,\"cold\":false,\"failures\":[]}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "showdown_meta_inventory_check",
+    "args": [
+      "--cold"
+    ],
+    "exit": 0,
+    "seconds": 5.3,
+    "source_sha256": "0a97be75d07aeeb2bcbeef616722c4ec6f89ecb468ae63828a5eb71b23d98de7",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "SHOWDOWN_META_INVENTORY {\"checks\":5,\"cold\":true,\"failures\":[]}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "terminal_meta_durability_check",
+    "args": [
+      "produce"
+    ],
+    "exit": 1,
+    "seconds": 7.83,
+    "source_sha256": "838d6a50860eb6d7fdf019346390f17f82aef9c6e83336a28d7882e8e03c0285",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "META029_HOST_OBSERVATIONS {\"checks\":3,\"failures\":[\"Exact fresh launcher private case selected\"],\"observations\":[],\"pid\":11492,\"stage\":\"\"}"
+    ],
+    "errors": []
+  }
+]

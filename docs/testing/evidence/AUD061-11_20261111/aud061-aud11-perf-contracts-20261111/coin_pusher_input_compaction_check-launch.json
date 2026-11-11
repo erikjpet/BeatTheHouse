@@ -1,0 +1,50 @@
+{
+  "E:\\CodexQA\\BTH": {
+    "probe": "E:\\CodexQA\\BTH",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+    "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\profile": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\profile",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\temp": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\temp",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\evidence": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\evidence",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\appdata": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\appdata",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\localappdata": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\localappdata",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\home": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\home",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\cache": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\cache",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\save_dir": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\save_dir",
+    "available_bytes": 334089388032
+  },
+  "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\pycache": {
+    "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud11-perf-contracts-20261111\\pycache",
+    "available_bytes": 334089388032
+  }
+}

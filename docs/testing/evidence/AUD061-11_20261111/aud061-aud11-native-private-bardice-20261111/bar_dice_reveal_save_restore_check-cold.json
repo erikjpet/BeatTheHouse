@@ -1,0 +1,69 @@
+{
+  "checks": 44,
+  "facts": {
+    "Cold Reveal Continue": {
+      "account_and_root_rng_equal": true,
+      "cup_equal": true,
+      "economy": {
+        "ante_block_reason": "",
+        "ceiling": 6,
+        "clock_minutes": 720,
+        "floor": 6,
+        "game_ceiling": -1,
+        "game_floor": -1,
+        "scenario_id": ""
+      },
+      "phase": "reveal"
+    },
+    "actions": [
+      "bar_dice_reveal",
+      "bar_dice_ack_call"
+    ],
+    "blocked": [],
+    "boundaries": [
+      {
+        "checkpoint_matches_raw_root": true,
+        "economy": {
+          "state": "before_normal_Continue"
+        },
+        "first_failed_stage": "",
+        "label": "cold_reveal",
+        "load_outcome": "loaded-primary",
+        "loaded_account_and_root_rng_equal": true,
+        "loaded_cup_equal": true,
+        "loaded_ledger_exact": true,
+        "loaded_ledger_present": true,
+        "raw_account_and_root_rng_equal": true,
+        "raw_cup_equal": true,
+        "raw_ledger_present": true,
+        "valid_shape_and_binding": true,
+        "valid_with_checkpoint": true
+      }
+    ],
+    "cold": {
+      "final_cash": 108,
+      "paid_call_count": 1,
+      "rounds": 1,
+      "stake": 6
+    },
+    "first_loss": "",
+    "original_state_used": false,
+    "post_call_ui": {
+      "closing_active": false,
+      "popup_event_id": "health_inspector",
+      "popup_visible": true,
+      "screen": "GAME",
+      "transition_active": true
+    },
+    "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+    "source_sha256": {
+      "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+      "fixture": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+      "game": "9c6315403bb2c433f77aaa9a78a6f917f050dcfd8f04b1cd7fce8bcaf40cfdb9"
+    },
+    "stage": "cold"
+  },
+  "failures": [
+    "Passive tumble ends without funding or rootRNG change"
+  ]
+}

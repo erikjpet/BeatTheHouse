@@ -1,0 +1,29 @@
+{
+  "checks": 19,
+  "facts": {
+    "actions": [],
+    "blocked": [],
+    "boundaries": [],
+    "first_loss": "",
+    "original_state_used": false,
+    "scope": "NEW synthetic Practice94/ante6/default-noon; native MainScene/renderer GUI injection. Not original storage, normal travel, overnight closure, Web or OS pointer evidence. Warm leaves unfunded Reveal; separate cold may finish once.",
+    "settled": {
+      "cash": 94,
+      "expected_cash_from_prior_observation": 0,
+      "game_action_rows": 0,
+      "new_inputs": 0,
+      "phase": "reveal",
+      "request_count": 0,
+      "rounds": 0.0
+    },
+    "source_sha256": {
+      "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+      "fixture": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+      "game": "9c6315403bb2c433f77aaa9a78a6f917f050dcfd8f04b1cd7fce8bcaf40cfdb9"
+    },
+    "stage": "settled"
+  },
+  "failures": [
+    "Automatic Save retains observed wallet and exactly one round/story action"
+  ]
+}

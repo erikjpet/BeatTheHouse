@@ -1,0 +1,64 @@
+ERROR: The tutorial wager lesson did not accept the real on-felt blackjack chip action.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: EnvironmentInstance layout is missing sealed event presentation authority.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: ActionResult leaked UI state key: ui_state.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: ActionResult leaked UI state key: ui_state.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Foundation UI shell contains game-specific token 'pull_tab'; route this through the GameModule contract instead.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Foundation UI shell contains game-specific token 'blackjack_'; route this through the GameModule contract instead.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: RNG twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: ["Object manifest is missing.","Persisted base slot authority has no layout dictionary."]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: RNG twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: ["Object manifest is missing.","Persisted base slot authority has no layout dictionary."]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: game-result twin A initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: ["Object manifest is missing.","Persisted base slot authority has no layout dictionary."]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: game-result twin B initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: ["Object manifest is missing.","Persisted base slot authority has no layout dictionary."]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: foundation contracts initial arrival arrived at  but production room finalization failed; the harness must not inspect or depart this room: ["Object manifest is missing.","Persisted base slot authority has no layout dictionary."]
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Environment contract did not include debt/lender hooks.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Environment contract did not include behavior-first suspicion cues.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Environment contract did not include local narrative flags.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: EventModule returned an unsuccessful result.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)
+ERROR: Event module did not apply flag consequences.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _foundation_init_after_tree_ready (res://.tmp/generated_tests/foundation_check_split_runner.gd:463)

@@ -13,3 +13,14 @@ After: the retained review JSON records the actual history and bullet counts and
 NEXT: pending the normal watcher. Root CHANGELOG.md is an import-classified input, so the existing exact-input cold-import request will be prepared for the final candidate commit and consumed by the existing capped watcher. No guard, reserve, memory cap, exporter pin or deployment path changes are authorized or made.
 
 Proposed candidate SHA: pending the code-plus-ledger commits. Final SHA, exact assets and startup will be recorded after delivery. AUD061-11/17 must qualify that exact identity; AUD061-12's two final-candidate private exports remain to run there.
+
+## Exact candidate and delivery
+
+Changelog commit: 6c6a3571740ac0ae20ebf9809e15d9b3ea0c3e29.
+Proposed frozen candidate: fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc.
+Tree: 2d49cb17f83379715435a2576473c5cba52728ff.
+Normal pull --rebase: up to date; push bdaa9b33..fcfe0204 succeeded.
+
+Existing watcher consumed the exact CHANGELOG.md-only cold-import request and promoted this SHA. Archive SHA256: 95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f. All ten expected assets passed (eight body hashes and two unchanged engine HEAD/MIME/length checks with their pinned identities). Rendered startup and ordinary Daily Challenge passed, page errors 0 / console errors 0 / worker exit 0 / owned processes 0. Reviewed startup and House screenshots; footer actually reads 0.6.0-dev+fcfe0204d4d0, preserving the AUD061-04 block. The fresh primary was 100312 bytes, SHA256 4ab56e0b869b2287235b4b57d039899cd63a8427c6d3c29f32c05f6086ecb45b, with no rollback or temp residue. This startup is not claimed as the remaining game acceptance.
+
+Full candidate Smoke was rerun: 4 pass / 7 fail, identical baseline stage outcomes, content 25 / runtime 16 failures, no new normalized ERROR category; performance 10 inherited categories. Reconciliation: 1683 inherited errors across 52 tasks; AUD061/QOL findings 0. All receipts are retained. No release/tag/upload was made. This candidate is available for acceptance testing; version qualification and other release gates remain open.

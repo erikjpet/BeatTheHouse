@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+AUD061_SCRATCH_SNAPSHOT_DIFF {"differences":[],"scope":"Read-only warm expectation versus final primary after the cold observer; current-build QA data only, no player files or writes"}

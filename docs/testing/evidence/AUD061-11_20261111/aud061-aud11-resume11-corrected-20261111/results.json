@@ -1,0 +1,39 @@
+[
+  {
+    "script": "aud061_rc_resume",
+    "args": [],
+    "exit": "TIMEOUT",
+    "seconds": 240.03,
+    "source_sha256": "cd89afffecf0defc4614f19c6bfc6d46cef679d56cf542d84198f4fc0c4d4f2f",
+    "tail": [
+      "SCRIPT ERROR: Invalid access to property or key 'current_environment' on a base object of type 'Nil'.",
+      "   at: _run (res://.tmp/aud061_rc_resume.gd:76)",
+      "   GDScript backtrace (most recent call first):",
+      "       [0] _run (res://.tmp/aud061_rc_resume.gd:76)",
+      "       [1] _frames (res://.tmp/aud061_rc_resume.gd:12)"
+    ],
+    "errors": [
+      "SCRIPT ERROR: Invalid access to property or key 'current_environment' on a base object of type 'Nil'."
+    ]
+  },
+  {
+    "script": "aud061_rc_resume",
+    "args": [
+      "--cold"
+    ],
+    "exit": 4294967295,
+    "seconds": 84.11,
+    "source_sha256": "cd89afffecf0defc4614f19c6bfc6d46cef679d56cf542d84198f4fc0c4d4f2f",
+    "tail": [
+      "       [0] _run (res://.tmp/aud061_rc_resume.gd:21)",
+      "SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'Dictionary'.",
+      "   at: _run (res://.tmp/aud061_rc_resume.gd:21)",
+      "   GDScript backtrace (most recent call first):",
+      "       [0] _run (res://.tmp/aud061_rc_resume.gd:21)"
+    ],
+    "errors": [
+      "ERROR: Condition \"len < 4\" is true. Returning: ERR_INVALID_DATA",
+      "SCRIPT ERROR: Trying to assign value of type 'Nil' to a variable of type 'Dictionary'."
+    ]
+  }
+]

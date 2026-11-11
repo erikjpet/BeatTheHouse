@@ -1,0 +1,5 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+META029_STEP {"msec":6709,"point":"begin","stage":"ack-continue"}
+META029_STEP {"msec":7061,"point":"normal_host_ready","stage":"ack-continue"}
+META029_HOST_OBSERVATIONS {"checks":26,"failures":[],"observations":[{"ack":true,"case":"cold_ack_replay","durable_card_count":0,"receipts":2,"run_seed":"AUDIT029-NATIVE-ACK","story_count":1}],"pid":4352,"stage":"ack-continue"}

@@ -1,0 +1,87 @@
+{
+  "automation": "enabled",
+  "source_branch": "main",
+  "poll_seconds": 120,
+  "pid": 15864,
+  "started_at": "2026-11-10T23:54:11Z",
+  "phase": "current",
+  "cpu_limit_percent": 10,
+  "cpu_job_guardian_pid": "2872",
+  "deployed_commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+  "deployed_at": "2026-11-11T12:26:18Z",
+  "updated_at": "2026-11-11T12:26:59Z",
+  "available_commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+  "last_checked_at": "2026-11-11T12:25:18Z",
+  "check_error": null,
+  "mirror_handoff": {
+    "handoff_id": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f",
+    "state": "PENDING",
+    "record": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\records\\fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f.json",
+    "delivery_format": "served_files_v2",
+    "automatic_library_sync": false
+  },
+  "mirror_handoff_error": null,
+  "building_commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+  "build_started_at": "2026-11-11T12:23:18Z",
+  "error": null,
+  "import_cache": {
+    "mode": "fresh_ephemeral_cold_import",
+    "files": 0,
+    "bytes": 0,
+    "baseline_commit": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+    "normal_godot_import_still_required": true,
+    "cold_import_qualification": {
+      "schema": "bth.cold_import_request/v1",
+      "target_commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+      "target_tree": "2d49cb17f83379715435a2576473c5cba52728ff",
+      "baseline_commit": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+      "before_inputs_sha256": "8e97a24171b5692169f247c107e2c7c037b5232f5788f8f0299963241348074c",
+      "after_inputs_sha256": "2999f37a76f324142a5e1b6ba230506a77fc90e3e6bd6a19b3def4331e6bd4ca",
+      "changed_paths": [
+        "CHANGELOG.md"
+      ],
+      "recorded_at": "2026-11-11T12:22:47.651824+00:00",
+      "reason": "Owner-authorized AUD061-05 root changelog update. Request one cache-free normal import through the existing capped watcher; all native/exporter/PCK guards and storage/reserve limits remain unchanged.",
+      "task_id": "AUD061-05"
+    },
+    "request_receipt": "D:\\Projects\\site\\state\\bth-next\\cold-import-qualification\\attempts\\bth-next-build-fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-1794399806517987300.json"
+  },
+  "ephemeral_toolchain": {
+    "source": "D:\\Projects\\site\\state\\bth-next\\toolchain",
+    "target": "E:\\CodexTaskStorage\\bth-next-build-fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-1794399806517987300\\.tools",
+    "files_checked": 20594,
+    "logical_bytes": 1744804376,
+    "original_retained": true
+  },
+  "build_pid": 13840,
+  "build_log": "state\\bth-next\\logs\\fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-1794399880314147900.log",
+  "promotion_capacity": {
+    "schema": "bth.exact_promotion_capacity/v1",
+    "d_free_bytes": 35789967360,
+    "d_required_bytes": 12019158283,
+    "archive_bytes": 41697432,
+    "payload_bytes": 73780491,
+    "promotion_overhead_bytes": 134217728,
+    "archive_retained_on_d": false,
+    "service_reserve_bytes": 10737418240,
+    "safety_margin_bytes": 1073741824,
+    "admitted": true
+  },
+  "mirror_stage": {
+    "handoff_id": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f",
+    "stage": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\staged\\fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f.json",
+    "archive_sha256": "95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f",
+    "file_count": 16,
+    "payload_bytes": 73780491
+  },
+  "build_finished_at": "2026-11-11T12:26:18Z",
+  "ephemeral_cleanup": {
+    "source": "E:\\CodexTaskStorage\\bth-next-build-fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-1794399806517987300",
+    "removed": true,
+    "ignored_files_checked": 1676,
+    "owned_record": "D:\\Projects\\site\\state\\bth-next\\retention\\attempts\\bth-next-build-fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc-1794399806517987300.json",
+    "terminal_state": "deployed"
+  },
+  "retention_error": null,
+  "ephemeral_cleanup_error": null
+}

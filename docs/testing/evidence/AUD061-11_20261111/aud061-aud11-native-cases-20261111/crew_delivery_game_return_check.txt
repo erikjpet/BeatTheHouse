@@ -1,0 +1,526 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+CREW_RETURN_PROGRESS startup
+CREW_RETURN_PROGRESS full_content_begin
+CREW_RETURN_PROGRESS full_content_end games=11
+CREW_RETURN_PROGRESS run_ui_begin
+CREW_RETURN_PROGRESS run_ui_end
+CREW_RETURN_PROGRESS entry_begin scratch_tickets:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end scratch_tickets:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented scratch_tickets:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin scratch_tickets:run_package:unpaid
+WARNING: Room action event:chain06_dave_same_bus has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:crew_contact_lucky has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:crew_contact_switch has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:parking_lot_tip has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action game:scratch_tickets has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action service:house_drink has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action travel:leave has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action scenario::gas_station_graveyard_shift_flashlight_dock has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action scenario::gas_station_graveyard_shift_safe_exit has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action numbers:book has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+CREW_RETURN_PROGRESS choice_end scratch_tickets:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin scratch_tickets:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end scratch_tickets:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented scratch_tickets:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin scratch_tickets:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end scratch_tickets:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin pull_tabs:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end pull_tabs:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented pull_tabs:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin pull_tabs:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end pull_tabs:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin pull_tabs:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end pull_tabs:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented pull_tabs:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin pull_tabs:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end pull_tabs:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin slot:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end slot:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented slot:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin slot:run_package:unpaid
+WARNING: Room action event:crew_contact_switch has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:parking_lot_tip has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:side_door has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action game:slot has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action service:house_drink has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action travel:leave has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action scenario::gas_station_tour_bus_stop_bus_driver has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action scenario::gas_station_tour_bus_stop_safe_exit has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action numbers:book has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+CREW_RETURN_PROGRESS choice_end slot:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin slot:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end slot:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented slot:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin slot:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end slot:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin bar_dice:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end bar_dice:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented bar_dice:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin bar_dice:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end bar_dice:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin bar_dice:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end bar_dice:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented bar_dice:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin bar_dice:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end bar_dice:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin blackjack:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end blackjack:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented blackjack:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin blackjack:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end blackjack:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin blackjack:run_package:unpaid
+CREW_RETURN_PROGRESS save_continue_end blackjack:run_package:unpaid
+CREW_RETURN_PROGRESS entry_begin blackjack:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end blackjack:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented blackjack:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin blackjack:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end blackjack:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin blackjack:run_package:paid
+CREW_RETURN_PROGRESS entry_end blackjack:run_package:paid ok=true
+CREW_RETURN_PROGRESS paid_action_begin blackjack:run_package:paid
+CREW_RETURN_PROGRESS paid_action_end blackjack:run_package:paid wager=1
+CREW_RETURN_PROGRESS offer_presented blackjack:run_package:paid
+CREW_RETURN_PROGRESS choice_begin blackjack:run_package:paid
+CREW_RETURN_PROGRESS choice_end blackjack:run_package:paid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin blackjack:run_package:paid
+CREW_RETURN_PROGRESS save_continue_end blackjack:run_package:paid
+CREW_RETURN_PROGRESS entry_begin baccarat:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end baccarat:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented baccarat:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin baccarat:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end baccarat:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin baccarat:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end baccarat:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented baccarat:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin baccarat:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end baccarat:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin craps:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end craps:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented craps:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin craps:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end craps:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin craps:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end craps:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented craps:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin craps:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end craps:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin roulette:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end roulette:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented roulette:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin roulette:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end roulette:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin roulette:run_package:unpaid
+CREW_RETURN_PROGRESS save_continue_end roulette:run_package:unpaid
+CREW_RETURN_PROGRESS entry_begin roulette:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end roulette:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented roulette:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin roulette:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end roulette:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin roulette:run_package:paid
+CREW_RETURN_PROGRESS entry_end roulette:run_package:paid ok=true
+CREW_RETURN_PROGRESS paid_action_begin roulette:run_package:paid
+CREW_RETURN_PROGRESS paid_action_end roulette:run_package:paid wager=1
+CREW_RETURN_PROGRESS offer_presented roulette:run_package:paid
+CREW_RETURN_PROGRESS choice_begin roulette:run_package:paid
+CREW_RETURN_PROGRESS choice_end roulette:run_package:paid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin roulette:run_package:paid
+CREW_RETURN_PROGRESS save_continue_end roulette:run_package:paid
+CREW_RETURN_PROGRESS entry_begin crew_draw_poker:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end crew_draw_poker:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented crew_draw_poker:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin crew_draw_poker:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end crew_draw_poker:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin crew_draw_poker:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end crew_draw_poker:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented crew_draw_poker:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin crew_draw_poker:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end crew_draw_poker:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin video_poker:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end video_poker:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented video_poker:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin video_poker:run_package:unpaid
+WARNING: Room action event:parking_lot_tip has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action event:side_door has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action game:video_poker has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action service:house_drink has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action travel:leave has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+WARNING: Room action numbers:book has no visible room object to attach to.
+   at: push_warning (core/variant/variant_utility.cpp:1034)
+   GDScript backtrace (most recent call first):
+       [0] _attach_action_only_records (res://scripts/ui/environment_interaction_controller.gd:839)
+       [1] prepare_room_catalog_at_boundary (res://scripts/ui/environment_interaction_controller.gd:116)
+       [2] _prepare_room_presentation_at_boundary (res://scripts/ui/foundation_main.gd:12613)
+       [3] _render_environment_screen (res://scripts/ui/foundation_main.gd:13097)
+       [4] _finish_foundation_refresh (res://scripts/ui/foundation_main.gd:12695)
+       [5] _refresh (res://scripts/ui/foundation_main.gd:12680)
+       [6] _complete_event_choice_resolution (res://scripts/ui/foundation_main.gd:4266)
+       [7] resolve_event_choice (res://scripts/ui/foundation_main.gd:4072)
+       [8] _on_talk_dock_choice_requested (res://scripts/ui/foundation_main.gd:4308)
+       [9] _choose (res://scripts/ui/talk_dock.gd:1174)
+       [10] _on_choice_pressed (res://scripts/ui/talk_dock.gd:1143)
+       [11] _case (res://scripts/tests/crew_delivery_game_return_check.gd:137)
+CREW_RETURN_PROGRESS choice_end video_poker:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin video_poker:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end video_poker:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented video_poker:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin video_poker:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end video_poker:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin coin_pusher:run_package:unpaid
+CREW_RETURN_PROGRESS entry_end coin_pusher:run_package:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented coin_pusher:run_package:unpaid
+CREW_RETURN_PROGRESS choice_begin coin_pusher:run_package:unpaid
+CREW_RETURN_PROGRESS choice_end coin_pusher:run_package:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin coin_pusher:run_package:unpaid
+CREW_RETURN_PROGRESS save_continue_end coin_pusher:run_package:unpaid
+CREW_RETURN_PROGRESS entry_begin coin_pusher:refuse:unpaid
+CREW_RETURN_PROGRESS entry_end coin_pusher:refuse:unpaid ok=true
+CREW_RETURN_PROGRESS offer_presented coin_pusher:refuse:unpaid
+CREW_RETURN_PROGRESS choice_begin coin_pusher:refuse:unpaid
+CREW_RETURN_PROGRESS choice_end coin_pusher:refuse:unpaid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS entry_begin coin_pusher:run_package:paid
+CREW_RETURN_PROGRESS entry_end coin_pusher:run_package:paid ok=true
+CREW_RETURN_PROGRESS paid_action_begin coin_pusher:run_package:paid
+CREW_RETURN_PROGRESS paid_action_end coin_pusher:run_package:paid wager=1
+CREW_RETURN_PROGRESS offer_presented coin_pusher:run_package:paid
+CREW_RETURN_PROGRESS choice_begin coin_pusher:run_package:paid
+CREW_RETURN_PROGRESS choice_end coin_pusher:run_package:paid ok=true screen=GAME native=true
+CREW_RETURN_PROGRESS save_continue_begin coin_pusher:run_package:paid
+CREW_RETURN_PROGRESS save_continue_end coin_pusher:run_package:paid
+CREW_DELIVERY_GAME_RETURN {"cases":[{"choice":"run_package","final_screen":"GAME","game":"scratch_tickets","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"scratch_tickets"},{"choice":"refuse","final_screen":"GAME","game":"scratch_tickets","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"scratch_tickets"},{"choice":"run_package","final_screen":"GAME","game":"pull_tabs","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"pull_tabs"},{"choice":"refuse","final_screen":"GAME","game":"pull_tabs","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"pull_tabs"},{"choice":"run_package","final_screen":"GAME","game":"slot","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"slot"},{"choice":"refuse","final_screen":"GAME","game":"slot","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"slot"},{"choice":"run_package","final_screen":"GAME","game":"bar_dice","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"bar_dice"},{"choice":"refuse","final_screen":"GAME","game":"bar_dice","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"bar_dice"},{"choice":"run_package","final_screen":"GAME","game":"blackjack","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"blackjack"},{"choice":"refuse","final_screen":"GAME","game":"blackjack","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"blackjack"},{"choice":"run_package","final_screen":"GAME","game":"blackjack","paid":true,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"blackjack"},{"choice":"run_package","final_screen":"GAME","game":"baccarat","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"baccarat"},{"choice":"refuse","final_screen":"GAME","game":"baccarat","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"baccarat"},{"choice":"run_package","final_screen":"GAME","game":"craps","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"craps"},{"choice":"refuse","final_screen":"GAME","game":"craps","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"craps"},{"choice":"run_package","final_screen":"GAME","game":"roulette","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"roulette"},{"choice":"refuse","final_screen":"GAME","game":"roulette","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"roulette"},{"choice":"run_package","final_screen":"GAME","game":"roulette","paid":true,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"roulette"},{"choice":"run_package","final_screen":"GAME","game":"crew_draw_poker","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"crew_draw_poker"},{"choice":"refuse","final_screen":"GAME","game":"crew_draw_poker","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"crew_draw_poker"},{"choice":"run_package","final_screen":"GAME","game":"video_poker","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"video_poker"},{"choice":"refuse","final_screen":"GAME","game":"video_poker","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"video_poker"},{"choice":"run_package","final_screen":"GAME","game":"coin_pusher","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"coin_pusher"},{"choice":"refuse","final_screen":"GAME","game":"coin_pusher","paid":false,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"coin_pusher"},{"choice":"run_package","final_screen":"GAME","game":"coin_pusher","paid":true,"response_native_bound":true,"response_screen":"GAME","result_ok":true,"state_key":"coin_pusher"}],"checks":477,"failures":[],"fidelity":"Synthetic seeded fixtures: complete production-generated Gas Casino campaign rooms for cabinet games, practice games with generated map for table/physical games; explicit Crew eligibility precedes generation. Real native game entry, TalkDock confirmation callback and event resolution; selected real Save/Continue. Optional paid cases use actual Deal, RED bet/Spin and Coin Drop through the native host. No player/browser profile capture, physical pointer injection or deployed Web gameplay."}

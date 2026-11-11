@@ -1,0 +1,5 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+META029_STEP {"msec":6666,"point":"begin","stage":"pending-continue"}
+META029_STEP {"msec":7032,"point":"normal_host_ready","stage":"pending-continue"}
+META029_HOST_OBSERVATIONS {"checks":38,"failures":[],"observations":[{"ack":true,"case":"cold_uncommitted_meta_retry","durable_card_count":0,"receipt":"terminal-outcome:1","story_count":1}],"pid":18864,"stage":"pending-continue"}

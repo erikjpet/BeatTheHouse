@@ -1,0 +1,7 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+META029_STEP {"msec":6522,"point":"begin","stage":"continue"}
+META029_STEP {"msec":6909,"point":"normal_host_ready","stage":"continue"}
+META029_STEP {"msec":7023,"point":"cold_menu_snapshot_returned","stage":"continue"}
+META029_STEP {"msec":11194,"point":"cold_public_continue_returned","stage":"continue"}
+META029_HOST_OBSERVATIONS {"checks":35,"failures":[],"observations":[{"case":"fresh_menu_save_snapshot_after_guard","load_available":true,"visible_pressure":"","visible_run_status":""},{"case":"cold_process_public_continue","decay_flag":true,"durable_meta_after_continue":0,"durable_meta_before_continue":0,"host_meta_after_continue":0,"processed_flag":true,"save_status":{"autosave_last_error":0,"autosave_last_error_code":"","has_save":true,"load_available":true,"pending_autosave":false,"status_text":"Autosave On · Loaded completed run.","visible_run_status":"failed"},"screen":"FAILURE","terminal_checkpoint_flag":true},{"case":"cold_host_public_terminal_save_retry","decay_flag":true,"durable_meta_count":0,"live_meta_count":0,"processed_flag":true,"save_status":{"autosave_last_error":0,"autosave_last_error_code":"","has_save":true,"load_available":true,"pending_autosave":false,"status_text":"Autosave On · Saved to Resume Slot.","visible_run_status":"failed"},"screen":"FAILURE","terminal_checkpoint_flag":true}],"pid":10688,"stage":"continue"}

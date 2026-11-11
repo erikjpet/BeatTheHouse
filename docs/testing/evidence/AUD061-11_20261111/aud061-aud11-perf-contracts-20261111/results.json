@@ -1,0 +1,67 @@
+[
+  {
+    "script": "coin_pusher_continuous_input_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 15.26,
+    "source_sha256": "a73c7ed148a463de68a5546c7fe2294bed0aba7799592f6cd09fc85917e0717e",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "COIN_PUSHER_CONTINUOUS_INPUT_RESULT={\"bankroll\":476,\"emitted_drops\":18,\"failures\":[],\"fidelity\":\"synthetic 60Hz clock through production module APIs; no rendered frame or full-host performance claim\",\"ok\":true,\"pending_drops\":6,\"phases\":[{\"authority_ticks\":120,\"frames\":120,\"input_trace_count\":0,\"invariants\":{\"active\":153,\"collected\":0,\"conservation_ok\":true,\"cup_consumed\":0,\"energy_ok\":true,\"gutter\":0,\"origin\":153,\"refused\":0,\"tray\":0},\"max_backlog_ticks\":0,\"max_publication_age_msec\":16,\"module_realtime_call_usec\":{\"count\":120,\"max\":164972,\"mean\":29033.4416666667,\"p95\":136603},\"native_step_usec\":{\"count\":120,\"max\":81719,\"mean\":28016.1416666667,\"p95\":68746},\"nozzle_updates\":0,\"phase\":\"idle\",\"pointer_call_usec\":{\"count\":0},\"published_frames\":80},{\"authority_ticks\":120,\"frames\":120,\"input_trace_count\":6,\"invariants\":{\"active\":159,\"collected\":0,\"conservation_ok\":true,\"cup_consumed\":0,\"energy_ok\":true,\"gutter\":0,\"origin\":159,\"refused\":0,\"tray\":0},\"max_backlog_ticks\":0,\"max_publication_age_msec\":16,\"module_realtime_call_usec\":{\"count\":120,\"max\":144579,\"mean\":17744.0833333333,\"p95\":132285},\"native_step_usec\":{\"count\":120,\"max\":74317,\"mean\":16861.2333333333,\"p95\":69655},\"nozzle_updates\":0,\"phase\":\"feeding\",\"pointer_call_usec\":{\"count\":0},\"published_frames\":80},{\"authority_ticks\":180,\"frames\":180,\"input_trace_count\":196,\"invariants\":{\"active\":168,\"collected\":0,\"conservation_ok\":true,\"cup_consumed\":0,\"energy_ok\":true,\"gutter\":0,\"origin\":168,\"refused\":0,\"tray\":0},\"max_backlog_ticks\":0,\"max_publication_age_msec\":16,\"module_realtime_call_usec\":{\"count\":180,\"max\":140063,\"mean\":17118.3333333333,\"p95\":109136},\"native_step_usec\":{\"count\":180,\"max\":72919,\"mean\":16134.9722222222,\"p95\":65577},\"nozzle_updates\":180,\"phase\":\"continuous_drag_feeding\",\"pointer_call_usec\":{\"count\":180,\"max\":149,\"mean\":69.7555555555556,\"p95\":104},\"published_frames\":120},{\"authority_ticks\":60,\"frames\":60,\"input_trace_count\":199,\"invariants\":{\"active\":171,\"collected\":0,\"conservation_ok\":true,\"cup_consumed\":0,\"energy_ok\":true,\"gutter\":0,\"origin\":171,\"refused\":0,\"tray\":0},\"max_backlog_ticks\":0,\"max_publication_age_msec\":16,\"module_realtime_call_usec\":{\"count\":60,\"max\":42109,\"mean\":14777.4,\"p95\":39714},\"native_step_usec\":{\"count\":60,\"max\":20674,\"mean\":13997.6833333333,\"p95\":20287},\"nozzle_updates\":0,\"phase\":\"released\",\"pointer_call_usec\":{\"count\":0},\"published_frames\":40}],\"platform\":\"Windows\",\"reserved_drops\":24,\"solver_backend\":\"gdscript_v3\",\"turns_after\":0,\"turns_before\":0,\"web_feature\":false}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "coin_pusher_input_compaction_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 5.69,
+    "source_sha256": "e5919b8ff81186c6a39d688bafd28eabbb9fb26de3fdbc1a4fd4a648862b5305",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "COIN_PUSHER_INPUT_COMPACTION_RESULT={\"authored_tick_preserved\":true,\"compaction_threshold\":1024,\"exit_settlement_preserved\":true,\"failures\":[],\"legacy_session_count_preserved\":true,\"mixed_pending_suffix_preserved\":true,\"no_replay_next_tick\":true,\"ok\":true,\"pending_inputs_consumed_once\":true,\"rejected_drop_rollback_preserved\":true,\"solver_backend\":\"gdscript_v3\",\"web_feature\":false}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "coin_pusher_input_retention_probe",
+    "args": [],
+    "exit": 1,
+    "seconds": 5.14,
+    "source_sha256": "8bade6539d041838f66036b7d6c5f1febee0c5c4c913ce35ac7515706d929dd6",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "COIN_PUSHER_INPUT_RETENTION_RESULT={\"failures\":[\"Native solver unavailable; refusing a different backend measurement.\"],\"ok\":false}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "video_poker_hint_incremental_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 7.98,
+    "source_sha256": "2f140554b57d24f9a7531964481ca4678a29b5eef8edcddce901a7f38b134836",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "BTH_VP_INCREMENTAL_REPORT {\"failures\":[],\"fidelity\":\"production-generated Deal and foreground realtime projection; synthetic module regression, not rendered host input\",\"passed\":true,\"rows\":[{\"cabinet_id\":\"jacks_or_better\",\"cold_surface_usec\":890,\"completion_count\":27430,\"frames\":55,\"mask_checks\":32,\"max_projection_slice_usec\":3613,\"recommended_holds\":[1,4]},{\"cabinet_id\":\"double_deuces\",\"cold_surface_usec\":786,\"completion_count\":27430,\"frames\":55,\"mask_checks\":32,\"max_projection_slice_usec\":3650,\"recommended_holds\":[1,2,4]},{\"cabinet_id\":\"triple_double_bonus\",\"cold_surface_usec\":822,\"completion_count\":27430,\"frames\":54,\"mask_checks\":32,\"max_projection_slice_usec\":3626,\"recommended_holds\":[3]}],\"web\":false}"
+    ],
+    "errors": []
+  },
+  {
+    "script": "animation_liveness_without_pointer_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 6.7,
+    "source_sha256": "4fab6bd8099c93fcd8f7157a775839fdd180e87d8f010cdbcfba78bd3b8aa4e9",
+    "tail": [
+      "Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org",
+      "",
+      "Animation liveness without pointer input: PASS"
+    ],
+    "errors": []
+  }
+]

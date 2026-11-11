@@ -1,0 +1,703 @@
+{
+  "checks": 94,
+  "facts": {
+    "actions": [
+      "bar_dice_roll",
+      "bar_dice_ack_cover",
+      "bar_dice_shake",
+      "bar_dice_shake",
+      "bar_dice_resolve",
+      "bar_dice_throw"
+    ],
+    "blocked": [],
+    "boundaries": [
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 7,
+          "flat": [
+            0,
+            0,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "agree_wager",
+          "process_frame": 18,
+          "projection": [
+            0,
+            0,
+            0
+          ],
+          "text_argument": "COV $0  ·  RISK $0  ·  RET $0"
+        },
+        "authority": {
+          "cover": 0,
+          "phase_input": "",
+          "returned": 0,
+          "risk": 0
+        },
+        "canvas_processing": true,
+        "expected_phase": "agree_wager",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            0,
+            0,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "agree_wager",
+          "pot": 30,
+          "projection": [
+            0,
+            0,
+            0
+          ]
+        },
+        "label": "initial",
+        "module": {
+          "ante": 6,
+          "flat": [
+            0,
+            0,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "agree_wager",
+          "pot": 30,
+          "projection": [
+            0,
+            0,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            0,
+            0,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "agree_wager",
+          "pot": 30,
+          "projection": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 11,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "cover",
+          "process_frame": 25,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "cover",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "cover",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "cover",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_roll",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "cover",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "cover",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 15,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "shake",
+          "process_frame": 32,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "shake",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "shake",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_ack_cover",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 116,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "shake",
+          "process_frame": 192,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "shake",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "shake",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_shake",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 207,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "shake",
+          "process_frame": 353,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "shake",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "shake",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_shake",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "shake",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 305,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "throw",
+          "process_frame": 514,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "throw",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "throw",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "throw",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_resolve",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "throw",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "throw",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      },
+      {
+        "account_and_root_rng_equal": true,
+        "actual_draw": {
+          "ante": 6,
+          "draw_count": 309,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "font_size": 7,
+          "phase": "reveal",
+          "process_frame": 521,
+          "projection": [
+            6,
+            6,
+            0
+          ],
+          "text_argument": "COV $6  ·  RISK $6  ·  RET $0"
+        },
+        "authority": {
+          "cover": 6,
+          "phase_input": "reveal",
+          "returned": 0,
+          "risk": 6
+        },
+        "canvas_processing": true,
+        "expected_phase": "reveal",
+        "host_snapshot": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "reveal",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "label": "bar_dice_throw",
+        "module": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "reveal",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        },
+        "new_actual_draw": true,
+        "retained_canvas": {
+          "ante": 6,
+          "flat": [
+            6,
+            6,
+            0
+          ],
+          "flat_present": [
+            true,
+            true,
+            true
+          ],
+          "phase": "reveal",
+          "pot": 30,
+          "projection": [
+            6,
+            6,
+            0
+          ]
+        }
+      }
+    ],
+    "completed": true,
+    "display_server": "headless",
+    "financial_calls": 0,
+    "first_loss": "",
+    "original_state_used": false,
+    "save_inputs": 0,
+    "scope": "Fresh supported Practice cash94/ante6; actual MainScene screen-builder Canvas factory with surface_label-only observation, real renderer hit-region callbacks, no Call/Save/Continue or financial settlement. Authority/module/host snapshot/retained Canvas/actual draw-text trace. No original state, cold/closing/Web or raster-pixel interpretation claim. Native shutdown outcome remains separately recorded by owned runner.",
+    "source_sha256": {
+      "bar_dice.gd": "9c6315403bb2c433f77aaa9a78a6f917f050dcfd8f04b1cd7fce8bcaf40cfdb9",
+      "bar_dice_cover_display_check.gd": "bb22b2f444bf85f71456ee30c6222046af0ee2c7aa9be068e43f23bb65ef2a96",
+      "bar_dice_ritual_projection.gd": "aeffef19fef32cf762e5788b7ff4a918345e9c81632a4831ce9333b194da1721",
+      "foundation_action_view_model.gd": "b49018d54bed650b9ae1c8e795777d7e782d82196653a93984f3e54ff5de9471",
+      "game_surface_canvas.gd": "a645374efc424371decf9134ead748b80c17009768ca71e79819f5280a3c5fe7"
+    }
+  },
+  "failures": []
+}

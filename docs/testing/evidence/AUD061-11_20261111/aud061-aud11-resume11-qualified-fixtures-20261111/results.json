@@ -1,0 +1,40 @@
+[
+  {
+    "script": "aud061_rc_resume",
+    "args": [],
+    "exit": 1,
+    "seconds": 1.31,
+    "source_sha256": "820ecb76d96e333607bfca9a5920ed79f94e0b66023863f3b99d51e0083688fc",
+    "tail": [
+      "",
+      "SCRIPT ERROR: Parse Error: Expected statement, found \"Indent\" instead.",
+      "   at: GDScript::reload (res://.tmp/aud061_rc_resume.gd:84)",
+      "ERROR: Failed to load script \"res://.tmp/aud061_rc_resume.gd\" with error \"Parse error\".",
+      "   at: load (modules/gdscript/gdscript.cpp:2907)"
+    ],
+    "errors": [
+      "SCRIPT ERROR: Parse Error: Expected statement, found \"Indent\" instead.",
+      "ERROR: Failed to load script \"res://.tmp/aud061_rc_resume.gd\" with error \"Parse error\"."
+    ]
+  },
+  {
+    "script": "aud061_rc_resume",
+    "args": [
+      "--cold"
+    ],
+    "exit": 1,
+    "seconds": 1.28,
+    "source_sha256": "820ecb76d96e333607bfca9a5920ed79f94e0b66023863f3b99d51e0083688fc",
+    "tail": [
+      "",
+      "SCRIPT ERROR: Parse Error: Expected statement, found \"Indent\" instead.",
+      "   at: GDScript::reload (res://.tmp/aud061_rc_resume.gd:84)",
+      "ERROR: Failed to load script \"res://.tmp/aud061_rc_resume.gd\" with error \"Parse error\".",
+      "   at: load (modules/gdscript/gdscript.cpp:2907)"
+    ],
+    "errors": [
+      "SCRIPT ERROR: Parse Error: Expected statement, found \"Indent\" instead.",
+      "ERROR: Failed to load script \"res://.tmp/aud061_rc_resume.gd\" with error \"Parse error\"."
+    ]
+  }
+]
