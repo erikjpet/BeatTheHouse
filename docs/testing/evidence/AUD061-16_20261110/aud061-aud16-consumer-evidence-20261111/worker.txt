@@ -1,0 +1,1 @@
+[{"root": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\tools", "files_scanned": 387, "direct_named_switch_or_setter_matches": []}, {"root": "D:\\Projects\\Beat-The-House\\tools", "files_scanned": 367, "direct_named_switch_or_setter_matches": []}]

@@ -1,0 +1,27 @@
+{
+  "search_names": [
+    "debug_force_write_failure",
+    "debug_force_rename_failure",
+    "debug_fail_transition",
+    "debug_storage_byte_limit_override",
+    "debug_force_compression_failure",
+    "script_prewarm_force_start_error_for_test",
+    "set_debug_force_write_failure",
+    "set_debug_force_rename_failure",
+    "set_debug_fail_transition"
+  ],
+  "scans": [
+    {
+      "root": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\tools",
+      "files_scanned": 387,
+      "direct_named_switch_or_setter_matches": []
+    },
+    {
+      "root": "D:\\Projects\\Beat-The-House\\tools",
+      "files_scanned": 367,
+      "direct_named_switch_or_setter_matches": []
+    }
+  ],
+  "preserved_switch_exceptions": [],
+  "indirect_source_fixture_note": "tools/check_godot.ps1 standalone launcher sets BTH_DISTRIBUTION_BUILD=1 for private source-project tests. It invokes the Godot source script, not an identified distribution export. Fault subcases now explicitly select non-distribution mode, keep private root overrides/all assertions and restore the prior mode. Shipping distribution behavior is checked independently by the new 58-check matrix and unchanged distribution-root validation."
+}

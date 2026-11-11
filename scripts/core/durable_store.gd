@@ -1,6 +1,8 @@
 class_name DurableStore
 extends RefCounted
 
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+
 const IoResultScript := preload("res://scripts/core/io_result.gd")
 const KeysScript := preload("res://scripts/core/keys.gd")
 
@@ -35,7 +37,7 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 
 	var temp_absolute := "%s.tmp" % absolute_path
 	_remove_if_exists(temp_absolute)
-	if debug_force_write_failure:
+	if not PersistencePathsScript.distribution_build() and debug_force_write_failure:
 		return _result(false, ERR_CANT_CREATE, "debug_forced_write_failure", OUTCOME_NONE)
 	var file := FileAccess.open(temp_absolute, FileAccess.WRITE)
 	if file == null:
@@ -113,7 +115,7 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 			return _result(false, stage_invalid_error, "invalid_primary_stage_failed", OUTCOME_NONE)
 		staged_invalid_primary = true
 
-	if debug_force_rename_failure or _debug_transition_fails(TRANSITION_INSTALL_PRIMARY):
+	if (not PersistencePathsScript.distribution_build() and debug_force_rename_failure) or _debug_transition_fails(TRANSITION_INSTALL_PRIMARY):
 		_remove_if_exists(temp_absolute)
 		var restore_error := _restore_install_generations(
 			absolute_path, backup_absolute, backup_rollback_absolute,
@@ -247,7 +249,7 @@ static func _read_generation(path: String, validator: Callable, capture_validate
 
 
 static func _debug_transition_fails(transition: String) -> bool:
-	return not transition.is_empty() and debug_fail_transition == transition
+	return not PersistencePathsScript.distribution_build() and not transition.is_empty() and debug_fail_transition == transition
 
 
 static func _restore_install_generations(

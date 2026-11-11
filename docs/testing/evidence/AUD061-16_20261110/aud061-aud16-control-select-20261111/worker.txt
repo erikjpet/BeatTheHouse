@@ -1,0 +1,1 @@
+Four exact HEAD Git blobs selected; candidate bytes safely retained, restoration required.

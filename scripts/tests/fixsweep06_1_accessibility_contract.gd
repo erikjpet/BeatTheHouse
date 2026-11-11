@@ -570,9 +570,13 @@ func _check_script_prewarm_behavior_contract() -> void:
 			str(cached_game_paths[1]): true,
 		}
 		app.set("game_module_script_prewarm_requests", forced_requests)
+		# Keep the deterministic fallback proof in its supported QA build mode.
+		var prior_fault_build := OS.get_environment("BTH_DISTRIBUTION_BUILD")
+		OS.set_environment("BTH_DISTRIBUTION_BUILD", "0")
 		app.set("script_prewarm_force_start_error_for_test", true)
 		app.call("_finish_all_script_prewarm_work")
 		app.set("script_prewarm_force_start_error_for_test", false)
+		OS.set_environment("BTH_DISTRIBUTION_BUILD", prior_fault_build)
 		_assert_app_script_prewarm_idle(app, "forced Thread.start fallback drain")
 
 	var run_requests: Dictionary = app.get("run_ui_script_prewarm_requests")

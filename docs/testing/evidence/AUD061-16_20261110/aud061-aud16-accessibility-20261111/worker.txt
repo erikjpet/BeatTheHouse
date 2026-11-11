@@ -1,0 +1,230 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640, 360) empty journal default settings.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=false text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=true text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=false text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=true text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=false text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=true text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=false text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (640.0, 360.0) small=true text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=false text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=true text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=false text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=true text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=false text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=true text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=false text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (800.0, 450.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (800.0, 450.0) small=true text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=false text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=true text=normal scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=false text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=true text=normal scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=false text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=true text=large scale=1.00.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=false text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: AIF-002: live Run Menu exposes 9 actions instead of eight for (960.0, 540.0) small=true text=large scale=1.30.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (960.0, 540.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)
+ERROR: Accessibility fixture requested (640.0, 360.0) but the live root remained (1280.0, 720.0).
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/fixsweep06_1_accessibility_contract.gd:59)

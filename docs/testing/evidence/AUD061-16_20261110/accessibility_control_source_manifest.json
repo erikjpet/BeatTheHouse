@@ -1,0 +1,31 @@
+{
+  "state": "CANDIDATE_RESTORED_HASHES_VERIFIED",
+  "head": "20b6ff23",
+  "files": [
+    {
+      "path": "scripts/core/durable_store.gd",
+      "candidate_sha256": "ff72b85506ffd7a7bb9aa9e42fd6b6ab45f3078f7eb569eb2e456bdc72317ed8",
+      "control_git_blob": "6f815e953a851fb95dcf9626296024f277e3560a",
+      "control_sha256": "0544c76325fd1235696e94e00ea8b82598a9124c0cddfcb264c848978814f02c"
+    },
+    {
+      "path": "scripts/core/run_save_codec.gd",
+      "candidate_sha256": "7af8bbc5d5827738efcd43035c90885352b8af56624414285ad986fee12d395a",
+      "control_git_blob": "94ba567a3747d8935db3ff898eb7caa0c106a9a9",
+      "control_sha256": "0dd8b384b1c368fc9e31c4fad0343accb7d49a39aa915c9ee5eba6435bce5344"
+    },
+    {
+      "path": "scripts/ui/foundation_main.gd",
+      "candidate_sha256": "7e9f759f842229d3e320c61ac46839492b08533d29f04d5dc205d903c2992985",
+      "control_git_blob": "056a2c837e86e1021f0591da305c4d1cb8ff06d1",
+      "control_sha256": "17df43556274d3fcddb862addc1c09f11826404fcd82138a868648de230262b9"
+    },
+    {
+      "path": "scripts/tests/fixsweep06_1_accessibility_contract.gd",
+      "candidate_sha256": "c78e1d909a972a6a87f4a32752e6397b9207ea8dcb0ef7963e6e655983876f1e",
+      "control_git_blob": "246f7e35bbce05f6dc00da279e09bb855a9806fb",
+      "control_sha256": "3ad164f3d8c7f64d2eed471e50f4d4483cddddd8246b306d995269307afc36b8"
+    }
+  ],
+  "restored_at": "2026-11-11T06:10:54.489273+00:00"
+}

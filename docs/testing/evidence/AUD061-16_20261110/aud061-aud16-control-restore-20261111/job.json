@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys,hashlib,collections\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nm=load(W/'.tmp/aud16_control_manifest.json')\nassert m['state']=='CONTROL_SOURCE_SELECTED_RESTORE_REQUIRED'\nfor f in m['files']:\n p=W/f['path'];data=(W/'.tmp/aud16_candidate_snapshot'/f['path']).read_bytes()\n assert hashlib.sha256(data).hexdigest()==f['candidate_sha256']\n p.write_bytes(data)\n assert hashlib.sha256(p.read_bytes()).hexdigest()==f['candidate_sha256']\nm['state']='CANDIDATE_RESTORED_HASHES_VERIFIED';m['restored_at']=now();dump(W/'.tmp/aud16_control_manifest.json',m)\nout=W/'docs/testing/evidence/AUD061-16_20261110'\ndump(out/'accessibility_control_source_manifest.json',m)\ndef errors(run):\n return [x for x in read(Path(r'E:\\CodexQA\\BTH\\runs')/run/'evidence/worker.log').splitlines() if x.startswith('ERROR: ')]\na=errors('aud061-aud16-accessibility-20261111');b=errors('aud061-aud16-accessibility-control-20261111')\ncmp={'candidate_error_count':len(a),'unchanged_main_error_count':len(b),'exact_error_multiset_match':collections.Counter(a)==collections.Counter(b),'new_error_multiset':list((collections.Counter(a)-collections.Counter(b)).elements()),'candidate_errors':a,'control_errors':b,'scope':'No total assertion count emitted; all ERROR lines compared exactly, including duplicates. Control used exact Git HEAD blobs for 3production files and accessibility test, matched same12%/2GiB/fresh-profile caps. Candidate4files restored byte-for-byte before any later QA.'}\ndump(out/'accessibility_control_comparison.json',cmp)\np=W/'.tmp/aud061_state_current.md'\nwrite(p,'# AUD16 CONTROL FINISHED \u2014 CANDIDATE RESTORED\\nFour candidate files restored and SHA256verified. Accessibility candidate/control error counts '+str(len(a))+'/'+str(len(b))+'; exact multiset match='+str(cmp['exact_error_multiset_match'])+'. No controlSourceSwapactive; noQAactive. Longer state below.\\n\\n'+read(p))\nprint(json.dumps({k:cmp[k] for k in ('candidate_error_count','unchanged_main_error_count','exact_error_multiset_match','new_error_multiset')}))\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "7d916ae09901694c61dfb4c377aa807c3185c22ce53b2d92385f9710b767baf6",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud16-control-restore-20261111",
+    "token": "7eaa5a2bb5bf34ccffc3685cf508fc1c",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 60,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\profile",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\temp",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\appdata",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\localappdata",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\home",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\cache",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\save_dir",
+      "available_bytes": 337699799040
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\pycache",
+      "available_bytes": 337699799040
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\profile",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\temp",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\evidence",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\appdata",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\localappdata",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\home",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\cache",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\save_dir",
+      "available_bytes": 337699790848
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud16-control-restore-20261111\\pycache",
+      "available_bytes": 337699790848
+    }
+  },
+  "pid": 9188,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794377454.5587583
+}

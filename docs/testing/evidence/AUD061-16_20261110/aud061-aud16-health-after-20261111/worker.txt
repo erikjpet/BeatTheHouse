@@ -1,0 +1,110 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: CH-01/02: induced write failure reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: write failure changed the prior primary bytes.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: induced rename failure reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: rename failure did not restore the prior primary byte-for-byte.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: induced third-generation install failure reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: failed third-generation install did not preserve the generation-two primary byte-for-byte.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: backup recovery returned the wrong generation.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: exact-proof install fault reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: exact-proof rollback changed primary or backup bytes.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: stage_backup fault injection reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: stage_backup fault changed the prior primary.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: stage_backup fault changed the prior backup.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: rotate_primary fault injection reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: rotate_primary fault changed the prior primary.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: rotate_primary fault changed the prior backup.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: install_primary fault injection reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: install_primary fault changed the prior primary.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: install_primary fault changed the prior backup.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: validate_primary fault injection reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: validate_primary fault changed the prior primary.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: RP-005: validate_primary fault changed the prior backup.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-05: failed developer placement write reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-05: failed developer placement write changed the prior generation.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-05: failed developer placement write leaked into active in-memory overrides.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-05: developer placement was not re-readable after failure.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: induced run rename failure reported success.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)
+ERROR: CH-01: failed run save retained a trusted-primary fingerprint.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/health06_1_durable_store_contract.gd:61)

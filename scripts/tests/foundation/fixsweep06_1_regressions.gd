@@ -132,9 +132,13 @@ static func _check_bth_039_oversized_save_is_atomic(failures: Array) -> void:
 		failures.append("BTH-039 oversized asynchronous replacement did not fail at completion.")
 	if FileAccess.get_file_as_bytes(primary_path) != baseline_bytes or FileAccess.get_file_as_bytes(backup_path) != backup_bytes:
 		failures.append("BTH-039 oversized asynchronous replacement changed a valid generation.")
+	# The injected fault is intentionally unavailable to distribution builds.
+	var prior_fault_build := OS.get_environment("BTH_DISTRIBUTION_BUILD")
+	OS.set_environment("BTH_DISTRIBUTION_BUILD", "0")
 	RunSaveCodec.debug_force_compression_failure = true
 	var compression_error := service.save_run(baseline, slot_id)
 	RunSaveCodec.debug_force_compression_failure = false
+	OS.set_environment("BTH_DISTRIBUTION_BUILD", prior_fault_build)
 	if compression_error == OK:
 		failures.append("BTH-039 injected compression failure reported success.")
 	if FileAccess.get_file_as_bytes(primary_path) != baseline_bytes or FileAccess.get_file_as_bytes(backup_path) != backup_bytes:

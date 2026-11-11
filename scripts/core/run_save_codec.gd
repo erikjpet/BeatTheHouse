@@ -1,6 +1,8 @@
 class_name RunSaveCodec
 extends RefCounted
 
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+
 const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
 const StorageNumericJsonScript := preload("res://scripts/core/storage_numeric_json.gd")
@@ -155,13 +157,13 @@ static func _expand_environment_registry_deltas(source: Dictionary) -> Dictionar
 static func pack_for_storage(encoded_state: Dictionary) -> Dictionary:
 	# Persist enough float digits to recover gameplay/physics values exactly.
 	# This is storage text only; authority canonicalization keeps its own format.
-	var storage_limit := debug_storage_byte_limit_override if debug_storage_byte_limit_override > 0 else MAX_STORAGE_BYTES
+	var storage_limit := debug_storage_byte_limit_override if not PersistencePathsScript.distribution_build() and debug_storage_byte_limit_override > 0 else MAX_STORAGE_BYTES
 	var source := StorageNumericJsonScript.stringify(encoded_state, storage_limit).to_utf8_buffer()
 	if source.is_empty():
 		return {"ok": false, "error": ERR_INVALID_DATA, "error_code": PACK_ERROR_EMPTY, "packed": {}}
 	if source.size() > storage_limit:
 		return {"ok": false, "error": ERR_OUT_OF_MEMORY, "error_code": PACK_ERROR_TOO_LARGE, "packed": {}, "uncompressed_bytes": source.size(), "storage_limit_bytes": storage_limit}
-	if debug_force_compression_failure:
+	if not PersistencePathsScript.distribution_build() and debug_force_compression_failure:
 		return {"ok": false, "error": ERR_CANT_CREATE, "error_code": PACK_ERROR_COMPRESSION, "packed": {}}
 	var compressed := source.compress(FileAccess.COMPRESSION_ZSTD)
 	if compressed.is_empty():

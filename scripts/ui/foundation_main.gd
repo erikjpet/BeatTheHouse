@@ -1,6 +1,8 @@
 class_name FoundationMain
 extends Control
 
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
@@ -1078,7 +1080,7 @@ func _start_next_script_prewarm_worker() -> void:
 	script_prewarm_active_path = script_path
 	script_prewarm_thread = Thread.new()
 	var start_error: Error = ERR_CANT_CREATE
-	if not script_prewarm_force_start_error_for_test:
+	if not (not PersistencePathsScript.distribution_build() and script_prewarm_force_start_error_for_test):
 		start_error = script_prewarm_thread.start(
 			Callable(self, "_load_script_prewarm_path_on_worker").bind(script_path),
 			Thread.PRIORITY_LOW

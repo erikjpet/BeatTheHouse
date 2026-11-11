@@ -359,7 +359,10 @@ func _configure_environment() -> void:
 	OS.set_environment(UserSettingsScript.SETTINGS_PATH_ENV, SETTINGS_PATH)
 	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, PLACEMENT_PATH)
 	OS.set_environment(DeveloperPlacementStoreScript.PROJECT_PATH_ENV, PROJECT_PLACEMENT_PATH)
-	OS.set_environment(PersistencePathsScript.DISTRIBUTION_FEATURE_ENV, "1")
+	# Fault-injection cases require non-distribution semantics. Explicit private
+	# paths above/below still isolate every write. Shipping-mode root validation
+	# is exercised separately by _check_distribution_root_validation().
+	OS.set_environment(PersistencePathsScript.DISTRIBUTION_FEATURE_ENV, "0")
 	OS.set_environment(PersistencePathsScript.DISTRIBUTION_ROOT_ENV, RUN_ROOT)
 
 
