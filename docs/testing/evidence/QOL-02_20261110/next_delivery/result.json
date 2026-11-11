@@ -1,0 +1,144 @@
+{
+  "sha": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+  "scope": "Unmodified exact NEXT HTML/PCK/engine/native; ordinary Daily Challenge, Run Menu and confirmation pointer/keyboard actions. Filesystem fault only in this fresh isolated browser profile; no scene/script/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/ed245d0327462ed7a0ee5b51fc0335a224091509/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/ed245d0327462ed7a0ee5b51fc0335a224091509/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/ed245d0327462ed7a0ee5b51fc0335a224091509/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/ed245d0327462ed7a0ee5b51fc0335a224091509/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107772,
+    "sha256": "540bf61ef8489dfc8af87dc151b92d145ec7f6f102099656795d600745951fb0",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "menu": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107772,
+    "sha256": "540bf61ef8489dfc8af87dc151b92d145ec7f6f102099656795d600745951fb0",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "stage": "COMPLETE",
+  "beforeFault": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107772,
+    "sha256": "540bf61ef8489dfc8af87dc151b92d145ec7f6f102099656795d600745951fb0",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "injectedFault": true,
+  "failedSave": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107772,
+    "sha256": "540bf61ef8489dfc8af87dc151b92d145ec7f6f102099656795d600745951fb0",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": true
+  },
+  "warningRoom": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107772,
+    "sha256": "540bf61ef8489dfc8af87dc151b92d145ec7f6f102099656795d600745951fb0",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": true
+  },
+  "touchDetails": true,
+  "removedFault": true,
+  "recoveredSave": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json.bak",
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107767,
+    "sha256": "21056f02c8dc7bafed244dc9ccb4c4b294648793cd5c39daefca80829447a74f",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "state": "FINISHED",
+  "testScope": "Normal rendered Web storage failure, visible first-slot warning without hover, touch-opened HUD details, and warning recovery after successful Save; one-time and async boundaries verified by native contract.",
+  "finished": "2026-11-11T04:21:29.886Z"
+}

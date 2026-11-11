@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_DELIVERED_QOL02_CORRECTION_TESTED_NEXT_PENDING",
+      "status": "FIVE_ORDERS_DELIVERED_13_REMAIN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30539,21 +30539,21 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
-          "summary": "FOUR_DELIVERED_QOL02_CORRECTION_TESTED_NEXT_PENDING"
+          "summary": "FIVE_ORDERS_DELIVERED_13_REMAIN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify corrected QOL-02 exact NEXT acceptance, then QOL-03 and remaining orders sequentially.",
+      "next_action": "Register QOL-03, reproduce the internal player wording, then execute the remaining13 orders in sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:14:28.573228+00:00",
+        "observed_at": "2026-11-11T04:23:16.875062+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T04:14:28.573228+00:00"
+      "updated_at": "2026-11-11T04:23:16.875062+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30980,22 +30980,28 @@
             "id": "1",
             "description": "A failed save uses a distinct warning icon and problem-first tooltip without inferring from message text.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "First blocked episode shows one nonmodal message; repeated failures do not spam and successful save clears the warning.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "Focused before/after and Smoke no worse than baseline; exact NEXT startup and visible failure/recovery verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -31004,8 +31010,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CORRECTION_COMMITTED_NATIVE_31_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31023,37 +31029,45 @@
           "evidence": [
             "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+          "evidence": [
+            "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+        "evidence": [
+          "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
-          "summary": "CORRECTION_COMMITTED_NATIVE_31_PASS_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI"
         }
       ],
       "implementation_batches": [
         "QOL-02-BATCH-001"
       ],
-      "next_action": "Push tested correction and ledger together, follow existing NEXT promotion, then verify visible notice/icon/hover/touch/recovery on the exact deployed SHA.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:14:28.507168+00:00",
+        "observed_at": "2026-11-11T04:23:16.824645+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
-      "updated_at": "2026-11-11T04:14:28.507168+00:00"
+      "updated_at": "2026-11-11T04:23:16.824645+00:00"
     }
   ],
   "batches": [
@@ -31882,8 +31896,8 @@
       "name": "Make autosave failure visible in the HUD implementation",
       "parent_id": "QOL-02",
       "group": "current",
-      "state": "open",
-      "status": "CORRECTION_COMMITTED_NATIVE_31_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI",
       "scope": [
         "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
@@ -31904,31 +31918,39 @@
           "evidence": [
             "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+          "evidence": [
+            "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+        "evidence": [
+          "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
-          "summary": "CORRECTION_COMMITTED_NATIVE_31_PASS_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI"
         }
       ],
-      "next_action": "Push tested correction and ledger together, follow existing NEXT promotion, then verify visible notice/icon/hover/touch/recovery on the exact deployed SHA.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:14:28.507168+00:00",
+        "observed_at": "2026-11-11T04:23:16.824645+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T04:14:28.507168+00:00"
+      "updated_at": "2026-11-11T04:23:16.824645+00:00"
     }
   ]
 }

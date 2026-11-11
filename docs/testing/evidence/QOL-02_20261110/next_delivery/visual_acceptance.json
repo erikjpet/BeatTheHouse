@@ -1,0 +1,42 @@
+{
+  "result": "PASS",
+  "exact_commit": "ed245d0327462ed7a0ee5b51fc0335a224091509",
+  "observed": [
+    "Unmodified main menu visibly identifies ed245d032746.",
+    "Red danger/save warning and Home glyph remain present after failure, without hover.",
+    "Input-transparent Not saving notice visibly appears below HUD.",
+    "Actual mouse hover starts with Not saving and gives full Run Menu retry text.",
+    "Touch opens Run details with full Not saving text; room/run remains active.",
+    "Healthy normal Save writes new primary/backup, removes warning/notice and restores Home plus save glyphs."
+  ],
+  "screenshots": [
+    {
+      "file": "00-startup.png",
+      "sha256": "3f9f15324a99be635f50589749c940567fe2cfe1ab545cf4338596136476658b"
+    },
+    {
+      "file": "03-failed-save.png",
+      "sha256": "bad35e26709a65a5cfbe8bb571d8d62c243fee46608ff95f5b5dc352829894e1"
+    },
+    {
+      "file": "04-warning-room.png",
+      "sha256": "ad9c87f0becff329478e26d8e151b53a2013a33074793cf50675fe9b9d8159c5"
+    },
+    {
+      "file": "05-warning-tooltip-mouse.png",
+      "sha256": "eb657682035a3b64a6bc89c700893842fd380a635a99f6b543332d66d6ae21f8"
+    },
+    {
+      "file": "05-warning-details-touch.png",
+      "sha256": "422670a20ffaf690faa0fd529bcedc83c7882343c8f946370cde8a65f46830b3"
+    },
+    {
+      "file": "06-recovered-save.png",
+      "sha256": "023fbc216998cce22061389b3d2c5768a58776d57833a55e615f0e7f6a93b8e5"
+    }
+  ],
+  "job_exit_is_visual_acceptance": false,
+  "native_one_time_and_async_contract": "31/0",
+  "page_errors": 0,
+  "console_errors": 0
+}
