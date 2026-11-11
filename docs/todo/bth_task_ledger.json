@@ -30367,19 +30367,15 @@
             "id": "2",
             "description": "AUD061-02",
             "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
-            ]
+            "state": "open",
+            "evidence": []
           },
           {
             "id": "3",
             "description": "AUD061-01",
             "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
-            ]
+            "state": "open",
+            "evidence": []
           },
           {
             "id": "4",
@@ -30494,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "THREE_ORDERS_DELIVERED_15_REMAIN",
+      "status": "THREE_DELIVERED_AUD10_TESTED_NEXT_PENDING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30513,6 +30509,12 @@
             "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
             "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "7f0e61f1240146ad4e22911a528b99ddc0b85a47",
+          "evidence": [
+            "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
@@ -30521,19 +30523,25 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
+          "summary": "THREE_DELIVERED_AUD10_TESTED_NEXT_PENDING"
+        }
+      ],
       "implementation_batches": [],
-      "next_action": "Register AUD061-10, then execute the remaining15 orders in the requested sequence.",
+      "next_action": "Verify AUD061-10 exact NEXT startup, then register QOL-02 and continue the remaining orders in sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "observed_at": "2026-11-11T03:24:12.714085+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T03:10:33.371707+00:00"
+      "updated_at": "2026-11-11T03:24:12.714085+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30840,6 +30848,93 @@
         "Only explicit-save/clear drain behavior and prior-failure diagnostics."
       ],
       "updated_at": "2026-11-11T03:10:33.308954+00:00"
+    },
+    {
+      "id": "AUD061-10",
+      "name": "Refresh economy at all three Crew heist bankroll boundaries",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Abort cost, Whale exposure payout and getaway payout refresh economic_state immediately.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Zero-payout settlement retains deferred terminal timing; focused checks and Smoke no worse than baseline.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Finished code commit is served by exact NEXT with clean startup.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "7f0e61f1240146ad4e22911a528b99ddc0b85a47",
+          "evidence": [
+            "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-10-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T03:24:12.656333+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence."
+      ],
+      "updated_at": "2026-11-11T03:24:12.656333+00:00"
     }
   ],
   "batches": [
@@ -31607,6 +31702,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T03:10:33.308954+00:00"
+    },
+    {
+      "id": "AUD061-10-BATCH-001",
+      "name": "Refresh economy at all three Crew heist bankroll boundaries implementation",
+      "parent_id": "AUD061-10",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING",
+      "scope": [
+        "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "7f0e61f1240146ad4e22911a528b99ddc0b85a47",
+          "evidence": [
+            "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T03:24:12.656333+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T03:24:12.656333+00:00"
     }
   ]
 }
