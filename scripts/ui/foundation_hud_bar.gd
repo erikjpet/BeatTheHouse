@@ -674,6 +674,20 @@ func present_money_feedback(entries: Array) -> void:
 	set_process(true)
 
 
+# Save completion/failure is a scalar mutation boundary, independent of the
+# heavier objective/room model and of autonomous animation scheduling.
+func render_save_status(status: Dictionary, warning: bool) -> void:
+	var statuses: Array = []
+	for existing in _status_details:
+		if existing.get("id", "") != "save":
+			statuses.append(existing)
+	if warning:
+		statuses.push_front(status)
+	else:
+		statuses.append(status)
+	_render_status_icons(statuses)
+
+
 func _render_status_icons(statuses_value: Variant) -> void:
 	if typeof(statuses_value) != TYPE_ARRAY:
 		if not _status_icons_key.is_empty():

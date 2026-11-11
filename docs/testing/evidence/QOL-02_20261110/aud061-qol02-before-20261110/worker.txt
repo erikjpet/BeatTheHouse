@@ -1,0 +1,43 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: QOL-02: explicit failure changes save icon without parsing status text
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:23)
+ERROR: QOL-02: failure tooltip leads with problem and is not truncated
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:24)
+ERROR: QOL-02: save failure stays visible when other icons fill two-icon tray
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:25)
+ERROR: QOL-02: host passes explicit failure field into HUD
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:40)
+ERROR: QOL-02: first blocked failure emits a nonmodal player message
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:41)
+ERROR: QOL-02: background boundary publishes warning to actual rendered HUD immediately
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:44)
+ERROR: QOL-02: new dirty generation keeps warning until successful save
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:49)
+ERROR: QOL-02: new blocked episode after success emits its first message
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _check (res://scripts/tests/qol02_save_warning_contract.gd:69)
+       [1] _run (res://scripts/tests/qol02_save_warning_contract.gd:60)
+QOL02_SAVE_WARNING {"checks":17,"failures":["explicit failure changes save icon without parsing status text","failure tooltip leads with problem and is not truncated","save failure stays visible when other icons fill two-icon tray","host passes explicit failure field into HUD","first blocked failure emits a nonmodal player message","background boundary publishes warning to actual rendered HUD immediately","new dirty generation keeps warning until successful save","new blocked episode after success emits its first message"],"observations":[{"case":"explicit_failure","first_icon":{"icon":"debt","id":"debt","label":"Debt","tooltip":"Debt"},"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Saved run."}},{"blocked":true,"case":"host_failure","message":"Shooters gather outside the chalk while a bottle-cap signal waits on the curb.","save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosave failed. Retr..."}},{"case":"recovered","rendered":[{"icon":"home","id":"home","label":"Home","tooltip":"Home: Home: tenure active."},{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosave failed. Retr..."}],"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Recovered."}}]}

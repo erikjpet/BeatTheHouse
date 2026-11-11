@@ -463,6 +463,8 @@ var autosave_failure_count := 0
 var autosave_last_error: Error = OK
 var autosave_last_error_code := ""
 var autosave_retry_blocked := false
+var autosave_warning_active := false
+var autosave_blocked_notice_shown := false
 # A room is inspected once after its normal canvas publication, never on an
 # animation frame. Until that inspection succeeds, no deferred save may replace
 # the previously loadable generation with an unplayable projection.
@@ -7056,6 +7058,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 	var requested_generation := autosave_dirty_generation
 	var error := save_service.save_run(run_state, autosave_slot_id) if synchronous else save_service.begin_save_run(run_state, autosave_slot_id)
 	if error == OK:
+		var warning_cleared := synchronous and autosave_warning_active
 		if synchronous:
 			autosave_completed_generation = maxi(autosave_completed_generation, requested_generation)
 			autosave_inflight_generation = 0
@@ -7072,6 +7075,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 		save_status_message = status_text if synchronous else "Autosave writing."
 		if save_status_label != null:
 			save_status_label.text = _save_status_text()
+		if warning_cleared:
+			_publish_autosave_warning_hud()
 		# The start menu is hidden during an active run. Re-reading both save
 		# generations here contends with the worker's file installation and can
 		# turn the first post-action frame into a visible hitch. The completion
@@ -7109,7 +7114,9 @@ func _poll_async_foundation_save() -> void:
 	var result := save_service.poll_async_save()
 	if not bool(result.get("completed", false)):
 		return
+	var warning_cleared := false
 	if int(result.get("error", FAILED)) == OK:
+		warning_cleared = autosave_warning_active
 		autosave_completed_generation = maxi(autosave_completed_generation, autosave_inflight_generation)
 		autosave_inflight_generation = 0
 		autosave_loadable_available = true
@@ -7134,6 +7141,9 @@ func _poll_async_foundation_save() -> void:
 		)
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
+
+	if warning_cleared:
+		_publish_autosave_warning_hud()
 
 
 func _queue_environment_runtime_autosave() -> void:
@@ -7172,7 +7182,7 @@ func _queue_pending_autosave(status_text: String, defer_frames: int, debounce_ov
 func retry_failed_autosave() -> bool:
 	if not pending_autosave or run_state == null:
 		return false
-	_clear_autosave_failure_state()
+	_clear_autosave_failure_state(false)
 	pending_autosave_after_frame = Engine.get_process_frames() + 1
 	pending_autosave_not_before_msec = 0
 	save_status_message = "Autosave retry requested."
@@ -7197,10 +7207,12 @@ func autosave_recovery_snapshot() -> Dictionary:
 func _mark_autosave_dirty() -> void:
 	autosave_dirty_generation += 1
 	if autosave_dirty_generation > autosave_failure_generation:
-		_clear_autosave_failure_state()
+		_clear_autosave_failure_state(false)
 
 
 func _record_autosave_failure(error: Error, error_code: String, failed_generation: int) -> void:
+	var warning_was_active := autosave_warning_active
+	autosave_warning_active = true
 	# Attribute the error to the generation that was actually written. A newer
 	# action may become dirty while that request is in flight; assigning the old
 	# I/O failure to the newest generation would latch it without one attempt.
@@ -7235,6 +7247,25 @@ func _record_autosave_failure(error: Error, error_code: String, failed_generatio
 		pending_autosave_not_before_msec = 0
 		save_status_message = "Autosave failed. Retry from Run Menu or after another action."
 
+	if autosave_retry_blocked and not autosave_blocked_notice_shown:
+		autosave_blocked_notice_shown = true
+		_show_message("Not saving — open Run Menu to retry.")
+	if not warning_was_active:
+		_publish_autosave_warning_hud()
+
+
+func _autosave_save_failed() -> bool:
+	return autosave_warning_active or autosave_retry_blocked or autosave_last_error != OK
+
+
+func _publish_autosave_warning_hud() -> void:
+	if structured_hud == null or run_state == null:
+		return
+	structured_hud.render_save_status(
+		FoundationHudViewModelScript.save_status_icon(_autosave_save_failed(), _save_status_text()),
+		_autosave_save_failed()
+	)
+
 
 func _autosave_error_is_transient(error: Error) -> bool:
 	return error == ERR_BUSY or error == ERR_TIMEOUT
@@ -7245,7 +7276,10 @@ func _autosave_retry_delay_msec(failure_count: int) -> int:
 	return mini(AUTOSAVE_RETRY_BASE_MSEC * (1 << exponent), AUTOSAVE_RETRY_MAX_MSEC)
 
 
-func _clear_autosave_failure_state() -> void:
+func _clear_autosave_failure_state(clear_warning: bool = true) -> void:
+	if clear_warning:
+		autosave_warning_active = false
+		autosave_blocked_notice_shown = false
 	autosave_failure_generation = 0
 	autosave_failure_count = 0
 	autosave_last_error = OK
@@ -21122,7 +21156,8 @@ func _save_status_text() -> String:
 		return FoundationHudViewModelScript.hud_save_text(
 			autosave_loadable_available,
 			save_status_message,
-			Callable(self, "_player_facing_text")
+			Callable(self, "_player_facing_text"),
+			_autosave_save_failed()
 		)
 	return "Saved run available" if _has_foundation_save() else "No saved run"
 
@@ -21171,6 +21206,7 @@ func _run_status_hud_model() -> Dictionary:
 		# consumers only when the main thread accepts that generation.
 		"has_save": autosave_loadable_available,
 		"save_status_message": save_status_message,
+		"save_failed": _autosave_save_failed(),
 		"economy_text": _economy_cue_text(),
 		"next_objective": _next_objective_option(pressure, objective),
 		"label_from_id": Callable(self, "_label_from_id"),

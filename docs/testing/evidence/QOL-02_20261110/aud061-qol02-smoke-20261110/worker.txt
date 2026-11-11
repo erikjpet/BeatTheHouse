@@ -1,0 +1,23 @@
+STAGE START validate_project
+validate_project                FAIL    94723ms
+STAGE START godot_import
+godot_import                    PASS    11863ms
+STAGE START gdscript_load_check
+gdscript_load_check             FAIL    44498ms
+STAGE START foundation_smoke_content
+foundation_smoke_content        FAIL    37516ms
+STAGE START foundation_smoke_runtime
+foundation_smoke_runtime        FAIL    54745ms
+STAGE START ui_scene_compile
+ui_scene_compile                FAIL    27263ms
+STAGE START cold_continue_room_projection
+cold_continue_room_projection    FAIL    16222ms
+STAGE START game_library_launchers
+game_library_launchers          PASS    20779ms
+STAGE START dave_bus_encounter
+dave_bus_encounter              PASS    23837ms
+STAGE START roulette_audio_audit
+roulette_audio_audit            PASS     4698ms
+STAGE START foundation_perf_smoke
+foundation_perf_smoke           FAIL    74876ms
+Report: E:\CodexQA\BTH\runs\aud061-qol02-smoke-20261110\evidence\smoke\summary.json

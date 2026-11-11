@@ -71,7 +71,8 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var run_text := "Run %s" % hud_run_status_text(run_state, pressure)
 	var clock := clock_model(run_state)
 	var clock_text := str(clock.get("clock_display", ""))
-	var save_text := hud_save_text(bool(data.get("has_save", false)), str(data.get("save_status_message", "")), player_text)
+	var save_failed := bool(data.get("save_failed", false))
+	var save_text := hud_save_text(bool(data.get("has_save", false)), str(data.get("save_status_message", "")), player_text, save_failed)
 	var goal_text := hud_goal_text(run_state, pressure, objective, player_text)
 	var label_from_id: Callable = data.get("label_from_id", Callable())
 	var environment_text := "%s · %s" % [
@@ -99,6 +100,8 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	if not home_text.is_empty():
 		objective_parts.insert(5, home_text)
 	var status_icons: Array = []
+	if save_failed:
+		status_icons.append(save_status_icon(true, save_text))
 	if not debt_items.is_empty():
 		status_icons.append({"id": "debt", "icon": "debt", "label": "Debt", "tooltip": hud_debt_tooltip(debt_items, player_text)})
 	if not home_text.is_empty():
@@ -107,8 +110,8 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		status_icons.append({"id": "pit_boss", "icon": "alert", "label": "Pit boss", "tooltip": pit_boss_hud_text(pit_boss)})
 	if ["distressed", "recovery", "failed"].has(str(pressure.get("state", ""))):
 		status_icons.append({"id": "pressure", "icon": "danger", "label": "Pressure", "tooltip": objective_pressure_text(pressure)})
-	if bool(data.get("has_save", false)) or not str(data.get("save_status_message", "")).is_empty():
-		status_icons.append({"id": "save", "icon": "save", "label": "Save", "tooltip": save_text})
+	if not save_failed and (bool(data.get("has_save", false)) or not str(data.get("save_status_message", "")).is_empty()):
+		status_icons.append(save_status_icon(false, save_text))
 	return {
 		"status_text": "%s  %s  %s  %s  %s  %s" % [clock_text, bankroll_text, heat_text, alcohol_text, debt_text, run_text],
 		"objective_text": " | ".join(objective_parts),
@@ -354,7 +357,13 @@ static func hud_run_status_text(run_state: RunState, pressure: Dictionary) -> St
 	return "Active" if run_state.run_status == "active" else run_state.run_status.capitalize()
 
 
-static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable) -> String:
+static func save_status_icon(failed: bool, tooltip: String) -> Dictionary:
+	return {"id": "save", "icon": "danger" if failed else "save", "label": "Not saving" if failed else "Save", "tooltip": tooltip}
+
+
+static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable, failed: bool = false) -> String:
+	if failed:
+		return "Not saving — open Run Menu to retry"
 	if has_save and status == "Autosave pending.":
 		return "Resume ready · New changes pending."
 	return "Autosave %s · %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]
