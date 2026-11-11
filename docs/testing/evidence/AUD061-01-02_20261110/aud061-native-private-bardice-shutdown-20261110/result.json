@@ -1,0 +1,273 @@
+{
+  "checks": 86,
+  "facts": {
+    "Venue Shake Continue": {
+      "account_and_root_rng_equal": true,
+      "cup_equal": true,
+      "economy": {
+        "ante_block_reason": "",
+        "ceiling": 46,
+        "clock_minutes": 1380,
+        "floor": 6,
+        "game_ceiling": -1,
+        "game_floor": -1,
+        "scenario_id": "bar_wake"
+      },
+      "phase": "shake",
+      "rendered_phase": "shake",
+      "ui_dice_equal": true,
+      "ui_phase": "shake"
+    },
+    "actions": [
+      "bar_dice_stake",
+      "bar_dice_roll",
+      "bar_dice_ack_cover",
+      "bar_dice_shake",
+      "bar_dice_shake",
+      "bar_dice_resolve",
+      "bar_dice_throw"
+    ],
+    "after_clock_before_save": {
+      "ante_block_reason": "",
+      "ceiling": 46,
+      "clock_minutes": 1770,
+      "floor": 6,
+      "game_ceiling": -1,
+      "game_floor": -1,
+      "scenario_id": "bar_wake"
+    },
+    "after_closed_reveal_save": {
+      "ante_block_reason": "",
+      "ceiling": 60.0,
+      "clock_minutes": 1770,
+      "floor": 10.0,
+      "game_ceiling": -1,
+      "game_floor": -1,
+      "scenario_id": ""
+    },
+    "before_closed_clock": {
+      "ante_block_reason": "",
+      "ceiling": 46,
+      "clock_minutes": 1380,
+      "floor": 6,
+      "game_ceiling": -1,
+      "game_floor": -1,
+      "scenario_id": "bar_wake"
+    },
+    "blocked": [],
+    "boundaries": [
+      {
+        "checkpoint_matches_raw_root": true,
+        "economy": {
+          "ante_block_reason": "",
+          "ceiling": 46,
+          "clock_minutes": 1380,
+          "floor": 6,
+          "game_ceiling": -1,
+          "game_floor": -1,
+          "scenario_id": "bar_wake"
+        },
+        "first_failed_stage": "",
+        "label": "venue_shake_control",
+        "load_outcome": "loaded-primary",
+        "loaded_account_and_root_rng_equal": true,
+        "loaded_cup_equal": true,
+        "loaded_ledger_exact": true,
+        "loaded_ledger_present": true,
+        "raw_account_and_root_rng_equal": true,
+        "raw_cup_equal": true,
+        "raw_ledger_present": true,
+        "valid_shape_and_binding": true,
+        "valid_with_checkpoint": true
+      },
+      {
+        "checkpoint_matches_raw_root": true,
+        "economy": {
+          "ante_block_reason": "",
+          "ceiling": 60.0,
+          "clock_minutes": 1770,
+          "floor": 10.0,
+          "game_ceiling": -1,
+          "game_floor": -1,
+          "scenario_id": ""
+        },
+        "first_failed_stage": "",
+        "label": "reveal",
+        "load_outcome": "loaded-primary",
+        "loaded_account_and_root_rng_equal": true,
+        "loaded_cup_equal": true,
+        "loaded_ledger_exact": true,
+        "loaded_ledger_present": true,
+        "raw_account_and_root_rng_equal": true,
+        "raw_cup_equal": true,
+        "raw_ledger_present": true,
+        "valid_shape_and_binding": true,
+        "valid_with_checkpoint": true
+      }
+    ],
+    "clock_preservation": {
+      "account_and_root_rng_equal": true,
+      "cup_equal": true
+    },
+    "completed": true,
+    "controlled_clock": {
+      "errors": [],
+      "from": 1380,
+      "ok": true,
+      "to": 1770
+    },
+    "first_loss": "",
+    "fixture": {
+      "authority_errors": [],
+      "authority_ok": true,
+      "cash": 94,
+      "clock_input": "Explicit controlled core-API initial23:00 and laterDay205:30; not natural elapsed route",
+      "clock_minutes": 1380,
+      "economy": {
+        "ante_block_reason": "not_in_game",
+        "ceiling": 46,
+        "clock_minutes": 1380,
+        "floor": 6,
+        "game_ceiling": -1,
+        "game_floor": -1,
+        "scenario_id": "bar_wake"
+      },
+      "environment_test": false,
+      "practice": false,
+      "seed": "BTH061-BAR-DICE-VENUE-TERMS-001"
+    },
+    "generated_terms": {
+      "ceiling": 46,
+      "day_type": "payday",
+      "floor": 6,
+      "ladder": [
+        6,
+        10,
+        20,
+        40,
+        46
+      ]
+    },
+    "generation": {
+      "errors": [],
+      "generation_attempts": 1,
+      "initial_clock": 1380,
+      "install_ok": true,
+      "requested_conditions": {
+        "day_type": "payday",
+        "happenings": [],
+        "weather": "clear"
+      },
+      "requested_scenario": "bar_wake"
+    },
+    "original_state_used": false,
+    "scope": "NEW catalog Bar Wake/Payday/clear/no-happenings venue, cash94, supported production WorldMap/RunGenerator/installation and actual MainScene renderer clicks. Explicit CONTROLLED core-clock inputs before generation23:00 and before RevealSaveDay205:30. No Practice bypass, normal-travel/no-clock-advance claim, original storage or outcome edits. Separate cold stage may finish same exact cup once only.",
+    "shutdown_probe": {
+      "additional_game_inputs": 0,
+      "base_wait_error": 0,
+      "extra_drain_attempted": false,
+      "mode": "require_host_drain",
+      "observations": [
+        {
+          "async_save_in_flight": false,
+          "async_slot_id": "",
+          "async_task_id": -1,
+          "completed_generation": 4,
+          "dirty_generation": 5,
+          "host_alive": true,
+          "host_processing": true,
+          "host_queued_for_deletion": false,
+          "label": "before_base_wait",
+          "last_outcome_error": 0,
+          "last_outcome_ok": true,
+          "pending_after_frame": 691,
+          "pending_autosave": true,
+          "pending_not_before_msec": 21015,
+          "process_frame": 692,
+          "service_alive": true,
+          "service_instance_id": -9223371927685429761,
+          "ticks_msec": 21238
+        },
+        {
+          "async_save_in_flight": false,
+          "async_slot_id": "",
+          "async_task_id": -1,
+          "completed_generation": 4,
+          "dirty_generation": 5,
+          "host_alive": true,
+          "host_processing": true,
+          "host_queued_for_deletion": false,
+          "label": "after_base_wait",
+          "last_outcome_error": 0,
+          "last_outcome_ok": true,
+          "pending_after_frame": 691,
+          "pending_autosave": true,
+          "pending_not_before_msec": 21015,
+          "process_frame": 692,
+          "service_alive": true,
+          "service_instance_id": -9223371927685429761,
+          "ticks_msec": 21238
+        },
+        {
+          "async_save_in_flight": false,
+          "async_slot_id": "",
+          "async_task_id": -1,
+          "completed_generation": 4,
+          "dirty_generation": 5,
+          "host_alive": true,
+          "host_processing": true,
+          "host_queued_for_deletion": true,
+          "label": "after_queue_free",
+          "last_outcome_error": 0,
+          "last_outcome_ok": true,
+          "pending_after_frame": 691,
+          "pending_autosave": true,
+          "pending_not_before_msec": 21015,
+          "process_frame": 692,
+          "service_alive": true,
+          "service_instance_id": -9223371927685429761,
+          "ticks_msec": 21239
+        },
+        {
+          "async_save_in_flight": false,
+          "async_slot_id": "",
+          "async_task_id": -1,
+          "completed_generation": 4,
+          "dirty_generation": 5,
+          "host_alive": true,
+          "host_processing": true,
+          "host_queued_for_deletion": true,
+          "label": "tree_exiting_after_host_exit_tree",
+          "last_outcome_error": 0,
+          "last_outcome_ok": true,
+          "pending_after_frame": -1,
+          "pending_autosave": false,
+          "pending_not_before_msec": 0,
+          "process_frame": 692,
+          "service_alive": true,
+          "service_instance_id": -9223371927685429761,
+          "ticks_msec": 21335
+        },
+        {
+          "async_task_id": -1,
+          "host_alive": false,
+          "label": "after_two_frames",
+          "process_frame": 694,
+          "service_alive": false,
+          "ticks_msec": 21369
+        }
+      ],
+      "save_service_source_sha256": "bef0fd9e850c51fb51df502ef5ac3e8f1dc1543fc4c750462dd0ee965e69b180",
+      "scope": "Weak observation of the exact Host-owned SaveService only; same wait/queue_free/two-frame ordering as the base test. Inherited warm inputs remain separately recorded.",
+      "service_released_after_host": true
+    },
+    "source_sha256": {
+      "base": "226dc3bd29ede50e43c8e943879d65c14b184ce0420cd76652c88203e560f398",
+      "fixture": "b963b9fbee33620d9c320f4a4fbbb990495dd9887ca78bdbcd794c9334df79eb",
+      "game": "2809845e51abbf6d0defe7df54b55691c481e5514454002fddefe70de3f30add"
+    },
+    "stage": "warm",
+    "warm_paid_calls": 0
+  },
+  "failures": []
+}

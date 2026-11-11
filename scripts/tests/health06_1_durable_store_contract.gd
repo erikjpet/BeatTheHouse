@@ -25,6 +25,7 @@ const RUN_SLOT := "health06_1"
 var failures: Array[String] = []
 var _saved_environment: Dictionary = {}
 var validation_calls := 0
+var checks := 0
 
 
 func _init() -> void:
@@ -39,6 +40,7 @@ func _run() -> void:
 	_cleanup()
 	_configure_environment()
 	_check_direct_durability()
+	_check_stale_rollback_cleanup()
 	_check_exact_primary_proof()
 	_check_transaction_transition_faults()
 	_check_json_coercion()
@@ -52,7 +54,7 @@ func _run() -> void:
 	_restore_environment()
 	_cleanup()
 	if failures.is_empty():
-		print("HEALTH06_1_DURABLE_STORE PASS")
+		print("HEALTH06_1_DURABLE_STORE PASS checks=%d failures=0" % checks)
 		quit(0)
 		return
 	for failure in failures:
@@ -394,5 +396,29 @@ func _write_raw(path: String, text: String) -> void:
 
 
 func _expect(condition: bool, message: String) -> void:
+	checks += 1
 	if not condition:
 		failures.append(message)
+
+
+func _check_stale_rollback_cleanup() -> void:
+	for spec in [[true, ".bak.rollback"], [true, ".rollback"], [false, ".bak.rollback"]]:
+		_remove_generation(TRANSITION_PATH)
+		if bool(spec[0]):
+			_expect(bool(DurableStoreScript.write_json(TRANSITION_PATH, {"generation": 1}, Callable(self, "_valid_generation")).get("ok", false)), "AUD061-01: baseline primary saves.")
+		var stale_path := TRANSITION_PATH + str(spec[1])
+		_write_raw(stale_path, "")
+		var result := DurableStoreScript.write_json(TRANSITION_PATH, {"generation": 2}, Callable(self, "_valid_generation"))
+		_expect(bool(result.get("ok", false)), "AUD061-01: stale %s denied the next write: %s" % [spec[1], result])
+		_expect(not FileAccess.file_exists(stale_path), "AUD061-01: stale rollback name remains after a successful write.")
+		var loaded := DurableStoreScript.read_json(TRANSITION_PATH, Callable(self, "_valid_generation"))
+		_expect(int((loaded.get("data", {}) as Dictionary).get("generation", 0)) == 2, "AUD061-01: replacement generation is loadable.")
+	_remove_generation(SETTINGS_PATH)
+	var settings := UserSettingsScript.new()
+	_expect(settings.save() == OK, "AUD061-01: baseline settings save.")
+	_write_raw(SETTINGS_PATH + ".bak.rollback", "")
+	settings.master_volume = 0.4
+	_expect(settings.save() == OK and not FileAccess.file_exists(SETTINGS_PATH + ".bak.rollback"), "AUD061-01: settings save clears stale rollback.")
+	var reloaded := UserSettingsScript.new()
+	reloaded.load()
+	_expect(is_equal_approx(reloaded.master_volume, 0.4), "AUD061-01: changed settings survive reload.")

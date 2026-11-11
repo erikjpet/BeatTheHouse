@@ -255,6 +255,13 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.save_delete_confirmation.confirmed.connect(host.confirm_delete_saved_run)
 	host.add_child(host.save_delete_confirmation)
 
+	host.leave_without_saving_confirmation = ConfirmationDialog.new()
+	host.leave_without_saving_confirmation.cancel_button_text = "Keep playing"
+	host.leave_without_saving_confirmation.confirmed.connect(host.confirm_leave_without_saving)
+	host.leave_without_saving_confirmation.canceled.connect(host.cancel_leave_without_saving)
+	host.leave_without_saving_confirmation.window_input.connect(host._on_leave_without_saving_input)
+	host.add_child(host.leave_without_saving_confirmation)
+
 	if not host._defer_start_menu_secondary_panels():
 		host._ensure_start_menu_config_panels_built()
 		if host.show_game_library_launcher:

@@ -67,13 +67,13 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 	var backup_absolute := ProjectSettings.globalize_path(backup_path(clean_path))
 	var backup_rollback_absolute := "%s.rollback" % backup_absolute
 	var invalid_primary_rollback_absolute := "%s.rollback" % absolute_path
-	# Rollback names are private to one synchronous install. A prior completed
-	# transaction must not leave either name behind, and an interrupted one is
-	# surfaced instead of silently overwriting a recoverable generation.
+	# Saves are disposable across versions. Clear abandoned transaction names so
+	# one interrupted cleanup cannot permanently prevent every future write.
 	for rollback_path in [backup_rollback_absolute, invalid_primary_rollback_absolute]:
-		if FileAccess.file_exists(rollback_path):
+		var cleanup_error := _remove_if_exists(rollback_path)
+		if cleanup_error != OK:
 			_remove_if_exists(temp_absolute)
-			return _result(false, ERR_ALREADY_IN_USE, "stale_transaction_rollback", OUTCOME_NONE)
+			return _result(false, cleanup_error, "stale_rollback_undeletable", OUTCOME_NONE)
 	var staged_backup := false
 	var rotated_primary := false
 	var staged_invalid_primary := false
@@ -157,8 +157,11 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 		return _result(false, ERR_FILE_CORRUPT, "installed_generation_invalid", OUTCOME_NONE)
 	# The new primary has been validated and the old primary is now the normal
 	# backup. Only now may the pre-transaction backup be discarded.
-	_remove_if_exists(backup_rollback_absolute)
-	_remove_if_exists(invalid_primary_rollback_absolute)
+	for rollback_path in [backup_rollback_absolute, invalid_primary_rollback_absolute]:
+		if _remove_if_exists(rollback_path) != OK:
+			# The installed primary is valid. Retry once; a remaining stale name
+			# is handled explicitly at the next write without denying this save.
+			_remove_if_exists(rollback_path)
 	var saved_result := _result(true, OK, "", OUTCOME_SAVED, installed.get("data", {}))
 	if reuse_validated_image:
 		saved_result["validated_sha256"] = str(installed.get("validated_sha256", ""))

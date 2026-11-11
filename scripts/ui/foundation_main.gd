@@ -498,6 +498,8 @@ var run_config_content_stack: VBoxContainer
 var run_config_start_button: Button
 var delete_saved_run_button: Button
 var save_delete_confirmation: ConfirmationDialog
+var leave_without_saving_confirmation: ConfirmationDialog
+var leave_without_saving_action := ""
 var main_menu_background_environment: Dictionary = {}
 var release_framing_label: Label
 var release_version_label: Label
@@ -1010,7 +1012,11 @@ func _notification(what: int) -> void:
 		if _event_choice_popup_is_visible():
 			call_deferred("_position_event_choice_popup")
 	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
-		exit_game()
+		if leave_without_saving_confirmation != null and leave_without_saving_confirmation.visible:
+			leave_without_saving_action = "exit"
+			confirm_leave_without_saving()
+		else:
+			exit_game()
 
 
 func _exit_tree() -> void:
@@ -19293,7 +19299,13 @@ func return_to_main_menu() -> bool:
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
 	if not _save_foundation_run_before_leaving("Autosaved before main menu."):
+		_show_leave_without_saving_confirmation("main_menu")
 		return false
+	return _return_to_main_menu_after_save()
+
+
+func _return_to_main_menu_after_save() -> bool:
+	_close_leave_without_saving_confirmation()
 	_clear_run_audio_caches()
 	pending_all_in_result_terminal_check = false
 	_finish_conclusion_animation()
@@ -19375,10 +19387,82 @@ func exit_game() -> void:
 		return
 	_drain_event_response_before_exit()
 	if not _save_foundation_run_before_leaving("Autosaved before exit."):
+		_show_leave_without_saving_confirmation("exit")
 		return
+	_exit_game_after_save()
+
+
+func _exit_game_after_save() -> void:
+	_close_leave_without_saving_confirmation()
+	_drain_script_prewarm_requests_for_shutdown()
+	if save_service != null and save_service.async_save_in_flight():
+		var save_error := save_service.wait_for_async_save()
+		if save_error != OK:
+			push_error("Pending run save failed during scene exit: %s" % error_string(save_error))
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
 	get_tree().quit()
+
+
+func _show_leave_without_saving_confirmation(action: String) -> void:
+	if leave_without_saving_confirmation == null:
+		return
+	leave_without_saving_action = action
+	var dialog := leave_without_saving_confirmation
+	dialog.title = "Quit without saving?" if action == "exit" else "Leave without saving?"
+	dialog.ok_button_text = "Quit without saving" if action == "exit" else "Leave without saving"
+	dialog.dialog_text = "Progress since your last successful save will be lost."
+	if save_service != null:
+		var status := save_service.slot_status(autosave_slot_id)
+		var path := save_service.run_save_path(autosave_slot_id) if bool(status.get("primary_loadable", false)) else save_service.backup_save_path(autosave_slot_id) if bool(status.get("backup_loadable", false)) else ""
+		var saved_at := FileAccess.get_modified_time(path) if not path.is_empty() else 0
+		if saved_at > 0:
+			dialog.dialog_text += "\nLast successful save: %s UTC." % Time.get_datetime_string_from_unix_time(saved_at).replace("T", " ")
+	dialog.popup_centered(Vector2i(590, 210))
+	# ConfirmationDialog is a Window; its button row is the Control root that
+	# the shared focus scope owns. Explicit controls keep both choices reachable.
+	var controls: Array = [dialog.get_cancel_button(), dialog.get_ok_button()]
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", dialog.get_cancel_button().get_parent(), dialog.get_cancel_button(), null, controls)
+	dialog.get_cancel_button().grab_focus()
+
+
+func _on_leave_without_saving_input(event: InputEvent) -> void:
+	if leave_without_saving_confirmation == null or not leave_without_saving_confirmation.visible:
+		return
+	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
+		leave_without_saving_confirmation.set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
+		leave_without_saving_confirmation.set_input_as_handled()
+		cancel_leave_without_saving()
+
+
+func _close_leave_without_saving_confirmation() -> void:
+	if leave_without_saving_confirmation != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", leave_without_saving_confirmation.get_cancel_button().get_parent())
+			# The dialog owns a separate viewport. Rebind the surviving scope to
+			# its own viewport so Run Menu/event navigation resumes after cancel.
+			var previous_root: Control = modal_focus_scope.call("active_root")
+			if previous_root != null:
+				modal_focus_scope.call("push_scope", previous_root)
+		leave_without_saving_confirmation.hide()
+	leave_without_saving_action = ""
+
+
+func cancel_leave_without_saving() -> void:
+	_close_leave_without_saving_confirmation()
+
+
+func confirm_leave_without_saving() -> void:
+	var action := leave_without_saving_action
+	_close_leave_without_saving_confirmation()
+	if action == "exit":
+		_exit_game_after_save()
+	elif action == "main_menu":
+		if save_service != null and save_service.async_save_in_flight():
+			save_service.wait_for_async_save()
+		_return_to_main_menu_after_save()
 
 
 func open_settings_menu() -> void:

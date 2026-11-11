@@ -1,0 +1,187 @@
+{
+  "reviewed_source_restored": {
+    "scripts/ui/foundation_main.gd": {
+      "reviewed_sha256": "d6ae0c11d2bf9b8a72d10a3c36a15f8e150093581b3f1a661dc7442fde85fc69",
+      "baseline_sha256": "f423d7a825f9ea79c13a84a62d8b70f74f5a1f9afc65c92e1dc65e896f80c0ee",
+      "backup": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp\\aud061-perf-control03-20261110\\foundation_main.gd"
+    },
+    "scripts/ui/foundation_screen_builder.gd": {
+      "reviewed_sha256": "2a8d5eccee586ced64fd4b11393b65b8c12be0d5ed71219b77900dda64e8df4d",
+      "baseline_sha256": "4b9662b370f45f33e80b3afc1800f0b426f2e939adac2c5f32b15456f0a896c3",
+      "backup": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp\\aud061-perf-control03-20261110\\foundation_screen_builder.gd"
+    },
+    "scripts/core/durable_store.gd": {
+      "reviewed_sha256": "5b4334e96e28bf5cd07b3bd9f11394d32e93754f518c4b5704609b83bb81f4af",
+      "baseline_sha256": "b78ae2c7f88543a9313cfac90247ffefc67976ccb29ee48ba28f2c06de76433f",
+      "backup": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp\\aud061-perf-control03-20261110\\durable_store.gd"
+    }
+  },
+  "runs": [
+    {
+      "run": "aud061-baseline-smoke-20261110",
+      "failure_count": 10,
+      "blackjack": [
+        {
+          "animation_liveness_active": true,
+          "avg_frame_ms": 6.78776666666667,
+          "draw_avg_ms": 3.13666666666667,
+          "draw_max_ms": 3.277,
+          "draw_p95_ms": 3.277,
+          "draw_samples": 12,
+          "elapsed_ms": 814.532,
+          "environment_id": "practice_blackjack",
+          "frames": 120,
+          "full_snapshot_calls": 0,
+          "game_id": "blackjack",
+          "idle_draw_budget_ms": 5.0,
+          "liveness_counter": "surface_animation_redraw_count",
+          "liveness_floor": 8,
+          "liveness_measured": 12,
+          "liveness_zero_reason": "",
+          "mode": "idle_surface",
+          "renderer": "blackjack",
+          "run_index": -1,
+          "runtime_status_calls": 0,
+          "seed": "practice:blackjack"
+        }
+      ],
+      "failures": [
+        "Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+        "Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+        "Late-run Crew dialogue performance probe did not open the conversation.",
+        "Idle coin_pusher surface averaged 71.55 ms per frame, above 45.00 ms.",
+        "Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+        "Coin Pusher V3 300-body tick p95 52.726 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+        "Coin Pusher coin_pusher_active_skill_release frame p95 283.003 ms exceeded 22.000 ms.",
+        "Coin Pusher coin_pusher_active_collect frame p95 293.017 ms exceeded 22.000 ms.",
+        "Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+        "Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+      ]
+    },
+    {
+      "run": "aud061-01-02-smoke-reviewed-20261110",
+      "failure_count": 11,
+      "blackjack": [
+        {
+          "animation_liveness_active": true,
+          "avg_frame_ms": 6.78745,
+          "draw_avg_ms": 4.40933333333333,
+          "draw_max_ms": 6.006,
+          "draw_p95_ms": 6.006,
+          "draw_samples": 12,
+          "elapsed_ms": 814.494,
+          "environment_id": "practice_blackjack",
+          "frames": 120,
+          "full_snapshot_calls": 0,
+          "game_id": "blackjack",
+          "idle_draw_budget_ms": 5.0,
+          "liveness_counter": "surface_animation_redraw_count",
+          "liveness_floor": 8,
+          "liveness_measured": 12,
+          "liveness_zero_reason": "",
+          "mode": "idle_surface",
+          "renderer": "blackjack",
+          "run_index": -1,
+          "runtime_status_calls": 0,
+          "seed": "practice:blackjack"
+        }
+      ],
+      "failures": [
+        "Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+        "Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+        "Idle blackjack surface animated idle draw p95 6.01 ms exceeded 5.00 ms.",
+        "Late-run Crew dialogue performance probe did not open the conversation.",
+        "Idle coin_pusher surface averaged 66.91 ms per frame, above 45.00 ms.",
+        "Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+        "Coin Pusher V3 300-body tick p95 52.555 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+        "Coin Pusher coin_pusher_active_skill_release frame p95 281.803 ms exceeded 22.000 ms.",
+        "Coin Pusher coin_pusher_active_collect frame p95 275.402 ms exceeded 22.000 ms.",
+        "Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+        "Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+      ]
+    },
+    {
+      "run": "aud061-perf-control-run-01-20261110",
+      "failure_count": 10,
+      "blackjack": [
+        {
+          "animation_liveness_active": true,
+          "avg_frame_ms": 6.81335,
+          "draw_avg_ms": 3.11038461538462,
+          "draw_max_ms": 3.447,
+          "draw_p95_ms": 3.447,
+          "draw_samples": 13,
+          "elapsed_ms": 817.602,
+          "environment_id": "practice_blackjack",
+          "frames": 120,
+          "full_snapshot_calls": 0,
+          "game_id": "blackjack",
+          "idle_draw_budget_ms": 5.0,
+          "liveness_counter": "surface_animation_redraw_count",
+          "liveness_floor": 8,
+          "liveness_measured": 13,
+          "liveness_zero_reason": "",
+          "mode": "idle_surface",
+          "renderer": "blackjack",
+          "run_index": -1,
+          "runtime_status_calls": 0,
+          "seed": "practice:blackjack"
+        }
+      ],
+      "failures": [
+        "Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+        "Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+        "Late-run Crew dialogue performance probe did not open the conversation.",
+        "Idle coin_pusher surface averaged 67.04 ms per frame, above 45.00 ms.",
+        "Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+        "Coin Pusher V3 300-body tick p95 50.820 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+        "Coin Pusher coin_pusher_active_skill_release frame p95 270.963 ms exceeded 22.000 ms.",
+        "Coin Pusher coin_pusher_active_collect frame p95 281.951 ms exceeded 22.000 ms.",
+        "Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+        "Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+      ]
+    },
+    {
+      "run": "aud061-perf-control-run-02-20261110",
+      "failure_count": 10,
+      "blackjack": [
+        {
+          "animation_liveness_active": true,
+          "avg_frame_ms": 6.78753333333333,
+          "draw_avg_ms": 3.21391666666667,
+          "draw_max_ms": 3.689,
+          "draw_p95_ms": 3.689,
+          "draw_samples": 12,
+          "elapsed_ms": 814.504,
+          "environment_id": "practice_blackjack",
+          "frames": 120,
+          "full_snapshot_calls": 0,
+          "game_id": "blackjack",
+          "idle_draw_budget_ms": 5.0,
+          "liveness_counter": "surface_animation_redraw_count",
+          "liveness_floor": 8,
+          "liveness_measured": 12,
+          "liveness_zero_reason": "",
+          "mode": "idle_surface",
+          "renderer": "blackjack",
+          "run_index": -1,
+          "runtime_status_calls": 0,
+          "seed": "practice:blackjack"
+        }
+      ],
+      "failures": [
+        "Slot environment icon did not expose active runtime state after leaving the surface for seed practice:slot.",
+        "Slot environment icon runtime state did not expose a status label for seed practice:slot.",
+        "Late-run Crew dialogue performance probe did not open the conversation.",
+        "Idle coin_pusher surface averaged 68.01 ms per frame, above 45.00 ms.",
+        "Coin Pusher V3 timing used gdscript_v3 instead of the locked native_v3 solver.",
+        "Coin Pusher V3 300-body tick p95 50.462 ms exceeded 12.000 ms and left insufficient renderer headroom.",
+        "Coin Pusher coin_pusher_active_skill_release frame p95 278.389 ms exceeded 22.000 ms.",
+        "Coin Pusher coin_pusher_active_collect frame p95 279.212 ms exceeded 22.000 ms.",
+        "Performance probe did not exercise the shipped 160-body Coin Pusher DROP/carriage/skill-stop/collect live sequence.",
+        "Performance probe did not report raw 300-body Coin Pusher solver stress timing."
+      ]
+    }
+  ],
+  "run01_scope": "Candidate reviewed code; initial control preparation was blocked before replacing source. run02 is exact original baseline source."
+}

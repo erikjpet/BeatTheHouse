@@ -187,7 +187,11 @@ func _check_storage_failure() -> void:
 	_check(retained, "Main Menu discarded the unsaved live run.")
 	if retained:
 		app.call("exit_game")
+		_check(app.get("leave_without_saving_confirmation").visible, "Failed Exit did not offer the explicit leave choice.")
+		app.call("cancel_leave_without_saving")
 		app.notification(Control.NOTIFICATION_WM_CLOSE_REQUEST)
+		_check(app.get("leave_without_saving_confirmation").visible, "Failed native close did not offer the explicit leave choice.")
+		app.call("cancel_leave_without_saving")
 		_check(not auto_accept_quit, "The engine still accepts native close before save recovery.")
 		_check(app.get("run_state") == state, "Exit/native close discarded the unsaved run.")
 		app.call("_on_run_report_home_requested")

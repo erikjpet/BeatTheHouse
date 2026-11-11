@@ -1,0 +1,101 @@
+{
+  "baseline_pass": 4,
+  "baseline_fail": 7,
+  "after_pass": 4,
+  "after_fail": 7,
+  "new_failures": [
+    "ERROR: Idle blackjack surface animated idle draw p95 <measured-number> ms exceeded <measured-number> ms."
+  ],
+  "stages": [
+    {
+      "stage": "validate_project",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "godot_import",
+      "baseline_exit": 0,
+      "after_exit": 0
+    },
+    {
+      "stage": "gdscript_load_check",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "foundation_smoke_content",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "foundation_smoke_runtime",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "ui_scene_compile",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "cold_continue_room_projection",
+      "baseline_exit": 1,
+      "after_exit": 1
+    },
+    {
+      "stage": "game_library_launchers",
+      "baseline_exit": 0,
+      "after_exit": 0
+    },
+    {
+      "stage": "dave_bus_encounter",
+      "baseline_exit": 0,
+      "after_exit": 0
+    },
+    {
+      "stage": "roulette_audio_audit",
+      "baseline_exit": 0,
+      "after_exit": 0
+    },
+    {
+      "stage": "foundation_perf_smoke",
+      "baseline_exit": 1,
+      "after_exit": 1
+    }
+  ],
+  "foundation_smoke_content.json": {
+    "baseline_failures": 25,
+    "after_failures": 25,
+    "new": []
+  },
+  "foundation_smoke_runtime.json": {
+    "baseline_failures": 16,
+    "after_failures": 16,
+    "new": []
+  },
+  "gdscript_load_check.stderr.txt": {
+    "baseline_error_lines": 4,
+    "after_error_lines": 4,
+    "new": []
+  },
+  "ui_scene_compile.stderr.txt": {
+    "baseline_error_lines": 1,
+    "after_error_lines": 1,
+    "new": []
+  },
+  "cold_continue_room_projection.stderr.txt": {
+    "baseline_error_lines": 4,
+    "after_error_lines": 4,
+    "new": []
+  },
+  "foundation_perf_smoke.stderr.txt": {
+    "baseline_error_lines": 10,
+    "after_error_lines": 11,
+    "new": [
+      "ERROR: Idle blackjack surface animated idle draw p95 <measured-number> ms exceeded <measured-number> ms."
+    ]
+  },
+  "result": "FUNCTIONAL_BASELINE_MATCH_TIMING_OUTLIER_NOT_REPRODUCED",
+  "assessment": "Functional and parser/content/runtime failures match baseline. One Blackjack draw-p95 outlier6.006ms is retained. Bounded candidate repeat3.447ms and unchanged-source control3.689ms both pass5ms; both retain the original10performance failures. No rendering/scheduling change, threshold change, skipped test or broad performance qualification claimed.",
+  "followup": "performance_controls.json"
+}
