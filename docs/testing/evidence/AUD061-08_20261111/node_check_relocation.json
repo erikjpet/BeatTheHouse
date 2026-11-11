@@ -1,0 +1,9 @@
+{
+  "source": "scripts/tests/aud061_web_lifecycle_bridge_check.cjs",
+  "destination": "tools/tests/aud061_web_lifecycle_bridge_check.cjs",
+  "before_sha256": "5b461c75ced25bf6b913af33d8e7098b5172ccffa8ffde145215a872d1808d5a",
+  "after_sha256": "5b461c75ced25bf6b913af33d8e7098b5172ccffa8ffde145215a872d1808d5a",
+  "guard_source": "D:\\Projects\\site\\scripts\\bth_import_cache.py",
+  "guard_source_sha256": "ecd61102233c74384121bc3b4dfd72aa451695295b050fa4acea17a032426b63",
+  "reason": "Existing inputs() excludes docs/ and tools/, plus non-addon .gd. Node-only check was the only newly classified input. No guard, qualification request, cap, reserve or asset bytes changed."
+}

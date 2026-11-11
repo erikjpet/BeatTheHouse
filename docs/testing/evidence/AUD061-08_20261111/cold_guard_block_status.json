@@ -1,0 +1,72 @@
+{
+  "automation": "enabled",
+  "source_branch": "main",
+  "poll_seconds": 120,
+  "pid": 15864,
+  "started_at": "2026-11-10T23:54:11Z",
+  "phase": "failed",
+  "cpu_limit_percent": 10,
+  "cpu_job_guardian_pid": "2872",
+  "deployed_commit": "23326f534823da8c5175f835f958ee55e7f1605e",
+  "deployed_at": "2026-11-11T08:24:04Z",
+  "updated_at": "2026-11-11T08:51:41Z",
+  "available_commit": "33904c0b5f0e887704a6f712c23658b6d2a22b78",
+  "last_checked_at": "2026-11-11T08:51:41Z",
+  "check_error": null,
+  "mirror_handoff": {
+    "handoff_id": "23326f534823da8c5175f835f958ee55e7f1605e-4f62a1e20557319ef95c3defcd370a3b8ff44c48e355ab6a356ccaf91d65fe67",
+    "state": "PENDING",
+    "record": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\records\\23326f534823da8c5175f835f958ee55e7f1605e-4f62a1e20557319ef95c3defcd370a3b8ff44c48e355ab6a356ccaf91d65fe67.json",
+    "delivery_format": "served_files_v2",
+    "automatic_library_sync": false
+  },
+  "mirror_handoff_error": null,
+  "building_commit": "33904c0b5f0e887704a6f712c23658b6d2a22b78",
+  "build_started_at": "2026-11-11T08:47:33Z",
+  "error": "Asset/importer/settings inputs changed; cold-import qualification required",
+  "import_cache": {
+    "mode": "fresh_ephemeral_cold_import",
+    "files": 0,
+    "bytes": 0,
+    "baseline_commit": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+    "normal_godot_import_still_required": true
+  },
+  "ephemeral_toolchain": {
+    "source": "D:\\Projects\\site\\state\\bth-next\\toolchain",
+    "target": "E:\\CodexTaskStorage\\bth-next-build-23326f534823da8c5175f835f958ee55e7f1605e-1794385277961608000\\.tools",
+    "files_checked": 20594,
+    "logical_bytes": 1744804376,
+    "original_retained": true
+  },
+  "build_pid": 7132,
+  "build_log": "state\\bth-next\\logs\\23326f534823da8c5175f835f958ee55e7f1605e-1794385350148259700.log",
+  "promotion_capacity": {
+    "schema": "bth.exact_promotion_capacity/v1",
+    "d_free_bytes": 35269517312,
+    "d_required_bytes": 12019155051,
+    "archive_bytes": 41695196,
+    "payload_bytes": 73777259,
+    "promotion_overhead_bytes": 134217728,
+    "archive_retained_on_d": false,
+    "service_reserve_bytes": 10737418240,
+    "safety_margin_bytes": 1073741824,
+    "admitted": true
+  },
+  "mirror_stage": {
+    "handoff_id": "23326f534823da8c5175f835f958ee55e7f1605e-4f62a1e20557319ef95c3defcd370a3b8ff44c48e355ab6a356ccaf91d65fe67",
+    "stage": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\staged\\23326f534823da8c5175f835f958ee55e7f1605e-4f62a1e20557319ef95c3defcd370a3b8ff44c48e355ab6a356ccaf91d65fe67.json",
+    "archive_sha256": "4f62a1e20557319ef95c3defcd370a3b8ff44c48e355ab6a356ccaf91d65fe67",
+    "file_count": 16,
+    "payload_bytes": 73777259
+  },
+  "build_finished_at": "2026-11-11T08:24:04Z",
+  "ephemeral_cleanup": {
+    "source": "E:\\CodexTaskStorage\\bth-next-build-33904c0b5f0e887704a6f712c23658b6d2a22b78-1794386861322067000",
+    "removed": true,
+    "ignored_files_checked": 1,
+    "owned_record": "D:\\Projects\\site\\state\\bth-next\\retention\\attempts\\bth-next-build-33904c0b5f0e887704a6f712c23658b6d2a22b78-1794386861322067000.json",
+    "terminal_state": "failed"
+  },
+  "retention_error": null,
+  "ephemeral_cleanup_error": null
+}
