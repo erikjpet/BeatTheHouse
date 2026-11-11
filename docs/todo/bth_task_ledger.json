@@ -32642,22 +32642,28 @@
             "id": "1",
             "description": "Current source/export/preset/menu stamps reproduced.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Requested0.6.1/Win0.6.1.0/Android10, project-derived identity and release+commit display delivered, or concrete incompatible pipeline requirement recorded per user stop rule.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "No telemetry/schema/migration/README release-asset claim or pipeline guard/cap change.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -32666,8 +32672,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_OWNER_C1_REDUCED_SCOPE_ONE_DISPLAY_VERSION",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32679,39 +32685,56 @@
           "evidence": [
             "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "ceccaf561d79718b69d4fbf499cf923cb0e864d3",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md",
           "summary": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "DONE_OWNER_C1_REDUCED_SCOPE_ONE_DISPLAY_VERSION"
         }
       ],
       "implementation_batches": [
         "AUD061-04-BATCH-001"
       ],
-      "next_action": "Carry this evidence-only blocked report with the next finished changelog push; separately reviewed0.6.1 input qualification is required before the version change.",
+      "next_action": "Owner C1 scope complete: RELEASE_VERSION0.6.0 plus manifest short commit on menu. Original incompatible all-stamps requirement remains documented as an alternative stop-rule outcome; project/export/internal/Windows stamps retained0.6.0 by explicit owner decision. Final packages tracked separately in CLOSE-05.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required project/preset/exporter edits conflict with fixed existing NEXT object qualification; changing guards is forbidden in this run. No0.6.1 stamp/display change delivered.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T12:12:26.062457+00:00",
-        "evidence": [
-          "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-11T22:32:20.140992+00:00",
+        "evidence": []
       },
       "planned_app_changes": [
         "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution."
       ],
-      "updated_at": "2026-11-11T12:12:26.062457+00:00"
+      "updated_at": "2026-11-11T22:32:20.140992+00:00"
     },
     {
       "id": "AUD061-05",
@@ -34580,29 +34603,37 @@
             "id": "1",
             "description": "Source displays RELEASE_VERSION",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Export displays RELEASE_VERSION and12-char manifest commit",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Changing constant alone changes source display; restore0.6.0",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           },
           {
             "id": "4",
             "description": "Pinned/internal identities untouched",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34611,8 +34642,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_ONE_RELEASE_VERSION_SOURCE_AND_NEXT_VERIFIED",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34630,13 +34661,21 @@
           "evidence": [
             "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -34648,24 +34687,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
           "summary": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "DONE_ONE_RELEASE_VERSION_SOURCE_AND_NEXT_VERIFIED"
         }
       ],
       "implementation_batches": [
         "CLOSE-04-BATCH-001"
       ],
-      "next_action": "After owner request enables CLOSE-01 delivery, push scoped local task pairs and verify actual NEXT footer. Packaging/source-menu5/0 and UI120.83s exit0; constant restored0.6.0, pinned inputs and telemetry unchanged.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:58:31.711804+00:00",
+        "observed_at": "2026-11-11T22:32:20.052474+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Single player-visible release version constant"
       ],
-      "updated_at": "2026-11-11T21:58:31.711804+00:00"
+      "updated_at": "2026-11-11T22:32:20.052474+00:00"
     },
     {
       "id": "CLOSE-06",
@@ -37314,8 +37358,8 @@
       "name": "Single player-visible release version constant bounded execution",
       "parent_id": "CLOSE-04",
       "group": "current",
-      "state": "open",
-      "status": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_ONE_RELEASE_VERSION_SOURCE_AND_NEXT_VERIFIED",
       "scope": [
         "Single player-visible release version constant"
       ],
@@ -37336,13 +37380,21 @@
           "evidence": [
             "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -37354,18 +37406,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
           "summary": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "DONE_ONE_RELEASE_VERSION_SOURCE_AND_NEXT_VERIFIED"
         }
       ],
-      "next_action": "After owner request enables CLOSE-01 delivery, push scoped local task pairs and verify actual NEXT footer. Packaging/source-menu5/0 and UI120.83s exit0; constant restored0.6.0, pinned inputs and telemetry unchanged.",
+      "next_action": "None for this task.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:58:31.711804+00:00",
+        "observed_at": "2026-11-11T22:32:20.053472+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T21:58:31.711804+00:00"
+      "updated_at": "2026-11-11T22:32:20.053472+00:00"
     },
     {
       "id": "CLOSE-06-BATCH-001",
