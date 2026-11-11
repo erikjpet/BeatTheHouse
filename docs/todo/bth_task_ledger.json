@@ -31389,6 +31389,100 @@
         "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop."
       ],
       "updated_at": "2026-11-11T05:56:08.333201+00:00"
+    },
+    {
+      "id": "AUD061-16",
+      "name": "Gate test fault reads in distribution builds",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Search tools for distribution-export consumers, preserve any required switch; gate other listed read sites with not PersistencePaths.distribution_build while retaining names/signatures and non-distribution QA behavior.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Record tools consumer search and any preserved release-QA switches.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Reproduce all listed active faults in distribution mode before gating.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Distribution ignores gated switches; non-distribution keeps them operational, names/signatures retained.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Focused adjacent and Smoke results no worse than baseline; exact NEXT assets/startup verified with observable scope stated.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE58_DURABLE129_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "12216a7d489ebd96b49af047d0586d4818b1cf66",
+          "evidence": [
+            "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE58_DURABLE129_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-16-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T06:21:26.299801+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Search tools for distribution-export consumers, preserve any required switch; gate other listed read sites with not PersistencePaths.distribution_build while retaining names/signatures and non-distribution QA behavior."
+      ],
+      "updated_at": "2026-11-11T06:21:26.299801+00:00"
     }
   ],
   "batches": [
@@ -32437,6 +32531,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T05:56:08.333201+00:00"
+    },
+    {
+      "id": "AUD061-16-BATCH-001",
+      "name": "Gate test fault reads in distribution builds implementation",
+      "parent_id": "AUD061-16",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE58_DURABLE129_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "scope": [
+        "Search tools for distribution-export consumers, preserve any required switch; gate other listed read sites with not PersistencePaths.distribution_build while retaining names/signatures and non-distribution QA behavior."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "12216a7d489ebd96b49af047d0586d4818b1cf66",
+          "evidence": [
+            "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE58_DURABLE129_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T06:21:26.299801+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T06:21:26.299801+00:00"
     }
   ]
 }
