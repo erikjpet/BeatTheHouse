@@ -102,3 +102,28 @@ Raw files remain outside the repository. The external index lists every file/pat
 | --- | --- |
 | E:\CodexQA\BTH\runs\cl061-checkpoint-commit\evidence\raw-evidence-index.json | f4484a9dcd145e4cdfe8fd626d9b039a5c3f70a447ed3d3f73e1cdec9c709998 |
 | E:\CodexQA\BTH\runs\cl061-checkpoint-reconcile\evidence\reconciliation.json | e1c22860660ef8777052b722cba068437ec081d8e6046d75361390129559629a |
+
+## Exact NEXT footer — completed
+
+On served a6ce512640cbd98019a6b9a4c5b5081278ba78bb, tree
+8846b3457d48daafd2ae37279bade6cd42f3d38e,10 identity/asset checks pass.
+Fresh rendered menu visibly reads Version 0.6.0 (a6ce512640cb), recorded in
+002-release-footer.png. Browser six normal-control batches then closes with
+zero page/console warnings/errors, exit0 and owned processes0. It also carries
+the scoped CLOSE-02 rendered financial-line qualification; no campaign-save
+coverage is claimed from this practice session.
+
+Together with the earlier one-line0.6.1 source-menu trial/restoration and
+byte-identical pinned inputs/internal telemetry, this completes owner decisionC1.
+The unchanged project/export-preset/Windows properties/internal build_version
+remain0.6.0 as the owner explicitly chose. No builder was re-pinned.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-a6-next-identity, cl061-s02-s04-web, cl061-s02-s04-web-cmd-1, cl061-s02-s04-web-cmd-2, cl061-s02-s04-web-cmd-3, cl061-s02-s04-web-cmd-4, cl061-s02-s04-web-cmd-5, cl061-s02-s04-web-cmd-6.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-s04-delivery-proof\evidence\raw-evidence-index.json | 70e22bee83c0156365180a2f6bc1bd5e239e5c9fdf9ef0e67d7b82cb644c578b |
+| E:\CodexQA\BTH\runs\cl061-s02-s04-web\evidence\result.json | 6ef7842f897e97bde9bc4ef344f98c9fda455095628f7c58b41223de0393131c |
+| E:\CodexQA\BTH\runs\cl061-s02-s04-web\evidence\002-release-footer.png | d0d7e5b2d66fb29d93e560fff5da1cd596013db67388f132d4f5900789ab8c3c |
