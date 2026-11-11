@@ -31837,13 +31837,100 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T09:53:38.688762+00:00",
+        "observed_at": "2026-11-11T09:55:09.971449+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Implement owner-approved item 2 only: quarantine a wrong-sized key and generate a new 32-byte key; preserve key path, capsule format, derivation, padding and existing failed-restore behavior."
       ],
-      "updated_at": "2026-11-11T09:53:38.688762+00:00"
+      "updated_at": "2026-11-11T09:55:09.971449+00:00"
+    },
+    {
+      "id": "QOL-01",
+      "name": "Confirm replacing a loadable saved run",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Loadable save prompts on every menu start route; cancel preserves bytes and current run.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Keyboard default, Escape, touch cancel and explicit start work.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "No loadable save, mandatory tutorial and finished report do not prompt; Smoke no worse than baseline and exact NEXT rendered behavior verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
+          "summary": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "QOL-01-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T10:09:31.761562+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
+      ],
+      "updated_at": "2026-11-11T10:09:31.761562+00:00"
     }
   ],
   "batches": [
@@ -33132,10 +33219,57 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T09:53:38.688762+00:00",
+        "observed_at": "2026-11-11T09:55:09.971449+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T09:53:38.688762+00:00"
+      "updated_at": "2026-11-11T09:55:09.971449+00:00"
+    },
+    {
+      "id": "QOL-01-BATCH-001",
+      "name": "Confirm replacing a loadable saved run implementation",
+      "parent_id": "QOL-01",
+      "group": "current",
+      "state": "open",
+      "status": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "scope": [
+        "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
+          "summary": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T10:09:31.761562+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T10:09:31.761562+00:00"
     }
   ]
 }
