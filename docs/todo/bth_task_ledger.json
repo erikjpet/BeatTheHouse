@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-11T00:35:18.870771+00:00",
+  "updated_at": "2026-11-11T02:23:50.226609+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -30343,6 +30343,372 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-11T00:35:18.870771+00:00"
+    },
+    {
+      "id": "AUD061-EXECUTION",
+      "name": "Execute the 0.6.1 audit work orders",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Execute only the user-authorized 18 audit/QOL orders in the supplied sequence. NEXT delivery is required. Reproduce before changing code; one task per code commit except paired01/02; separate SHA-ledger commit pushed together. Preserve unrelated work, existing pipeline guards/caps/reserves and no-input animation. No save migration, item/scenario content, STR work, tags or manual deployment. Freeze/version/changelog only after prior work; qualification on exact proposed RC.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "AUD061-12",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "AUD061-02",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "AUD061-01",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "AUD061-09",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "5",
+            "description": "AUD061-10",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "6",
+            "description": "QOL-02",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "7",
+            "description": "QOL-03",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "8",
+            "description": "QOL-04",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "9",
+            "description": "QOL-05",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "10",
+            "description": "AUD061-16",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "11",
+            "description": "AUD061-14",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "12",
+            "description": "AUD061-08",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "13",
+            "description": "AUD061-15",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "14",
+            "description": "QOL-01",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "15",
+            "description": "AUD061-04",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "16",
+            "description": "AUD061-05",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "17",
+            "description": "AUD061-11",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "18",
+            "description": "AUD061-17",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PAIRED_01_02_NATIVE_VERIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "ca2302b6bbe36f9b2d6b2af7fbcd8728de9ab968",
+          "evidence": [
+            "docs/todo/BTH_0.6.1_audit_work_orders.md"
+          ]
+        },
+        {
+          "sha": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+          "evidence": [
+            "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+            "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [],
+      "next_action": "Deliver the first paired task through existing NEXT, then continue the remaining16 work orders in the authorized sequence.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+    },
+    {
+      "id": "AUD061-02",
+      "name": "Allow confirmed leaving after a failed save",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Add the specified safe-default ConfirmationDialog for Exit and Main Menu failures, modal focus ownership, decisive repeated native close, and owned prewarm/save joins. Preserve tutorial/meta branches and pending Web Save guard.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Failed save offers Keep playing and explicit leave; cancel retains dirty live run and prior disk save; confirmed Main Menu clears run and Continue restores last successful save.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "First native close offers the dialog; repeated close and explicit Quit join owned work before quit; healthy saves leave without prompting.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "Existing shutdown/save-failure checks and Smoke are no worse than baseline; exact NEXT identity/startup and visible behavior verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+          "evidence": [
+            "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "evidence": [
+          "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+        ],
+        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction_and_fix",
+          "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
+          "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-02-BATCH-001"
+      ],
+      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Add the specified safe-default ConfirmationDialog for Exit and Main Menu failures, modal focus ownership, decisive repeated native close, and owned prewarm/save joins. Preserve tutorial/meta branches and pending Web Save guard."
+      ],
+      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+    },
+    {
+      "id": "AUD061-01",
+      "name": "Clear stale rollback files before saving",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Delete stale .rollback/.bak.rollback before installation; fail distinctly as stale_rollback_undeletable only if cleanup fails. Retry final cleanup once and retain success for validated installed primary. Preserve rename ordering, validators and exact-digest reuse; no read-side recovery.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Three required stale rollback contract cases and settings stale backup case reproduce before and pass after.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "All durable-store contract cases and Smoke no worse than baseline; exact NEXT delivered and starts.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+          "evidence": [
+            "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "evidence": [
+          "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+        ],
+        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction_and_fix",
+          "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+          "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-01-BATCH-001"
+      ],
+      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Delete stale .rollback/.bak.rollback before installation; fail distinctly as stale_rollback_undeletable only if cleanup fails. Retry final cleanup once and retain success for validated installed primary. Preserve rename ordering, validators and exact-digest reuse; no read-side recovery."
+      ],
+      "updated_at": "2026-11-11T02:23:50.226609+00:00"
     }
   ],
   "batches": [
@@ -30933,6 +31299,106 @@
           ]
         }
       }
+    },
+    {
+      "id": "AUD061-02-BATCH-001",
+      "name": "Allow confirmed leaving after a failed save implementation",
+      "parent_id": "AUD061-02",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "scope": [
+        "Add the specified safe-default ConfirmationDialog for Exit and Main Menu failures, modal focus ownership, decisive repeated native close, and owned prewarm/save joins. Preserve tutorial/meta branches and pending Web Save guard."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+          "evidence": [
+            "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "evidence": [
+          "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+        ],
+        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction_and_fix",
+          "reference": "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
+          "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        }
+      ],
+      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T02:23:50.226609+00:00"
+    },
+    {
+      "id": "AUD061-01-BATCH-001",
+      "name": "Clear stale rollback files before saving implementation",
+      "parent_id": "AUD061-01",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_VERIFIED_NEXT_PENDING",
+      "scope": [
+        "Delete stale .rollback/.bak.rollback before installation; fail distinctly as stale_rollback_undeletable only if cleanup fails. Retry final cleanup once and retain success for validated installed primary. Preserve rename ordering, validators and exact-digest reuse; no read-side recovery."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+          "evidence": [
+            "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "1996d6bec0725081c5f873d32ab26ad93eb22e18",
+        "evidence": [
+          "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+        ],
+        "scope": "Existing NEXT only; push code and ledger together, then verify actual promoted identity/startup and changed Web behavior. Native close tested natively."
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction_and_fix",
+          "reference": "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+          "summary": "Reproduced before changing code. Durable129/0; leave20/0+14/0+14/0; existing BarDice86/0 and save-navigation pass. Smoke4/7 retained; bounded candidate/control performance comparison and all scope limits preserved."
+        }
+      ],
+      "next_action": "Push tested paired code/proof and associated-SHA ledger commits together after pull --rebase origin main; observe existing NEXT and verify exact served identity/startup plus visible behavior.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T01:37:01.628976+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T02:23:50.226609+00:00"
     }
   ]
 }

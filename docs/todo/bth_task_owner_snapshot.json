@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-11T01:11:43.957468+00:00",
+  "observed_at": "2026-11-11T02:23:50.226609+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -239,6 +239,13 @@
       "state": "active",
       "observed_at": "2026-11-11T00:35:18.870771+00:00",
       "source": "Actual integration worker active during final documentation checkpoint in a fresh isolated remote-b039 clone after unobserved external workspace removal. Product b039 already pushed/deployed and strict-HTTPS identity/assets/menu verified. Original Gas incidents remain Open/unattributed. No old remaining files or historical clone changed; other observations not refreshed."
+    },
+    {
+      "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+      "title": "Execute 0.6.1 audit work orders",
+      "state": "active",
+      "observed_at": "2026-11-11T02:23:50.226609+00:00",
+      "source": "Current audit chat actively preparing the first paired code/ledger push and existing NEXT verification; other task states are not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
