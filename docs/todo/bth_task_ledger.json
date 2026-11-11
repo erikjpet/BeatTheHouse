@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-11T00:15:23.394875+00:00",
+  "updated_at": "2026-11-11T00:20:59.678617+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -1516,10 +1516,10 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_WEB_QUALIFIED_DELIVERY_PENDING",
+      "status": "INDEPENDENT_WEB_QUALIFIED_ORIGINAL_CAUSE_UNKNOWN",
       "owner": {
-        "name": "Verify Gas Web exits",
-        "task_ref": "/root/finish_gas_web_tests",
+        "name": "Publish Gas compatibility closeout",
+        "task_ref": "/root/publish_gas_compatibility",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -1535,6 +1535,13 @@
           "evidence": [
             "docs/testing/gas_exit_web_closeout_20261110.json",
             "Test-only paid fixture capture; no Gas production fix."
+          ]
+        },
+        {
+          "sha": "460a4f09850476da583aeda5a7758324bce6c0be",
+          "evidence": [
+            "docs/testing/gas_exit_web_closeout_20261110.json",
+            "Preserved test/evidence closeout, no Gas product fix."
           ]
         }
       ],
@@ -1565,22 +1572,27 @@
           "kind": "bounded_independent_rendered_Web",
           "reference": "docs/testing/gas_exit_web_closeout_20261110.json",
           "summary": "Exact unmodified HTTPS85d rendered paid-tray Collect/Clear All/File/Back/Leave/map Close/public Save/new-browser Continue passes at02:30,03:15 and independently Web-generated Day1 16:30/$117 and04:00. Native84 fixture checks plus Web22+24 producer checks are separate. Original incident not reproduced or attributed. Separate native-active cross-platform fingerprint defect remains under its own repair."
+        },
+        {
+          "kind": "integration",
+          "reference": "docs/testing/gas_seal_integration_20261111.json",
+          "summary": "Gas fixture/evidence integrated while preserving newer Crew closure and original Gas incidents as Open, cause unknown. Separate compatibility fix has its own named objective."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate scoped evidence/test commits and reconcile parent disposition/delivery. Finish the separately discovered native/Web inventory fingerprint repair and its own acceptance without attributing it to the unavailable original Gas incident.",
+      "next_action": "Preserve bounded independent Gas not-reproduced disposition and original cause unknown. Scoped evidence/test are integrated; finish exact NEXT follow-through of separate BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 without treating it as the historical Gas cause.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Independent Gas Web exit qualification complete. Parent integration/disposition pending; separate cross-platform inventory compatibility defect has its own active owner. Original incident save unavailable, not awaited.",
+        "description": "Independent Gas native and exact85d Web exit qualification complete; original cause remains unknown. Test/evidence integrated; independent seal fix tracked separately. No original replay or gone-save request.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T23:53:20.640584+00:00",
+        "observed_at": "2026-11-11T00:20:59.678617+00:00",
         "evidence": [
           "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T23:53:20.640584+00:00",
+      "updated_at": "2026-11-11T00:20:59.678617+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4263,10 +4275,10 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_WEB_QUALIFIED_DELIVERY_PENDING",
+      "status": "INDEPENDENT_WEB_QUALIFIED_ORIGINAL_CAUSE_UNKNOWN",
       "owner": {
-        "name": "Verify Gas Web exits",
-        "task_ref": "/root/finish_gas_web_tests",
+        "name": "Publish Gas compatibility closeout",
+        "task_ref": "/root/publish_gas_compatibility",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -4289,6 +4301,13 @@
           "evidence": [
             "docs/testing/gas_exit_web_closeout_20261110.json",
             "Test-only paid fixture capture; no Gas production fix."
+          ]
+        },
+        {
+          "sha": "460a4f09850476da583aeda5a7758324bce6c0be",
+          "evidence": [
+            "docs/testing/gas_exit_web_closeout_20261110.json",
+            "Preserved test/evidence closeout, no Gas product fix."
           ]
         }
       ],
@@ -4321,22 +4340,27 @@
           "kind": "bounded_independent_rendered_Web",
           "reference": "docs/testing/gas_exit_web_closeout_20261110.json",
           "summary": "Exact unmodified HTTPS85d rendered paid-tray Collect/Clear All/File/Back/Leave/map Close/public Save/new-browser Continue passes at02:30,03:15 and independently Web-generated Day1 16:30/$117 and04:00. Native84 fixture checks plus Web22+24 producer checks are separate. Original incident not reproduced or attributed. Separate native-active cross-platform fingerprint defect remains under its own repair."
+        },
+        {
+          "kind": "integration",
+          "reference": "docs/testing/gas_seal_integration_20261111.json",
+          "summary": "Gas fixture/evidence integrated while preserving newer Crew closure and original Gas incidents as Open, cause unknown. Separate compatibility fix has its own named objective."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate scoped evidence/test commits and reconcile parent disposition/delivery. Finish the separately discovered native/Web inventory fingerprint repair and its own acceptance without attributing it to the unavailable original Gas incident.",
+      "next_action": "Preserve bounded independent Gas not-reproduced disposition and original cause unknown. Scoped evidence/test are integrated; finish exact NEXT follow-through of separate BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 without treating it as the historical Gas cause.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Independent Gas Web exit qualification complete. Parent integration/disposition pending; separate cross-platform inventory compatibility defect has its own active owner. Original incident save unavailable, not awaited.",
+        "description": "Independent Gas native and exact85d Web exit qualification complete; original cause remains unknown. Test/evidence integrated; independent seal fix tracked separately. No original replay or gone-save request.",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T23:53:20.640584+00:00",
+        "observed_at": "2026-11-11T00:20:59.678617+00:00",
         "evidence": [
           "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-10T23:53:20.640584+00:00",
+      "updated_at": "2026-11-11T00:20:59.678617+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -30215,8 +30239,11 @@
             "id": "integration",
             "description": "Run focused checks on integrated source and reconcile both tracking views without erasing prior validation or pauses.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_seal_integration_20261111.json",
+              "Focused integrated-source assertions and tools tests pass; manual ledger reconciliation recorded separately."
+            ]
           },
           {
             "id": "next-delivery",
@@ -30233,7 +30260,7 @@
         }
       },
       "state": "open",
-      "status": "INDEPENDENT_FIX_QUALIFIED_INTEGRATION_AND_NEXT_PENDING",
+      "status": "INTEGRATED_NATIVE_187_TOOLS_180_PASS_NEXT_PENDING",
       "owner": {
         "name": "Publish Gas compatibility closeout",
         "task_ref": "/root/publish_gas_compatibility",
@@ -30245,6 +30272,13 @@
           "evidence": [
             "docs/testing/scenario_cross_platform_geometry.md",
             "Independently reviewed final source and candidate-PCK/native compatibility receipts."
+          ]
+        },
+        {
+          "sha": "c3bc398e99763faaedf1aae566713f44246939f0",
+          "evidence": [
+            "docs/testing/gas_seal_integration_20261111.json",
+            "Integrated identical reviewed core bytes; focused native60+20+23 and Gas84 pass."
           ]
         }
       ],
@@ -30260,22 +30294,27 @@
           "kind": "focused_native_and_candidate_web",
           "reference": "docs/testing/scenario_cross_platform_geometry.md",
           "summary": "60+20+23 native checks, same-platform four-fixture Continue, finalization tamper rejection, native Day-1/Open to Web normal paid-action/Save/cold Continue and Web-to-native exact-body/numeric-bit roundtrip. Historical compact/layer paths without full inventory body are not newly qualified. Candidate override is not exact-commit NEXT proof."
+        },
+        {
+          "kind": "integrated_source",
+          "reference": "docs/testing/gas_seal_integration_20261111.json",
+          "summary": "Native60+20+23 and Gas84 assertions, 180 tools tests pass; all five capped Jobs ended/0. Independent original candidate Web roundtrip evidence retains its own identity."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate approved 4acc046f, run focused integrated-source checks and existing manual reconciliation, push tested main and verify the exact existing NEXT watcher result.",
+      "next_action": "Run manual reconciliation with current scoped owner/runtime observations, push tested integrated main and verify exact existing NEXT identity/assets/basic launch.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "No current blocker; exact integrated source and NEXT delivery not yet verified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T00:15:23.394875+00:00",
+        "observed_at": "2026-11-11T00:20:59.678617+00:00",
         "evidence": [
           "docs/testing/scenario_cross_platform_geometry.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T00:15:23.394875+00:00"
+      "updated_at": "2026-11-11T00:20:59.678617+00:00"
     }
   ],
   "batches": [

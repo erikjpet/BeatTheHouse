@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-11T00:15:23.394875+00:00",
+  "observed_at": "2026-11-11T00:20:59.678617+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -237,8 +237,8 @@
       "task_ref": "/root/publish_gas_compatibility",
       "title": "Publish Gas compatibility closeout",
       "state": "active",
-      "observed_at": "2026-11-11T00:15:23.394875+00:00",
-      "source": "Actual native integration worker active. Approved Gas test/evidence integrated with newer Crew closure preserved; independent seal fix integration and exact NEXT follow-through underway. Other owner observations not refreshed."
+      "observed_at": "2026-11-11T00:20:59.678617+00:00",
+      "source": "Actual native integration worker active: focused integrated source native187/tools180 pass with closed Jobs; scoped reconciliation and existing NEXT publication underway. Original Gas cause unknown; other observations not refreshed."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
