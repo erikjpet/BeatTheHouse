@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nsys.stdout.reconfigure(encoding='utf-8')\nimport subprocess\nsys.path.insert(0,r'D:\\Projects\\Beat-The-House\\tools')\nfrom bth_qa_storage import Layout,check_launch\nm=load(Path(os.environ['BTH_QA_EVIDENCE_DIR'])/'storage-manifest.json')\nlayout=Layout(**{k:Path(v) for k,v in m['paths'].items()},run_id=m['run_id'],token=m['token'],prepared=True,expected_write_bytes=m['expected_write_bytes'],reserve_bytes=m['reserve_bytes'])\ndef git(*args):\n check_launch(layout,cwd=str(W),env=os.environ,extra_write_paths=(W,layout.evidence,layout.temp))\n r=subprocess.run([r'C:\\Program Files\\Git\\cmd\\git.exe','-C',str(W),*args],text=True,capture_output=True,encoding='utf-8')\n if r.returncode:raise RuntimeError(r.stderr or r.stdout)\n return r.stdout\npaths=git('diff','--cached','--name-only').splitlines()\nassert paths and all(p.startswith('docs/') for p in paths)\nassert not any(Path(p).suffix.lower() in ('.pck','.zip','.exe','.dll','.wasm') for p in paths)\nprint('Staged',len(paths),'docs-only paths; runtime/item/scenario/native/policy files0; binary build archives0.')\nprint(git('-c','core.whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol','diff','--cached','--check','--','docs',':(exclude)docs/testing/evidence') or 'Whitespace check PASS with preserved raw Windows CRLF explicitly recognized.')\nprint(git('diff','--cached','--','docs/plans/0.6.1_stability_release_plan.md')[:12500])\nprint('HEAD',git('rev-parse','HEAD').strip())\nwrite(Path(os.environ['BTH_QA_EVIDENCE_DIR'])/'staged-paths.txt','\\n'.join(paths)+'\\n')\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "d7f5a7e4e9520358c6db68d6c463ad7f297b295e73842cdb20f847b5c4cc4176",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud17-final-staged-review-20261111",
+    "token": "5bf3748abfa106d43598f1d2e0952eca",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\profile",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\temp",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\appdata",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\localappdata",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\home",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\cache",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\save_dir",
+      "available_bytes": 332535181312
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\pycache",
+      "available_bytes": 332535181312
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\profile",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\temp",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\evidence",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\appdata",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\localappdata",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\home",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\cache",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\save_dir",
+      "available_bytes": 332535173120
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-final-staged-review-20261111\\pycache",
+      "available_bytes": 332535173120
+    }
+  },
+  "pid": 13572,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794407271.0374854
+}

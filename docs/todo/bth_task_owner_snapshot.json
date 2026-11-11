@@ -244,8 +244,8 @@
       "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
       "title": "Execute 0.6.1 audit work orders",
       "state": "active",
-      "observed_at": "2026-11-11T14:19:16.983412+00:00",
-      "source": "Actual current audit chat is active on AUD061-17; FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY. Other owners not refreshed."
+      "observed_at": "2026-11-11T14:38:08.512802+00:00",
+      "source": "Actual current audit chat is finishing the18-order report and exact final NEXT delivery; release qualification remains open."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

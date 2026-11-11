@@ -1,0 +1,4 @@
+Inherited 1682 Added 0 Removed 1
+added []
+resolved ['{"code": "OWNER_TASK_REFERENCE_MISSING", "evidence": [], "message": "Open work needs the owner\'s current task reference.", "severity": "error", "task_id": "BTH061-006"}']
+Root acceptance {'pass': 14, 'open': 4}

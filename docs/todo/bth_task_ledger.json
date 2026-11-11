@@ -30871,19 +30871,32 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "18_OF_18_PROCESSED_14_DONE_1_NOT_REPRODUCED_1_BLOCKED_2_FAILED_QUALIFICATION"
+        },
+        {
+          "kind": "final_execution_report",
+          "reference": "docs/testing/AUD061_final_execution_report_2026-11-11.md",
+          "summary": "All18 scoped orders have actual dispositions;14 done,1 not reproduced,1 blocked,2 failed qualification. Final conclusion delivery has a supplemental exact-identity receipt."
         }
       ],
       "implementation_batches": [],
@@ -30899,7 +30912,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:38:08.478077+00:00"
     },
     {
       "id": "AUD061-02",
@@ -32377,14 +32390,20 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "bdaa9b337d3fae076a9ee623051acc2af2e6a7d9",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
         "evidence": [
-          "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -32415,7 +32434,7 @@
       "planned_app_changes": [
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "AUD061-04",
@@ -33287,13 +33306,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -33319,7 +33346,7 @@
       "planned_app_changes": [
         "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
       ],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-COUNT-EXPECTATION-001",
@@ -33376,13 +33403,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -33406,7 +33441,7 @@
       "planned_app_changes": [
         "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
       ],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
@@ -33463,13 +33498,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -33493,7 +33536,7 @@
       "planned_app_changes": [
         "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
       ],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001",
@@ -33550,13 +33593,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -33580,7 +33631,7 @@
       "planned_app_changes": [
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     }
   ],
   "batches": [
@@ -35441,8 +35492,8 @@
       "name": "Frozen candidate release coverage implementation",
       "parent_id": "AUD061-17",
       "group": "current",
-      "state": "open",
-      "status": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY",
+      "state": "complete",
+      "status": "BOUNDED_EXECUTION_COMPLETE_EXACT_REPORT_NEXT_VERIFIED_PARENT_QUALIFICATION_OPEN",
       "scope": [
         "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
       ],
@@ -35463,13 +35514,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35478,18 +35537,16 @@
           "summary": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY"
         }
       ],
-      "next_action": "Resolve diagnosed qualification gaps and AUD061-04 version admission, then choose and fully qualify a new exact release candidate before owner tagging.",
+      "next_action": "None for this bounded execution/report batch; parent and diagnosed follow-ups remain open.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required same-build/money/closing coverage is incomplete or fails its oracle/fixture checks; final0.6.1 packaging is blocked by AUD061-04.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.983412+00:00",
-        "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-11T14:36:47.177714+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001",
@@ -35512,13 +35569,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35536,7 +35601,7 @@
         "observed_at": "2026-11-11T14:19:16.797499+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001",
@@ -35559,13 +35624,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35583,7 +35656,7 @@
         "observed_at": "2026-11-11T14:19:16.847885+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001-BATCH-001",
@@ -35606,13 +35679,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35630,15 +35711,15 @@
         "observed_at": "2026-11-11T14:19:16.913895+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     },
     {
       "id": "AUD061-12-BATCH-002",
       "name": "Exact frozen candidate two-export manifest comparison",
       "parent_id": "AUD061-12",
       "group": "current",
-      "state": "open",
-      "status": "CHECKS_PASS_REPORT_DELIVERY_PENDING",
+      "state": "complete",
+      "status": "BOUNDED_EXECUTION_COMPLETE_EXACT_REPORT_NEXT_VERIFIED_PARENT_QUALIFICATION_OPEN",
       "scope": [
         "Compare two full private Web PCK exports of fcfe under unchanged2GiB/12% guards; retain differences and identity."
       ],
@@ -35653,13 +35734,21 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35668,16 +35757,16 @@
           "summary": "Two exact-RC full private packs and independent manifest/payload comparison pass."
         }
       ],
-      "next_action": "Associate finished report commit and verify normal NEXT delivery; original-cause parent remains open.",
+      "next_action": "None for this bounded execution/report batch; parent and diagnosed follow-ups remain open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T11:53:51.886562+00:00",
+        "observed_at": "2026-11-11T14:36:47.177714+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:28:39.237109+00:00"
+      "updated_at": "2026-11-11T14:36:47.177714+00:00"
     }
   ]
 }

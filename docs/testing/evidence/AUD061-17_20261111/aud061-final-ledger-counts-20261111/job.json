@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nb=load(Path(r'E:\\CodexQA\\BTH\\runs\\aud061-aud11-reconciliation-final-20261111\\evidence\\ledger.json'));a=load(Path(r'E:\\CodexQA\\BTH\\runs\\aud061-aud17-post-association-ledger-check-20261111\\evidence\\ledger.json'));key=lambda x:json.dumps(x,sort_keys=True)\nold={key(x) for x in b['findings']};new={key(x) for x in a['findings']}\nprint('Inherited',len(new),'Added',len(new-old),'Removed',len(old-new))\nprint('added',list(new-old));print('resolved',list(old-new))\nd=load(L);r=next(x for x in d['objectives'] if x['id']=='AUD061-EXECUTION')\nprint('Root acceptance', {s:sum(x['state']==s for x in r['objective']['acceptance']) for s in ['pass','open']})\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "8091c653ab40aaa7260aec8c668281118deb0971abdc2e79fbcf4184d2a7bb94",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-final-ledger-counts-20261111",
+    "token": "5cf6aebddc7c67f6fd99c78a888f5506",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\profile",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\temp",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\appdata",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\localappdata",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\home",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\cache",
+      "available_bytes": 329772777472
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\save_dir",
+      "available_bytes": 329772765184
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\pycache",
+      "available_bytes": 329772765184
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\profile",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\temp",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\evidence",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\appdata",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\localappdata",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\home",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\cache",
+      "available_bytes": 329772744704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\save_dir",
+      "available_bytes": 329772740608
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-final-ledger-counts-20261111\\pycache",
+      "available_bytes": 329772740608
+    }
+  },
+  "pid": 3208,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794407616.813845
+}
