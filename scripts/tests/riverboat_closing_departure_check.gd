@@ -8,13 +8,16 @@ class ClosingHost extends "res://scripts/ui/foundation_main.gd":
 	var reject_advance := false
 	var saved := 0
 	var maps := 0
-	func _ready() -> void: set_process(false)
+	func _ready() -> void:
+		set_process(false) # Existing callback-only host; no game/environment Canvas is constructed.
+		TalkDockScript = preload("res://scripts/ui/talk_dock.gd")
+		FoundationActionViewModelScript = preload("res://scripts/ui/foundation_action_view_model.gd")
+		_build_talk_dock()
 	func _advance_environment_turns_checked(amount: int = 1, _timing: Dictionary = {}) -> bool:
 		advances.append(amount)
 		if reject_advance: return false
 		run_state._advance_travel_lock(amount)
 		return true
-	func _refresh_talk_dock() -> void: pass
 	func _show_message(_text: String) -> void: pass
 	func _autosave_foundation_run(_text: String = "Autosaved.", _force: bool = false) -> bool:
 		saved += 1
@@ -23,6 +26,7 @@ class ClosingHost extends "res://scripts/ui/foundation_main.gd":
 		maps += 1
 		return true
 
+var fixture_library: ContentLibrary
 var checks := 0
 var failures: Array[String] = []
 func _initialize() -> void: call_deferred("_run")
@@ -31,6 +35,7 @@ func _check(ok: bool, text: String) -> void:
 	if not ok: failures.append(text)
 func _fixture(lock: int = 1, archetype: String = "delta_queen", source: String = "") -> ClosingHost:
 	var host := ClosingHost.new()
+	host.library = fixture_library
 	root.add_child(host)
 	host.run_state = RunState.new()
 	host.run_state.bankroll = 298
@@ -39,10 +44,15 @@ func _fixture(lock: int = 1, archetype: String = "delta_queen", source: String =
 	host.run_state.begin_closing_time(host.run_state.current_environment, 240, 0)
 	host.run_state.force_closing_time_travel()
 	host.run_state.enqueue_dialogue(host.CLOSING_TIME_DIALOGUE_ID,host.CLOSING_TIME_TALK_EVENT_ID,{},"notice","closing_time")
+	host._refresh_run_action_service()
+	host._refresh_talk_dock()
+	_check(host.talk_dock != null and str(host.talk_dock.entry.get("event_id", "")) == host.CLOSING_TIME_TALK_EVENT_ID,"Real dialogue dock did not publish the current closing entry.")
 	return host
 func _respond(host) -> void:
 	host._on_talk_dock_choice_requested(host.CLOSING_TIME_TALK_EVENT_ID,host.CLOSING_TIME_TALK_CHOICE_ID)
 func _run() -> void:
+	fixture_library = ContentLibrary.new()
+	fixture_library.load(false)
 	for remaining in [1,2]:
 		var host := _fixture(remaining)
 		_respond(host)
@@ -69,6 +79,20 @@ func _run() -> void:
 	invalid.run_state.closing_time_state["environment_id"]="different_room";invalid.run_state.closing_time_state["world_node_id"]="different_node";_respond(invalid);await process_frame
 	_check(invalid.advances.is_empty(),"Stale closing state advanced a different room.")
 	invalid.free()
+	var guarded := _fixture()
+	var retained_dock: TalkDock = guarded.talk_dock
+	guarded.talk_dock = null
+	_respond(guarded)
+	_check(guarded.advances.is_empty() and guarded.saved == 0 and not guarded.run_state.pending_talk_event(guarded.CLOSING_TIME_TALK_EVENT_ID).is_empty(), "Missing dock must preserve the pending response without advancing or saving.")
+	guarded.talk_dock = retained_dock
+	guarded.talk_dock.clear_entry()
+	_respond(guarded)
+	_check(guarded.advances.is_empty() and guarded.saved == 0, "Missing current dock entry must not advance or save.")
+	guarded._refresh_talk_dock()
+	_respond(guarded)
+	await process_frame
+	_check(guarded.advances == [1] and guarded.saved == 1 and guarded.maps == 1, "Restoring the real matching dock entry permits exactly one checked departure.")
+	guarded.free()
 	for failure in failures: push_error(failure)
 	print("Riverboat closing departure checks: ",checks," failures=",failures.size())
 	quit(0 if failures.is_empty() else 1)

@@ -304,10 +304,53 @@ func _record_block(action: String, reason: String) -> void:
 
 
 func _idle_tumble() -> bool:
+	if not await _dismiss_event_popup_before_tumble(): return false
 	var before: Dictionary = _guard(app.run_state.to_dict()).account
 	await create_timer(float(BarDice.TUMBLE_DURATION_MSEC + 150) / 1000.0).timeout
 	await _frames(2)
-	return _check(not app.game_surface_canvas.surface_animation_active(BarDice.TUMBLE_CHANNEL) and _guard(app.run_state.to_dict()).account == before, "Passive tumble ends without funding or rootRNG change")
+	var account_after: Dictionary = _guard(app.run_state.to_dict()).account
+	var idle: bool = not app.game_surface_canvas.surface_animation_active(BarDice.TUMBLE_CHANNEL)
+	var popup_buttons: Array = []
+	if app.event_choice_popup_choices_list != null:
+		_collect_visible_popup_buttons(app.event_choice_popup_choices_list, popup_buttons)
+	if not facts.has("tumble_observations"): facts["tumble_observations"] = []
+	facts.tumble_observations.append({"account_before": before, "account_after": account_after, "animation_idle": idle, "popup_visible": app._event_choice_popup_is_visible(), "popup_title": app.event_choice_popup_title_label.text if app.event_choice_popup_title_label != null else "", "popup_buttons": popup_buttons, "pause": app.game_surface_canvas.debug_pause_contract_snapshot()})
+	var account_ok := _check(account_after == before, "Passive tumble preserves account and root RNG")
+	var animation_ok := _check(idle, "Passive tumble animation ends")
+	return account_ok and animation_ok
+
+
+func _dismiss_event_popup_before_tumble() -> bool:
+	if not app._event_choice_popup_is_visible(): return true
+	var before: Dictionary = _guard(app.run_state.to_dict()).account
+	if not _check(app.pending_event_choice_popup_event_id == "health_inspector", "Observed modal is the expected Health Inspector event"): return false
+	var button := _find_inspector_finish_button(app.event_choice_popup_choices_list)
+	if not _check(button != null and button.text == "One last move", "Real enabled no-payment inspector response is available"): return false
+	button.pressed.emit()
+	for frame in range(120):
+		await process_frame
+		if not app._event_choice_popup_is_visible() and app._event_response_transaction.is_empty(): break
+	var after: Dictionary = _guard(app.run_state.to_dict()).account
+	if not facts.has("tumble_popup_dismissals"): facts["tumble_popup_dismissals"] = []
+	facts.tumble_popup_dismissals.append({"event":"health_inspector","choice":"finish_one","control":"One last move","account_before":before,"account_after":after,"popup_closed":not app._event_choice_popup_is_visible()})
+	if not _check(not app._event_choice_popup_is_visible(), "Normal inspector response closes its popup before passive wait"): return false
+	return _check(int(before.cash) == int(after.cash) and int(before.chips) == int(after.chips), "No-payment inspector response preserves both wallets")
+
+
+func _find_inspector_finish_button(node: Node) -> Button:
+	if node is Button and (node as Button).is_visible_in_tree() and not (node as Button).disabled 			and str(node.get_meta("event_id", "")) == "health_inspector" and str(node.get_meta("choice_id", "")) == "finish_one":
+		return node as Button
+	for child in node.get_children():
+		var found := _find_inspector_finish_button(child)
+		if found != null: return found
+	return null
+
+
+func _collect_visible_popup_buttons(node: Node, buttons: Array) -> void:
+	if node is Button and (node as Button).is_visible_in_tree():
+		buttons.append({"text": (node as Button).text, "disabled": (node as Button).disabled})
+	for child in node.get_children():
+		_collect_visible_popup_buttons(child, buttons)
 
 
 func _save_menu() -> bool:
