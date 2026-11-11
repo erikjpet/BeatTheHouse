@@ -31888,7 +31888,7 @@
         }
       },
       "state": "open",
-      "status": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "status": "FINAL_83_PASS_LIVENESS_PASS_SMOKE_4P7F_BASELINE_MATCH_NEXT_PENDING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31897,6 +31897,12 @@
       "commits": [
         {
           "sha": "b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "adacdc0414a3c41db59cd5708e814ea766175891",
           "evidence": [
             "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
           ]
@@ -31912,7 +31918,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
-          "summary": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "FINAL_83_PASS_LIVENESS_PASS_SMOKE_4P7F_BASELINE_MATCH_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
@@ -31924,13 +31930,13 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T10:09:31.761562+00:00",
+        "observed_at": "2026-11-11T10:30:56.623199+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
       ],
-      "updated_at": "2026-11-11T10:09:31.761562+00:00"
+      "updated_at": "2026-11-11T10:30:56.623199+00:00"
     }
   ],
   "batches": [
@@ -33230,7 +33236,7 @@
       "parent_id": "QOL-01",
       "group": "current",
       "state": "open",
-      "status": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "status": "FINAL_83_PASS_LIVENESS_PASS_SMOKE_4P7F_BASELINE_MATCH_NEXT_PENDING",
       "scope": [
         "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
       ],
@@ -33242,6 +33248,12 @@
       "commits": [
         {
           "sha": "b0cb51dfaf2cea0cf2cb61c42d693cca4b57b434",
+          "evidence": [
+            "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "adacdc0414a3c41db59cd5708e814ea766175891",
           "evidence": [
             "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
           ]
@@ -33257,7 +33269,7 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md",
-          "summary": "73_PASS_LIVENESS_PASS_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "FINAL_83_PASS_LIVENESS_PASS_SMOKE_4P7F_BASELINE_MATCH_NEXT_PENDING"
         }
       ],
       "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
@@ -33266,10 +33278,10 @@
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T10:09:31.761562+00:00",
+        "observed_at": "2026-11-11T10:30:56.623199+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T10:09:31.761562+00:00"
+      "updated_at": "2026-11-11T10:30:56.623199+00:00"
     }
   ]
 }
