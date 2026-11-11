@@ -31957,6 +31957,93 @@
         "Guard menu configured/generated/Daily/meta quick starts with the requested confirmation and Keep saved run default. Preserve no-save, mandatory tutorial and finished-report behavior."
       ],
       "updated_at": "2026-11-11T11:04:39.660403+00:00"
+    },
+    {
+      "id": "AUD061-12",
+      "name": "Investigate retained 49-percent Web export failures",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Retained49-percent resource and distinct failure types identified from raw evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Bounded same-memory-cap reproduction/isolation recorded; no speculative GC or asset fix claimed.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Current approved-storage reserve and actual existing-pipeline delivery recorded; two same-RC manifests compared or exact remaining blocker recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "7b4de496596f4a47ef114d11b0e103cf25b88001",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
+          "summary": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-12-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT report delivery, then final frozen-RC export pair; retain unresolved original causal acceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T11:45:30.207639+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
+      ],
+      "updated_at": "2026-11-11T11:45:30.207639+00:00"
     }
   ],
   "batches": [
@@ -33316,6 +33403,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T11:04:39.660403+00:00"
+    },
+    {
+      "id": "AUD061-12-BATCH-001",
+      "name": "Investigate retained 49-percent Web export failures implementation",
+      "parent_id": "AUD061-12",
+      "group": "current",
+      "state": "open",
+      "status": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING",
+      "scope": [
+        "Bounded retained-log investigation, exact historical/current same-limit private exports, resource isolation and pre-RC manifest comparison; report a factual disposition without closing the parent causal/RC acceptance."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "7b4de496596f4a47ef114d11b0e103cf25b88001",
+          "evidence": [
+            "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
+          "summary": "NOT_REPRODUCED_160_PASS_7_EXPORTS_ROOT_UNRESOLVED_EXACT_RC_PAIR_PENDING_NEXT_REPORT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT report delivery, then final frozen-RC export pair; retain unresolved original causal acceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T11:45:30.207639+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T11:45:30.207639+00:00"
     }
   ]
 }
