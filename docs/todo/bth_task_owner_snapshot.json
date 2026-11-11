@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-11T21:58:59.490961+00:00",
+  "observed_at": "2026-11-11T22:21:49.829504+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -244,8 +244,8 @@
       "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
       "title": "Execute 0.6.1 audit work orders",
       "state": "active",
-      "observed_at": "2026-11-11T21:58:59.490961+00:00",
-      "source": "Actual closeout checkpoint: CLOSE-01 local Smoke11/11; CLOSE-02/03/04 scoped local commits pass. Owner chose to place exact973 cold-import request, destination not present; remote973 retained. NEXT/browser acceptance/final candidate and packages remain open. No agent control-file submission or pipeline change."
+      "observed_at": "2026-11-11T22:21:49.829504+00:00",
+      "source": "User authorized exact request submission; watcher accepted/promoted973 and10 asset checks plus fresh rendered Slot6/BackAlley passed. Local CLOSE02/03/04 committed and focused checks pass; push/follow through then normal browser acceptance and final packages."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

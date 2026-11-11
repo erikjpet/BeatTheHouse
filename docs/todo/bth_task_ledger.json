@@ -34012,7 +34012,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "IN_PROGRESS_LOCAL_02_03_04_QUALIFIED_CLOSE01_NEXT_DONE",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34032,21 +34032,27 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "IN_PROGRESS_LOCAL_02_03_04_QUALIFIED_CLOSE01_NEXT_DONE"
+        }
+      ],
       "implementation_batches": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Push the scoped local task/ledger commit pairs, verify actual NEXT identity and changed behavior, run CLOSE-06 normal-control browser cases, then freeze/qualify/package CLOSE-05.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:33.623643+00:00",
+        "observed_at": "2026-11-11T22:21:49.763599+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Finish accepted0.6.1 audit closeout per owner decisions"
       ],
-      "updated_at": "2026-11-11T16:12:33.623643+00:00"
+      "updated_at": "2026-11-11T22:21:49.763599+00:00"
     },
     {
       "id": "CLOSE-LEDGER",
@@ -34167,29 +34173,37 @@
             "id": "1",
             "description": "Fresh NEXT first-night Blackjack wager lesson and Pull Tabs redemption",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Classify each failure before changing product/test/harness",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Smoke exit0 without weakening checks",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+            ]
           },
           {
             "id": "4",
             "description": "No-pointer liveness and Python comparison",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34198,8 +34212,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING",
+      "state": "complete",
+      "status": "DONE_SMOKE_11_PASS_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34223,13 +34237,21 @@
           "evidence": [
             "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c",
+        "evidence": [
+          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -34266,26 +34288,34 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_PASS_REQUEST_SUBMITTED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "DONE_SMOKE_11_PASS_EXACT_NEXT_VERIFIED"
         }
       ],
       "implementation_batches": [
         "CLOSE-01-BATCH-001"
       ],
-      "next_action": "Owner is placing the prepared exact973f0ba2 cold-import qualification request; monitor unchanged watcher, verify exact served identity and focused behavior before further push.",
+      "next_action": "Complete. Final candidate full Smoke remains independently required by CLOSE-05 after remaining browser acceptance.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Owner selected personal submission. Exact request destination absent at checkpoint; NEXT remainsf00a686f. No agent D control-file write or pipeline change.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-11T21:58:31.560671+00:00",
-        "evidence": [
-          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
-        ]
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T22:21:49.674634+00:00",
+        "evidence": []
       },
       "planned_app_changes": [
         "Classify and correct Smoke failures; tutorial first"
       ],
-      "updated_at": "2026-11-11T21:58:31.560671+00:00"
+      "updated_at": "2026-11-11T22:21:49.674634+00:00"
     },
     {
       "id": "CLOSE-02",
@@ -37006,8 +37036,8 @@
       "name": "Classify and correct Smoke failures; tutorial first bounded execution",
       "parent_id": "CLOSE-01",
       "group": "current",
-      "state": "open",
-      "status": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING",
+      "state": "complete",
+      "status": "DONE_SMOKE_11_PASS_EXACT_NEXT_VERIFIED",
       "scope": [
         "Classify and correct Smoke failures; tutorial first"
       ],
@@ -37034,13 +37064,21 @@
           "evidence": [
             "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c",
+          "evidence": [
+            "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c",
+        "evidence": [
+          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -37077,20 +37115,28 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_PASS_REQUEST_SUBMITTED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "DONE_SMOKE_11_PASS_EXACT_NEXT_VERIFIED"
         }
       ],
-      "next_action": "Owner is placing the prepared exact973f0ba2 cold-import qualification request; monitor unchanged watcher, verify exact served identity and focused behavior before further push.",
+      "next_action": "Complete. Final candidate full Smoke remains independently required by CLOSE-05 after remaining browser acceptance.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Owner selected personal submission. Exact request destination absent at checkpoint; NEXT remainsf00a686f. No agent D control-file write or pipeline change.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-11T21:58:31.560671+00:00",
-        "evidence": [
-          "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
-        ]
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T22:21:49.674634+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-11T21:58:31.560671+00:00"
+      "updated_at": "2026-11-11T22:21:49.674634+00:00"
     },
     {
       "id": "CLOSE-02-BATCH-001",
