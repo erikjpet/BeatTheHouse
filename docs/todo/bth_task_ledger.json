@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "FIVE_DELIVERED_QOL03_NATIVE_VERIFIED_SMOKE_RUNNING",
+      "status": "OPEN_6_OF_18_ORDERS_DONE_QOL04_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30538,22 +30538,22 @@
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
-          "summary": "FIVE_DELIVERED_QOL03_NATIVE_VERIFIED_SMOKE_RUNNING"
+          "reference": "docs/testing/AUD061_baseline_2026-11-10.md",
+          "summary": "OPEN_6_OF_18_ORDERS_DONE_QOL04_NEXT"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish QOL-03 exact NEXT delivery and visible wording attempt, then QOL-04 and remaining orders in sequence.",
+      "next_action": "Execute QOL-04, then remaining ordered work; parent stays open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:41:30.799690+00:00",
+        "observed_at": "2026-11-11T05:04:17.659086+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T04:41:30.799690+00:00"
+      "updated_at": "2026-11-11T05:04:17.659086+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31087,22 +31087,28 @@
             "id": "1",
             "description": "Listed player error messages become clear/actionable while original diagnostics remain logged.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "Additional reachable internal message literals are handled or explicitly classified; ordinary in-world wording and scenario/item content are unchanged.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "Focused before/after checks and Smoke no worse than baseline; exact NEXT identity/startup and feasible visible wording verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -31111,8 +31117,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_54_PASS_SUPPORT_21_EXACT_NEXT_STARTUP_WEB_LIMIT_RECORDED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31124,37 +31130,45 @@
           "evidence": [
             "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "49f0b2931b14ac139273b4ec54166fa709f7c21a",
+          "evidence": [
+            "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "49f0b2931b14ac139273b4ec54166fa709f7c21a",
+        "evidence": [
+          "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE_54_PASS_SUPPORT_21_EXACT_NEXT_STARTUP_WEB_LIMIT_RECORDED"
         }
       ],
       "implementation_batches": [
         "QOL-03-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:53:50.561768+00:00",
+        "observed_at": "2026-11-11T05:04:17.596602+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior."
       ],
-      "updated_at": "2026-11-11T04:53:50.561768+00:00"
+      "updated_at": "2026-11-11T05:04:17.596602+00:00"
     }
   ],
   "batches": [
@@ -32044,8 +32058,8 @@
       "name": "Replace internal player error wording with actionable messages implementation",
       "parent_id": "QOL-03",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_54_PASS_SUPPORT_21_EXACT_NEXT_STARTUP_WEB_LIMIT_RECORDED",
       "scope": [
         "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior."
       ],
@@ -32060,31 +32074,39 @@
           "evidence": [
             "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "49f0b2931b14ac139273b4ec54166fa709f7c21a",
+          "evidence": [
+            "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "49f0b2931b14ac139273b4ec54166fa709f7c21a",
+        "evidence": [
+          "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE_54_PASS_SUPPORT_21_EXACT_NEXT_STARTUP_WEB_LIMIT_RECORDED"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:53:50.561768+00:00",
+        "observed_at": "2026-11-11T05:04:17.596602+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T04:53:50.561768+00:00"
+      "updated_at": "2026-11-11T05:04:17.596602+00:00"
     }
   ]
 }

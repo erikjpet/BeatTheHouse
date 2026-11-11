@@ -59,4 +59,10 @@ Before54/23; after54/0. Existing `res://scripts/tests/fixsweep06_1_player_text_c
 
 ## NEXT
 
-Pending code/ledger commits and existing-pipeline promotion; final-source native/adjacent checks, Smoke comparison and bounded timing repeat complete. Exact unmodified startup and feasible normal-input visible wording checks remain to be attempted. Rare rejected-boundary copy is directly verified natively; no browser branch is claimed before observation.
+Verified exact deployed commit **49f0b2931b14ac139273b4ec54166fa709f7c21a**, containing code **384c7a84869861f0f61b52099aacef376f8e3504**; tree196a9e61234d6c843230253a2154231548d038ef; archive dbe9cff795db44697fc6a5bcaeb6b63e5ec20990412df968708264fc7e10b702. Existing watcher promoted it at2026-11-11T04:59:06Z with no error. Exact metadata/REF/HTML/JS/PCK/native GET hashes and engine HEAD length/MIME/pins:10/10PASS. Ordinary /dev/ entry resolves to this build.
+
+Fresh approved browser profile, unmodified served build: startup, Daily Challenge, House-to-Gas-Casino travel, ordinary slot play and Run Menu visually checked. Browser errors0, console warnings/errors0, jobexit0, no timeout, zero active processes after close. Screenshots00-startup,01-daily-run,04-click,07-click,08-burst,09-click,12-click retained and visually inspected. No script/scene/path override or personal-save access.
+
+The rejected-boundary wording remains directly verified by the native54/0 check and21/21 original support diagnostics. It was **not observed in the Web UI**: a rapid Spin/Menu/Save sequence did not reach the busy-save guard, and ordinary autoplay produced a normal Machine Jam choice instead. Inspection shows the special readiness override belongs to Coin Pusher; slot play does not reproduce it. The browser run establishes exact deployment, clean startup and normal navigation/play, not coverage of rare malformed-authority/reward or live-Coin-Pusher rejection branches. Those are explicit verification limits, not claimed Web successes. This copy-only order's changed boundaries have native rejection/property evidence; no validation, error code or persistence scheduling changed.
+
+Ledger reconciliation:1683inherited errors across52existing tasks, matching baseline; zero findings mentioning this audit's IDs. Raw output retained. Parent remains Open for12remaining work orders.
