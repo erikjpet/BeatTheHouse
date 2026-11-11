@@ -1,0 +1,12 @@
+[
+  {
+    "key": "01-rourke_phased_interruption_check",
+    "script": "rourke_phased_interruption_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 20.74,
+    "source_sha256": "f7b0facab95355cb6e70e79d7edd9e87cf0e3eac8f65a0d74e82374c9984592e",
+    "footer": [],
+    "errors": []
+  }
+]

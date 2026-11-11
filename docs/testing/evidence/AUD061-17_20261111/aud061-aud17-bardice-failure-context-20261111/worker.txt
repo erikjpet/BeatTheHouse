@@ -1,0 +1,1 @@
+{"checks": 44, "failures": ["Passive tumble ends without funding or rootRNG change"], "cold": {"final_cash": 108, "paid_call_count": 1, "rounds": 1, "stake": 6}, "post_call_ui": {"closing_active": false, "popup_event_id": "health_inspector", "popup_visible": true, "screen": "GAME", "transition_active": true}, "completed": null, "actions": ["bar_dice_reveal", "bar_dice_ack_call"]}

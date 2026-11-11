@@ -1,0 +1,10 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+RUN_SAVE_MIGRATION town_state regenerated from seed for a pre-0.6 save.
+ERROR: failed navigation save retains the once-settled open run
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/rourke_phased_interruption_check.gd:124)
+ROURKE_PHASED_INTERRUPTION_CHECK {"cases":["terminal parity","shared animation and result-reading gate","automatic terminal report","terminal Main Menu and cold Continue","failed Save and retry","scene teardown","pending save auto recovery"],"failures":["failed navigation save retains the once-settled open run"]}

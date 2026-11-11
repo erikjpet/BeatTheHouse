@@ -1,0 +1,1 @@
+Prepared current-build money-history stages; checkpoint data preserves completed report and last-order registration.

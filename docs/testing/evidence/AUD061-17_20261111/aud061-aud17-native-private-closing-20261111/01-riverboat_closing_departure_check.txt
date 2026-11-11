@@ -1,0 +1,43 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+ERROR: Closing response did not serve the remaining ride beats through checked turns.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Successful response did not complete and save once.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Duplicate response advanced, saved or opened a second map.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Closing response did not serve the remaining ride beats through checked turns.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Successful response did not complete and save once.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Duplicate response advanced, saved or opened a second map.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Existing ordinary departure behavior changed.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Existing ordinary departure behavior changed.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: Existing ordinary departure behavior changed.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+ERROR: A rejected docking wait could not be retried once.
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _run (res://scripts/tests/riverboat_closing_departure_check.gd:72)
+Riverboat closing departure checks: 19 failures=10

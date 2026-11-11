@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\np=W/'.tmp/aud061_rc_checks.py';s=read(p)\nneedle=\" isqa=name.startswith('aud061_')\"\nassert needle in s\ns=s.replace(needle,\" env['BTH_TARGET_OUTPUT']=str(out/(key+'.json'))\\n\"+needle)\nneedle=\" if name=='money_flow_runstate_persistence_check':\"\ns=s.replace(needle,\" if name=='count_heist_money_flow_check':\\n  env['BTH_COUNT_MONEY_CASE']=args[0] if args else 'synthetic';args=[]\\n\"+needle)\ns=s.replace(\"'environment_stage':env.get('BTH_BAR_DICE_RESTORE_STAGE')\",\"'declared_stage':{k:env[k] for k in ('BTH_BAR_DICE_RESTORE_STAGE','BTH_MONEY_ARCHIVE_STAGE','BTH_COUNT_MONEY_CASE','BTH_TARGET_OUTPUT') if k in env}\")\nwrite(p,s);write(W/'.tmp/aud061_numbers_rc.gd',\"extends \\\"res://scripts/tests/numbers_purchase_journal_check.gd\\\"\\nfunc _private_roots() -> bool:\\n private_root=OS.get_environment(\\\"BTH_QA_RUN_DIR\\\").replace(\\\"\\\\\\\\\\\",\\\"/\\\").simplify_path()\\n var m: Dictionary=JSON.parse_string(FileAccess.get_file_as_string(OS.get_environment(\\\"BTH_QA_EVIDENCE_DIR\\\").path_join(\\\"storage-manifest.json\\\")))\\n if not _check(private_root.begins_with(\\\"E:/CodexQA/BTH/runs/\\\") and m.get(\\\"prepared\\\",false) and str(m.get(\\\"paths\\\",{}).get(\\\"run_root\\\",\\\"\\\")).replace(\\\"\\\\\\\\\\\",\\\"/\\\")==private_root,\\\"Exact current prepared E native root\\\"):return false\\n for key in [\\\"APPDATA\\\",\\\"LOCALAPPDATA\\\",\\\"USERPROFILE\\\",\\\"BTH_SAVE_DIR\\\",\\\"BTH_DISTRIBUTION_DATA_ROOT\\\",\\\"BTH_META_COLLECTION_PATH\\\",\\\"BTH_PROFILE_INVENTORY_PATH\\\",\\\"BTH_USER_SETTINGS_PATH\\\",\\\"BTH_WORLD_REENTRY_ROOT\\\",\\\"BTH_TARGET_OUTPUT\\\"]:\\n  if not _check(OS.get_environment(key).replace(\\\"\\\\\\\\\\\",\\\"/\\\").simplify_path().begins_with(private_root+\\\"/\\\"),\\\"Private admitted containment \\\"+key):return false\\n return _check(OS.get_environment(\\\"BTH_CAPTURED_FIXTURE\\\").is_empty() and OS.get_environment(\\\"BTH_WEB_STORAGE_PROFILE\\\").is_empty(),\\\"Original player saves and profiles excluded\\\")\\n\")\nprint('Declared bounded evidence output for all checks and explicit current-build synthetic/prospective Count stages. Numbers adapter preserves tests while using exact admitted manifest containment; no captured save input selected.')"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "56272d648c8a76732510e844ca8da0bc737b4e7235981fc32205c4105c297534",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud17-explicit-money-modes-prepare-20261111",
+    "token": "fa38eabeaf7721eacdccb0545ea19994",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\profile",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\temp",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\appdata",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\localappdata",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\home",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\cache",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\save_dir",
+      "available_bytes": 333918224384
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\pycache",
+      "available_bytes": 333918224384
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\profile",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\temp",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\evidence",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\appdata",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\localappdata",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\home",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\cache",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\save_dir",
+      "available_bytes": 333918216192
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-explicit-money-modes-prepare-20261111\\pycache",
+      "available_bytes": 333918216192
+    }
+  },
+  "pid": 17940,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794404307.4378004
+}

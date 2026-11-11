@@ -1,0 +1,5 @@
+Closing/travel test retains every behavior assertion, using the exact prepared current E manifest for its older private-root naming convention.
+{"key": "01-craps_refund_journal_currency_check", "exit": 0, "errors": []}
+{"key": "02-craps_working_stakes_terminal_check", "exit": 0, "errors": []}
+{"key": "03-blackjack_money_reveal_check", "exit": 0, "errors": []}
+{"key": "04-blackjack_money_reveal_check---cash", "exit": 0, "errors": []}

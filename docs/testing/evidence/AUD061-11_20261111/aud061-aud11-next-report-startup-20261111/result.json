@@ -1,0 +1,72 @@
+{
+  "sha": "e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec",
+  "scope": "Unmodified exact NEXT HTML/PCK/engine/native startup and ordinary Daily Challenge in a fresh isolated browser profile; no scene/script/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 100292,
+    "sha256": "29e52fb68433d3409665ad79375ce3efdd23faf6a3ca5d56712daa6058fabd60",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "menu": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 100292,
+    "sha256": "29e52fb68433d3409665ad79375ce3efdd23faf6a3ca5d56712daa6058fabd60",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "stage": "COMPLETE",
+  "state": "FINISHED",
+  "testScope": "Exact unmodified NEXT startup and ordinary fresh Daily Challenge; task-specific native evidence is recorded separately.",
+  "finished": "2026-11-11T13:33:12.797Z"
+}

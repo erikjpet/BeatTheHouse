@@ -1,0 +1,211 @@
+{
+  "checks": 20,
+  "facts": {
+    "restore_differences": [
+      {
+        "expected": 0.148837209302326,
+        "path": "/current_environment/layout/object_rects/home_container:trunk_01/h",
+        "restored": 0.148837209302326
+      },
+      {
+        "expected": 0.102222222222222,
+        "path": "/current_environment/layout/object_rects/home_container:trunk_01/w",
+        "restored": 0.102222222222222
+      },
+      {
+        "expected": 0.828888888888889,
+        "path": "/current_environment/layout/object_rects/home_container:trunk_01/x",
+        "restored": 0.828888888888889
+      },
+      {
+        "expected": 0.388372093023256,
+        "path": "/current_environment/layout/object_rects/home_container:trunk_01/y",
+        "restored": 0.388372093023256
+      },
+      {
+        "expected": 0.111627906976744,
+        "path": "/current_environment/layout/object_rects/home_sleep:bed/h",
+        "restored": 0.111627906976744
+      },
+      {
+        "expected": 0.235555555555556,
+        "path": "/current_environment/layout/object_rects/home_sleep:bed/x",
+        "restored": 0.235555555555556
+      },
+      {
+        "expected": 0.390697674418605,
+        "path": "/current_environment/layout/object_rects/home_sleep:bed/y",
+        "restored": 0.390697674418605
+      },
+      {
+        "expected": 0.148837209302326,
+        "path": "/current_environment/layout/object_rects/home_storage:place/h",
+        "restored": 0.148837209302326
+      },
+      {
+        "expected": 0.102222222222222,
+        "path": "/current_environment/layout/object_rects/home_storage:place/w",
+        "restored": 0.102222222222222
+      },
+      {
+        "expected": 0.404444444444444,
+        "path": "/current_environment/layout/object_rects/home_storage:place/x",
+        "restored": 0.404444444444444
+      },
+      {
+        "expected": 0.365116279069767,
+        "path": "/current_environment/layout/object_rects/home_storage:place/y",
+        "restored": 0.365116279069767
+      },
+      {
+        "expected": 0.111627906976744,
+        "path": "/current_environment/layout/object_rects/home_tenure:status/h",
+        "restored": 0.111627906976744
+      },
+      {
+        "expected": 0.583720930232558,
+        "path": "/current_environment/layout/object_rects/home_tenure:status/y",
+        "restored": 0.583720930232558
+      },
+      {
+        "expected": 0.111627906976744,
+        "path": "/current_environment/layout/object_rects/item:cashout_envelope/h",
+        "restored": 0.111627906976744
+      },
+      {
+        "expected": 0.0488888888888889,
+        "path": "/current_environment/layout/object_rects/item:cashout_envelope/w",
+        "restored": 0.0488888888888889
+      },
+      {
+        "expected": 0.736666666666667,
+        "path": "/current_environment/layout/object_rects/item:cashout_envelope/x",
+        "restored": 0.736666666666667
+      },
+      {
+        "expected": 0.130232558139535,
+        "path": "/current_environment/layout/object_rects/item:cashout_envelope/y",
+        "restored": 0.130232558139535
+      },
+      {
+        "expected": 0.111627906976744,
+        "path": "/current_environment/layout/object_rects/item:cheap_sunglasses/h",
+        "restored": 0.111627906976744
+      },
+      {
+        "expected": 0.0488888888888889,
+        "path": "/current_environment/layout/object_rects/item:cheap_sunglasses/w",
+        "restored": 0.0488888888888889
+      },
+      {
+        "expected": 0.661111111111111,
+        "path": "/current_environment/layout/object_rects/item:cheap_sunglasses/x",
+        "restored": 0.661111111111111
+      },
+      {
+        "expected": 0.132558139534884,
+        "path": "/current_environment/layout/object_rects/item:cheap_sunglasses/y",
+        "restored": 0.132558139534884
+      },
+      {
+        "expected": 0.111627906976744,
+        "path": "/current_environment/layout/object_rects/item:lucky_keychain/h",
+        "restored": 0.111627906976744
+      },
+      {
+        "expected": 0.0488888888888889,
+        "path": "/current_environment/layout/object_rects/item:lucky_keychain/w",
+        "restored": 0.0488888888888889
+      },
+      {
+        "expected": 0.826666666666667,
+        "path": "/current_environment/layout/object_rects/item:lucky_keychain/x",
+        "restored": 0.826666666666667
+      },
+      {
+        "expected": 0.125581395348837,
+        "path": "/current_environment/layout/object_rects/item:lucky_keychain/y",
+        "restored": 0.125581395348837
+      },
+      {
+        "expected": 0.167441860465116,
+        "path": "/current_environment/layout/object_rects/travel:leave/h",
+        "restored": 0.167441860465116
+      },
+      {
+        "expected": 0.0711111111111111,
+        "path": "/current_environment/layout/object_rects/travel:leave/w",
+        "restored": 0.0711111111111111
+      },
+      {
+        "expected": 0.924444444444444,
+        "path": "/current_environment/layout/object_rects/travel:leave/x",
+        "restored": 0.924444444444444
+      },
+      {
+        "expected": 0.718604651162791,
+        "path": "/current_environment/layout/object_rects/travel:leave/y",
+        "restored": 0.718604651162791
+      },
+      {
+        "expected": 0.2058,
+        "path": "/current_environment/music_profile/volume",
+        "restored": 0.2058
+      },
+      {
+        "expected": 0.30999999165535,
+        "path": "/world_map/nodes/0/position/x",
+        "restored": 0.30999999165535
+      },
+      {
+        "expected": 0.490000009536743,
+        "path": "/world_map/nodes/1/position/x",
+        "restored": 0.490000009536743
+      },
+      {
+        "expected": 0.599999985694885,
+        "path": "/world_map/nodes/1/position/y",
+        "restored": 0.599999985694885
+      },
+      {
+        "expected": 0.140000000596046,
+        "path": "/world_map/nodes/2/position/y",
+        "restored": 0.140000000596046
+      },
+      {
+        "expected": 0.139999996423721,
+        "path": "/world_map/nodes/3/position/x",
+        "restored": 0.139999996423721
+      },
+      {
+        "expected": 0.469999988079071,
+        "path": "/world_map/nodes/3/position/y",
+        "restored": 0.469999988079071
+      },
+      {
+        "expected": 0.779999990463257,
+        "path": "/world_map/nodes/4/position/x",
+        "restored": 0.779999990463257
+      },
+      {
+        "expected": 0.125000002980232,
+        "path": "/world_map/nodes/4/position/y",
+        "restored": 0.125000002980232
+      },
+      {
+        "expected": 0.239999998807907,
+        "path": "/world_map/nodes/5/position/y",
+        "restored": 0.239999998807907
+      },
+      {
+        "expected": 0.909999976158142,
+        "path": "/world_map/nodes/6/position/x",
+        "restored": 0.909999976158142
+      }
+    ],
+    "scope": "Synthetic new-run settlements and report guard controls; captured modes never replay the historical award. Prospective read in a separate process is required for fresh-process acceptance. No historical saves are repaired or resaved."
+  },
+  "failures": [
+    "official restore preserves full ending/receipts/RNG state"
+  ]
+}

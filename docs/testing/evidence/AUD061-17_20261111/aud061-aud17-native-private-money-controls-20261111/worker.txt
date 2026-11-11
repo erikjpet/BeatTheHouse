@@ -1,0 +1,8 @@
+{"key": "01-grand_casino_clean_walkout_cashout_check", "exit": 0, "seconds": 4.64, "footer": ["CLEAN_WALKOUT_CASHOUT checks=39 failures=[]"], "errors": []}
+{"key": "02-grand_chip_liquidity_terminal_check", "exit": 0, "seconds": 8.23, "footer": ["GRAND_CHIP_LIQUIDITY checks=62 failures=0"], "errors": []}
+{"key": "03-count_heist_money_flow_check-synthetic", "exit": 0, "seconds": 5.3, "footer": ["COUNT_HEIST_MONEY_FLOW checks=70 failures=[]"], "errors": []}
+{"key": "04-count_heist_money_flow_check-prospective_write", "exit": 1, "seconds": 6.38, "footer": ["COUNT_HEIST_MONEY_FLOW checks=20 failures=[\"official restore preserves full ending/receipts/RNG state\"]"], "errors": []}
+{"key": "05-count_heist_money_flow_check-prospective_read", "exit": 1, "seconds": 5.81, "footer": ["COUNT_HEIST_MONEY_FLOW checks=7 failures=[\"official restore preserves full ending/receipts/RNG state\"]"], "errors": []}
+{"key": "06-runtime_item_purchase_uniqueness_check", "exit": 0, "seconds": 6.7, "footer": ["RUNTIME_ITEM_UNIQUENESS checks=101 failures=0"], "errors": []}
+{"key": "07-aud061_numbers_rc", "exit": 0, "seconds": 5.52, "footer": ["NUMBERS_PURCHASE_JOURNAL_RESULT {\"checks\":109,\"facts\":{\"cold\":[],\"legacy\":{\"cash\":29,\"fixture_setup\":\"normal paid API purchase, then remove only synthetic new purchase row to repre"], "errors": []}
+{"key": "08-aud061_numbers_rc---cold", "exit": 0, "seconds": 5.19, "footer": ["NUMBERS_PURCHASE_JOURNAL_RESULT {\"checks\":58,\"facts\":{\"cold\":[{\"cash\":30,\"chips\":25,\"money_lines\":[[\"Bankroll -1\"]],\"purchase_rows\":1,\"slips\":1,\"slot\":\"numbers_purchase_reported\"},"], "errors": []}

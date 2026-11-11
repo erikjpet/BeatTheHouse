@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nwrite(W/'.tmp/aud061_count_expectation_observer.gd',\"extends SceneTree\\nconst Codec := preload(\\\"res://scripts/core/run_save_codec.gd\\\")\\nconst Numeric := preload(\\\"res://scripts/core/storage_numeric_json.gd\\\")\\nfunc _init():\\n var base := \\\"E:/CodexQA/BTH/runs/aud061-aud17-native-private-money-controls-20261111/\\\"\\n var raw := FileAccess.get_file_as_string(base+\\\"save_dir/distribution/saves/count_money_prospective.json\\\")\\n var parsed := Numeric.parse(Codec.preserve_blackjack_ledger_integer_tokens(raw))\\n var actual: Dictionary=Codec.decode(Codec.unpack_from_storage(parsed.get(\\\"data\\\",{}).get(\\\"run_state\\\",{})))\\n var ref=JSON.parse_string(FileAccess.get_file_as_string(base+\\\"appdata/Godot/app_userdata/Beat the House/count-money-expected.json\\\"))\\n if not ref is Dictionary or not actual.has(\\\"current_environment\\\"):\\n  print(\\\"COUNT_EXPECTATION_DIAGNOSTIC missing current QA input\\\");quit(2);return\\n var expected: Dictionary=ref.get(\\\"snapshot\\\",{})\\n var a: float=actual.get(\\\"current_environment\\\",{}).get(\\\"layout\\\",{}).get(\\\"object_rects\\\",{}).get(\\\"home_container:trunk_01\\\",{}).get(\\\"h\\\",0)\\n var b: float=expected.get(\\\"current_environment\\\",{}).get(\\\"layout\\\",{}).get(\\\"object_rects\\\",{}).get(\\\"home_container:trunk_01\\\",{}).get(\\\"h\\\",0)\\n var protected: Dictionary={}\\n for key in [\\\"bankroll\\\",\\\"grand_casino_chips\\\",\\\"rng_state\\\",\\\"run_status\\\",\\\"seed_text\\\"]:\\n  protected[key]={\\\"actual\\\":actual.get(key),\\\"expected\\\":expected.get(key),\\\"same_value\\\":actual.get(key)==expected.get(key)}\\n print(\\\"COUNT_EXPECTATION_DIAGNOSTIC \\\"+JSON.stringify({\\\"scope\\\":\\\"Read-only selected leaf and financial/identity fields from this run's own exact-source QA save/ordinary-JSON expectation; not a full loss diagnosis\\\",\\\"path\\\":\\\"/current_environment/layout/object_rects/home_container:trunk_01/h\\\",\\\"actual_17_digits\\\":\\\"%.17f\\\"%a,\\\"expected_17_digits\\\":\\\"%.17f\\\"%b,\\\"actual_bits\\\":PackedFloat64Array([a]).to_byte_array().hex_encode(),\\\"expected_bits\\\":PackedFloat64Array([b]).to_byte_array().hex_encode(),\\\"absolute_delta\\\":abs(a-b),\\\"actual_equals_64_over_430\\\":a==64.0/430.0,\\\"protected\\\":protected,\\\"full_snapshot_test_still_failed\\\":true}))\\n quit(0)\\n\")\nprint('Prepared a read-only bit/precision observation, retaining the exact failed assertion and its required status.')"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "9942df6f1251ee26787d7a395b017e368d9626dfdb934ad0d888d4af438148c8",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud17-count-diagnostic-prepare-20261111",
+    "token": "0962560ffead5fdec50943bcd4c90a1d",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\profile",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\temp",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\appdata",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\localappdata",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\home",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\cache",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\save_dir",
+      "available_bytes": 332568178688
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\pycache",
+      "available_bytes": 332568178688
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\profile",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\temp",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\evidence",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\appdata",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\localappdata",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\home",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\cache",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\save_dir",
+      "available_bytes": 332568170496
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-count-diagnostic-prepare-20261111\\pycache",
+      "available_bytes": 332568170496
+    }
+  },
+  "pid": 3008,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794405410.8752413
+}

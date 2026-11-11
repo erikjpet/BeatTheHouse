@@ -1,0 +1,1 @@
+HEAD is now at fcfe0204 AUD061-05: record the full changelog commit identity

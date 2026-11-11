@@ -1,0 +1,24 @@
+{
+  "checks": 70,
+  "facts": {
+    "legacy_control": {
+      "coverage": {
+        "archived_entry_count": 0,
+        "complete": true,
+        "known_entry_count": 0,
+        "retained_entry_count": 1,
+        "unknown_entry_count": 0
+      },
+      "rows": [
+        {
+          "currency": "cash",
+          "key": "crew_heist",
+          "label": "Heist payout",
+          "net": 720
+        }
+      ]
+    },
+    "scope": "Synthetic new-run settlements and report guard controls; captured modes never replay the historical award. Prospective read in a separate process is required for fresh-process acceptance. No historical saves are repaired or resaved."
+  },
+  "failures": []
+}

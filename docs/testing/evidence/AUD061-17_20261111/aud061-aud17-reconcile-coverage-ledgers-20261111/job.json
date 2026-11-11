@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nproof='docs/testing/AUD061-17_release_coverage_2026-11-11.md'\nd=load(L);stamp=now();candidate='fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc'\nr=next(r for r in d['objectives'] if r['id']=='AUD061-12')\nr.update(status='NOT_REPRODUCED_EXACT_RC_TWO_EXPORTS_PASS_ORIGINAL_CAUSE_OPEN',updated_at=stamp,next_action='Retain historical allocation/stack cause as not reproduced. If failure recurs, capture exact next resource/allocation boundary under unchanged limits; no speculative workaround.')\nr['objective']['acceptance'][2].update(state='pass',evidence=[proof])\nr['evidence'].append({'kind':'exact_rc_export_pair','reference':proof,'summary':'Two full exact fcfe exports0/0;1165-file manifests and all payload MD5s pass; only218-class cache list ordering differs.'})\nb=copy.deepcopy(next(r for r in d['batches'] if r['id']=='AUD061-12-BATCH-001'))\nb.update(id='AUD061-12-BATCH-002',name='Exact frozen candidate two-export manifest comparison',state='open',status='CHECKS_PASS_REPORT_DELIVERY_PENDING',commits=[],evidence=[{'kind':'audit_proof','reference':proof,'summary':'Two exact-RC full private packs and independent manifest/payload comparison pass.'}],scope=['Compare two full private Web PCK exports of fcfe under unchanged2GiB/12% guards; retain differences and identity.'],deployment={'required':True,'state':'pending','commit':None,'evidence':[]},updated_at=stamp,next_action='Associate finished report commit and verify normal NEXT delivery; original-cause parent remains open.')\nd['batches'].append(b);r['implementation_batches'].append(b['id'])\nsummary={\n 'BTH061-005':('FROZEN_RC_SCOPED_MONEY_856_CHECKS_2_ORACLE_FAILURES_COVERAGE_OPEN','Complete normal-run conservation/use/cancel/travel coverage and resolve Count oracle discrepancy. No demonstrated payout loss in the scoped result.'),\n 'BTH061-006':('FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN','Resolve Scratch owned-state discrepancy and finish all eleven paid/pending/settled public and cold Continue cases; retain unresolved original Pull Tabs cause separately.'),\n 'BTH061-007':('FROZEN_RC_PUBLIC_CLOSING_83_0_RIVERBOAT_FIXTURE_19_10_COVERAGE_OPEN','Qualify mounted Riverboat and normal Bar Dice interruption/exit; complete conversation/delivery/crew closing cases. Rourke source-fault and terminal Continue scoped controls pass.'),\n 'BTH061-012':('FROZEN_RC_PRIVATE_PACKS_SOURCE_PASS_VERSION_2_2_FAIL_FINAL_PACKAGE_OPEN','Admit separately reviewed0.6.1 version/project/preset/exporter changes through existing guards, then qualify one final Windows/Web/source set and remaining gates; no cross-version save gate.')}\nfor ident,(status,nxt) in summary.items():\n r=next(r for r in d['objectives'] if r['id']==ident)\n r['owner']={'name':'Execute 0.6.1 audit work orders','task_ref':OWNER,'assignment_state':'assigned'}\n r.update(state='open',status=status,next_action=nxt,updated_at=stamp)\n r['evidence'].append({'kind':'frozen_candidate_qualification','reference':proof,'summary':status})\n r['candidate_qualification_20261111']={'commit':candidate,'proof':proof,'scope':status}\n r['blocker']={'state':'active' if ident=='BTH061-012' else 'none','kind':'external' if ident=='BTH061-012' else 'none','description':'AUD061-04 exact guarded version-input qualification conflict.' if ident=='BTH061-012' else 'Remaining acceptance and diagnosed test discrepancies require follow-up; no external block established.','requires_user_input':False,'observed_at':stamp,'evidence':[proof]}\n if ident=='BTH061-012':\n  r['objective']['historical_scope_before_owner_override']=r['objective']['text']\n  r['objective']['text']='Build and qualify final Windows/Web/source packages, version stamps, checksums, fresh startup and remaining acceptance from one exact candidate. Historical cross-version compatibility receipts are retained, but the current owner explicitly excludes old-save preservation, migration, upgrade fixtures and runtime version checks.'\n  for a in r['objective']['acceptance']:a.update(description=r['objective']['text'],state='open',evidence=[proof])\nr=next(r for r in d['objectives'] if r['id']=='AUD061-EXECUTION')\nr.update(status='18_OF_18_PROCESSED_14_DONE_1_NOT_REPRODUCED_1_BLOCKED_2_FAILED_QUALIFICATION',next_action='Resolve AUD061-04 and the separately registered release qualification findings; choose and fully qualify the next candidate before owner tagging.',updated_at=stamp)\nr['evidence']=[{'kind':'audit_proof','reference':proof,'summary':r['status']}]\nr['blocker']={'state':'active','kind':'external','description':'AUD061-04 version admission and unresolved acceptance/final-packaging qualification. All18 execution dispositions are recorded; release is not qualified.','requires_user_input':False,'observed_at':stamp,'evidence':[proof]}\ndone=['AUD061-02','AUD061-01','AUD061-09','AUD061-10','QOL-02','QOL-03','QOL-04','QOL-05','AUD061-16','AUD061-14','AUD061-08','AUD061-15','QOL-01','AUD061-05']\nfor a in r['objective']['acceptance']:\n ident=a['description'];row=next((x for x in d['objectives'] if x['id']==ident),None)\n if row:a.update(state='pass' if ident in done else 'open',evidence=[e['reference'] for e in row['evidence'] if e.get('reference')])\nfor ident in ['AUD061-17']:\n r=next(r for r in d['objectives'] if r['id']==ident)\n for a in r['objective']['acceptance']:\n  a.update(state='pass' if a['id'] in ['5','6'] else 'open',evidence=[proof])\ndump(L,d)\ntext=read(P)\nrows={r['id']:r for g in ['objectives','batches'] for r in d[g]}\ntarget=set(summary)|{'AUD061-12','AUD061-EXECUTION','AUD061-17'}\nlines=[]\nfor line in text.splitlines():\n cells=line.split('|');ident=cells[1].strip().split(' (')[0] if len(cells)>2 else ''\n if ident in target:\n  r=rows[ident]\n  if len(cells)>=10:\n   cells[4]=' '+r['owner']['name']+' ';cells[5]=' Open ';cells[6]=' '+r['status']+' ';cells[7]=' '+(', '.join(c['sha'] for c in r['commits']) or '-')+' ';cells[8]=' '+r['next_action']+' '+proof+' '\n  elif len(cells)==5:cells[2]=' Open / '+r['status']+' ';cells[3]=' '+r['next_action']+' '+proof+' '\n  line='|'.join(cells)\n lines.append(line)\nidx=next(i for i,x in enumerate(lines) if x.startswith('| AUD061-EXECUTION |'))\nlines.insert(idx,'| '+b['id']+' | '+b['name']+' | AUD061-12 | Execute 0.6.1 audit work orders | Open | '+b['status']+' | - | '+b['next_action']+' '+proof+' |')\nwrite(P,'\\n'.join(lines)+'\\n')\np=W/'docs/testing/AUD061-12_web_export_investigation_2026-11-11.md'\nwrite(p,read(p)+'\\n## Frozen-candidate pair follow-through (AUD061-17)\\n\\nBoth full private Web exports of fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc exit0 under the unchanged12% CPU/2GiB Job/storage guards; active processes0. Each has1,165 allowed files with all payload MD5s verified. The only changed payload is global_script_class_cache.cfg list order:218 identical class/all-field maps; all1,164 other payloads match. Packs are not byte-identical. See '+proof+' and its raw receipts for exact hashes. This completes the previously pending exact-RC pair criterion; bounded batch002 records it separately without reopening completed investigation batch001. Original allocation/stack-overflow cause remains not reproduced; parent and BTH-NEXT-ALLOC-001 remain open. No speculative production fix.\\n')\nprint('Synced root, exact-RC export follow-through and four required coverage objectives; kept original cause and incomplete gates open.')\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "cde75bba053dfceefa8cefc6676ec5d546dd8c6fbd92ef8c6950e307023aa166",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud17-reconcile-coverage-ledgers-20261111",
+    "token": "bc1f3d14e5729f7982cc28ebac6f081b",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\profile",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\temp",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\appdata",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\localappdata",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\home",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\cache",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\save_dir",
+      "available_bytes": 332555153408
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\pycache",
+      "available_bytes": 332555153408
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\profile",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\temp",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\evidence",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\appdata",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\localappdata",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\home",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\cache",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\save_dir",
+      "available_bytes": 332555137024
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-reconcile-coverage-ledgers-20261111\\pycache",
+      "available_bytes": 332555137024
+    }
+  },
+  "pid": 3468,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794407138.835701
+}

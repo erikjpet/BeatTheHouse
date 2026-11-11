@@ -1,0 +1,8 @@
+{
+	"checks": 101,
+	"facts": {
+
+	},
+	"failures": [],
+	"fidelity": "Synthetic real service/candidate transactions with explicitly labeled candidate fault seams, plus optional official L06 copied-save service/SaveService check. Native model coverage, no normal Web/pointer claim; original profiles untouched."
+}

@@ -1,0 +1,8 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+GRAND_CHIP_LIQUIDITY checks=1 failures=1
+ERROR: private diagnostic persistence roots are required
+   at: push_error (core/variant/variant_utility.cpp:1024)
+   GDScript backtrace (most recent call first):
+       [0] _finish (res://scripts/tests/grand_chip_liquidity_terminal_check.gd:177)
+       [1] _run (res://scripts/tests/grand_chip_liquidity_terminal_check.gd:28)

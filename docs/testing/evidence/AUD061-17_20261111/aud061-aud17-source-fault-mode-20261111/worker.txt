@@ -1,0 +1,1 @@
+Source Rourke fault-switch test now explicitly non-distribution, as AUD061-16 requires; its storage stays in the same admitted E root and no assertion changes.

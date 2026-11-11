@@ -1,0 +1,1 @@
+Prepared full manifest/allowlist/each-payload MD5 comparison; only identical class maps may explain cache list ordering. Actual byte differences are retained, not hidden.

@@ -1,0 +1,142 @@
+[
+  {
+    "key": "01-craps_refund_journal_currency_check",
+    "script": "craps_refund_journal_currency_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 5.3,
+    "source_sha256": "3be5040b71a328af77e0626c04704a6a5cd2c4682b40ccd95a7e0170d91c0023",
+    "footer": [],
+    "errors": []
+  },
+  {
+    "key": "02-craps_working_stakes_terminal_check",
+    "script": "craps_working_stakes_terminal_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 5.36,
+    "source_sha256": "54e850f59c9867d75a5724557e6db7bc43637265cc01785657040095707ec59f",
+    "footer": [
+      "CRAPS_WORKING_STAKES_TERMINAL_RESULT {\"checks\":16,\"failures\":[]}"
+    ],
+    "errors": []
+  },
+  {
+    "key": "03-blackjack_money_reveal_check",
+    "script": "blackjack_money_reveal_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 14.81,
+    "source_sha256": "4a16baae565d88528d4e326658468990c97f739a3bbf901bfe0cac6250f1d24e",
+    "footer": [
+      "BLACKJACK_MONEY_REVEAL_RESULT {\"checks\":133,\"failures\":[],\"rows\":[{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":17,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":10,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":0,\"start\":105007},{\"actual\":100000,\"before\":99999,\"cash\":99998,\"chips\":2,\"duration\":2600,\"hand_results\":[{\"bankroll_delta\":1,\"blackjack\":false,\"dealer_total\":24,\"doubled\":false,\"outcome\":\"dealer_bust\",\"player_total\":17,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":1,\"start\":135007},{\"actual\":100000,\"before\":100000,\"cash\":99998,\"chips\":2,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":0,\"blackjack\":false,\"dealer_total\":19,\"doubled\":false,\"outcome\":\"push\",\"player_total\":19,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":2,\"start\":165007},{\"actual\":99999,\"before\":100000,\"cash\":99998,\"chips\":1,\"duration\":2600,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":17,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":15,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1335771704\",\"round\":3,\"start\":195007},{\"actual\":100000,\"before\":99999,\"cash\":99998,\"chips\":2,\"duration\":6275,\"hand_results\":[{\"bankroll_delta\":1,\"blackjack\":false,\"dealer_total\":25,\"doubled\":false,\"outcome\":\"dealer_bust\",\"player_total\":17,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1335771704\",\"round\":4,\"start\":225007},{\"actual\":99999,\"before\":100000,\"cash\":99998,\"chips\":1,\"duration\":1860,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":18,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":13,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"839422609\",\"round\":5,\"start\":255007}]}"
+    ],
+    "errors": []
+  },
+  {
+    "key": "04-blackjack_money_reveal_check---cash",
+    "script": "blackjack_money_reveal_check",
+    "args": [
+      "--cash"
+    ],
+    "exit": 0,
+    "seconds": 14.67,
+    "source_sha256": "4a16baae565d88528d4e326658468990c97f739a3bbf901bfe0cac6250f1d24e",
+    "footer": [
+      "BLACKJACK_MONEY_REVEAL_RESULT {\"checks\":133,\"failures\":[],\"rows\":[{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":17,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":10,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":0,\"start\":105007},{\"actual\":100000,\"before\":99999,\"cash\":100000,\"chips\":0,\"duration\":2600,\"hand_results\":[{\"bankroll_delta\":1,\"blackjack\":false,\"dealer_total\":24,\"doubled\":false,\"outcome\":\"dealer_bust\",\"player_total\":17,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":1,\"start\":135007},{\"actual\":100000,\"before\":100000,\"cash\":100000,\"chips\":0,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":0,\"blackjack\":false,\"dealer_total\":19,\"doubled\":false,\"outcome\":\"push\",\"player_total\":19,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1024587934\",\"round\":2,\"start\":165007},{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":2600,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":17,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":15,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1335771704\",\"round\":3,\"start\":195007},{\"actual\":100000,\"before\":99999,\"cash\":100000,\"chips\":0,\"duration\":6275,\"hand_results\":[{\"bankroll_delta\":1,\"blackjack\":false,\"dealer_total\":25,\"doubled\":false,\"outcome\":\"dealer_bust\",\"player_total\":17,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"1335771704\",\"round\":4,\"start\":225006},{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":1860,\"hand_results\":[{\"bankroll_delta\":-1,\"blackjack\":false,\"dealer_total\":18,\"doubled\":false,\"outcome\":\"lose\",\"player_total\":13,\"split\":false,\"surrendered\":false,\"wager\":1}],\"hold\":true,\"phase\":\"betting\",\"result_action\":\"play_basic\",\"rng\":\"839422609\",\"round\":5,\"start\":255007}]}"
+    ],
+    "errors": []
+  },
+  {
+    "key": "05-grand_casino_clean_walkout_cashout_check",
+    "script": "grand_casino_clean_walkout_cashout_check",
+    "args": [],
+    "exit": 4294967295,
+    "seconds": 213.11,
+    "source_sha256": "58a1c2e2dd3d363dfc0754104b50646cca001e138a3f01456be9786c59d7fad2",
+    "footer": [],
+    "errors": [
+      "SCRIPT ERROR: Cannot call method 'store_string' on a null value."
+    ]
+  },
+  {
+    "key": "06-grand_chip_liquidity_terminal_check",
+    "script": "grand_chip_liquidity_terminal_check",
+    "args": [],
+    "exit": 1,
+    "seconds": 7.8,
+    "source_sha256": "3111b651c711c7ebd065ba76aef9fa31e2fe4232136667544ab126ec6bdef8ee",
+    "footer": [
+      "GRAND_CHIP_LIQUIDITY checks=1 failures=1"
+    ],
+    "errors": [
+      "ERROR: private diagnostic persistence roots are required"
+    ]
+  },
+  {
+    "key": "07-count_heist_money_flow_check",
+    "script": "count_heist_money_flow_check",
+    "args": [],
+    "exit": 1,
+    "seconds": 5.08,
+    "source_sha256": "59f4f248e2cbe086f88648fc1e5a1f485b38c0c312d91c00100e868156bc30d3",
+    "footer": [
+      "COUNT_HEIST_MONEY_FLOW checks=2 failures=[\"explicit synthetic/captured/prospective mode required\"]"
+    ],
+    "errors": []
+  },
+  {
+    "key": "08-runtime_item_purchase_uniqueness_check",
+    "script": "runtime_item_purchase_uniqueness_check",
+    "args": [],
+    "exit": 1,
+    "seconds": 5.19,
+    "source_sha256": "b7c34a4822fb54d6c3db76d78b250a68dcd530d7c5c8ca5a815ff9a05aa2d31c",
+    "footer": [
+      "RUNTIME_ITEM_UNIQUENESS checks=1 failures=1"
+    ],
+    "errors": [
+      "ERROR: private diagnostic persistence roots are required"
+    ]
+  },
+  {
+    "key": "09-numbers_purchase_journal_check",
+    "script": "numbers_purchase_journal_check",
+    "args": [],
+    "exit": 1,
+    "seconds": 4.7,
+    "source_sha256": "d757f212d5bacb813c128d8f0b957dbef4f85c445521ab63faa676655d21e3b4",
+    "footer": [
+      "NUMBERS_PURCHASE_JOURNAL_RESULT {\"checks\":3,\"facts\":{\"cold\":[],\"legacy\":{},\"original_profiles_used\":false,\"purchases\":[],\"rejections\":[]},\"failures\":[\"private containment for APPDATA\",\"requested producer or cold stage reaches final assertion\"],\"fidelity\":\"Disposable RunState.start_new/canonical set_environment and normal numbers_buy_slip API. Explicit synthetic Numbers-clock setup for Corner Store Draw2 and closed-book fixture. Official SaveService plus independent cold load and exact old-slip shape; no original R05 profile, hidden draw replay, Host/rendered/Web path or publication claim.\",\"id\":\"BTH-NUMBERS-PURCHASE-JOURNAL-001\",\"mode\":\"producer\",\"source_sha256\":{\"archive\":\"b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6\",\"journal\":\"a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45\",\"numbers\":\"2bb1e1005917ce17b409a8424fc5bd341cb2ca75f77d2733d3c695704d3b08ce\",\"run_state\":\"005481fd92034c5ee98f75aae607f435d623fc123f8e8630520e6173d7e606c6\",\"test\":\"d757f212d5bacb813c128d8f0b957dbef4f85c445521ab63faa676655d21e3b4\"}}"
+    ],
+    "errors": []
+  },
+  {
+    "key": "10-money_flow_runstate_persistence_check-write",
+    "script": "money_flow_runstate_persistence_check",
+    "args": [
+      "write"
+    ],
+    "exit": 0,
+    "seconds": 6.2,
+    "source_sha256": "5007c17f4c3dd15fcb96672183206e750b0d851f7cba787ca79733a5777b6b79",
+    "footer": [
+      "MONEY_FLOW_RUNSTATE_PERSISTENCE checks=33 failures=0"
+    ],
+    "errors": []
+  },
+  {
+    "key": "11-money_flow_runstate_persistence_check-read",
+    "script": "money_flow_runstate_persistence_check",
+    "args": [
+      "read"
+    ],
+    "exit": 0,
+    "seconds": 5.69,
+    "source_sha256": "5007c17f4c3dd15fcb96672183206e750b0d851f7cba787ca79733a5777b6b79",
+    "footer": [
+      "MONEY_FLOW_RUNSTATE_PERSISTENCE checks=12 failures=0"
+    ],
+    "errors": []
+  }
+]

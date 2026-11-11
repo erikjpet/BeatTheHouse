@@ -1,0 +1,1 @@
+{"checks": 19, "failures": ["Automatic Save retains observed wallet and exactly one round/story action"], "settled": {"cash": 94, "expected_cash_from_prior_observation": 0, "game_action_rows": 0, "new_inputs": 0, "phase": "reveal", "request_count": 0, "rounds": 0.0}}

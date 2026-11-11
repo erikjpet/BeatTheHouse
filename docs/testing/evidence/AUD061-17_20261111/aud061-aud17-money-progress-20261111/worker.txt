@@ -1,0 +1,4 @@
+{"key": "01-craps_refund_journal_currency_check", "exit": 0, "footer": [], "errors": []}
+{"key": "02-craps_working_stakes_terminal_check", "exit": 0, "footer": ["CRAPS_WORKING_STAKES_TERMINAL_RESULT {\"checks\":16,\"failures\":[]}"], "errors": []}
+{"key": "03-blackjack_money_reveal_check", "exit": 0, "footer": ["BLACKJACK_MONEY_REVEAL_RESULT {\"checks\":133,\"failures\":[],\"rows\":[{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":-1,\"black"], "errors": []}
+{"key": "04-blackjack_money_reveal_check---cash", "exit": 0, "footer": ["BLACKJACK_MONEY_REVEAL_RESULT {\"checks\":133,\"failures\":[],\"rows\":[{\"actual\":99999,\"before\":100000,\"cash\":99999,\"chips\":0,\"duration\":3350,\"hand_results\":[{\"bankroll_delta\":-1,\"black"], "errors": []}

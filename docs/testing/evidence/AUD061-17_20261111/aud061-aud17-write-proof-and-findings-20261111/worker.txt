@@ -1,0 +1,4 @@
+Registered BTH061-RC-COUNT-EXPECTATION-001 and separate batch.
+Registered BTH061-RC-RIVERBOAT-FIXTURE-001 and separate batch.
+Registered BTH061-RC-PACKAGING-001 and separate batch.
+All eighteen orders now have a concrete disposition:14 done,1 not reproduced,1 blocked,2 failed qualification. Three new follow-ups registered; no gameplay fixes attempted.

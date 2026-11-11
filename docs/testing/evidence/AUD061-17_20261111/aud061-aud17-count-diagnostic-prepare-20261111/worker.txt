@@ -1,0 +1,1 @@
+Prepared a read-only bit/precision observation, retaining the exact failed assertion and its required status.

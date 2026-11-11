@@ -1,0 +1,106 @@
+[
+  {
+    "key": "01-grand_casino_clean_walkout_cashout_check",
+    "script": "grand_casino_clean_walkout_cashout_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 4.64,
+    "source_sha256": "58a1c2e2dd3d363dfc0754104b50646cca001e138a3f01456be9786c59d7fad2",
+    "footer": [
+      "CLEAN_WALKOUT_CASHOUT checks=39 failures=[]"
+    ],
+    "errors": []
+  },
+  {
+    "key": "02-grand_chip_liquidity_terminal_check",
+    "script": "grand_chip_liquidity_terminal_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 8.23,
+    "source_sha256": "3111b651c711c7ebd065ba76aef9fa31e2fe4232136667544ab126ec6bdef8ee",
+    "footer": [
+      "GRAND_CHIP_LIQUIDITY checks=62 failures=0"
+    ],
+    "errors": []
+  },
+  {
+    "key": "03-count_heist_money_flow_check-synthetic",
+    "script": "count_heist_money_flow_check",
+    "args": [
+      "synthetic"
+    ],
+    "exit": 0,
+    "seconds": 5.3,
+    "source_sha256": "59f4f248e2cbe086f88648fc1e5a1f485b38c0c312d91c00100e868156bc30d3",
+    "footer": [
+      "COUNT_HEIST_MONEY_FLOW checks=70 failures=[]"
+    ],
+    "errors": []
+  },
+  {
+    "key": "04-count_heist_money_flow_check-prospective_write",
+    "script": "count_heist_money_flow_check",
+    "args": [
+      "prospective_write"
+    ],
+    "exit": 1,
+    "seconds": 6.38,
+    "source_sha256": "59f4f248e2cbe086f88648fc1e5a1f485b38c0c312d91c00100e868156bc30d3",
+    "footer": [
+      "COUNT_HEIST_MONEY_FLOW checks=20 failures=[\"official restore preserves full ending/receipts/RNG state\"]"
+    ],
+    "errors": []
+  },
+  {
+    "key": "05-count_heist_money_flow_check-prospective_read",
+    "script": "count_heist_money_flow_check",
+    "args": [
+      "prospective_read"
+    ],
+    "exit": 1,
+    "seconds": 5.81,
+    "source_sha256": "59f4f248e2cbe086f88648fc1e5a1f485b38c0c312d91c00100e868156bc30d3",
+    "footer": [
+      "COUNT_HEIST_MONEY_FLOW checks=7 failures=[\"official restore preserves full ending/receipts/RNG state\"]"
+    ],
+    "errors": []
+  },
+  {
+    "key": "06-runtime_item_purchase_uniqueness_check",
+    "script": "runtime_item_purchase_uniqueness_check",
+    "args": [],
+    "exit": 0,
+    "seconds": 6.7,
+    "source_sha256": "b7c34a4822fb54d6c3db76d78b250a68dcd530d7c5c8ca5a815ff9a05aa2d31c",
+    "footer": [
+      "RUNTIME_ITEM_UNIQUENESS checks=101 failures=0"
+    ],
+    "errors": []
+  },
+  {
+    "key": "07-aud061_numbers_rc",
+    "script": "aud061_numbers_rc",
+    "args": [],
+    "exit": 0,
+    "seconds": 5.52,
+    "source_sha256": "284018027d10cbb40bfae382cc6274ce2001c7f76aba9333030c314c53cfee7c",
+    "footer": [
+      "NUMBERS_PURCHASE_JOURNAL_RESULT {\"checks\":109,\"facts\":{\"cold\":[],\"legacy\":{\"cash\":29,\"fixture_setup\":\"normal paid API purchase, then remove only synthetic new purchase row to represent old save shape\",\"purchase_rows\":0,\"slips\":1},\"original_profiles_used\":false,\"purchases\":[{\"cash\":30,\"chips\":25,\"digits\":\"000\",\"draw\":2,\"label\":\"Corner Store Draw2\",\"play_type\":\"straight\",\"purchase_rows\":1,\"slip_id\":\"numbers_slip_00001\",\"stake\":1,\"venue\":\"corner_store\"},{\"cash\":29,\"chips\":25,\"digits\":\"123\",\"draw\":1,\"label\":\"normalized Box\",\"play_type\":\"box\",\"purchase_rows\":1,\"slip_id\":\"numbers_slip_00001\",\"stake\":2,\"venue\":\"motel\"},{\"cash\":27,\"chips\":25,\"digits\":\"123\",\"draw\":1,\"label\":\"additional legitimate purchase\",\"play_type\":\"box\",\"purchase_rows\":2,\"slip_id\":\"numbers_slip_00002\",\"stake\":2,\"venue\":\"motel\"}],\"rejections\":[{\"label\":\"invalid 00/1/straight\",\"message\":\"A slip needs exactly three digits.\"},{\"label\":\"invalid 0a0/1/straight\",\"message\":\"A slip needs exactly three digits.\"},{\"label\":\"invalid 0000/1/straight\",\"message\":\"A slip needs exactly three digits.\"},{\"label\":\"invalid 000/1/invalid\",\"message\":\"Choose straight or box.\"},{\"label\":\"invalid 000/0/straight\",\"message\":\"Stake must be between $1 and $20.\"},{\"label\":\"invalid 000/-1/straight\",\"message\":\"Stake must be between $1 and $20.\"},{\"label\":\"invalid 000/21/straight\",\"message\":\"Stake must be between $1 and $20.\"},{\"label\":\"insufficient cash\",\"message\":\"That stake is not in your pocket.\"},{\"label\":\"venue without book\",\"message\":\"There is no Numbers book here.\"},{\"label\":\"authored Motel close boundary\",\"message\":\"Motel's book is closed for today's handle.\"}]},\"failures\":[],\"fidelity\":\"Disposable RunState.start_new/canonical set_environment and normal numbers_buy_slip API. Explicit synthetic Numbers-clock setup for Corner Store Draw2 and closed-book fixture. Official SaveService plus independent cold load and exact old-slip shape; no original R05 profile, hidden draw replay, Host/rendered/Web path or publication claim.\",\"id\":\"BTH-NUMBERS-PURCHASE-JOURNAL-001\",\"mode\":\"producer\",\"source_sha256\":{\"archive\":\"b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6\",\"journal\":\"a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45\",\"numbers\":\"2bb1e1005917ce17b409a8424fc5bd341cb2ca75f77d2733d3c695704d3b08ce\",\"run_state\":\"005481fd92034c5ee98f75aae607f435d623fc123f8e8630520e6173d7e606c6\",\"test\":\"d757f212d5bacb813c128d8f0b957dbef4f85c445521ab63faa676655d21e3b4\"}}"
+    ],
+    "errors": []
+  },
+  {
+    "key": "08-aud061_numbers_rc---cold",
+    "script": "aud061_numbers_rc",
+    "args": [
+      "--cold"
+    ],
+    "exit": 0,
+    "seconds": 5.19,
+    "source_sha256": "284018027d10cbb40bfae382cc6274ce2001c7f76aba9333030c314c53cfee7c",
+    "footer": [
+      "NUMBERS_PURCHASE_JOURNAL_RESULT {\"checks\":58,\"facts\":{\"cold\":[{\"cash\":30,\"chips\":25,\"money_lines\":[[\"Bankroll -1\"]],\"purchase_rows\":1,\"slips\":1,\"slot\":\"numbers_purchase_reported\"},{\"cash\":27,\"chips\":25,\"money_lines\":[[\"Bankroll -2\"],[\"Bankroll -2\"]],\"purchase_rows\":2,\"slips\":2,\"slot\":\"numbers_purchase_multiple\"},{\"cash\":29,\"chips\":25,\"money_lines\":[],\"purchase_rows\":0,\"slips\":1,\"slot\":\"numbers_purchase_legacy\"}],\"legacy\":{},\"original_profiles_used\":false,\"purchases\":[],\"rejections\":[]},\"failures\":[],\"fidelity\":\"Disposable RunState.start_new/canonical set_environment and normal numbers_buy_slip API. Explicit synthetic Numbers-clock setup for Corner Store Draw2 and closed-book fixture. Official SaveService plus independent cold load and exact old-slip shape; no original R05 profile, hidden draw replay, Host/rendered/Web path or publication claim.\",\"id\":\"BTH-NUMBERS-PURCHASE-JOURNAL-001\",\"mode\":\"cold\",\"source_sha256\":{\"archive\":\"b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6\",\"journal\":\"a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45\",\"numbers\":\"2bb1e1005917ce17b409a8424fc5bd341cb2ca75f77d2733d3c695704d3b08ce\",\"run_state\":\"005481fd92034c5ee98f75aae607f435d623fc123f8e8630520e6173d7e606c6\",\"test\":\"d757f212d5bacb813c128d8f0b957dbef4f85c445521ab63faa676655d21e3b4\"}}"
+    ],
+    "errors": []
+  }
+]

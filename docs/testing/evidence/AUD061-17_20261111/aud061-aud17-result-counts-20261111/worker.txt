@@ -1,0 +1,9 @@
+{"run": "aud061-aud17-native-private-money-archive-20261111", "file": "01-craps_refund_journal_currency_check.txt", "counts": {"checks": 63, "failures": []}}
+{"run": "aud061-aud17-native-private-money-archive-20261111", "file": "02-craps_working_stakes_terminal_check.txt", "counts": {"checks": 16, "failures": []}}
+{"run": "aud061-aud17-native-private-money-archive-20261111", "file": "03-blackjack_money_reveal_check.txt", "counts": {"checks": 133, "failures": []}}
+{"run": "aud061-aud17-native-private-money-archive-20261111", "file": "04-blackjack_money_reveal_check---cash.txt", "counts": {"checks": 133, "failures": []}}
+{"run": "aud061-aud17-native-private-money-archive-20261111", "file": "09-numbers_purchase_journal_check.txt", "counts": {"checks": 3, "failures": ["private containment for APPDATA", "requested producer or cold stage reaches final assertion"]}}
+{"run": "aud061-aud17-native-private-money-controls-20261111", "file": "07-aud061_numbers_rc.txt", "counts": {"checks": 109, "failures": []}}
+{"run": "aud061-aud17-native-private-money-controls-20261111", "file": "08-aud061_numbers_rc---cold.txt", "counts": {"checks": 58, "failures": []}}
+{"run": "aud061-aud17-native-private-closing-20261111", "file": "04-aud061_closing_rc.txt", "counts": {"checks": 65, "failures": []}}
+{"run": "aud061-aud17-native-private-closing-20261111", "file": "05-aud061_closing_rc---cold.txt", "counts": {"checks": 18, "failures": []}}

@@ -63,3 +63,9 @@ Full candidate Smoke: 4 pass /7 fail, same eleven stage outcomes as baseline; co
 NEXT promoted exact fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc, tree2d49cb17f83379715435a2576473c5cba52728ff, archive95dfd86c6ca9ce73682045f517720511176e786f0b1619a5e543c8177c30aa0f. Ten asset checks pass (eight hashes, two pinned engine HEAD checks), clean startup and observed play above. All new tests use that frozen source and immutable served build. The menu still reads0.6.0-dev+fcfe0204d4d0; AUD061-04 remains blocked. Publication of these evidence-only results must not be confused with qualifying a changed gameplay candidate.
 
 Unverified: complete eleven-game paid/pending/settled Web matrix; candidate Crew/Jazz and offered Meta changed-behavior flows; normal strategy-hat hint attribution; comparable qualified Windows native performance and long input-retention plateau. No release or tag is authorized by these results.
+
+## Result-report delivery
+
+Report commit45b175ec3b971ae85d1217b1124099f8d9562bdd and associated ledgers were pushed together after pull --rebase reported up to date. Existing watcher promoted evidence-only descendant e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec, tree45bd0dee352c033a6f1a977e96c823bdf7200038, archive947d068a7896e334e721f881119d743f2e7098d6a762e99a2c9267946c2ce6e8. Ten served-asset checks and a fresh normal Daily startup pass, page/console errors0, Job0/active0. Actual candidate behavioral qualification above remains bound to fcfe, not relabelled as tests of e1. The two served PCK audits both report1168 files.
+
+Final reconciliation after adopting actual current acceptance ownership and recording the latest user's scoped resumption:1683 inherited errors /52 tasks, no new finding relative to pre-order reconciliation. Broader item/scenario pause IDs remain unchanged. Current strict HTTPS succeeds without any trust change; the old certificate condition is not an active block for the observed route.

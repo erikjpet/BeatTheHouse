@@ -5717,11 +5717,11 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / coverage pending",
+      "status": "FROZEN_RC_SCOPED_MONEY_856_CHECKS_2_ORACLE_FAILURES_COVERAGE_OPEN",
       "owner": {
-        "name": "Original stability/release owner; current assignment to reconcile",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
       },
       "commits": [],
       "deployment": {
@@ -5740,20 +5740,32 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FROZEN_RC_SCOPED_MONEY_856_CHECKS_2_ORACLE_FAILURES_COVERAGE_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-005, then carry out the named remaining acceptance without repeating delivered implementation. Source record: High / coverage pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Complete normal-run conservation/use/cancel/travel coverage and resolve Count oracle discrepancy. No demonstrated payout loss in the scoped result.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "Remaining acceptance and diagnosed test discrepancies require follow-up; no external block established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T14:25:38.735003+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+        "scope": "FROZEN_RC_SCOPED_MONEY_856_CHECKS_2_ORACLE_FAILURES_COVERAGE_OPEN"
+      }
     },
     {
       "id": "BTH061-006",
@@ -5859,11 +5871,11 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / coverage pending",
+      "status": "FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN",
       "owner": {
-        "name": "Original stability/release owner; current assignment to reconcile",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
       },
       "commits": [],
       "deployment": {
@@ -5887,25 +5899,31 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile an actual owner for the eleven-game continuation objective; inventory per-game unfinished/committed/pending states and retained evidence, execute missing declared warm/cold cases and resolve named findings. Keep Pull Tabs current-route proof and original unresolved cause separate; do not close the parent after that child alone.",
+      "next_action": "Resolve Scratch owned-state discrepancy and finish all eleven paid/pending/settled public and cold Continue cases; retain unresolved original Pull Tabs cause separately.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": "No concrete technical blocker established for the full parent; current assignment and per-game acceptance coverage require reconciliation. Do not infer completion from a single subtask.",
+        "kind": "none",
+        "description": "Remaining acceptance and diagnosed test discrepancies require follow-up; no external block established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T14:25:38.735003+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-11T14:25:38.735003+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
-        "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
-        "source_receipt_commit": "45b175ec3b971ae85d1217b1124099f8d9562bdd",
-        "scope": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+        "scope": "FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN"
       }
     },
     {
@@ -5937,11 +5955,11 @@
         }
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / coverage pending",
+      "status": "FROZEN_RC_PUBLIC_CLOSING_83_0_RIVERBOAT_FIXTURE_19_10_COVERAGE_OPEN",
       "owner": {
-        "name": "Original stability/release owner; current assignment to reconcile",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
       },
       "commits": [],
       "deployment": {
@@ -5960,20 +5978,32 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FROZEN_RC_PUBLIC_CLOSING_83_0_RIVERBOAT_FIXTURE_19_10_COVERAGE_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-007, then carry out the named remaining acceptance without repeating delivered implementation. Source record: High / coverage pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Qualify mounted Riverboat and normal Bar Dice interruption/exit; complete conversation/delivery/crew closing cases. Rourke source-fault and terminal Continue scoped controls pass.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "none",
+        "kind": "none",
+        "description": "Remaining acceptance and diagnosed test discrepancies require follow-up; no external block established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T14:25:38.735003+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+        "scope": "FROZEN_RC_PUBLIC_CLOSING_83_0_RIVERBOAT_FIXTURE_19_10_COVERAGE_OPEN"
+      }
     },
     {
       "id": "BTH061-008",
@@ -6251,17 +6281,17 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Genuine 0.6 Web and Windows saves load in `ead6856` candidates; seven focused/relevant regression checks pass. Separate Windows EXE and Web candidates are built with source/native hashes. Still qualify profile/meta inventory compatibility, finish the remaining coverage, and build final source ZIP, Windows EXE package, Web package, checksums and release notes from one clean candidate. Audit final packages for generated save/profile data and verify extracted builds start fresh. Publishing/tagging is a separate release step.",
+        "text": "Build and qualify final Windows/Web/source packages, version stamps, checksums, fresh startup and remaining acceptance from one exact candidate. Historical cross-version compatibility receipts are retained, but the current owner explicitly excludes old-save preservation, migration, upgrade fixtures and runtime version checks.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Genuine 0.6 Web and Windows saves load in `ead6856` candidates; seven focused/relevant regression checks pass. Separate Windows EXE and Web candidates are built with source/native hashes. Still qualify profile/meta inventory compatibility, finish the remaining coverage, and build final source ZIP, Windows EXE package, Web package, checksums and release notes from one clean candidate. Audit final packages for generated save/profile data and verify extracted builds start fresh. Publishing/tagging is a separate release step.",
+            "description": "Build and qualify final Windows/Web/source packages, version stamps, checksums, fresh startup and remaining acceptance from one exact candidate. Historical cross-version compatibility receipts are retained, but the current owner explicitly excludes old-save preservation, migration, upgrade fixtures and runtime version checks.",
             "required": true,
-            "state": "unknown",
+            "state": "open",
             "evidence": [
-              "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list"
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
             ]
           }
         ],
@@ -6269,14 +6299,15 @@
           "required": false,
           "complete": false,
           "areas": []
-        }
+        },
+        "historical_scope_before_owner_override": "Genuine 0.6 Web and Windows saves load in `ead6856` candidates; seven focused/relevant regression checks pass. Separate Windows EXE and Web candidates are built with source/native hashes. Still qualify profile/meta inventory compatibility, finish the remaining coverage, and build final source ZIP, Windows EXE package, Web package, checksums and release notes from one clean candidate. Audit final packages for generated save/profile data and verify extracted builds start fresh. Publishing/tagging is a separate release step."
       },
       "state": "open",
-      "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: Required before release / partial, final packaging pending",
+      "status": "FROZEN_RC_PRIVATE_PACKS_SOURCE_PASS_VERSION_2_2_FAIL_FINAL_PACKAGE_OPEN",
       "owner": {
-        "name": "Original stability/release owner; current assignment to reconcile",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
       },
       "commits": [
         {
@@ -6303,20 +6334,32 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "frozen_candidate_qualification",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FROZEN_RC_PRIVATE_PACKS_SOURCE_PASS_VERSION_2_2_FAIL_FINAL_PACKAGE_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH061-012, then carry out the named remaining acceptance without repeating delivered implementation. Source record: Required before release / partial, final packaging pending; Retain the original prioritized-table criteria and reported scope. Reconcile current owner and complete original acceptance before any new closure.",
+      "next_action": "Admit separately reviewed0.6.1 version/project/preset/exporter changes through existing guards, then qualify one final Windows/Web/source set and remaining gates; no cross-version save gate.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "active",
+        "kind": "external",
+        "description": "AUD061-04 exact guarded version-input qualification conflict.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T14:25:38.735003+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-11T14:25:38.735003+00:00",
+      "candidate_qualification_20261111": {
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+        "scope": "FROZEN_RC_PRIVATE_PACKS_SOURCE_PASS_VERSION_2_2_FAIL_FINAL_PACKAGE_OPEN"
+      }
     },
     {
       "id": "BTH061-013",
@@ -30590,126 +30633,165 @@
             "description": "AUD061-12",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "AUD061-02",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
+              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "AUD061-01",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
+              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+            ]
           },
           {
             "id": "4",
             "description": "AUD061-09",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+            ]
           },
           {
             "id": "5",
             "description": "AUD061-10",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+            ]
           },
           {
             "id": "6",
             "description": "QOL-02",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+            ]
           },
           {
             "id": "7",
             "description": "QOL-03",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+            ]
           },
           {
             "id": "8",
             "description": "QOL-04",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+            ]
           },
           {
             "id": "9",
             "description": "QOL-05",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+            ]
           },
           {
             "id": "10",
             "description": "AUD061-16",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md"
+            ]
           },
           {
             "id": "11",
             "description": "AUD061-14",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+            ]
           },
           {
             "id": "12",
             "description": "AUD061-08",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
+            ]
           },
           {
             "id": "13",
             "description": "AUD061-15",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+            ]
           },
           {
             "id": "14",
             "description": "QOL-01",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+            ]
           },
           {
             "id": "15",
             "description": "AUD061-04",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+            ]
           },
           {
             "id": "16",
             "description": "AUD061-05",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+            ]
           },
           {
             "id": "17",
             "description": "AUD061-11",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "18",
             "description": "AUD061-17",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -30719,7 +30801,7 @@
         }
       },
       "state": "open",
-      "status": "15_OF_18_PROCESSED_13_DONE_AUD12_NOT_REPRODUCED_AUD04_BLOCKED",
+      "status": "18_OF_18_PROCESSED_14_DONE_1_NOT_REPRODUCED_1_BLOCKED_2_FAILED_QUALIFICATION",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30767,22 +30849,24 @@
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/AUD061-08_background_save_flush_2026-11-11.md",
-          "summary": "IN_PROGRESS_11_OF_18_ORDERS_DELIVERED"
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "18_OF_18_PROCESSED_14_DONE_1_NOT_REPRODUCED_1_BLOCKED_2_FAILED_QUALIFICATION"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Continue AUD061-05 changelog/proposed source candidate, then AUD061-11/17 with explicit version qualification blocker and AUD12 exact-RC export pair.",
+      "next_action": "Resolve AUD061-04 and the separately registered release qualification findings; choose and fully qualify the next candidate before owner tagging.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "AUD061-04 version admission and unresolved acceptance/final-packaging qualification. All18 execution dispositions are recorded; release is not qualified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T09:31:35.422481+00:00",
-        "evidence": []
+        "observed_at": "2026-11-11T14:25:38.735003+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T12:07:52.070201+00:00"
+      "updated_at": "2026-11-11T14:25:38.735003+00:00"
     },
     {
       "id": "AUD061-02",
@@ -32223,8 +32307,10 @@
             "id": "3",
             "description": "Current approved-storage reserve and actual existing-pipeline delivery recorded; two same-RC manifests compared or exact remaining blocker recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -32234,7 +32320,7 @@
         }
       },
       "state": "open",
-      "status": "NOT_REPRODUCED_REPORT_NEXT_VERIFIED_ORIGINAL_CAUSE_AND_EXACT_RC_PAIR_OPEN",
+      "status": "NOT_REPRODUCED_EXACT_RC_TWO_EXPORTS_PASS_ORIGINAL_CAUSE_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -32267,12 +32353,18 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
           "summary": "NOT_REPRODUCED_REPORT_NEXT_VERIFIED_ORIGINAL_CAUSE_AND_EXACT_RC_PAIR_OPEN"
+        },
+        {
+          "kind": "exact_rc_export_pair",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Two full exact fcfe exports0/0;1165-file manifests and all payload MD5s pass; only218-class cache list ordering differs."
         }
       ],
       "implementation_batches": [
-        "AUD061-12-BATCH-001"
+        "AUD061-12-BATCH-001",
+        "AUD061-12-BATCH-002"
       ],
-      "next_action": "Run two exact frozen-RC private exports and compare manifests during final qualification; retain original causal objective open, with bounded investigation disposition recorded.",
+      "next_action": "Retain historical allocation/stack cause as not reproduced. If failure recurs, capture exact next resource/allocation boundary under unchanged limits; no speculative workaround.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -32284,7 +32376,7 @@
       "planned_app_changes": [
         "Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists."
       ],
-      "updated_at": "2026-11-11T11:53:51.886562+00:00"
+      "updated_at": "2026-11-11T14:25:38.735003+00:00"
     },
     {
       "id": "AUD061-04",
@@ -33061,6 +33153,352 @@
         "Obtain the exact qualified Windows native artifact through approved storage/launch gates, then rerun comparable measurements."
       ],
       "updated_at": "2026-11-11T13:22:42.466196+00:00"
+    },
+    {
+      "id": "AUD061-17",
+      "name": "Frozen candidate release coverage",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "BTH061-005 money/item conservation",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "BTH061-006 all-eleven same-build paid/pending/settled continuation",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "BTH061-007 closing, interruptions and terminal cleanup",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "4",
+            "description": "BTH061-012 final packaging without cross-version save compatibility",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "5",
+            "description": "Two exact frozen-candidate PCK exports and manifest comparison",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          },
+          {
+            "id": "6",
+            "description": "Declare optional003/004/008/011 scope and009/010 measurement limits",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY"
+        }
+      ],
+      "implementation_batches": [
+        "AUD061-17-BATCH-001"
+      ],
+      "next_action": "Resolve diagnosed qualification gaps and AUD061-04 version admission, then choose and fully qualify a new exact release candidate before owner tagging.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required same-build/money/closing coverage is incomplete or fails its oracle/fixture checks; final0.6.1 packaging is blocked by AUD061-04.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.983412+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
+      },
+      "planned_app_changes": [
+        "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
+      ],
+      "updated_at": "2026-11-11T14:19:16.983412+00:00"
+    },
+    {
+      "id": "BTH061-RC-COUNT-EXPECTATION-001",
+      "name": "Count restore expectation loses float precision",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped reproduction/diagnosis",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact current candidate acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001"
+      ],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.797499+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
+      ],
+      "updated_at": "2026-11-11T14:19:16.797499+00:00"
+    },
+    {
+      "id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
+      "name": "Riverboat closing callback fixture is unmounted",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped reproduction/diagnosis",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact current candidate acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001"
+      ],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.847885+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
+      ],
+      "updated_at": "2026-11-11T14:19:16.847885+00:00"
+    },
+    {
+      "id": "BTH061-RC-PACKAGING-001",
+      "name": "Final 0.6.1 package qualification remains blocked",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Actual scoped reproduction/diagnosis",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Associated corrective or qualification commit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Exact current candidate acceptance before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "implementation_batches": [
+        "BTH061-RC-PACKAGING-001-BATCH-001"
+      ],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.913895+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
+      ],
+      "updated_at": "2026-11-11T14:19:16.913895+00:00"
     }
   ],
   "batches": [
@@ -34585,8 +35023,8 @@
       "name": "Frozen candidate acceptance runs implementation",
       "parent_id": "AUD061-11",
       "group": "current",
-      "state": "open",
-      "status": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_RC_ACCEPTANCE_EXECUTION_RECORDED_REPORT_NEXT_VERIFIED_PARENT_FAILED_OPEN",
       "scope": [
         "Run each recorded acceptance on exact frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; failures become separate findings; no unrelated fixes."
       ],
@@ -34607,12 +35045,18 @@
           "evidence": [
             "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec",
+          "evidence": [
+            "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "e1f78f0c9504ee0e292bcf8cce2cb9e5564ae1ec",
         "evidence": [
           "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
         ]
@@ -34624,16 +35068,14 @@
           "summary": "FAILED_FROZEN_RC_QUALIFICATION_RECORDED_FINDINGS_OPEN"
         }
       ],
-      "next_action": "Resolve separately registered cold/coverage findings; do not tag this candidate.",
+      "next_action": "None for this bounded run; required failed/unqualified parent acceptances and separately diagnosed findings remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required cold/coverage qualification is incomplete; see the five diagnosed follow-ups.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.119274+00:00",
-        "evidence": [
-          "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-11T13:35:25.904592+00:00",
+        "evidence": []
       },
       "updated_at": "2026-11-11T13:22:42.119274+00:00"
     },
@@ -34911,6 +35353,199 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T13:22:42.466196+00:00"
+    },
+    {
+      "id": "AUD061-17-BATCH-001",
+      "name": "Frozen candidate release coverage implementation",
+      "parent_id": "AUD061-17",
+      "group": "current",
+      "state": "open",
+      "status": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY",
+      "scope": [
+        "Run required money conservation, same-build unfinished Continue, closing/interruption and packaging checks on frozen fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc; optional scopes stated; no old-save compatibility gate or speculative fixes."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+          "evidence": [
+            "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "FAILED_REQUIRED_FROZEN_RC_COVERAGE_RECORDED_RELEASE_NOT_READY"
+        }
+      ],
+      "next_action": "Resolve diagnosed qualification gaps and AUD061-04 version admission, then choose and fully qualify a new exact release candidate before owner tagging.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Required same-build/money/closing coverage is incomplete or fails its oracle/fixture checks; final0.6.1 packaging is blocked by AUD061-04.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.983412+00:00",
+        "evidence": [
+          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+        ]
+      },
+      "updated_at": "2026-11-11T14:19:16.983412+00:00"
+    },
+    {
+      "id": "BTH061-RC-COUNT-EXPECTATION-001-BATCH-001",
+      "name": "Count restore expectation loses float precision implementation",
+      "parent_id": "BTH061-RC-COUNT-EXPECTATION-001",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "scope": [
+        "Resolve the failed full-ending comparison with a lossless current-build test reference; preserve all accounting/replay assertions and do not alter production values to match rounded expected geometry."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.797499+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T14:19:16.797499+00:00"
+    },
+    {
+      "id": "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001",
+      "name": "Riverboat closing callback fixture is unmounted implementation",
+      "parent_id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "scope": [
+        "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.847885+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T14:19:16.847885+00:00"
+    },
+    {
+      "id": "BTH061-RC-PACKAGING-001-BATCH-001",
+      "name": "Final 0.6.1 package qualification remains blocked implementation",
+      "parent_id": "BTH061-RC-PACKAGING-001",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_REPRODUCTION_PENDING",
+      "scope": [
+        "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Reproduce, implement exactly the work order, run focused checks and Smoke, record proof and deliver through main/NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T14:19:16.913895+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T14:19:16.913895+00:00"
+    },
+    {
+      "id": "AUD061-12-BATCH-002",
+      "name": "Exact frozen candidate two-export manifest comparison",
+      "parent_id": "AUD061-12",
+      "group": "current",
+      "state": "open",
+      "status": "CHECKS_PASS_REPORT_DELIVERY_PENDING",
+      "scope": [
+        "Compare two full private Web PCK exports of fcfe under unchanged2GiB/12% guards; retain differences and identity."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
+          "summary": "Two exact-RC full private packs and independent manifest/payload comparison pass."
+        }
+      ],
+      "next_action": "Associate finished report commit and verify normal NEXT delivery; original-cause parent remains open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T11:53:51.886562+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T14:25:38.735003+00:00"
     }
   ]
 }

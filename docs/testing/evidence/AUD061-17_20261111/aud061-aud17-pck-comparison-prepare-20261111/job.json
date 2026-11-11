@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nwrite(W/'.tmp/aud061_compare_rc_pcks.py',\"from pathlib import Path\\nimport os,sys,json,hashlib,re\\nsys.dont_write_bytecode=True\\nsys.path.insert(0,str(Path(os.environ['BTH_QA_WORKSPACE'])/'tools'))\\nimport audit_pck_manifest as pck\\nout=Path(os.environ['BTH_QA_EVIDENCE_DIR'])\\npacks=[Path(v) for v in sys.argv[1:]]\\nassert len(packs)==2\\nreports=[];payloads=[]\\nfor index,path in enumerate(packs):\\n data=path.read_bytes();directory=pck.find_directory(data);entries=directory['entries']\\n problems=pck.audit(entries);content={}\\n for e in entries:\\n  start=directory['pack_offset']+directory['file_base']+e['offset']\\n  raw=data[start:start+e['bytes']]\\n  assert len(raw)==e['bytes'] and hashlib.md5(raw).hexdigest()==e['md5'],e['path']\\n  assert not e['path'].startswith(('Microsoft/','userfs/','save_dir/','appdata/','localappdata/')),e['path']\\n  assert Path(e['path']).name not in ('foundation_ui_autosave.json','profile_inventory.json','meta_collection.json','user_settings.json'),e['path']\\n  content[e['path']]=raw\\n assert not problems,problems\\n report={'package':str(path),'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'file_count':len(entries),'audit_failures':problems,'all_payload_md5_verified':True,'engine_version':directory['engine_version'],'files':sorted(entries,key=lambda e:e['path'])}\\n (out/('manifest-'+str(index+1)+'.json')).write_text(json.dumps(report,indent=2),encoding='utf-8')\\n reports.append(report);payloads.append(content)\\na,b=payloads;paths=sorted(set(a)|set(b));changed=[p for p in paths if a.get(p)!=b.get(p)]\\nsemantic=None\\nif changed==['.godot/global_script_class_cache.cfg']:\\n def classes(raw):\\n  s=raw.decode('utf-8');assert s.startswith('list=')\\n  entries=json.loads(re.sub(r'&(?=\\\")','',s[5:]))\\n  mapping={r['class']:r for r in entries};assert len(mapping)==len(entries)\\n  return mapping\\n ca,cb=classes(a[changed[0]]),classes(b[changed[0]])\\n semantic={'same_class_to_all_fields_map':ca==cb,'classes':[len(ca),len(cb)],'changed_classes':sorted(k for k in set(ca)|set(cb) if ca.get(k)!=cb.get(k))}\\n for i,blob in enumerate([a[changed[0]],b[changed[0]]],1):(out/('class-cache-'+str(i)+'.cfg')).write_bytes(blob)\\nresult={'schema':'bth.frozen_rc_pck_comparison/v1','source_commit':'fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc','source_tree':'2d49cb17f83379715435a2576473c5cba52728ff','packages':[{k:r[k] for k in ('package','bytes','sha256','file_count','all_payload_md5_verified','audit_failures')} for r in reports],'identical_file_sets':set(a)==set(b),'changed_payloads':changed,'class_cache_semantics':semantic,'same_payload_bytes':not changed,'private_exports_not_published':True}\\nresult['passed']=set(a)==set(b) and (not changed or changed==['.godot/global_script_class_cache.cfg'] and semantic['same_class_to_all_fields_map'])\\n(out/'comparison.json').write_text(json.dumps(result,indent=2),encoding='utf-8')\\nprint(json.dumps(result))\\nsys.exit(0 if result['passed'] else 1)\\n\")\nprint('Prepared full manifest/allowlist/each-payload MD5 comparison; only identical class maps may explain cache list ordering. Actual byte differences are retained, not hidden.')"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "79ef56ea636c495f493641e783a196f168b4443c6deadcbd514b28f46f6b0973",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud17-pck-comparison-prepare-20261111",
+    "token": "62f07bef722c70dbf9c3a739e9f7aacc",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\profile",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\temp",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\appdata",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\localappdata",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\home",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\cache",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\save_dir",
+      "available_bytes": 333917896704
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\pycache",
+      "available_bytes": 333917896704
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\profile",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\temp",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\evidence",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\appdata",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\localappdata",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\home",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\cache",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\save_dir",
+      "available_bytes": 333917888512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud17-pck-comparison-prepare-20261111\\pycache",
+      "available_bytes": 333917888512
+    }
+  },
+  "pid": 13180,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794404574.1072788
+}

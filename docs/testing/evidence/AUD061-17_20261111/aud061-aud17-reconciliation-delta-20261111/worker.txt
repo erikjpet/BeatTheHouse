@@ -1,0 +1,23 @@
+counts 1683 1682 added 0 removed 1
+GIT DIFF
+ docs/plans/0.6.1_stability_release_plan.md         |  31 +-
+ .../AUD061-11_candidate_acceptance_2026-11-11.md   |   6 +
+ ...UD061-12_web_export_investigation_2026-11-11.md |   4 +
+ docs/testing/AUD061_RC_findings_2026-11-11.md      |  10 +
+ docs/todo/bth_task_ledger.json                     | 951 +++++++++++++++++----
+ docs/todo/bth_task_owner_snapshot.json             |   4 +-
+ 6 files changed, 835 insertions(+), 171 deletions(-)
+
+ M docs/plans/0.6.1_stability_release_plan.md
+ M docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md
+ M docs/testing/AUD061-12_web_export_investigation_2026-11-11.md
+ M docs/testing/AUD061_RC_findings_2026-11-11.md
+ M docs/todo/bth_task_ledger.json
+ M docs/todo/bth_task_owner_snapshot.json
+?? Microsoft/
+?? docs/testing/AUD061-17_release_coverage_2026-11-11.md
+?? docs/testing/evidence/AUD061-11_20261111/aud061-aud11-next-assets-20261111/
+?? docs/testing/evidence/AUD061-11_20261111/aud061-aud11-next-report-startup-20261111/
+?? docs/testing/evidence/AUD061-11_20261111/aud061-aud11-reconciliation-final-20261111/
+?? docs/testing/evidence/AUD061-17_20261111/
+

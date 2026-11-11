@@ -1,0 +1,59 @@
+{
+	"checks": 58,
+	"facts": {
+		"cold": [
+			{
+				"cash": 30,
+				"chips": 25,
+				"money_lines": [
+					[
+						"Bankroll -1"
+					]
+				],
+				"purchase_rows": 1,
+				"slips": 1,
+				"slot": "numbers_purchase_reported"
+			},
+			{
+				"cash": 27,
+				"chips": 25,
+				"money_lines": [
+					[
+						"Bankroll -2"
+					],
+					[
+						"Bankroll -2"
+					]
+				],
+				"purchase_rows": 2,
+				"slips": 2,
+				"slot": "numbers_purchase_multiple"
+			},
+			{
+				"cash": 29,
+				"chips": 25,
+				"money_lines": [],
+				"purchase_rows": 0,
+				"slips": 1,
+				"slot": "numbers_purchase_legacy"
+			}
+		],
+		"legacy": {
+
+		},
+		"original_profiles_used": false,
+		"purchases": [],
+		"rejections": []
+	},
+	"failures": [],
+	"fidelity": "Disposable RunState.start_new/canonical set_environment and normal numbers_buy_slip API. Explicit synthetic Numbers-clock setup for Corner Store Draw2 and closed-book fixture. Official SaveService plus independent cold load and exact old-slip shape; no original R05 profile, hidden draw replay, Host/rendered/Web path or publication claim.",
+	"id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
+	"mode": "cold",
+	"source_sha256": {
+		"archive": "b5b6b41a4b40827800a48dea7a031d99929f47df44b725fa58aafd55b08558a6",
+		"journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+		"numbers": "2bb1e1005917ce17b409a8424fc5bd341cb2ca75f77d2733d3c695704d3b08ce",
+		"run_state": "005481fd92034c5ee98f75aae607f435d623fc123f8e8630520e6173d7e606c6",
+		"test": "d757f212d5bacb813c128d8f0b957dbef4f85c445521ab63faa676655d21e3b4"
+	}
+}

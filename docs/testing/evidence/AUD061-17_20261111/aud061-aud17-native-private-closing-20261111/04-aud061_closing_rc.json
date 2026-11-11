@@ -1,0 +1,117 @@
+{
+	"checks": 65,
+	"facts": {
+		"candidate_diagnostics": [
+			{
+				"cash": 12,
+				"clock": 1680,
+				"eligible_ids": [
+					"apartment",
+					"back_alley"
+				],
+				"eligible_inside_ids": [
+					"back_alley"
+				],
+				"game_ids": [
+					"roulette",
+					"slot",
+					"bar_dice"
+				],
+				"has_video_poker": false,
+				"ordinary_ids": [
+					"gas_station_casino",
+					"motel",
+					"back_alley"
+				],
+				"rejected_reasons": [
+					"generated Lounge lacks Video Poker",
+					"eligible fallback still present in ordinary cap"
+				],
+				"seed": "CLOSING-PUBLIC-NATIVE-0"
+			},
+			{
+				"cash": 12,
+				"clock": 1680,
+				"eligible_ids": [
+					"back_alley",
+					"house"
+				],
+				"eligible_inside_ids": [],
+				"game_ids": [
+					"roulette",
+					"video_poker",
+					"bar_dice"
+				],
+				"has_video_poker": true,
+				"ordinary_ids": [
+					"gas_station_casino",
+					"pawn_shop",
+					"jazz_club"
+				],
+				"rejected_reasons": [],
+				"seed": "CLOSING-PUBLIC-NATIVE-1"
+			}
+		],
+		"cash_after_hand": 8,
+		"fallback_exposed": true,
+		"fallback_id": "house",
+		"fallback_map_node": {
+			"cost": 0,
+			"method": "Walk",
+			"reason": "",
+			"travel_enabled": true,
+			"travel_target": true
+		},
+		"map_clock": 1770,
+		"natural_hand": {
+			"gross": 2,
+			"net": -4,
+			"stake": 6
+		},
+		"ordinary_ids": [
+			"gas_station_casino",
+			"pawn_shop",
+			"jazz_club"
+		],
+		"original_hand_replayed": false,
+		"public_ids": [
+			"gas_station_casino",
+			"pawn_shop",
+			"jazz_club",
+			"house"
+		],
+		"quote": {
+			"cost": 0,
+			"detail": "House\nHours: Open 24 hours (OPEN)\nYour roof. For now.\n110 min * 0$ * Walk",
+			"enabled": true,
+			"method": "Walk",
+			"minutes": 110
+		},
+		"reopening": {
+			"closing_active": false,
+			"from_clock": 1770,
+			"history_rows_added_by_ordinary_time_effects": 0,
+			"map_pauses_time": true,
+			"rng_unchanged_during_ordinary_time_effects": true,
+			"scope": "simulated elapsed delta through normal frame clock; no real-hours wait",
+			"to_clock": 2220
+		},
+		"seed": "CLOSING-PUBLIC-NATIVE-1",
+		"setup": "fresh normal campaign; production-generated Alley/Bar/Jazz/Lounge visits, initial cash12 and production clock advance to04:00",
+		"setup_candidates": 2,
+		"source_authority_valid": true,
+		"travel": {
+			"errors": [],
+			"ok": true
+		}
+	},
+	"failures": [],
+	"fidelity": "Fresh reconstructed native Foundation campaign and production-generated/finalized visits, initial cash12 and production clock setup. One natural actual Host Video Poker hand consumes real closing grace, real TalkDock acknowledgement/public map/selected quote/Travel dispatch. No original R11 save or two-pair replay, handcrafted zero route, authority bypass, pinned old-Web replay, outcome/item/scenario modifications or new native kernel/physics calls. Reopening uses simulated elapsed frame-clock delta, not real-hours wait. Official SaveService and separate cold.",
+	"id": "BTH-TRAVEL-CLOSING-FALLBACK-R11-1067",
+	"mode": "producer",
+	"source_sha256": {
+		"test": "c9fef3b72e036eed23d6600af3841cb138c31a45510d201bb5f4a4a6052345ca",
+		"travel_view": "41214108bb1decd3fc1e1b77e13e62e9cfcdcb064ef63ba98502b92712959ae7",
+		"world_map": "d7c435bd44a9c44c250154c603b21b2a64ac8fa28764f649055e987abb6d113d"
+	}
+}
