@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-11T00:20:59.678617+00:00",
+  "updated_at": "2026-11-11T00:35:18.870771+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -1580,19 +1580,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve bounded independent Gas not-reproduced disposition and original cause unknown. Scoped evidence/test are integrated; finish exact NEXT follow-through of separate BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 without treating it as the historical Gas cause.",
+      "next_action": "Retain bounded independent native/Web not-reproduced disposition and original cause unknown. On a new current recurrence preserve first-failure build/actions/state/generations before more Save/replay. Independent BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 is separately fixed, tested and delivered; do not attribute the original incidents to it or request gone personal saves.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Independent Gas native and exact85d Web exit qualification complete; original cause remains unknown. Test/evidence integrated; independent seal fix tracked separately. No original replay or gone-save request.",
+        "description": "Original incident cause remains unknown despite bounded independent native/Web qualification. This is an evidence limit, not a pending save request. The separate compatibility defect is delivered under its own ID.",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T00:20:59.678617+00:00",
+        "observed_at": "2026-11-11T00:35:18.870771+00:00",
         "evidence": [
           "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T00:20:59.678617+00:00",
+      "updated_at": "2026-11-11T00:35:18.870771+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4348,19 +4348,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve bounded independent Gas not-reproduced disposition and original cause unknown. Scoped evidence/test are integrated; finish exact NEXT follow-through of separate BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 without treating it as the historical Gas cause.",
+      "next_action": "Retain bounded independent native/Web not-reproduced disposition and original cause unknown. On a new current recurrence preserve first-failure build/actions/state/generations before more Save/replay. Independent BTH-SCENARIO-CROSS-PLATFORM-SEAL-001 is separately fixed, tested and delivered; do not attribute the original incidents to it or request gone personal saves.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Independent Gas native and exact85d Web exit qualification complete; original cause remains unknown. Test/evidence integrated; independent seal fix tracked separately. No original replay or gone-save request.",
+        "description": "Original incident cause remains unknown despite bounded independent native/Web qualification. This is an evidence limit, not a pending save request. The separate compatibility defect is delivered under its own ID.",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T00:20:59.678617+00:00",
+        "observed_at": "2026-11-11T00:35:18.870771+00:00",
         "evidence": [
           "docs/testing/gas_exit_web_closeout_20261110.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T00:20:59.678617+00:00",
+      "updated_at": "2026-11-11T00:35:18.870771+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -30249,8 +30249,11 @@
             "id": "next-delivery",
             "description": "Push scoped integrated main and verify exact NEXT identity, served assets and basic launch through the existing watcher.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/gas_seal_delivery_20261111.json",
+              "Main b039cc42e78eb56b5d0e1b835050053c0764ee57/tree ffa62c796dc778336f73c93219d75d935a2db15c promoted 2026-11-11T00:28:05Z; exact strict-HTTPS menu/assets/redirect pass."
+            ]
           }
         ],
         "coverage": {
@@ -30259,8 +30262,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "INTEGRATED_NATIVE_187_TOOLS_180_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_WEB_COMPATIBILITY_AND_EXACT_NEXT_DELIVERED",
       "owner": {
         "name": "Publish Gas compatibility closeout",
         "task_ref": "/root/publish_gas_compatibility",
@@ -30280,14 +30283,24 @@
             "docs/testing/gas_seal_integration_20261111.json",
             "Integrated identical reviewed core bytes; focused native60+20+23 and Gas84 pass."
           ]
+        },
+        {
+          "sha": "b039cc42e78eb56b5d0e1b835050053c0764ee57",
+          "evidence": [
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "Pushed integrated product source; exact existing NEXT identity/assets/strict-HTTPS main-menu startup verified."
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing private LAN NEXT only; no stable, itch, audience, infrastructure, credential or security changes."
+        "state": "verified",
+        "commit": "b039cc42e78eb56b5d0e1b835050053c0764ee57",
+        "evidence": [
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "docs/testing/gas_seal_delivery_20261111.md"
+        ],
+        "scope": "Existing private LAN NEXT; deployed 2026-11-11T00:28:05Z. Exact source/tree, served PCK/native hashes, unchanged engine receipts/headers and strict HTTPS normal menu verified. Candidate native/Web changed-behavior qualification retained; no new NEXT gameplay sweep."
       },
       "evidence": [
         {
@@ -30299,22 +30312,27 @@
           "kind": "integrated_source",
           "reference": "docs/testing/gas_seal_integration_20261111.json",
           "summary": "Native60+20+23 and Gas84 assertions, 180 tools tests pass; all five capped Jobs ended/0. Independent original candidate Web roundtrip evidence retains its own identity."
+        },
+        {
+          "kind": "exact_next_delivery",
+          "reference": "docs/testing/gas_seal_delivery_20261111.json",
+          "summary": "Pushed b039cc42 exact source/tree now served by existing NEXT. Strict HTTPS normal menu/version, no page/console/request failures; full PCK/native hashes and unchanged engine receipts match. Candidate cross-platform behavior evidence retains its original identity."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Run manual reconciliation with current scoped owner/runtime observations, push tested integrated main and verify exact existing NEXT identity/assets/basic launch.",
+      "next_action": "None for this bounded compatibility fix. Original Gas cause remains unknown and tracked separately; historical compact/layer paths without full body are not newly qualified.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "No current blocker; exact integrated source and NEXT delivery not yet verified.",
+        "description": "None. Focused integrated native187/tools180, scoped reconciliation and exact NEXT identity/assets/basic launch verified; original integrity and pauses preserved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T00:20:59.678617+00:00",
+        "observed_at": "2026-11-11T00:35:18.870771+00:00",
         "evidence": [
           "docs/testing/scenario_cross_platform_geometry.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T00:20:59.678617+00:00"
+      "updated_at": "2026-11-11T00:35:18.870771+00:00"
     }
   ],
   "batches": [

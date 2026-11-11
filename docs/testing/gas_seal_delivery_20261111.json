@@ -1,0 +1,486 @@
+{
+  "schema": "bth.gas_seal_delivery/v1",
+  "observed_at": "2026-11-11T00:20:59.678617+00:00",
+  "base_main": "50984841102fa4bc3d78bc1a0d10b93e119dcc1e",
+  "source_commits": {
+    "gas_fixture": "b5291a49a60d2830f2fc00038d1a1aa62f142d8f",
+    "gas_evidence": "460a4f09850476da583aeda5a7758324bce6c0be",
+    "independent_seal_fix": "4acc046f269b27ccfa5de2bcdaae95ab99e2fd8f"
+  },
+  "integrated_commits": {
+    "gas_fixture": "53002e118a8fa67c260e0cc5b9c54d1945e0264e",
+    "gas_evidence": "035819f836d389d9938fc5e798bef48ebaee1bab",
+    "independent_seal_fix": "c3bc398e99763faaedf1aae566713f44246939f0"
+  },
+  "tested_source_commit": "c3bc398e99763faaedf1aae566713f44246939f0",
+  "tested_tree": "9240b13a85291ce68f5feaaf7f04049ab499416c",
+  "final_core_sha256": {
+    "scripts/core/run_state.gd": "afb14ac626b82e26f616d655e9a34a535ca1a2e6ad7e228f4e120fab6489efd3",
+    "scripts/core/environment_semantic_inventory.gd": "d9f3bd5d88205752fe3edc0747d560a5f59072ce488c203de01e51f27948eede"
+  },
+  "tests": [
+    {
+      "run_id": "integrate-gas-seal-scenario-inventory-legacy-serialization-20261111",
+      "count": 60,
+      "count_kind": "native assertions",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-inventory-legacy-serialization-20261111\\evidence\\job.json",
+      "job_sha256": "c9b64721666a03dcfddcaf7623b82cfebd6f85ba72aba509f9320622daa23bd8",
+      "log": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-inventory-legacy-serialization-20261111\\evidence\\worker.log",
+      "log_sha256": "083d8b523928f5a75d8267dfae661c8fa988417b7daead53293f915428c0092d",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/scenario_inventory_legacy_serialization_check.gd"
+      ],
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "cc98eec9093dae214e692f3c0e293ee97357dca9ce3916a1e1a1f9f370949f0a",
+      "finished_at": "2026-11-11T00:16:00.422961+00:00"
+    },
+    {
+      "run_id": "integrate-gas-seal-scenario-cross-platform-geometry-20261111",
+      "count": 20,
+      "count_kind": "native assertions",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-cross-platform-geometry-20261111\\evidence\\job.json",
+      "job_sha256": "456f126a4a9e3f6682bd99863f85969b04f0419e4779546c2367bfcdc8e40e27",
+      "log": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-cross-platform-geometry-20261111\\evidence\\worker.log",
+      "log_sha256": "d1ced707c103ed15d845d52fc1eed880095bd1b93df89b72b64248472be552ae",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/scenario_cross_platform_geometry_check.gd"
+      ],
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "8d9460c00d0ed6c27ee13ba104d5eb0af70635b42008692827de7a9373ae007e",
+      "finished_at": "2026-11-11T00:16:06.377706+00:00"
+    },
+    {
+      "run_id": "integrate-gas-seal-scenario-event-restore-binding-20261111",
+      "count": 23,
+      "count_kind": "native assertions",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-event-restore-binding-20261111\\evidence\\job.json",
+      "job_sha256": "3a7ea9011758742e7e4cbdf446c17fafb65de63daa9e8b24bde82ca6c096f704",
+      "log": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-scenario-event-restore-binding-20261111\\evidence\\worker.log",
+      "log_sha256": "ccc3a557ede0d45318c3bae9c29150949706b945c7eed20a69441d7d62ac3f31",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/scenario_event_restore_binding_check.gd"
+      ],
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "c4700817e230ee93cdc424a157b33b265b7c7bbc1fcd3189822c5265b23a7461",
+      "finished_at": "2026-11-11T00:16:12.041056+00:00"
+    },
+    {
+      "run_id": "integrate-gas-paid-fixture-20261111",
+      "count": 84,
+      "count_kind": "native assertions",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-paid-fixture-20261111\\evidence\\job.json",
+      "job_sha256": "8e39c43adb1a455668e8f1aef29a5269e4a6559271537911f5140b00bd1189d0",
+      "log": "E:\\CodexQA\\BTH\\runs\\integrate-gas-paid-fixture-20261111\\evidence\\worker.log",
+      "log_sha256": "b398cdba480e35a1de11d52d56c9bf45220bf9db03556fb1e1078bef9138ed39",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/gas_scratch_exit_clock_check.gd"
+      ],
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "77a662a204f36f31d6dfbb78fcacb7cbcc3b29327caaa3617106c8aa1cad3e2a",
+      "finished_at": "2026-11-11T00:18:06.658674+00:00"
+    },
+    {
+      "run_id": "integrate-gas-seal-tools-unit-20261111",
+      "count": 180,
+      "count_kind": "tools unit tests",
+      "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-tools-unit-20261111\\evidence\\job.json",
+      "job_sha256": "0dc3c38dec8830fb9efd32881827597fcd6e7edb3dcc1d18199a2344b83f2ab1",
+      "log": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-tools-unit-20261111\\evidence\\worker.log",
+      "log_sha256": "00f1c63e85b45a276ff22da417d40d1e3037bc53aacdfac172a21fcaa2323d7d",
+      "command": [
+        "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tools/tests",
+        "-v"
+      ],
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "13598d2552d072b777cdb40e0270dbdb4064b1ece6abe74fcc61be58622232eb",
+      "finished_at": "2026-11-11T00:18:45.601754+00:00"
+    }
+  ],
+  "qualification_scope": "Focused integrated-source regressions and tools tests, not a full gameplay suite. Prior candidate-Web/native roundtrip and four exact85d Gas Web exit qualifications retain their original build and fixture identity. No new Web gameplay result yet.",
+  "transport_interruption": "First three native runs completed despite transient exec transport failure; their existing receipts were inspected, not relaunched. A later read-only inspection also failed before execution and was retried.",
+  "reconciliation": {
+    "state": "SCOPED_ZERO_FINDINGS_GLOBAL_BACKLOG_NOT_PASS",
+    "checks": [
+      {
+        "group": "current",
+        "checked_at": "2026-11-11T00:21:17.625391Z",
+        "global_summary": {
+          "objectives_checked": 162,
+          "batches_checked": 9,
+          "open_objectives": 64,
+          "open_batches": 5,
+          "open_work_items": 69,
+          "user_paused_items": 36,
+          "complete_objectives": 98,
+          "errors": 888,
+          "warnings": 0,
+          "tasks_with_errors": 59
+        },
+        "scoped_ids": [
+          "BTH-09",
+          "BTH-GAS-SCRATCHER-EXIT-001",
+          "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001"
+        ],
+        "scoped_findings": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\reconciliation.json",
+        "report_sha256": "b149bb8b293d747b0c934d3d568c0c0da34cd67e0b48d7450a270ed6e80609ef",
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+        "job_sha256": "73e862d5fe711a9b6988422b6c06ecc86906bd0a1accb95e77ca18458c6bfc6c",
+        "exit_code": 1,
+        "meaning": "Existing global/inherited ledger findings; no findings in these three scoped IDs.",
+        "owned_remaining": 0
+      },
+      {
+        "group": "all",
+        "checked_at": "2026-11-11T00:21:28.558051Z",
+        "global_summary": {
+          "objectives_checked": 306,
+          "batches_checked": 9,
+          "open_objectives": 194,
+          "open_batches": 5,
+          "open_work_items": 199,
+          "user_paused_items": 36,
+          "complete_objectives": 110,
+          "errors": 1504,
+          "warnings": 0,
+          "tasks_with_errors": 199
+        },
+        "scoped_ids": [
+          "BTH-09",
+          "BTH-GAS-SCRATCHER-EXIT-001",
+          "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001"
+        ],
+        "scoped_findings": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\reconciliation.json",
+        "report_sha256": "9680047b39b5296f3bff5ae28f3f7ea9a9e38028b071438d749dcb1c1567356d",
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+        "job_sha256": "65aee2ac69894947e2a7f588d96ae8106cede513c0265f82103668eeab185bb9",
+        "exit_code": 1,
+        "meaning": "Existing global/inherited ledger findings; no findings in these three scoped IDs.",
+        "owned_remaining": 0
+      }
+    ]
+  },
+  "next_delivery": {
+    "state": "verified",
+    "source_commit": "b039cc42e78eb56b5d0e1b835050053c0764ee57",
+    "source_tree": "ffa62c796dc778336f73c93219d75d935a2db15c",
+    "deployed_at": "2026-11-11T00:28:05Z",
+    "verification_finished_at": "2026-11-11T00:28:48.772Z",
+    "archive_sha256": "f84625c47eb4fd4d1bd89a76d57e44c8901b92452a8395e129100da8c30c7615",
+    "route": "https://192.168.0.36:8443/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/",
+    "redirect": {
+      "requested": "http://localhost:8088/p/beat-the-house/play/dev/",
+      "resolved": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/",
+      "status": 200,
+      "matchesInstalled": true
+    },
+    "metadata": [
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/next.json",
+        "status": 200,
+        "sha256": "d462116268dfaff313e403fb55ee0734f76402fcf03f7bc38d5a5feaa9a29eea",
+        "source_commit": "b039cc42e78eb56b5d0e1b835050053c0764ee57",
+        "source_tree": "ffa62c796dc778336f73c93219d75d935a2db15c",
+        "archive_sha256": "f84625c47eb4fd4d1bd89a76d57e44c8901b92452a8395e129100da8c30c7615",
+        "tls_validation_disabled": false
+      },
+      {
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/next.json",
+        "status": 200,
+        "sha256": "d462116268dfaff313e403fb55ee0734f76402fcf03f7bc38d5a5feaa9a29eea",
+        "source_commit": "b039cc42e78eb56b5d0e1b835050053c0764ee57",
+        "source_tree": "ffa62c796dc778336f73c93219d75d935a2db15c",
+        "archive_sha256": "f84625c47eb4fd4d1bd89a76d57e44c8901b92452a8395e129100da8c30c7615",
+        "tls_validation_disabled": false
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/BUILD.json",
+        "status": 200,
+        "sha256": "cbea3f1b2524082148dcfb1f96f438b72ac8eb1dc16e6cbda975bc3160b84794",
+        "text": "{\r\n  \"version\": \"0.6.0-dev+b039cc42e78e\",\r\n  \"source_tree\": \"ffa62c796dc778336f73c93219d75d935a2db15c\",\r\n  \"built_at\": \"2026-11-11T00:28:01Z\",\r\n  \"source_branch\": \"main\",\r\n  \"source_commit\": \"b039cc42e78eb56b5d0e1b835050053c0764ee57\"\r\n}\r\n"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/build_manifest.json",
+        "status": 200,
+        "sha256": "43807b1741304744c3a6c44726d068eebfe0beca29ccd2a8caeafe8ae989ea9b",
+        "text": "{\r\n  \"schema\": \"beat_the_house.build_manifest/v1\",\r\n  \"build_version\": \"0.6.0-dev+b039cc42e78e\",\r\n  \"release_version\": \"0.6.0\",\r\n  \"source_commit\": \"b039cc42e78eb56b5d0e1b835050053c0764ee57\",\r\n  \"source_tree\": \"ffa62c796dc778336f73c93219d75d935a2db15c\",\r\n  \"source_dirty\": false,\r\n  \"dirty_state_digest\": \"a51a7c91930243bbc61ed7b8cea76c1e5db706ac82b1f5a92f8a5b1416fb2d7c\",\r\n  \"engine_sha256\": \"fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae\",\r\n  \"export_presets_sha256\": \"ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad\",\r\n  \"platform\": \"web\",\r\n  \"native_library_path\": \"coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm\",\r\n  \"native_library_sha256\": \"63cdfbee8e8d2f63481dbcab8073244f649a76fa24918b9d35a07303847ecaaf\"\r\n}"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/REF",
+        "status": 200,
+        "sha256": "8161c7f856481f220f7cda81205f6f267e1f9d5dec6e20eacfe1531882c73da7",
+        "text": "b039cc42e78eb56b5d0e1b835050053c0764ee57\r\n"
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/VERSION",
+        "status": 200,
+        "sha256": "54a9e93e909c8e19390e651a71cc1cf7d385c7a097b1212e38f8d479c981a9d7",
+        "text": "0.6.0-dev+b039cc42e78e\r\n"
+      }
+    ],
+    "assets": [
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/index.js",
+        "file": "index.js",
+        "local_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "matchesArchiveJournal": true,
+        "status": 200,
+        "bytes": 2828608,
+        "contentType": "text/javascript",
+        "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+        "matchesGlHandleReceipt": true
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/index.wasm",
+        "file": "index.wasm",
+        "local_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "matchesArchiveJournal": true,
+        "status": 200,
+        "bytes": 1508237,
+        "contentType": "application/wasm",
+        "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+        "matchesPinnedEngine": true
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/index.side.wasm",
+        "file": "index.side.wasm",
+        "local_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "matchesArchiveJournal": true,
+        "status": 200,
+        "bytes": 21802358,
+        "contentType": "application/wasm",
+        "scope": "Unchanged payload: served header linked to exact-build pipeline hash receipt; not a fresh full-body audit.",
+        "matchesPinnedEngine": true
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/index.pck",
+        "file": "index.pck",
+        "local_sha256": "5e128a3f27803ca79196d0e248355cab301b37a7f9a2de55f22e1aeba13b0ade",
+        "matchesArchiveJournal": true,
+        "status": 200,
+        "bytes": 47223256,
+        "sha256": "5e128a3f27803ca79196d0e248355cab301b37a7f9a2de55f22e1aeba13b0ade",
+        "contentType": "application/octet-stream",
+        "servedFullHashMatchesInstalled": true
+      },
+      {
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/b039cc42e78eb56b5d0e1b835050053c0764ee57/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "file": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "local_sha256": "63cdfbee8e8d2f63481dbcab8073244f649a76fa24918b9d35a07303847ecaaf",
+        "matchesArchiveJournal": true,
+        "status": 200,
+        "bytes": 340415,
+        "sha256": "63cdfbee8e8d2f63481dbcab8073244f649a76fa24918b9d35a07303847ecaaf",
+        "contentType": "application/wasm",
+        "servedFullHashMatchesInstalled": true,
+        "matchesNativeManifest": true
+      }
+    ],
+    "startup": {
+      "state": "PASS",
+      "canvas_visible": true,
+      "loading_overlay_removed": true,
+      "page_errors": [],
+      "console_errors": [],
+      "request_failures": [],
+      "screenshot_review": "Normal Beat the House main menu visibly rendered; bottom-right version 0.6.0-dev+b039cc42e78e.",
+      "audio_scope": "QA AudioService contention avoided using ordinary --disable-audio-output; no audio quality acceptance."
+    },
+    "evidence": {
+      "startup.json": {
+        "path": "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\startup.json",
+        "sha256": "458f20a09c0e2810acdf0c83d02c608acc0ee3bfce987b37cce012a08f97eb9c"
+      },
+      "startup.png": {
+        "path": "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\startup.png",
+        "sha256": "104859a30cf7efde2c1df3749156f62523e7b57c05f56260c1ce46fa42dd7cc6"
+      },
+      "job.json": {
+        "path": "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+        "sha256": "2f90312fa58dfdff3a58672fa13d6b74578d70bac1ed47b143e60d917d1db6aa"
+      },
+      "browser-launch-storage-gate.json": {
+        "path": "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\browser-launch-storage-gate.json",
+        "sha256": "5067ecc008b059288091e3d627e9214f3d561b4234b304b166ce0a4cbbb08845"
+      }
+    },
+    "scope": "Exact source/tree/metadata/redirect, served PCK/native hashes, unchanged engine receipt/headers and strict-HTTPS menu startup. Reuses independently qualified candidate Web/native changed-behavior evidence; no new NEXT gameplay sweep."
+  },
+  "limits": [
+    "Independent native/Web seal defect does not establish either original Gas incident cause.",
+    "Original personal saves unavailable, not awaited; retained agent profiles and original synthetic companions untouched.",
+    "All existing validation and named user pauses preserved.",
+    "No stable, itch, audience, infrastructure, credential or security changes.",
+    "Only actually merged branch refs qualify for cleanup; no forced deletion or historical ownership-blocked clone access."
+  ],
+  "branch_cleanup": {
+    "observed_at": "2026-11-11T00:35:18.870771+00:00",
+    "deleted_by_this_worker": [],
+    "current_clone": "Only main in fresh independent clone.",
+    "prior_observation": "At the pre-removal checkpoint, only main was actually merged by ancestry; qa/gas-web-20261110 was retained because the work was cherry-picked. Subsequent workspace disappearance cause is unobserved. No forced ref deletion or cleanup performed."
+  },
+  "closure_observed_at": "2026-11-11T00:35:18.870771+00:00",
+  "closure_workspace": "E:\\CodexQA\\BTH\\workspaces\\close-gas-seal-delivery-20261111",
+  "workspace_recovery": {
+    "observed_at": "2026-11-11T00:35:18.870771+00:00",
+    "event": "Original integration workspace lost .git and tracked ledger files after exact b039 delivery; two other explicitly known source workspaces also lacked .git. Cause and actor unobserved. No removal, reset or cleanup was performed by this worker.",
+    "interrupted_action": "Writing the post-delivery ledger closure stopped at FileNotFound; only the remaining local delivery JSON and Markdown had been updated.",
+    "recovery": "Fresh independent shallow clone of verified remote b039, using exact remote-published storage/Job guards; prior workspace and historical ownership-blocked clone untouched.",
+    "preserved_files": [
+      {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110\\docs\\testing\\gas_seal_integration_20261111.json",
+        "sha256": "9143434eaff69d86707fc773d561e3a03519bdb4d24be42454f159df317b3aab"
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\finalize-branches-20261110\\docs\\testing\\gas_seal_integration_20261111.md",
+        "sha256": "fda04fe7492a7c44c452da2ae16aba97fe61981b6ddb7ed5b51deac67be7a3ab"
+      }
+    ],
+    "guard_receipt": "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+    "git_evidence_limit": "Fresh shallow clone does not re-prove all historical original commit objects. The earlier b039 integration current/all checks with --verify-git passed for these scoped IDs before the workspace disappeared; retain those original receipts. Final manual reconciliation will use the documented non-Git-check command."
+  },
+  "final_manual_reconciliation": {
+    "state": "SCOPED_ZERO_FINDINGS_GLOBAL_BACKLOG_NOT_PASS",
+    "checks": [
+      {
+        "group": "current",
+        "checked_at": "2026-11-11T00:36:07.862127Z",
+        "git_verification": false,
+        "summary": {
+          "objectives_checked": 162,
+          "batches_checked": 9,
+          "open_objectives": 63,
+          "open_batches": 5,
+          "open_work_items": 68,
+          "user_paused_items": 36,
+          "complete_objectives": 99,
+          "errors": 883,
+          "warnings": 0,
+          "tasks_with_errors": 59
+        },
+        "scoped_findings": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\gas-seal-final-ledger-current-20261111\\evidence\\reconciliation.json",
+        "report_sha256": "76d45ca306fb6498bc874756b01cf5f1ce7c00d276b656c47314999613268389",
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\gas-seal-final-ledger-current-20261111\\evidence\\job.json",
+        "job_sha256": "133f62b4229b71ec046400daa25e146a7dda35104907d0611e00359f9f5bf6db",
+        "exit_code": 1,
+        "owned_remaining": 0
+      },
+      {
+        "group": "all",
+        "checked_at": "2026-11-11T00:36:08.749125Z",
+        "git_verification": false,
+        "summary": {
+          "objectives_checked": 306,
+          "batches_checked": 9,
+          "open_objectives": 193,
+          "open_batches": 5,
+          "open_work_items": 198,
+          "user_paused_items": 36,
+          "complete_objectives": 111,
+          "errors": 1499,
+          "warnings": 0,
+          "tasks_with_errors": 199
+        },
+        "scoped_findings": [],
+        "report": "E:\\CodexQA\\BTH\\runs\\gas-seal-final-ledger-all-20261111\\evidence\\reconciliation.json",
+        "report_sha256": "bf579fc72d675390e8e3d07bd92d41450d88b8897995ea5bfcac8e82fbab3096",
+        "job_receipt": "E:\\CodexQA\\BTH\\runs\\gas-seal-final-ledger-all-20261111\\evidence\\job.json",
+        "job_sha256": "6a30474238fb10fbef7889ef7cc609951f1af00c347f8d86155e1c88a633cb52",
+        "exit_code": 1,
+        "owned_remaining": 0
+      }
+    ],
+    "mode_difference": "883 current/1499 all without optional Git checks versus prior888/1504 with local Git checks. Difference is check mode, not five resolved backlog findings."
+  }
+}

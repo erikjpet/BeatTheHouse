@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-11T00:20:59.678617+00:00",
+  "observed_at": "2026-11-11T00:35:50.339373+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed. Plus six actual Gas Web fixture/qualification Job closure receipts, all owned-zero, including retained first Web command-capture failure. Prior records are unchanged and not re-observed; separate compatibility diagnostics are not qualified by these receipts. Plus five integrated Gas/seal focused native/tools Jobs with actual assigned/guarded/finished-zero receipts. Prior runtime records preserved and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed. Plus six actual Gas Web fixture/qualification Job closure receipts, all owned-zero, including retained first Web command-capture failure. Prior records are unchanged and not re-observed; separate compatibility diagnostics are not qualified by these receipts. Plus five integrated Gas/seal focused native/tools Jobs with actual assigned/guarded/finished-zero receipts. Prior runtime records preserved and not re-observed. Plus two manual reconciliation Jobs, exact b039 NEXT verification and fresh independent remote-b039 clone Job, all verified-zero; checker exit1 reflects retained global findings. No other runtimes re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -23484,6 +23484,362 @@
           "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-tools-unit-20261111\\evidence\\launch-claim.json"
         ],
         "limit": "Actual capped Job assigned before execution, finished exit0 without timeout/errors and released0. Scope only this Job; no host census or other cleanup."
+      }
+    },
+    {
+      "instance_id": "gas-seal-integration:integrate-gas-seal-ledger-current-20261111",
+      "task_id": "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001",
+      "owner_task_ref": "/root/publish_gas_compatibility",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "integrate-gas-seal-ledger-current-20261111",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json:pid:7952",
+        "started_at": "2026-11-11T00:21:17.336985+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T00:21:27.995830+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json:pid:7952",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T00:21:27.995830+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T00:21:27.995830+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "integrate-gas-seal-ledger-current-20261111",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T00:21:27.995830+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-current-20261111\\evidence\\launch-claim.json"
+        ],
+        "limit": "Actual guarded capped Job ended/0 without timeout/error. Checker exit1 is retained global findings; exact NEXT verifier and fresh clone exit0. No host census or unrelated cleanup."
+      }
+    },
+    {
+      "instance_id": "gas-seal-integration:integrate-gas-seal-ledger-all-20261111",
+      "task_id": "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001",
+      "owner_task_ref": "/root/publish_gas_compatibility",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "integrate-gas-seal-ledger-all-20261111",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json:pid:10692",
+        "started_at": "2026-11-11T00:21:28.284155+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T00:21:41.469919+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json:pid:10692",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T00:21:41.469919+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T00:21:41.469919+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "integrate-gas-seal-ledger-all-20261111",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T00:21:41.469919+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\integrate-gas-seal-ledger-all-20261111\\evidence\\launch-claim.json"
+        ],
+        "limit": "Actual guarded capped Job ended/0 without timeout/error. Checker exit1 is retained global findings; exact NEXT verifier and fresh clone exit0. No host census or unrelated cleanup."
+      }
+    },
+    {
+      "instance_id": "gas-seal-integration:gas-seal-b039-next-verify-20261111",
+      "task_id": "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001",
+      "owner_task_ref": "/root/publish_gas_compatibility",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gas-seal-b039-next-verify-20261111",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json:pid:1900",
+        "started_at": "2026-11-11T00:24:26.020327+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T00:28:48.807665+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json:pid:1900",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T00:28:48.807665+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T00:28:48.807665+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gas-seal-b039-next-verify-20261111",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T00:28:48.807665+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-b039-next-verify-20261111\\evidence\\launch-claim.json"
+        ],
+        "limit": "Actual guarded capped Job ended/0 without timeout/error. Checker exit1 is retained global findings; exact NEXT verifier and fresh clone exit0. No host census or unrelated cleanup."
+      }
+    },
+    {
+      "instance_id": "gas-seal-integration:gas-seal-remote-recovery-setup-20261111",
+      "task_id": "BTH-SCENARIO-CROSS-PLATFORM-SEAL-001",
+      "owner_task_ref": "/root/publish_gas_compatibility",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gas-seal-remote-recovery-setup-20261111",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json:pid:14144",
+        "started_at": "2026-11-11T00:33:26.936599+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-11T00:33:52.065290+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json:pid:14144",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-11T00:33:52.065290+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-11T00:33:52.065290+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gas-seal-remote-recovery-setup-20261111",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+            "docs/testing/gas_seal_delivery_20261111.json",
+            "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-11T00:33:52.065290+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\job.json",
+          "docs/testing/gas_seal_delivery_20261111.json",
+          "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
+        ],
+        "limit": "Actual guarded capped Job ended/0 without timeout/error. Checker exit1 is retained global findings; exact NEXT verifier and fresh clone exit0. No host census or unrelated cleanup."
       }
     }
   ],
