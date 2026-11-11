@@ -1,0 +1,24 @@
+{
+  "schema": "bth-qa-storage/v1",
+  "run_id": "aud061-aud08-web-readback-coordinated-20261111",
+  "token": "b242553447cb3c4d7866086eeb43edec",
+  "prepared": true,
+  "expected_write_bytes": 4294967296,
+  "reserve_bytes": 21474836480,
+  "required_bytes": 25769803776,
+  "paths": {
+    "root": "E:\\CodexQA\\BTH",
+    "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+    "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111",
+    "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\profile",
+    "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\temp",
+    "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\evidence",
+    "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\appdata",
+    "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\localappdata",
+    "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\home",
+    "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\cache",
+    "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\save_dir",
+    "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\pycache"
+  },
+  "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-readback-coordinated-20261111\\evidence\\storage-manifest.json"
+}

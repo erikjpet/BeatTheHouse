@@ -43,7 +43,7 @@ Fresh Chrome launched directly in inherited capped Job with explicit E profile/c
 
 ## NEXT
 
-Pending finished task push and exact deployment/asset/startup/actual lifecycle verification through the existing watcher.
+Final accepted NEXT is facf757e9520800f4212266e42b4dedc6f3ad32b; see the final accepted section. Earlier deployment attempts below are historical and explicitly unaccepted.
 
 
 ### Real hidden-state method and Web before
@@ -108,3 +108,18 @@ Actual adapter test first expanded28checks/3failures, then30checks/4failures inc
 After the first lifecycle request, the bridge now serializes calls to the unchanged GodotFS.sync primitive with one promise tail. Automatic and lifecycle callers each receive a distinct later promise; original engine sync/busy/IDB implementation and native callback acknowledgement are preserved. This coordinates existing callers rather than coalescing a newer manual write into an older promise. No engine asset rewrite, direct FS.syncfs/IndexedDB access, frame pump, debounce/canvas scheduling change or new version check. Queue installation occurs once in this engine module; existing manual begin/poll code stays unchanged.
 
 Same full adapter test after: **30/0**, automatic/lifecycle interleavingcalls2/overlaps0/persistedgeneration3, newer manual acknowledgement succeeds. This is controlled engine-promise VM evidence, not real IndexedDB. Native77/0 again, queued flush113.000/115.097/120.759ms with no frames. LivenessPASS again. Coordinated Smoke4pass/7fail matches baseline4/7, exact content25/runtime16 inherited assertions, normalized new errors[], performance9inherited versus baseline10, no timeout/activeprocesses0; exact deployed clean-console/within200ms/reload proof still pending.
+
+
+## Final accepted NEXT
+
+Verified **facf757e9520800f4212266e42b4dedc6f3ad32b**, containing final coordinated code **138880bbed6999aa21264b72acdace61036535af**, earlier immediate-sync code9d7d9c4a and foundation lifecycle code30ac66e4, plus unchanged Node-check relocationd45f5c02. Tree6bbd49fb856b77ed251dd502914437c78726e278, archive8981596be152b8e30bbe069ec1baa741c7039ab91636a6016f04a05803508463, promoted2026-11-11T09:27:08Z. Exact10selected assetsPASS; ordinary /dev/ entry selects this identity. Footer0.6.0-dev+facf757e9520; fresh ordinary startup/Daily visually clean. Existing watcher admission/export/promotion succeeds without guard/cap/reserve/qualification changes.
+
+New fresh real-visibility browser, normal House Sleep card12:15PM, ordinary trusted Sleep input withzero extra delay, actual hidden event**162.7ms** after pointer-up (strict200msPASS), host minimize completion13ms after click acknowledgement. Main visibilitychange/pagehide registrations each verified as1bubble listener plus1capture observation listener.
+
+Primary changes100312bytes/SHA2565e1e162965744e4ace5d0e16bee485437b45473eb520d1c5460213b38dfa92cd to100422bytes/SHA256f7fc89783f0403372d82a7d445424737eb5e13d0b62d3290454947134ce7e509 while hidden. Reload restores this same new100422bytes/f7fc..., backup present, no .tmp/rollback residue. Normal Continue visibly restores8:15PM display and You sleep for8hours...; display rounds to its normal quarter-hour bucket. Read-only production Codec validation/decode of actual hidden/reloaded byte captures: **19/0**, both exact savedclock1223minutes, bankroll68, onehome_sleep entryhours8/minutes480/clock1223, same full primary hash. Capture helper does not issue filesystem sync or mutate game state; no hidden screenshot/frame pump, profile migration or version/schema addition.
+
+Screens00startup/01Daily/34SleepCard/35ReloadContinue/36RestoredSleep inspected. Pageerrors0, consolewarnings/errors0, no Already syncing overlap. Jobexit0/no timeout/activeprocesses0. Byte readback ran only after browser closed. Native77/0, bridge30/0, captured-state19/0, livenessPASS; final Smoke4pass7fail matches baseline stage outcomes and exact inherited assertion sets, normalized new errors[], performance9old versus baseline10.
+
+Actual visibility-hide/reload path and listener registration are qualified. An isolated pagehide-only navigation, abrupt process kill, mobile OS lifecycle and every late-run size are not separately claimed. Native notification contract and actual exported real-hide capture are the stated scope. Earlier failed/timing/console attempts remain retained and unaccepted. Final post-delivery reconciliation follows. Parent remains Open:11of18orders delivered,7remain.
+
+Final post-delivery reconciliation1683inherited errors/52older tasks, zero new AUD061/QOL findings. Final full JSON/job/manifest retained. No source swap or QA process remains active. Delivery-only receipt waits for the next finished task push.
