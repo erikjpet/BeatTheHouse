@@ -59,7 +59,15 @@
         "url": "https://192.168.0.36:8443/p/beat-the-house/play/dev/17ae0cb50b5852c232d68e61784f117b1220f84d/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
         "status": 200
       }
-    ]
+    ],
+    "error_disposition": {
+      "state": "OPEN_UNATTRIBUTED_PAGE_ERRORS",
+      "page_error_count": 2,
+      "console_error_count": 0,
+      "failed_request_count": 0,
+      "timing_and_stack": "Not recorded by original runner; phase/cause unknown.",
+      "acceptance_limit": "Not an error-free browser pass. Six settled rounds and bounded timing observations retained; successful Job cleanup does not clear browser errors."
+    }
   },
   "latency_method": "Browser Event Timing dispatch-to-next-paint duration, quantized in 8ms buckets, threshold16ms. Not the completion latency of the deliberate multi-card animation or an internal strategy slice. A missing observation means unavailable, not zero.",
   "actions": [
@@ -1000,5 +1008,10 @@
       "label": "controlled-finish",
       "op": "exit"
     }
-  ]
+  ],
+  "integration_review": {
+    "observed_at": "2026-11-11T01:20:31.244585+00:00",
+    "source_commit": "b454aaa78c8a4198f1e765de0a02823140a9e64f",
+    "correction": "Original Markdown and ledger zero-browser-error claims contradicted preserved JSON/raw result. Corrected claims only; raw errors and evidence retained. No new gameplay or product code change."
+  }
 }

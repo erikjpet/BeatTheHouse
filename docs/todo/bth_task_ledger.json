@@ -671,7 +671,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_17AE_NORMAL_WEB_SAMPLED; HISTORICAL_OUTLIER_ATTRIBUTION_OPEN",
+      "status": "EXACT_17AE_NORMAL_WEB_SAMPLED; PAGE_ERRORS_AND_HISTORICAL_ATTRIBUTION_OPEN",
       "owner": {
         "name": "Video Poker hint qualification",
         "task_ref": "BTH-PERF-VIDEO-HINT-20261110",
@@ -702,8 +702,8 @@
           "docs/testing/video_poker_deployed_visible_20261111.json"
         ],
         "scope": "Exact17ae identity/payload/startup custody retained; new ordinary visible Web Deal/Hold/Draw sampled on all three cabinets without modifying deployed assets. Historical outliers and broader performance remain open.",
-        "verified_scope": "Exact deployed normal Games route; six settled rounds, visible Hold/payout and no-input animation; bounded browser latency/longtasks.",
-        "pending_scope": "Historical188-344ms standalone outlier attribution and broader performance qualification."
+        "verified_scope": "Exact deployed normal Games route; six settled rounds, visible Hold/payout and no-input animation; bounded browser latency/longtasks. Two page errors retained; not an error-free browser pass.",
+        "pending_scope": "Historical188-344ms standalone outlier attribution and broader performance qualification. Attribute two preserved browser DataCloneError out-of-memory entries; original runner did not record their timestamps/stacks."
       },
       "evidence": [
         {
@@ -734,15 +734,15 @@
         {
           "kind": "deployed_normal_gameplay",
           "reference": "docs/testing/video_poker_deployed_visible_20261111.json",
-          "summary": "Exact HTTPS17ae ordinary practice on all three cabinets: six settled rounds and seven Deals, visible Hold and animation; zero browser errors. Deal/Hold sampled windows have no50ms longtask; Draw59-66ms and entry175-502ms remain wider performance findings. Historical188-344ms attribution remains open."
+          "summary": "Exact HTTPS17ae ordinary practice on all three cabinets: six settled rounds and seven Deals, visible Hold and animation; two preserved DataCloneError out-of-memory page errors; no console errors or failed requests, with error phase/cause unknown. Deal/Hold sampled windows have no50ms longtask; Draw59-66ms and entry175-502ms remain wider performance findings. Historical188-344ms attribution remains open."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Preserve exact deployed ordinary-flow sample and prior slice/parity evidence. Attribute historical standalone outliers only from correlated CPU/call-stack evidence; investigate repeated Draw/full-host frame and entry costs under the whole-game performance parent. No original-save or user-input dependency.",
+      "next_action": "Preserve exact deployed ordinary-flow sample and prior slice/parity evidence. Attribute historical standalone outliers only from correlated CPU/call-stack evidence; investigate repeated Draw/full-host frame and entry costs under the whole-game performance parent. No original-save or user-input dependency. Attribute the two retained page errors from supporting evidence if available; do not infer phase or a clean browser pass.",
       "blocker": {
         "state": "active",
         "kind": "acceptance_evidence",
-        "description": "Exact17ae ordinary deployed gameplay is now sampled. Historical188-344ms standalone wall-time outliers remain unattributed; current initial trace identifies two60ms CPU MainLoop_runner frame costs without GDScript/advice attribution. Whole-game performance is not qualified.",
+        "description": "Exact17ae ordinary deployed gameplay is now sampled. Historical188-344ms standalone wall-time outliers remain unattributed; current initial trace identifies two60ms CPU MainLoop_runner frame costs without GDScript/advice attribution. Whole-game performance is not qualified. Two final raw/JSON DataCloneError out-of-memory page errors remain unattributed; error timestamps/stacks were not recorded.",
         "requires_user_input": false,
         "observed_at": "2026-11-11T01:11:43.957468+00:00",
         "evidence": [
@@ -752,7 +752,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T01:11:43.957468+00:00"
+      "updated_at": "2026-11-11T01:20:31.259799+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",

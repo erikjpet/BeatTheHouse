@@ -4,7 +4,7 @@ BTH-PERF-20261104-002 remains **Open** for historical outlier attribution. The w
 
 ## Actual deployed ordinary flow
 
-Trusted LAN HTTPS loaded **17ae0cb50b5852c232d68e61784f117b1220f84d**, tree **2e71e62a9e4f704254dc88cfab12e24d9c08baaa**, in a fresh E-drive profile. The existing exact-build startup/PCK/native custody receipt is reused. Browser engine/PCK/native responses were all 200, with no page errors, console errors or failed requests. TLS validation stayed enabled. Production HTML, scripts, engine, PCK, saves and deployment were not changed; no scene override, fixture or game-state hook was used.
+Trusted LAN HTTPS loaded **17ae0cb50b5852c232d68e61784f117b1220f84d**, tree **2e71e62a9e4f704254dc88cfab12e24d9c08baaa**, in a fresh E-drive profile. The existing exact-build startup/PCK/native custody receipt is reused. Browser engine/PCK/native responses were all 200. The final raw result and committed JSON retain two page errors: `DataCloneError: Failed to execute 'postMessage' on 'MessagePort': Data cannot be cloned, out of memory.` Console errors and failed requests were empty. Error timestamps/stacks were not recorded, so their phase and cause are unknown; this is not an error-free browser pass. TLS validation stayed enabled. Production HTML, scripts, engine, PCK, saves and deployment were not changed; no scene override, fixture or game-state hook was used.
 
 Normal Main Menu > Games navigation and the visible practice seed field produced:
 
@@ -31,6 +31,10 @@ The preserved source-matched rendered **3.010-3.045ms** advice slices still pass
 The old standalone **188-344ms** wall-time outliers remain unattributed. Their committed numeric reports are preserved. Named old raw E-drive run directories were absent from the current runs inventory. The new trace cannot retroactively assign them to CPU quota, JIT, GC or advice, and its full-host MainLoop costs do not establish the old standalone cause. Time.get_ticks_usec measures wall elapsed; correlated call-stack/thread-CPU evidence is needed to resolve those historical values.
 
 No speculative product fix is justified by that missing attribution. Preserve this deployed sample and the earlier exact-source tests, retain a concrete historical-attribution follow-up, and investigate repeated Draw/full-host frame and entry costs under the whole-game parent. No original-save or user-input dependency is invented.
+
+## Integration correction
+
+Integration review caught a contradiction in the original summary: it claimed no browser errors while its own committed JSON and final raw result retained the two page errors above. The errors are preserved verbatim, the ledger and readable index are corrected, and their attribution remains open. Six settled rounds and the measured windows remain bounded observations; Job exit0/zero owned processes does not clear browser errors. No new gameplay run or product fix was performed to hide or reclassify them.
 
 ## Custody and validation
 
