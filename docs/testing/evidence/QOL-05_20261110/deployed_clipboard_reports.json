@@ -1,0 +1,114 @@
+[
+  {
+    "action_id": 2,
+    "result": "PASS",
+    "report": {
+      "autosave_failure_code": "",
+      "build": {
+        "export_sha256": "",
+        "identity_source": "embedded_manifest",
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+        "version": "0.6.0-dev+d389abcf59c6"
+      },
+      "last_load": {
+        "backup_exists": false,
+        "backup_loadable": false,
+        "outcome": "nothing-loadable",
+        "primary_exists": false,
+        "primary_loadable": false
+      },
+      "last_save": {
+        "error": 0,
+        "error_code": "",
+        "ok": true
+      },
+      "platform": "Web",
+      "schema": "beat_the_house.support_diagnostics/v1"
+    }
+  },
+  {
+    "action_id": 10,
+    "result": "PASS",
+    "report": {
+      "autosave_failure_code": "save_start_failed",
+      "build": {
+        "export_sha256": "",
+        "identity_source": "embedded_manifest",
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+        "version": "0.6.0-dev+d389abcf59c6"
+      },
+      "last_load": {
+        "backup_exists": false,
+        "backup_loadable": false,
+        "outcome": "nothing-loadable",
+        "primary_exists": false,
+        "primary_loadable": false
+      },
+      "last_save": {
+        "error": 12,
+        "error_code": "temporary_open_failed",
+        "ok": false
+      },
+      "platform": "Web",
+      "schema": "beat_the_house.support_diagnostics/v1"
+    }
+  },
+  {
+    "action_id": 16,
+    "result": "PASS",
+    "report": {
+      "autosave_failure_code": "",
+      "build": {
+        "export_sha256": "",
+        "identity_source": "embedded_manifest",
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+        "version": "0.6.0-dev+d389abcf59c6"
+      },
+      "last_load": {
+        "backup_exists": false,
+        "backup_loadable": false,
+        "outcome": "nothing-loadable",
+        "primary_exists": false,
+        "primary_loadable": false
+      },
+      "last_save": {
+        "error": 0,
+        "error_code": "",
+        "ok": true
+      },
+      "platform": "Web",
+      "schema": "beat_the_house.support_diagnostics/v1"
+    }
+  },
+  {
+    "action_id": 22,
+    "result": "PASS",
+    "report": {
+      "autosave_failure_code": "",
+      "build": {
+        "export_sha256": "",
+        "identity_source": "embedded_manifest",
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+        "version": "0.6.0-dev+d389abcf59c6"
+      },
+      "last_load": {
+        "backup_exists": true,
+        "backup_loadable": false,
+        "outcome": "loaded-primary",
+        "primary_exists": true,
+        "primary_loadable": true
+      },
+      "last_save": {
+        "error": 0,
+        "error_code": "",
+        "ok": true
+      },
+      "platform": "Web",
+      "schema": "beat_the_house.support_diagnostics/v1"
+    }
+  }
+]

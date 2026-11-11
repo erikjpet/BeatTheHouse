@@ -1,0 +1,126 @@
+{
+  "archive": {
+    "bytes": 41694037,
+    "filename": "d389abcf59c682ba02d378ec4c7ff4d94f20de25-1794376075762749500.zip",
+    "sha256": "171ef3c3a353f7292989335d973ce4221c1efb6e106151d10a599f6bee500d58"
+  },
+  "built_at": "2026-11-11T05:49:24Z",
+  "files": [
+    {
+      "bytes": 238,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "BUILD.json",
+      "sha256": "d70fa8ccb826fa9cbcadd9ae07de73560c9a9aac3ea4392a766666b85f3b2919"
+    },
+    {
+      "bytes": 42,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "REF",
+      "sha256": "ac2ad5518cf5debdd6dafe5fb030a29d6eed25c5541ce4695f88e2c025b641db"
+    },
+    {
+      "bytes": 24,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "VERSION",
+      "sha256": "e528b4a7c24b49040b96ba0d61d5406582ec005f78633a72f9653c5a15bc6b03"
+    },
+    {
+      "bytes": 773,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "build_manifest.json",
+      "sha256": "54337d999633b0e20afcff4f03e2ceb0aa84e2b12d2ca81cda158006106462cb"
+    },
+    {
+      "bytes": 340415,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "sha256": "49b1cb487285d9b1c2ca5bbb152f6709ee1b9861ce8efc2beba13f2437c41667"
+    },
+    {
+      "bytes": 4099,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.apple-touch-icon.png",
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b"
+    },
+    {
+      "bytes": 2973,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.position.worklet.js",
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8"
+    },
+    {
+      "bytes": 7298,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.audio.worklet.js",
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3"
+    },
+    {
+      "bytes": 5514,
+      "isolation_headers": {},
+      "mime": "text/html",
+      "path": "index.html",
+      "sha256": "8e637b33a8b243840d6ff3c7b65bb1d34796920973565f62833958e7959b9da3"
+    },
+    {
+      "bytes": 14818,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.icon.png",
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a"
+    },
+    {
+      "bytes": 2828608,
+      "isolation_headers": {},
+      "mime": "text/javascript",
+      "path": "index.js",
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c"
+    },
+    {
+      "bytes": 47236052,
+      "isolation_headers": {},
+      "mime": "application/octet-stream",
+      "path": "index.pck",
+      "sha256": "90047ccab7f179697a6b8e8ee32f497e3ad9fc9a7ba448cd58db6b6ef102ffb8"
+    },
+    {
+      "bytes": 21443,
+      "isolation_headers": {},
+      "mime": "image/png",
+      "path": "index.png",
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e"
+    },
+    {
+      "bytes": 21802358,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.side.wasm",
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+    },
+    {
+      "bytes": 1508237,
+      "isolation_headers": {},
+      "mime": "application/wasm",
+      "path": "index.wasm",
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+    },
+    {
+      "bytes": 1295,
+      "isolation_headers": {},
+      "mime": "application/json",
+      "path": "web-gl-handles.json",
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd"
+    }
+  ],
+  "schema": "beat_the_house.served_handoff_stage/v2",
+  "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+  "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+  "version": "0.6.0-dev+d389abcf59c6"
+}

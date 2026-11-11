@@ -1,0 +1,182 @@
+{
+  "checked_at": "2026-11-11T05:50:08.708412+00:00",
+  "expected_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+  "expected_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+  "archive_sha256": "171ef3c3a353f7292989335d973ce4221c1efb6e106151d10a599f6bee500d58",
+  "watcher_phase": "current",
+  "deployed_at": "2026-11-11T05:49:29Z",
+  "files": [
+    {
+      "path": "BUILD.json",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/json",
+      "expected_sha256": "d70fa8ccb826fa9cbcadd9ae07de73560c9a9aac3ea4392a766666b85f3b2919",
+      "expected_bytes": 238,
+      "bytes": 238,
+      "sha256": "d70fa8ccb826fa9cbcadd9ae07de73560c9a9aac3ea4392a766666b85f3b2919",
+      "matches": true,
+      "metadata": {
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_branch": "main",
+        "version": "0.6.0-dev+d389abcf59c6",
+        "built_at": "2026-11-11T05:49:24Z",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f"
+      }
+    },
+    {
+      "path": "REF",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/octet-stream",
+      "expected_sha256": "ac2ad5518cf5debdd6dafe5fb030a29d6eed25c5541ce4695f88e2c025b641db",
+      "expected_bytes": 42,
+      "bytes": 42,
+      "sha256": "ac2ad5518cf5debdd6dafe5fb030a29d6eed25c5541ce4695f88e2c025b641db",
+      "matches": true
+    },
+    {
+      "path": "VERSION",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/octet-stream",
+      "expected_sha256": "e528b4a7c24b49040b96ba0d61d5406582ec005f78633a72f9653c5a15bc6b03",
+      "expected_bytes": 24,
+      "bytes": 24,
+      "sha256": "e528b4a7c24b49040b96ba0d61d5406582ec005f78633a72f9653c5a15bc6b03",
+      "matches": true
+    },
+    {
+      "path": "build_manifest.json",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/json",
+      "expected_sha256": "54337d999633b0e20afcff4f03e2ceb0aa84e2b12d2ca81cda158006106462cb",
+      "expected_bytes": 773,
+      "bytes": 773,
+      "sha256": "54337d999633b0e20afcff4f03e2ceb0aa84e2b12d2ca81cda158006106462cb",
+      "matches": true,
+      "metadata": {
+        "schema": "beat_the_house.build_manifest/v1",
+        "build_version": "0.6.0-dev+d389abcf59c6",
+        "release_version": "0.6.0",
+        "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+        "source_dirty": false,
+        "dirty_state_digest": "a51a7c91930243bbc61ed7b8cea76c1e5db706ac82b1f5a92f8a5b1416fb2d7c",
+        "engine_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+        "export_presets_sha256": "ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad",
+        "platform": "web",
+        "native_library_path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "native_library_sha256": "49b1cb487285d9b1c2ca5bbb152f6709ee1b9861ce8efc2beba13f2437c41667"
+      }
+    },
+    {
+      "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/wasm",
+      "expected_sha256": "49b1cb487285d9b1c2ca5bbb152f6709ee1b9861ce8efc2beba13f2437c41667",
+      "expected_bytes": 340415,
+      "bytes": 340415,
+      "sha256": "49b1cb487285d9b1c2ca5bbb152f6709ee1b9861ce8efc2beba13f2437c41667",
+      "matches": true
+    },
+    {
+      "path": "index.html",
+      "method": "GET",
+      "status": 200,
+      "mime": "text/html",
+      "expected_sha256": "8e637b33a8b243840d6ff3c7b65bb1d34796920973565f62833958e7959b9da3",
+      "expected_bytes": 5514,
+      "bytes": 5514,
+      "sha256": "8e637b33a8b243840d6ff3c7b65bb1d34796920973565f62833958e7959b9da3",
+      "matches": true
+    },
+    {
+      "path": "index.js",
+      "method": "GET",
+      "status": 200,
+      "mime": "text/javascript",
+      "expected_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+      "expected_bytes": 2828608,
+      "bytes": 2828608,
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+      "matches": true
+    },
+    {
+      "path": "index.pck",
+      "method": "GET",
+      "status": 200,
+      "mime": "application/octet-stream",
+      "expected_sha256": "90047ccab7f179697a6b8e8ee32f497e3ad9fc9a7ba448cd58db6b6ef102ffb8",
+      "expected_bytes": 47236052,
+      "bytes": 47236052,
+      "sha256": "90047ccab7f179697a6b8e8ee32f497e3ad9fc9a7ba448cd58db6b6ef102ffb8",
+      "matches": true
+    },
+    {
+      "path": "index.side.wasm",
+      "method": "HEAD",
+      "status": 200,
+      "mime": "application/wasm",
+      "expected_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "expected_bytes": 21802358,
+      "bytes": 21802358,
+      "sha256_scope": "Unchanged engine pin reused from exact stage and next web_gl_handles; served status/MIME/length checked."
+    },
+    {
+      "path": "index.wasm",
+      "method": "HEAD",
+      "status": 200,
+      "mime": "application/wasm",
+      "expected_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "expected_bytes": 1508237,
+      "bytes": 1508237,
+      "sha256_scope": "Unchanged engine pin reused from exact stage and next web_gl_handles; served status/MIME/length checked."
+    }
+  ],
+  "next": {
+    "source_commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+    "source_branch": "main",
+    "version": "0.6.0-dev+d389abcf59c6",
+    "built_at": "2026-11-11T05:49:24Z",
+    "source_tree": "1c507e9054f57478912937de58b2e7608fb2d27f",
+    "web_gl_handles": {
+      "schema": "bth.web_gl_handles/v1",
+      "policy_version": 1,
+      "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
+      "source_hash_format": "utf8_lf_v1",
+      "policy_sha256": "1c129ff20ed33f16ba9297ef0353152c11e00aad5e84e729ec4cb5b6aad2ded0",
+      "tool_sha256": "496d770ba2d8509fd3b97ede25a5fc8edce46104c5a258009206815d750c938a",
+      "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
+      "godot_commit": "89cea143987d564363e15d207438530651d943ac",
+      "emscripten_version": "4.0.20",
+      "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+      "build_profile_sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7",
+      "engine_assets": {
+        "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+      },
+      "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+      "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+      "tables": [
+        "buffers",
+        "textures",
+        "vaos",
+        "syncs"
+      ],
+      "rewrites": {
+        "allocator": 1,
+        "delete_buffers": 1,
+        "delete_textures": 1,
+        "delete_vaos": 1,
+        "delete_syncs": 1
+      }
+    },
+    "archive_sha256": "171ef3c3a353f7292989335d973ce4221c1efb6e106151d10a599f6bee500d58"
+  },
+  "entry_final_url": "http://localhost:8088/p/beat-the-house/play/dev/d389abcf59c682ba02d378ec4c7ff4d94f20de25/",
+  "entry_status": 200,
+  "result": "PASS"
+}

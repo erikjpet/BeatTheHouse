@@ -60,4 +60,19 @@ Raw jobs/commands/stdout/storage manifests and pre-child launch gates retained i
 
 ## NEXT
 
-Pending finished code/ledger commits, existing-pipeline promotion and actual deployed copy/clipboard/field inspection. No Web copy success is claimed yet.
+Verified **d389abcf59c682ba02d378ec4c7ff4d94f20de25**, containing code **25822cff6d0f7debb2f9db688515a77f4655cc49**, tree1c507e9054f57478912937de58b2e7608fb2d27f, archive171ef3c3a353f7292989335d973ce4221c1efb6e106151d10a599f6bee500d58. Existing watcher promoted at2026-11-11T05:49:29Z,phasecurrent/errornull. Exact metadata/REF/HTML/JS/PCK/native GET hashes plus engine HEAD length/MIME/pins:10/10PASS; ordinary /dev/entry resolves to this identity.
+
+Fresh approved browser profile; unmodified NEXT build, ordinary Settings/Copy/normal Daily Challenge/Menu Save/Load inputs. Startup/Settings clean; Support Copy diagnostics visible, desktop Open save folder absent on Web. Four actual button clicks copied valid reports with exact full commit/tree, version0.6.0-dev+d389abcf59c6, platformWeb, embedded_manifest identity. Actual reports in deployed_clipboard_reports.json; relevant raw values:
+```
+{"action_id": 2, "autosave_failure_code": "", "last_load": {"backup_exists": false, "backup_loadable": false, "outcome": "nothing-loadable", "primary_exists": false, "primary_loadable": false}, "last_save": {"error": 0, "error_code": "", "ok": true}}
+{"action_id": 10, "autosave_failure_code": "save_start_failed", "last_load": {"backup_exists": false, "backup_loadable": false, "outcome": "nothing-loadable", "primary_exists": false, "primary_loadable": false}, "last_save": {"error": 12, "error_code": "temporary_open_failed", "ok": false}}
+{"action_id": 16, "autosave_failure_code": "", "last_load": {"backup_exists": false, "backup_loadable": false, "outcome": "nothing-loadable", "primary_exists": false, "primary_loadable": false}, "last_save": {"error": 0, "error_code": "", "ok": true}}
+{"action_id": 22, "autosave_failure_code": "", "last_load": {"backup_exists": true, "backup_loadable": false, "outcome": "loaded-primary", "primary_exists": true, "primary_loadable": true}, "last_save": {"error": 0, "error_code": "", "ok": true}}
+```
+Initial report saveOK/no load. In the normal disposable run, a declared own-profile temporary-write fault caused actual explicit Save to fail: error12/temporary_open_failed plus autosave save_start_failed. Second Copy reported those current values. Removed only that owned fault, retried actual Save successfully; third Copy reportsOK/error0/emptyfailurecode. Actual enabled Load restored the saved run with visible Run loaded result; fourth Copy reportsloaded-primary/primaryexists/loadabletrue/backupexists true. backup_loadablefalse is the actual returned load outcome field(the primary path did not require backup recovery), not a claim about every backup's validity. Last-load fields describe the last Load operation, so remain initial values before actual Load.
+
+Every copy shows Diagnostics copied feedback. Screenshots00startup,01Settings,01wheel/02copy,07failedSave,09wheel/10copy,13saveRecovery/16copy,19loaded/22copy inspected. Report keys and omissions verified; no paths,slot IDs,free messages,seeds,money or save contents copied. Browser helper reads clipboard only immediately after its owned trusted Copy click, returns only expected-schema/current-SHA reports and suppresses unrelated clipboard text. Export hash is empty because the embedded manifest does not bind its own completed export-tree digest; exact serving hashes are independently verified above.
+
+Four clipboardchecksPASS; pageerrors0,consolewarnings/errors0,jobexit0/no timeout/zero active processes after close. Fault removed before finish. Native42checks/0 plus modal14/0 remain. Native desktop folder target/success/error/missing-path routes are stub-tested; an actual Explorer launch is not claimed. No personal profile,script/scene/path override or item/scenario change.
+
+Reconciliation before push:1683inherited errors across52existing tasks, no new AUD061/QOL-05 findings. Parent stays Open with10orders remaining.

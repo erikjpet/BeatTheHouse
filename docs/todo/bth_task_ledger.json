@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_7_OF_18_ORDERS_DONE_QOL05_NEXT",
+      "status": "OPEN_8_OF_18_ORDERS_DONE_AUD16_NEXT",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30539,21 +30539,21 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_baseline_2026-11-10.md",
-          "summary": "OPEN_7_OF_18_ORDERS_DONE_QOL05_NEXT"
+          "summary": "OPEN_8_OF_18_ORDERS_DONE_AUD16_NEXT"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Execute QOL-05 then the remaining ordered audit work; parent stays Open.",
+      "next_action": "Execute AUD061-16 then remaining specified work orders; parent remains Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:30:18.738023+00:00",
+        "observed_at": "2026-11-11T05:56:08.387130+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T05:30:18.738023+00:00"
+      "updated_at": "2026-11-11T05:56:08.387130+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31298,29 +31298,37 @@
             "id": "1",
             "description": "Reproduce missing Settings support actions.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "Copy diagnostics reads current build/platform/save/load/autosave codes through a strict allowlist with no paths or save contents.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "Desktop-only save-folder action targets actual save directory; keyboard/focus and settings draft semantics preserved.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+            ]
           },
           {
             "id": "4",
             "description": "Focused and Smoke results no worse than baseline; exact NEXT identity/startup and deployed copy action verified.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -31329,8 +31337,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_EXACT_NEXT_COPY4_PASS",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31342,37 +31350,45 @@
           "evidence": [
             "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+          "evidence": [
+            "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "evidence": [
+          "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-05_support_diagnostics_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_EXACT_NEXT_COPY4_PASS"
         }
       ],
       "implementation_batches": [
         "QOL-05-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:45:13.227832+00:00",
+        "observed_at": "2026-11-11T05:56:08.333201+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop."
       ],
-      "updated_at": "2026-11-11T05:45:13.227832+00:00"
+      "updated_at": "2026-11-11T05:56:08.333201+00:00"
     }
   ],
   "batches": [
@@ -32372,8 +32388,8 @@
       "name": "Copy build and save diagnostics in Settings implementation",
       "parent_id": "QOL-05",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_EXACT_NEXT_COPY4_PASS",
       "scope": [
         "Add Copy diagnostics with BuildIdentity/platform, safe last save/load outcomes and autosave failure code, without personal data or save contents; offer Open save folder only on desktop."
       ],
@@ -32388,31 +32404,39 @@
           "evidence": [
             "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+          "evidence": [
+            "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "d389abcf59c682ba02d378ec4c7ff4d94f20de25",
+        "evidence": [
+          "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/QOL-05_support_diagnostics_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_NEXT_PENDING"
+          "summary": "COMPLETE_NATIVE42_MODAL14_SMOKE_BASELINE_MATCH_EXACT_NEXT_COPY4_PASS"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T05:45:13.227832+00:00",
+        "observed_at": "2026-11-11T05:56:08.333201+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T05:45:13.227832+00:00"
+      "updated_at": "2026-11-11T05:56:08.333201+00:00"
     }
   ]
 }
