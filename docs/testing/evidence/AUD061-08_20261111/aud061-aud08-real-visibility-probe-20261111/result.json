@@ -1,0 +1,50 @@
+{
+  "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+  "scope": "Read-only native browser visibility capability probe on exact deployed build; no game state or visibility-property override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [],
+  "initial": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "focusEmulationDisabled": true,
+  "withoutFocusEmulation": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "window": {
+    "windowId": 1897197097,
+    "bounds": {
+      "left": -26214,
+      "top": -26214,
+      "width": 1298,
+      "height": 855,
+      "windowState": "normal"
+    }
+  },
+  "minimized": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "restored": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "otherTab": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "front": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "result": "REAL_HIDDEN_NOT_OBSERVED"
+}

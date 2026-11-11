@@ -1,0 +1,5 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+BTH support: Save waits for the live machine to settle.
+BTH support: Room check pending; existing save retained.
+AUD061_08_LIFECYCLE {"checks":77,"failures":[],"observations":[{"case":"lifecycle_2017","flush_elapsed_ms":123.825,"frame_unchanged":true,"marker":"lifecycle_2017"},{"case":"lifecycle_1005","flush_elapsed_ms":118.151,"frame_unchanged":true,"marker":"lifecycle_1005"},{"case":"lifecycle_2015","flush_elapsed_ms":117.18,"frame_unchanged":true,"marker":"lifecycle_2015"},{"case":"scopes","guards":"actual publication/practice/meta; explicit rejecting GameModule readiness boundary","native_worker":"actual","web_phases":"actual SaveService phases invoked natively; exported callback delivery is separate Web evidence"}]}

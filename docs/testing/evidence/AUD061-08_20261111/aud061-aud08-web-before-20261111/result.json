@@ -1,0 +1,317 @@
+{
+  "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+  "scope": "Exact unmodified NEXT assets, ordinary Daily/Sleep/Continue controls. Fresh owned Chrome, public noDefaults attachment, real minimized hidden events. DOM-only trusted-pointer/lifecycle observation; no game state/scene/path override, no helper filesystem sync.",
+  "errors": [],
+  "console": [],
+  "actions": [
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 22,
+        "type": "click",
+        "x": 368,
+        "y": 348
+      },
+      "time": "2026-11-11T08:15:10.295Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794384910308,
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "22-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 23,
+        "type": "click_hide_reload",
+        "x": 913,
+        "y": 465,
+        "delay": 40
+      },
+      "time": "2026-11-11T08:15:31.701Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794384931769,
+      "minimizeRequestedEpoch": 1794384931810,
+      "minimizeCompletedEpoch": 1794384931827,
+      "hiddenState": {
+        "hidden": true,
+        "visibility": "hidden",
+        "events": [
+          {
+            "event": "visibilitychange",
+            "time": 61734.10000000149,
+            "listener_time": 61734.20000000298,
+            "hidden": true,
+            "visibility": "hidden",
+            "pointer": {
+              "time": 61616.10000000149,
+              "trusted": true
+            },
+            "persisted": false
+          }
+        ],
+        "pointer": {
+          "time": 61616.10000000149,
+          "trusted": true
+        }
+      },
+      "afterHidden": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "hideWithin200ms": true,
+      "eventDeltaMs": 118,
+      "hostMinimizeAfterClickMs": 58,
+      "afterReload": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "23-click_hide_reload.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 24,
+        "type": "click",
+        "x": 492,
+        "y": 405
+      },
+      "time": "2026-11-11T08:17:27.354Z",
+      "before": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "beforeVisibility": {
+        "hidden": false,
+        "visibility": "visible"
+      },
+      "clickCompletedEpoch": 1794385047980,
+      "info": {
+        "fsAvailable": true,
+        "moduleKeys": [
+          "initFS",
+          "copyToFS",
+          "FS"
+        ],
+        "saveFiles": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+        ],
+        "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+        "bytes": 103197,
+        "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+        "backupRollback": false,
+        "primaryRollback": false,
+        "tmpExists": false
+      },
+      "screenshot": "24-click.png"
+    },
+    {
+      "command": {
+        "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+        "id": 25,
+        "type": "stop",
+        "visual_review": [
+          "Exact unmodified pre-AUD08 NEXT71e456a36d07 startup/Daily clean.",
+          "Ordinary House Sleep card opened at12:30PM, normal Sleep button trusted click followed by genuine minimized visibilitychange118ms after pointerup; minimize completion58ms after click acknowledgement.",
+          "Primary stayed103197bytes/SHA2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78 before/hidden/reload, no tmp/rollback.",
+          "Reload and normal Continue restore old Day1 12:00PM; elapsed time/sleep input was not persisted. No hidden screenshot, forced filesystem sync or game state override performed by helper.",
+          "This is a before observation; final candidate must preserve its actual action and reload state."
+        ]
+      },
+      "time": "2026-11-11T08:18:02.552Z"
+    }
+  ],
+  "assets": [],
+  "browserArguments": [
+    "C:/Users/theep/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe",
+    "--user-data-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-before-20261111\\profile",
+    "--disk-cache-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-before-20261111\\cache",
+    "--crash-dumps-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-web-before-20261111\\temp",
+    "--remote-debugging-port=0",
+    "--remote-debugging-address=127.0.0.1",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-component-update",
+    "--disable-background-networking",
+    "--disable-sync",
+    "--enable-unsafe-swiftshader",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--window-position=-32000,-32000",
+    "--window-size=1280,720",
+    "about:blank"
+  ],
+  "frameworkMode": "Fresh owned full Chrome; connectOverCDP noDefaults=true, no framework focus/media emulation",
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 103197,
+    "sha256": "2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "window": {
+    "windowId": 1627157273,
+    "bounds": {
+      "left": -26214,
+      "top": -26214,
+      "width": 1281,
+      "height": 721,
+      "windowState": "normal"
+    }
+  },
+  "stage": "COMPLETE",
+  "lifecycleEvents": [
+    {
+      "event": "visibilitychange",
+      "time": 61734.10000000149,
+      "listener_time": 61734.20000000298,
+      "hidden": true,
+      "visibility": "hidden",
+      "pointer": {
+        "time": 61616.10000000149,
+        "trusted": true
+      },
+      "persisted": false
+    }
+  ],
+  "visual_review": [
+    "Exact unmodified pre-AUD08 NEXT71e456a36d07 startup/Daily clean.",
+    "Ordinary House Sleep card opened at12:30PM, normal Sleep button trusted click followed by genuine minimized visibilitychange118ms after pointerup; minimize completion58ms after click acknowledgement.",
+    "Primary stayed103197bytes/SHA2cf33c89c3b5318979fe61e79ec354aa9ab9d9a9799bc4ba64cd684111259e78 before/hidden/reload, no tmp/rollback.",
+    "Reload and normal Continue restore old Day1 12:00PM; elapsed time/sleep input was not persisted. No hidden screenshot, forced filesystem sync or game state override performed by helper.",
+    "This is a before observation; final candidate must preserve its actual action and reload state."
+  ],
+  "state": "FINISHED",
+  "finished": "2026-11-11T08:18:03.562Z"
+}

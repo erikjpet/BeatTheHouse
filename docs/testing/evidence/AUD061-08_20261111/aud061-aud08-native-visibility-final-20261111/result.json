@@ -1,0 +1,11 @@
+{
+  "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+  "scope": "Read-only native browser visibility capability probe on exact deployed build; no game state or visibility-property override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [],
+  "frameworkMode": "Fresh owned full Chrome; connectOverCDP noDefaults=true, no framework focus/media emulation",
+  "failure": "TimeoutError: page.waitForFunction: Timeout 60000ms exceeded.",
+  "result": "PROBE_FAILED"
+}

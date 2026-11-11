@@ -89,6 +89,13 @@ func begin() -> Dictionary:
 	return result
 
 
+# A background/pagehide boundary cannot await the manual Save acknowledgement.
+# Request the engine-owned sync after the synchronous VFS generation is installed.
+func request_lifecycle_sync() -> void:
+	if OS.has_feature("web"):
+		JavaScriptBridge.force_fs_sync()
+
+
 func poll() -> Dictionary:
 	if _interface == null or _request_id <= 0:
 		return _failure("browser_sync_request_missing")

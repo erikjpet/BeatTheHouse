@@ -603,6 +603,10 @@ var run_menu_family_repay_button: Button
 var _web_manual_save_pending := false
 var _manual_save_error := ""
 var _web_save_durability_bridge: Variant = null
+var _web_lifecycle_callback: Variant = null
+var _web_lifecycle_document: Variant = null
+var _web_lifecycle_window: Variant = null
+var _lifecycle_save_flush_active := false
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
@@ -816,6 +820,7 @@ func _ready() -> void:
 		"challenge_count": library.challenges.size() if library != null else 0,
 	})
 	_initialize_perf_telemetry()
+	_install_web_lifecycle_callbacks()
 
 
 func _process(delta: float) -> void:
@@ -1003,10 +1008,12 @@ func _notification(what: int) -> void:
 		_drain_script_prewarm_requests_for_shutdown()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		set_application_pause_owner("focus_out", true)
+		_flush_pending_autosave_for_lifecycle()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
 		set_application_pause_owner("focus_out", false)
 	elif what == NOTIFICATION_APPLICATION_PAUSED:
 		set_application_pause_owner("application_paused", true)
+		_flush_pending_autosave_for_lifecycle()
 	elif what == NOTIFICATION_APPLICATION_RESUMED:
 		set_application_pause_owner("application_paused", false)
 	elif what == NOTIFICATION_RESIZED:
@@ -1029,7 +1036,54 @@ func _notification(what: int) -> void:
 			exit_game()
 
 
+func _flush_pending_autosave_for_lifecycle() -> bool:
+	if _lifecycle_save_flush_active or save_service == null:
+		return false
+	if not pending_autosave and not save_service.async_save_in_flight():
+		return false
+	# Match the ordinary autosave owner: never capture a partial accepted action.
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
+		return false
+	_lifecycle_save_flush_active = true
+	var saved := _autosave_foundation_run("Autosaved before backgrounding.", true)
+	if saved and OS.has_feature("web"):
+		if _web_save_durability_bridge == null:
+			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
+		_web_save_durability_bridge.request_lifecycle_sync()
+	_lifecycle_save_flush_active = false
+	return saved
+
+
+func _install_web_lifecycle_callbacks() -> void:
+	if not OS.has_feature("web") or _web_lifecycle_callback != null:
+		return
+	_web_lifecycle_document = JavaScriptBridge.get_interface("document")
+	_web_lifecycle_window = JavaScriptBridge.get_interface("window")
+	_web_lifecycle_callback = JavaScriptBridge.create_callback(_on_web_lifecycle_flush)
+	_web_lifecycle_document.addEventListener("visibilitychange", _web_lifecycle_callback)
+	_web_lifecycle_window.addEventListener("pagehide", _web_lifecycle_callback)
+
+
+func _on_web_lifecycle_flush(args: Array) -> void:
+	if not is_inside_tree() or args.is_empty():
+		return
+	var kind := str(args[0].type)
+	if kind == "pagehide" or (kind == "visibilitychange" and bool(_web_lifecycle_document.hidden)):
+		_flush_pending_autosave_for_lifecycle()
+
+
+func _remove_web_lifecycle_callbacks() -> void:
+	if _web_lifecycle_callback == null:
+		return
+	_web_lifecycle_document.removeEventListener("visibilitychange", _web_lifecycle_callback)
+	_web_lifecycle_window.removeEventListener("pagehide", _web_lifecycle_callback)
+	_web_lifecycle_callback = null
+	_web_lifecycle_document = null
+	_web_lifecycle_window = null
+
+
 func _exit_tree() -> void:
+	_remove_web_lifecycle_callbacks()
 	_cancel_rourke_resolution(false)
 	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
 		modal_focus_scope.call("clear")

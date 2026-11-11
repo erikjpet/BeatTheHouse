@@ -1,0 +1,130 @@
+{
+  "sha": "71e456a36d079e2aa8c4d8a95d22b325a673973b",
+  "scope": "Read-only native browser visibility capability probe on exact deployed build; no game state or visibility-property override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [],
+  "browserArguments": [
+    "C:/Users/theep/AppData/Local/ms-playwright/chromium-1243/chrome-win64/chrome.exe",
+    "--user-data-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-visibility-diagnostics-20261111\\profile",
+    "--disk-cache-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-visibility-diagnostics-20261111\\cache",
+    "--crash-dumps-dir=E:\\CodexQA\\BTH\\runs\\aud061-aud08-visibility-diagnostics-20261111\\temp",
+    "--remote-debugging-port=0",
+    "--remote-debugging-address=127.0.0.1",
+    "--no-first-run",
+    "--no-default-browser-check",
+    "--disable-component-update",
+    "--disable-background-networking",
+    "--disable-sync",
+    "--enable-unsafe-swiftshader",
+    "--disable-backgrounding-occluded-windows",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--window-position=-32000,-32000",
+    "--window-size=1280,720",
+    "about:blank"
+  ],
+  "frameworkMode": "Fresh owned full Chrome; connectOverCDP noDefaults=true, no framework focus/media emulation",
+  "beforeStartup": {
+    "hidden": false,
+    "visibility": "visible",
+    "status": ""
+  },
+  "initial": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "focusEmulationDisabled": true,
+  "withoutFocusEmulation": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": []
+  },
+  "window": {
+    "windowId": 1668800616,
+    "bounds": {
+      "left": -26214,
+      "top": -26214,
+      "width": 1281,
+      "height": 721,
+      "windowState": "normal"
+    }
+  },
+  "minimized": {
+    "hidden": true,
+    "visibility": "hidden",
+    "events": [
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 10634.400000002235
+      }
+    ]
+  },
+  "restored": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": [
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 10634.400000002235
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": false,
+        "time": 10772.400000002235
+      }
+    ]
+  },
+  "otherTab": {
+    "hidden": true,
+    "visibility": "hidden",
+    "events": [
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 10634.400000002235
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": false,
+        "time": 10772.400000002235
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 11154.60000000149
+      }
+    ]
+  },
+  "front": {
+    "hidden": false,
+    "visibility": "visible",
+    "events": [
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 10634.400000002235
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": false,
+        "time": 10772.400000002235
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": true,
+        "time": 11154.60000000149
+      },
+      {
+        "event": "visibilitychange",
+        "hidden": false,
+        "time": 11343.800000000745
+      }
+    ]
+  },
+  "result": "REAL_HIDDEN_AVAILABLE"
+}
