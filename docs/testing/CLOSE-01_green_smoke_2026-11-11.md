@@ -612,7 +612,7 @@ includes failures reached only after the original blockers were removed.
 | --- | --- | --- |
 | Blackjack wager tutorial1 | Stale expectation | Fresh NEXT felt chip5→6 advances Pal; c458224b durable wager predicate replaces input-only completion. Check false/true state and unchanged-input rejection. |
 | Pull Tabs redemption tutorial1 | Stale harness | Fresh NEXT paid marked winner filed at Nell advances Pal;27368b99 requires retained receipt and environment counter. Drive real ticket lifecycle and retain duplicate/account controls. |
-| Generated breakdown stale1 | Stale generated expectation | Generator yields identical75 contexts/607 slots; CRLF checkout differs from canonical LF. Regenerate and pin only this generated document's LF attribute. |
+| Generated breakdown stale1 | Stale generated expectation | Generator yields identical75 contexts/607 slots; CRLF checkout differs from canonical LF. Regenerate canonical LF using the unchanged strict check; final attribute file is identical to baseline. |
 | Prepared route override / scenario probe2 | Stale harness | Parent adds refresh argument; scenario check requires library and errors. Match current signatures and pass both arguments. |
 | Missing object manifest5 and dependent contract6 | Stale harness | Fixture never bound mandatory sealed object authority. Bind isolated synthetic map before freeze; inspect live scenario authority separately from base projection. |
 | Talk consequence4 | Stale harness | Raw synthetic room cannot resolve under current publication guard. Generate/finalize real arrival; preserve all four exact cash/Heat expectations. No value updates. |
@@ -898,3 +898,42 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\close061-s01a-20261111\evidence\smoke\foundation_smoke_content.json | ed899e5ef650ead813cd6afbe19c87dbded4cbf5cb273c1d3b220a50a4f83784 |
 | E:\CodexQA\BTH\runs\close061-s01a-20261111\evidence\smoke\foundation_smoke_runtime.json | 42081d28ebca51687a6a6ed703dec98a3e004bf4aa130c5c4689b662777b570f |
 | E:\CodexQA\BTH\runs\close061-liveness-after-authorized-room-exit-20261111\evidence\worker.log | e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b |
+
+## NEXT guarded-input classification and scoped follow-up
+
+Code4fe2c509 and ledgerb7da568e were pushed after pull/rebase. Existing watcher
+observed b7da568e but retained f00a686f, refusing before export: Asset/importer/
+settings inputs changed; cold-import qualification required. Exact unchanged
+pipeline classification identifies THREE guarded paths: .gitattributes plus the
+two owner-approved C5 JSON text files. The earlier chat attribution to attributes
+alone was incomplete; the exact three-file comparison corrects it.
+
+The attribute entry is unnecessary: the generator already emits canonical LF and
+its output's Git blob is unchanged. Revert only our added attribute entry, run the
+existing generator and its strict byte-for-byte --check unchanged, and preserve
+the original attribute file exactly. No generator/test relaxation is needed.
+The11/11 Smoke and liveness receipts continue to qualify the identical runtime
+and maintained checks; this metadata-only follow-up adds a focused strict guide
+check. Final candidate exact-commit full qualification remains CLOSE-05.
+
+The remaining two guarded paths are precisely the authorized eight-word lender
+and event lines. scripts/bth_e_ephemeral.py already supports a one-shot
+bth.cold_import_request/v1 binding the exact target commit/tree, last-good commit,
+before/after input hashes and changed paths. Its existing watcher consumes this
+request and performs the normal cache-free import under unchanged containment
+and artifact/pin checks. Prepare that exact request as a normal delivery input;
+no pipeline code, classification allow-list, pin, cap, reserve, template, security
+setting or audience is changed. This is not the historical allocation failure:
+no export was attempted, so the owner-closed C3 finding is not reopened.
+
+Focused follow-up: unchanged generator and --check both exit0,20 base+55 scenario=75 contexts/607 exact slots. Original .gitattributes Git blob4f46cb324f1b6089df1a566791710361a91e4381 is restored exactly; generated guide blob0753df036a963f0bba648fc91e5a888cbcc75988 remains unchanged.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: close061-s01-preserve-guard-and-remove-extra-input, close061-s01-regenerate-guide, close061-s01-strict-guide-check, close061-s01-confirm-exact-guarded-inputs.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\close061-s01-commit-original-input-preservation\evidence\raw-evidence-index.json | ca3027a19aa73b4f32d2bc709d89b6bcb2f2f1d944b63ae39d4cbea6b0085729 |
+| E:\CodexQA\BTH\runs\close061-s01-preserve-guard-and-remove-extra-input\evidence\failed-watcher-status.json | 6acc770d8db87708aca33bd9b34e6b1ceb4dd7b5aa53474e93ef0c4651b89ec2 |
+| E:\CodexQA\BTH\runs\close061-s01-strict-guide-check\evidence\worker.log | ecb2ead4cb3437c61c7775bdb44aec94ee551eca3b08fffde8f083a8805e2a60 |
