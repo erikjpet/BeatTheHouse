@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "FOUR_ORDERS_DELIVERED_14_REMAIN",
+      "status": "FOUR_DELIVERED_QOL02_TESTED_NEXT_PENDING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30515,6 +30515,12 @@
           "evidence": [
             "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "3e11f59a1096a7e4e7749d877dadd9bc743f7819",
+          "evidence": [
+            "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
@@ -30526,22 +30532,22 @@
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
-          "summary": "FOUR_ORDERS_DELIVERED_14_REMAIN"
+          "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
+          "summary": "FOUR_DELIVERED_QOL02_TESTED_NEXT_PENDING"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Register QOL-02, reproduce the save warning, then execute the remaining14 orders in sequence.",
+      "next_action": "Verify QOL-02 exact NEXT warning/touch-details/recovery, then register QOL-03 and continue the remaining orders in sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:30:32.737728+00:00",
+        "observed_at": "2026-11-11T03:47:24.098881+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T03:30:32.737728+00:00"
+      "updated_at": "2026-11-11T03:47:24.098881+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30949,6 +30955,93 @@
         "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence."
       ],
       "updated_at": "2026-11-11T03:30:32.681932+00:00"
+    },
+    {
+      "id": "QOL-02",
+      "name": "Make autosave failure visible in the HUD",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "A failed save uses a distinct warning icon and problem-first tooltip without inferring from message text.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "First blocked episode shows one nonmodal message; repeated failures do not spam and successful save clears the warning.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Focused before/after and Smoke no worse than baseline; exact NEXT startup and visible failure/recovery verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_21_PASS_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "3e11f59a1096a7e4e7749d877dadd9bc743f7819",
+          "evidence": [
+            "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_21_PASS_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "QOL-02-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T03:47:24.042537+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+      ],
+      "updated_at": "2026-11-11T03:47:24.042537+00:00"
     }
   ],
   "batches": [
@@ -31771,6 +31864,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T03:30:32.681932+00:00"
+    },
+    {
+      "id": "QOL-02-BATCH-001",
+      "name": "Make autosave failure visible in the HUD implementation",
+      "parent_id": "QOL-02",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_21_PASS_NEXT_PENDING",
+      "scope": [
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "3e11f59a1096a7e4e7749d877dadd9bc743f7819",
+          "evidence": [
+            "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_21_PASS_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T03:47:24.042537+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T03:47:24.042537+00:00"
     }
   ]
 }

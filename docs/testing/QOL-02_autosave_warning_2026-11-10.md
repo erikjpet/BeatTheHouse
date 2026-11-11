@@ -24,7 +24,7 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 QOL02_SAVE_WARNING {"checks":21,"failures":[],"observations":[{"case":"explicit_failure","first_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"},"save_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"}},{"blocked":true,"case":"host_failure","message":"Not saving — open Run Menu to retry.","save_icon":{"icon":"danger","id":"save","label":"Not saving","tooltip":"Not saving — open Run Menu to retry"}},{"case":"recovered","rendered":[{"icon":"home","id":"home","label":"Home","tooltip":"Home: Home: tenure active."},{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Recovered."}],"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Recovered."}},{"case":"async_recovered","in_flight":false,"rendered":[{"icon":"home","id":"home","label":"Home","tooltip":"Home: Home: tenure active."},{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosaved."}],"save_icon":{"icon":"save","id":"save","label":"Save","tooltip":"Autosave On · Autosaved."}}]}
 ```
 
-Native console transcripts above are decoded as UTF-8/UTF-8 to preserve their actual punctuation; raw bytes are retained unchanged. The controller console uses replacement characters for those legacy bytes. Source files remain UTF-8.
+The captured Windows console output replaces some punctuation with `�`; the blocks reproduce that captured output. Source files remain UTF-8. On-screen wording still requires the exact NEXT check.
 
 ## Test comparison
 
