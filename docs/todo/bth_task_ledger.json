@@ -34535,7 +34535,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34547,6 +34547,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "ceccaf561d79718b69d4fbf499cf923cb0e864d3",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -34555,23 +34561,29 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-04-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; verify served footer 0.6.0 with actual12-character commit. One-line source trial and protected-file/internal-telemetry checks passed; displayed constant restored0.6.0.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.007389+00:00",
+        "observed_at": "2026-11-11T21:46:17.607433+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Single player-visible release version constant"
       ],
-      "updated_at": "2026-11-11T16:12:34.007389+00:00"
+      "updated_at": "2026-11-11T21:46:17.607433+00:00"
     },
     {
       "id": "CLOSE-06",
@@ -37187,7 +37199,7 @@
       "parent_id": "CLOSE-04",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING",
       "scope": [
         "Single player-visible release version constant"
       ],
@@ -37202,6 +37214,12 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "ceccaf561d79718b69d4fbf499cf923cb0e864d3",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -37210,17 +37228,23 @@
         "commit": null,
         "evidence": []
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; verify served footer 0.6.0 with actual12-character commit. One-line source trial and protected-file/internal-telemetry checks passed; displayed constant restored0.6.0.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.007389+00:00",
+        "observed_at": "2026-11-11T21:46:17.607433+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:34.007389+00:00"
+      "updated_at": "2026-11-11T21:46:17.607433+00:00"
     },
     {
       "id": "CLOSE-06-BATCH-001",

@@ -32,9 +32,8 @@ smoke follows RELEASE_VERSION; the separate project stamp check remains0.6.0.
 
 One-line source trial: only RELEASE_VERSION changed0.6.0 ->0.6.1. The same5/0
 probe and actual menu contract pass, and the raw output reads
-CLOSE04_SOURCE_MENU Version0.6.1 (with a space between Version and0.6.1 in the
-actual log). The trial's finally block restored the exact pre-trial bytes.
-Restored final run again reports5/0 and actual menu Version0.6.0, no script errors.
+CLOSE04_SOURCE_MENU Version 0.6.1. The trial's finally block restored the exact pre-trial bytes.
+Restored final run again reports5/0 and actual menu Version 0.6.0, no script errors.
 
 Protected file SHA-256 values match before/after:
 project.godot d9eb64e9635c66f230bbe779956f3d8763e8ba701eabca905209a4cdd8fc01b3;
