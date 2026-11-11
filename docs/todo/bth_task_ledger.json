@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "FIVE_ORDERS_DELIVERED_13_REMAIN",
+      "status": "FIVE_DELIVERED_QOL03_NATIVE_VERIFIED_SMOKE_RUNNING",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30538,22 +30538,22 @@
       "evidence": [
         {
           "kind": "audit_proof",
-          "reference": "docs/testing/QOL-02_autosave_warning_2026-11-10.md",
-          "summary": "FIVE_ORDERS_DELIVERED_13_REMAIN"
+          "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
+          "summary": "FIVE_DELIVERED_QOL03_NATIVE_VERIFIED_SMOKE_RUNNING"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Register QOL-03, reproduce the internal player wording, then execute the remaining13 orders in sequence.",
+      "next_action": "Finish QOL-03 exact NEXT delivery and visible wording attempt, then QOL-04 and remaining orders in sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T04:23:16.875062+00:00",
+        "observed_at": "2026-11-11T04:41:30.799690+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T04:23:16.875062+00:00"
+      "updated_at": "2026-11-11T04:41:30.799690+00:00"
     },
     {
       "id": "AUD061-02",
@@ -31068,6 +31068,93 @@
         "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
       "updated_at": "2026-11-11T04:23:16.824645+00:00"
+    },
+    {
+      "id": "QOL-03",
+      "name": "Replace internal player error wording with actionable messages",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "AUD061-EXECUTION"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior.",
+        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Listed player error messages become clear/actionable while original diagnostics remain logged.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Additional reachable internal message literals are handled or explicitly classified; ordinary in-world wording and scenario/item content are unchanged.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Focused before/after checks and Smoke no worse than baseline; exact NEXT identity/startup and feasible visible wording verified.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING",
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "384c7a84869861f0f61b52099aacef376f8e3504",
+          "evidence": [
+            "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "QOL-03-BATCH-001"
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T04:53:50.561768+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior."
+      ],
+      "updated_at": "2026-11-11T04:53:50.561768+00:00"
     }
   ],
   "batches": [
@@ -31951,6 +32038,53 @@
         "evidence": []
       },
       "updated_at": "2026-11-11T04:23:16.824645+00:00"
+    },
+    {
+      "id": "QOL-03-BATCH-001",
+      "name": "Replace internal player error wording with actionable messages implementation",
+      "parent_id": "QOL-03",
+      "group": "current",
+      "state": "open",
+      "status": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING",
+      "scope": [
+        "Reproduce the seven listed messages and their duplicate player paths; rewrite them to explain what happened and what the player can do. Keep original text in support log lines. Sweep other message literals containing authority/projection/publication/envelope/transaction/receipt/intent, distinguishing actual banking/items and nonplayer metadata. Do not change validation, error codes, authority or game behavior."
+      ],
+      "owner": {
+        "name": "Execute 0.6.1 audit work orders",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "384c7a84869861f0f61b52099aacef376f8e3504",
+          "evidence": [
+            "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "audit_proof",
+          "reference": "docs/testing/QOL-03_player_error_wording_2026-11-10.md",
+          "summary": "CODE_COMMITTED_NATIVE_54_PASS_SUPPORT_21_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T04:53:50.561768+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-11T04:53:50.561768+00:00"
     }
   ]
 }
