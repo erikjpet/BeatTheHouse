@@ -30490,7 +30490,7 @@
         }
       },
       "state": "open",
-      "status": "THREE_DELIVERED_AUD10_TESTED_NEXT_PENDING",
+      "status": "FOUR_ORDERS_DELIVERED_14_REMAIN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30527,21 +30527,21 @@
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
-          "summary": "THREE_DELIVERED_AUD10_TESTED_NEXT_PENDING"
+          "summary": "FOUR_ORDERS_DELIVERED_14_REMAIN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify AUD061-10 exact NEXT startup, then register QOL-02 and continue the remaining orders in sequence.",
+      "next_action": "Register QOL-02, reproduce the save warning, then execute the remaining14 orders in sequence.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:24:12.714085+00:00",
+        "observed_at": "2026-11-11T03:30:32.737728+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T03:24:12.714085+00:00"
+      "updated_at": "2026-11-11T03:30:32.737728+00:00"
     },
     {
       "id": "AUD061-02",
@@ -30867,22 +30867,28 @@
             "id": "1",
             "description": "Abort cost, Whale exposure payout and getaway payout refresh economic_state immediately.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+            ]
           },
           {
             "id": "2",
             "description": "Zero-payout settlement retains deferred terminal timing; focused checks and Smoke no worse than baseline.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+            ]
           },
           {
             "id": "3",
             "description": "Finished code commit is served by exact NEXT with clean startup.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+            ]
           }
         ],
         "coverage": {
@@ -30891,8 +30897,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_13_PASS_AND_EXACT_NEXT_STARTUP",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -30904,37 +30910,45 @@
           "evidence": [
             "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "bcd22342148d2ee12a5b95bd2649b39ca83d7635",
+          "evidence": [
+            "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "bcd22342148d2ee12a5b95bd2649b39ca83d7635",
+        "evidence": [
+          "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_13_PASS_AND_EXACT_NEXT_STARTUP"
         }
       ],
       "implementation_batches": [
         "AUD061-10-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:24:12.656333+00:00",
+        "observed_at": "2026-11-11T03:30:32.681932+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence."
       ],
-      "updated_at": "2026-11-11T03:24:12.656333+00:00"
+      "updated_at": "2026-11-11T03:30:32.681932+00:00"
     }
   ],
   "batches": [
@@ -31708,8 +31722,8 @@
       "name": "Refresh economy at all three Crew heist bankroll boundaries implementation",
       "parent_id": "AUD061-10",
       "group": "current",
-      "state": "open",
-      "status": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_13_PASS_AND_EXACT_NEXT_STARTUP",
       "scope": [
         "Replace only the three CrewRunFacade direct bankroll writes with change_bankroll(delta, true), retaining deferred zero-wallet termination and every payout/abort consequence."
       ],
@@ -31724,31 +31738,39 @@
           "evidence": [
             "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
           ]
+        },
+        {
+          "sha": "bcd22342148d2ee12a5b95bd2649b39ca83d7635",
+          "evidence": [
+            "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "bcd22342148d2ee12a5b95bd2649b39ca83d7635",
+        "evidence": [
+          "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md",
-          "summary": "CODE_COMMITTED_NATIVE_13_PASS_NEXT_PENDING"
+          "summary": "VERIFIED_NATIVE_13_PASS_AND_EXACT_NEXT_STARTUP"
         }
       ],
-      "next_action": "Verify exact NEXT identity, assets, startup and changed behavior where observable.",
+      "next_action": "None for this order; continue remaining audit work orders.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T03:24:12.656333+00:00",
+        "observed_at": "2026-11-11T03:30:32.681932+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T03:24:12.656333+00:00"
+      "updated_at": "2026-11-11T03:30:32.681932+00:00"
     }
   ]
 }

@@ -28,13 +28,6 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 AUD061_CREW_BANKROLL {"checks":11,"failures":[],"observations":[{"case":"abort","cash":35,"economy":"volatile","result":{"cost":25,"message":"The crew folds the map. Preparation costs $25; the run stays yours.","ok":true,"run_ended":false}},{"case":"whale","cash":228,"economy":"growing","result":{"message":"The front door becomes a race. The money keeps up.","ok":true,"outcome":"out_hot","payout":227,"resolved":true}},{"case":"getaway","cash":721,"economy":"growing","expected_payout":720,"ok":true}]}
 ```
 
-## Test comparison
-
-Initial focused11/0 versus before11/3; strengthened final13/0. All focused jobs joined with zero active processes. Smoke **4stages pass/7fail**, matching baseline; content25/runtime16, parser/UI/geometry failure sets match. Performance has9error lines versus baseline10, with zero new normalized errors. Actual command: `powershell.exe -NoProfile -File tools/check_godot.ps1 -Suite Smoke -RequireGodot -KeepGoing -ReportDir <guarded-evidence>/smoke -VerboseStages`, exit1/no timeout. Full comparison: `evidence/AUD061-10_20261110/smoke_comparison.json`. Baseline Smoke4stages pass/7fail, Python180/0 and liveness PASS are in [baseline](AUD061_baseline_2026-11-10.md). No canvas, pause or performance code changed. Full outputs and storage/launch receipts are retained under `evidence/AUD061-10_20261110/`.
-
-## NEXT
-
-Pending code/ledger commits and existing-pipeline promotion; final-source focused checks and Smoke comparison complete. Immediate economic_state is a model property verified natively; exact NEXT startup remains to be checked. No native solver, broader heist gameplay route or personal-save acceptance is claimed.
 
 The final contract additionally observes direct `fail_run` calls so an intermediate zero-wallet failure cannot be hidden by the subsequent ending. Final run `aud061-10-after-timing-20261110`, same command, exit0; actual output follows. Both zero-payout paths recorded0premature_failures,0cash,insolvent and ended.
 
@@ -43,3 +36,16 @@ Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
 
 AUD061_CREW_BANKROLL {"checks":13,"failures":[],"observations":[{"case":"abort","cash":35,"economy":"volatile","result":{"cost":25,"message":"The crew folds the map. Preparation costs $25; the run stays yours.","ok":true,"run_ended":false}},{"case":"whale","cash":228,"economy":"growing","result":{"message":"The front door becomes a race. The money keeps up.","ok":true,"outcome":"out_hot","payout":227,"resolved":true}},{"case":"getaway","cash":721,"economy":"growing","expected_payout":720,"ok":true},{"case":"whale_zero","cash":0,"economy":"insolvent","premature_failures":0,"status":"ended"},{"case":"getaway_zero","cash":0,"economy":"insolvent","premature_failures":0,"status":"ended"}]}
 ```
+
+
+## Test comparison
+
+Initial focused11/0 versus before11/3; strengthened final13/0. All focused jobs joined with zero active processes. Smoke **4stages pass/7fail**, matching baseline; content25/runtime16, parser/UI/geometry failure sets match. Performance has9error lines versus baseline10, with zero new normalized errors. Actual command: `powershell.exe -NoProfile -File tools/check_godot.ps1 -Suite Smoke -RequireGodot -KeepGoing -ReportDir <guarded-evidence>/smoke -VerboseStages`, exit1/no timeout. Full comparison: `evidence/AUD061-10_20261110/smoke_comparison.json`. Baseline Smoke4stages pass/7fail, Python180/0 and liveness PASS are in [baseline](AUD061_baseline_2026-11-10.md). No canvas, pause or performance code changed. Full outputs and storage/launch receipts are retained under `evidence/AUD061-10_20261110/`.
+
+## NEXT
+
+**Verified** on pushed main `bcd22342148d2ee12a5b95bd2649b39ca83d7635`, containing code `7f0e61f1240146ad4e22911a528b99ddc0b85a47`. Tree `9ec756782e5df5aa587a7ecd086614abeef5bfd2`; archive SHA256 `5b07f14710467367fed2dcce7d15171efa0314a7b93b55b0a9fad77b01e450f0`. Existing watcher promoted at `2026-11-11T03:29:02Z`, phase current/error null; PCK AUDIT PASS files1166. BUILD/REF/VERSION/manifest and ordinary dev redirect agree. Eight GET hashes and two unchanged engine HEAD/pin checks match the pipeline stage.
+
+Unmodified rendered Web startup visibly shows `Version 0.6.0-dev+bcd22342148d`; ordinary Daily Challenge reaches Quiet House with53cash,Day1,12PM and creates a normal save. Page errors0 and console warnings/errors0; browser Job exits0/active0. Startup and Daily screenshots visually reviewed. Receipts under `next_delivery/` retain hashes, storage gates and browser result. The harness result's explicit testScope limits this run to startup/Daily; no heist was driven in the browser.
+
+Immediate economic_state and all three changed settlement boundaries are verified natively by the13/0 contract, including direct zero-payout timing observations. This is not a broader Web heist route, native solver or personal-save acceptance. Ledger reconciliation1683 inherited errors, zero scoped audit findings, matching baseline. No migration, item/scenario content or deployment guard changed.

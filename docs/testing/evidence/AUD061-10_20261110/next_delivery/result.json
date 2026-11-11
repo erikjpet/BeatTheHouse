@@ -1,0 +1,72 @@
+{
+  "sha": "bcd22342148d2ee12a5b95bd2649b39ca83d7635",
+  "scope": "Unmodified exact NEXT HTML/PCK/engine/native; ordinary Daily Challenge, Run Menu and confirmation pointer/keyboard actions. Filesystem fault only in this fresh isolated browser profile; no scene/script/path override.",
+  "errors": [],
+  "console": [],
+  "actions": [],
+  "assets": [
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/bcd22342148d2ee12a5b95bd2649b39ca83d7635/index.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/bcd22342148d2ee12a5b95bd2649b39ca83d7635/index.pck",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/bcd22342148d2ee12a5b95bd2649b39ca83d7635/index.side.wasm",
+      "status": 200
+    },
+    {
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/bcd22342148d2ee12a5b95bd2649b39ca83d7635/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200
+    }
+  ],
+  "initial": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": []
+  },
+  "daily": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107767,
+    "sha256": "51613bdd4513cc071fd0f49b4fd560ce2880f7e92076a56d2c5e93f173efac8a",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "menu": {
+    "fsAvailable": true,
+    "moduleKeys": [
+      "initFS",
+      "copyToFS",
+      "FS"
+    ],
+    "saveFiles": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json"
+    ],
+    "path": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1/saves/foundation_ui_autosave.json",
+    "bytes": 107767,
+    "sha256": "51613bdd4513cc071fd0f49b4fd560ce2880f7e92076a56d2c5e93f173efac8a",
+    "backupRollback": false,
+    "primaryRollback": false,
+    "tmpExists": false
+  },
+  "stage": "COMPLETE",
+  "state": "FINISHED",
+  "testScope": "Exact unmodified NEXT startup and ordinary fresh Daily Challenge; model-only settlement branch verified natively.",
+  "finished": "2026-11-11T03:29:47.177Z"
+}
