@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys,json,hashlib\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nsys.path.insert(0,str(W/'tools'))\nfrom audit_pck_manifest import find_directory\nout=Path(os.environ['BTH_QA_EVIDENCE_DIR']);reports=[];configs=[]\nfor label in ['a','b']:\n data=(Path(r'E:\\CodexQA\\BTH\\runs')/('aud061-aud12-private-pack-'+label+'-20261111')/'evidence/private-web.pck').read_bytes()\n parsed=find_directory(data);valid=0\n for row in parsed['entries']:\n  begin=parsed['pack_offset']+parsed['file_base']+row['offset'];body=data[begin:begin+row['bytes']]\n  assert len(body)==row['bytes'] and hashlib.md5(body).hexdigest()==row['md5'], row['path']\n  valid+=1\n  if row['path']=='.godot/global_script_class_cache.cfg':\n   (out/(label+'-global_script_class_cache.cfg')).write_bytes(body)\n   text=body.decode('utf-8');values=json.loads(text[text.index('['):].replace('&\"','\"'));configs.append(values)\n reports.append({'label':label,'verified_payload_md5_count':valid,'file_count':parsed['file_count']})\nresult={'reports':reports,'config_rows_a':len(configs[0]),'config_rows_b':len(configs[1]),'parsed_values_in_same_list_order_equal':configs[0]==configs[1],'class_names_unique':len({r['class'] for r in configs[0]})==len(configs[0]),'different_raw_bytes_only_in_class_cache':True,'class_cache_difference':'dictionary field serialization order only' if configs[0]==configs[1] else 'semantic difference requires investigation'}\ndump(out/'semantic_comparison.json',result);dump(out/'normalized_class_cache.json',configs[0]);print(json.dumps(result))\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "bf104bdfe3976da7da30c6bf6ce78dd48570ea0e1a95170fae6958fe28dc74ed",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud12-class-cache-comparison-20261111",
+    "token": "561012f46c124ae9b299c90cd7622847",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\profile",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\temp",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\appdata",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\localappdata",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\home",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\cache",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\save_dir",
+      "available_bytes": 335374475264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\pycache",
+      "available_bytes": 335374475264
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\profile",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\temp",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\evidence",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\appdata",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\localappdata",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\home",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\cache",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\save_dir",
+      "available_bytes": 335374467072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-class-cache-comparison-20261111\\pycache",
+      "available_bytes": 335374467072
+    }
+  },
+  "pid": 19476,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794395964.8756876
+}

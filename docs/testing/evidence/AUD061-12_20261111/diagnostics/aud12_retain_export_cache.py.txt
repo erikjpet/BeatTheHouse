@@ -1,0 +1,13 @@
+from pathlib import Path
+import os,json
+root=Path(os.environ['BTH_QA_WORKSPACE']).resolve()
+approved=Path(r'E:\CodexQA\BTH\workspaces\aud12-historical-20261111').resolve()
+assert root.parent==approved and root.name in ('allocation','stack')
+source=root/'.godot/exported'
+target=root/'.godot/exported.qa-retained-before-cold-typed'
+assert source.is_dir() and not source.is_symlink() and not target.exists()
+assert source.resolve().is_relative_to(root) and target.resolve().is_relative_to(root)
+source.rename(target)
+out=Path(os.environ['BTH_QA_EVIDENCE_DIR'])
+(out/'retained-cache.json').write_text(json.dumps({'source':str(source),'retained_at':str(target),'root_verified':str(root),'scope':'Own fresh historical QA generated export cache retained intact; no profile, save, evidence, native binary or project source moved/deleted.'},indent=2),encoding='utf-8')
+print('Retained generated export cache intact; next probe regenerates scene output.')

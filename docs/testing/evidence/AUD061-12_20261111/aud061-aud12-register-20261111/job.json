@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "import sys\nsys.path.insert(0,r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp')\nfrom aud061_ops import *\nregister('AUD061-12','Investigate retained 49-percent Web export failures','Identify exact retained failure context; attempt isolated-resource and full private pack reproduction under unchanged2GiB limit, preserve all artifacts/guards, document causal limits and two exact-RC manifest exports when candidate exists.',['Retained49-percent resource and distinct failure types identified from raw evidence.','Bounded same-memory-cap reproduction/isolation recorded; no speculative GC or asset fix claimed.','Current approved-storage reserve and actual existing-pipeline delivery recorded; two same-RC manifests compared or exact remaining blocker recorded.'],'docs/testing/AUD061-12_web_export_investigation_2026-11-11.md')\nwrite(W/'.tmp/aud12_resource_isolation.gd','''extends SceneTree\n+var checks := 0\n+var failures: Array[String] = []\n+func check(ok: bool, label: String) -> void:\n+\\tchecks += 1\n+\\tif not ok: failures.append(label)\n+func _init() -> void:\n+\\tvar evidence := OS.get_environment(\"BTH_QA_EVIDENCE_DIR\")\n+\\tif not evidence.replace(\"\\\\\\\\\", \"/\").begins_with(\"E:/CodexQA/BTH/runs/\"):\n+\\t\\tquit(2)\n+\\t\\treturn\n+\\tvar facts: Array = []\n+\\tfor index in range(8):\n+\\t\\tvar scene := ResourceLoader.load(\"res://scenes/coin_pusher_export_parity.tscn\", \"PackedScene\", ResourceLoader.CACHE_MODE_IGNORE)\n+\\t\\tcheck(scene is PackedScene, \"parity scene loads with real script dependencies %d\" % index)\n+\\t\\tif not scene is PackedScene: continue\n+\\t\\tvar binary := evidence.path_join(\"isolated-%d.scn\" % index)\n+\\t\\tcheck(ResourceSaver.save(scene, binary) == OK, \"binary resource serialization %d\" % index)\n+\\t\\tvar pack := PCKPacker.new()\n+\\t\\tvar package := evidence.path_join(\"isolated-%d.pck\" % index)\n+\\t\\tcheck(pack.pck_start(package) == OK, \"PCK start %d\" % index)\n+\\t\\tcheck(pack.add_file(\"res://coin_pusher_export_parity.scn\", binary) == OK, \"PCK scene add %d\" % index)\n+\\t\\tcheck(pack.flush() == OK, \"PCK flush %d\" % index)\n+\\t\\tfacts.append({\"iteration\":index,\"binary_bytes\":FileAccess.get_file_as_bytes(binary).size(),\"package_bytes\":FileAccess.get_file_as_bytes(package).size()})\n+\\tprint(JSON.stringify({\"checks\":checks,\"failure_count\":failures.size(),\"failures\":failures,\"facts\":facts,\"scope\":\"Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export.\"}))\n+\\tquit(0 if failures.is_empty() else 1)\n+'''.replace('\\n+','\\n'))\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "eee5ccb043f43e18eee63cdb5f771589fbf86ac32659714bec5e2193623e89e3",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud12-register-20261111",
+    "token": "4768dd3c27a3d63f58225bb6ce655d04",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\profile",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\temp",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\appdata",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\localappdata",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\home",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\cache",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\save_dir",
+      "available_bytes": 336376995840
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\pycache",
+      "available_bytes": 336376995840
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\profile",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\temp",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\evidence",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\appdata",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\localappdata",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\home",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\cache",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\save_dir",
+      "available_bytes": 336376987648
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-register-20261111\\pycache",
+      "available_bytes": 336376987648
+    }
+  },
+  "pid": 7620,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794395202.8950207
+}

@@ -1,0 +1,1657 @@
+WorkerThreadPool: 16 threads, 12 max low-priority.
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+TextServer: Added interface "Dummy"
+TextServer: Added interface "ICU / HarfBuzz / Graphite (Built-in)"
+Unrecognized output string "misc2" in mapping:
+030000000d0f00000202000000000000,Horipad O Nintendo Switch 2 Controller,a:b1,b:b0,back:b8,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b4,leftstick:b10,lefttrigger:b6,leftx:a0,lefty:a1,misc1:b13,misc2:b14,rightshoulder:b5,rightstick:b11,righttrigger:b7,rightx:a2,righty:a3,start:b9,x:b3,y:b2,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000000d0f00009601000000000000,Horipad Steam,a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,guide:b12,leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,misc2:b2,paddle1:b5,paddle2:b15,paddle3:b18,paddle4:b19,rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a3,righty:a4,start:b11,x:b3,y:b4,platform:Windows,
+Unrecognized output string "misc2" in mapping:
+030000007e0500006920000000000000,Nintendo Switch 2 Pro Controller,a:b0,b:b1,back:b14,dpdown:b8,dpleft:b10,dpright:b9,dpup:b11,guide:b16,leftshoulder:b12,leftstick:b15,lefttrigger:b13,leftx:a0,lefty:a1~,misc1:b17,misc2:b20,paddle1:b18,paddle2:b19,rightshoulder:b4,rightstick:b7,righttrigger:b5,rightx:a2,righty:a3~,start:b6,x:b2,y:b3,platform:Windows,
+Using "default" pen tablet driver...
+
+TextServer: Primary interface set to: "ICU / HarfBuzz / Graphite (Built-in)".
+Loading resource: res://default_bus_layout.tres
+CORE API HASH: 3663110324
+EDITOR API HASH: 835956462
+SceneTreeFTI: traversal method DEFAULT
+EditorTheme: Generating new theme for the config '3810048042'.
+EditorTheme: Generating new icons.
+EditorTheme: Generating new fonts.
+EditorTheme: Generating new styles.
+Regenerating editor help cache
+Class 'ViewportRotationControl' is not exposed, skipping.
+Class 'ViewportNavigationControl' is not exposed, skipping.
+Class 'Node3DEditorViewport' is not exposed, skipping.
+Class 'Node3DEditorViewportContainer' is not exposed, skipping.
+Class 'Node3DEditor' is not exposed, skipping.
+Class 'CanvasItemEditorPlugin' is not exposed, skipping.
+Class 'SnapDialog' is not exposed, skipping.
+Class 'EditorTranslationPreviewMenu' is not exposed, skipping.
+Class 'CanvasItemEditorViewport' is not exposed, skipping.
+Class 'ViewPanner' is not exposed, skipping.
+Class 'EditorTranslationPreviewButton' is not exposed, skipping.
+Class 'EditorZoomWidget' is not exposed, skipping.
+Class 'CanvasItemEditor' is not exposed, skipping.
+Class 'DebuggerEditorPlugin' is not exposed, skipping.
+Class 'RunInstancesDialog' is not exposed, skipping.
+Class 'EditorDebuggerTree' is not exposed, skipping.
+Class 'EditorPerformanceProfiler' is not exposed, skipping.
+Class 'EditorVisualProfiler' is not exposed, skipping.
+Class 'EditorProfiler' is not exposed, skipping.
+Class 'EditorExpressionEvaluator' is not exposed, skipping.
+Class 'EditorDebuggerRemoteObjects' is not exposed, skipping.
+Class 'ScriptEditorDebugger' is not exposed, skipping.
+Class 'EditorDebuggerNode' is not exposed, skipping.
+Class 'EditorFileServer' is not exposed, skipping.
+Class 'AudioStreamPreviewGenerator' is not exposed, skipping.
+Class 'OrphanResourcesDialog' is not exposed, skipping.
+Class 'EditorNativeShaderSourceVisualizer' is not exposed, skipping.
+Class 'EditorLog' is not exposed, skipping.
+Class 'EditorBottomPanel' is not exposed, skipping.
+Class 'HistoryDock' is not exposed, skipping.
+Class 'GroupsEditor' is not exposed, skipping.
+Class 'GroupsDock' is not exposed, skipping.
+Class 'ConnectDialogBinds' is not exposed, skipping.
+Class 'ConnectDialog' is not exposed, skipping.
+Class 'ConnectionsDock' is not exposed, skipping.
+Class 'SignalsDock' is not exposed, skipping.
+Class 'EditorObjectSelector' is not exposed, skipping.
+Class 'InspectorDock' is not exposed, skipping.
+Class 'EditorAudioStreamTooltipPlugin' is not exposed, skipping.
+Class 'EditorTextureTooltipPlugin' is not exposed, skipping.
+Class 'AnimationNodeBlendSpace2DEditor' is not exposed, skipping.
+Class 'AnimationNodeBlendSpace1DEditor' is not exposed, skipping.
+Class 'EditorInspectorPluginAnimationNodeAnimation' is not exposed, skipping.
+Class 'AnimationNodeBlendTreeEditor' is not exposed, skipping.
+Class 'AnimationTreeNodeEditorPlugin' is not exposed, skipping.
+Class 'GraphEditFilter' is not exposed, skipping.
+Class 'AnimationTreeEditor' is not exposed, skipping.
+Class 'AudioBusesEditorPlugin' is not exposed, skipping.
+Class 'AnimationMarkerKeyEditEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginAnimationMarkerKeyEdit' is not exposed, skipping.
+Class 'AnimationTrackKeyEditEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginAnimationTrackKeyEdit' is not exposed, skipping.
+Class 'AnimationPlayerEditorPlugin' is not exposed, skipping.
+Class 'SpriteFramesEditor' is not exposed, skipping.
+Class 'Skeleton3DEditorPlugin' is not exposed, skipping.
+Class 'Skeleton3DGizmoPlugin' is not exposed, skipping.
+Class 'AnimationLibraryEditor' is not exposed, skipping.
+Class 'AnimationTrackEditDefaultPlugin' is not exposed, skipping.
+Class 'AnimationTrackEditPlugin' is not exposed, skipping.
+Class 'PropertySelector' is not exposed, skipping.
+Class 'SceneTreeDialog' is not exposed, skipping.
+Class 'AnimationMarkerEdit' is not exposed, skipping.
+Class 'AnimationPlayerEditor' is not exposed, skipping.
+Class 'AssetLibraryEditorPlugin' is not exposed, skipping.
+Class 'EditorAssetLibrary' is not exposed, skipping.
+Class 'EditorAudioBuses' is not exposed, skipping.
+Class 'GameViewPlugin' is not exposed, skipping.
+Class 'GameViewPluginBase' is not exposed, skipping.
+Class 'GameView' is not exposed, skipping.
+Class 'EmbeddedProcess' is not exposed, skipping.
+Class 'EmbeddedProcessBase' is not exposed, skipping.
+Class 'GameViewDebugger' is not exposed, skipping.
+Class 'ScriptEditorPlugin' is not exposed, skipping.
+Class 'EditorConfigFileSyntaxHighlighter' is not exposed, skipping.
+Class 'EditorMarkdownSyntaxHighlighter' is not exposed, skipping.
+Class 'EditorJSONSyntaxHighlighter' is not exposed, skipping.
+Class 'FindInFilesContainer' is not exposed, skipping.
+Class 'FindInFilesDialog' is not exposed, skipping.
+Class 'EditorHelpSearch' is not exposed, skipping.
+Class 'ScreenSelect' is not exposed, skipping.
+Class 'FindReplaceBar' is not exposed, skipping.
+Class 'WindowWrapper' is not exposed, skipping.
+Class 'Node3DEditorPlugin' is not exposed, skipping.
+Class 'ColorPickerShapeOKHLRectangle' is not exposed, skipping.
+Class 'ColorPickerShapeOKHSRectangle' is not exposed, skipping.
+Class 'ColorPickerShapeOKHSLCircle' is not exposed, skipping.
+Class 'ColorPickerShapeVHSCircle' is not exposed, skipping.
+Class 'ColorPickerShapeCircle' is not exposed, skipping.
+Class 'ColorPickerShapeWheel' is not exposed, skipping.
+Class 'ColorPickerShape' is not exposed, skipping.
+Class 'PreviewSunEnvPopup' is not exposed, skipping.
+Class 'DefaultThemeEditorPreview' is not exposed, skipping.
+Class 'ThemeEditorPreview' is not exposed, skipping.
+Class 'ThemeItemImportTree' is not exposed, skipping.
+Class 'ThemeTypeDialog' is not exposed, skipping.
+Class 'ThemeTypeEditor' is not exposed, skipping.
+Class 'TextureRegionEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginTextureRegion' is not exposed, skipping.
+Class 'TextureRegionEditor' is not exposed, skipping.
+Class 'TextureLayeredEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginLayeredTexture' is not exposed, skipping.
+Class 'TextureEditorPlugin' is not exposed, skipping.
+Class 'Texture3DEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPlugin3DTexture' is not exposed, skipping.
+Class 'SubViewportPreviewEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginSubViewportPreview' is not exposed, skipping.
+Class 'StyleBoxEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginStyleBox' is not exposed, skipping.
+Class 'SpriteFramesEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginSkeleton' is not exposed, skipping.
+Class 'ShaderFileEditorPlugin' is not exposed, skipping.
+Class 'ShaderFileEditor' is not exposed, skipping.
+Class 'VisualShaderLanguagePlugin' is not exposed, skipping.
+Class 'TextShaderLanguagePlugin' is not exposed, skipping.
+Class 'EditorShaderLanguagePlugin' is not exposed, skipping.
+Class 'ShaderEditorPlugin' is not exposed, skipping.
+Class 'ResourcePreloaderEditorPlugin' is not exposed, skipping.
+Class 'ResourcePreloaderEditor' is not exposed, skipping.
+Class 'Polygon3DEditorPlugin' is not exposed, skipping.
+Class 'Polygon3DEditor' is not exposed, skipping.
+Class 'PhysicalBone3DEditorPlugin' is not exposed, skipping.
+Class 'Path3DEditorPlugin' is not exposed, skipping.
+Class 'Path3DGizmoPlugin' is not exposed, skipping.
+Class 'PackedSceneEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginPackedScene' is not exposed, skipping.
+Class 'OccluderInstance3DEditorPlugin' is not exposed, skipping.
+Class 'MultiMeshEditorPlugin' is not exposed, skipping.
+Class 'MultiMeshEditor' is not exposed, skipping.
+Class 'MeshLibraryEditorPlugin' is not exposed, skipping.
+Class 'MeshLibraryEditor' is not exposed, skipping.
+Class 'MeshInstance3DEditorPlugin' is not exposed, skipping.
+Class 'MeshInstance3DEditor' is not exposed, skipping.
+Class 'MeshEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginMesh' is not exposed, skipping.
+Class 'MaterialEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginMaterial' is not exposed, skipping.
+Class 'MarginContainerEditorPlugin' is not exposed, skipping.
+Class 'LightmapGIEditorPlugin' is not exposed, skipping.
+Class 'InputEventEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginInputEvent' is not exposed, skipping.
+Class 'GradientTexture2DEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginGradientTexture2D' is not exposed, skipping.
+Class 'GradientEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginGradient' is not exposed, skipping.
+Class 'GPUParticlesCollisionSDF3DEditorPlugin' is not exposed, skipping.
+Class 'GPUParticles3DEditorPlugin' is not exposed, skipping.
+Class 'FontEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginFontPreview' is not exposed, skipping.
+Class 'EditorInspectorPluginSystemFont' is not exposed, skipping.
+Class 'EditorInspectorPluginFontVariation' is not exposed, skipping.
+Class 'EditorScriptPlugin' is not exposed, skipping.
+Class 'DebugAdapterServer' is not exposed, skipping.
+Class 'DebugAdapterParser' is not exposed, skipping.
+Class 'CurveEditorPlugin' is not exposed, skipping.
+Class 'CurvePreviewGenerator' is not exposed, skipping.
+Class 'EditorInspectorPluginCurve' is not exposed, skipping.
+Class 'CPUParticles3DEditorPlugin' is not exposed, skipping.
+Class 'Particles3DEditorPlugin' is not exposed, skipping.
+Class 'ParticlesEditorPlugin' is not exposed, skipping.
+Class 'ControlEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginControl' is not exposed, skipping.
+Class 'SizeFlagPresetPicker' is not exposed, skipping.
+Class 'AnchorPresetPicker' is not exposed, skipping.
+Class 'ControlEditorPresetPicker' is not exposed, skipping.
+Class 'ControlEditorToolbar' is not exposed, skipping.
+Class 'ControlEditorPopupButton' is not exposed, skipping.
+Class 'Camera3DEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginCamera3DPreview' is not exposed, skipping.
+Class 'EditorInspectorPluginTexture' is not exposed, skipping.
+Class 'BoneMapEditorPlugin' is not exposed, skipping.
+Class 'PostImportPluginSkeletonRestFixer' is not exposed, skipping.
+Class 'PostImportPluginSkeletonRenamer' is not exposed, skipping.
+Class 'PostImportPluginSkeletonTrackOrganizer' is not exposed, skipping.
+Class 'EditorInspectorPluginBoneMap' is not exposed, skipping.
+Class 'BitMapEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginBitMap' is not exposed, skipping.
+Class 'AudioStreamRandomizerEditorPlugin' is not exposed, skipping.
+Class 'AudioStreamEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginAudioStream' is not exposed, skipping.
+Class 'AnimationTreeEditorPlugin' is not exposed, skipping.
+Class 'AnimationNodeStateMachineEditor' is not exposed, skipping.
+Class 'OpenXREditorPlugin' is not exposed, skipping.
+Class 'EditorImportBlendRunner' is not exposed, skipping.
+Class 'EditorFileSystemImportFormatSupportQueryBlend' is not exposed, skipping.
+Class 'GDScriptLanguageServer' is not exposed, skipping.
+Class 'EditorExportGDScript' is not exposed, skipping.
+Class 'QuickOpenResultContainer' is not exposed, skipping.
+Class 'EditorQuickOpenDialog' is not exposed, skipping.
+Class 'PackedSceneEditorTranslationParserPlugin' is not exposed, skipping.
+Class 'ShaderBakerExportPluginPlatformD3D12' is not exposed, skipping.
+Class 'ShaderBakerExportPluginPlatformVulkan' is not exposed, skipping.
+Class 'ShaderBakerExportPluginPlatform' is not exposed, skipping.
+Class 'VisualShaderConversionPlugin' is not exposed, skipping.
+Class 'FogMaterialConversionPlugin' is not exposed, skipping.
+Class 'PhysicalSkyMaterialConversionPlugin' is not exposed, skipping.
+Class 'PanoramaSkyMaterialConversionPlugin' is not exposed, skipping.
+Class 'ProceduralSkyMaterialConversionPlugin' is not exposed, skipping.
+Class 'ParticleProcessMaterialConversionPlugin' is not exposed, skipping.
+Class 'CanvasItemMaterialConversionPlugin' is not exposed, skipping.
+Class 'ORMMaterial3DConversionPlugin' is not exposed, skipping.
+Class 'StandardMaterial3DConversionPlugin' is not exposed, skipping.
+Class 'EditorGradientPreviewPlugin' is not exposed, skipping.
+Class 'EditorFontPreviewPlugin' is not exposed, skipping.
+Class 'EditorBitmapPreviewPlugin' is not exposed, skipping.
+Class 'EditorMeshPreviewPlugin' is not exposed, skipping.
+Class 'EditorAudioStreamPreviewPlugin' is not exposed, skipping.
+Class 'EditorScriptPreviewPlugin' is not exposed, skipping.
+Class 'EditorMaterialPreviewPlugin' is not exposed, skipping.
+Class 'EditorPackedScenePreviewPlugin' is not exposed, skipping.
+Class 'EditorImagePreviewPlugin' is not exposed, skipping.
+Class 'EditorTexturePreviewPlugin' is not exposed, skipping.
+Class 'ObjectDBProfilerPlugin' is not exposed, skipping.
+Class 'ObjectDBProfilerDebuggerPlugin' is not exposed, skipping.
+Class 'NoiseEditorPlugin' is not exposed, skipping.
+Class 'NoiseEditorInspectorPlugin' is not exposed, skipping.
+Class 'NavigationObstacle3DEditorPlugin' is not exposed, skipping.
+Class 'NavigationObstacle3DGizmoPlugin' is not exposed, skipping.
+Class 'NavigationRegion3DEditorPlugin' is not exposed, skipping.
+Class 'NavigationRegion3DGizmoPlugin' is not exposed, skipping.
+Class 'NavigationRegion3DEditor' is not exposed, skipping.
+Class 'NavigationLink3DEditorPlugin' is not exposed, skipping.
+Class 'NavigationLink3DGizmoPlugin' is not exposed, skipping.
+Class 'NavigationObstacle2DEditorPlugin' is not exposed, skipping.
+Class 'NavigationObstacle2DEditor' is not exposed, skipping.
+Class 'NavigationRegion2DEditorPlugin' is not exposed, skipping.
+Class 'NavigationRegion2DEditor' is not exposed, skipping.
+Class 'NavigationLink2DEditorPlugin' is not exposed, skipping.
+Class 'NavigationLink2DEditor' is not exposed, skipping.
+Class 'MultiplayerEditorPlugin' is not exposed, skipping.
+Class 'MultiplayerEditorDebugger' is not exposed, skipping.
+Class 'ReplicationEditor' is not exposed, skipping.
+Class 'AudioStreamInteractiveEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginAudioStreamInteractive' is not exposed, skipping.
+Class 'AudioStreamInteractiveTransitionEditor' is not exposed, skipping.
+Class 'SceneExporterGLTFPlugin' is not exposed, skipping.
+Class 'EditorSceneExporterGLTFSettings' is not exposed, skipping.
+Class 'EditorPluginCSG' is not exposed, skipping.
+Class 'CSGShapeEditor' is not exposed, skipping.
+Class 'CSGShape3DGizmoPlugin' is not exposed, skipping.
+Class 'Gizmo3DHelper' is not exposed, skipping.
+Class 'ParallaxBackgroundEditorPlugin' is not exposed, skipping.
+Class 'TileMapEditorPlugin' is not exposed, skipping.
+Class 'TileMapLayerEditorTerrainsPlugin' is not exposed, skipping.
+Class 'TileMapLayerEditorTilesPlugin' is not exposed, skipping.
+Class 'SwitchSeparator' is not exposed, skipping.
+Class 'TileMapLayerEditor' is not exposed, skipping.
+Class 'TileSetEditorPlugin' is not exposed, skipping.
+Class 'SceneTileProxyObject' is not exposed, skipping.
+Class 'TileSetScenesCollectionProxyObject' is not exposed, skipping.
+Class 'TileSetScenesCollectionSourceEditor' is not exposed, skipping.
+Class 'TileSourceInspectorPlugin' is not exposed, skipping.
+Class 'EditorInspectorPluginTileData' is not exposed, skipping.
+Class 'TileAtlasView' is not exposed, skipping.
+Class 'TileSetAtlasSourceProxyObject' is not exposed, skipping.
+Class 'AtlasTileProxyObject' is not exposed, skipping.
+Class 'TileSetAtlasSourceEditor' is not exposed, skipping.
+Class 'EditorPropertyVector2i' is not exposed, skipping.
+Class 'EditorPropertyVectorN' is not exposed, skipping.
+Class 'TileProxiesManagerDialog' is not exposed, skipping.
+Class 'EditorPropertyInteger' is not exposed, skipping.
+Class 'AtlasMergingDialog' is not exposed, skipping.
+Class 'TileSetSourceItemList' is not exposed, skipping.
+Class 'TilesEditorUtils' is not exposed, skipping.
+Class 'Sprite2DEditorPlugin' is not exposed, skipping.
+Class 'Sprite2DEditor' is not exposed, skipping.
+Class 'Skeleton2DEditorPlugin' is not exposed, skipping.
+Class 'Skeleton2DEditor' is not exposed, skipping.
+Class 'Cast2DEditorPlugin' is not exposed, skipping.
+Class 'Cast2DEditor' is not exposed, skipping.
+Class 'Polygon2DEditorPlugin' is not exposed, skipping.
+Class 'Polygon2DEditor' is not exposed, skipping.
+Class 'Path2DEditorPlugin' is not exposed, skipping.
+Class 'Path2DEditor' is not exposed, skipping.
+Class 'Line2DEditorPlugin' is not exposed, skipping.
+Class 'Line2DEditor' is not exposed, skipping.
+Class 'LightOccluder2DEditorPlugin' is not exposed, skipping.
+Class 'LightOccluder2DEditor' is not exposed, skipping.
+Class 'GPUParticles2DEditorPlugin' is not exposed, skipping.
+Class 'CPUParticles2DEditorPlugin' is not exposed, skipping.
+Class 'Particles2DEditorPlugin' is not exposed, skipping.
+Class 'CollisionShape2DEditorPlugin' is not exposed, skipping.
+Class 'CollisionShape2DEditor' is not exposed, skipping.
+Class 'CollisionPolygon2DEditorPlugin' is not exposed, skipping.
+Class 'AbstractPolygon2DEditorPlugin' is not exposed, skipping.
+Class 'CollisionPolygon2DEditor' is not exposed, skipping.
+Class 'AbstractPolygon2DEditor' is not exposed, skipping.
+Class 'Camera2DEditorPlugin' is not exposed, skipping.
+Class 'Camera2DEditor' is not exposed, skipping.
+Class 'SkeletonIK3DEditorPlugin' is not exposed, skipping.
+Class 'VoxelGIEditorPlugin' is not exposed, skipping.
+Class 'ToolButtonEditorPlugin' is not exposed, skipping.
+Class 'EditorInspectorToolButtonPlugin' is not exposed, skipping.
+Class 'ThemeEditorPlugin' is not exposed, skipping.
+Class 'IPWindows' is not exposed, skipping.
+SceneTreeFTI: traversal method DEFAULT
+Class 'ResourceFormatImporterSaver' is not exposed, skipping.
+Class 'GodotNavigationServer2D' is not exposed, skipping.
+Class 'MovieWriterOGV' is not exposed, skipping.
+Class 'MovieWriterMJPEG' is not exposed, skipping.
+Class 'GDScriptEditorTranslationParserPlugin' is not exposed, skipping.
+Class 'MovieWriterPNGWAV' is not exposed, skipping.
+Class 'EditorMainScreen' is not exposed, skipping.
+Class 'EditorSceneTabs' is not exposed, skipping.
+Class 'EditorDockDragHint' is not exposed, skipping.
+Class 'EditorDockManager' is not exposed, skipping.
+Class 'DockShortcutHandler' is not exposed, skipping.
+Class 'DockContextPopup' is not exposed, skipping.
+Class 'DockSplitContainer' is not exposed, skipping.
+Class 'SplitContainerDragger' is not exposed, skipping.
+Class 'EditorTitleBar' is not exposed, skipping.
+Class 'ProgressDialog' is not exposed, skipping.
+Class 'TileSetEditor' is not exposed, skipping.
+Class 'ThemeEditor' is not exposed, skipping.
+Class 'AnimationBezierTrackEdit' is not exposed, skipping.
+Class 'AnimationTimelineEdit' is not exposed, skipping.
+Class 'AnimationTrackEditor' is not exposed, skipping.
+Class 'EditorInspectorCategory' is not exposed, skipping.
+Class 'EditorDebuggerInspector' is not exposed, skipping.
+Class 'EditorValidationPanel' is not exposed, skipping.
+Class 'ThemeItemEditorDialog' is not exposed, skipping.
+Class 'EditorAbout' is not exposed, skipping.
+Class 'SceneImportSettingsDialog' is not exposed, skipping.
+Class 'ProjectExportDialog' is not exposed, skipping.
+Class 'ProjectSettingsEditor' is not exposed, skipping.
+Class 'EditorSettingsDialog' is not exposed, skipping.
+Class 'EditorTheme' is not exposed, skipping.
+Class 'EditorExport' is not exposed, skipping.
+Class 'EditorContextMenuPluginManager' is not exposed, skipping.
+Class 'EditorInspectorParticleProcessMaterialPlugin' is not exposed, skipping.
+Class 'EditorInspectorVisualShaderModePlugin' is not exposed, skipping.
+Class 'EditorInspectorRootMotionPlugin' is not exposed, skipping.
+Class 'EditorInspectorDefaultPlugin' is not exposed, skipping.
+Class 'EditorSceneFormatImporterESCN' is not exposed, skipping.
+Class 'EditorOBJImporter' is not exposed, skipping.
+Class 'EditorSceneFormatImporterCollada' is not exposed, skipping.
+Class 'ProjectUpgradeTool' is not exposed, skipping.
+Class 'EditorNode' is not exposed, skipping.
+Class 'EditorPropertyNameProcessor' is not exposed, skipping.
+Class 'SceneRPCInterface' is not exposed, skipping.
+Class 'SceneReplicationInterface' is not exposed, skipping.
+Class 'SceneCacheInterface' is not exposed, skipping.
+Class 'ThemeContext' is not exposed, skipping.
+Class 'GraphEditMinimap' is not exposed, skipping.
+Class 'GDScriptNativeClass' is not exposed, skipping.
+Class 'GodotPhysicsServer2D' is not exposed, skipping.
+Class 'GodotPhysicsServer3D' is not exposed, skipping.
+Class 'GLTFDocumentExtensionTextureWebP' is not exposed, skipping.
+Class 'GLTFDocumentExtensionTextureKTX' is not exposed, skipping.
+Class 'GLTFDocumentExtensionPhysics' is not exposed, skipping.
+Class 'EditorHelpBit' is not exposed, skipping.
+Class 'EditorFeatureProfileManager' is not exposed, skipping.
+Class 'ExportTemplateManager' is not exposed, skipping.
+Class 'DynamicFontImportSettingsData' is not exposed, skipping.
+Class 'DynamicFontImportSettingsDialog' is not exposed, skipping.
+Class 'AudioStreamPlayerInternal' is not exposed, skipping.
+Class 'AudioStreamImportSettingsDialog' is not exposed, skipping.
+Class 'SceneImportSettingsData' is not exposed, skipping.
+Class 'ImportDefaultsEditorSettings' is not exposed, skipping.
+Class 'ImportDefaultsEditor' is not exposed, skipping.
+Class 'EditorPluginSettings' is not exposed, skipping.
+Class 'PluginConfigDialog' is not exposed, skipping.
+Class 'GroupSettingsEditor' is not exposed, skipping.
+Class 'ShaderGlobalsEditorInterface' is not exposed, skipping.
+Class 'ShaderGlobalsEditor' is not exposed, skipping.
+Class 'EditorAutoloadSettings' is not exposed, skipping.
+Class 'EditorLocaleDialog' is not exposed, skipping.
+Class 'LocalizationEditor' is not exposed, skipping.
+Class 'ActionMapEditor' is not exposed, skipping.
+Class 'EditorVariantTypeOptionButton' is not exposed, skipping.
+Class 'EditorSettingsInspectorPlugin' is not exposed, skipping.
+Class 'InputEventConfigurationDialog' is not exposed, skipping.
+Class 'EventListenerLineEdit' is not exposed, skipping.
+Class 'EditorEventSearchBar' is not exposed, skipping.
+Class 'SectionedInspector' is not exposed, skipping.
+Class 'SectionedInspectorFilter' is not exposed, skipping.
+Class 'DependencyErrorDialog' is not exposed, skipping.
+Class 'ProjectExportTextureFormatError' is not exposed, skipping.
+Class 'SpinBoxLineEdit' is not exposed, skipping.
+Class 'EditorPropertyPath' is not exposed, skipping.
+Class 'SceneCreateDialog' is not exposed, skipping.
+Class 'DirectoryCreateDialog' is not exposed, skipping.
+Class 'EditorDirDialog' is not exposed, skipping.
+Class 'DependencyRemoveDialog' is not exposed, skipping.
+Class 'DependencyEditorOwners' is not exposed, skipping.
+Class 'DependencyEditor' is not exposed, skipping.
+Class 'FileSystemList' is not exposed, skipping.
+Class 'ImportDockParameters' is not exposed, skipping.
+Class 'ImportDock' is not exposed, skipping.
+Class 'ReparentDialog' is not exposed, skipping.
+Class 'ShaderCreateDialog' is not exposed, skipping.
+Class 'RenameDialog' is not exposed, skipping.
+Class 'CreateDialog' is not exposed, skipping.
+Class 'SceneTreeEditor' is not exposed, skipping.
+Class 'SceneTreeDock' is not exposed, skipping.
+Class 'EditorLayoutsDialog' is not exposed, skipping.
+Class 'BackgroundProgress' is not exposed, skipping.
+Class 'EditorRunNative' is not exposed, skipping.
+Class 'EditorRunBar' is not exposed, skipping.
+Class 'VersionControlEditorPlugin' is not exposed, skipping.
+Class 'FBXImporterManager' is not exposed, skipping.
+Class 'EditorVersionButton' is not exposed, skipping.
+Class 'EditorBuildProfileManager' is not exposed, skipping.
+Loaded system CA certificates
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Started Project initialization (5 steps)[39m[0m
+[   0% ] [90m[1mfirst_scan_filesystem[22m | Scanning file structure...[39m[0m
+[  16% ] [90m[1mfirst_scan_filesystem[22m | Loading global class names...[39m[0m
+[  33% ] [90m[1mfirst_scan_filesystem[22m | Verifying GDExtensions...[39m[0m
+[  50% ] [90m[1mfirst_scan_filesystem[22m | Creating autoload scripts...[39m[0m
+[  66% ] [90m[1mfirst_scan_filesystem[22m | Initializing plugins...[39m[0m
+[  83% ] [90m[1mfirst_scan_filesystem[22m | Starting file scan...[39m[0m
+[92m[ DONE ][39m [1mfirst_scan_filesystem[22m
+[0m
+[   0% ] [90m[1m_update_scan_actions[22m | Started Scanning actions... (13 steps)[39m[0m
+[   0% ] [90m[1m_update_scan_actions[22m | pad.wav[39m[0m
+[   7% ] [90m[1m_update_scan_actions[22m | tension.wav[39m[0m
+[  14% ] [90m[1m_update_scan_actions[22m | JazzClub_Bass_UprightBass_1.wav[39m[0m
+[  21% ] [90m[1m_update_scan_actions[22m | JazzClub_Bass_UprightBass_2.wav[39m[0m
+[  28% ] [90m[1m_update_scan_actions[22m | JazzClub_Bass_UprightBass_3.wav[39m[0m
+[  35% ] [90m[1m_update_scan_actions[22m | JazzClub_Chords_Guitar_1.wav[39m[0m
+[  42% ] [90m[1m_update_scan_actions[22m | JazzClub_Chords_Piano_1.wav[39m[0m
+[  50% ] [90m[1m_update_scan_actions[22m | JazzClub_Chords_Piano_2.wav[39m[0m
+[  57% ] [90m[1m_update_scan_actions[22m | JazzClub_DrumsHigh_BrushKit_1.wav[39m[0m
+[  64% ] [90m[1m_update_scan_actions[22m | JazzClub_Fill_BrushKit_1.wav[39m[0m
+[  71% ] [90m[1m_update_scan_actions[22m | JazzClub_Lead_Trumpet_1.wav[39m[0m
+[  78% ] [90m[1m_update_scan_actions[22m | JazzClub_Stinger_Trumpet_1.wav[39m[0m
+[  85% ] [90m[1m_update_scan_actions[22m | JazzClub_Chords_Piano_2.wav[39m[0m
+[92m[ DONE ][39m [1m_update_scan_actions[22m
+[0m
+[   0% ] [90m[1msavepack[22m | Started Packing (102 steps)[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/back_alley.png-8eb6fe48d1f35d1ec1d579fea627693f.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/back_alley.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bar.png-883e840d8bcfba6bd5267050b38deac6.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/bar.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/corner_store.png-7792426161de438794d44661056124ac.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/corner_store.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gas_station_casino.png-00bd9899cd2ba81fecfd85921cb3b0c2.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/gas_station_casino.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino.png-678f6933b213a819c7dd3423a911336e.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/grand_casino.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_club.png-9067be36b36f6600fd88d7825da89575.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/jazz_club.png.import[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel.png-2999df4faa244d28c844263b7b327da0.ctex[39m[0m
+[   1% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/motel.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/punchline_back_room.png-7f805551a1c4e00e61c272a9f8ac27a1.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/punchline_back_room.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/punchline_club.png-8d4e7af6f246a15f813231e94ecb9667.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/punchline_club.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/small_underground_casino.png-a2a92e96dcd8fc2cf54e3b6eae51d3fc.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/environments/small_underground_casino.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/back_alley_offer.png-a44e4f0439f578be0b2bf689c157cb18.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/back_alley_offer.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/chatty_clerk.png-8cdeacdecf032580f576ed38e131eb29.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/chatty_clerk.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/comped_suite_offer.png-ec45f36645d975f67dd5e4b9ef973d14.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/comped_suite_offer.png.import[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/eye_in_the_sky.png-4fc1b97abe4b9d755b8ecf3e20bd1024.ctex[39m[0m
+[   2% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/eye_in_the_sky.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/heat_at_exit.png-fcf9d8d85e2631b7bfee843e35345c4d.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/heat_at_exit.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/late_shift_discount.png-14f5b46a8b067bb218ffd111360cf848.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/late_shift_discount.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/machine_jam.png-b41f8a534effe23b982bedb0f21fc91e.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/machine_jam.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel_knock.png-388bf0c4e8f43394b7a0980418c71102.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/motel_knock.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/parking_lot_tip.png-c1e200d0a1e0686ff4d995ef5cacb1f4.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/parking_lot_tip.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pit_boss_sweep.png-45ebb12e74cf05b496ccc24b8de58a98.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/pit_boss_sweep.png.import[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/rowdy_regular.png-5375a97810c7e99e65788566214a2414.ctex[39m[0m
+[   3% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/rowdy_regular.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/side_door.png-903813bd2144350f094a76d96767b688.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/side_door.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/suspicious_patron.png-b3582475ab022af95719cbc9ee35cc74.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/events/suspicious_patron.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/double_deuces_cabinet_full_scene.png-c6c8c05f53c1ace218917fce4d11ae10.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/double_deuces_cabinet_full_scene.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jacks_or_better_cabinet_full_scene.png-18c9ee9be1cf3d9bee88bdaeabc61c2d.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/jacks_or_better_cabinet_full_scene.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/triple_double_bonus_cabinet_full_scene.png-998aae5f235ad466b0457e49999b256c.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/triple_double_bonus_cabinet_full_scene.png.import[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/double_deuces_cabinet_bg.png-d0996bc2bd18dd92d62c260945328fb0.ctex[39m[0m
+[   4% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/double_deuces_cabinet_bg.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jacks_or_better_cabinet_bg.png-01e06834a4d82a608ea7134c82d445f0.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/jacks_or_better_cabinet_bg.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/triple_double_bonus_cabinet_bg.png-6c374d8587d9ba9d9fc1cb51ec2e17a9.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker_cabinets/triple_double_bonus_cabinet_bg.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/baccarat.png-e50f06d9dcbf23505e7087cc6dd20099.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/baccarat.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bar_dice.png-a6a49459058760d70c800b2c405986b3.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/bar_dice.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/blackjack.png-ffacfa2f00d89659422a95a79461c5b4.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/blackjack.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cards.png-6e531bdb5215ed78d6882de7a01eeaf0.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/cards.png.import[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/dice.png-ae6d1cb0237d20a0737602874a186c89.ctex[39m[0m
+[   5% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/dice.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/poker.png-7ede59761c68756466fe3cdf3e29d2cd.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/poker.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pull_tabs.png-c0d0ffc2ef80e6114b464293514513e4.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/pull_tabs.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/roulette.png-abf6ff84ae04b2c921010330185bf886.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/roulette.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/scratch_tickets.png-4ae2e313950bd7d1fd3af465573d1798.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/scratch_tickets.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/slot.png-4720595073ca8df1ceb3ca824406a446.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/slot.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/video_poker.png-f8ece6ae77d1c7921aefd6a2cdee29f9.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/games/video_poker.png.import[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/boarded_window_nail.svg-1fbd73efce40f28109ed1e4c80b4735a.ctex[39m[0m
+[   6% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/boarded_window_nail.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/convoy_cb_tag.svg-6d77ee4dba350a2357766f5b317d2bee.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/convoy_cb_tag.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/crew_package.svg-da9d993c81bb44ad6463a8f4c42f052b.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/crew_package.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/delivery_twine.svg-fa09144994b6f7ac5caf5b8eac7ca368.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/delivery_twine.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/estate_map_clasp.svg-68bf2ae268f05ebd529b7548b519ddd9.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/estate_map_clasp.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/festival_brass_token.svg-892ae62afd84ebf4e9d0ba8e0f074622.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/festival_brass_token.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/fight_night_betting_slip.svg-197ed6f4e40bd3985178d49ae79d3fec.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/fight_night_betting_slip.svg.import[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lock_in_door_chit.svg-b1c957edfde80cd46f4ae17e249a0c56.ctex[39m[0m
+[   7% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/lock_in_door_chit.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lotto_queue_number.svg-bcedd67ecb08d726b5e13cce4ef06c10.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/lotto_queue_number.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/mags_lined_sleeve.svg-b78052bf76ea429e56f654f4f9af1e62.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/mags_lined_sleeve.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/mags_loaded_dice.svg-498a695bd1dd3a8f6569e734e1b14650.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/mags_loaded_dice.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/mags_nudge_dampener.svg-ff9ea9abd5a683d7081c6c03b33d0fc3.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/mags_nudge_dampener.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/mags_shim_kit.svg-4e0f18e0edbeb07e1a2d983711ee5a55.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/mags_shim_kit.svg.import[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/mags_tuned_loupe.svg-991b116957b132018a31194f3fe2dde2.ctex[39m[0m
+[   8% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/mags_tuned_loupe.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/recording_room_tape.svg-bb71813ad8fe212d1b6925fd9c0d8521.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/recording_room_tape.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/rent_party_hat_pin.svg-f983bed71c48a49ac4dd35e190a5e30b.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/rent_party_hat_pin.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tour_bus_luggage_tag.svg-3ccc1fe1e9a0aa34584020dc7774d106.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/tour_bus_luggage_tag.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/wake_matchbook.svg-f0b9b38bdc889166f33148916fd04197.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/wake_matchbook.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/wedding_ribbon_favor.svg-7684b195f660e8823b02fd4b77f21800.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/content06/wedding_ribbon_favor.svg.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/backpack.png-99ffa121792f25b70847e05d2a6c0530.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/backpack.png.import[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bag.png-3f2000707a41905a36d9e05b4375c154.ctex[39m[0m
+[   9% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/bag.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/basic_strategy_card.png-21a1d7e4159f2388cb7a39515e54776c.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/basic_strategy_card.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/broken_cufflinks.png-a99ec2e3da47b42d5b84a2043274f87e.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/broken_cufflinks.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bumper_battery.png-3a70cc2bc7c65c78654aae72d91ec84e.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/bumper_battery.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/card_counters_notes.png-d2efb0fe031452f87bee4b3f9f037edc.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/card_counters_notes.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cashout_envelope.png-edebb15050bc31fdb478eff4be1bc396.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/cashout_envelope.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cheap_sunglasses.png-a0fb89d1b05ca9168ef240f4eaa68215.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/cheap_sunglasses.png.import[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/chip_slide_wax.png-8c6466b911eb412829aba36d64a4691d.ctex[39m[0m
+[  10% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/chip_slide_wax.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/coffee_cup.png-b073205ad2b63ac33083ca18e94aa5a0.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/coffee_cup.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/coin_return_shim.png-065d6ac8660ff6d0433bb6540c863eda.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/coin_return_shim.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cold_quarters.png-63e34fa5b012099099f3fd25cd8259c9.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/cold_quarters.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/coolers_cufflinks.png-bbb419ad90ed1c79c9eab4914137c1c8.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/coolers_cufflinks.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/creased_luck_card.png-1815607e42b3247d4560c171ced1a35e.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/creased_luck_card.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cumquat_sandwich.png-5aa97dd3cbfb669b5c3c43322944561a.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/cumquat_sandwich.png.import[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/dice_calipers.png-bbe627272077cb9ebe64563226878501.ctex[39m[0m
+[  11% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/dice_calipers.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/drain_cleaner.png-dc6a0d177e1afa70770332cad0bb898f.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/drain_cleaner.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/edge_sort_loupe.png-285d881138b019a2e26e34972cc7bc98.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/edge_sort_loupe.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/extra_ball_token.png-0d32fe3b9f95e13aa2de2d56a9a4d716.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/extra_ball_token.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/feature_magnet.png-ca847034a89194ef7787a10273396272.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/feature_magnet.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/flask_of_courage.png-edc0149e277c5fd00e227fac53d7d59e.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/flask_of_courage.png.import[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/foil_sleeve.png-717c5ab47e44e80e7ff2003d70e51107.ctex[39m[0m
+[  12% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/foil_sleeve.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/freds_poker_hat.png-3f59026768a15f8501ed606b5473401a.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/freds_poker_hat.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gambler_gloves.png-5dbdec9607332e43e89cacd1737a3701.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/gambler_gloves.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gold_tooth_token.png-404091c67cb4e9fbb59a465b098e01c9.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/gold_tooth_token.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/high_roller_watch.png-08b936d5bdb0bafac2394bfc913d287b.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/high_roller_watch.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/holdout_rig.png-c0670865c5a8dee64055190004c8d37e.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/holdout_rig.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/holdout_wax.png-decf4af5cbe722eb9ea1e4d8b09e029d.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/holdout_wax.png.import[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/hot_streak_token.png-c65a1b6bd3751b06d67f89c92134944e.ctex[39m[0m
+[  13% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/hot_streak_token.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/inside_man.png-2514eb53abe88f812a8dce25811394b3.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/inside_man.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/instant_coffee.png-ed9fc478c6c512d4b6fb296fe874bb9e.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/instant_coffee.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jackpot_magnet.png-b4d53f65d305a39c808d4d9ab17e9a3e.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/jackpot_magnet.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_cello_lucky_coin.png-d7b17ea47a091062e64fbef7e96da8a8.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/jazz_cello_lucky_coin.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_drummer_glasses.png-84b542bfa3a27527a01c49e8a734b294.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/jazz_drummer_glasses.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_drummer_lucky_coin.png-f4a0921e9bba4e7fa85e50cb31182dab.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/jazz_drummer_lucky_coin.png.import[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_sax_lucky_coin.png-83a253dc84475a88f4f73821a701f8aa.ctex[39m[0m
+[  14% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/jazz_sax_lucky_coin.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/ledger_pencil.png-4ae6884e812d48fdc206407bee6e70ac.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/ledger_pencil.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/loaded_dice.png-210ece1aacef7dba0e27fa5057be6f5d.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/loaded_dice.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lock_jammer.png-64aa56118d78b1f6300990b5e2282848.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lock_jammer.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_bar_napkin.png-60950bcce0bc4c8fc41d376eccd8d299.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_bar_napkin.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_charm.png-66159252831e904c17c149ad9ba1b2d5.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_charm.png.import[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_cigarette.png-b353a752f056d041499331f1a3c3af2e.ctex[39m[0m
+[  15% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_cigarette.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_keychain.png-bd281bdc91c44ca3f655eaa735726064.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_keychain.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_ladies_compact.png-fd9970fd86e1619926e76f70feb59a46.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_ladies_compact.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_penny.png-ce6cca79b1c2d5cb4898f3f9bd6d221b.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_penny.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_reel_grease.png-0b3d59707a46a14e3eb97660a6d688e1.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/lucky_reel_grease.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/luck_card.png-f594d8125b0f1db1940b42af184d8269.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/luck_card.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/magnet_cup.png-e7cb5316c574ffbf149b2a55212c7bee.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/magnet_cup.png.import[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/marked_cards.png-bdaa4c8c514bcc1b4136b5c768e388ab.ctex[39m[0m
+[  16% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/marked_cards.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/neon_players_charm.png-0c3f99cfadfdfa9561d29aaf28b5054d.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/neon_players_charm.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/numbers_slips.svg-19987c1d957990acadff3ba44999a398.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/numbers_slips.svg.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/odds_notebook.png-053dba123308aad6c8d49954c3bc16c7.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/odds_notebook.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pawn_receipt_sleeve.png-0e8aaccb10c28abed3fbd3379725e48d.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/pawn_receipt_sleeve.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/payment_calendar.png-77d0b4be954746834d9d162d6f6f1f08.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/payment_calendar.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/payout_pamphlet.png-af1fb9758599d1c973bd0b2f64002216.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/payout_pamphlet.png.import[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/plunger_tuner.png-6b0a7d7907bf258f3362367d9d941ac0.ctex[39m[0m
+[  17% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/plunger_tuner.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pocket_watch.png-dc2b78c6df6ed614b85b4a73483ff10c.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/pocket_watch.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/poker_chip.png-d88aa7e40bb54ade209e209897469add.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/poker_chip.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/police_scanner.png-3c824cab043d8d1eb6ce8b181a57dd33.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/police_scanner.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/rabbits_foot.png-3c073ade00e2b9e9ac844e22c26afec5.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/rabbits_foot.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/return_spring.png-eb36e591cb546bacf347fce2ef1f1b5e.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/return_spring.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/roadside_map.png-5220d07fd8a98b025aa9277792361a4e.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/roadside_map.png.import[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/rubber_pegs.png-13f7aca5213357a5fffec259a99d9470.ctex[39m[0m
+[  18% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/rubber_pegs.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/scratch_pad.png-9619f382dbdc8512aa75ab812faaa100.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/scratch_pad.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/shoe_cut_marker.png-25c4c909db2a54d136816ebfd28cf4fd.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/shoe_cut_marker.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/side_bet_chart.png-1a49dd46688ae3b88ce4fc2f793c02ad.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/side_bet_chart.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/splitter_token.png-6e4c60f69f82f1b84939677feb7bb4ef.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/splitter_token.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/split_reel_note.png-24e8ae7b9a7005c22ef5047f33ad11ea.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/split_reel_note.png.import[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/suitcase.png-3e3aebddfb7328ff3d381bd0de36805b.ctex[39m[0m
+[  19% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/suitcase.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/sunglasses.png-d4d5a7f76688c22c5cbc625dfa45ce9c.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/sunglasses.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tab_detector.png-f3a162f7c8ea9e27729fbdd61c419b6b.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/tab_detector.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tarot_card.png-aa86e51fc9ca28edd5f684f703cc4a0a.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/tarot_card.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/thermos_black_coffee.png-f6cdb746de1122565a21d17cd3c9fbce.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/thermos_black_coffee.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/thermos_black_coffee_half.png-f6183ce3677815a8b2dd49ff38f200ff.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/thermos_black_coffee_half.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tilt_dampener.png-939359323aa384b7ad199b6d980d5838.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/tilt_dampener.png.import[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/timing_bracelet.png-3ec9bf83cbaa34639e9a660fd17ecfd7.ctex[39m[0m
+[  20% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/timing_bracelet.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tip_sheet.png-6f34fde6d46e0ab27d53d2788428822d.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/tip_sheet.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/trunk.png-4c66a1e38f76c4efa82ca6fd099e4387.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/trunk.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/velvet_table_key.png-5d1a44e21c5b1d9a4d521243c5518837.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/velvet_table_key.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/weighted_keyring.png-bdc7c489064cbbbe5bfff5995dae1d01.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/weighted_keyring.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/xray_glasses.png-029cb695a7f412f9ecd9db977d3d24b9.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/items/xray_glasses.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png.import[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex[39m[0m
+[  21% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/apartment.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/back_alley.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/bar.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/beach.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/corner_store.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/delta_queen.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/gas_station_casino.png.import[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex[39m[0m
+[  22% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/grand_casino.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/house.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/jazz_club.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/kitty_cat_lounge.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/motel.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/motel_room.png.import[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex[39m[0m
+[  23% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/pawn_shop.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/map_icons/small_underground_casino.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/broke.png-46366d8faedbb4fa7bd5d3bdff1181ef.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/broke.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/players_card.png-4955193e948448e88b4d557d6b8858a9.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/players_card.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/police_capture.png-493be0f521e92bf07b99a6e7eb561602.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/police_capture.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/showdown_survived.png-ad9e2bbe91a35cdc4fd31e58aa032efa.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/showdown_survived.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/stranded.png-406a2bc9a897eb24e66a8d3bfc20518a.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/stranded.png.import[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/taken_out_back.png-d2aa5c8a03d74370d797e872732eb7ca.ctex[39m[0m
+[  24% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/taken_out_back.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/walked_away.png-8268058703d5424b8283f9945ca8fbb7.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/run_outcomes/walked_away.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bonus_bingo_background_pro.png-1637c69083e5aea2d94936ed76fe7def.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/bonus_bingo_background_pro.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/crossword_corner_background_pro.png-c603a9b0c462da8bc314e209416359d7.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/crossword_corner_background_pro.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/golden_vault_background_pro.png-ef1081fa3c9c64caf67f79378e07a3ec.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/golden_vault_background_pro.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/high_roller_holdem_background_pro.png-a123199f8d9125f3a02697bcddbd0fff.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/high_roller_holdem_background_pro.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_7s_background_pro.png-5ceef3616ea7baabe69a2c3c6a24a42b.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/lucky_7s_background_pro.png.import[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/tic_tac_gold_background_pro.png-15fd05e776714d42db1e2f07d41f8534.ctex[39m[0m
+[  25% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/tic_tac_gold_background_pro.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/two_fer_background_pro.png-d415101f9b162b6636e046fe4248e359.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/layers/two_fer_background_pro.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bingo_ball.png-1609a36a21127a749f55404e81d52472.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/bingo_ball.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/brass_bar.png-51797e1c60126ab79f6481b9c815c9f0.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/brass_bar.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gold_bar.png-afd013e75c17d31e4bc88beabe8ab8d6.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/gold_bar.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/lucky_seven.png-d20ecb2052572dee6eb90904cca6b186.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/lucky_seven.png.import[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/multiplier_coin.png-105874f7fa7fb3ed97e492350107477a.ctex[39m[0m
+[  26% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/multiplier_coin.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/number_coin.png-941e655ba908e811054e48010faa0fa4.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/number_coin.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_bell.png-f0681f73b046cfacf41872c02d47dc50.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_bell.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_clover.png-0ad213e9660c6a755bfc531902676094.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_clover.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_star.png-695fbb6d4e13afd29b6cd1e207d9eabe.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_star.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_tic_circle.png-48edd62a8278e2dad9c12c48c199084e.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_circle.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_tic_diamond.png-46642ba56006a697206cbae4ee079ee5.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_diamond.png.import[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_tic_miss.png-6c1df80ac58a159193e02afa18d45949.ctex[39m[0m
+[  27% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_miss.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_tic_star.png-b180a454d49c06214150e05f58ef09f8.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_star.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pro_twofer.png-cd8744cab8125e3ba30dc061d6a033b6.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_twofer.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/vault_open.png-92ef486b0ac4bfcbb12bf64e23d247ff.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/vault_open.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/vault_sealed.png-7d3354c15ae3dfdd57ce43ea57f60f9b.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/vault_sealed.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/wild_card.png-10bb5be74ba0ac52977e8d6ff147c0e8.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/scratch_tickets/reveal_symbols/wild_card.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/buffalo_classic_3_reel_heritage.png-79627da07811f75570cae9fd63fa6f0c.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/buffalo_classic_3_reel_heritage.png.import[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/buffalo_line_5x3_ways.png-077e3f4568ec24225ccfa505ceef24ce.ctex[39m[0m
+[  28% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/buffalo_line_5x3_ways.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/buffalo_video_feature_link_arena.png-a578b26742c607fbedd439cbee96d747.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/buffalo_video_feature_link_arena.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pinball_classic_3_reel_em_bumper_drop.png-7095e64dc391853df063c1ff02dc4585.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/pinball_classic_3_reel_em_bumper_drop.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pinball_line_5x3_lane_multiball.png-551d29b87bb32632a60d5f53e1e5905b.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/pinball_line_5x3_lane_multiball.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pinball_video_feature_full_table.png-acf367eea7f1df8203b3620e714f1145.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/slots/pinball_video_feature_full_table.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/apartment.png-b27c3e26a09451a8bbb1abba892528c5.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/apartment.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/back_alley.png-16022896abb792ecd90e21fe8b06ec2a.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/back_alley.png.import[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bar.png-17160e3e003cc4e263a5d63493d563d7.ctex[39m[0m
+[  29% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/bar.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/beach.png-72b902243c368bd476ba82975b2edeac.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/beach.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/corner_store.png-9a0c0a59508d438947dcb5fc947ff249.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/corner_store.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/delta_queen.png-38623c2a41f238678a6c49d2408a90ff.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/delta_queen.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/gas_station_casino.png-85ef9902b87723b2a3d5fc09427e259a.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/gas_station_casino.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino.png-84299afc97504e4cc3bca7848925322c.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/grand_casino.png.import[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino_back_room.png-7824e0f66dc71463871b0e2d753bbd21.ctex[39m[0m
+[  30% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/grand_casino_back_room.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino_cage.png-9b4cb66516d874559b0ed9c873f6cb2b.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/grand_casino_cage.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/grand_casino_high_limit.png-d470ee31f8c533bd7b9d6f7178fc0863.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/grand_casino_high_limit.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/house.png-482f936534da34230f64224804e005c2.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/house.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/jazz_club.png-b9f4d44c5b3b5b2cb12542558e9a876c.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/jazz_club.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/kitty_cat_lounge.png-bb2cc3231e44281b520a305a2ae9237a.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/kitty_cat_lounge.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel.png-dc4cb8d0f0793711af809a064c24e8d8.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/motel.png.import[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel_room.png-d9d86a73438cdcf57fbcd487bca6ae25.ctex[39m[0m
+[  31% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/motel_room.png.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pawn_shop.png-d79f4a3e68be060904a55f545cb24ccc.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/pawn_shop.png.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/small_underground_casino.png-e0f524babae0997bc8d59e5dd14f6e3a.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/environment_titles/small_underground_casino.png.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cash_transfer.svg-b08298150c2b5cbd11e3cedeb22f5c99.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/cash_transfer.svg.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/close.svg.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/decrease.svg-7944374030b32ec275f1911815262cc4.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/decrease.svg.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/focused.svg-764689e1fd63b614f7c676b57dba6332.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/focused.svg.import[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/hovered.svg-03b8f32857c2e99b4b725c9293c0b7d9.ctex[39m[0m
+[  32% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/hovered.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/increase.svg-1b940f08d890d4e4a960a31d82581340.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/increase.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/next.svg-7c48c0f9fa15b5fbce7977ebc7444810.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/next.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/play.svg-46b9dd326f06286e19a0c887abe8e938.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/play.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/previous.svg-386380160f1134570f2618b788ef81d2.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/previous.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/replay.svg-85c5c767877dd5a8ce54db284cf341b3.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/replay.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/run_setup.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/selected.svg-f2db6233ee07c52f856c1d27705a419e.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/selected.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/controls/settings.svg.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/alert.png-448aa02e5f39962ca3d6755d04b69be1.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/alert.png.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/casino_chips.png-b5c57e52b52b739747eb053df60a1bc2.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/casino_chips.png.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/cheat.png-d1fba8a2ec17edb4c657a61895f3d276.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/cheat.png.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/danger.png-4fecbc18d7ba76ce062971a295ae28ef.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/danger.png.import[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/debt.png-92eb74b33cd8c93d09894b8d16b7b393.ctex[39m[0m
+[  33% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/debt.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/drink.png-287228756de8270b703e9fd14b97204e.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/drink.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/heat.png-0b146ee6cf09aff5e51d984cd0a6449e.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/heat.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/home.png-429a191626e0bb61648467d96787b79e.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/home.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/luck.png-00af16ba02e1ce8c93f6c13b99f0f163.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/luck.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/save.png-70305506e9911c4e8a30d48c1592e8ba.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/save.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/time.png-a0a4aa1e2e03169ce633c4264726902c.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/time.png.import[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/wallet.png-b89fa93aec764e99386098ae4bc871b0.ctex[39m[0m
+[  34% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/icons/wallet.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/backpack_open.png-aa6581639827baf3a483b2f65ea900a6.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/backpack_open.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bag_open.png-4214ea02fc59c9ccf62d46f3bded2da3.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/bag_open.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/home_storage.png-11202387473ee374c6f6ee1f07c0d626.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/home_storage.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/loose_carry.png-43c6b15767ca69ed8f8b4fa4ccda9082.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/loose_carry.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/suitcase_open.png-3219a05167991201b78de089e96edd85.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/suitcase_open.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/trunk_open.png-a76340b74a905c770fe2f16816cc0b99.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory_containers/trunk_open.png.import[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/bartender.png-8bf74ed72c9d71cd5fbf16ca867abfbc.ctex[39m[0m
+[  35% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/bartender.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/faceless_lender.png-ef95676778eaef396605ac0e255ebc5d.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/faceless_lender.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/motel_clerk.png-928d2e4544b0bf632b69101b393aba49.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/motel_clerk.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pawn_broker.png-73195aa85b42e08e1efe6b50f7aa347c.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/pawn_broker.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/pit_boss.png-ee3c05496326c3ee3f17d89bd8f3a803.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/pit_boss.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/riverboat_dealer.png-ed9e81d79b521c6066a5ae814f3230c7.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/portraits/riverboat_dealer.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/audio.png-e7524c0a7a6b2953186655a132bfc15a.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/audio.png.import[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/beat_the_house_logo.png-098dcd7e40b55374409601ccca10946c.ctex[39m[0m
+[  36% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/beat_the_house_logo.png.import[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/drink.png-ed600ae89e5b7f54d481de4203e7c86e.ctex[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/drink.png.import[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/inventory.png-d9250d43516fcc8380f5cb24f139577d.ctex[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/inventory.png.import[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/main_menu_button_plate.png-c97f94d811309c346dc6d5687b4f58f2.ctex[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/main_menu_button_plate.png.import[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/source_index.json[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/travel.png-d422b097ffbf324c553e652f735ba982.ctex[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/travel.png.import[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/travel_bus.png-e65af800464ff035739a2e5969302df0.ctex[39m[0m
+[  37% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/travel_bus.png.import[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/travel_door.png-1e76a97dff6b7ff300d1fa8f3ecdccbf.ctex[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/travel_door.png.import[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/travel_phone.png-080a0e86bfdc48999cc76a23c1af5fd5.ctex[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/travel_phone.png.import[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/travel_ride.png-ec42c6bd3c8602e8368c1717f4753e9e.ctex[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/art/ui/travel_ride.png.import[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_dolly_tap.bthsfx[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_win.bthsfx[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_draw.bthsfx[39m[0m
+[  38% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_double.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_deal.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_cheat_beat.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_cheat.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_button.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/scratch_paper_foley_loop.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/scratch_box_pop.bthsfx[39m[0m
+[  39% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_rotor_launch.bthsfx[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_payout.bthsfx[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/video_poker_hold.bthsfx[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://data/art/art_manifest.json[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://data/art/attribute_glyphs.json[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://data/art/run_outcome_icons.json[39m[0m
+[  40% ] [90m[1msavepack[22m | Storing File: res://data/audio/music_manifest.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/audio/surface_sfx_manifest.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/challenges/challenges.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/characters/characters.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/characters/pools.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/collections/collections.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/content_groups/groups.json[39m[0m
+[  41% ] [90m[1msavepack[22m | Storing File: res://data/crew/crew.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/heist.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/jobs.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/numbers.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/plays.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/poker.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/recruitment.json[39m[0m
+[  42% ] [90m[1msavepack[22m | Storing File: res://data/crew/tells.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/crew/world06_1_crew_favor_delivery_sequence.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/crew/world06_6_heist_sequences.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/debt/lenders.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/dialogue/dialogues.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/economy/content06_1_audit.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequences/env06_7_bars_road.json[39m[0m
+[  43% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequences/env06_7_queen_public.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequences/env06_7_roadside_shelter.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequences/env06_7_shops_streets.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequences/env06_7_underground_lounge.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_sequence_compatibility/grand_casino_gala_night_v1.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/archetypes.json[39m[0m
+[  44% ] [90m[1msavepack[22m | Storing File: res://data/environments/character_offers.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/environments/developer_placement_overrides.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/environments/placement_surfaces.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenarios.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/environments/scenario_slot_layouts.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/events/events.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/games/rituals/craps06_3_environment_bindings.json[39m[0m
+[  45% ] [90m[1msavepack[22m | Storing File: res://data/games/rituals/craps06_3_sequences.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/bar_dice_game_ritual_v1.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/games.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/scratch_tickets.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/scratch_ticket_regions.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/showdown_duel_game_ritual_v1.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/games/showdown_duel_ritual_v1.json[39m[0m
+[  46% ] [90m[1msavepack[22m | Storing File: res://data/items/items.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/services/services.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/story/character_chains.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/town/conditions.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/town/itineraries.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/town/reputation.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/town/rumors.json[39m[0m
+[  47% ] [90m[1msavepack[22m | Storing File: res://data/travel/routes.json[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://data/tutorial/lessons.json[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://data/ui/environment_ui.json[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://data/ui/inventory_containers.json[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_chip_sweep.bthsfx[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_chip_stack.bthsfx[39m[0m
+[  48% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_chip_select.bthsfx[39m[0m
+Loading resource: res://scenes/coin_pusher_export_parity.tscn
+Loading resource: res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd
+[  49% ] [90m[1msavepack[22m | Storing File: res://.godot/exported/133200997/export-1909ed950b1fa9020d96f3c52e9856db-coin_pusher_export_parity.scn[39m[0m
+Loading resource: res://scenes/main.tscn
+Loading resource: res://scripts/ui/foundation_main.gd
+Loading resource: res://assets/art/ui/icons/controls/settings.svg
+Loading resource: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex
+Loading resource: res://assets/art/ui/icons/controls/run_setup.svg
+Loading resource: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex
+Loading resource: res://assets/art/ui/icons/controls/close.svg
+Loading resource: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex
+Loading resource: res://assets/art/ui/icons/controls/previous.svg
+Loading resource: res://.godot/imported/previous.svg-386380160f1134570f2618b788ef81d2.ctex
+Loading resource: res://assets/art/ui/icons/controls/next.svg
+Loading resource: res://.godot/imported/next.svg-7c48c0f9fa15b5fbce7977ebc7444810.ctex
+Loading resource: res://assets/art/ui/icons/controls/decrease.svg
+Loading resource: res://.godot/imported/decrease.svg-7944374030b32ec275f1911815262cc4.ctex
+Loading resource: res://assets/art/ui/icons/controls/increase.svg
+Loading resource: res://.godot/imported/increase.svg-1b940f08d890d4e4a960a31d82581340.ctex
+Loading resource: res://assets/art/ui/icons/controls/play.svg
+Loading resource: res://.godot/imported/play.svg-46b9dd326f06286e19a0c887abe8e938.ctex
+Loading resource: res://assets/art/ui/icons/controls/replay.svg
+Loading resource: res://.godot/imported/replay.svg-85c5c767877dd5a8ce54db284cf341b3.ctex
+Loading resource: res://assets/art/ui/icons/controls/selected.svg
+Loading resource: res://.godot/imported/selected.svg-f2db6233ee07c52f856c1d27705a419e.ctex
+Loading resource: res://assets/art/ui/icons/controls/focused.svg
+Loading resource: res://.godot/imported/focused.svg-764689e1fd63b614f7c676b57dba6332.ctex
+Loading resource: res://assets/art/ui/icons/controls/hovered.svg
+Loading resource: res://.godot/imported/hovered.svg-03b8f32857c2e99b4b725c9293c0b7d9.ctex
+Loading resource: res://assets/art/ui/icons/controls/cash_transfer.svg
+Loading resource: res://.godot/imported/cash_transfer.svg-b08298150c2b5cbd11e3cedeb22f5c99.ctex
+[  49% ] [90m[1msavepack[22m | Storing File: res://.godot/exported/133200997/export-3ad5c15c4f3250da0cc7c1af1770d85f-main.scn[39m[0m
+[  49% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/bars_road.gdc[39m[0m
+[  49% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/punchline_clubs.gdc[39m[0m
+[  49% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/queen_public.gdc[39m[0m
+[  49% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/roadside_shelter.gdc[39m[0m
+[  49% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/semantic_v1.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/shops_streets.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/art_contracts.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/attribute_badges.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/bar_dice_ritual_projection.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/blackjack_action_authority.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/build_identity.gdc[39m[0m
+[  50% ] [90m[1msavepack[22m | Storing File: res://scripts/core/cage_economy_model.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/card_shoe.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_chain_model.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_offer_model.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_roster.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/collection_drop_service.gdc[39m[0m
+[  51% ] [90m[1msavepack[22m | Storing File: res://scripts/core/collection_item_resolver.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/content_library.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/craps06_3_environment_binding.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_delivery_schedule.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_heist_model.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_play_model.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_poker_model.gdc[39m[0m
+[  52% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_recruitment_model.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_run_facade.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_state_model.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_turn_model.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_world_sequence_adapter.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/delivery_run_facade.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/delivery_run_model.gdc[39m[0m
+[  53% ] [90m[1msavepack[22m | Storing File: res://scripts/core/developer_placement_store.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/durable_store.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_base_semantic_records.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_event_resolver.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_hours.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_instance.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_object_manifest.gdc[39m[0m
+[  54% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_placement.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_runtime_scheduler.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_semantic_inventory.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_slot_binder.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/event_module.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/function_options.gdc[39m[0m
+[  55% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_module.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_module_registry.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_host_authority.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_layout.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_runtime.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_schema.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_duel_model.gdc[39m[0m
+[  56% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_duel_ritual_projection.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_run_facade.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_showdown_model.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/io_result.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/item_effect.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/json_coerce.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/keys.gdc[39m[0m
+[  57% ] [90m[1msavepack[22m | Storing File: res://scripts/core/meta_collection_service.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/music_delivery_index.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/numbers_model.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/persistence_paths.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/persistent_environment_projection.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/platform_services.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/police_sweep_model.gdc[39m[0m
+[  58% ] [90m[1msavepack[22m | Storing File: res://scripts/core/profile_inventory.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/rng_stream.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/room_presentation_publication.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_action_service.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_generator.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_money_flow_archive.gdc[39m[0m
+[  59% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_save_codec.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_state.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_state_schema.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_terminal_evaluator.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/save_service.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_engine.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_extension_dispatch.gdc[39m[0m
+[  60% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_host_transaction.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_layout_resolver.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_operation_registry.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_catalog.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_rollout_manifest.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_runtime.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_schema.gdc[39m[0m
+[  61% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_venue_cycle.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/static_data_cache.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/storage_numeric_json.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/surface_sfx_manifest.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/town_network.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/town_state.gdc[39m[0m
+[  62% ] [90m[1msavepack[22m | Storing File: res://scripts/core/tutorial_flow.gdc[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/core/user_settings.gdc[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/core/world_map.gdc[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/core/world_sequence_package_catalog.gdc[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_export_parity_input.json[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gdc[39m[0m
+Loading resource: res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.tscn
+[  63% ] [90m[1msavepack[22m | Storing File: res://.godot/exported/133200997/export-e5420f39fe5487e4855fc6d514991474-coin_pusher_export_parity_runner.scn[39m[0m
+[  63% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_live_session.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_renderer.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_solver.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_solver_api.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/jackpot_ridge.gdc[39m[0m
+[  64% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/vault_drop.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps/craps_rules.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps/craps_surface_view_model.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_board.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_boards.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_feature.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_items.gdc[39m[0m
+[  65% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_sequencer.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_sim.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_bonus_recovery.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_catalog.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_definition_cache.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_family_buffalo.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_family_pinball.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_machine_generator.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_machine_state.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_presentation.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_renderer.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_resolver.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_rng_math.gdc[39m[0m
+[  66% ] [90m[1msavepack[22m | Storing File: res://scripts/games/baccarat.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/bar_dice.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/blackjack.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/crew_draw_poker.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/playing_card_renderer.gdc[39m[0m
+[  67% ] [90m[1msavepack[22m | Storing File: res://scripts/games/pull_tabs.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/roulette.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_tickets.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_background_renderer.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_foil_renderer.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_icon_renderer.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_machine_renderer.gdc[39m[0m
+[  68% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_mask.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_region_model.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slot.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/games/table_game_visuals.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/games/video_poker.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/games/video_poker_renderer.gdc[39m[0m
+[  69% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cage_atm_view_model.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cage_counter_view_model.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/career_stats_screen.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/career_stats_view_model.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cheat_dock.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/coach_overlay.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/coach_view_model.gdc[39m[0m
+[  70% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/drunk_distortion_overlay.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_header.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_interaction_controller.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_interaction_view_model.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_action_view_model.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_hud_bar.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_hud_view_model.gdc[39m[0m
+[  71% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_main.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_screen_builder.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_travel_view_model.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_widgets.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_surface_canvas.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/heat_feedback_visuals.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/heat_gain_feedback_overlay.gdc[39m[0m
+[  72% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/hud_time_watch.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/icon_sprite_renderer.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/inventory_container_catalog.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/inventory_container_surface.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/item_card_view_model.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/item_found_popup.gdc[39m[0m
+[  73% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_collection_view_model.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_item_interaction_screen.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_item_interaction_view_model.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_session_controller.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/mobile_viewport_policy.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/modal_focus_scope.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/money_feedback_view_model.gdc[39m[0m
+[  74% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_arrangement_selector.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_float_pcm_stream.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_layer_choreography.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_outcome_director_model.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/null_perf_sink.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/performance_fixture_setup.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/performance_liveness_guard.gdc[39m[0m
+[  75% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/perf_telemetry_overlay.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/pixel_scene_canvas.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/player_text.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/procedural_music_player.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_inventory_screen.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_inventory_view_model.gdc[39m[0m
+[  76% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_journal_view_model.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_screen.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_timeline_canvas.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_view_model.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_semantic_view_model.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/sealed_action_host.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/segmented_meter.gdc[39m[0m
+[  77% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/settings_menu.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/sfx_player.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/small_screen_policy.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/support_diagnostics.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/talk_dock.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/terminal_consequence_view_model.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/ui_art.gdc[39m[0m
+[  78% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/visual_style.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/wager_confirmation_controller.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/web_audio_bridge.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/web_save_durability_bridge.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/world_map_canvas.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/world_map_overlay_controller.gdc[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot_buffalo.bthsfx[39m[0m
+[  79% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot_digital.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot_hit.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot_hit_buffalo.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot_hit_digital.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/lever.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/lever_buffalo.bthsfx[39m[0m
+[  80% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/lever_digital.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/lose.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/nudge.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/nudge_buffalo.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/nudge_digital.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/nudge_pinball.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/paper_peek.bthsfx[39m[0m
+[  81% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/paper_peel.bthsfx[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/payout.bthsfx[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/payout_digital.bthsfx[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/phone_call.bthsfx[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/phone_out_of_service.bthsfx[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/bar_dice_room_prop.gdc[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/coin_pusher_room_prop.gdc[39m[0m
+[  82% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/craps_room_prop.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/game_prop_kit.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/scratch_ticket_room_prop.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/street_craps_circle_prop.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/bars_road.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/punchline_clubs.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/queen_public.gdc[39m[0m
+[  83% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/roadside_shelter.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/semantic_v1.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/shops_streets.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/attribute_badge_row.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/bag_open_reel.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/bag_open_reel_view_model.gdc[39m[0m
+[  84% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/pinball_money_ding.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/pull_tab_click.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/pull_tab_thump.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_loop.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_loop_buffalo.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_loop_digital.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_loop_pinball.bthsfx[39m[0m
+[  85% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_stop.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_stop_buffalo.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_stop_digital.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/reel_stop_pinball.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_bounce.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_drop.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_loop.bthsfx[39m[0m
+[  86% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_pocket.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_rim_tick.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_roll.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_ball_scatter.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_chip_lift.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/roulette_chip_place.bthsfx[39m[0m
+[  87% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/back_alley.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/apartment.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Stinger_Trumpet_1.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/jackpot.bthsfx[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Lead_Trumpet_1.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/bar.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/beach.bthadpcm.gz[39m[0m
+[  88% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/delta_queen.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/gas_station_casino.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/grand_casino.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/grand_casino_back_room.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/grand_casino_cage.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/grand_casino_high_limit.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/house.bthadpcm.gz[39m[0m
+[  89% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/jazz_club.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/kitty_cat_lounge.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/main_menu_tour.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/motel.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/motel_room.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/pawn_shop.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/procedural/small_underground_casino.bthadpcm.gz[39m[0m
+[  90% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_bust.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_card.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_chip.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_count.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_distraction.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_felt.bthsfx[39m[0m
+[  91% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_payout.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/blackjack_peek.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_start.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_start_buffalo.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_start_digital.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_start_pinball.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_step_buffalo.bthsfx[39m[0m
+[  92% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_step_digital.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_total.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_total_buffalo.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bonus_total_digital.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/bumper.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/button.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/button_buffalo.bthsfx[39m[0m
+[  93% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/button_digital.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/button_pinball.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_alarm.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_chirp.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_coin_metal.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_coin_stack.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_fall.bthsfx[39m[0m
+[  94% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_gutter.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_ledge_tip.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_motor.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_shake.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_slide.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_tell_rock.bthsfx[39m[0m
+[  95% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_topple.bthsfx[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/coin_pusher_tray.bthsfx[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/double_gold_coin_tease.bthsfx[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/drink_consumed.bthsfx[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/gold_coin_tease.bthsfx[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://assets/audio/sfx_web/heat_gain.bthsfx[39m[0m
+Loading resource: res://default_bus_layout.tres
+[  96% ] [90m[1msavepack[22m | Storing File: res://.godot/exported/133200997/export-19246414aa9fb561ced4b8dce477acec-default_bus_layout.res[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://.godot/imported/icon.svg-218a8f2b3041327d8a5756f3a245f83b.ctex[39m[0m
+[  96% ] [90m[1msavepack[22m | Storing File: res://icon.svg.import[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_features/arcade.bthstems[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_features/buffalo.bthstems[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/corner_store_sparse_fixture/pad.bthadpcm.gz[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/corner_store_sparse_fixture/tension.bthadpcm.gz[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_16_bar/JazzClub_Chords_Piano_2.bthadpcm.gz[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_1.bthadpcm.gz[39m[0m
+[  97% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_2.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Bass_UprightBass_3.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Guitar_1.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_1.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Chords_Piano_2.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_DrumsHigh_BrushKit_1.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://assets/audio/music_web/jazz_club_delivery_fixture_8_bar/JazzClub_Fill_BrushKit_1.bthadpcm.gz[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scenes/coin_pusher_export_parity.tscn.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scenes/main.tscn.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/bars_road.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/punchline_clubs.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/queen_public.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/roadside_shelter.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/semantic_v1.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_handlers/shops_streets.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/art_contracts.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/attribute_badges.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/bar_dice_ritual_projection.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/blackjack_action_authority.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/build_identity.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/cage_economy_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/card_shoe.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_chain_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_offer_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/character_roster.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/collection_drop_service.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/collection_item_resolver.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/content_library.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/craps06_3_environment_binding.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_delivery_schedule.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_heist_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_play_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_poker_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_recruitment_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_run_facade.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_state_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_turn_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/crew_world_sequence_adapter.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/delivery_run_facade.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/delivery_run_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/developer_placement_store.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/durable_store.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_base_semantic_records.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_event_resolver.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_hours.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_instance.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_object_manifest.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_placement.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_runtime_scheduler.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_semantic_inventory.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/environment_slot_binder.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/event_module.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/function_options.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_module.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_module_registry.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_host_authority.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_layout.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_runtime.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/game_ritual_schema.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_duel_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_duel_ritual_projection.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_run_facade.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/grand_casino_showdown_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/io_result.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/item_effect.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/json_coerce.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/keys.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/meta_collection_service.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/music_delivery_index.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/numbers_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/persistence_paths.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/persistent_environment_projection.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/platform_services.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/police_sweep_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/profile_inventory.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/rng_stream.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/room_presentation_publication.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_action_service.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_generator.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_money_flow_archive.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_save_codec.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_state.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_state_schema.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/run_terminal_evaluator.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/save_service.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_engine.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_extension_dispatch.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_host_transaction.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_layout_resolver.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_operation_registry.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_catalog.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_rollout_manifest.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_runtime.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_sequence_schema.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/scenario_venue_cycle.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/static_data_cache.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/storage_numeric_json.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/surface_sfx_manifest.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/town_network.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/town_state.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/tutorial_flow.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/user_settings.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/world_map.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/core/world_sequence_package_catalog.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.tscn.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_live_session.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_solver.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_solver_api.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/jackpot_ridge.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher/vault_drop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps/craps_rules.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps/craps_surface_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_board.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_boards.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_feature.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_items.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_sequencer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/pinball/pinball_sim.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_bonus_recovery.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_catalog.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_definition_cache.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_family_buffalo.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_family_pinball.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_machine_generator.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_machine_state.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_presentation.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_resolver.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slots/slot_rng_math.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/baccarat.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/bar_dice.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/blackjack.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/coin_pusher.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/craps.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/crew_draw_poker.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/playing_card_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/pull_tabs.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/roulette.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_tickets.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_background_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_foil_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_icon_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_machine_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_mask.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/scratch_ticket_region_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/slot.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/table_game_visuals.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/video_poker.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/games/video_poker_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cage_atm_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cage_counter_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/career_stats_screen.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/career_stats_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/cheat_dock.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/coach_overlay.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/coach_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/drunk_distortion_overlay.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_header.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_interaction_controller.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/environment_interaction_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_action_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_hud_bar.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_hud_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_main.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_screen_builder.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_travel_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/foundation_widgets.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_surface_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/heat_feedback_visuals.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/heat_gain_feedback_overlay.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/hud_time_watch.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/icon_sprite_renderer.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/inventory_container_catalog.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/inventory_container_surface.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/item_card_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/item_found_popup.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_collection_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_item_interaction_screen.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_item_interaction_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/meta_session_controller.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/mobile_viewport_policy.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/modal_focus_scope.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/money_feedback_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_arrangement_selector.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_float_pcm_stream.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_layer_choreography.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/music_outcome_director_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/null_perf_sink.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/performance_fixture_setup.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/performance_liveness_guard.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/perf_telemetry_overlay.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/pixel_scene_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/player_text.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/procedural_music_player.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_inventory_screen.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_inventory_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_journal_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_screen.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_timeline_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/run_report_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_semantic_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/sealed_action_host.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/segmented_meter.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/settings_menu.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/sfx_player.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/small_screen_policy.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/support_diagnostics.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/talk_dock.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/terminal_consequence_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/ui_art.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/visual_style.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/wager_confirmation_controller.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/web_audio_bridge.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/web_save_durability_bridge.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/world_map_canvas.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/world_map_overlay_controller.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/bar_dice_room_prop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/coin_pusher_room_prop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/craps_room_prop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/game_prop_kit.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/scratch_ticket_room_prop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/game_props/street_craps_circle_prop.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/bars_road.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/punchline_clubs.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/queen_public.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/roadside_shelter.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/semantic_v1.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/scenario_renderers/shops_streets.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/attribute_badge_row.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/bag_open_reel.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://scripts/ui/bag_open_reel_view_model.gd.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://default_bus_layout.tres.remap[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://.godot/global_script_class_cache.cfg[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://icon.svg[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://.godot/uid_cache.bin[39m[0m
+[  98% ] [90m[1msavepack[22m | Storing File: res://project.binary[39m[0m
+[92m[ DONE ][39m [1msavepack[22m
+[0m
+Script docs haven't been properly loaded or regenerated, so don't save them to disk.
+EditorSettings: Save OK!
+XR: Clearing primary interface
+XR: Removed interface "Native mobile"
+XR: Removed interface "OpenXR"
+Orphan StringName: Node (static: 3, total: 4)
+StringName: 1 unclaimed string names at exit.

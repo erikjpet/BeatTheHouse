@@ -1,0 +1,24 @@
+import sys,os,json
+from pathlib import Path
+sys.dont_write_bytecode=True
+sys.path.insert(0,r'D:\Projects\Beat-The-House\tools')
+from bth_qa_storage import plan_layout,prepare_layout
+from bth_qa_guarded_run import execute
+CAMPAIGN=Path(r'E:\CodexQA\BTH\workspaces\aud12-historical-20261111')
+kind,run,timeout,*command=sys.argv[1:]
+if kind not in ('allocation','stack'): raise ValueError('Explicit admitted historical checkout required')
+ROOT=CAMPAIGN/kind
+CURRENT=Path(r'E:\CodexQA\BTH\workspaces\aud061-20261110')
+PY=r'C:\Users\theep\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+os.environ['GODOT_BIN']=r'D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe'
+os.environ['GIT_CONFIG_COUNT']='3'
+for i,value in enumerate((str(CURRENT),str(CAMPAIGN/'allocation'),str(CAMPAIGN/'stack'))):
+ os.environ['GIT_CONFIG_KEY_'+str(i)]='safe.directory'
+ os.environ['GIT_CONFIG_VALUE_'+str(i)]=value
+layout=prepare_layout(plan_layout(r'E:\CodexQA\BTH',ROOT,run))
+if 'typed-wrapper' in run: os.environ['DOTNET_GCHeapHardLimit']='0x20000000'
+command=[s.replace('{workspace}',str(ROOT)).replace('{current}',str(CURRENT)).replace('{evidence}',str(layout.evidence)) for s in command]
+result=execute(layout,command,timeout=int(timeout))
+print(json.dumps({k:result.get(k) for k in ('storage_manifest','assigned_before_execution','limits','exit_code','timed_out','error','cleanup_errors','active_at_release')}))
+print((layout.evidence/'worker.log').read_text(encoding='utf-8',errors='replace')[-12000:])
+sys.exit(0 if result.get('exit_code')==0 and not result.get('error') and not result.get('timed_out') else 1)

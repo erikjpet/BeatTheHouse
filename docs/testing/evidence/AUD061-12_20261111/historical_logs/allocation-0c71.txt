@@ -1,0 +1,1710 @@
+Godot runtime and locked Web GDExtension export template verified.
+Build wrapper memory before import: {"managed_heap_bytes":8501440,"managed_heap_limit_bytes":536870912,"private_bytes":48361472}
+Import policy: recovery-mode editor startup; parallel resource imports disabled; worker pool 1; normal export; override removed before export.
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+[   0% ] first_scan_filesystem | Started Project initialization (5 steps)
+[   0% ] first_scan_filesystem | Scanning file structure...
+[  16% ] first_scan_filesystem | Loading global class names...
+[  33% ] first_scan_filesystem | Verifying GDExtensions...
+[  50% ] first_scan_filesystem | Creating autoload scripts...
+[  66% ] first_scan_filesystem | Initializing plugins...
+[  83% ] first_scan_filesystem | Starting file scan...
+[ DONE ] first_scan_filesystem
+
+[   0% ] update_scripts_classes | Started Registering global classes... (752 steps)
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | ArtContracts
+[   0% ] update_scripts_classes | AttributeBadges
+[   1% ] update_scripts_classes | BarDiceRitualProjection
+[   1% ] update_scripts_classes | BlackjackActionAuthority
+[   1% ] update_scripts_classes | BuildIdentity
+[   1% ] update_scripts_classes | CageEconomyModel
+[   1% ] update_scripts_classes | CardShoe
+[   1% ] update_scripts_classes | CharacterChainModel
+[   1% ] update_scripts_classes | CharacterOfferModel
+[   1% ] update_scripts_classes | CharacterRoster
+[   2% ] update_scripts_classes | CollectionDropService
+[   2% ] update_scripts_classes | CollectionItemResolver
+[   2% ] update_scripts_classes | ContentLibrary
+[   2% ] update_scripts_classes | Craps06EnvironmentBinding
+[   2% ] update_scripts_classes | CrewDeliverySchedule
+[   2% ] update_scripts_classes | CrewHeistModel
+[   2% ] update_scripts_classes | CrewPlayModel
+[   3% ] update_scripts_classes | CrewPokerModel
+[   3% ] update_scripts_classes | CrewRecruitmentModel
+[   3% ] update_scripts_classes | CrewRunFacade
+[   3% ] update_scripts_classes | CrewStateModel
+[   3% ] update_scripts_classes | CrewTurnModel
+[   3% ] update_scripts_classes | CrewWorldSequenceAdapter
+[   3% ] update_scripts_classes | DeliveryRunFacade
+[   3% ] update_scripts_classes | DeliveryRunModel
+[   4% ] update_scripts_classes | DeveloperPlacementStore
+[   4% ] update_scripts_classes | DurableStore
+[   4% ] update_scripts_classes | EnvironmentBaseSemanticRecords
+[   4% ] update_scripts_classes | EnvironmentEventResolver
+[   4% ] update_scripts_classes | EnvironmentHours
+[   4% ] update_scripts_classes | EnvironmentInstance
+[   4% ] update_scripts_classes | EnvironmentObjectManifest
+[   5% ] update_scripts_classes | EnvironmentPlacement
+[   5% ] update_scripts_classes | EnvironmentRuntimeScheduler
+[   5% ] update_scripts_classes | EnvironmentSemanticInventory
+[   5% ] update_scripts_classes | EnvironmentSlotBinder
+[   5% ] update_scripts_classes | EventModule
+[   5% ] update_scripts_classes | FunctionOptions
+[   5% ] update_scripts_classes | GameModule
+[   5% ] update_scripts_classes | GameModuleRegistry
+[   6% ] update_scripts_classes | GameRitualHostAuthority
+[   6% ] update_scripts_classes | GameRitualLayout
+[   6% ] update_scripts_classes | GameRitualRuntime
+[   6% ] update_scripts_classes | GameRitualSchema
+[   6% ] update_scripts_classes | GrandCasinoDuelModel
+[   6% ] update_scripts_classes | GrandCasinoDuelRitualProjection
+[   6% ] update_scripts_classes | GrandCasinoRunFacade
+[   7% ] update_scripts_classes | GrandCasinoShowdownModel
+[   7% ] update_scripts_classes | IoResult
+[   7% ] update_scripts_classes | ItemEffect
+[   7% ] update_scripts_classes | JsonCoerce
+[   7% ] update_scripts_classes | Keys
+[   7% ] update_scripts_classes | MetaCollectionService
+[   7% ] update_scripts_classes | MusicDeliveryIndex
+[   7% ] update_scripts_classes | NumbersModel
+[   8% ] update_scripts_classes | PersistencePaths
+[   8% ] update_scripts_classes | 
+[   8% ] update_scripts_classes | PlatformServices
+[   8% ] update_scripts_classes | PoliceSweepModel
+[   8% ] update_scripts_classes | ProfileInventory
+[   8% ] update_scripts_classes | RngStream
+[   8% ] update_scripts_classes | 
+[   9% ] update_scripts_classes | RunActionService
+[   9% ] update_scripts_classes | RunGenerator
+[   9% ] update_scripts_classes | 
+[   9% ] update_scripts_classes | RunSaveCodec
+[   9% ] update_scripts_classes | RunState
+[   9% ] update_scripts_classes | RunStateSchema
+[   9% ] update_scripts_classes | RunTerminalEvaluator
+[   9% ] update_scripts_classes | SaveService
+[  10% ] update_scripts_classes | ScenarioEngine
+[  10% ] update_scripts_classes | ScenarioExtensionDispatch
+[  10% ] update_scripts_classes | ScenarioHostTransaction
+[  10% ] update_scripts_classes | ScenarioLayoutResolver
+[  10% ] update_scripts_classes | ScenarioOperationRegistry
+[  10% ] update_scripts_classes | ScenarioSequenceCatalog
+[  10% ] update_scripts_classes | ScenarioSequenceRolloutManifest
+[  11% ] update_scripts_classes | ScenarioSequenceRuntime
+[  11% ] update_scripts_classes | ScenarioSequenceSchema
+[  11% ] update_scripts_classes | ScenarioVenueCycle
+[  11% ] update_scripts_classes | StaticDataCache
+[  11% ] update_scripts_classes | 
+[  11% ] update_scripts_classes | SurfaceSfxManifest
+[  11% ] update_scripts_classes | TownNetwork
+[  11% ] update_scripts_classes | TownState
+[  12% ] update_scripts_classes | TutorialFlow
+[  12% ] update_scripts_classes | UserSettings
+[  12% ] update_scripts_classes | WorldMap
+[  12% ] update_scripts_classes | WorldSequencePackageCatalog
+[  12% ] update_scripts_classes | 
+[  12% ] update_scripts_classes | 
+[  12% ] update_scripts_classes | CoinPusherLiveSession
+[  13% ] update_scripts_classes | CoinPusherRenderer
+[  13% ] update_scripts_classes | CoinPusherSolver
+[  13% ] update_scripts_classes | CoinPusherSolverApi
+[  13% ] update_scripts_classes | 
+[  13% ] update_scripts_classes | JackpotRidgeVariation
+[  13% ] update_scripts_classes | VaultDropVariation
+[  13% ] update_scripts_classes | CrapsRules
+[  13% ] update_scripts_classes | CrapsSurfaceViewModel
+[  14% ] update_scripts_classes | PinballBoard
+[  14% ] update_scripts_classes | PinballBoards
+[  14% ] update_scripts_classes | PinballFeature
+[  14% ] update_scripts_classes | PinballItems
+[  14% ] update_scripts_classes | PinballSequencer
+[  14% ] update_scripts_classes | PinballSim
+[  14% ] update_scripts_classes | SlotCatalog
+[  15% ] update_scripts_classes | SlotDefinitionCache
+[  15% ] update_scripts_classes | SlotFamilyBuffalo
+[  15% ] update_scripts_classes | SlotFamilyPinball
+[  15% ] update_scripts_classes | SlotMachineGenerator
+[  15% ] update_scripts_classes | SlotMachineState
+[  15% ] update_scripts_classes | SlotPresentation
+[  15% ] update_scripts_classes | SlotRenderer
+[  15% ] update_scripts_classes | SlotResolver
+[  16% ] update_scripts_classes | SlotRngMath
+[  16% ] update_scripts_classes | BaccaratGame
+[  16% ] update_scripts_classes | BarDiceGame
+[  16% ] update_scripts_classes | BlackjackGame
+[  16% ] update_scripts_classes | CoinPusherGame
+[  16% ] update_scripts_classes | CrapsGame
+[  16% ] update_scripts_classes | CrewDrawPokerGame
+[  16% ] update_scripts_classes | PlayingCardRenderer
+[  17% ] update_scripts_classes | PullTabsGame
+[  17% ] update_scripts_classes | RouletteGame
+[  17% ] update_scripts_classes | ScratchTicketsGame
+[  17% ] update_scripts_classes | ScratchTicketBackgroundRenderer
+[  17% ] update_scripts_classes | ScratchTicketFoilRenderer
+[  17% ] update_scripts_classes | ScratchTicketIconRenderer
+[  17% ] update_scripts_classes | ScratchTicketMachineRenderer
+[  18% ] update_scripts_classes | ScratchTicketMask
+[  18% ] update_scripts_classes | ScratchTicketRegionModel
+[  18% ] update_scripts_classes | SlotGame
+[  18% ] update_scripts_classes | TableGameVisuals
+[  18% ] update_scripts_classes | VideoPokerGame
+[  18% ] update_scripts_classes | VideoPokerRenderer
+[  18% ] update_scripts_classes | 
+[  18% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | ContentDepthContract
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  21% ] update_scripts_classes | 
+[  21% ] update_scripts_classes | CrewHeistContract
+[  21% ] update_scripts_classes | CrewIgnoredGoldenProbe
+[  21% ] update_scripts_classes | CrewLayer3JobsContract
+[  21% ] update_scripts_classes | 
+[  21% ] update_scripts_classes | 
+[  21% ] update_scripts_classes | CrewTurnContract
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  23% ] update_scripts_classes | 
+[  23% ] update_scripts_classes | Env068EnvironmentReadabilityContract
+[  23% ] update_scripts_classes | 
+[  23% ] update_scripts_classes | 
+[  23% ] update_scripts_classes | Fixsweep061Regressions
+[  23% ] update_scripts_classes | FoundationTestHarness
+[  23% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | GameRitualRuntimeContract
+[  24% ] update_scripts_classes | HarnessProductionFidelity
+[  25% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | NumbersContract
+[  25% ] update_scripts_classes | Onboarding06Contract
+[  25% ] update_scripts_classes | PlaytestFixes02Contract
+[  26% ] update_scripts_classes | PlaytestFixes03Contract
+[  26% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | ScenarioSemanticPresentationContract
+[  26% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  69% ] update_scripts_classes | BarDiceRoomProp
+[  69% ] update_scripts_classes | CoinPusherRoomProp
+[  69% ] update_scripts_classes | CrapsRoomProp
+[  69% ] update_scripts_classes | GamePropKit
+[  69% ] update_scripts_classes | ScratchTicketRoomProp
+[  69% ] update_scripts_classes | StreetCrapsCircleProp
+[  69% ] update_scripts_classes | 
+[  69% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | AttributeBadgeRow
+[  70% ] update_scripts_classes | BagOpenReel
+[  70% ] update_scripts_classes | BagOpenReelViewModel
+[  71% ] update_scripts_classes | CageAtmViewModel
+[  71% ] update_scripts_classes | CageCounterViewModel
+[  71% ] update_scripts_classes | CareerStatsScreen
+[  71% ] update_scripts_classes | CareerStatsViewModel
+[  71% ] update_scripts_classes | CheatDock
+[  71% ] update_scripts_classes | CoachOverlay
+[  71% ] update_scripts_classes | CoachViewModel
+[  71% ] update_scripts_classes | DrunkDistortionOverlay
+[  72% ] update_scripts_classes | EnvironmentHeader
+[  72% ] update_scripts_classes | 
+[  72% ] update_scripts_classes | EnvironmentInteractionViewModel
+[  72% ] update_scripts_classes | 
+[  72% ] update_scripts_classes | FoundationHudBar
+[  72% ] update_scripts_classes | FoundationHudViewModel
+[  72% ] update_scripts_classes | FoundationMain
+[  73% ] update_scripts_classes | 
+[  73% ] update_scripts_classes | 
+[  73% ] update_scripts_classes | FoundationWidgets
+[  73% ] update_scripts_classes | GameSurfaceCanvas
+[  73% ] update_scripts_classes | HeatFeedbackVisuals
+[  73% ] update_scripts_classes | HeatGainFeedbackOverlay
+[  73% ] update_scripts_classes | HudTimeWatch
+[  73% ] update_scripts_classes | IconSpriteRenderer
+[  74% ] update_scripts_classes | InventoryContainerCatalog
+[  74% ] update_scripts_classes | InventoryContainerSurface
+[  74% ] update_scripts_classes | ItemCardViewModel
+[  74% ] update_scripts_classes | ItemFoundPopup
+[  74% ] update_scripts_classes | MetaCollectionViewModel
+[  74% ] update_scripts_classes | MetaItemInteractionScreen
+[  74% ] update_scripts_classes | MetaItemInteractionViewModel
+[  75% ] update_scripts_classes | MetaSessionController
+[  75% ] update_scripts_classes | 
+[  75% ] update_scripts_classes | ModalFocusScope
+[  75% ] update_scripts_classes | MoneyFeedbackViewModel
+[  75% ] update_scripts_classes | MusicArrangementSelector
+[  75% ] update_scripts_classes | MusicFloatPcmStream
+[  75% ] update_scripts_classes | MusicLayerChoreography
+[  75% ] update_scripts_classes | MusicOutcomeDirectorModel
+[  76% ] update_scripts_classes | NullPerfSink
+[  76% ] update_scripts_classes | PerformanceFixtureSetup
+[  76% ] update_scripts_classes | PerformanceLivenessGuard
+[  76% ] update_scripts_classes | PerfTelemetryOverlay
+[  76% ] update_scripts_classes | PixelSceneCanvas
+[  76% ] update_scripts_classes | PlayerText
+[  76% ] update_scripts_classes | ProceduralMusicPlayer
+[  77% ] update_scripts_classes | RunInventoryScreen
+[  77% ] update_scripts_classes | RunInventoryViewModel
+[  77% ] update_scripts_classes | RunJournalViewModel
+[  77% ] update_scripts_classes | RunReportScreen
+[  77% ] update_scripts_classes | RunReportTimelineCanvas
+[  77% ] update_scripts_classes | RunReportViewModel
+[  77% ] update_scripts_classes | ScenarioSemanticViewModel
+[  77% ] update_scripts_classes | SealedActionHost
+[  78% ] update_scripts_classes | SegmentedMeter
+[  78% ] update_scripts_classes | SettingsMenu
+[  78% ] update_scripts_classes | SfxPlayer
+[  78% ] update_scripts_classes | SmallScreenPolicy
+[  78% ] update_scripts_classes | TalkDock
+[  78% ] update_scripts_classes | TerminalConsequenceViewModel
+[  78% ] update_scripts_classes | UIArt
+[  79% ] update_scripts_classes | VisualStyle
+[  79% ] update_scripts_classes | WagerConfirmationController
+[  79% ] update_scripts_classes | WebAudioBridge
+[  79% ] update_scripts_classes | WorldMapCanvas
+[  79% ] update_scripts_classes | WorldMapOverlayController
+[  79% ] update_scripts_classes | 
+[  79% ] update_scripts_classes | 
+[  79% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | AgentPlaytestPublicObservation
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | ScenarioSequenceProbeSupport
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[  99% ] update_scripts_classes | 
+[ DONE ] update_scripts_classes
+
+[   0% ] _update_scan_actions | Started Scanning actions... (281 steps)
+[   0% ] _update_scan_actions | back_alley.png
+[   0% ] _update_scan_actions | bar.png
+[   0% ] _update_scan_actions | corner_store.png
+[   1% ] _update_scan_actions | gas_station_casino.png
+[   1% ] _update_scan_actions | grand_casino.png
+[   1% ] _update_scan_actions | jazz_club.png
+[   2% ] _update_scan_actions | motel.png
+[   2% ] _update_scan_actions | punchline_back_room.png
+[   2% ] _update_scan_actions | punchline_club.png
+[   3% ] _update_scan_actions | small_underground_casino.png
+[   3% ] _update_scan_actions | back_alley_offer.png
+[   3% ] _update_scan_actions | chatty_clerk.png
+[   4% ] _update_scan_actions | comped_suite_offer.png
+[   4% ] _update_scan_actions | eye_in_the_sky.png
+[   4% ] _update_scan_actions | heat_at_exit.png
+[   5% ] _update_scan_actions | late_shift_discount.png
+[   5% ] _update_scan_actions | machine_jam.png
+[   6% ] _update_scan_actions | motel_knock.png
+[   6% ] _update_scan_actions | parking_lot_tip.png
+[   6% ] _update_scan_actions | pit_boss_sweep.png
+[   7% ] _update_scan_actions | rowdy_regular.png
+[   7% ] _update_scan_actions | side_door.png
+[   7% ] _update_scan_actions | suspicious_patron.png
+[   8% ] _update_scan_actions | double_deuces_cabinet_full_scene.png
+[   8% ] _update_scan_actions | jacks_or_better_cabinet_full_scene.png
+[   8% ] _update_scan_actions | triple_double_bonus_cabinet_full_scene.png
+[   9% ] _update_scan_actions | double_deuces_cabinet_bg.png
+[   9% ] _update_scan_actions | jacks_or_better_cabinet_bg.png
+[   9% ] _update_scan_actions | triple_double_bonus_cabinet_bg.png
+[  10% ] _update_scan_actions | baccarat.png
+[  10% ] _update_scan_actions | bar_dice.png
+[  10% ] _update_scan_actions | blackjack.png
+[  11% ] _update_scan_actions | cards.png
+[  11% ] _update_scan_actions | dice.png
+[  12% ] _update_scan_actions | poker.png
+[  12% ] _update_scan_actions | pull_tabs.png
+[  12% ] _update_scan_actions | roulette.png
+[  13% ] _update_scan_actions | scratch_tickets.png
+[  13% ] _update_scan_actions | slot.png
+[  13% ] _update_scan_actions | video_poker.png
+[  14% ] _update_scan_actions | baccarat.png
+[  14% ] _update_scan_actions | bar_dice.png
+[  14% ] _update_scan_actions | blackjack.png
+[  15% ] _update_scan_actions | poker.png
+[  15% ] _update_scan_actions | pull_tabs.png
+[  15% ] _update_scan_actions | roulette.png
+[  16% ] _update_scan_actions | scratch_tickets.png
+[  16% ] _update_scan_actions | slot.png
+[  17% ] _update_scan_actions | video_poker.png
+[  17% ] _update_scan_actions | boarded_window_nail.svg
+[  17% ] _update_scan_actions | convoy_cb_tag.svg
+[  18% ] _update_scan_actions | crew_package.svg
+[  18% ] _update_scan_actions | delivery_twine.svg
+[  18% ] _update_scan_actions | estate_map_clasp.svg
+[  19% ] _update_scan_actions | festival_brass_token.svg
+[  19% ] _update_scan_actions | fight_night_betting_slip.svg
+[  19% ] _update_scan_actions | lock_in_door_chit.svg
+[  20% ] _update_scan_actions | lotto_queue_number.svg
+[  20% ] _update_scan_actions | mags_lined_sleeve.svg
+[  20% ] _update_scan_actions | mags_loaded_dice.svg
+[  21% ] _update_scan_actions | mags_nudge_dampener.svg
+[  21% ] _update_scan_actions | mags_shim_kit.svg
+[  21% ] _update_scan_actions | mags_tuned_loupe.svg
+[  22% ] _update_scan_actions | recording_room_tape.svg
+[  22% ] _update_scan_actions | rent_party_hat_pin.svg
+[  23% ] _update_scan_actions | tour_bus_luggage_tag.svg
+[  23% ] _update_scan_actions | wake_matchbook.svg
+[  23% ] _update_scan_actions | wedding_ribbon_favor.svg
+[  24% ] _update_scan_actions | backpack.png
+[  24% ] _update_scan_actions | bag.png
+[  24% ] _update_scan_actions | basic_strategy_card.png
+[  25% ] _update_scan_actions | broken_cufflinks.png
+[  25% ] _update_scan_actions | bumper_battery.png
+[  25% ] _update_scan_actions | card_counters_notes.png
+[  26% ] _update_scan_actions | cashout_envelope.png
+[  26% ] _update_scan_actions | cheap_sunglasses.png
+[  26% ] _update_scan_actions | chip_slide_wax.png
+[  27% ] _update_scan_actions | coffee_cup.png
+[  27% ] _update_scan_actions | coin_return_shim.png
+[  28% ] _update_scan_actions | cold_quarters.png
+[  28% ] _update_scan_actions | coolers_cufflinks.png
+[  28% ] _update_scan_actions | creased_luck_card.png
+[  29% ] _update_scan_actions | cumquat_sandwich.png
+[  29% ] _update_scan_actions | dice_calipers.png
+[  29% ] _update_scan_actions | drain_cleaner.png
+[  30% ] _update_scan_actions | edge_sort_loupe.png
+[  30% ] _update_scan_actions | extra_ball_token.png
+[  30% ] _update_scan_actions | feature_magnet.png
+[  31% ] _update_scan_actions | flask_of_courage.png
+[  31% ] _update_scan_actions | foil_sleeve.png
+[  31% ] _update_scan_actions | freds_poker_hat.png
+[  32% ] _update_scan_actions | gambler_gloves.png
+[  32% ] _update_scan_actions | gold_tooth_token.png
+[  32% ] _update_scan_actions | high_roller_watch.png
+[  33% ] _update_scan_actions | holdout_rig.png
+[  33% ] _update_scan_actions | holdout_wax.png
+[  34% ] _update_scan_actions | hot_streak_token.png
+[  34% ] _update_scan_actions | inside_man.png
+[  34% ] _update_scan_actions | instant_coffee.png
+[  35% ] _update_scan_actions | jackpot_magnet.png
+[  35% ] _update_scan_actions | jazz_cello_lucky_coin.png
+[  35% ] _update_scan_actions | jazz_drummer_glasses.png
+[  36% ] _update_scan_actions | jazz_drummer_lucky_coin.png
+[  36% ] _update_scan_actions | jazz_sax_lucky_coin.png
+[  36% ] _update_scan_actions | ledger_pencil.png
+[  37% ] _update_scan_actions | loaded_dice.png
+[  37% ] _update_scan_actions | lock_jammer.png
+[  37% ] _update_scan_actions | lucky_bar_napkin.png
+[  38% ] _update_scan_actions | lucky_charm.png
+[  38% ] _update_scan_actions | lucky_cigarette.png
+[  39% ] _update_scan_actions | lucky_keychain.png
+[  39% ] _update_scan_actions | lucky_ladies_compact.png
+[  39% ] _update_scan_actions | lucky_penny.png
+[  40% ] _update_scan_actions | lucky_reel_grease.png
+[  40% ] _update_scan_actions | luck_card.png
+[  40% ] _update_scan_actions | magnet_cup.png
+[  41% ] _update_scan_actions | marked_cards.png
+[  41% ] _update_scan_actions | neon_players_charm.png
+[  41% ] _update_scan_actions | numbers_slips.svg
+[  42% ] _update_scan_actions | odds_notebook.png
+[  42% ] _update_scan_actions | pawn_receipt_sleeve.png
+[  42% ] _update_scan_actions | payment_calendar.png
+[  43% ] _update_scan_actions | payout_pamphlet.png
+[  43% ] _update_scan_actions | plunger_tuner.png
+[  43% ] _update_scan_actions | pocket_watch.png
+[  44% ] _update_scan_actions | poker_chip.png
+[  44% ] _update_scan_actions | police_scanner.png
+[  45% ] _update_scan_actions | rabbits_foot.png
+[  45% ] _update_scan_actions | return_spring.png
+[  45% ] _update_scan_actions | roadside_map.png
+[  46% ] _update_scan_actions | rubber_pegs.png
+[  46% ] _update_scan_actions | scratch_pad.png
+[  46% ] _update_scan_actions | shoe_cut_marker.png
+[  47% ] _update_scan_actions | side_bet_chart.png
+[  47% ] _update_scan_actions | splitter_token.png
+[  47% ] _update_scan_actions | split_reel_note.png
+[  48% ] _update_scan_actions | suitcase.png
+[  48% ] _update_scan_actions | sunglasses.png
+[  48% ] _update_scan_actions | tab_detector.png
+[  49% ] _update_scan_actions | tarot_card.png
+[  49% ] _update_scan_actions | thermos_black_coffee.png
+[  50% ] _update_scan_actions | thermos_black_coffee_half.png
+[  50% ] _update_scan_actions | tilt_dampener.png
+[  50% ] _update_scan_actions | timing_bracelet.png
+[  51% ] _update_scan_actions | tip_sheet.png
+[  51% ] _update_scan_actions | trunk.png
+[  51% ] _update_scan_actions | velvet_table_key.png
+[  52% ] _update_scan_actions | weighted_keyring.png
+[  52% ] _update_scan_actions | xray_glasses.png
+[  52% ] _update_scan_actions | cyberpunk_city_overhead.png
+[  53% ] _update_scan_actions | apartment.png
+[  53% ] _update_scan_actions | back_alley.png
+[  53% ] _update_scan_actions | bar.png
+[  54% ] _update_scan_actions | beach.png
+[  54% ] _update_scan_actions | corner_store.png
+[  54% ] _update_scan_actions | delta_queen.png
+[  55% ] _update_scan_actions | gas_station_casino.png
+[  55% ] _update_scan_actions | grand_casino.png
+[  56% ] _update_scan_actions | house.png
+[  56% ] _update_scan_actions | jazz_club.png
+[  56% ] _update_scan_actions | kitty_cat_lounge.png
+[  57% ] _update_scan_actions | motel.png
+[  57% ] _update_scan_actions | motel_room.png
+[  57% ] _update_scan_actions | pawn_shop.png
+[  58% ] _update_scan_actions | small_underground_casino.png
+[  58% ] _update_scan_actions | broke.png
+[  58% ] _update_scan_actions | players_card.png
+[  59% ] _update_scan_actions | police_capture.png
+[  59% ] _update_scan_actions | showdown_survived.png
+[  59% ] _update_scan_actions | stranded.png
+[  60% ] _update_scan_actions | taken_out_back.png
+[  60% ] _update_scan_actions | walked_away.png
+[  60% ] _update_scan_actions | bonus_bingo_background_pro.png
+[  61% ] _update_scan_actions | crossword_corner_background_pro.png
+[  61% ] _update_scan_actions | golden_vault_background_pro.png
+[  62% ] _update_scan_actions | high_roller_holdem_background_pro.png
+[  62% ] _update_scan_actions | lucky_7s_background_pro.png
+[  62% ] _update_scan_actions | tic_tac_gold_background_pro.png
+[  63% ] _update_scan_actions | two_fer_background_pro.png
+[  63% ] _update_scan_actions | bingo_ball.png
+[  63% ] _update_scan_actions | brass_bar.png
+[  64% ] _update_scan_actions | gold_bar.png
+[  64% ] _update_scan_actions | lucky_seven.png
+[  64% ] _update_scan_actions | multiplier_coin.png
+[  65% ] _update_scan_actions | number_coin.png
+[  65% ] _update_scan_actions | pro_bell.png
+[  65% ] _update_scan_actions | pro_clover.png
+[  66% ] _update_scan_actions | pro_star.png
+[  66% ] _update_scan_actions | pro_tic_circle.png
+[  67% ] _update_scan_actions | pro_tic_diamond.png
+[  67% ] _update_scan_actions | pro_tic_miss.png
+[  67% ] _update_scan_actions | pro_tic_star.png
+[  68% ] _update_scan_actions | pro_twofer.png
+[  68% ] _update_scan_actions | vault_open.png
+[  68% ] _update_scan_actions | vault_sealed.png
+[  69% ] _update_scan_actions | wild_card.png
+[  69% ] _update_scan_actions | buffalo_classic_3_reel_heritage.png
+[  69% ] _update_scan_actions | buffalo_line_5x3_ways.png
+[  70% ] _update_scan_actions | buffalo_video_feature_link_arena.png
+[  70% ] _update_scan_actions | pinball_classic_3_reel_em_bumper_drop.png
+[  70% ] _update_scan_actions | pinball_line_5x3_lane_multiball.png
+[  71% ] _update_scan_actions | pinball_video_feature_full_table.png
+[  71% ] _update_scan_actions | apartment.png
+[  71% ] _update_scan_actions | back_alley.png
+[  72% ] _update_scan_actions | bar.png
+[  72% ] _update_scan_actions | beach.png
+[  73% ] _update_scan_actions | corner_store.png
+[  73% ] _update_scan_actions | delta_queen.png
+[  73% ] _update_scan_actions | gas_station_casino.png
+[  74% ] _update_scan_actions | grand_casino.png
+[  74% ] _update_scan_actions | grand_casino_back_room.png
+[  74% ] _update_scan_actions | grand_casino_cage.png
+[  75% ] _update_scan_actions | grand_casino_high_limit.png
+[  75% ] _update_scan_actions | house.png
+[  75% ] _update_scan_actions | jazz_club.png
+[  76% ] _update_scan_actions | kitty_cat_lounge.png
+[  76% ] _update_scan_actions | motel.png
+[  76% ] _update_scan_actions | motel_room.png
+[  77% ] _update_scan_actions | pawn_shop.png
+[  77% ] _update_scan_actions | small_underground_casino.png
+[  78% ] _update_scan_actions | cash_transfer.svg
+[  78% ] _update_scan_actions | close.svg
+[  78% ] _update_scan_actions | decrease.svg
+[  79% ] _update_scan_actions | focused.svg
+[  79% ] _update_scan_actions | hovered.svg
+[  79% ] _update_scan_actions | increase.svg
+[  80% ] _update_scan_actions | next.svg
+[  80% ] _update_scan_actions | play.svg
+[  80% ] _update_scan_actions | previous.svg
+[  81% ] _update_scan_actions | replay.svg
+[  81% ] _update_scan_actions | run_setup.svg
+[  81% ] _update_scan_actions | selected.svg
+[  82% ] _update_scan_actions | settings.svg
+[  82% ] _update_scan_actions | alert.png
+[  82% ] _update_scan_actions | casino_chips.png
+[  83% ] _update_scan_actions | cheat.png
+[  83% ] _update_scan_actions | danger.png
+[  84% ] _update_scan_actions | debt.png
+[  84% ] _update_scan_actions | drink.png
+[  84% ] _update_scan_actions | heat.png
+[  85% ] _update_scan_actions | home.png
+[  85% ] _update_scan_actions | luck.png
+[  85% ] _update_scan_actions | save.png
+[  86% ] _update_scan_actions | time.png
+[  86% ] _update_scan_actions | wallet.png
+[  86% ] _update_scan_actions | backpack_open.png
+[  87% ] _update_scan_actions | bag_open.png
+[  87% ] _update_scan_actions | home_storage.png
+[  87% ] _update_scan_actions | loose_carry.png
+[  88% ] _update_scan_actions | suitcase_open.png
+[  88% ] _update_scan_actions | trunk_open.png
+[  89% ] _update_scan_actions | bartender.png
+[  89% ] _update_scan_actions | faceless_lender.png
+[  89% ] _update_scan_actions | motel_clerk.png
+[  90% ] _update_scan_actions | pawn_broker.png
+[  90% ] _update_scan_actions | pit_boss.png
+[  90% ] _update_scan_actions | riverboat_dealer.png
+[  91% ] _update_scan_actions | audio.png
+[  91% ] _update_scan_actions | beat_the_house_logo.png
+[  91% ] _update_scan_actions | drink.png
+[  92% ] _update_scan_actions | inventory.png
+[  92% ] _update_scan_actions | main_menu_button_plate.png
+[  92% ] _update_scan_actions | travel.png
+[  93% ] _update_scan_actions | travel_bus.png
+[  93% ] _update_scan_actions | travel_door.png
+[  93% ] _update_scan_actions | travel_phone.png
+[  94% ] _update_scan_actions | travel_ride.png
+[  94% ] _update_scan_actions | pad.wav
+[  95% ] _update_scan_actions | tension.wav
+[  95% ] _update_scan_actions | JazzClub_Bass_UprightBass_1.wav
+[  95% ] _update_scan_actions | JazzClub_Bass_UprightBass_2.wav
+[  96% ] _update_scan_actions | JazzClub_Bass_UprightBass_3.wav
+[  96% ] _update_scan_actions | JazzClub_Chords_Guitar_1.wav
+[  96% ] _update_scan_actions | JazzClub_Chords_Piano_1.wav
+[  97% ] _update_scan_actions | JazzClub_Chords_Piano_2.wav
+[  97% ] _update_scan_actions | JazzClub_DrumsHigh_BrushKit_1.wav
+[  97% ] _update_scan_actions | JazzClub_Fill_BrushKit_1.wav
+[  98% ] _update_scan_actions | JazzClub_Lead_Trumpet_1.wav
+[  98% ] _update_scan_actions | JazzClub_Stinger_Trumpet_1.wav
+[  98% ] _update_scan_actions | JazzClub_Chords_Piano_2.wav
+[  99% ] _update_scan_actions | icon.svg
+[ DONE ] _update_scan_actions
+
+[   0% ] loading_editor_layout | Started Loading editor (5 steps)
+[   0% ] loading_editor_layout | Loading editor layout...
+[  16% ] loading_editor_layout | Loading docks...
+[ DONE ] loading_editor_layout
+
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+[   0% ] first_scan_filesystem | Started Project initialization (5 steps)
+[   0% ] first_scan_filesystem | Scanning file structure...
+[  16% ] first_scan_filesystem | Loading global class names...
+[  33% ] first_scan_filesystem | Verifying GDExtensions...
+[  50% ] first_scan_filesystem | Creating autoload scripts...
+[  66% ] first_scan_filesystem | Initializing plugins...
+[  83% ] first_scan_filesystem | Starting file scan...
+[ DONE ] first_scan_filesystem
+
+[   0% ] _update_scan_actions | Started Scanning actions... (13 steps)
+[   0% ] _update_scan_actions | pad.wav
+[   7% ] _update_scan_actions | tension.wav
+[  14% ] _update_scan_actions | JazzClub_Bass_UprightBass_1.wav
+[  21% ] _update_scan_actions | JazzClub_Bass_UprightBass_2.wav
+[  28% ] _update_scan_actions | JazzClub_Bass_UprightBass_3.wav
+[  35% ] _update_scan_actions | JazzClub_Chords_Guitar_1.wav
+[  42% ] _update_scan_actions | JazzClub_Chords_Piano_1.wav
+[  50% ] _update_scan_actions | JazzClub_Chords_Piano_2.wav
+[  57% ] _update_scan_actions | JazzClub_DrumsHigh_BrushKit_1.wav
+[  64% ] _update_scan_actions | JazzClub_Fill_BrushKit_1.wav
+[  71% ] _update_scan_actions | JazzClub_Lead_Trumpet_1.wav
+[  78% ] _update_scan_actions | JazzClub_Stinger_Trumpet_1.wav
+[  85% ] _update_scan_actions | JazzClub_Chords_Piano_2.wav
+[ DONE ] _update_scan_actions
+
+[   0% ] savepack | Started Packing (102 steps)
+[   1% ] savepack | Storing File: res://addons/coin_pusher_native/coin_pusher_native.gdextension
+[   1% ] savepack | Storing File: res://.godot/imported/back_alley.png-8eb6fe48d1f35d1ec1d579fea627693f.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/back_alley.png.import
+[   1% ] savepack | Storing File: res://.godot/imported/bar.png-883e840d8bcfba6bd5267050b38deac6.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/bar.png.import
+[   1% ] savepack | Storing File: res://.godot/imported/corner_store.png-7792426161de438794d44661056124ac.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/corner_store.png.import
+[   1% ] savepack | Storing File: res://.godot/imported/gas_station_casino.png-00bd9899cd2ba81fecfd85921cb3b0c2.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/gas_station_casino.png.import
+[   1% ] savepack | Storing File: res://.godot/imported/grand_casino.png-678f6933b213a819c7dd3423a911336e.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/grand_casino.png.import
+[   1% ] savepack | Storing File: res://.godot/imported/jazz_club.png-9067be36b36f6600fd88d7825da89575.ctex
+[   1% ] savepack | Storing File: res://assets/art/environments/jazz_club.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/motel.png-2999df4faa244d28c844263b7b327da0.ctex
+[   2% ] savepack | Storing File: res://assets/art/environments/motel.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/punchline_back_room.png-7f805551a1c4e00e61c272a9f8ac27a1.ctex
+[   2% ] savepack | Storing File: res://assets/art/environments/punchline_back_room.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/punchline_club.png-8d4e7af6f246a15f813231e94ecb9667.ctex
+[   2% ] savepack | Storing File: res://assets/art/environments/punchline_club.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/small_underground_casino.png-a2a92e96dcd8fc2cf54e3b6eae51d3fc.ctex
+[   2% ] savepack | Storing File: res://assets/art/environments/small_underground_casino.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/back_alley_offer.png-a44e4f0439f578be0b2bf689c157cb18.ctex
+[   2% ] savepack | Storing File: res://assets/art/events/back_alley_offer.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/chatty_clerk.png-8cdeacdecf032580f576ed38e131eb29.ctex
+[   2% ] savepack | Storing File: res://assets/art/events/chatty_clerk.png.import
+[   2% ] savepack | Storing File: res://.godot/imported/comped_suite_offer.png-ec45f36645d975f67dd5e4b9ef973d14.ctex
+[   2% ] savepack | Storing File: res://assets/art/events/comped_suite_offer.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/eye_in_the_sky.png-4fc1b97abe4b9d755b8ecf3e20bd1024.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/eye_in_the_sky.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/heat_at_exit.png-fcf9d8d85e2631b7bfee843e35345c4d.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/heat_at_exit.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/late_shift_discount.png-14f5b46a8b067bb218ffd111360cf848.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/late_shift_discount.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/machine_jam.png-b41f8a534effe23b982bedb0f21fc91e.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/machine_jam.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/motel_knock.png-388bf0c4e8f43394b7a0980418c71102.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/motel_knock.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/parking_lot_tip.png-c1e200d0a1e0686ff4d995ef5cacb1f4.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/parking_lot_tip.png.import
+[   3% ] savepack | Storing File: res://.godot/imported/pit_boss_sweep.png-45ebb12e74cf05b496ccc24b8de58a98.ctex
+[   3% ] savepack | Storing File: res://assets/art/events/pit_boss_sweep.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/rowdy_regular.png-5375a97810c7e99e65788566214a2414.ctex
+[   4% ] savepack | Storing File: res://assets/art/events/rowdy_regular.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/side_door.png-903813bd2144350f094a76d96767b688.ctex
+[   4% ] savepack | Storing File: res://assets/art/events/side_door.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/suspicious_patron.png-b3582475ab022af95719cbc9ee35cc74.ctex
+[   4% ] savepack | Storing File: res://assets/art/events/suspicious_patron.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/double_deuces_cabinet_full_scene.png-c6c8c05f53c1ace218917fce4d11ae10.ctex
+[   4% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/double_deuces_cabinet_full_scene.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/jacks_or_better_cabinet_full_scene.png-18c9ee9be1cf3d9bee88bdaeabc61c2d.ctex
+[   4% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/jacks_or_better_cabinet_full_scene.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/triple_double_bonus_cabinet_full_scene.png-998aae5f235ad466b0457e49999b256c.ctex
+[   4% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/source_full_scene/triple_double_bonus_cabinet_full_scene.png.import
+[   4% ] savepack | Storing File: res://.godot/imported/double_deuces_cabinet_bg.png-d0996bc2bd18dd92d62c260945328fb0.ctex
+[   4% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/double_deuces_cabinet_bg.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/jacks_or_better_cabinet_bg.png-01e06834a4d82a608ea7134c82d445f0.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/jacks_or_better_cabinet_bg.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/triple_double_bonus_cabinet_bg.png-6c374d8587d9ba9d9fc1cb51ec2e17a9.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/video_poker_cabinets/triple_double_bonus_cabinet_bg.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/baccarat.png-e50f06d9dcbf23505e7087cc6dd20099.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/baccarat.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/bar_dice.png-a6a49459058760d70c800b2c405986b3.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/bar_dice.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/blackjack.png-ffacfa2f00d89659422a95a79461c5b4.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/blackjack.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/cards.png-6e531bdb5215ed78d6882de7a01eeaf0.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/cards.png.import
+[   5% ] savepack | Storing File: res://.godot/imported/dice.png-ae6d1cb0237d20a0737602874a186c89.ctex
+[   5% ] savepack | Storing File: res://assets/art/games/dice.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/poker.png-7ede59761c68756466fe3cdf3e29d2cd.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/poker.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/pull_tabs.png-c0d0ffc2ef80e6114b464293514513e4.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/pull_tabs.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/roulette.png-abf6ff84ae04b2c921010330185bf886.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/roulette.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/scratch_tickets.png-4ae2e313950bd7d1fd3af465573d1798.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/scratch_tickets.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/slot.png-4720595073ca8df1ceb3ca824406a446.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/slot.png.import
+[   6% ] savepack | Storing File: res://.godot/imported/video_poker.png-f8ece6ae77d1c7921aefd6a2cdee29f9.ctex
+[   6% ] savepack | Storing File: res://assets/art/games/video_poker.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/baccarat.png-481ba9d32f7d05ffc8f5874b17b5121d.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/baccarat.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/bar_dice.png-cfa24fde9128a86998fe720c95549e99.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/bar_dice.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/blackjack.png-cc881a58ccfc49e55b12a6834437d52c.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/blackjack.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/poker.png-89252c01ad36ba239e2ee92ae0dcf518.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/poker.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/pull_tabs.png-e3b5e71c8a9631d38b0796d483b614ce.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/pull_tabs.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/roulette.png-83ec8cf51e45b6f50fa7d8e2c113bce8.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/roulette.png.import
+[   7% ] savepack | Storing File: res://.godot/imported/scratch_tickets.png-932767e443bea62ff31a4e829dc01c0e.ctex
+[   7% ] savepack | Storing File: res://assets/art/game_scenes/scratch_tickets.png.import
+[   8% ] savepack | Storing File: res://.godot/imported/slot.png-9e3ef4a5a2fac0e2c821dc3e497c23ec.ctex
+[   8% ] savepack | Storing File: res://assets/art/game_scenes/slot.png.import
+[   8% ] savepack | Storing File: res://.godot/imported/video_poker.png-ae5bcc91e58e8a76a63aa0cfbd490aea.ctex
+[   8% ] savepack | Storing File: res://assets/art/game_scenes/video_poker.png.import
+[   8% ] savepack | Storing File: res://.godot/imported/boarded_window_nail.svg-1fbd73efce40f28109ed1e4c80b4735a.ctex
+[   8% ] savepack | Storing File: res://assets/art/items/content06/boarded_window_nail.svg.import
+[   8% ] savepack | Storing File: res://.godot/imported/convoy_cb_tag.svg-6d77ee4dba350a2357766f5b317d2bee.ctex
+[   8% ] savepack | Storing File: res://assets/art/items/content06/convoy_cb_tag.svg.import
+[   8% ] savepack | Storing File: res://.godot/imported/crew_package.svg-da9d993c81bb44ad6463a8f4c42f052b.ctex
+[   8% ] savepack | Storing File: res://assets/art/items/content06/crew_package.svg.import
+[   8% ] savepack | Storing File: res://.godot/imported/delivery_twine.svg-fa09144994b6f7ac5caf5b8eac7ca368.ctex
+[   8% ] savepack | Storing File: res://assets/art/items/content06/delivery_twine.svg.import
+[   8% ] savepack | Storing File: res://.godot/imported/estate_map_clasp.svg-68bf2ae268f05ebd529b7548b519ddd9.ctex
+[   8% ] savepack | Storing File: res://assets/art/items/content06/estate_map_clasp.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/festival_brass_token.svg-892ae62afd84ebf4e9d0ba8e0f074622.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/festival_brass_token.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/fight_night_betting_slip.svg-197ed6f4e40bd3985178d49ae79d3fec.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/fight_night_betting_slip.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/lock_in_door_chit.svg-b1c957edfde80cd46f4ae17e249a0c56.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/lock_in_door_chit.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/lotto_queue_number.svg-bcedd67ecb08d726b5e13cce4ef06c10.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/lotto_queue_number.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/mags_lined_sleeve.svg-b78052bf76ea429e56f654f4f9af1e62.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/mags_lined_sleeve.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/mags_loaded_dice.svg-498a695bd1dd3a8f6569e734e1b14650.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/mags_loaded_dice.svg.import
+[   9% ] savepack | Storing File: res://.godot/imported/mags_nudge_dampener.svg-ff9ea9abd5a683d7081c6c03b33d0fc3.ctex
+[   9% ] savepack | Storing File: res://assets/art/items/content06/mags_nudge_dampener.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/mags_shim_kit.svg-4e0f18e0edbeb07e1a2d983711ee5a55.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/mags_shim_kit.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/mags_tuned_loupe.svg-991b116957b132018a31194f3fe2dde2.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/mags_tuned_loupe.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/recording_room_tape.svg-bb71813ad8fe212d1b6925fd9c0d8521.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/recording_room_tape.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/rent_party_hat_pin.svg-f983bed71c48a49ac4dd35e190a5e30b.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/rent_party_hat_pin.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/tour_bus_luggage_tag.svg-3ccc1fe1e9a0aa34584020dc7774d106.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/tour_bus_luggage_tag.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/wake_matchbook.svg-f0b9b38bdc889166f33148916fd04197.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/wake_matchbook.svg.import
+[  10% ] savepack | Storing File: res://.godot/imported/wedding_ribbon_favor.svg-7684b195f660e8823b02fd4b77f21800.ctex
+[  10% ] savepack | Storing File: res://assets/art/items/content06/wedding_ribbon_favor.svg.import
+[  11% ] savepack | Storing File: res://.godot/imported/backpack.png-99ffa121792f25b70847e05d2a6c0530.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/backpack.png.import
+[  11% ] savepack | Storing File: res://.godot/imported/bag.png-3f2000707a41905a36d9e05b4375c154.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/bag.png.import
+[  11% ] savepack | Storing File: res://.godot/imported/basic_strategy_card.png-21a1d7e4159f2388cb7a39515e54776c.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/basic_strategy_card.png.import
+[  11% ] savepack | Storing File: res://.godot/imported/broken_cufflinks.png-a99ec2e3da47b42d5b84a2043274f87e.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/broken_cufflinks.png.import
+[  11% ] savepack | Storing File: res://.godot/imported/bumper_battery.png-3a70cc2bc7c65c78654aae72d91ec84e.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/bumper_battery.png.import
+[  11% ] savepack | Storing File: res://.godot/imported/card_counters_notes.png-d2efb0fe031452f87bee4b3f9f037edc.ctex
+[  11% ] savepack | Storing File: res://assets/art/items/card_counters_notes.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/cashout_envelope.png-edebb15050bc31fdb478eff4be1bc396.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/cashout_envelope.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/cheap_sunglasses.png-a0fb89d1b05ca9168ef240f4eaa68215.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/cheap_sunglasses.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/chip_slide_wax.png-8c6466b911eb412829aba36d64a4691d.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/chip_slide_wax.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/coffee_cup.png-b073205ad2b63ac33083ca18e94aa5a0.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/coffee_cup.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/coin_return_shim.png-065d6ac8660ff6d0433bb6540c863eda.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/coin_return_shim.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/cold_quarters.png-63e34fa5b012099099f3fd25cd8259c9.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/cold_quarters.png.import
+[  12% ] savepack | Storing File: res://.godot/imported/coolers_cufflinks.png-bbb419ad90ed1c79c9eab4914137c1c8.ctex
+[  12% ] savepack | Storing File: res://assets/art/items/coolers_cufflinks.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/creased_luck_card.png-1815607e42b3247d4560c171ced1a35e.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/creased_luck_card.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/cumquat_sandwich.png-5aa97dd3cbfb669b5c3c43322944561a.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/cumquat_sandwich.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/dice_calipers.png-bbe627272077cb9ebe64563226878501.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/dice_calipers.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/drain_cleaner.png-dc6a0d177e1afa70770332cad0bb898f.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/drain_cleaner.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/edge_sort_loupe.png-285d881138b019a2e26e34972cc7bc98.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/edge_sort_loupe.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/extra_ball_token.png-0d32fe3b9f95e13aa2de2d56a9a4d716.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/extra_ball_token.png.import
+[  13% ] savepack | Storing File: res://.godot/imported/feature_magnet.png-ca847034a89194ef7787a10273396272.ctex
+[  13% ] savepack | Storing File: res://assets/art/items/feature_magnet.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/flask_of_courage.png-edc0149e277c5fd00e227fac53d7d59e.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/flask_of_courage.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/foil_sleeve.png-717c5ab47e44e80e7ff2003d70e51107.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/foil_sleeve.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/freds_poker_hat.png-3f59026768a15f8501ed606b5473401a.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/freds_poker_hat.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/gambler_gloves.png-5dbdec9607332e43e89cacd1737a3701.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/gambler_gloves.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/gold_tooth_token.png-404091c67cb4e9fbb59a465b098e01c9.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/gold_tooth_token.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/high_roller_watch.png-08b936d5bdb0bafac2394bfc913d287b.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/high_roller_watch.png.import
+[  14% ] savepack | Storing File: res://.godot/imported/holdout_rig.png-c0670865c5a8dee64055190004c8d37e.ctex
+[  14% ] savepack | Storing File: res://assets/art/items/holdout_rig.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/holdout_wax.png-decf4af5cbe722eb9ea1e4d8b09e029d.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/holdout_wax.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/hot_streak_token.png-c65a1b6bd3751b06d67f89c92134944e.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/hot_streak_token.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/inside_man.png-2514eb53abe88f812a8dce25811394b3.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/inside_man.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/instant_coffee.png-ed9fc478c6c512d4b6fb296fe874bb9e.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/instant_coffee.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/jackpot_magnet.png-b4d53f65d305a39c808d4d9ab17e9a3e.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/jackpot_magnet.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/jazz_cello_lucky_coin.png-d7b17ea47a091062e64fbef7e96da8a8.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/jazz_cello_lucky_coin.png.import
+[  15% ] savepack | Storing File: res://.godot/imported/jazz_drummer_glasses.png-84b542bfa3a27527a01c49e8a734b294.ctex
+[  15% ] savepack | Storing File: res://assets/art/items/jazz_drummer_glasses.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/jazz_drummer_lucky_coin.png-f4a0921e9bba4e7fa85e50cb31182dab.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/jazz_drummer_lucky_coin.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/jazz_sax_lucky_coin.png-83a253dc84475a88f4f73821a701f8aa.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/jazz_sax_lucky_coin.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/ledger_pencil.png-4ae6884e812d48fdc206407bee6e70ac.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/ledger_pencil.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/loaded_dice.png-210ece1aacef7dba0e27fa5057be6f5d.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/loaded_dice.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/lock_jammer.png-64aa56118d78b1f6300990b5e2282848.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/lock_jammer.png.import
+[  16% ] savepack | Storing File: res://.godot/imported/lucky_bar_napkin.png-60950bcce0bc4c8fc41d376eccd8d299.ctex
+[  16% ] savepack | Storing File: res://assets/art/items/lucky_bar_napkin.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_charm.png-66159252831e904c17c149ad9ba1b2d5.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_charm.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_cigarette.png-b353a752f056d041499331f1a3c3af2e.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_cigarette.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_keychain.png-bd281bdc91c44ca3f655eaa735726064.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_keychain.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_ladies_compact.png-fd9970fd86e1619926e76f70feb59a46.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_ladies_compact.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_penny.png-ce6cca79b1c2d5cb4898f3f9bd6d221b.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_penny.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/lucky_reel_grease.png-0b3d59707a46a14e3eb97660a6d688e1.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/lucky_reel_grease.png.import
+[  17% ] savepack | Storing File: res://.godot/imported/luck_card.png-f594d8125b0f1db1940b42af184d8269.ctex
+[  17% ] savepack | Storing File: res://assets/art/items/luck_card.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/magnet_cup.png-e7cb5316c574ffbf149b2a55212c7bee.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/magnet_cup.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/marked_cards.png-bdaa4c8c514bcc1b4136b5c768e388ab.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/marked_cards.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/neon_players_charm.png-0c3f99cfadfdfa9561d29aaf28b5054d.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/neon_players_charm.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/numbers_slips.svg-19987c1d957990acadff3ba44999a398.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/numbers_slips.svg.import
+[  18% ] savepack | Storing File: res://.godot/imported/odds_notebook.png-053dba123308aad6c8d49954c3bc16c7.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/odds_notebook.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/pawn_receipt_sleeve.png-0e8aaccb10c28abed3fbd3379725e48d.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/pawn_receipt_sleeve.png.import
+[  18% ] savepack | Storing File: res://.godot/imported/payment_calendar.png-77d0b4be954746834d9d162d6f6f1f08.ctex
+[  18% ] savepack | Storing File: res://assets/art/items/payment_calendar.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/payout_pamphlet.png-af1fb9758599d1c973bd0b2f64002216.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/payout_pamphlet.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/plunger_tuner.png-6b0a7d7907bf258f3362367d9d941ac0.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/plunger_tuner.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/pocket_watch.png-dc2b78c6df6ed614b85b4a73483ff10c.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/pocket_watch.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/poker_chip.png-d88aa7e40bb54ade209e209897469add.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/poker_chip.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/police_scanner.png-3c824cab043d8d1eb6ce8b181a57dd33.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/police_scanner.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/rabbits_foot.png-3c073ade00e2b9e9ac844e22c26afec5.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/rabbits_foot.png.import
+[  19% ] savepack | Storing File: res://.godot/imported/return_spring.png-eb36e591cb546bacf347fce2ef1f1b5e.ctex
+[  19% ] savepack | Storing File: res://assets/art/items/return_spring.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/roadside_map.png-5220d07fd8a98b025aa9277792361a4e.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/roadside_map.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/rubber_pegs.png-13f7aca5213357a5fffec259a99d9470.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/rubber_pegs.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/scratch_pad.png-9619f382dbdc8512aa75ab812faaa100.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/scratch_pad.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/shoe_cut_marker.png-25c4c909db2a54d136816ebfd28cf4fd.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/shoe_cut_marker.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/side_bet_chart.png-1a49dd46688ae3b88ce4fc2f793c02ad.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/side_bet_chart.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/splitter_token.png-6e4c60f69f82f1b84939677feb7bb4ef.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/splitter_token.png.import
+[  20% ] savepack | Storing File: res://.godot/imported/split_reel_note.png-24e8ae7b9a7005c22ef5047f33ad11ea.ctex
+[  20% ] savepack | Storing File: res://assets/art/items/split_reel_note.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/suitcase.png-3e3aebddfb7328ff3d381bd0de36805b.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/suitcase.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/sunglasses.png-d4d5a7f76688c22c5cbc625dfa45ce9c.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/sunglasses.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/tab_detector.png-f3a162f7c8ea9e27729fbdd61c419b6b.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/tab_detector.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/tarot_card.png-aa86e51fc9ca28edd5f684f703cc4a0a.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/tarot_card.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/thermos_black_coffee.png-f6cdb746de1122565a21d17cd3c9fbce.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/thermos_black_coffee.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/thermos_black_coffee_half.png-f6183ce3677815a8b2dd49ff38f200ff.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/thermos_black_coffee_half.png.import
+[  21% ] savepack | Storing File: res://.godot/imported/tilt_dampener.png-939359323aa384b7ad199b6d980d5838.ctex
+[  21% ] savepack | Storing File: res://assets/art/items/tilt_dampener.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/timing_bracelet.png-3ec9bf83cbaa34639e9a660fd17ecfd7.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/timing_bracelet.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/tip_sheet.png-6f34fde6d46e0ab27d53d2788428822d.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/tip_sheet.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/trunk.png-4c66a1e38f76c4efa82ca6fd099e4387.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/trunk.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/velvet_table_key.png-5d1a44e21c5b1d9a4d521243c5518837.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/velvet_table_key.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/weighted_keyring.png-bdc7c489064cbbbe5bfff5995dae1d01.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/weighted_keyring.png.import
+[  22% ] savepack | Storing File: res://.godot/imported/xray_glasses.png-029cb695a7f412f9ecd9db977d3d24b9.ctex
+[  22% ] savepack | Storing File: res://assets/art/items/xray_glasses.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/cyberpunk_city_overhead.png-4c18ef1e34ba38f5bcde7913c36cf0af.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_backgrounds/cyberpunk_city_overhead.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/apartment.png-2168347909c591756eaf2c99024a3b1e.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/apartment.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/back_alley.png-8a355077912a30efe6a3708ea0574eb9.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/back_alley.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/bar.png-a9fc4dbfa7d27c52e406a6e769a52957.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/bar.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/beach.png-6179b6d0bebe012af57d2b4fdca70562.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/beach.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/corner_store.png-2f53d6dffbfabb1c19c28fb58eab9777.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/corner_store.png.import
+[  23% ] savepack | Storing File: res://.godot/imported/delta_queen.png-7957bba9a68987a95511c7fe239da678.ctex
+[  23% ] savepack | Storing File: res://assets/art/map_icons/delta_queen.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/gas_station_casino.png-755d83761886adc782e9498bf0134129.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/gas_station_casino.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/grand_casino.png-0918bbd93f531af0e277fa60f9f8a681.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/grand_casino.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/house.png-3124cfc0c0ead9ca0412be8a2d5cad90.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/house.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/jazz_club.png-db01ccdcb91cd31a317582a2d7ebdb43.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/jazz_club.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/kitty_cat_lounge.png-8478e8244d9b9bca2960b2f00d32f46c.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/kitty_cat_lounge.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/motel.png-dd4e7f46402f72cbbdb8ef2b8fc0bb59.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/motel.png.import
+[  24% ] savepack | Storing File: res://.godot/imported/motel_room.png-b1dd3f35f223692e5d837d1e243ea936.ctex
+[  24% ] savepack | Storing File: res://assets/art/map_icons/motel_room.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/pawn_shop.png-eead61de63d4995f1b94df012fb83645.ctex
+[  25% ] savepack | Storing File: res://assets/art/map_icons/pawn_shop.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/small_underground_casino.png-e849ecfc1d61578543e83ee495e80cf8.ctex
+[  25% ] savepack | Storing File: res://assets/art/map_icons/small_underground_casino.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/broke.png-46366d8faedbb4fa7bd5d3bdff1181ef.ctex
+[  25% ] savepack | Storing File: res://assets/art/run_outcomes/broke.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/players_card.png-4955193e948448e88b4d557d6b8858a9.ctex
+[  25% ] savepack | Storing File: res://assets/art/run_outcomes/players_card.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/police_capture.png-493be0f521e92bf07b99a6e7eb561602.ctex
+[  25% ] savepack | Storing File: res://assets/art/run_outcomes/police_capture.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/showdown_survived.png-ad9e2bbe91a35cdc4fd31e58aa032efa.ctex
+[  25% ] savepack | Storing File: res://assets/art/run_outcomes/showdown_survived.png.import
+[  25% ] savepack | Storing File: res://.godot/imported/stranded.png-406a2bc9a897eb24e66a8d3bfc20518a.ctex
+[  25% ] savepack | Storing File: res://assets/art/run_outcomes/stranded.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/taken_out_back.png-d2aa5c8a03d74370d797e872732eb7ca.ctex
+[  26% ] savepack | Storing File: res://assets/art/run_outcomes/taken_out_back.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/walked_away.png-8268058703d5424b8283f9945ca8fbb7.ctex
+[  26% ] savepack | Storing File: res://assets/art/run_outcomes/walked_away.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/bonus_bingo_background_pro.png-1637c69083e5aea2d94936ed76fe7def.ctex
+[  26% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/bonus_bingo_background_pro.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/crossword_corner_background_pro.png-c603a9b0c462da8bc314e209416359d7.ctex
+[  26% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/crossword_corner_background_pro.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/golden_vault_background_pro.png-ef1081fa3c9c64caf67f79378e07a3ec.ctex
+[  26% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/golden_vault_background_pro.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/high_roller_holdem_background_pro.png-a123199f8d9125f3a02697bcddbd0fff.ctex
+[  26% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/high_roller_holdem_background_pro.png.import
+[  26% ] savepack | Storing File: res://.godot/imported/lucky_7s_background_pro.png-5ceef3616ea7baabe69a2c3c6a24a42b.ctex
+[  26% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/lucky_7s_background_pro.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/tic_tac_gold_background_pro.png-15fd05e776714d42db1e2f07d41f8534.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/tic_tac_gold_background_pro.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/two_fer_background_pro.png-d415101f9b162b6636e046fe4248e359.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/layers/two_fer_background_pro.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/bingo_ball.png-1609a36a21127a749f55404e81d52472.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/bingo_ball.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/brass_bar.png-51797e1c60126ab79f6481b9c815c9f0.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/brass_bar.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/gold_bar.png-afd013e75c17d31e4bc88beabe8ab8d6.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/gold_bar.png.import
+[  27% ] savepack | Storing File: res://.godot/imported/lucky_seven.png-d20ecb2052572dee6eb90904cca6b186.ctex
+[  27% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/lucky_seven.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/multiplier_coin.png-105874f7fa7fb3ed97e492350107477a.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/multiplier_coin.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/number_coin.png-941e655ba908e811054e48010faa0fa4.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/number_coin.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/pro_bell.png-f0681f73b046cfacf41872c02d47dc50.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_bell.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/pro_clover.png-0ad213e9660c6a755bfc531902676094.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_clover.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/pro_star.png-695fbb6d4e13afd29b6cd1e207d9eabe.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_star.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/pro_tic_circle.png-48edd62a8278e2dad9c12c48c199084e.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_circle.png.import
+[  28% ] savepack | Storing File: res://.godot/imported/pro_tic_diamond.png-46642ba56006a697206cbae4ee079ee5.ctex
+[  28% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_diamond.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/pro_tic_miss.png-6c1df80ac58a159193e02afa18d45949.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_miss.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/pro_tic_star.png-b180a454d49c06214150e05f58ef09f8.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_tic_star.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/pro_twofer.png-cd8744cab8125e3ba30dc061d6a033b6.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/pro_twofer.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/vault_open.png-92ef486b0ac4bfcbb12bf64e23d247ff.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/vault_open.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/vault_sealed.png-7d3354c15ae3dfdd57ce43ea57f60f9b.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/vault_sealed.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/wild_card.png-10bb5be74ba0ac52977e8d6ff147c0e8.ctex
+[  29% ] savepack | Storing File: res://assets/art/scratch_tickets/reveal_symbols/wild_card.png.import
+[  29% ] savepack | Storing File: res://.godot/imported/buffalo_classic_3_reel_heritage.png-79627da07811f75570cae9fd63fa6f0c.ctex
+[  29% ] savepack | Storing File: res://assets/art/slots/buffalo_classic_3_reel_heritage.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/buffalo_line_5x3_ways.png-077e3f4568ec24225ccfa505ceef24ce.ctex
+[  30% ] savepack | Storing File: res://assets/art/slots/buffalo_line_5x3_ways.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/buffalo_video_feature_link_arena.png-a578b26742c607fbedd439cbee96d747.ctex
+[  30% ] savepack | Storing File: res://assets/art/slots/buffalo_video_feature_link_arena.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/pinball_classic_3_reel_em_bumper_drop.png-7095e64dc391853df063c1ff02dc4585.ctex
+[  30% ] savepack | Storing File: res://assets/art/slots/pinball_classic_3_reel_em_bumper_drop.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/pinball_line_5x3_lane_multiball.png-551d29b87bb32632a60d5f53e1e5905b.ctex
+[  30% ] savepack | Storing File: res://assets/art/slots/pinball_line_5x3_lane_multiball.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/pinball_video_feature_full_table.png-acf367eea7f1df8203b3620e714f1145.ctex
+[  30% ] savepack | Storing File: res://assets/art/slots/pinball_video_feature_full_table.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/apartment.png-b27c3e26a09451a8bbb1abba892528c5.ctex
+[  30% ] savepack | Storing File: res://assets/art/ui/environment_titles/apartment.png.import
+[  30% ] savepack | Storing File: res://.godot/imported/back_alley.png-16022896abb792ecd90e21fe8b06ec2a.ctex
+[  30% ] savepack | Storing File: res://assets/art/ui/environment_titles/back_alley.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/bar.png-17160e3e003cc4e263a5d63493d563d7.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/bar.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/beach.png-72b902243c368bd476ba82975b2edeac.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/beach.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/corner_store.png-9a0c0a59508d438947dcb5fc947ff249.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/corner_store.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/delta_queen.png-38623c2a41f238678a6c49d2408a90ff.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/delta_queen.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/gas_station_casino.png-85ef9902b87723b2a3d5fc09427e259a.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/gas_station_casino.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/grand_casino.png-84299afc97504e4cc3bca7848925322c.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/grand_casino.png.import
+[  31% ] savepack | Storing File: res://.godot/imported/grand_casino_back_room.png-7824e0f66dc71463871b0e2d753bbd21.ctex
+[  31% ] savepack | Storing File: res://assets/art/ui/environment_titles/grand_casino_back_room.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/grand_casino_cage.png-9b4cb66516d874559b0ed9c873f6cb2b.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/grand_casino_cage.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/grand_casino_high_limit.png-d470ee31f8c533bd7b9d6f7178fc0863.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/grand_casino_high_limit.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/house.png-482f936534da34230f64224804e005c2.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/house.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/jazz_club.png-b9f4d44c5b3b5b2cb12542558e9a876c.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/jazz_club.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/kitty_cat_lounge.png-bb2cc3231e44281b520a305a2ae9237a.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/kitty_cat_lounge.png.import
+[  32% ] savepack | Storing File: res://.godot/imported/motel.png-dc4cb8d0f0793711af809a064c24e8d8.ctex
+[  32% ] savepack | Storing File: res://assets/art/ui/environment_titles/motel.png.import
+[  33% ] savepack | Storing File: res://.godot/imported/motel_room.png-d9d86a73438cdcf57fbcd487bca6ae25.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/environment_titles/motel_room.png.import
+[  33% ] savepack | Storing File: res://.godot/imported/pawn_shop.png-d79f4a3e68be060904a55f545cb24ccc.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/environment_titles/pawn_shop.png.import
+[  33% ] savepack | Storing File: res://.godot/imported/small_underground_casino.png-e0f524babae0997bc8d59e5dd14f6e3a.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/environment_titles/small_underground_casino.png.import
+[  33% ] savepack | Storing File: res://.godot/imported/cash_transfer.svg-b08298150c2b5cbd11e3cedeb22f5c99.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/cash_transfer.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/close.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/decrease.svg-7944374030b32ec275f1911815262cc4.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/decrease.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/focused.svg-764689e1fd63b614f7c676b57dba6332.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/focused.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/hovered.svg-03b8f32857c2e99b4b725c9293c0b7d9.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/hovered.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/increase.svg-1b940f08d890d4e4a960a31d82581340.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/increase.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/next.svg-7c48c0f9fa15b5fbce7977ebc7444810.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/next.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/play.svg-46b9dd326f06286e19a0c887abe8e938.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/play.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/previous.svg-386380160f1134570f2618b788ef81d2.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/previous.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/replay.svg-85c5c767877dd5a8ce54db284cf341b3.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/replay.svg.import
+[  33% ] savepack | Storing File: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex
+[  33% ] savepack | Storing File: res://assets/art/ui/icons/controls/run_setup.svg.import
+[  34% ] savepack | Storing File: res://.godot/imported/selected.svg-f2db6233ee07c52f856c1d27705a419e.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/controls/selected.svg.import
+[  34% ] savepack | Storing File: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/controls/settings.svg.import
+[  34% ] savepack | Storing File: res://.godot/imported/alert.png-448aa02e5f39962ca3d6755d04b69be1.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/alert.png.import
+[  34% ] savepack | Storing File: res://.godot/imported/casino_chips.png-b5c57e52b52b739747eb053df60a1bc2.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/casino_chips.png.import
+[  34% ] savepack | Storing File: res://.godot/imported/cheat.png-d1fba8a2ec17edb4c657a61895f3d276.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/cheat.png.import
+[  34% ] savepack | Storing File: res://.godot/imported/danger.png-4fecbc18d7ba76ce062971a295ae28ef.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/danger.png.import
+[  34% ] savepack | Storing File: res://.godot/imported/debt.png-92eb74b33cd8c93d09894b8d16b7b393.ctex
+[  34% ] savepack | Storing File: res://assets/art/ui/icons/debt.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/drink.png-287228756de8270b703e9fd14b97204e.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/drink.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/heat.png-0b146ee6cf09aff5e51d984cd0a6449e.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/heat.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/home.png-429a191626e0bb61648467d96787b79e.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/home.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/luck.png-00af16ba02e1ce8c93f6c13b99f0f163.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/luck.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/save.png-70305506e9911c4e8a30d48c1592e8ba.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/save.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/time.png-a0a4aa1e2e03169ce633c4264726902c.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/time.png.import
+[  35% ] savepack | Storing File: res://.godot/imported/wallet.png-b89fa93aec764e99386098ae4bc871b0.ctex
+[  35% ] savepack | Storing File: res://assets/art/ui/icons/wallet.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/backpack_open.png-aa6581639827baf3a483b2f65ea900a6.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/backpack_open.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/bag_open.png-4214ea02fc59c9ccf62d46f3bded2da3.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/bag_open.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/home_storage.png-11202387473ee374c6f6ee1f07c0d626.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/home_storage.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/loose_carry.png-43c6b15767ca69ed8f8b4fa4ccda9082.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/loose_carry.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/suitcase_open.png-3219a05167991201b78de089e96edd85.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/suitcase_open.png.import
+[  36% ] savepack | Storing File: res://.godot/imported/trunk_open.png-a76340b74a905c770fe2f16816cc0b99.ctex
+[  36% ] savepack | Storing File: res://assets/art/ui/inventory_containers/trunk_open.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/bartender.png-8bf74ed72c9d71cd5fbf16ca867abfbc.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/bartender.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/faceless_lender.png-ef95676778eaef396605ac0e255ebc5d.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/faceless_lender.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/motel_clerk.png-928d2e4544b0bf632b69101b393aba49.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/motel_clerk.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/pawn_broker.png-73195aa85b42e08e1efe6b50f7aa347c.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/pawn_broker.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/pit_boss.png-ee3c05496326c3ee3f17d89bd8f3a803.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/pit_boss.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/riverboat_dealer.png-ed9e81d79b521c6066a5ae814f3230c7.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/portraits/riverboat_dealer.png.import
+[  37% ] savepack | Storing File: res://.godot/imported/audio.png-e7524c0a7a6b2953186655a132bfc15a.ctex
+[  37% ] savepack | Storing File: res://assets/art/ui/audio.png.import
+[  38% ] savepack | Storing File: res://.godot/imported/beat_the_house_logo.png-098dcd7e40b55374409601ccca10946c.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/beat_the_house_logo.png.import
+[  38% ] savepack | Storing File: res://.godot/imported/drink.png-ed600ae89e5b7f54d481de4203e7c86e.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/drink.png.import
+[  38% ] savepack | Storing File: res://.godot/imported/inventory.png-d9250d43516fcc8380f5cb24f139577d.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/inventory.png.import
+[  38% ] savepack | Storing File: res://.godot/imported/main_menu_button_plate.png-c97f94d811309c346dc6d5687b4f58f2.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/main_menu_button_plate.png.import
+[  38% ] savepack | Storing File: res://assets/art/ui/source_index.json
+[  38% ] savepack | Storing File: res://.godot/imported/travel.png-d422b097ffbf324c553e652f735ba982.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/travel.png.import
+[  38% ] savepack | Storing File: res://.godot/imported/travel_bus.png-e65af800464ff035739a2e5969302df0.ctex
+[  38% ] savepack | Storing File: res://assets/art/ui/travel_bus.png.import
+[  39% ] savepack | Storing File: res://.godot/imported/travel_door.png-1e76a97dff6b7ff300d1fa8f3ecdccbf.ctex
+[  39% ] savepack | Storing File: res://assets/art/ui/travel_door.png.import
+[  39% ] savepack | Storing File: res://.godot/imported/travel_phone.png-080a0e86bfdc48999cc76a23c1af5fd5.ctex
+[  39% ] savepack | Storing File: res://assets/art/ui/travel_phone.png.import
+[  39% ] savepack | Storing File: res://.godot/imported/travel_ride.png-ec42c6bd3c8602e8368c1717f4753e9e.ctex
+[  39% ] savepack | Storing File: res://assets/art/ui/travel_ride.png.import
+[  39% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_dolly_tap.bthsfx
+[  39% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_win.bthsfx
+[  39% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_draw.bthsfx
+[  39% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_double.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_deal.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_cheat_beat.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_cheat.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_button.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/scratch_paper_foley_loop.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/scratch_box_pop.bthsfx
+[  40% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_rotor_launch.bthsfx
+[  41% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_payout.bthsfx
+[  41% ] savepack | Storing File: res://assets/audio/sfx_web/video_poker_hold.bthsfx
+[  41% ] savepack | Storing File: res://data/art/art_manifest.json
+[  41% ] savepack | Storing File: res://data/art/attribute_glyphs.json
+[  41% ] savepack | Storing File: res://data/art/run_outcome_icons.json
+[  41% ] savepack | Storing File: res://data/audio/music_manifest.json
+[  41% ] savepack | Storing File: res://data/audio/surface_sfx_manifest.json
+[  42% ] savepack | Storing File: res://data/challenges/challenges.json
+[  42% ] savepack | Storing File: res://data/characters/characters.json
+[  42% ] savepack | Storing File: res://data/characters/pools.json
+[  42% ] savepack | Storing File: res://data/collections/collections.json
+[  42% ] savepack | Storing File: res://data/content_groups/groups.json
+[  42% ] savepack | Storing File: res://data/crew/crew.json
+[  43% ] savepack | Storing File: res://data/crew/heist.json
+[  43% ] savepack | Storing File: res://data/crew/jobs.json
+[  43% ] savepack | Storing File: res://data/crew/numbers.json
+[  43% ] savepack | Storing File: res://data/crew/plays.json
+[  43% ] savepack | Storing File: res://data/crew/poker.json
+[  43% ] savepack | Storing File: res://data/crew/recruitment.json
+[  43% ] savepack | Storing File: res://data/crew/tells.json
+[  44% ] savepack | Storing File: res://data/crew/world06_1_crew_favor_delivery_sequence.json
+[  44% ] savepack | Storing File: res://data/crew/world06_6_heist_sequences.json
+[  44% ] savepack | Storing File: res://data/debt/lenders.json
+[  44% ] savepack | Storing File: res://data/dialogue/dialogues.json
+[  44% ] savepack | Storing File: res://data/economy/content06_1_audit.json
+[  44% ] savepack | Storing File: res://data/environments/scenario_sequences/env06_7_bars_road.json
+[  44% ] savepack | Storing File: res://data/environments/scenario_sequences/env06_7_queen_public.json
+[  45% ] savepack | Storing File: res://data/environments/scenario_sequences/env06_7_roadside_shelter.json
+[  45% ] savepack | Storing File: res://data/environments/scenario_sequences/env06_7_shops_streets.json
+[  45% ] savepack | Storing File: res://data/environments/scenario_sequences/env06_7_underground_lounge.json
+[  45% ] savepack | Storing File: res://data/environments/scenario_sequence_compatibility/grand_casino_gala_night_v1.json
+[  45% ] savepack | Storing File: res://data/environments/archetypes.json
+[  45% ] savepack | Storing File: res://data/environments/character_offers.json
+[  45% ] savepack | Storing File: res://data/environments/developer_placement_overrides.json
+[  46% ] savepack | Storing File: res://data/environments/placement_surfaces.json
+[  46% ] savepack | Storing File: res://data/environments/scenarios.json
+[  46% ] savepack | Storing File: res://data/environments/scenario_slot_layouts.json
+[  46% ] savepack | Storing File: res://data/events/events.json
+[  46% ] savepack | Storing File: res://data/games/rituals/craps06_3_environment_bindings.json
+[  46% ] savepack | Storing File: res://data/games/rituals/craps06_3_sequences.json
+[  46% ] savepack | Storing File: res://data/games/bar_dice_game_ritual_v1.json
+[  47% ] savepack | Storing File: res://data/games/games.json
+[  47% ] savepack | Storing File: res://data/games/scratch_tickets.json
+[  47% ] savepack | Storing File: res://data/games/scratch_ticket_regions.json
+[  47% ] savepack | Storing File: res://data/games/showdown_duel_game_ritual_v1.json
+[  47% ] savepack | Storing File: res://data/games/showdown_duel_ritual_v1.json
+[  47% ] savepack | Storing File: res://data/items/items.json
+[  48% ] savepack | Storing File: res://data/services/services.json
+[  48% ] savepack | Storing File: res://data/story/character_chains.json
+[  48% ] savepack | Storing File: res://data/town/conditions.json
+[  48% ] savepack | Storing File: res://data/town/itineraries.json
+[  48% ] savepack | Storing File: res://data/town/reputation.json
+[  48% ] savepack | Storing File: res://data/town/rumors.json
+[  48% ] savepack | Storing File: res://data/travel/routes.json
+[  49% ] savepack | Storing File: res://data/tutorial/lessons.json
+[  49% ] savepack | Storing File: res://data/ui/environment_ui.json
+[  49% ] savepack | Storing File: res://data/ui/inventory_containers.json
+[  49% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_chip_sweep.bthsfx
+[  49% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_chip_stack.bthsfx
+[  49% ] savepack | Storing File: res://assets/audio/sfx_web/roulette_chip_select.bthsfx
+[  49% ] savepack | Storing File: res://.godot/exported/133200997/export-1909ed950b1fa9020d96f3c52e9856db-coin_pusher_export_parity.scn
+ERROR: Parameter "mem" is null.
+   at: alloc_static (core/os/memory.cpp:114)
+
+================================================================
+CrashHandlerException: Program crashed with signal 11
+Engine version: Godot Engine v4.6.stable.official (89cea143987d564363e15d207438530651d943ac)
+Dumping the backtrace. Please include this when reporting the bug on: https://github.com/godotengine/godot/issues
+[1] error(-1): no debug info in PE/COFF executable
+[2] error(-1): no debug info in PE/COFF executable
+ERROR: Parameter "mem" is null.
+   at: alloc_static (core/os/memory.cpp:114)
+Exception: D:\Projects\site\state\bth-next\sources\0c71fdad33ebdcdecb4aa78e9e7dc9e3f6d0bd80-1793747073800207900\tools\export_itch_helpers.ps1:79
+Line |
+  79 |          throw "Godot web export failed with exit $exitCode."
+     |          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | Godot web export failed with exit -1073741819.

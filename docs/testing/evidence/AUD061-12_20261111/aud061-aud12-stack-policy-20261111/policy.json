@@ -1,0 +1,6 @@
+{
+  "source_commit": "345f94149609e828c76c7a9df6b2cffaff5862b9",
+  "override": "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\stack\\override.cfg",
+  "sha256": "a04c96ff585c32dba8aa61566062d0a43837b4cd9591fd8cbed7945d34293498",
+  "scope": "Exact existing pipeline import-only policy; verify and remove before normal export."
+}

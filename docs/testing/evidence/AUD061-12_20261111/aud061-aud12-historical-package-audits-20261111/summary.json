@@ -1,0 +1,52 @@
+[
+  {
+    "package": "historical-allocation.pck",
+    "package_bytes": 47228360,
+    "package_sha256": "af22c901270e51598a450be389d631d57df19fa816089555a8bdffd990cac022",
+    "file_count": 1177,
+    "passed": true,
+    "failures": [],
+    "verified_payload_md5_count": 1177,
+    "label": "allocation-bare"
+  },
+  {
+    "package": "historical-stack.pck",
+    "package_bytes": 47188844,
+    "package_sha256": "2a5a85789bcfc9b96d8c21663268c510b496f820f83467722d758307d9fa914a",
+    "file_count": 1161,
+    "passed": true,
+    "failures": [],
+    "verified_payload_md5_count": 1161,
+    "label": "stack-bare"
+  },
+  {
+    "package": "historical-typed.pck",
+    "package_bytes": 47228360,
+    "package_sha256": "b2bc8d90981feeaa0144f929ceb1b2d829fa6c851bd601b7ee55489ed0c58c47",
+    "file_count": 1177,
+    "passed": true,
+    "failures": [],
+    "verified_payload_md5_count": 1177,
+    "label": "allocation-warm-typed"
+  },
+  {
+    "package": "historical-typed.pck",
+    "package_bytes": 47228360,
+    "package_sha256": "36843a4b1de8cb3c6ce6bd86c3d7d6c6656b9b4eb7e5243b57dce95436b307d3",
+    "file_count": 1177,
+    "passed": true,
+    "failures": [],
+    "verified_payload_md5_count": 1177,
+    "label": "allocation-cold-typed"
+  },
+  {
+    "package": "historical-typed.pck",
+    "package_bytes": 47188844,
+    "package_sha256": "d51f51d7fe4ddf47fb587ec21ca938d096e8faa1d2f97a4fbcc87d63566d6120",
+    "file_count": 1161,
+    "passed": true,
+    "failures": [],
+    "verified_payload_md5_count": 1161,
+    "label": "stack-cold-typed"
+  }
+]

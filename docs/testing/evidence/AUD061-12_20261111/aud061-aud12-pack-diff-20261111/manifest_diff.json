@@ -1,0 +1,23 @@
+{
+  "only_a": [],
+  "only_b": [],
+  "changed": [
+    {
+      "path": ".godot/global_script_class_cache.cfg",
+      "a": {
+        "path": ".godot/global_script_class_cache.cfg",
+        "offset": 47019632,
+        "bytes": 41633,
+        "md5": "5f76ce4f6abe3fa322420e717217a402",
+        "flags": 0
+      },
+      "b": {
+        "path": ".godot/global_script_class_cache.cfg",
+        "offset": 47019632,
+        "bytes": 41633,
+        "md5": "9008fcacab152f533bb1d0da560ebbb5",
+        "flags": 0
+      }
+    }
+  ]
+}

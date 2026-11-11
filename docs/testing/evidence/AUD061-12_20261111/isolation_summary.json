@@ -1,0 +1,201 @@
+[
+  {
+    "run": "aud061-aud12-resource-isolation-20261111",
+    "checks": 40,
+    "facts": [
+      {
+        "binary_bytes": 757,
+        "iteration": 0,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 1,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 2,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 3,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 4,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 5,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 6,
+        "package_bytes": 972
+      },
+      {
+        "binary_bytes": 757,
+        "iteration": 7,
+        "package_bytes": 972
+      }
+    ],
+    "failure_count": 0,
+    "failures": [],
+    "scope": "Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export."
+  },
+  {
+    "run": "aud061-aud12-main-isolation-20261111",
+    "checks": 40,
+    "facts": [
+      {
+        "binary_bytes": 893,
+        "iteration": 0,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 1,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 2,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 3,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 4,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 5,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 6,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 7,
+        "package_bytes": 1076
+      }
+    ],
+    "failure_count": 0,
+    "failures": [],
+    "scope": "Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export.",
+    "target": "res://scenes/main.tscn"
+  },
+  {
+    "run": "aud061-aud12-stack-main-isolation-20261111",
+    "checks": 40,
+    "facts": [
+      {
+        "binary_bytes": 893,
+        "iteration": 0,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 1,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 2,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 3,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 4,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 5,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 6,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 7,
+        "package_bytes": 1076
+      }
+    ],
+    "failure_count": 0,
+    "failures": [],
+    "scope": "Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export.",
+    "target": "res://scenes/main.tscn"
+  },
+  {
+    "run": "aud061-aud12-allocation-main-isolation-20261111",
+    "checks": 40,
+    "facts": [
+      {
+        "binary_bytes": 893,
+        "iteration": 0,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 1,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 2,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 3,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 4,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 5,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 6,
+        "package_bytes": 1076
+      },
+      {
+        "binary_bytes": 893,
+        "iteration": 7,
+        "package_bytes": 1076
+      }
+    ],
+    "failure_count": 0,
+    "failures": [],
+    "scope": "Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export.",
+    "target": "res://scenes/main.tscn"
+  }
+]

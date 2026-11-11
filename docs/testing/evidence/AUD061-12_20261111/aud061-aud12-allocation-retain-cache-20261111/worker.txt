@@ -1,0 +1,1 @@
+Retained generated export cache intact; next probe regenerates scene output.

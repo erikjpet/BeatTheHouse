@@ -1,0 +1,154 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Users\\theep\\.cache\\codex-runtimes\\codex-primary-runtime\\dependencies\\python\\python.exe",
+    "-B",
+    "-c",
+    "from pathlib import Path\nimport os\np=Path(os.environ['BTH_QA_WORKSPACE'])/'.tmp/aud12_resource_isolation.gd';p.parent.mkdir(exist_ok=True);p.write_bytes(Path(r'E:\\CodexQA\\BTH\\workspaces\\aud061-20261110\\.tmp\\aud12_resource_isolation.gd').read_bytes())\nprint('Copied diagnostic only; historical tracked source unchanged.')\n"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "b6f301ce509be6553441abf0a9d080053bc25b643d1549f9193bd0f18e88923f",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-aud12-allocation-diagnostic-20261111",
+    "token": "cbe8624858f1471b687d0d28d4265faa",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 120,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\profile",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\temp",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\appdata",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\localappdata",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\home",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\cache",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\save_dir",
+      "available_bytes": 334211211264
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\pycache",
+      "available_bytes": 334211211264
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\profile",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\temp",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\evidence",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\appdata",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\localappdata",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\home",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\cache",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\save_dir",
+      "available_bytes": 334211203072
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-aud12-allocation-diagnostic-20261111\\pycache",
+      "available_bytes": 334211203072
+    }
+  },
+  "pid": 21692,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 0,
+  "active_at_release": 0,
+  "finished_epoch": 1794396936.2565913
+}

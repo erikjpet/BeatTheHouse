@@ -1,0 +1,27 @@
+extends SceneTree
+var checks := 0
+var failures: Array[String] = []
+func check(ok: bool, label: String) -> void:
+	checks += 1
+	if not ok: failures.append(label)
+func _init() -> void:
+	var evidence := OS.get_environment("BTH_QA_EVIDENCE_DIR")
+	if not evidence.replace("\\", "/").begins_with("E:/CodexQA/BTH/runs/"):
+		quit(2)
+		return
+	var target := "res://scenes/main.tscn" if OS.get_cmdline_user_args().has("main") else "res://scenes/coin_pusher_export_parity.tscn"
+	var facts: Array = []
+	for index in range(8):
+		var scene := ResourceLoader.load(target, "PackedScene", ResourceLoader.CACHE_MODE_IGNORE)
+		check(scene is PackedScene, "target scene loads with real script dependencies %d" % index)
+		if not scene is PackedScene: continue
+		var binary := evidence.path_join("isolated-%d.scn" % index)
+		check(ResourceSaver.save(scene, binary) == OK, "binary resource serialization %d" % index)
+		var pack := PCKPacker.new()
+		var package := evidence.path_join("isolated-%d.pck" % index)
+		check(pack.pck_start(package) == OK, "PCK start %d" % index)
+		check(pack.add_file("res://" + target.get_file().get_basename() + ".scn", binary) == OK, "PCK scene add %d" % index)
+		check(pack.flush() == OK, "PCK flush %d" % index)
+		facts.append({"iteration":index,"binary_bytes":FileAccess.get_file_as_bytes(binary).size(),"package_bytes":FileAccess.get_file_as_bytes(package).size()})
+	print(JSON.stringify({"target":target,"checks":checks,"failure_count":failures.size(),"failures":failures,"facts":facts,"scope":"Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export."}))
+	quit(0 if failures.is_empty() else 1)

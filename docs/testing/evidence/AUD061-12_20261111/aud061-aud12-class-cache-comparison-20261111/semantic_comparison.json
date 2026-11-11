@@ -1,0 +1,20 @@
+{
+  "reports": [
+    {
+      "label": "a",
+      "verified_payload_md5_count": 1165,
+      "file_count": 1165
+    },
+    {
+      "label": "b",
+      "verified_payload_md5_count": 1165,
+      "file_count": 1165
+    }
+  ],
+  "config_rows_a": 218,
+  "config_rows_b": 218,
+  "parsed_values_in_same_list_order_equal": false,
+  "class_names_unique": true,
+  "different_raw_bytes_only_in_class_cache": true,
+  "class_cache_difference": "semantic difference requires investigation"
+}

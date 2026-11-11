@@ -1,0 +1,1964 @@
+[
+  {
+    "base": "RefCounted",
+    "class": "SupportDiagnostics",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/support_diagnostics.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSequenceProbeSupport",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://tools/scenario_sequence_probe_support.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "AgentPlaytestPublicObservation",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://tools/agent_playtest_public_observation.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WorldMapOverlayController",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/world_map_overlay_controller.gd"
+  },
+  {
+    "base": "Control",
+    "class": "WorldMapCanvas",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/world_map_canvas.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WebSaveDurabilityBridge",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/web_save_durability_bridge.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WebAudioBridge",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/web_audio_bridge.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WagerConfirmationController",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/wager_confirmation_controller.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "VisualStyle",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/visual_style.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "UIArt",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/ui_art.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "TerminalConsequenceViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/terminal_consequence_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "TalkDock",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/talk_dock.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SmallScreenPolicy",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/small_screen_policy.gd"
+  },
+  {
+    "base": "Node",
+    "class": "SfxPlayer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/sfx_player.gd"
+  },
+  {
+    "base": "VBoxContainer",
+    "class": "SettingsMenu",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/settings_menu.gd"
+  },
+  {
+    "base": "Control",
+    "class": "SegmentedMeter",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/segmented_meter.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SealedActionHost",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/sealed_action_host.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSemanticViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/scenario_semantic_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunReportViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_report_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "RunReportTimelineCanvas",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_report_timeline_canvas.gd"
+  },
+  {
+    "base": "Control",
+    "class": "RunReportScreen",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_report_screen.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunJournalViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_journal_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunInventoryViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_inventory_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "RunInventoryScreen",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/run_inventory_screen.gd"
+  },
+  {
+    "base": "Node",
+    "class": "ProceduralMusicPlayer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/procedural_music_player.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PlayerText",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/player_text.gd"
+  },
+  {
+    "base": "Control",
+    "class": "PixelSceneCanvas",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/pixel_scene_canvas.gd"
+  },
+  {
+    "base": "Control",
+    "class": "PerfTelemetryOverlay",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/perf_telemetry_overlay.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PerformanceLivenessGuard",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/performance_liveness_guard.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PerformanceFixtureSetup",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/performance_fixture_setup.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "NullPerfSink",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/null_perf_sink.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MusicOutcomeDirectorModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/music_outcome_director_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MusicLayerChoreography",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/music_layer_choreography.gd"
+  },
+  {
+    "base": "AudioStreamGenerator",
+    "class": "MusicFloatPcmStream",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/music_float_pcm_stream.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MusicArrangementSelector",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/music_arrangement_selector.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MoneyFeedbackViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/money_feedback_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ModalFocusScope",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/modal_focus_scope.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MetaSessionController",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/meta_session_controller.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MetaItemInteractionViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/meta_item_interaction_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "MetaItemInteractionScreen",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/meta_item_interaction_screen.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MetaCollectionViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/meta_collection_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "ItemFoundPopup",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/item_found_popup.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ItemCardViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/item_card_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "InventoryContainerSurface",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/inventory_container_surface.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "InventoryContainerCatalog",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/inventory_container_catalog.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "IconSpriteRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/icon_sprite_renderer.gd"
+  },
+  {
+    "base": "Control",
+    "class": "HudTimeWatch",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/hud_time_watch.gd"
+  },
+  {
+    "base": "Control",
+    "class": "HeatGainFeedbackOverlay",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/heat_gain_feedback_overlay.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "HeatFeedbackVisuals",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/heat_feedback_visuals.gd"
+  },
+  {
+    "base": "Control",
+    "class": "GameSurfaceCanvas",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_surface_canvas.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "FoundationWidgets",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/foundation_widgets.gd"
+  },
+  {
+    "base": "Control",
+    "class": "FoundationMain",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/foundation_main.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "FoundationHudViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/foundation_hud_view_model.gd"
+  },
+  {
+    "base": "PanelContainer",
+    "class": "FoundationHudBar",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/foundation_hud_bar.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentInteractionViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/environment_interaction_view_model.gd"
+  },
+  {
+    "base": "PanelContainer",
+    "class": "EnvironmentHeader",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/environment_header.gd"
+  },
+  {
+    "base": "ColorRect",
+    "class": "DrunkDistortionOverlay",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/drunk_distortion_overlay.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoachViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/coach_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "CoachOverlay",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/coach_overlay.gd"
+  },
+  {
+    "base": "Control",
+    "class": "CheatDock",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/cheat_dock.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CareerStatsViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/career_stats_view_model.gd"
+  },
+  {
+    "base": "VBoxContainer",
+    "class": "CareerStatsScreen",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/career_stats_screen.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CageCounterViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/cage_counter_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CageAtmViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/cage_atm_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "BagOpenReelViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/bag_open_reel_view_model.gd"
+  },
+  {
+    "base": "Control",
+    "class": "BagOpenReel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/bag_open_reel.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "AttributeBadgeRow",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/attribute_badge_row.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "StreetCrapsCircleProp",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/street_craps_circle_prop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketRoomProp",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/scratch_ticket_room_prop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GamePropKit",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/game_prop_kit.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrapsRoomProp",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/craps_room_prop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoinPusherRoomProp",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/coin_pusher_room_prop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "BarDiceRoomProp",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/ui/game_props/bar_dice_room_prop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSemanticPresentationContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/scenario_semantic_presentation_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PlaytestFixes03Contract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/playtest_fixes03_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PlaytestFixes02Contract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/playtest_fixes02_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "Onboarding06Contract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/onboarding_06_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "NumbersContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/numbers_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "HarnessProductionFidelity",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/harness_production_fidelity.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameRitualRuntimeContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/game_ritual_runtime_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "FoundationTestHarness",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/foundation_test_harness.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "Fixsweep061Regressions",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/fixsweep06_1_regressions.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "Env068EnvironmentReadabilityContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/env06_8_environment_readability_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewTurnContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/crew_turn_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewLayer3JobsContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/crew_layer3_jobs_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewIgnoredGoldenProbe",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/crew_ignored_golden_probe.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewHeistContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/crew_heist_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ContentDepthContract",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/tests/foundation/content_depth_contract.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "VideoPokerRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/video_poker_renderer.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "VideoPokerGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/video_poker.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "TableGameVisuals",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/table_game_visuals.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "SlotGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slot.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketRegionModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_region_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketMask",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_mask.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketMachineRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_machine_renderer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketIconRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_icon_renderer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketFoilRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_foil_renderer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScratchTicketBackgroundRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_ticket_background_renderer.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "ScratchTicketsGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/scratch_tickets.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "RouletteGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/roulette.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "PullTabsGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/pull_tabs.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PlayingCardRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/playing_card_renderer.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "CrewDrawPokerGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/crew_draw_poker.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "CrapsGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/craps.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "CoinPusherGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "BlackjackGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/blackjack.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "BarDiceGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/bar_dice.gd"
+  },
+  {
+    "base": "GameModule",
+    "class": "BaccaratGame",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/baccarat.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameModule",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_module.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotRngMath",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_rng_math.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotResolver",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_resolver.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_renderer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotPresentation",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_presentation.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotMachineState",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_machine_state.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotMachineGenerator",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_machine_generator.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotFamilyPinball",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_family_pinball.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotFamilyBuffalo",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_family_buffalo.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotDefinitionCache",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_definition_cache.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotCatalog",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_catalog.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SlotBonusRecovery",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/slot_bonus_recovery.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballSim",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_sim.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballSequencer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_sequencer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballItems",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_items.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballFeature",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_feature.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballBoards",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_boards.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PinballBoard",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/slots/pinball/pinball_board.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrapsSurfaceViewModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/craps/craps_surface_view_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrapsRules",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/craps/craps_rules.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "VaultDropVariation",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/vault_drop.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "JackpotRidgeVariation",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/jackpot_ridge.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoinPusherSolverApi",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/coin_pusher_solver_api.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoinPusherSolver",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/coin_pusher_solver.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoinPusherRenderer",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/coin_pusher_renderer.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CoinPusherLiveSession",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/games/coin_pusher/coin_pusher_live_session.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WorldSequencePackageCatalog",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/world_sequence_package_catalog.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "WorldMap",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/world_map.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "UserSettings",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/user_settings.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "TutorialFlow",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/tutorial_flow.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "TownState",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/town_state.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "TownNetwork",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/town_network.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SurfaceSfxManifest",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/surface_sfx_manifest.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "StaticDataCache",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/static_data_cache.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioVenueCycle",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_venue_cycle.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSequenceSchema",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_sequence_schema.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSequenceRuntime",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_sequence_runtime.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSequenceRolloutManifest",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_sequence_rollout_manifest.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioSequenceCatalog",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_sequence_catalog.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioOperationRegistry",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_operation_registry.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioLayoutResolver",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_layout_resolver.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioHostTransaction",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_host_transaction.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioExtensionDispatch",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_extension_dispatch.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ScenarioEngine",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/scenario_engine.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "SaveService",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/save_service.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunTerminalEvaluator",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_terminal_evaluator.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunStateSchema",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_state_schema.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunState",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_state.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunSaveCodec",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_save_codec.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunGenerator",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_generator.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RunActionService",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/run_action_service.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "RngStream",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/rng_stream.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ProfileInventory",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/profile_inventory.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PoliceSweepModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/police_sweep_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PlatformServices",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/platform_services.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "PersistencePaths",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/persistence_paths.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "NumbersModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/numbers_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MusicDeliveryIndex",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/music_delivery_index.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "MetaCollectionService",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/meta_collection_service.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "Keys",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/keys.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "JsonCoerce",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/json_coerce.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ItemEffect",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/item_effect.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "IoResult",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/io_result.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GrandCasinoShowdownModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/grand_casino_showdown_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GrandCasinoRunFacade",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/grand_casino_run_facade.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GrandCasinoDuelRitualProjection",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/grand_casino_duel_ritual_projection.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GrandCasinoDuelModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/grand_casino_duel_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameRitualSchema",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_ritual_schema.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameRitualRuntime",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_ritual_runtime.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameRitualLayout",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_ritual_layout.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameRitualHostAuthority",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_ritual_host_authority.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "GameModuleRegistry",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/game_module_registry.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "FunctionOptions",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/function_options.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EventModule",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/event_module.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentSlotBinder",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_slot_binder.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentSemanticInventory",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_semantic_inventory.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentRuntimeScheduler",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_runtime_scheduler.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentPlacement",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_placement.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentObjectManifest",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_object_manifest.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentInstance",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_instance.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentHours",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_hours.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentEventResolver",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_event_resolver.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "EnvironmentBaseSemanticRecords",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/environment_base_semantic_records.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "DurableStore",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/durable_store.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "DeveloperPlacementStore",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/developer_placement_store.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "DeliveryRunModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/delivery_run_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "DeliveryRunFacade",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/delivery_run_facade.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewWorldSequenceAdapter",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_world_sequence_adapter.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewTurnModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_turn_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewStateModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_state_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewRunFacade",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_run_facade.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewRecruitmentModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_recruitment_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewPokerModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_poker_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewPlayModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_play_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewHeistModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_heist_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CrewDeliverySchedule",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/crew_delivery_schedule.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "Craps06EnvironmentBinding",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/craps06_3_environment_binding.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ContentLibrary",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/content_library.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CollectionItemResolver",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/collection_item_resolver.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CollectionDropService",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/collection_drop_service.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CharacterRoster",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/character_roster.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CharacterOfferModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/character_offer_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CharacterChainModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/character_chain_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CardShoe",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/card_shoe.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "CageEconomyModel",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/cage_economy_model.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "BuildIdentity",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/build_identity.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "BlackjackActionAuthority",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/blackjack_action_authority.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "BarDiceRitualProjection",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/bar_dice_ritual_projection.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "AttributeBadges",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/attribute_badges.gd"
+  },
+  {
+    "base": "RefCounted",
+    "class": "ArtContracts",
+    "icon": "",
+    "is_abstract": false,
+    "is_tool": false,
+    "language": "GDScript",
+    "path": "res://scripts/core/art_contracts.gd"
+  }
+]

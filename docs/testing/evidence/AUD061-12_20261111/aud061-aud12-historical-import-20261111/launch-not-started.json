@@ -1,0 +1,5 @@
+{
+  "child_started": false,
+  "error": "command_path_mismatch: E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation: --path must equal admitted workspace E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111",
+  "resolution": "That launch stopped before child creation. A fresh admission used the actual allocation checkout as workspace; drive, guard and caps unchanged."
+}

@@ -1,0 +1,6 @@
+{
+  "source_commit": "0c71fdad33ebdcdecb4aa78e9e7dc9e3f6d0bd80",
+  "override": "E:\\CodexQA\\BTH\\workspaces\\aud12-historical-20261111\\allocation\\override.cfg",
+  "sha256": "a04c96ff585c32dba8aa61566062d0a43837b4cd9591fd8cbed7945d34293498",
+  "scope": "Exact existing pipeline import-only policy; remove verified owned override before normal export."
+}

@@ -1,0 +1,15 @@
+{
+  "allocation-0c71.txt": {
+    "last_completed_file": "res://.godot/exported/133200997/export-1909ed950b1fa9020d96f3c52e9856db-coin_pusher_export_parity.scn",
+    "alloc_null": true,
+    "stack_overflow": false,
+    "sha256": "1824966c4127549a1386af5680f9d69a722507d247965d94406ae1988b55493a"
+  },
+  "stack-345f.txt": {
+    "last_completed_file": "res://.godot/exported/133200997/export-1909ed950b1fa9020d96f3c52e9856db-coin_pusher_export_parity.scn",
+    "alloc_null": false,
+    "stack_overflow": true,
+    "sha256": "3837add839f2fa2e9d862d06a82a0fc87d45bf02eed0f1bf7fc505234b988a26"
+  },
+  "current_verbose_after_parity": "export-1909ed950b1fa9020d96f3c52e9856db-coin_pusher_export_parity.scn\nLoading resource: res://scenes/main.tscn\nLoading resource: res://scripts/ui/foundation_main.gd\nLoading resource: res://assets/art/ui/icons/controls/settings.svg\nLoading resource: res://.godot/imported/settings.svg-0b4b808b1aaec39e5f9842fe3ba05a6a.ctex\nLoading resource: res://assets/art/ui/icons/controls/run_setup.svg\nLoading resource: res://.godot/imported/run_setup.svg-2358dd42811fa4b39b93b0134c1bdbe3.ctex\nLoading resource: res://assets/art/ui/icons/controls/close.svg\nLoading resource: res://.godot/imported/close.svg-26bcfcb59a1c9bccced878621aef3f05.ctex\nLoading resource: res://assets/art/ui/icons/controls/previous.svg\nLo"
+}

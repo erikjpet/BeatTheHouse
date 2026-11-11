@@ -1,0 +1,3 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+{"checks":40,"facts":[{"binary_bytes":757,"iteration":0,"package_bytes":972},{"binary_bytes":757,"iteration":1,"package_bytes":972},{"binary_bytes":757,"iteration":2,"package_bytes":972},{"binary_bytes":757,"iteration":3,"package_bytes":972},{"binary_bytes":757,"iteration":4,"package_bytes":972},{"binary_bytes":757,"iteration":5,"package_bytes":972},{"binary_bytes":757,"iteration":6,"package_bytes":972},{"binary_bytes":757,"iteration":7,"package_bytes":972}],"failure_count":0,"failures":[],"scope":"Resource load with actual dependencies, binary serialize and single-resource PCK flush; not EditorExportPlugin dependency transformation or a launchable Web export."}

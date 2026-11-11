@@ -1,0 +1,23 @@
+param([Parameter(Mandatory)][string]$SourcePath)
+$ErrorActionPreference = 'Stop'
+$root = [IO.Path]::GetFullPath($SourcePath)
+if (-not $root.Equals([IO.Path]::GetFullPath($env:BTH_QA_WORKSPACE), [StringComparison]::OrdinalIgnoreCase)) { throw 'Source must equal admitted historical workspace.' }
+$heapLimit = [GC]::GetConfigurationVariables()['GCHeapHardLimit']
+if ($heapLimit -ne 536870912) { throw 'Private typed-wrapper probe requires the existing 512 MiB managed-heap limit.' }
+. (Join-Path $root 'tools/export_itch_helpers.ps1')
+Write-Host ('PRIVATE_TYPED_WRAPPER_BEFORE ' + (@{managed_heap_limit_bytes=$heapLimit;managed_heap_bytes=[GC]::GetTotalMemory($false);private_bytes=[Diagnostics.Process]::GetCurrentProcess().PrivateMemorySize64;scope='Existing historical Invoke-TypedConsoleProcess only; no native/template build, staging or deployment.'}|ConvertTo-Json -Compress))
+$gateCode = @'
+import os,sys,json
+from pathlib import Path
+sys.path.insert(0,r'D:\Projects\Beat-The-House\tools')
+from bth_qa_storage import Layout,check_launch
+m=json.loads((Path(os.environ['BTH_QA_EVIDENCE_DIR'])/'storage-manifest.json').read_text(encoding='utf-8'))
+l=Layout(**{k:Path(v) for k,v in m['paths'].items()},run_id=m['run_id'],token=m['token'],prepared=True,expected_write_bytes=m['expected_write_bytes'],reserve_bytes=m['reserve_bytes'])
+print(json.dumps(check_launch(l,cwd=os.getcwd(),env=os.environ,extra_write_paths=(l.workspace,l.evidence,l.profile,l.temp))))
+'@
+& 'C:\Users\theep\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe' -B -c $gateCode
+if ($LASTEXITCODE -ne 0) { throw 'Pre-Godot storage launch gate failed.' }
+$output = Join-Path $env:BTH_QA_EVIDENCE_DIR 'historical-typed.pck'
+[int]$result = Invoke-TypedConsoleProcess -FilePath $env:GODOT_BIN -ArgumentList @('--headless','--path',$root,'--export-pack','Web',$output)
+Write-Host ('PRIVATE_TYPED_WRAPPER_AFTER ' + (@{exit_code=$result;managed_heap_bytes=[GC]::GetTotalMemory($false);private_bytes=[Diagnostics.Process]::GetCurrentProcess().PrivateMemorySize64}|ConvertTo-Json -Compress))
+exit $result
