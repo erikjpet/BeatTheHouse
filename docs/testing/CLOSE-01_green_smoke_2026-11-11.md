@@ -977,3 +977,55 @@ they do not close NEXT delivery. CLOSE-06 and final CLOSE-05 remain unrun.
 Resume existing-pipeline observation once the owner places the prepared file.
 
 The final checkpoint raw observation/request hashes and reconciliation index are in docs/testing/CLOSE-04_one_release_version_2026-11-11.md. Current-group reconciliation remains1681 versus1681, with zero CLOSE-/AUD061 findings; unrelated runtime records remain untouched.
+
+## Explicit one-file submission authorized and performed
+
+The owner subsequently instructed "Please perform the action to close out
+everything". On2026-11-11T22:03:10.1432492Z the exact prepared738-byte request was
+submitted to its named D site control path, SHA-256
+ae586957174c7e06af02784b032b62bdbd4c073981be5bc49197ba37740f8643.
+This is the expressly authorized one-file exception, not a QA root migration.
+Raw QA evidence remains onE; no pipeline code, setting, pin, cap or audience
+was changed. Existing watcher observation and exact served verification follow.
+
+## Exact NEXT delivery — completed
+
+Existing watcher consumed the one-file request with its exact hash and approved
+only data/debt/lenders.json and data/events/events.json. It promoted
+973f0ba2ae5fbf50f38cac3346a433c13a1e5c2c, tree
+f08f58cd96a2a39190f397d9044dece08ca20d5d; exact served metadata/redirect/manifest/
+REF/VERSION and10 selected asset checks pass. Archive SHA-256
+52b8188d5af212736a25d2e5bcafecb7fd6794c5b5098fba555085cdfc248d8a.
+The earlier root error and owner-submission handoff are resolved by the owner's
+later explicit instruction; no pipeline code/settings/pins/caps/audience changed.
+
+Fresh admitted browser profile on the immutable973 URL: clean menu with its
+correct pre-CLOSE-04 internal footer. Normal controls open Slot practice, complete
+a natural2-dollar spin (100000 ->99998), return to the room with six distinct
+labelled cabinets, and enter cabinet6 Link Arena using the real entry card.
+Back Alley Base/No Scenario then renders a valid room with no recovery rejection.
+The initial keyboard-selection batch actually remained Corner Store; screenshot
+011 is retained as that room and is not evidence of Back Alley. Mouse selection
+is observed in013 and actual Back Alley in014/015. Browser14 batches, zero
+page/console warnings/errors, normal closure and owned Job0.
+
+These practice views are focused rendered regression evidence, not normal-
+campaign save/Continue, an expired Jazz handoff or a Delta closing-time ride.
+Those remain the explicitly separate CLOSE-03/-06 browser work. The exact
+first-Night tutorial result and native strict Smoke11/11/liveness remain scoped
+as recorded above. All CLOSE-01 failures have prior classifications/evidence;
+no check, damaged-geometry guard or performance budget was skipped or weakened.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-request-submitted, cl061-qualification-accepted, cl061-s01-next-identity, cl061-s01-served, cl061-s01-served-cmd-1, cl061-s01-served-cmd-2, cl061-s01-served-cmd-3, cl061-s01-served-cmd-4, cl061-s01-served-cmd-5, cl061-s01-served-cmd-6, cl061-s01-served-cmd-7, cl061-s01-served-cmd-8, cl061-s01-served-cmd-9, cl061-s01-served-cmd-10, cl061-s01-served-cmd-11, cl061-s01-served-cmd-12, cl061-s01-served-cmd-13, cl061-s01-served-cmd-14.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-s01-delivery-proof\evidence\raw-evidence-index.json | 59b2ac7e81c464e14fcad57d8cb0ac594ad410171071d07adb129db2581e6e40 |
+| E:\CodexQA\BTH\runs\cl061-s01-served\evidence\result.json | 256a6fa939d165912854f9638ac2a94412f4ba61cec7792d7895b72532640462 |
+| E:\CodexQA\BTH\runs\cl061-request-submitted\evidence\submission.json | 906b68b0a65014cba182054b4b4365ffbfc0bb0b68e31d344550a8b5220d393b |
+| E:\CodexQA\BTH\runs\cl061-qualification-accepted\evidence\consumed-request-receipt.json | ae586957174c7e06af02784b032b62bdbd4c073981be5bc49197ba37740f8643 |
+| E:\CodexQA\BTH\runs\cl061-s01-served\evidence\006-slot-practice-room.png | d111047eadc1dcaacb4fa0cced5cf87c2d3919ad9581a81fca97547d9a0acfaa |
+| E:\CodexQA\BTH\runs\cl061-s01-served\evidence\008-sixth-slot-enter.png | 3ad650792da24c96c1ca8e77446ef800cbd96007432c6f8ddf52e21362a1805a |
+| E:\CodexQA\BTH\runs\cl061-s01-served\evidence\014-back-alley-rendered-base.png | 65764a0db3756411f7e1d5ddbedf6a3c12af0cbf3b6c342a100e5e371b1c6190 |
