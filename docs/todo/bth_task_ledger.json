@@ -34199,7 +34199,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED",
+      "status": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34261,18 +34261,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING"
         }
       ],
       "implementation_batches": [
         "CLOSE-01-BATCH-001"
       ],
-      "next_action": "Await explicit one-file storage exception or owner submission of the prepared exact NEXT request; continue independent closeout repairs.",
+      "next_action": "Owner is placing the prepared exact973f0ba2 cold-import qualification request; monitor unchanged watcher, verify exact served identity and focused behavior before further push.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "root_escape: D:\\Projects\\site workspace must be strictly below approved root E:\\CodexQA\\BTH. Submission stopped before directory/write/child; one-file exception requested.",
+        "description": "Owner selected personal submission. Exact request destination absent at checkpoint; NEXT remainsf00a686f. No agent D control-file write or pipeline change.",
         "requires_user_input": true,
-        "observed_at": "2026-11-11T21:00:32.672694+00:00",
+        "observed_at": "2026-11-11T21:58:31.560671+00:00",
         "evidence": [
           "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
         ]
@@ -34280,7 +34285,7 @@
       "planned_app_changes": [
         "Classify and correct Smoke failures; tutorial first"
       ],
-      "updated_at": "2026-11-11T21:00:32.672694+00:00"
+      "updated_at": "2026-11-11T21:58:31.560671+00:00"
     },
     {
       "id": "CLOSE-02",
@@ -34535,7 +34540,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING",
+      "status": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34566,24 +34571,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
           "summary": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
         "CLOSE-04-BATCH-001"
       ],
-      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; verify served footer 0.6.0 with actual12-character commit. One-line source trial and protected-file/internal-telemetry checks passed; displayed constant restored0.6.0.",
+      "next_action": "After owner request enables CLOSE-01 delivery, push scoped local task pairs and verify actual NEXT footer. Packaging/source-menu5/0 and UI120.83s exit0; constant restored0.6.0, pinned inputs and telemetry unchanged.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:46:17.607433+00:00",
+        "observed_at": "2026-11-11T21:58:31.711804+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Single player-visible release version constant"
       ],
-      "updated_at": "2026-11-11T21:46:17.607433+00:00"
+      "updated_at": "2026-11-11T21:58:31.711804+00:00"
     },
     {
       "id": "CLOSE-06",
@@ -36997,7 +37007,7 @@
       "parent_id": "CLOSE-01",
       "group": "current",
       "state": "open",
-      "status": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED",
+      "status": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING",
       "scope": [
         "Classify and correct Smoke failures; tutorial first"
       ],
@@ -37062,20 +37072,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "LOCAL_PASS_NEXT_REQUEST_STORAGE_BLOCKED"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
+          "summary": "LOCAL_SMOKE_11_PASS_OWNER_REQUEST_PENDING"
         }
       ],
-      "next_action": "Await explicit one-file storage exception or owner submission of the prepared exact NEXT request; continue independent closeout repairs.",
+      "next_action": "Owner is placing the prepared exact973f0ba2 cold-import qualification request; monitor unchanged watcher, verify exact served identity and focused behavior before further push.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "root_escape: D:\\Projects\\site workspace must be strictly below approved root E:\\CodexQA\\BTH. Submission stopped before directory/write/child; one-file exception requested.",
+        "description": "Owner selected personal submission. Exact request destination absent at checkpoint; NEXT remainsf00a686f. No agent D control-file write or pipeline change.",
         "requires_user_input": true,
-        "observed_at": "2026-11-11T21:00:32.672694+00:00",
+        "observed_at": "2026-11-11T21:58:31.560671+00:00",
         "evidence": [
           "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
         ]
       },
-      "updated_at": "2026-11-11T21:00:32.672694+00:00"
+      "updated_at": "2026-11-11T21:58:31.560671+00:00"
     },
     {
       "id": "CLOSE-02-BATCH-001",
@@ -37199,7 +37214,7 @@
       "parent_id": "CLOSE-04",
       "group": "current",
       "state": "open",
-      "status": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING",
+      "status": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING",
       "scope": [
         "Single player-visible release version constant"
       ],
@@ -37233,18 +37248,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
           "summary": "LOCAL_VERSION_AND_SOURCE_MENU_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "LOCAL_VERSION_MENU_AND_UI_PASS_NEXT_PENDING"
         }
       ],
-      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; verify served footer 0.6.0 with actual12-character commit. One-line source trial and protected-file/internal-telemetry checks passed; displayed constant restored0.6.0.",
+      "next_action": "After owner request enables CLOSE-01 delivery, push scoped local task pairs and verify actual NEXT footer. Packaging/source-menu5/0 and UI120.83s exit0; constant restored0.6.0, pinned inputs and telemetry unchanged.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:46:17.607433+00:00",
+        "observed_at": "2026-11-11T21:58:31.711804+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T21:46:17.607433+00:00"
+      "updated_at": "2026-11-11T21:58:31.711804+00:00"
     },
     {
       "id": "CLOSE-06-BATCH-001",

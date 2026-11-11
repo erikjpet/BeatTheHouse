@@ -964,3 +964,16 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\close061-s01-prepare-exact-cold-request\evidence\qualification-request.json | ae586957174c7e06af02784b032b62bdbd4c073981be5bc49197ba37740f8643 |
 | E:\CodexQA\BTH\runs\close061-s01-prepare-exact-cold-request\evidence\exact-input-comparison.json | 5d2ec09d4c6c3c4febc5738de6d9750d2a3c0ff3e07572ec6f2109d4a0b2ff17 |
 | E:\CodexQA\BTH\runs\close061-s02-register-rendered-regression\evidence\storage-launch-stop.json | a48df3a90cfec620ae648d633a66f16734c5bd37313ecf63ebbbd5dd484f77ca |
+
+## Owner submission handoff checkpoint
+
+The owner answered "I'll submit the prepared request". The agent has not written
+the D site control file or retried a storage-rule exception. At the current
+checkpoint the exact973f0ba2 request destination is absent and existing NEXT
+still servesf00a686f. The target remote remains973f0ba2 so its one-shot request
+will continue to match exactly. CLOSE-02/03/04 code and separate ledger commits
+are local only, not pushed over that target. Those local focused checks pass;
+they do not close NEXT delivery. CLOSE-06 and final CLOSE-05 remain unrun.
+Resume existing-pipeline observation once the owner places the prepared file.
+
+The final checkpoint raw observation/request hashes and reconciliation index are in docs/testing/CLOSE-04_one_release_version_2026-11-11.md. Current-group reconciliation remains1681 versus1681, with zero CLOSE-/AUD061 findings; unrelated runtime records remain untouched.

@@ -59,3 +59,46 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\native-private-close061-s04-trial\evidence\results.json | 4956b80c1a610b59fdd5f80e5fbb0599e5f3da6a2dbb8362e0a966e7225ef67d |
 | E:\CodexQA\BTH\runs\native-private-close061-s04-trial\evidence\source-trial.json | a695a9ff9302de5a5e61222bdf1388976fb6c6d141d6378e242d70c3a71cf459 |
 | E:\CodexQA\BTH\runs\native-private-close061-s04-trial\evidence\source-restored.json | 9c6fb108c1a737a2b8e89260c786056180f87b4125c0c7234527d4030fe36739 |
+
+## Additional UI-wrapper attempt
+
+The optional focused UI wrapper cl061-s04-ui used a360-second outer QA budget.
+It completed strict validate_project232.960s, import11.718s and all831 script
+loads45.406s, then entered ui_scene_compile before the outer budget expired.
+This is an incomplete run, not a UI pass or a product failure. The existing
+FoundationSuite UI option still runs those preconditions. The owned Job drained
+to zero with no cleanup errors. Final full candidate Smoke remains required.
+The direct packaging and actual source-menu checks above are the qualified
+CLOSE-04 results; no check or budget inside the maintained suite was changed.
+
+The direct unchanged maintained UI split runner was then invoked with the same
+private roots and resource limits: ui_scene/compile_run_menu_and_game_flows.gd,
+exit0,120.83s, UI scene compile check passed, no script errors, owned processes0.
+This isolates the changed UI expectation without repeating already successful
+validation/import/load preconditions. The complete final candidate Smoke remains
+required after CLOSE-06; the interrupted wrapper is retained as incomplete.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-s04-ui, cl061-s04-ui-direct, cl061-checkpoint-prepare.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-checkpoint-evidence\evidence\raw-evidence-index.json | 88a94a540fa10de165320ad1d924af90526bb3cdbd349530cd205d9155165832 |
+| E:\CodexQA\BTH\runs\cl061-s04-ui-direct\evidence\results.json | 8f979482845a19494ef975a971093afc76acd616b6012eb8ca418125918fce0b |
+| E:\CodexQA\BTH\runs\cl061-checkpoint-prepare\evidence\handoff-observation.json | a0e8db39cf4750c42e486871110d4d2d53e147b306bab0728f10e8977e952f22 |
+| E:\CodexQA\BTH\runs\cl061-checkpoint-prepare\evidence\next-status.json | 7d37ec16b0089d2db45f53980a0793a362ada8fd4db1c323d380581b45913134 |
+
+Checkpoint reconciliation uses the same current-group snapshots and fixed
+comparison time as the established baseline:1681 findings, unchanged; zero
+CLOSE-/AUD061 findings.1671 are unrelated preserved runtime-inventory findings.
+No unrelated runtime, owner or protected resource was changed.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-checkpoint-reconcile.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-checkpoint-commit\evidence\raw-evidence-index.json | f4484a9dcd145e4cdfe8fd626d9b039a5c3f70a447ed3d3f73e1cdec9c709998 |
+| E:\CodexQA\BTH\runs\cl061-checkpoint-reconcile\evidence\reconciliation.json | e1c22860660ef8777052b722cba068437ec081d8e6046d75361390129559629a |
