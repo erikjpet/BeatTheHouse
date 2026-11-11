@@ -3152,3 +3152,7 @@ func _dict_ref(value: Variant) -> Dictionary:
 
 func _array_ref(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+func environment_hook_is_recovery(hook_id: String, action_id: String) -> bool:
+	return hook_id == "scratch_ticket_clerk" and action_id in ["", "redeem_scratch_winners"]

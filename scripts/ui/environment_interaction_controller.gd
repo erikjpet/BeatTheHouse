@@ -236,7 +236,7 @@ static func _gather_live_records(host: Variant) -> Array:
 		"shopkeeper_label": host._shopkeeper_label(),
 		"shop_description": host._shop_description(),
 		"before_travel_objects": before_travel_objects,
-		"travel_choices": travel_choices,
+		"travel_choices": _authorized_room_exit_choices(host.run_state.current_environment, travel_choices),
 		"direct_room_exit": host._local_parent_home_door_travel_choice(host._parent_home_parent_target_id()),
 		"travel_risk_summary": Callable(host, "_travel_risk_summary"),
 		"travel_preview_summary": Callable(host, "_travel_preview_summary"),
@@ -245,6 +245,22 @@ static func _gather_live_records(host: Variant) -> Array:
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
 	return result
+
+
+# Inspectable map routes may exist while no local exit is part of the committed
+# room (for example every destination is currently closed). They must not mint
+# an unsealed door and invalidate otherwise valid room geometry. The global map
+# remains available; ordinary sealed exits and initial construction are unchanged.
+static func _authorized_room_exit_choices(environment: Dictionary, choices: Array) -> Array:
+	var rows := _array(_dict(environment.get("object_manifest", {})).get("rows", []))
+	if rows.is_empty():
+		return choices
+	for value in rows:
+		var row := _dict(value)
+		var identity := str(row.get("presentation_object_id", row.get("object_id", "")))
+		if identity == "travel:leave" and bool(row.get("active", true)) and bool(row.get("physical", true)):
+			return choices
+	return []
 
 
 static func compile_room_catalog_at_boundary(host: Variant) -> Array:
@@ -640,8 +656,9 @@ static func _manifest_layout_annotated_record(record: Dictionary, bindings: Dict
 		result["slot_family"] = family
 	if not result.has("presentation_mode"):
 		result["presentation_mode"] = str(binding.get("presentation_mode", "overflow"))
-	if not result.has("fixed_slot_geometry"):
-		result["fixed_slot_geometry"] = true
+	# This binding has passed the sealed family/class/slot join above. A live
+	# view model's default false must not re-enable legacy geometry expansion.
+	result["fixed_slot_geometry"] = true
 	var rect := _dict(object_rects.get(binding_id, {}))
 	if not rect.is_empty() and str(result.get("presentation_mode", "")) == "room" and not result.has("focus_rect"):
 		if not result.has("normalized_rect"):

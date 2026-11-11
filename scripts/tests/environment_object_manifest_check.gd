@@ -1323,7 +1323,7 @@ func _check_controller_fail_closed_membership() -> void:
 	var preference_errors := EnvironmentInteractionControllerScript._manifest_layout_correlation_errors(preference_rows, preference_bindings)
 	_check(preference_errors.size() == 2, "controller exact-slot policy", "expected fixed/exit rejection only, got %s" % JSON.stringify(preference_errors))
 	var annotated_event := EnvironmentInteractionControllerScript._manifest_layout_annotated_record(
-		{"object_id": "event:fixture", "placement_class": "wall_mounted", "manifest_exact_slot_id": "event.preferred"},
+		{"object_id": "event:fixture", "placement_class": "wall_mounted", "manifest_exact_slot_id": "event.preferred", "fixed_slot_geometry": false},
 		preference_bindings,
 		{"event:fixture": {"x": 0.1, "y": 0.2, "w": 0.2, "h": 0.2}},
 		"event:fixture",
@@ -1331,6 +1331,7 @@ func _check_controller_fail_closed_membership() -> void:
 		"event"
 	)
 	_check(str(annotated_event.get("slot_id", "")) == "event.alternate", "controller exact-slot policy", "event preference blocked an authenticated alternate slot")
+	_check(bool(annotated_event.get("fixed_slot_geometry", false)), "controller authored geometry", "a live default false restored legacy visual expansion after an authenticated slot join")
 
 
 func _delivery_fixture_run(library: ContentLibrary, seed_text: String) -> RunState:

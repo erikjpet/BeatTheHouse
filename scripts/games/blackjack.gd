@@ -127,6 +127,8 @@ const BJ_CENTER_FELT_COLORS := [Color("#063f35")]
 
 var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
+const CHIP_RIM_GEOMETRY_CACHE_LIMIT := 128
+var chip_rim_geometry_cache: Dictionary = {}
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
 
@@ -1481,13 +1483,15 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	var phase_id := str(projection.get("phase_id", "wagering"))
 	var energy_tier := str(projection.get("energy_tier", "quiet"))
 	var totals := _draw_dict_view(projection.get("readable_totals", {}))
+	var available_funds := int(totals.get("available_funds", 0))
+	var returned_stake := int(totals.get("returned_stake", 0))
+	var payout := int(totals.get("payout", 0))
 	if not bool(surface_state.get("boss_duel_active", false)) and surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
-		totals = totals.duplicate(false)
 		if bool(surface_state.get("between_hands", false)):
 			var accepted_return := int(_draw_dict_view(surface_state.get("last_result", {})).get("bankroll_delta", 0))
-			totals["available_funds"] = maxi(0, int(totals.get("available_funds", 0)) - accepted_return)
-		totals["returned_stake"] = 0
-		totals["payout"] = 0
+			available_funds = maxi(0, available_funds - accepted_return)
+		returned_stake = 0
+		payout = 0
 	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
 	var phase_rect := Rect2(28, 120, 164, 20)
 	TableVisualsScript._draw_neon_panel(surface, phase_rect, accent, 0.13)
@@ -1497,11 +1501,11 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(money_rect, Color(accent.r, accent.g, accent.b, 0.38), false, 1)
 	var wager_currency := _blackjack_surface_currency(surface_state)
 	surface.surface_label_centered("AVAILABLE %s   PENDING %s   AT RISK %s   RETURN %s   PAYS %s" % [
-		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("available_funds", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, available_funds, true),
 		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("pending_total", 0)), true),
 		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("at_risk_total", 0)), true),
-		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("returned_stake", 0)), true),
-		PlayerTextScript.format_currency_amount(wager_currency, int(totals.get("payout", 0)), true),
+		PlayerTextScript.format_currency_amount(wager_currency, returned_stake, true),
+		PlayerTextScript.format_currency_amount(wager_currency, payout, true),
 	], money_rect, 6, C_WHITE)
 	var pit_actor: Dictionary = {}
 	for actor_value in _draw_array_view(projection.get("actors", [])):
@@ -4423,12 +4427,15 @@ func _draw_casino_chip(surface, center: Vector2, value: int, radius: float, alph
 	surface.draw_circle(center + Vector2(2, 3), radius, Color(0, 0, 0, 0.28 * alpha))
 	surface.draw_circle(center, radius, Color(color.r, color.g, color.b, 0.95 * alpha))
 	surface.draw_circle(center, radius * 0.78, Color(rim.r, rim.g, rim.b, 0.86 * alpha), false, maxf(1.0, radius * 0.12))
-	for i in range(12):
-		var angle := (float(i) / 12.0) * PI * 2.0
-		var dir := Vector2(cos(angle), sin(angle))
-		var p0 := center + dir * radius * 0.70
-		var p1 := center + dir * radius * 0.98
-		surface.draw_line(p0, p1, Color(rim.r, rim.g, rim.b, 0.88 * alpha), maxf(1.0, radius * 0.10))
+	var rim_points := _cached_chip_rim_geometry(center, radius)
+	var rim_color := Color(rim.r, rim.g, rim.b, 0.88 * alpha)
+	var rim_width := maxf(1.0, radius * 0.10)
+	if surface.has_method("draw_multiline"):
+		surface.draw_multiline(rim_points, rim_color, rim_width)
+	else:
+		# Existing lightweight audit surfaces can replay the same segment pairs.
+		for point_index in range(0, rim_points.size(), 2):
+			surface.draw_line(rim_points[point_index], rim_points[point_index + 1], rim_color, rim_width)
 	surface.draw_circle(center, radius * 0.50, Color("#101018"))
 	surface.draw_circle(center, radius * 0.50, Color(color.r, color.g, color.b, 0.42 * alpha), false, maxf(1.0, radius * 0.08))
 	if radius >= 8.0:
@@ -8928,3 +8935,91 @@ static func _draw_dict_view(value: Variant) -> Dictionary:
 
 static func _draw_array_view(value: Variant) -> Array:
 	return value as Array if typeof(value) == TYPE_ARRAY else []
+
+
+func round_net_feedback_delta(result: Dictionary) -> Variant:
+	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \
+			or bool(result.get("applied_currency_unknown", false)) \
+			or not GameModule.applied_currency_settlement(result).is_empty():
+		return null
+	for key in ["outcome_bankroll_delta", "round_net_delta", "blackjack_round_net_delta"]:
+		if result.has(key):
+			var value: Variant = result[key]
+			return int(value) if _feedback_value_is_integer(value) else null
+	return null
+
+
+func round_net_feedback_lead(result: Dictionary) -> String:
+	var net: Variant = round_net_feedback_delta(result)
+	if net == null:
+		return ""
+	var currency := str(result.get("currency", ""))
+	if currency == "chips":
+		return "Blackjack net: %+d chips." % int(net)
+	if currency == "cash":
+		return "Blackjack net: $%+d." % int(net)
+	return ""
+
+
+func story_is_unwagered_observation(entry: Dictionary) -> bool:
+	if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or not bool(entry.get("sat_out", false)):
+		return false
+	# Watching the next automatic hand must not replace the last paid outcome.
+	# Retain any money, Heat, security or terminal consequence as a real result.
+	if bool(entry.get("ended", false)) or bool(entry.get("dealer_caught_cheat", false)) \
+			or not str(entry.get("security_message", "")).is_empty() or entry.has("applied_currency_settlement"):
+		return false
+	for key in ["bankroll_delta", "currency_delta", "chips_delta", "cash_delta", "round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta", "suspicion_delta", "stake", "wager_debited", "total_wager", "settlement_return_delta", "main_delta", "side_delta", "nominal_bankroll_delta"]:
+		if entry.has(key) and (not _feedback_value_is_integer(entry[key]) or int(entry[key]) != 0):
+			return false
+	var settlement := JsonCoerceScript._copy_dict(entry.get("settlement", {}))
+	if settlement.has("delta") and (not _feedback_value_is_integer(settlement.delta) or int(settlement.delta) != 0):
+		return false
+	return true
+
+
+func story_is_unmeasured_penalty(entry: Dictionary) -> bool:
+	var room := str(entry.get("environment_archetype_id", entry.get("environment_id", "")))
+	return str(entry.get("game_id", "")) == "blackjack" and int(entry.get("bankroll_delta", 0)) <= 0 \
+			and bool(entry.get("dealer_caught_cheat", false)) \
+			and (room == "grand_casino" or room.begins_with("grand_casino_"))
+
+
+func _feedback_value_is_integer(value: Variant) -> bool:
+	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value)) and float(value) == float(int(value))
+
+func restored_surface_stake(ui_state: Dictionary) -> int:
+	return int(ui_state.get("selected_stake", 0))
+
+func uses_round_net_feedback() -> bool:
+	return true
+
+func story_feedback_keys() -> Array:
+	return ["round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta"]
+
+func unmeasured_penalty_message(entry: Dictionary, nominal: int) -> String:
+	var label := "Caught peeking" if str(entry.get("action_id", "")) == "peek_hole_card" else "Blackjack penalty"
+	return "%s. Recorded penalty: %d chips. The actual applied loss was not recorded in this older save." % [label, absi(nominal)]
+
+func settled_round_message() -> String:
+	return "Blackjack hand settled."
+
+func terminal_checkpoint_uses_web_phases(environment: Dictionary) -> bool:
+	var flags := JsonCoerceScript._copy_dict(environment.get("local_narrative_flags", {}))
+	return str(flags.get("blackjack_boss_variant", "")) == "rourke_duel"
+
+
+func _cached_chip_rim_geometry(center: Vector2, radius: float) -> PackedVector2Array:
+	var key := Vector3(center.x, center.y, radius)
+	if chip_rim_geometry_cache.has(key):
+		return chip_rim_geometry_cache[key]
+	var points := PackedVector2Array()
+	for index in range(12):
+		var angle := (float(index) / 12.0) * PI * 2.0
+		var direction := Vector2(cos(angle), sin(angle))
+		points.append(center + direction * radius * 0.70)
+		points.append(center + direction * radius * 0.98)
+	if chip_rim_geometry_cache.size() >= CHIP_RIM_GEOMETRY_CACHE_LIMIT:
+		chip_rim_geometry_cache.erase(chip_rim_geometry_cache.keys()[0])
+	chip_rim_geometry_cache[key] = points
+	return points

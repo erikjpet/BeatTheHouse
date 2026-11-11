@@ -4720,3 +4720,11 @@ func _array_size(value: Variant) -> int:
 	if typeof(value) != TYPE_ARRAY:
 		return 0
 	return (value as Array).size()
+
+
+func environment_hook_is_recovery(hook_id: String, action_id: String) -> bool:
+	return hook_id == "ticket_redeemer" and action_id in ["", "redeem_pull_tab_winners"]
+
+
+func environment_coach_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return {"scripted_target_redeemed": tutorial_redemption_completed(run_state, environment)}

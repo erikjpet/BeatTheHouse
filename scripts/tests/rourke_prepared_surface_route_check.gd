@@ -25,9 +25,9 @@ class ObservedMain extends Main:
 	func _current_game_surface_input_time_msec() -> int:
 		return input_clock
 
-	func select_game_action(action_id: String, action_kind: String, input_route_guarded: bool = false) -> void:
+	func select_game_action(action_id: String, action_kind: String, input_route_guarded: bool = false, refresh_presentation: bool = true) -> void:
 		selections += 1
-		super.select_game_action(action_id, action_kind, input_route_guarded)
+		super.select_game_action(action_id, action_kind, input_route_guarded, refresh_presentation)
 
 	func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_requested: bool = false, notify_coach: bool = true, input_route_guarded: bool = false) -> bool:
 		if command.has("_sealed_action_host_prepared") and bool(command.get("direct_resolve", false)):

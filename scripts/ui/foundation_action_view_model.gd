@@ -500,6 +500,9 @@ static func game_test_environment(host: Variant, game_id: String, game: GameModu
 	if not environment_overrides.is_empty():
 		host._deep_merge_dict(environment, environment_overrides)
 	if game_id == "slot":
+		# Its six cabinets need their own exact placement authority; the ordinary
+		# casino has fewer free slots and must retain its saved geometry hashes.
+		environment["local_narrative_flags"]["practice_placement_id"] = "slot_cabinet_bank"
 		# The Slot practice room doubles as the production stress room: expose one
 		# fixture for every family/format identity so six cabinets can autoplay while
 		# the player watches any one of them.

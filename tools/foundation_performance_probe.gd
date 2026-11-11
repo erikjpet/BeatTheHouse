@@ -15,6 +15,7 @@ const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_ove
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PerformanceFixtureSetupScript := preload("res://scripts/ui/performance_fixture_setup.gd")
+const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const SlotMachineStateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
@@ -1451,22 +1452,16 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 	if run_state == null:
 		failures.append("Late-run Crew dialogue probe could not access RunState.")
 		return
+	var generator := RunGenerator.new(app.get("library"))
+	var arrival := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, "delta_queen", true, app.get("library"), failures, "late-run Crew performance arrival")
+	if not bool(arrival.get("ok", false)):
+		return
 	run_state.bankroll = 1
 	run_state.economic_state = "volatile"
 	var environment := run_state.current_environment.duplicate(true)
-	environment["id"] = "perf_delta_queen_late_run"
-	environment["world_node_id"] = "delta_queen"
-	environment["archetype_id"] = "delta_queen"
-	environment["display_name"] = "Delta Queen"
-	environment["kind"] = "casino"
-	environment["tier"] = 2
-	environment["game_ids"] = []
-	environment["event_ids"] = []
-	environment["resolved_event_ids"] = []
-	environment["service_ids"] = []
-	environment["lender_hooks"] = ["the_crew"]
-	environment["travel_hooks"] = []
-	environment["next_archetypes"] = []
+	if not (environment.get("lender_hooks", []) as Array).has("the_crew"):
+		failures.append("Late-run Crew performance room did not declare its real Crew lender.")
+		return
 	var legacy_mask: Array = []
 	legacy_mask.resize(256 * 192)
 	legacy_mask.fill(255)
@@ -1501,18 +1496,11 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 		"last_settled_ticket": legacy_losers.back().duplicate(true),
 		"last_settled_pile": "loser_pile",
 	}
-	environment["game_states"] = {"scratch_tickets": legacy_player_state.duplicate(true)}
+	var retained_game_states: Dictionary = environment.get("game_states", {})
+	retained_game_states["scratch_tickets"] = legacy_player_state.duplicate(true)
+	environment["game_states"] = retained_game_states
 	run_state.current_environment = environment
 	run_state.portable_ticket_piles = {"scratch_tickets": {origin_key: legacy_player_state}}
-	run_state.world_map = {
-		"version": 1,
-		"seed_text": run_state.seed_text,
-		"start_node_id": "delta_queen",
-		"current_node_id": "delta_queen",
-		"nodes": [{"id": "delta_queen", "state": "visited", "environment": environment.duplicate(true)}],
-		"edges": [],
-		"visited_path": ["delta_queen"],
-	}
 	var legacy_save_started := Time.get_ticks_usec()
 	var legacy_snapshot := run_state.to_dict()
 	var legacy_json := JSON.stringify(legacy_snapshot)
@@ -1520,6 +1508,10 @@ func _probe_late_run_crew_dialogue_budget() -> void:
 	var legacy_chars := legacy_json.length()
 	var migrated := RunState.new()
 	migrated.from_dict(legacy_snapshot)
+	var finalized := migrated.scenario_finalize_installed_environment(app.get("library"))
+	if not bool(finalized.get("ok", false)):
+		failures.append("Late-run Crew restored room did not finalize: %s." % str(finalized.get("errors", [])))
+		return
 	app.set("run_state", migrated)
 	app.call("_refresh_run_action_service")
 	app.call("clear_interaction_focus")

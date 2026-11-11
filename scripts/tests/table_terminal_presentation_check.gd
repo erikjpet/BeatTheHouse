@@ -66,6 +66,7 @@ func _run() -> void:
 		quit(2)
 		return
 	_check_finite_canvas_channels()
+	await _entry_terminal_boundary()
 	for fixture in ["stand", "hit", "nonending", "reduced"]:
 		await _blackjack(fixture)
 	await _baccarat()
@@ -304,3 +305,17 @@ func _check(condition: bool, message: String) -> void:
 	if not condition:
 		failures.append(message)
 		push_error(message)
+
+# Entering a table is not a settled hand and must not own a result wait.
+func _entry_terminal_boundary() -> void:
+	var app := await _new_host("entry_only", 100)
+	if not _start(app, "blackjack"):
+		await _close(app)
+		return
+	_check(str(app.last_game_result.get("type", "")) == "game_enter", "Entry fixture has no played table outcome")
+	var before := [app.run_state.bankroll, app.run_state.grand_casino_chips, app.run_state.rng_state, app.run_state.inventory.duplicate(true)]
+	app.run_state.fail_run(RunState.FAILURE_POLICE_CAPTURE, RunState.POLICE_CAPTURE_FAILURE_MESSAGE)
+	app._evaluate_run_terminal_state()
+	_check(app.current_screen == "FAILURE" and app.current_game == null and app.terminal_game_result_presentation.is_empty(), "External failure after entry routes immediately without a fabricated hand wait")
+	_check(before == [app.run_state.bankroll, app.run_state.grand_casino_chips, app.run_state.rng_state, app.run_state.inventory], "Entry-only terminal routing preserves cash/chips/RNG/inventory")
+	await _close(app)

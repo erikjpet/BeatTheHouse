@@ -1445,13 +1445,74 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	if gas_talk_occupied.intersects(gas_peek_anchor.grow(10.0)):
 		push_error("Pal's pull-tab instruction overlapped the highlighted Peek control: talk=%s target=%s." % [str(gas_talk_occupied), str(gas_peek_anchor)])
 		return false
+	# Since27368b99, completion belongs to the retained paid target receipt and
+	# the environment screen, not a transient hook id fabricated on GAME.
+	var redeem_lesson: Dictionary = app.get("library").tutorial_lesson("tutorial_gas_redeem")
 	app.set("last_hook_result", {"type": "game_hook", "action_id": "redeem_pull_tab_winners"})
 	var redeem_context: Dictionary = app.call("_coach_context_snapshot")
-	var redeem_lesson: Dictionary = app.get("library").tutorial_lesson("tutorial_gas_redeem")
-	if str((redeem_context.get("action", {}) as Dictionary).get("last_action_id", "")) != "redeem_pull_tab_winners" or not CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
-		push_error("The real Pull Tabs counter result could not satisfy Pal's redemption lesson: context=%s lesson=%s." % [str(redeem_context.get("action", {})), str(redeem_lesson.get("completion", {}))])
+	if CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
+		push_error("An unpaid tutorial winner completed redemption from a hook id alone.")
 		return false
 	app.set("last_hook_result", {})
+	var redemption_game: GameModule = app.get("current_game")
+	for _purchase in range(8):
+		var purchase_state: Dictionary = redemption_game.coach_state(run_state, run_state.current_environment, app.get("game_surface_ui_state"))
+		if bool(purchase_state.get("scripted_target_consumed", false)):
+			break
+		app.call("_on_game_surface_action", "pull_tab_buy", 0, false)
+		await create_timer(0.9).timeout
+		app.call("_on_game_surface_action", "pull_tab_collect_tray", 0, false)
+		await create_timer(0.4).timeout
+	var purchased_state: Dictionary = redemption_game.coach_state(run_state, run_state.current_environment, app.get("game_surface_ui_state"))
+	if not bool(purchased_state.get("scripted_target_consumed", false)):
+		push_error("The real tutorial purchase route did not reach its marked target within eight paid tickets.")
+		return false
+	# Every purchase is a real stack entry. Open and file each in turn; latest
+	# does not mean the marked tutorial ticket, and one reveal opens all windows.
+	for _ticket in range(8):
+		var filing_progress: Dictionary = redemption_game.coach_state(run_state, run_state.current_environment, app.get("game_surface_ui_state"))
+		if bool(filing_progress.get("scripted_target_filed", false)):
+			break
+		app.call("_on_game_surface_action", "pull_tab_latest", 0, false)
+		app.call("_on_game_surface_action", "pull_tab_reveal_next", -1, false)
+		await create_timer(1.2).timeout
+		app.call("_on_game_surface_action", "pull_tab_file_ticket", -1, false)
+		await create_timer(0.9).timeout
+	var filed_state: Dictionary = redemption_game.coach_state(run_state, run_state.current_environment, app.get("game_surface_ui_state"))
+	if not bool(filed_state.get("scripted_target_filed", false)):
+		push_error("The real tutorial peel/file route did not file its marked winner: %s." % str(filed_state))
+		return false
+	app.call("back_to_environment")
+	await process_frame
+	redeem_context = app.call("_coach_context_snapshot")
+	if CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
+		push_error("A filed but unpaid winner completed Pal's redemption lesson.")
+		return false
+	var cash_before_redemption: int = run_state.bankroll
+	var counter: Dictionary = app.call("_interactable_object", "character:nell")
+	var redemption_action_key := ""
+	for attached_value in counter.get("attached_room_actions", []):
+		var attached: Dictionary = attached_value
+		if str((attached.get("action", {}) as Dictionary).get("id", "")) == "redeem_pull_tab_winners":
+			redemption_action_key = str(attached.get("key", ""))
+	if redemption_action_key.is_empty() or not bool(app.call("focus_interactable_object", "character:nell")) \
+			or not bool(app.call("_activate_attached_room_action", "character:nell", redemption_action_key)):
+		push_error("The real Nell counter could not redeem the filed tutorial target.")
+		return false
+	await process_frame
+	app.set("last_hook_result", {})
+	redeem_context = app.call("_coach_context_snapshot")
+	if run_state.bankroll <= cash_before_redemption \
+			or str(redeem_context.get("screen", "")) != "ENVIRONMENT" \
+			or not CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
+		push_error("The paid retained Pull Tabs receipt did not satisfy Pal's environment redemption lesson.")
+		return false
+	var cash_after_redemption: int = run_state.bankroll
+	var rng_after_redemption: int = run_state.rng_state
+	app.call("_activate_attached_room_action", "character:nell", redemption_action_key)
+	if run_state.bankroll != cash_after_redemption or run_state.rng_state != rng_after_redemption:
+		push_error("Repeating the paid tutorial counter changed cash or RNG.")
+		return false
 	app.call("back_to_environment")
 	await process_frame
 	app.call("open_run_menu")
@@ -3025,6 +3086,8 @@ func _install_multi_slot_fixture_room(app: Control, run_state: RunState) -> bool
 	var slot_game: GameModule = slot_game_value
 	var environment := {
 		"id": "ui_multi_slot_fixture_room",
+		# This static interaction fixture does not own a live venue cycle.
+		"local_narrative_flags": {"environment_test_session": true},
 		"archetype_id": "grand_casino",
 		"display_name": "Multi Slot Fixture",
 		"kind": "casino",
@@ -3048,7 +3111,15 @@ func _install_multi_slot_fixture_room(app: Control, run_state: RunState) -> bool
 		push_error("Multi-slot fixture did not generate three independent slot machine states.")
 		return false
 	environment["game_states"] = fixture_states
-	run_state.set_environment(environment)
+	var installed := run_state.set_environment(environment)
+	if not bool(installed.get("ok", false)):
+		push_error("Multi-slot fixture installation failed: %s." % str(installed.get("errors", [])))
+		return false
+	var arrival_errors: Array = []
+	var finalized := HarnessProductionFidelityScript.finalize_arrival(run_state, app.get("library"), arrival_errors, "multi-slot UI fixture")
+	if not bool(finalized.get("ok", false)):
+		push_error("Multi-slot fixture finalization failed: %s." % str(arrival_errors))
+		return false
 	app.set("current_game", null)
 	app.call("clear_interaction_focus")
 	app.call("_refresh_run_action_service")
@@ -3158,7 +3229,16 @@ func _enter_action_fixture_game(app: Control, game_id: String) -> bool:
 	var environment: Dictionary = environment_value as Dictionary
 	if environment.is_empty():
 		return false
-	run_state.set_environment(environment)
+	var flags: Dictionary = (environment.get("local_narrative_flags", {}) as Dictionary).duplicate(true)
+	flags["environment_test_session"] = true
+	environment["local_narrative_flags"] = flags
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, app.get("library"))
+	var installed := run_state.set_environment(environment)
+	var errors: Array = []
+	if not bool(installed.get("ok", false)) or not bool(HarnessProductionFidelityScript.finalize_arrival(
+			run_state, app.get("library"), errors, "action UI fixture").get("ok", false)):
+		push_error("Action UI fixture did not install/finalize: %s / %s" % [JSON.stringify(installed), JSON.stringify(errors)])
+		return false
 	app.call("_refresh_run_action_service")
 	app.call("_refresh")
 	app.call("enter_game", game_id)
@@ -3769,6 +3849,7 @@ func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
 	}]
 	var environment := {
 		"id": "ui_preview_focus_fixture",
+		"local_narrative_flags": {"environment_test_session": true},
 		"archetype_id": "corner_store",
 		"display_name": "Preview Focus Fixture",
 		"kind": "shop",
@@ -3779,13 +3860,18 @@ func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
 		"resolved_event_ids": [],
 		"item_offers": [{"id": "creased_luck_card", "price": 8}],
 		"service_ids": ["cashier_tip"],
-		"lender_hooks": ["street_lender"],
+		"lender_hooks": ["the_crew"],
 		"next_archetypes": ["bar"],
 		"travel_hooks": ["bar"],
 		"object_fixtures": ["shopkeeper:merchant"],
 	}
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
-	fixture_run.set_environment(environment)
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, app.get("library"))
+	var installed := fixture_run.set_environment(environment)
+	var arrival_errors: Array = []
+	if not bool(installed.get("ok", false)) or not bool(HarnessProductionFidelityScript.finalize_arrival(
+			fixture_run, app.get("library"), arrival_errors, "preview focus fixture").get("ok", false)):
+		push_error("Preview fixture did not install/finalize its physical authority: %s / %s" % [JSON.stringify(installed), JSON.stringify(arrival_errors)])
+		return false
 	_set_ui_fixture_run(app, fixture_run)
 	app.call("clear_interaction_focus")
 	var serialized_before_frame := JSON.stringify(app.call("serialized_run_state"))
@@ -3809,9 +3895,9 @@ func _check_preview_focus_keeps_serialized_run_state(app: Control) -> bool:
 		return false
 	if not await _preview_call_keeps_serialized_run_state(app, "service selection", "select_service_hook", ["cashier_tip"]):
 		return false
-	if not await _preview_call_keeps_serialized_run_state(app, "lender focus", "focus_interactable_object", ["lender:street_lender"]):
+	if not await _preview_call_keeps_serialized_run_state(app, "lender focus", "focus_interactable_object", ["lender:the_crew"]):
 		return false
-	if not await _preview_call_keeps_serialized_run_state(app, "lender selection", "select_lender_hook", ["street_lender"]):
+	if not await _preview_call_keeps_serialized_run_state(app, "lender selection", "select_lender_hook", ["the_crew"]):
 		return false
 	if not await _preview_call_keeps_serialized_run_state(app, "travel category preview", "select_action_category", ["travel"]):
 		return false
@@ -4023,6 +4109,8 @@ func _grand_casino_environment_for_ui(app: Control) -> Dictionary:
 		return {}
 	var environment := archetype.duplicate(true)
 	environment["id"] = "grand_casino_ui_hud_fixture"
+	environment["local_narrative_flags"] = (environment.get("local_narrative_flags", {}) as Dictionary).duplicate(true)
+	environment["local_narrative_flags"]["environment_test_session"] = true
 	environment["archetype_id"] = "grand_casino"
 	environment["display_name"] = "Grand Casino"
 	environment["kind"] = "boss"
@@ -4052,6 +4140,7 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	# synthesize a canvas actor in Motel, where no Crew slot is authored.
 	var environment := {
 		"id": "ui_crew_lender_interrupt_fixture",
+		"local_narrative_flags": {"environment_test_session": true},
 		"archetype_id": "corner_store",
 		"display_name": "Corner Store Lender Fixture",
 		"kind": "shop",
@@ -4067,8 +4156,13 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		"next_archetypes": [],
 		"object_fixtures": [],
 	}
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
-	run_state.set_environment(environment)
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, library)
+	var installed := run_state.set_environment(environment)
+	var arrival_errors: Array = []
+	if not bool(installed.get("ok", false)) or not bool(HarnessProductionFidelityScript.finalize_arrival(
+			run_state, library, arrival_errors, "Crew lender UI fixture").get("ok", false)):
+		push_error("Crew lender fixture failed installation/finalization: %s / %s" % [JSON.stringify(installed), JSON.stringify(arrival_errors)])
+		return false
 	app.call("clear_interaction_focus")
 	app.call("_refresh")
 	await process_frame
@@ -4161,7 +4255,7 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	app.call("_on_talk_dock_choice_requested", str(talk.get("event_id", "")), "accept")
 	await process_frame
 	var rejected_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(rejected_talk.get("visible", false)) or str(rejected_talk.get("event_id", "")) != str(talk.get("event_id", "")) or run_state.bankroll != 1 or not run_state.debt.is_empty():
+	if not bool(rejected_talk.get("visible", false)) or str(rejected_talk.get("event_id", "")) != str(talk.get("event_id", "")) or run_state.bankroll != 1 or not run_state.debt.is_empty() or run_state.crew_delivery_obligation_count() != 0:
 		push_error("Rejected lender acceptance consumed its retryable conversation or leaked a partial transaction: %s." % JSON.stringify(rejected_talk))
 		return false
 	run_state.set("_turn_transaction_test_failure_stage", "")
@@ -4171,16 +4265,8 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 		push_error("Crew lender conversation stayed open after accepting the offer.")
 		return false
 	var state: Dictionary = app.call("serialized_run_state")
-	if int(state.get("bankroll", 0)) <= 1:
-		push_error("Crew lender popup regression fixture did not apply the crew loan.")
-		return false
-	var crew_debt_found := false
-	for debt_value in state.get("debt", []):
-		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("lender_id", "")) == "the_crew":
-			crew_debt_found = true
-			break
-	if not crew_debt_found:
-		push_error("Crew lender popup regression fixture did not create the crew marker.")
+	if int(state.get("bankroll", 0)) != 71 or run_state.crew_delivery_obligation_count() != 2 or not run_state.debt.is_empty():
+		push_error("Crew lender did not atomically grant exactly70 cash for2 obligations without cash debt: cash=%d owed=%d debt=%s." % [run_state.bankroll, run_state.crew_delivery_obligation_count(), JSON.stringify(run_state.debt)])
 		return false
 	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
 	if bool(popup.get("visible", false)):

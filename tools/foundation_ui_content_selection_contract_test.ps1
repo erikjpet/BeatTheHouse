@@ -53,32 +53,36 @@ $duplicateSecurity = Get-FoundationUiContentSelectionScan ($source + "`n" + $sec
 Assert-ContentClassification ($duplicateSecurity.HostSecurityAllowlistCount -eq 2 -and $duplicateSecurity.ScanText.Contains('"slot"')) "Duplicate security allowlists must remain unclassified."
 
 # Each current feedback fragment must remain tied to its exact function and
-# predicate. A global Blackjack exception or whole-function mask would hide
+# predicate. Module-owned feedback replaces shell game-id selection. A global
+# Blackjack exception or whole-function mask would hide
 # the extra, moved, changed, duplicated, or ambiguous literals exercised here.
 $blackjackFeedbackBindings = @(
-    @{ Function = '_environment_result_feedback_view'; Lines = @('	if str(result.get("game_id", "")) == "blackjack" and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:') },
-    @{ Function = '_blackjack_round_net_feedback_delta'; Lines = @('	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \', '			or bool(result.get("applied_currency_unknown", false)) \', '			or not GameModule.applied_currency_settlement(result).is_empty():', '		return null') },
-    @{ Function = '_story_is_unwagered_blackjack_watch'; Lines = @('	if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or not bool(entry.get("sat_out", false)):', '		return false') },
-    @{ Function = '_result_from_story_log'; Lines = @('		if str(story_entry.get("game_id", "")) == "blackjack":', '			feedback_keys.append_array(["round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta"])') },
-    @{ Function = '_result_from_story_log'; Lines = @('		if str(restored.get("game_id", "")) == "blackjack" and not restored.has("currency") and _blackjack_round_net_feedback_delta(restored) != null:') }
+    @{ Function = '_environment_result_feedback_view'; Lines = @('	if _recorded_result_game(result) != null and _recorded_result_game(result).uses_round_net_feedback() and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:'); ContentFrom = '_recorded_result_game(result)'; ContentTo = '_recorded_result_game({"game_id": "motel"})'; PredicateFrom = 'uses_round_net_feedback()'; PredicateTo = 'story_is_unmeasured_penalty(result)' },
+    @{ Function = '_round_net_feedback_delta'; Lines = @('	var game := _recorded_result_game(result)', '	return game.round_net_feedback_delta(result) if game != null else null'); ContentFrom = '_recorded_result_game(result)'; ContentTo = '_recorded_result_game({"game_id": "motel"})'; PredicateFrom = 'if game != null else null'; PredicateTo = 'if game == null else null' },
+    @{ Function = '_story_is_unwagered_game_observation'; Lines = @('	var game := _recorded_result_game(entry)', '	return game != null and game.story_is_unwagered_observation(entry)'); ContentFrom = '_recorded_result_game(entry)'; ContentTo = '_recorded_result_game({"game_id": "motel"})'; PredicateFrom = 'game != null and'; PredicateTo = 'game == null and' },
+    @{ Function = '_result_from_story_log'; Lines = @('		var recorded_game := _recorded_result_game(story_entry)', '		if recorded_game != null:', '			feedback_keys.append_array(recorded_game.story_feedback_keys())'); ContentFrom = '_recorded_result_game(story_entry)'; ContentTo = '_recorded_result_game({"game_id": "motel"})'; PredicateFrom = 'if recorded_game != null:'; PredicateTo = 'if recorded_game == null:' },
+    @{ Function = '_result_from_story_log'; Lines = @('		if not restored.has("currency") and _round_net_feedback_delta(restored) != null:'); ContentFrom = '_round_net_feedback_delta(restored)'; ContentTo = '_round_net_feedback_delta({"game_id": "motel"})'; PredicateFrom = 'if not restored.has'; PredicateTo = 'if restored.has' }
 )
 $feedbackHostileCount = 0
 foreach ($binding in $blackjackFeedbackBindings) {
     $fragment = $binding.Lines -join "`n"
     Assert-ContentClassification ([regex]::Matches($source, [regex]::Escape($fragment)).Count -eq 1) "Feedback hostile fixture requires one exact current fragment: $($binding.Function)."
     $duplicatedFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $fragment + "`n" + $fragment)) -RequireReviewedBindings
-    Assert-ContentClassification ($duplicatedFeedback.Issues.Count -gt 0 -and $duplicatedFeedback.ScanText.Contains('"blackjack"')) "Duplicate feedback text must remain unclassified: $($binding.Function)."
+    Assert-ContentClassification ($duplicatedFeedback.Issues.Count -gt 0 -and $duplicatedFeedback.ScanText.Contains($fragment)) "Duplicate feedback text must remain unclassified: $($binding.Function)."
     $feedbackHostileCount += 1
     $movedFeedbackSource = $source.Replace($fragment, "") + "`nfunc _hostile_blackjack_feedback_owner() -> void:`n" + $fragment
     $movedFeedback = Get-FoundationUiContentSelectionScan $movedFeedbackSource -RequireReviewedBindings
-    Assert-ContentClassification ($movedFeedback.Issues.Count -gt 0 -and $movedFeedback.ScanText.Contains('"blackjack"')) "Feedback text moved to another function must remain unclassified: $($binding.Function)."
+    Assert-ContentClassification ($movedFeedback.Issues.Count -gt 0 -and $movedFeedback.ScanText.Contains($fragment)) "Feedback text moved to another function must remain unclassified: $($binding.Function)."
     $feedbackHostileCount += 1
-    $changedFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $fragment.Replace('"blackjack"', '"motel"'))) -RequireReviewedBindings
+    $changedContentFragment = $fragment.Replace($binding.ContentFrom, $binding.ContentTo)
+    Assert-ContentClassification ($changedContentFragment -cne $fragment) "Content mutation must change its current feedback fragment."
+    $changedFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $changedContentFragment)) -RequireReviewedBindings
     Assert-ContentClassification ($changedFeedback.Issues.Count -gt 0 -and $changedFeedback.ScanText.Contains('"motel"')) "Changed feedback content identity must require review: $($binding.Function)."
     $feedbackHostileCount += 1
-    $changedPredicate = if ($fragment.Contains('== "blackjack"')) { $fragment.Replace('== "blackjack"', '!= "blackjack"') } else { $fragment.Replace('!= "blackjack"', '== "blackjack"') }
+    $changedPredicate = $fragment.Replace($binding.PredicateFrom, $binding.PredicateTo)
+    Assert-ContentClassification ($changedPredicate -cne $fragment) "Predicate mutation must change its current feedback fragment."
     $changedFeedbackPredicate = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $changedPredicate)) -RequireReviewedBindings
-    Assert-ContentClassification ($changedFeedbackPredicate.Issues.Count -gt 0 -and $changedFeedbackPredicate.ScanText.Contains('"blackjack"')) "Changed feedback predicate must require review: $($binding.Function)."
+    Assert-ContentClassification ($changedFeedbackPredicate.Issues.Count -gt 0 -and $changedFeedbackPredicate.ScanText.Contains($changedPredicate)) "Changed feedback predicate must require review: $($binding.Function)."
     $feedbackHostileCount += 1
 }
 foreach ($ownerName in @($blackjackFeedbackBindings | ForEach-Object { $_.Function } | Select-Object -Unique)) {
@@ -91,7 +95,7 @@ foreach ($ownerName in @($blackjackFeedbackBindings | ForEach-Object { $_.Functi
     $duplicateFeedbackOwner = Get-FoundationUiContentSelectionScan ($source + "`n" + $declaration + "`n`treturn {`"game_id`": `"blackjack`"}") -RequireReviewedBindings
     Assert-ContentClassification ($duplicateFeedbackOwner.Issues.Count -gt 0 -and $duplicateFeedbackOwner.ScanText.Contains('"blackjack"')) "Duplicate feedback function owners must remain unclassified: $ownerName."
     $feedbackHostileCount += 1
-    $ambiguousFeedbackSource = $source.Replace($declaration, $declaration + "`n`tvar embedded := $tripleQuote`n$tripleQuote")
+    $ambiguousFeedbackSource = $source.Replace($declaration, $declaration + "`n`tvar embedded := $tripleQuote`n$tripleQuote`n`tvar hostile_blackjack_choice := `"blackjack`"")
     $ambiguousFeedback = Get-FoundationUiContentSelectionScan $ambiguousFeedbackSource -RequireReviewedBindings
     Assert-ContentClassification (($ambiguousFeedback.Issues -join "`n").Contains("multiline-string ambiguity") -and $ambiguousFeedback.ScanText.Contains('"blackjack"')) "Ambiguous feedback function text must remain unclassified: $ownerName."
     $feedbackHostileCount += 1

@@ -239,8 +239,33 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var pawn_canvas := app.get("environment_canvas") as Control
 	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")
 	var pawn_layout := JsonCoerceScript._copy_dict(pawn_canvas_view.get("object_layout", {}))
-	if int(pawn_layout.get("overlap_count", -1)) != 0:
-		push_error("Sal shelf fixtures overlap in the authored pawn-shop layout: %s." % JSON.stringify(pawn_layout.get("overlaps", [])))
+	var pawn_targets := JsonCoerceScript._copy_array(pawn_layout.get("objects", []))
+	var target_collisions := _room_target_collisions(pawn_targets)
+	if not target_collisions.is_empty():
+		push_error("Sal shelf interaction targets overlap in the authored pawn-shop layout: %s." % str(target_collisions))
+		return false
+	for target_value in pawn_targets:
+		var target := JsonCoerceScript._copy_dict(target_value)
+		var identity := str(target.get("id", ""))
+		if not identity.begins_with("meta_sal_shelf:"):
+			continue
+		var shelf_index := int(identity.get_slice(":", 1))
+		var binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("item:sal_shelf_%d" % shelf_index, {}))
+		var hit: Array = JsonCoerceScript._copy_dict(binding.get("slot", {})).get("hit_rect", [])
+		if hit.size() != 4 or not _snapshot_rect(target.get("interaction_rect", {})).is_equal_approx(Rect2(float(hit[0]), float(hit[1]), float(hit[2]), float(hit[3]))):
+			push_error("Sal shelf interaction target drifted from its authored slot: %s." % identity)
+			return false
+	var label_layout := JsonCoerceScript._copy_dict(pawn_layout.get("label_layout", {}))
+	if int(label_layout.get("resolved_label_overlap_count", -1)) != 0 or int(label_layout.get("resolved_object_overlap_count", -1)) != 0:
+		push_error("Sal shelf labels overlap resolved labels or objects.")
+		return false
+	var collided_targets := pawn_targets.duplicate(true)
+	if collided_targets.size() < 2:
+		push_error("Sal shelf collision rejection control has fewer than two targets.")
+		return false
+	collided_targets[1]["interaction_rect"] = collided_targets[0]["interaction_rect"].duplicate(true)
+	if _room_target_collisions(collided_targets).is_empty():
+		push_error("Sal shelf collision rejection control accepted coincident targets.")
 		return false
 	if JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])).size() != 6:
 		push_error("Custom pawn-shop room did not author exactly six physical shelf spots.")
@@ -327,17 +352,14 @@ func _check_run_pawn_credit_is_immediate(app: Control) -> bool:
 	if run_state == null:
 		push_error("Pawn immediate-credit check could not start a run.")
 		return false
+	var pawn_errors: Array = []
+	var pawn_generator := RunGenerator.new(app.get("library"))
+	var pawn_arrival := HarnessProductionFidelity.generate_and_finalize(
+		pawn_generator, run_state, pawn_errors, "Pawn immediate-credit fixture", "pawn_shop", true)
+	if not bool(pawn_arrival.get("ok", false)):
+		push_error("Pawn credit fixture could not publish its real room: %s." % JSON.stringify(pawn_errors))
+		return false
 	run_state.bankroll = 100
-	run_state.current_environment = {
-		"id": "ui_pawn_credit_room",
-		"display_name": "Sal's Pawn Shop",
-		"kind": "shop",
-		"tier": 2,
-		"archetype_id": "pawn_shop",
-		"service_ids": [],
-		"lender_hooks": ["sals_pawn_counter"],
-		"layout": {},
-	}
 	run_state.add_item("creased_luck_card")
 	app.call("_refresh_run_action_service")
 	var service := app.get("run_action_service") as RunActionService
@@ -721,4 +743,3 @@ func _qa_action_label(action: Dictionary) -> String:
 	if action_id.is_empty():
 		return "Action"
 	return action_id.replace("_", " ").capitalize()
-

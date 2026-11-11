@@ -7,6 +7,7 @@ extends RefCounted
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
 const SCENARIO_LAYOUT_PATH := "res://data/environments/scenario_slot_layouts.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
+const PracticeEnvironmentPlacementScript := preload("res://scripts/core/practice_environment_placement.gd")
 const SLOT_SCHEMA_VERSION := 2
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const SLOT_COLLECTIONS := {
@@ -172,10 +173,10 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	if authority_revision != _runtime_surface_revision:
 		_runtime_surface_maps.clear()
 		_runtime_surface_revision = authority_revision
-	var cache_key := DeveloperPlacementStoreScript.layout_id(environment)
+	var cache_key := "%s|%s" % [DeveloperPlacementStoreScript.layout_id(environment), PracticeEnvironmentPlacementScript.profile_id(environment)]
 	if _runtime_surface_maps.has(cache_key):
 		return _dict(_runtime_surface_maps.get(cache_key, {}))
-	var result := _with_runtime_slot_geometry(environment, _shipping_surface_map(environment))
+	var result := _with_runtime_slot_geometry(environment, PracticeEnvironmentPlacementScript.surface_map(environment, _shipping_surface_map(environment)))
 	_runtime_surface_maps[cache_key] = result
 	return result
 

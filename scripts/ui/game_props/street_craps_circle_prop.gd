@@ -16,6 +16,10 @@ const C_SHOE := Color("#11131a")
 const C_DENIM := Color("#263c52")
 const C_BROWN := Color("#4b3022")
 const C_RED := Color("#d04455")
+const CASH_CORNERS := [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]
+const CASH_POSITIONS := [Vector3(0.19, 0.69, -0.10), Vector3(0.66, 0.72, 0.08), Vector3(0.72, 0.52, -0.05)]
+const CHALK_GEOMETRY_CACHE_LIMIT := 16
+static var _chalk_geometry_cache: Dictionary = {}
 
 
 # Draws the full floor circle with live dice, point, and dispersed state.
@@ -62,14 +66,13 @@ static func _draw_player_edges(canvas: CanvasItem, safe: Rect2) -> void:
 # Paints the chalk layout and current public game state on the pavement.
 static func _draw_chalk_game(canvas: CanvasItem, safe: Rect2, visual: Dictionary, accent: Color, pulse: float) -> void:
 	var ring := Rect2(safe.position + Vector2(safe.size.x * 0.15, safe.size.y * 0.48), Vector2(safe.size.x * 0.70, safe.size.y * 0.39))
-	var ring_points := _ellipse_points(ring, 36)
+	var geometry := _chalk_geometry(safe)
+	var ring_points: PackedVector2Array = geometry.ring
 	canvas.draw_colored_polygon(ring_points, Color(C_CHALK.r, C_CHALK.g, C_CHALK.b, 0.025 + pulse * 0.025))
 	var outline_color := Color(C_CHALK.r, C_CHALK.g, C_CHALK.b, 0.82)
 	canvas.draw_polyline(ring_points, outline_color, 2.0)
 	canvas.draw_line(ring_points[ring_points.size() - 1], ring_points[0], outline_color, 2.0)
-	var inner := Rect2(ring.position + ring.size * Vector2(0.14, 0.20), ring.size * Vector2(0.72, 0.58))
-	var inner_points := _ellipse_points(inner, 28)
-	inner_points.append(inner_points[0])
+	var inner_points: PackedVector2Array = geometry.inner
 	canvas.draw_polyline(inner_points, Color(C_CHALK_DIM.r, C_CHALK_DIM.g, C_CHALK_DIM.b, 0.72), 1.0)
 	canvas.draw_line(Vector2(ring.position.x + ring.size.x * 0.24, ring.get_center().y), Vector2(ring.end.x - ring.size.x * 0.24, ring.get_center().y), C_CHALK_DIM, 1.0)
 	canvas.draw_line(Vector2(ring.get_center().x, ring.position.y + ring.size.y * 0.16), Vector2(ring.get_center().x, ring.end.y - ring.size.y * 0.14), C_CHALK_DIM, 1.0)
@@ -80,18 +83,9 @@ static func _draw_chalk_game(canvas: CanvasItem, safe: Rect2, visual: Dictionary
 	KitScript.draw_die(canvas, Rect2(center + Vector2(-die_size.x * 1.02, -die_size.y * 0.48), die_size), int(visual.get("last_die_a", 2)), Color("#372b23"), Color("#d8c9ab"))
 	KitScript.draw_die(canvas, Rect2(center + Vector2(die_size.x * 0.10, die_size.y * 0.06), die_size), int(visual.get("last_die_b", 4)), Color("#372b23"), Color("#d8c9ab"))
 
-	for cash_data in [Vector3(0.19, 0.69, -0.10), Vector3(0.66, 0.72, 0.08), Vector3(0.72, 0.52, -0.05)]:
-		var cash_size := Vector2(maxf(8.0, safe.size.x * 0.13), maxf(4.0, safe.size.y * 0.07))
-		var cash_position := safe.position + safe.size * Vector2(cash_data.x, cash_data.y)
-		var cash := Rect2(cash_position, cash_size)
-		# Rotate vertices in board space. Changing the caller's draw transform
-		# here would also move every subsequent room prop away from its hitbox.
-		var cash_points := PackedVector2Array()
-		for corner in [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]:
-			cash_points.append(cash.get_center() + (corner * cash.size).rotated(cash_data.z))
-		canvas.draw_colored_polygon(cash_points, C_CASH)
-		cash_points.append(cash_points[0])
-		canvas.draw_polyline(cash_points, C_CASH_EDGE, 1.0)
+	for cash_geometry in geometry.cash:
+		canvas.draw_colored_polygon(cash_geometry.fill, C_CASH)
+		canvas.draw_polyline(cash_geometry.outline, C_CASH_EDGE, 1.0)
 
 	var point := int(visual.get("point", 0))
 	var marker_color := Color("#e8e5dc") if point == 0 else accent.lerp(Color("#f3ca52"), 0.45)
@@ -126,3 +120,29 @@ static func _ellipse_points(rect: Rect2, segments: int) -> PackedVector2Array:
 		var angle := TAU * float(index) / float(maxi(8, segments))
 		points.append(rect.get_center() + Vector2(cos(angle) * rect.size.x * 0.5, sin(angle) * rect.size.y * 0.5))
 	return points
+
+
+# Geometry depends only on the board rectangle, not the animation clock.
+# A fixed bound admits multiple props/sizes without retaining old camera layouts.
+static func _chalk_geometry(safe: Rect2) -> Dictionary:
+	if _chalk_geometry_cache.has(safe):
+		return _chalk_geometry_cache[safe]
+	var ring := Rect2(safe.position + Vector2(safe.size.x * 0.15, safe.size.y * 0.48), Vector2(safe.size.x * 0.70, safe.size.y * 0.39))
+	var inner := Rect2(ring.position + ring.size * Vector2(0.14, 0.20), ring.size * Vector2(0.72, 0.58))
+	var inner_points := _ellipse_points(inner, 28)
+	inner_points.append(inner_points[0])
+	var cash_geometry: Array = []
+	for cash_data in CASH_POSITIONS:
+		var cash_size := Vector2(maxf(8.0, safe.size.x * 0.13), maxf(4.0, safe.size.y * 0.07))
+		var cash := Rect2(safe.position + safe.size * Vector2(cash_data.x, cash_data.y), cash_size)
+		var points := PackedVector2Array()
+		for corner in CASH_CORNERS:
+			points.append(cash.get_center() + (corner * cash.size).rotated(cash_data.z))
+		var outline := points.duplicate()
+		outline.append(outline[0])
+		cash_geometry.append({"fill": points, "outline": outline})
+	var result := {"ring": _ellipse_points(ring, 36), "inner": inner_points, "cash": cash_geometry}
+	if _chalk_geometry_cache.size() >= CHALK_GEOMETRY_CACHE_LIMIT:
+		_chalk_geometry_cache.erase(_chalk_geometry_cache.keys()[0])
+	_chalk_geometry_cache[safe] = result
+	return result

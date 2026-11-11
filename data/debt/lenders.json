@@ -122,7 +122,7 @@
       "character_identity_key": "the_crew",
       "voice_line_key": "loan_offer"
     },
-    "description": "Cash for two package deliveries. No repayment or interest.",
+    "description": "Cash for two deliveries. No repayment or interest.",
     "debt_profile": {
       "principal_min": 70,
       "principal_max": 70,

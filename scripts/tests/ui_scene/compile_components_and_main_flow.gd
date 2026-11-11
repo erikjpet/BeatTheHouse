@@ -2262,6 +2262,7 @@ func _check_post_action_interrupt_fast_paths(app: Control) -> bool:
 	production_library = app.get("library")
 	app.set("current_game", null)
 	run_state.narrative_flags["health_inspector_closing_actions"] = 1
+	run_state.narrative_flags["health_inspector_origin_environment_id"] = str(run_state.current_environment.get("id", ""))
 	var forced_choices: Array = app.call("_travel_choice_view_list")
 	var has_enabled_forced_choice := false
 	for forced_choice_value in forced_choices:
@@ -2474,6 +2475,15 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if run_state == null or event_definition.is_empty():
 		push_error("Crew-favor talk fixture is unavailable.")
 		return false
+	# Use a real room with authored Crew presence. New obligations replaced the
+	# retired favor-debt model; the last remaining package clears the marker.
+	var crew_arrival_errors: Array = []
+	var crew_arrival := HarnessProductionFidelity.travel_and_finalize(
+		app.get("generator"), run_state, "corner_store", true, library,
+		crew_arrival_errors, "Crew conversation offer room")
+	if not bool(crew_arrival.get("ok", false)):
+		push_error("Crew conversation could not reach its authored group: %s" % JSON.stringify(crew_arrival_errors))
+		return false
 	# Model a real earlier visit without spending test time on an unrelated
 	# round trip. Offer selection must prefer this open, visited venue.
 	var delivery_origin_id := run_state.current_world_node_id()
@@ -2484,23 +2494,15 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, visited_delivery_target_id)
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, delivery_origin_id, run_state.current_environment)
-	# The shipped favor can only be offered against an active Crew marker. Keep
-	# this focused UI fixture at the due-favor seam, but retain the production
-	# debt authority that the handoff must clear atomically with its rewards.
-	run_state.add_debt({
-		"id": "the_crew_marker",
-		"lender_id": RunState.CREW_LENDER_ID,
-		"lender_name": "The Crew",
-		"balance": 1,
-		"debt_kind": "favor",
-		"status": "favor_due",
-		"deadline_turns": 2,
-		"turns_remaining": 0,
-		"default_consequence": "crew_favor_due",
-		"cash_conversion_balance_per_favor": 70,
-		"cash_conversion_interest_rate": 0.35,
-	})
+	# The appointment test controls only the independent hourly offer stream.
+	# Its probability boundary has separate coverage; normal eligibility stays.
+	run_state.narrative_flags["crew_delivery_obligations"] = 1
+	run_state.narrative_flags["crew_marker_clear"] = false
+	run_state.narrative_flags["crew_package_offer_rng_state"] = 48
 	run_state.narrative_flags["crew_favor_pending"] = true
+	if not run_state.crew_delivery_request_context_valid():
+		push_error("Crew conversation fixture lacks a live group or outstanding delivery.")
+		return false
 	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
 	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", {"trigger": "action", "type": "action", "turns": 1}, overrides):
 		push_error("Crew-favor talk fixture could not be queued.")
@@ -2636,13 +2638,31 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
 		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s registrations=%s lifecycle_errors=%s layout_audit=%s manifest_errors=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), JSON.stringify(run_state.current_environment.get("scenario_layout_audit", {})), JSON.stringify(run_state.current_environment.get("object_manifest_errors", [])), JSON.stringify(delivery_object_summary)])
 		return false
+	var appointment := CrewDeliverySchedule.window_for(run_state.active_delivery_run, target_id)
+	if appointment.is_empty():
+		push_error("Crew conversation target has no authored appointment.")
+		return false
+	var opens := int(appointment.get("opens", -1))
+	if run_state.game_clock_minutes < opens:
+		var early_account := [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory.duplicate(true), run_state.crew_delivery_obligation_count()]
+		if bool(app.call("_complete_delivery_handoff", target_id)) or early_account != [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory, run_state.crew_delivery_obligation_count()]:
+			push_error("Early Crew handoff settled or changed the account.")
+			return false
+		var clock_result := run_state.advance_game_clock_minutes(opens - run_state.game_clock_minutes)
+		if not bool(clock_result.get("ok", false)):
+			push_error("Crew conversation could not advance to its actual appointment.")
+			return false
+		app.call("_refresh")
+	if not bool(run_state.delivery_arrival_interaction().get("available", false)):
+		push_error("Crew recipient did not become available at the authored opening.")
+		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
 	if not bool(app.call("_complete_delivery_handoff", target_id)) or run_state.delivery_has_active_run() \
 			or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-			or not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)) \
+			or run_state.crew_delivery_obligation_count() != 0 or not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)) \
 			or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
-		push_error("Physical handoff did not atomically clear its authentic Crew marker with the exact shipped rewards: bankroll=%d/%d heat=%d/%d debt=%s flags=%s." % [run_state.bankroll, bankroll_before_handoff, run_state.suspicion_level(), heat_before_handoff, JSON.stringify(run_state.debt), JSON.stringify(run_state.narrative_flags)])
+		push_error("Physical handoff did not atomically clear its final Crew obligation/marker with the exact shipped rewards: bankroll=%d/%d heat=%d/%d debt=%s flags=%s." % [run_state.bankroll, bankroll_before_handoff, run_state.suspicion_level(), heat_before_handoff, JSON.stringify(run_state.debt), JSON.stringify(run_state.narrative_flags)])
 		return false
 	var inactive_snapshot: Dictionary = app.call("_world_map_snapshot")
 	if inactive_snapshot.has("courier_layer"):
@@ -2770,10 +2790,13 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# solver reproduced these hashes on Linux and Windows. A full state comparison
 	# with 637a8f8 found only removal of numbers:book and numbers:silas from immutable
 	# base geometry; see docs/releases/0.6.0_candidate_review.md.
+	# CLOSE-01: pre-closeout f00a686f and candidate full values are identical.
+	# Accepted venue-cycle retirement and authored placement supersede the old
+	# scenario-bearing snapshot; all route/economy/RNG/story checks remain exact.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "e1cc608becb41f2fb66b1c90bdc6aba220dae8a74db04dfb9013c8875399a423",
+		"current_environment_sha256": "f563ddfe23c125be386c7690cbf14e1a3f756eda46b74f2fa454d2ce39ba8d91",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2784,7 +2807,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "4b0c6eead861f6365d757658eafb9b4445046f1ae9e189d52b78521c0ca00895",
+		"world_map_sha256": "56b43eea175ca046e89aff1120695ea2377506208cfae9a94cdb952db525e7ea",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2953,45 +2976,22 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		push_error("Dialogue dock fixture could not access run state.")
 		return false
 	var library: ContentLibrary = app.get("library")
-	var scenario_definition := library.scenario("corner_store_delivery_day") if library != null else {}
+	var scenario_definition := library.scenario("gas_station_graveyard_shift") if library != null else {}
 	if library == null or scenario_definition.is_empty():
-		push_error("Dialogue dock fixture could not load its canonical corner-store scenario.")
+		push_error("Dialogue dock fixture could not load its canonical counter scenario.")
 		return false
 	var dialogue_modifiers: Dictionary = run_state.challenge_config.get("modifiers", {}).duplicate(true) if typeof(run_state.challenge_config.get("modifiers", {})) == TYPE_DICTIONARY else {}
-	dialogue_modifiers["scenario_pins"] = {"corner_store": "corner_store_delivery_day"}
+	dialogue_modifiers["scenario_pins"] = {"gas_station_casino": "gas_station_graveyard_shift"}
 	dialogue_modifiers["scenario_pins_apply_mutations"] = false
 	run_state.challenge_config["modifiers"] = dialogue_modifiers
-	var dialogue_rng := RngStream.new()
-	dialogue_rng.configure(271828)
-	var environment := EnvironmentInstance.from_archetype(library.environment_archetype("corner_store"), 1, dialogue_rng, library).to_dict()
-	environment["id"] = "ui_dialogue_pull_tabs"
-	environment["world_node_id"] = "corner_store"
-	environment["archetype_id"] = "corner_store"
-	environment["kind"] = "shop"
-	environment["tier"] = 1
-	environment["game_ids"] = ["pull_tabs"]
-	environment["event_ids"] = []
-	environment["resolved_event_ids"] = []
-	environment["next_archetypes"] = ["bar"]
-	environment["scenario_id"] = str(scenario_definition.get("id", ""))
-	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
-	# This fixture swaps the generated room to Pull Tabs; regenerate its sealed
-	# layout so the counter host exists before its attached dialogue opens.
-	var pull_tabs_module: GameModule = app.call("_create_game_module", library.game("pull_tabs"))
-	if pull_tabs_module == null:
-		push_error("Dialogue dock fixture could not create its Pull Tabs module.")
-		return false
-	environment["game_states"] = {
-		"pull_tabs": pull_tabs_module.generate_environment_state(
-			run_state,
-			environment,
-			run_state.create_rng("ui_dialogue_pull_tabs_machine")
-		),
-	}
-	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, library)
-	var dialogue_environment_install := run_state.set_environment(environment)
-	if not bool(dialogue_environment_install.get("ok", false)):
-		push_error("Dialogue dock fixture could not install through the scenario host: %s." % JSON.stringify(dialogue_environment_install))
+	# Pull Tabs services now belong to the authored Nell counter. Generate and
+	# finalize that real venue rather than inventing a lottery in Corner Store.
+	var arrival_errors: Array = []
+	var arrival := HarnessProductionFidelity.travel_and_finalize(
+		app.get("generator"), run_state, "gas_station_casino", true, library,
+		arrival_errors, "dialogue dock counter arrival")
+	if not bool(arrival.get("ok", false)) or not (run_state.current_environment.get("game_ids", []) as Array).has("pull_tabs"):
+		push_error("Dialogue dock fixture could not reach its published lottery counter: %s" % JSON.stringify(arrival_errors))
 		return false
 	var layout_before_dialogue := JSON.stringify(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
 	app.call("_refresh")
@@ -4425,6 +4425,9 @@ func _run_main_flow(app: Control) -> void:
 		challenge_seed_input.text = "UI-DRY-RUN-SEED"
 		challenge_new_run_button.emit_signal("pressed")
 		await process_frame
+		if not await _confirm_smoke_saved_run_replacement(app):
+			quit(1)
+			return
 		var dry_run_state: RunState = app.get("run_state")
 		if dry_run_state == null or str(dry_run_state.challenge_config.get("id", "")) != "dry_run":
 			push_error("New Run did not launch the selected authored challenge.")
@@ -4772,6 +4775,9 @@ func _run_main_flow(app: Control) -> void:
 		return
 	daily_run_button.emit_signal("pressed")
 	await process_frame
+	if not await _confirm_smoke_saved_run_replacement(app):
+		quit(1)
+		return
 	var daily_run_state: RunState = app.get("run_state")
 	if daily_run_state == null:
 		push_error("Daily Run button did not create a foundation RunState.")
@@ -4921,6 +4927,9 @@ func _run_main_flow(app: Control) -> void:
 	seed_input.text = "UI-CONTENT-GROUP-SEED"
 	new_run_button.emit_signal("pressed")
 	await process_frame
+	if not await _confirm_smoke_saved_run_replacement(app):
+		quit(1)
+		return
 	var grouped_run_state: RunState = app.get("run_state")
 	if grouped_run_state == null:
 		push_error("New Run with content groups did not create a RunState.")
@@ -4947,6 +4956,9 @@ func _run_main_flow(app: Control) -> void:
 	seed_input.text = "UI-COMPILE-SEED"
 	new_run_button.emit_signal("pressed")
 	await process_frame
+	if not await _confirm_smoke_saved_run_replacement(app):
+		quit(1)
+		return
 	if app.get("run_state") == null:
 		push_error("New Run button did not create a foundation RunState.")
 		quit(1)
@@ -5468,20 +5480,16 @@ func _run_main_flow(app: Control) -> void:
 	var live_environment_canvas: Control = app.get("environment_canvas")
 	var canvas_snapshot: Dictionary = live_environment_canvas.call("current_view_snapshot")
 	var object_layout: Dictionary = canvas_snapshot.get("object_layout", {})
-	if int(object_layout.get("overlap_count", -1)) != 0:
-		var overlap_ids: Dictionary = {}
-		for overlap_value in object_layout.get("overlaps", []):
-			var overlap: Dictionary = overlap_value if typeof(overlap_value) == TYPE_DICTIONARY else {}
-			overlap_ids[str(overlap.get("a", ""))] = true
-			overlap_ids[str(overlap.get("b", ""))] = true
-		var overlap_objects: Array = []
-		for object_value in object_layout.get("objects", []):
-			var object_data: Dictionary = object_value if typeof(object_value) == TYPE_DICTIONARY else {}
-			var object_id := str(object_data.get("id", ""))
-			if overlap_ids.has(object_id):
-				overlap_objects.append(object_data)
-		var overlap_environment: Dictionary = (app.get("run_state") as RunState).current_environment
-		push_error("Environment object layout allowed overlapping room props: archetype=%s scenario=%s overlaps=%s objects=%s." % [str(overlap_environment.get("archetype_id", "")), str(overlap_environment.get("scenario_id", "")), JSON.stringify(object_layout.get("overlaps", [])), JSON.stringify(overlap_objects)])
+	# Manual placements own exact targets. Padded art envelopes are a
+	# diagnostic, while actual target collisions and bad seals remain failures.
+	var live_target_collisions := _room_target_collisions(JsonCoerceScript._copy_array(object_layout.get("objects", [])), true)
+	if not live_target_collisions.is_empty():
+		push_error("Environment object layout allowed overlapping interaction targets: %s." % str(live_target_collisions))
+		quit(1)
+		return
+	var room_geometry_proof := preload("res://scripts/core/environment_slot_binder.gd").validate_base_layout_authority((app.get("run_state") as RunState).current_environment)
+	if not bool(room_geometry_proof.get("ok", false)):
+		push_error("Environment canvas room lost exact authored geometry: %s." % str(room_geometry_proof.get("errors", [])))
 		quit(1)
 		return
 	var canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), focus_object_id)
@@ -7168,7 +7176,18 @@ func _run_main_flow(app: Control) -> void:
 		event_fixture_environment["service_ids"] = []
 		event_fixture_environment["lender_hooks"] = []
 		event_fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_environment, app.get("library"))
-		event_fixture_run_state.current_environment = event_fixture_environment
+		var event_fixture_flags: Dictionary = (event_fixture_environment.get("local_narrative_flags", {}) as Dictionary).duplicate(true)
+		event_fixture_flags["environment_test_session"] = true
+		event_fixture_environment["local_narrative_flags"] = event_fixture_flags
+		var event_fixture_install := event_fixture_run_state.set_environment(event_fixture_environment)
+		var event_fixture_errors: Array = []
+		if not bool(event_fixture_install.get("ok", false)) or not bool(HarnessProductionFidelity.finalize_arrival(
+				event_fixture_run_state, app.get("library"), event_fixture_errors, "event card fixture").get("ok", false)):
+			push_error("Event card fixture failed installation/finalization: %s / %s" % [JSON.stringify(event_fixture_install), JSON.stringify(event_fixture_errors)])
+			quit(1)
+			return
+		app.call("_refresh_run_action_service")
+		app.call("_refresh")
 		app.call("clear_interaction_focus")
 		await process_frame
 		event_snapshot = app.call("current_environment_view_snapshot")
@@ -7450,18 +7469,34 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var item_fixture_run_state: RunState = app.get("run_state")
-	item_fixture_run_state.current_environment["kind"] = "shop"
-	item_fixture_run_state.current_environment["archetype_id"] = "corner_store"
-	item_fixture_run_state.current_environment["display_name"] = "Fixture Corner Store"
-	item_fixture_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
-	item_fixture_run_state.current_environment["item_offers"] = [{"id": "creased_luck_card", "price": 8}]
-	item_fixture_run_state.current_environment["event_ids"] = []
-	item_fixture_run_state.current_environment["service_ids"] = []
-	item_fixture_run_state.current_environment["lender_hooks"] = []
-	item_fixture_run_state.current_environment["resolved_event_ids"] = []
 	var item_fixture_archetype := _archetype_by_id(app.get("library"), "corner_store")
-	item_fixture_run_state.current_environment["layout"] = (item_fixture_archetype.get("layout", {}) as Dictionary).duplicate(true) if typeof(item_fixture_archetype.get("layout", {})) == TYPE_DICTIONARY else {}
-	item_fixture_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(item_fixture_run_state.current_environment)
+	var item_fixture_environment := EnvironmentInstance.from_archetype(
+		item_fixture_archetype, int(item_fixture_run_state.current_environment.get("depth", 0)),
+		item_fixture_run_state.create_rng("ui_item_slot_fixture"), app.get("library")).to_dict()
+	item_fixture_environment["id"] = "ui_item_slot_fixture"
+	item_fixture_environment["world_node_id"] = "corner_store"
+	item_fixture_environment["display_name"] = "Fixture Corner Store"
+	item_fixture_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	item_fixture_environment["game_ids"] = []
+	item_fixture_environment["game_states"] = {}
+	item_fixture_environment["item_offers"] = [{"id": "creased_luck_card", "price": 8}]
+	item_fixture_environment["event_ids"] = []
+	item_fixture_environment["service_ids"] = []
+	item_fixture_environment["lender_hooks"] = []
+	item_fixture_environment["resolved_event_ids"] = []
+	var item_fixture_flags: Dictionary = (item_fixture_environment.get("local_narrative_flags", {}) as Dictionary).duplicate(true)
+	item_fixture_flags["environment_test_session"] = true
+	item_fixture_environment["local_narrative_flags"] = item_fixture_flags
+	item_fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(item_fixture_environment, app.get("library"))
+	var item_fixture_install := item_fixture_run_state.set_environment(item_fixture_environment)
+	var item_fixture_errors: Array = []
+	if not bool(item_fixture_install.get("ok", false)) or not bool(HarnessProductionFidelity.finalize_arrival(
+			item_fixture_run_state, app.get("library"), item_fixture_errors, "item UI fixture").get("ok", false)):
+		push_error("Item UI fixture failed installation/finalization: %s / %s" % [JSON.stringify(item_fixture_install), JSON.stringify(item_fixture_errors)])
+		quit(1)
+		return
+	app.call("_refresh_run_action_service")
+	app.call("_refresh")
 	app.call("clear_interaction_focus")
 	await process_frame
 	var item_start_snapshot: Dictionary = app.call("current_environment_view_snapshot")
@@ -7866,14 +7901,6 @@ func _run_main_flow(app: Control) -> void:
 		push_error("Hook result-delta fixture is missing the Back Alley archetype.")
 		quit(1)
 		return
-	hook_run_state.current_environment["kind"] = str(hook_fixture_archetype.get("kind", "shop"))
-	hook_run_state.current_environment["archetype_id"] = "back_alley"
-	hook_run_state.current_environment["display_name"] = "Fixture Back Alley"
-	hook_run_state.current_environment["object_fixtures"] = JsonCoerceScript._copy_array(hook_fixture_archetype.get("object_fixtures", []))
-	hook_run_state.current_environment["event_ids"] = []
-	hook_run_state.current_environment["resolved_event_ids"] = []
-	hook_run_state.current_environment["item_offers"] = []
-	hook_run_state.current_environment["layout"] = JsonCoerceScript._copy_dict(hook_fixture_archetype.get("layout", {}))
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
 	# Exercise result-delta behavior through a genuinely authored physical object.
@@ -7888,12 +7915,35 @@ func _run_main_flow(app: Control) -> void:
 		"flags_set": {"fixture_ui_service_used": true},
 	}
 	hook_library.services = [fixture_service]
-	hook_run_state.current_environment["kind"] = "fixture_room"
-	hook_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
-	hook_run_state.current_environment["service_ids"] = ["house_drink"]
-	hook_run_state.current_environment["lender_hooks"] = ["fixture_missing_lender"]
-	hook_run_state.current_environment["item_offers"] = []
-	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment, hook_library)
+	hook_library.rebuild_content_indexes()
+	var hook_fixture_environment := EnvironmentInstance.from_archetype(
+		hook_fixture_archetype, int(hook_run_state.current_environment.get("depth", 0)),
+		hook_run_state.create_rng("ui_hook_slot_fixture"), hook_library).to_dict()
+	hook_fixture_environment["id"] = "ui_hook_slot_fixture"
+	hook_fixture_environment["world_node_id"] = "back_alley"
+	hook_fixture_environment["display_name"] = "Fixture Back Alley"
+	hook_fixture_environment["kind"] = "fixture_room"
+	hook_fixture_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	hook_fixture_environment["game_ids"] = []
+	hook_fixture_environment["game_states"] = {}
+	hook_fixture_environment["event_ids"] = []
+	hook_fixture_environment["resolved_event_ids"] = []
+	hook_fixture_environment["service_ids"] = ["house_drink"]
+	hook_fixture_environment["lender_hooks"] = ["fixture_missing_lender"]
+	hook_fixture_environment["item_offers"] = []
+	var hook_fixture_flags: Dictionary = (hook_fixture_environment.get("local_narrative_flags", {}) as Dictionary).duplicate(true)
+	hook_fixture_flags["environment_test_session"] = true
+	hook_fixture_environment["local_narrative_flags"] = hook_fixture_flags
+	hook_fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_fixture_environment, hook_library)
+	var hook_fixture_install := hook_run_state.set_environment(hook_fixture_environment)
+	var hook_fixture_errors: Array = []
+	if not bool(hook_fixture_install.get("ok", false)) or not bool(HarnessProductionFidelity.finalize_arrival(
+			hook_run_state, hook_library, hook_fixture_errors, "service hook UI fixture").get("ok", false)):
+		push_error("Service UI fixture failed installation/finalization: %s / %s" % [JSON.stringify(hook_fixture_install), JSON.stringify(hook_fixture_errors)])
+		quit(1)
+		return
+	app.call("_refresh_run_action_service")
+	app.call("_refresh")
 	var hook_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var service_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "service")
 	var lender_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "lender")
@@ -8860,3 +8910,32 @@ func _run_main_flow(app: Control) -> void:
 	await process_frame
 	print("UI scene compile check passed.")
 	quit(0)
+
+
+func _confirm_smoke_saved_run_replacement(app: Control) -> bool:
+	var dialog: ConfirmationDialog = app.get("new_run_confirmation")
+	if dialog == null or not dialog.visible:
+		push_error("A Smoke menu start replacing its saved run did not request confirmation.")
+		return false
+	dialog.get_ok_button().pressed.emit()
+	await process_frame
+	if dialog.visible:
+		push_error("The Smoke menu start did not consume its explicit confirmation.")
+		return false
+	return true
+
+
+func _room_target_collisions(targets: Array, allow_scenario_overlap: bool = false) -> Array:
+	var collisions: Array = []
+	for first_index in range(targets.size()):
+		var first := JsonCoerceScript._copy_dict(targets[first_index])
+		var first_rect := _snapshot_rect(first.get("interaction_rect", {}))
+		for second_index in range(first_index + 1, targets.size()):
+			var second := JsonCoerceScript._copy_dict(targets[second_index])
+			var second_rect := _snapshot_rect(second.get("interaction_rect", {}))
+			# Preserve the existing scenario-composition overlap policy.
+			if allow_scenario_overlap and (bool(first.get("scenario_owned", false)) or bool(second.get("scenario_owned", false))):
+				continue
+			if first_rect.intersects(second_rect) and first_rect.intersection(second_rect).get_area() > 0.01:
+				collisions.append([str(first.get("id", "")), str(second.get("id", ""))])
+	return collisions

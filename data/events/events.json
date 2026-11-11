@@ -2270,7 +2270,7 @@
     },
     "conditions": {},
     "payload": {
-      "summary": "The Crew wants a package delivered. No cash repayment.",
+      "summary": "Crew wants a package delivered. No cash repayment.",
       "choices": [
         {
           "id": "run_package",

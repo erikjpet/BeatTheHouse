@@ -1924,3 +1924,42 @@ static func _has_only_canonical_result_delta_keys(deltas: Dictionary) -> bool:
 		if not canonical.has(key):
 			return false
 	return true
+
+
+# Read-only presentation policy. The shell coordinates these contracts without
+# interpreting any game's private receipt, selector or tutorial state.
+func restored_surface_stake(_ui_state: Dictionary) -> int:
+	return 0
+
+func environment_hook_is_recovery(_hook_id: String, _action_id: String) -> bool:
+	return false
+
+func environment_coach_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {}
+
+func uses_round_net_feedback() -> bool:
+	return false
+
+func round_net_feedback_delta(_result: Dictionary) -> Variant:
+	return null
+
+func round_net_feedback_lead(_result: Dictionary) -> String:
+	return ""
+
+func story_is_unwagered_observation(_entry: Dictionary) -> bool:
+	return false
+
+func story_is_unmeasured_penalty(_entry: Dictionary) -> bool:
+	return false
+
+func story_feedback_keys() -> Array:
+	return []
+
+func unmeasured_penalty_message(_entry: Dictionary, _nominal: int) -> String:
+	return ""
+
+func settled_round_message() -> String:
+	return ""
+
+func terminal_checkpoint_uses_web_phases(_environment: Dictionary) -> bool:
+	return false

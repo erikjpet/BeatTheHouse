@@ -1,5 +1,6 @@
 extends SceneTree
 
+const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const ScenarioPresentationContractScript := preload("res://scripts/tests/foundation/scenario_presentation_contract.gd")
 
 
@@ -9,7 +10,10 @@ func _init() -> void:
 
 func _run() -> void:
 	var failures: Array = []
-	ScenarioPresentationContractScript.check(failures)
+	var library := ContentLibraryScript.new()
+	library.load()
+	failures.append_array(library.validation_errors)
+	ScenarioPresentationContractScript.check(library, failures)
 	var report := {
 		"passed": failures.is_empty(),
 		"failures": failures,

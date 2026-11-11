@@ -4423,11 +4423,15 @@ func _check_run_state_save_round_trip(expected: Dictionary, actual: Dictionary, 
 
 
 # Checks the README one-structure EnvironmentInstance shape.
-func _check_environment_instance_shape(environment: EnvironmentInstance, require_game: bool, failures: Array) -> void:
+func _check_environment_instance_shape(environment: EnvironmentInstance, require_game: bool, failures: Array, authoritative_environment: Dictionary = {}) -> void:
 	if environment == null:
 		failures.append("RunGenerator returned a null EnvironmentInstance.")
 		return
 	var data := environment.to_dict()
+	if not authoritative_environment.is_empty() and EnvironmentInstance.from_dict(authoritative_environment).to_dict() != data:
+		failures.append("EnvironmentInstance shape does not match its supplied authoritative live room.")
+		return
+	var scenario_authority_environment := authoritative_environment if not authoritative_environment.is_empty() else data
 	if data.is_empty():
 		failures.append("EnvironmentInstance did not produce saveable dictionary output.")
 	if environment.id.is_empty():
@@ -4484,6 +4488,29 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 						object_id,
 						manifest_action_owners.get(object_id, "")
 					))
+				if str(manifest_families.get(presentation_object_id, "")) == "scenario":
+					var composed_proof := preload("res://scripts/core/room_presentation_publication.gd").validate(scenario_authority_environment)
+					var scenario_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(scenario_authority_environment.get("scenario_layout_authority", {})).get(presentation_object_id, {}))
+					var scenario_mode := str(scenario_binding.get("presentation_mode", ""))
+					var scenario_rect := JsonCoerceScript._copy_dict(scenario_binding.get("normalized_hit_rect", {}))
+					if not bool(composed_proof.get("ok", false)) or scenario_binding.is_empty() \
+							or str(scenario_binding.get("identity", "")) != presentation_object_id \
+							or str(scenario_binding.get("slot_family", "")) != "scenario" \
+							or str(scenario_binding.get("placement_class", "")) not in EnvironmentPlacementScript.CLASSES \
+							or scenario_mode not in ["room", "overflow"]:
+						failures.append("EnvironmentInstance layout is missing sealed event presentation authority.")
+					if scenario_mode == "room":
+						var geometry_ok := scenario_rect.size() == 4 and not str(scenario_binding.get("slot_id", "")).is_empty()
+						for field in ["x", "y", "w", "h"]:
+							var value: Variant = scenario_rect.get(field)
+							geometry_ok = geometry_ok and typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value)) and float(value) >= 0.0
+						if not geometry_ok or float(scenario_rect.get("w", 0)) <= 0.0 or float(scenario_rect.get("h", 0)) <= 0.0 \
+								or float(scenario_rect.get("x", 0)) + float(scenario_rect.get("w", 0)) > 1.000001 \
+								or float(scenario_rect.get("y", 0)) + float(scenario_rect.get("h", 0)) > 1.000001:
+							failures.append("EnvironmentInstance room event binding is missing authored geometry.")
+					elif scenario_mode == "overflow" and (not scenario_rect.is_empty() or not str(scenario_binding.get("slot_id", "")).is_empty()):
+						failures.append("EnvironmentInstance overflow event binding retained room geometry.")
+					continue
 				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(presentation_object_id, {}))
 				var expected_family := str(manifest_families.get(presentation_object_id, ""))
 				var mode := str(binding.get("presentation_mode", ""))

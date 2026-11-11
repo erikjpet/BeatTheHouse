@@ -239,7 +239,7 @@ func _projection_controls(app: ClockHost) -> void:
 		for key in ["currency", "currency_delta", "environment_id", "environment_archetype_id"]:
 			unknown_source.erase(key)
 		var unknown_units: Dictionary = reader.call([unknown_source])
-		_check(not unknown_units.has("currency") and app._blackjack_round_net_feedback_lead(unknown_units).is_empty(), reader_name + " unknown recorded source never invents cash/chip units for net")
+		_check(not unknown_units.has("currency") and app._round_net_feedback_lead(unknown_units).is_empty(), reader_name + " unknown recorded source never invents cash/chip units for net")
 		app.last_game_result = unknown_units
 		var unknown_units_view: Dictionary = app._environment_result_feedback_view()
 		_check(int(unknown_units_view.get("bankroll_delta", 999)) == 10 and not str(unknown_units_view.get("text", "")).contains("$+5"), reader_name + " unknown units retain original cash-alias fallback without substituting new net")

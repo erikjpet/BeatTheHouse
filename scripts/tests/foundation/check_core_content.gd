@@ -1,6 +1,7 @@
 extends SceneTree
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const FixtureRoomAuthorityScript := preload("res://scripts/tests/fixtures/foundation_room_authority.gd")
 const FoundationTestHarnessScript := preload("res://scripts/tests/foundation/foundation_test_harness.gd")
 
 # Smoke test for production content and foundation contracts.
@@ -337,6 +338,10 @@ class SurfaceHarness:
 
 	func draw_line(_from: Vector2, _to: Vector2, _color: Color, _width: float = -1.0, _antialiased: bool = false) -> void:
 		pass
+
+	func draw_multiline(points: PackedVector2Array, color: Color, width: float = -1.0, antialiased: bool = false) -> void:
+		for index in range(0, points.size(), 2):
+			draw_line(points[index], points[index + 1], color, width, antialiased)
 
 	func draw_polygon(_points: Array, _colors: Array, _uvs: Array = [], _texture: Texture2D = null) -> void:
 		pass
@@ -1086,7 +1091,7 @@ func _check_content_arrival_contract(library: ContentLibrary, failures: Array) -
 	run_state.start_new("CONTENT-CHECK")
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment := _harness_arrive(generator, run_state, failures, "content check initial arrival")
-	call("_check_environment_instance_shape", first_environment, false, failures)
+	call("_check_environment_instance_shape", first_environment, false, failures, run_state.current_environment)
 	_check_start_home_environment(run_state, first_environment, failures)
 	if first_environment.kind != "home":
 		call("_check_offer_prices", first_environment.item_offers, library, failures)
@@ -1097,7 +1102,7 @@ func _check_content_arrival_contract(library: ContentLibrary, failures: Array) -
 
 	var target: String = str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
 	var second_environment := _harness_arrive(generator, run_state, failures, "content check second-room arrival", target)
-	call("_check_environment_instance_shape", second_environment, false, failures)
+	call("_check_environment_instance_shape", second_environment, false, failures, run_state.current_environment)
 	if second_environment.id == first_environment.id:
 		failures.append("Travel did not generate a distinct second environment.")
 
@@ -2677,6 +2682,7 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 	var generated_lender_hooks := JsonCoerceScript._raw_string_array(environment.get("lender_hooks", []))
 	if generated_lender_hooks != ["the_crew"]:
 		failures.append("S0.2 Kitty Cat Lounge generated the wrong production lender hooks: %s." % str(generated_lender_hooks))
+	_check_authored_room_geometry(environment, failures, "S0.2 Kitty Cat Lounge")
 	var keys: Array = object_rects.keys()
 	for index in range(keys.size()):
 		var key := str(keys[index])
@@ -2688,7 +2694,7 @@ func _check_s0_2_kitty_lounge_mixed_hook_layout(library: ContentLibrary, failure
 			var other_rect := _layout_rect_from_dict(object_rects.get(other_key, {}))
 			if other_rect.size.x <= 0.0 or other_rect.size.y <= 0.0:
 				continue
-			if _layout_rects_overlap_with_gap(rect, other_rect):
+			if _authored_room_rects_conflict(environment, key, rect, other_key, other_rect):
 				failures.append("S0.2 Kitty Cat Lounge generated layout overlaps: %s and %s." % [key, other_key])
 
 
@@ -3163,6 +3169,7 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 			failures.append("Grand Casino host desk does not own Pull Tabs counter action %s." % action_id)
 	if counter_host_actions.has(counter_machine_id):
 		failures.append("Grand Casino host desk still owns the launch action of the stocked Pull Tabs machine.")
+	_check_authored_room_geometry(main_environment, failures, "Grand Casino production-order")
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):
 		var object_id := str(object_ids[index])
@@ -3174,7 +3181,7 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 			var other_rect := _layout_rect_from_dict(object_rects.get(other_id, {}))
 			if other_rect.size.x <= 0.0 or other_rect.size.y <= 0.0:
 				continue
-			if _layout_rects_overlap_with_gap(rect, other_rect):
+			if _authored_room_rects_conflict(main_environment, object_id, rect, other_id, other_rect):
 				failures.append("Grand Casino production-order layout overlaps: %s and %s." % [object_id, other_id])
 
 
@@ -3499,7 +3506,10 @@ func _check_talk_content_resolve_delta(library: ContentLibrary, event_id: String
 		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("TALK-PARITY-%s" % event_id)
-	run_state.set_environment(_t4_3_fixture_environment("talk_parity", "casino", 2, ["blackjack"], [], ["bar"]))
+	var generator := RunGenerator.new(library)
+	var arrival := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, failures, "talk consequence %s" % event_id, "bar", true)
+	if not bool(arrival.get("ok", false)):
+		return
 	if expected_suspicion_delta < 0:
 		run_state.add_suspicion("talk_parity_start", 20, "behavior")
 	var event_module := EventModule.new()
@@ -3507,6 +3517,8 @@ func _check_talk_content_resolve_delta(library: ContentLibrary, event_id: String
 	if event_module.get_interaction_mode() == "triggered":
 		run_state.enqueue_triggered_event(event_id, "talk_content_parity")
 	var result: Dictionary = event_module.resolve(run_state, run_state.current_environment, choice_id)
+	if not bool(result.get("ok", false)):
+		failures.append("Talk consequence fixture rejected %s/%s: %s." % [event_id, choice_id, str(result.get("message", ""))])
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != expected_bankroll_delta:
 		failures.append("Talk content migrated event %s/%s changed bankroll consequence." % [event_id, choice_id])
@@ -4435,11 +4447,11 @@ func _check_foundation_contract_core(library: ContentLibrary, failures: Array) -
 
 	var generator: RunGenerator = RunGeneratorScript.new(library)
 	var first_environment := _harness_arrive(generator, run_state, failures, "foundation smoke initial arrival")
-	call("_check_environment_instance_shape", first_environment, false, failures)
+	call("_check_environment_instance_shape", first_environment, false, failures, run_state.current_environment)
 	_check_start_home_environment(run_state, first_environment, failures)
 	var smoke_target := str(first_environment.next_archetypes[0]) if not first_environment.next_archetypes.is_empty() else ""
 	var second_environment := _harness_arrive(generator, run_state, failures, "foundation smoke second-room arrival", smoke_target)
-	call("_check_environment_instance_shape", second_environment, false, failures)
+	call("_check_environment_instance_shape", second_environment, false, failures, run_state.current_environment)
 	if second_environment.kind == "home":
 		failures.append("Second foundation EnvironmentInstance should leave home into the world.")
 	if second_environment.game_ids.is_empty() and second_environment.item_offers.is_empty() and second_environment.service_ids.is_empty() and second_environment.lender_hooks.is_empty() and second_environment.event_ids.is_empty() and second_environment.next_archetypes.is_empty():
@@ -4525,8 +4537,12 @@ func _check_coach_engine_foundation(library: ContentLibrary, failures: Array) ->
 			or not CoachViewModelScript.state_completion_matches(state_lesson, {"game": {"count_all_selected": true}}):
 		failures.append("Coach state-predicate completion did not recognize all selected count bubbles.")
 	var raise_lesson := library.tutorial_lesson("tutorial_blackjack_raise")
-	if not CoachViewModelScript.completion_matches(raise_lesson, "blackjack_chip"):
-		failures.append("The tutorial wager lesson did not accept the real on-felt blackjack chip action.")
+	# c458224b: an input notification is intent; only a durable increased wager completes.
+	if CoachViewModelScript.completion_matches(raise_lesson, "blackjack_chip"):
+		failures.append("An unchanged chip input completed the durable tutorial wager lesson.")
+	if CoachViewModelScript.state_completion_matches(raise_lesson, {"game": {"wager_raised": false}}) \
+			or not CoachViewModelScript.state_completion_matches(raise_lesson, {"game": {"wager_raised": true}}):
+		failures.append("The tutorial wager lesson did not require the real raised-wager state.")
 	var blackjack_boundary_context := {"run": {"tutorial": true}, "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "game": {"hands_played": 0, "between_hands": false}}
 	if CoachViewModelScript.trigger_matches(raise_lesson, blackjack_boundary_context, {"tutorial_blackjack_clean_finish": true}, false):
 		failures.append("The raised-bet Pal dialogue became eligible before the clean tutorial hand settled.")
@@ -5648,7 +5664,10 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 	if not legal_actions.is_empty():
 		var legal_before := _run_state_result_snapshot(run_state)
 		var legal_result := game.resolve(str(legal_actions[0].get("id", "")), 1, run_state, environment_data, run_state.create_rng())
-		call("_check_action_result_shape", legal_result, "legal", failures)
+		if game_id == "video_poker":
+			_check_host_response_action_result_shape(legal_result, "legal", failures, game_id, str(legal_actions[0].get("id", "")))
+		else:
+			call("_check_action_result_shape", legal_result, "legal", failures)
 		call("_check_action_result_application_contract", legal_before, run_state, legal_result, "legal smoke result", failures)
 	if not cheat_actions.is_empty():
 		var cheat_run_state: RunState = RunStateScript.new()
@@ -5657,7 +5676,10 @@ func _check_production_game_module_load(library: ContentLibrary, run_state: RunS
 		var cheat_before := _run_state_result_snapshot(cheat_run_state)
 		var cheat_action_id := str(cheat_actions[0].get("id", ""))
 		var cheat_result := game.resolve(cheat_action_id, 1, cheat_run_state, cheat_environment, cheat_run_state.create_rng())
-		call("_check_action_result_shape", cheat_result, "cheat", failures, "smoke game %s action %s" % [game_id, cheat_action_id])
+		if game_id == "video_poker":
+			_check_host_response_action_result_shape(cheat_result, "cheat", failures, game_id, cheat_action_id, {}, "smoke game %s action %s" % [game_id, cheat_action_id])
+		else:
+			call("_check_action_result_shape", cheat_result, "cheat", failures, "smoke game %s action %s" % [game_id, cheat_action_id])
 		call("_check_action_result_application_contract", cheat_before, cheat_run_state, cheat_result, "cheat smoke result", failures)
 
 
@@ -8309,6 +8331,7 @@ func _deterministic_run_projection(run_state: RunState) -> Dictionary:
 
 func _fixture_library(failures: Array) -> ContentLibrary:
 	var library := ContentLibraryScript.new()
+	FixtureRoomAuthorityScript.install(failures)
 	library.environment_archetypes = [
 		{
 			"id": "fixture_environment",
@@ -9240,3 +9263,35 @@ func _expect_host_response_action_result_rejection(result: Dictionary, expected_
 		if str(diagnostic).contains(expected_diagnostic):
 			return
 	failures.append("Host response guard control did not reject %s with its original diagnostic." % label)
+
+
+# Saved hand placements replaced automatic spacing for these exact slot IDs.
+# Their hit rectangles remain exclusive and must match authenticated geometry;
+# generated slots retain the older padded packing requirement.
+func _authored_room_rects_conflict(environment: Dictionary, first_id: String, first: Rect2, second_id: String, second: Rect2) -> bool:
+	var surface := preload("res://scripts/core/environment_placement.gd").surface_map(environment)
+	var positions := JsonCoerceScript._copy_dict(surface.get("developer_slot_positions", {}))
+	var bindings := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment.get("layout", {})).get("slot_bindings", {}))
+	var first_slot := str(JsonCoerceScript._copy_dict(bindings.get(first_id, {})).get("slot_id", ""))
+	var second_slot := str(JsonCoerceScript._copy_dict(bindings.get(second_id, {})).get("slot_id", ""))
+	if positions.has(first_slot) and positions.has(second_slot):
+		return first.intersects(second)
+	return _layout_rects_overlap_with_gap(first, second)
+
+
+func _check_authored_room_geometry(environment: Dictionary, failures: Array, context: String) -> void:
+	var proof := preload("res://scripts/core/environment_slot_binder.gd").validate_base_layout_authority(environment)
+	if not bool(proof.get("ok", false)):
+		failures.append("%s does not match authenticated authored slot geometry: %s." % [context, str(proof.get("errors", []))])
+		return
+	var damaged := environment.duplicate(true)
+	var rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(damaged.get("layout", {})).get("object_rects", {}))
+	if rects.is_empty():
+		failures.append("%s has no room geometry for its tamper rejection control." % context)
+		return
+	var identity := str(rects.keys()[0])
+	var moved := JsonCoerceScript._copy_dict(rects[identity])
+	moved["x"] = float(moved.get("x", 0.0)) + 0.01
+	damaged["layout"]["object_rects"][identity] = moved
+	if bool(preload("res://scripts/core/environment_slot_binder.gd").validate_base_layout_authority(damaged).get("ok", false)):
+		failures.append("%s accepted geometry moved away from its authored slot." % context)

@@ -1541,17 +1541,17 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	_store_current_game_surface_ui_state(current_game.restored_surface_ui_state(run_state, run_state.current_environment))
 	# A validated pending Blackjack wager must replace the entry default before
 	# host UI projection supplies that selector to the table and its next DEAL.
-	var restored_blackjack_wager := int(game_surface_ui_state.get("selected_stake", 0)) if clean_game_id == "blackjack" else 0
-	if restored_blackjack_wager > 0:
-		selected_stake = restored_blackjack_wager
+	var restored_surface_wager := current_game.restored_surface_stake(game_surface_ui_state)
+	if restored_surface_wager > 0:
+		selected_stake = restored_surface_wager
 	_show_message(str(result.get("message", "")))
 	if bool(slot_wager_recovery.get("handled", false)):
 		_show_message(str(slot_wager_recovery.get("message", "")))
 		_autosave_foundation_run("Autosaved recovered wager.")
 	_refresh()
 	_clear_selected_stake()
-	if restored_blackjack_wager > 0:
-		selected_stake = restored_blackjack_wager
+	if restored_surface_wager > 0:
+		selected_stake = restored_surface_wager
 	return current_screen == SCREEN_GAME and current_game == game_module
 
 
@@ -6974,8 +6974,8 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 		return false
 	# Cashing already-issued tickets is recovery, not another wager. Closing
 	# hours may stop new play but must not strand winners at their counter.
-	var ticket_redemption := (game_id == "scratch_tickets" and hook_id == "scratch_ticket_clerk" and action_id in ["", "redeem_scratch_winners"]) \
-		or (game_id == "pull_tabs" and hook_id == "ticket_redeemer" and action_id in ["", "redeem_pull_tab_winners"])
+	var recovery_game := _game_module_for_id(game_id)
+	var ticket_redemption := recovery_game != null and recovery_game.environment_hook_is_recovery(hook_id, action_id)
 	if _guard_player_input_route(ticket_redemption, "game_hook:%s:%s" % [game_id, hook_id]):
 		return false
 	var game := _game_module_for_id(game_id)
@@ -18683,8 +18683,8 @@ func _environment_result_feedback_view() -> Dictionary:
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
 	var currency_lead := _environment_result_currency_lead(result, suspicion_delta)
-	var round_net_lead := _blackjack_round_net_feedback_lead(result)
-	if str(result.get("game_id", "")) == "blackjack" and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:
+	var round_net_lead := _round_net_feedback_lead(result)
+	if _recorded_result_game(result) != null and _recorded_result_game(result).uses_round_net_feedback() and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:
 		# Preserve the legacy fallback when the recorded units are unknown; new
 		# net metadata alone cannot establish a cash-denominated outcome.
 		bankroll_delta = int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
@@ -18752,49 +18752,8 @@ func _environment_result_currency_lead(result: Dictionary, suspicion_delta: int)
 	return lead
 
 
-func _blackjack_round_net_feedback_delta(result: Dictionary) -> Variant:
-	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \
-			or bool(result.get("applied_currency_unknown", false)) \
-			or not GameModule.applied_currency_settlement(result).is_empty():
-		return null
-	for key in ["outcome_bankroll_delta", "round_net_delta", "blackjack_round_net_delta"]:
-		if result.has(key):
-			var value: Variant = result[key]
-			return int(value) if _feedback_is_integer(value) else null
-	return null
-
-
-func _blackjack_round_net_feedback_lead(result: Dictionary) -> String:
-	var net: Variant = _blackjack_round_net_feedback_delta(result)
-	if net == null:
-		return ""
-	var currency := str(result.get("currency", ""))
-	if currency == "chips":
-		return "Blackjack net: %+d chips." % int(net)
-	if currency == "cash":
-		return "Blackjack net: $%+d." % int(net)
-	return ""
-
-
 func _feedback_is_integer(value: Variant) -> bool:
 	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value)) and float(value) == float(int(value))
-
-
-func _story_is_unwagered_blackjack_watch(entry: Dictionary) -> bool:
-	if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or not bool(entry.get("sat_out", false)):
-		return false
-	# Watching the next automatic hand must not replace the last paid outcome.
-	# Retain any money, Heat, security or terminal consequence as a real result.
-	if bool(entry.get("ended", false)) or bool(entry.get("dealer_caught_cheat", false)) \
-			or not str(entry.get("security_message", "")).is_empty() or entry.has("applied_currency_settlement"):
-		return false
-	for key in ["bankroll_delta", "currency_delta", "chips_delta", "cash_delta", "round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta", "suspicion_delta", "stake", "wager_debited", "total_wager", "settlement_return_delta", "main_delta", "side_delta", "nominal_bankroll_delta"]:
-		if entry.has(key) and (not _feedback_is_integer(entry[key]) or int(entry[key]) != 0):
-			return false
-	var settlement := JsonCoerceScript._copy_dict(entry.get("settlement", {}))
-	if settlement.has("delta") and (not _feedback_is_integer(settlement.delta) or int(settlement.delta) != 0):
-		return false
-	return true
 
 
 func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> Color:
@@ -18878,7 +18837,7 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var story_entry := entry as Dictionary
-		if _story_is_unwagered_blackjack_watch(story_entry):
+		if _story_is_unwagered_game_observation(story_entry):
 			continue
 		var message := str(story_entry.get("message", ""))
 		if message.is_empty():
@@ -18902,8 +18861,9 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			"environment_id": str(story_entry.get("environment_id", "")),
 		})
 		var feedback_keys := ["currency", "currency_delta", "chips_delta", "settlement", "message_key", "message_params", "nominal_bankroll_delta"]
-		if str(story_entry.get("game_id", "")) == "blackjack":
-			feedback_keys.append_array(["round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta"])
+		var recorded_game := _recorded_result_game(story_entry)
+		if recorded_game != null:
+			feedback_keys.append_array(recorded_game.story_feedback_keys())
 		for key in feedback_keys:
 			if story_entry.has(key):
 				var value: Variant = story_entry[key]
@@ -18925,7 +18885,7 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored["bankroll_delta"] = int(applied.cash_delta)
 			restored["deltas"]["bankroll_delta"] = int(applied.cash_delta)
 			restored["deltas"]["chips_delta"] = int(applied.chips_delta)
-		elif _story_is_unmeasured_blackjack_penalty(story_entry):
+		elif _story_is_unmeasured_game_penalty(story_entry):
 			# The old instruction cannot establish what a clamped account lost.
 			# Report its recorded nominal amount without inventing a measured zero.
 			restored["currency"] = "chips"
@@ -18936,8 +18896,7 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored.erase("settlement")
 			restored["bankroll_delta"] = 0
 			restored["deltas"]["bankroll_delta"] = 0
-			var penalty_label := "Caught peeking" if str(story_entry.get("action_id", "")) == "peek_hole_card" else "Blackjack penalty"
-			restored["message"] = "%s. Recorded penalty: %d chips. The actual applied loss was not recorded in this older save." % [penalty_label, absi(int(restored.nominal_bankroll_delta))]
+			restored["message"] = recorded_game.unmeasured_penalty_message(story_entry, int(restored.nominal_bankroll_delta))
 			restored["messages"] = [restored.message]
 			restored["deltas"]["messages"] = [restored.message]
 		elif str(restored.get("currency", "")) == "chips":
@@ -18947,18 +18906,18 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored["bankroll_delta"] = 0
 			restored["deltas"]["bankroll_delta"] = 0
 			restored["deltas"]["chips_delta"] = chip_delta
-		if str(restored.get("game_id", "")) == "blackjack" and not restored.has("currency") and _blackjack_round_net_feedback_delta(restored) != null:
+		if not restored.has("currency") and _round_net_feedback_delta(restored) != null:
 			# Only a known recorded non-Grand venue establishes old cash units.
 			# An unknown source must not borrow today's room or wallet.
 			var recorded_archetype := str(story_entry.get("environment_archetype_id", ""))
 			if not recorded_archetype.is_empty() and not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(recorded_archetype) and not _environment_archetype(recorded_archetype).is_empty():
 				restored["currency"] = "cash"
-		var round_net: Variant = _blackjack_round_net_feedback_delta(restored)
+		var round_net: Variant = _round_net_feedback_delta(restored)
 		if round_net != null:
 			restored["outcome_bankroll_delta"] = int(round_net)
 			if str(story_entry.get("message", "")).is_empty():
 				# Do not reuse the journal's credit-leg label as the hand outcome.
-				restored["message"] = "Blackjack hand settled."
+				restored["message"] = recorded_game.settled_round_message()
 				restored["messages"] = [restored.message]
 				restored["deltas"]["messages"] = [restored.message]
 		return restored
@@ -18988,13 +18947,6 @@ func _recorded_game_uses_chips(entry: Dictionary) -> bool:
 		# Never fall back to the current room or wallet for an unknown source.
 		return false
 	return GameModule.presentation_currency_for_game(run_state, game_id, recorded_environment) == "chips"
-
-
-func _story_is_unmeasured_blackjack_penalty(entry: Dictionary) -> bool:
-	var room := str(entry.get("environment_archetype_id", entry.get("environment_id", "")))
-	return str(entry.get("game_id", "")) == "blackjack" and int(entry.get("bankroll_delta", 0)) <= 0 \
-			and bool(entry.get("dealer_caught_cheat", false)) \
-			and (room == "grand_casino" or room.begins_with("grand_casino_"))
 
 
 func _suspicion_cue_view_list() -> Array:
@@ -21773,7 +21725,8 @@ func _current_game_has_table_result_presentation() -> bool:
 
 func _defer_terminal_game_result_presentation(result: Dictionary) -> bool:
 	if current_screen != SCREEN_GAME or current_game == null or game_surface_canvas == null \
-			or not _current_game_has_table_result_presentation() or not _current_game_embeds_result_feedback() or not bool(last_game_result.get("ok", false)):
+			or not _current_game_has_table_result_presentation() or not _current_game_embeds_result_feedback() \
+			or not bool(last_game_result.get("ok", false)) or str(last_game_result.get("type", "")) != "game_action":
 		return false
 	if terminal_game_result_presentation.is_empty():
 		# Accounting and terminal classification are already final. Publish the
@@ -22044,8 +21997,11 @@ func _save_terminal_resume_checkpoint() -> bool:
 func _terminal_checkpoint_uses_web_phases() -> bool:
 	if run_state == null or not OS.has_feature("web") or not OS.has_feature("nothreads"):
 		return false
-	var flags: Dictionary = JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
-	return str(flags.get("blackjack_boss_variant", "")) == "rourke_duel"
+	for game_id in run_state.current_environment.get("game_ids", []):
+		var game := _game_module_for_id(str(game_id))
+		if game != null and game.terminal_checkpoint_uses_web_phases(run_state.current_environment):
+			return true
+	return false
 
 
 func _present_terminal_run_screen() -> void:
@@ -22472,9 +22428,9 @@ func _game_result_from_story_log(entries: Array) -> Dictionary:
 		var entry: Dictionary = entries[index]
 		if str(entry.get("type", "")) != "game_action":
 			continue
-		if _story_is_unwagered_blackjack_watch(entry):
+		if _story_is_unwagered_game_observation(entry):
 			continue
-		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_game_uses_chips(entry) or _blackjack_round_net_feedback_delta(entry) != null:
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_game_penalty(entry) or _recorded_game_uses_chips(entry) or _round_net_feedback_delta(entry) != null:
 			var result := _result_from_story_log([entry])
 			result["type"] = "game_action_summary"
 			result["action_kind"] = "summary"
@@ -24613,13 +24569,12 @@ func _coach_context_snapshot() -> Dictionary:
 	var game_coach_state: Dictionary = {}
 	if current_game != null and run_state != null:
 		game_coach_state = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
-	elif run_state != null and run_state.is_tutorial_run() \
-			and archetype_id == "gas_station_casino" and _coach_visible_surface_screen() == SCREEN_ENVIRONMENT:
-		# Cold Continue has no transient redemption action. Read only the retained
-		# marked-winner receipt; do not enter or generate a machine to guide Pal.
-		var pull_tab_game := _game_module_for_id("pull_tabs")
-		if pull_tab_game != null:
-			game_coach_state["scripted_target_redeemed"] = bool(pull_tab_game.call("tutorial_redemption_completed", run_state, environment))
+	elif run_state != null and run_state.is_tutorial_run() and _coach_visible_surface_screen() == SCREEN_ENVIRONMENT:
+		# Read retained game-owned receipts without entering or generating a game.
+		for game_id in environment.get("game_ids", []):
+			var receipt_game := _game_module_for_id(str(game_id))
+			if receipt_game != null:
+				game_coach_state.merge(receipt_game.environment_coach_state(run_state, environment))
 	return {
 		"screen": _coach_visible_surface_screen(),
 		"environment_kind": str(environment.get("kind", archetype.get("kind", ""))),
@@ -25136,3 +25091,23 @@ func _snapshot_copy_value(value: Variant) -> Variant:
 	if typeof(value) == TYPE_ARRAY:
 		return (value as Array).duplicate(true)
 	return value
+
+
+func _recorded_result_game(result: Dictionary) -> GameModule:
+	return _game_module_for_id(str(result.get("game_id", result.get("source_id", ""))))
+
+func _round_net_feedback_delta(result: Dictionary) -> Variant:
+	var game := _recorded_result_game(result)
+	return game.round_net_feedback_delta(result) if game != null else null
+
+func _round_net_feedback_lead(result: Dictionary) -> String:
+	var game := _recorded_result_game(result)
+	return game.round_net_feedback_lead(result) if game != null else ""
+
+func _story_is_unwagered_game_observation(entry: Dictionary) -> bool:
+	var game := _recorded_result_game(entry)
+	return game != null and game.story_is_unwagered_observation(entry)
+
+func _story_is_unmeasured_game_penalty(entry: Dictionary) -> bool:
+	var game := _recorded_result_game(entry)
+	return game != null and game.story_is_unmeasured_penalty(entry)

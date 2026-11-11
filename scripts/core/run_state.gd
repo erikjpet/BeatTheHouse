@@ -3688,6 +3688,12 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
 	if not legacy_rejection.is_empty():
 		return {"ok": false, "inactive": false, "errors": legacy_rejection}
+	# A cold restore may rebuild renderer caches, but it must authenticate the
+	# durable room seal first. Never replace damaged geometry with a new seal.
+	if bool(current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
+		var incoming_proof := RoomPresentationPublicationScript.validate(current_environment, false)
+		if not bool(incoming_proof.get("ok", false)):
+			return {"ok": false, "inactive": false, "errors": JsonCoerceScript._copy_array(incoming_proof.get("errors", []))}
 	# Environment practice is the authoring/repair surface. UI refreshes rebuild
 	# their own layout context, so derive this permission from the installed room
 	# marker on every pass instead of relying on one generator call to carry it.
