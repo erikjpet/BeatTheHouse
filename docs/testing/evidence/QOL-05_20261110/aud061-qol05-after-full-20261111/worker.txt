@@ -1,0 +1,27 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+QOL05_SAFE_REPORT {
+  "autosave_failure_code": "disk_full",
+  "build": {
+    "export_sha256": "",
+    "identity_source": "source_harness",
+    "source_commit": "",
+    "source_tree": "",
+    "version": "0.6.0"
+  },
+  "last_load": {
+    "backup_exists": true,
+    "backup_loadable": true,
+    "outcome": "loaded-backup",
+    "primary_exists": true,
+    "primary_loadable": false
+  },
+  "last_save": {
+    "error": 19,
+    "error_code": "rename_failed",
+    "ok": false
+  },
+  "platform": "Windows",
+  "schema": "beat_the_house.support_diagnostics/v1"
+}
+QOL05_SUPPORT_DIAGNOSTICS {"checks":42,"clipboard":"captured at final platform boundary; no system clipboard write in native test","failures":[],"folder":"system-open stub records actual path; Explorer launch not claimed"}

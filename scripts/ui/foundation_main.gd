@@ -8,6 +8,7 @@ const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durabi
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const SupportDiagnosticsScript := preload("res://scripts/ui/support_diagnostics.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
@@ -10454,6 +10455,8 @@ func _build_settings_overlay() -> void:
 	settings_menu.cancel_requested.connect(close_settings_menu)
 	settings_menu.settings_applied.connect(_on_settings_applied)
 	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
+	settings_menu.copy_diagnostics_requested.connect(_copy_diagnostics)
+	settings_menu.open_save_folder_requested.connect(_open_save_folder)
 	settings_menu.game_library_requested.connect(_on_settings_game_library_requested)
 	settings_menu.environment_library_requested.connect(_on_settings_environment_library_requested)
 	settings_panel.add_child(settings_menu)
@@ -19504,6 +19507,39 @@ func confirm_leave_without_saving() -> void:
 		if save_service != null and save_service.async_save_in_flight():
 			save_service.wait_for_async_save()
 		_return_to_main_menu_after_save()
+
+
+func support_diagnostics_text() -> String:
+	var saved: Dictionary = save_service.last_save_outcome if save_service != null else {}
+	var loaded: Dictionary = save_service.last_load_outcome if save_service != null else {}
+	return JSON.stringify(SupportDiagnosticsScript.snapshot(saved, loaded, autosave_last_error_code), "  ")
+
+
+func _copy_diagnostics() -> void:
+	_write_support_clipboard(support_diagnostics_text())
+	if settings_menu != null:
+		settings_menu.set_support_status("Diagnostics copied.")
+
+
+func _write_support_clipboard(text: String) -> void:
+	DisplayServer.clipboard_set(text)
+
+
+func _open_save_folder() -> void:
+	if not SupportDiagnosticsScript.desktop_platform(OS.get_name()) or save_service == null:
+		return
+	var path := ProjectSettings.globalize_path(save_service.save_dir())
+	if not DirAccess.dir_exists_absolute(path):
+		if settings_menu != null:
+			settings_menu.set_support_status("No save folder yet. Start a run and save first.")
+		return
+	var error := _open_support_folder(path)
+	if settings_menu != null:
+		settings_menu.set_support_status("Save folder opened." if error == OK else "Could not open the save folder. Try again.")
+
+
+func _open_support_folder(path: String) -> Error:
+	return OS.shell_open(path)
 
 
 func open_settings_menu() -> void:

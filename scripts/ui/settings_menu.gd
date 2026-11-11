@@ -9,9 +9,12 @@ signal back_requested
 signal cancel_requested
 signal settings_applied
 signal reset_tips_requested
+signal copy_diagnostics_requested
+signal open_save_folder_requested
 signal game_library_requested
 signal environment_library_requested
 
+const SupportDiagnosticsScript := preload("res://scripts/ui/support_diagnostics.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -49,6 +52,8 @@ var play_on_small_screen: CheckBox
 var coach_tips: CheckBox
 var object_labels_and_borders: CheckBox
 var reset_tips: Button
+var copy_diagnostics: Button
+var open_save_folder: Button
 var haptics_note: Label
 var game_library: Button
 var environment_library: Button
@@ -163,6 +168,16 @@ func _build() -> void:
 	reduce_motion.toggled.connect(_on_reduce_motion)
 	haptics_note = _note(box, "Haptics are not used by this demo's input stack.")
 
+	_section(box, "Support")
+	_note(box, "Build and save status for support.")
+	copy_diagnostics = _button("Copy diagnostics")
+	copy_diagnostics.pressed.connect(copy_diagnostics_requested.emit)
+	box.add_child(copy_diagnostics)
+	open_save_folder = _button("Open save folder")
+	open_save_folder.visible = SupportDiagnosticsScript.desktop_platform(OS.get_name())
+	open_save_folder.pressed.connect(open_save_folder_requested.emit)
+	box.add_child(open_save_folder)
+
 	_section(box, "Developer")
 	developer_placement_mode = _check(box, "Environment placement mode")
 	developer_placement_mode.tooltip_text = "Select and move particular spawned room objects."
@@ -249,6 +264,11 @@ func _focus_first_setting() -> void:
 func _ensure_focused_control_visible(control: Control) -> void:
 	if body_scroll != null and is_instance_valid(control) and body_scroll.is_ancestor_of(control):
 		body_scroll.ensure_control_visible(control)
+
+
+func set_support_status(message: String) -> void:
+	if status != null:
+		status.text = message
 
 
 func action_buttons() -> Array:

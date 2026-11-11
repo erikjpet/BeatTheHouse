@@ -1,0 +1,29 @@
+Godot Engine v4.6.stable.official.89cea1439 - https://godotengine.org
+
+SCRIPT ERROR: Parse Error: Cannot infer the type of "code" variable because the value doesn't have a set type.
+   at: GDScript::reload (res://scripts/ui/support_diagnostics.gd:53)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/ui/foundation_main.gd:0)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/tests/qol05_support_diagnostics_check.gd:0)
+ERROR: Failed to load script "res://scripts/tests/qol05_support_diagnostics_check.gd" with error "Compilation failed".
+   at: load (modules/gdscript/gdscript.cpp:2907)
+SCRIPT ERROR: Invalid call. Nonexistent function 'desktop_platform' in base 'GDScript'.
+   at: SettingsMenu._build (res://scripts/ui/settings_menu.gd:177)
+   GDScript backtrace (most recent call first):
+       [0] _build (res://scripts/ui/settings_menu.gd:177)
+       [1] setup (res://scripts/ui/settings_menu.gd:79)
+       [2] _run (res://scripts/tests/qol05_support_diagnostics_check.gd:15)
+SCRIPT ERROR: Invalid assignment of property or key 'text' with value of type 'String' on a base object of type 'Nil'.
+   at: SettingsMenu.open (res://scripts/ui/settings_menu.gd:88)
+   GDScript backtrace (most recent call first):
+       [0] open (res://scripts/ui/settings_menu.gd:88)
+       [1] _run (res://scripts/tests/qol05_support_diagnostics_check.gd:17)
+QOL05_BEFORE {"available_buttons":["1280 x 720","Windowed","[ ] VSync","[ ] Calmer Music","[ ] Play on small screen","[ ] Coach tips","Reset tips","[ ] Object labels and borders","Small","[ ] High Contrast","Wavy Distortion","[ ] Reduce Motion","Copy diagnostics"],"checks":4,"failures":["Desktop Settings offers Open save folder"]}
+WARNING: 1 RID of type "CanvasItem" was leaked.
+   at: _free_rids (servers/rendering/renderer_canvas_cull.cpp:2690)
+ERROR: 1 RID allocations of type 'PN13RendererDummy14TextureStorage12DummyTextureE' were leaked at exit.
+ERROR: 2 RID allocations of type 'PN18TextServerAdvanced22ShapedTextDataAdvancedE' were leaked at exit.
+ERROR: 1 RID allocations of type 'PN18TextServerAdvanced12FontAdvancedE' were leaked at exit.
+WARNING: ObjectDB instances leaked at exit (run with --verbose for details).
+   at: cleanup (core/object/object.cpp:2641)

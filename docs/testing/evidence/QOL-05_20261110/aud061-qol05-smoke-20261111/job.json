@@ -1,0 +1,161 @@
+{
+  "schema": "bth.qa_guarded_run/v1",
+  "command": [
+    "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+    "-NoProfile",
+    "-File",
+    "tools/check_godot.ps1",
+    "-Suite",
+    "Smoke",
+    "-RequireGodot",
+    "-KeepGoing",
+    "-ReportDir",
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence\\smoke",
+    "-VerboseStages"
+  ],
+  "storage_manifest": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence\\storage-manifest.json",
+  "storage_manifest_sha256": "0a0e83a987c5c0a1226869da7d1b00908a43b3eeb4fa4c75d66efcf63bfdae12",
+  "storage": {
+    "schema": "bth-qa-storage/v1",
+    "run_id": "aud061-qol05-smoke-20261111",
+    "token": "2b3625a73acd1dadc3d6365002ec2ec7",
+    "prepared": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "required_bytes": 25769803776,
+    "paths": {
+      "root": "E:\\CodexQA\\BTH",
+      "workspace": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "run_root": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111",
+      "profile": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\profile",
+      "temp": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\temp",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence",
+      "appdata": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\appdata",
+      "localappdata": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\localappdata",
+      "home": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\home",
+      "cache": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\cache",
+      "save_dir": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\save_dir",
+      "pycache": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\pycache"
+    },
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence\\storage-manifest.json"
+  },
+  "timeout_seconds": 900,
+  "storage_gate_before_job": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\profile",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\temp",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\appdata",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\localappdata",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\home",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\cache",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\save_dir",
+      "available_bytes": 337765568512
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\pycache",
+      "available_bytes": 337765568512
+    }
+  },
+  "error": null,
+  "cleanup_errors": [],
+  "log_truncated": false,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "storage_gate_before_child": {
+    "E:\\CodexQA\\BTH": {
+      "probe": "E:\\CodexQA\\BTH",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110": {
+      "probe": "E:\\CodexQA\\BTH\\workspaces\\aud061-20261110",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\profile": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\profile",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\temp": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\temp",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\evidence",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\appdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\appdata",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\localappdata": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\localappdata",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\home": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\home",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\cache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\cache",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\save_dir": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\save_dir",
+      "available_bytes": 337765564416
+    },
+    "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\pycache": {
+      "probe": "E:\\CodexQA\\BTH\\runs\\aud061-qol05-smoke-20261111\\pycache",
+      "available_bytes": 337765564416
+    }
+  },
+  "pid": 15472,
+  "assigned_before_execution": true,
+  "timed_out": false,
+  "exit_code": 1,
+  "active_at_release": 0,
+  "finished_epoch": 1794375863.1847174
+}

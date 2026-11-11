@@ -1,0 +1,30 @@
+extends SceneTree
+
+const Main := preload("res://scripts/ui/foundation_main.gd")
+const Settings := preload("res://scripts/ui/settings_menu.gd")
+const User := preload("res://scripts/core/user_settings.gd")
+
+var failures: Array[String] = []
+var checks := 0
+func _init() -> void:call_deferred("_run")
+func _check(ok: bool, label: String) -> void:
+	checks+=1
+	if not ok:failures.append(label)
+func _run() -> void:
+	var menu := Settings.new()
+	menu.setup(User.new())
+	root.add_child(menu)
+	menu.open()
+	await process_frame
+	var found := {}
+	for node in menu.find_children("*","Button",true,false): found[node.text]=true
+	_check(found.has("Copy diagnostics"),"Settings offers Copy diagnostics")
+	_check(found.has("Open save folder"),"Desktop Settings offers Open save folder")
+	var host := Main.new()
+	_check(host.has_method("support_diagnostics_text"),"Host assembles current safe diagnostics")
+	_check(host.has_method("_open_save_folder"),"Host routes desktop save-folder action")
+	print("QOL05_BEFORE "+JSON.stringify({"checks":checks,"failures":failures,"available_buttons":found.keys()}))
+	host.free()
+	menu.queue_free()
+	await process_frame
+	quit(0 if failures.is_empty() else 1)
