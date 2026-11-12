@@ -53,3 +53,31 @@ Raw files remain outside the repository. The external index lists every file/pat
 | --- | --- |
 | E:\CodexQA\BTH\runs\uf061-intake-record\evidence\raw-evidence-index.json | 9de3821c588e6bc93df95b4db68eb081316ba83b676e4c8370bd24f1dea2be82 |
 | E:\CodexQA\BTH\runs\uf061-bootstrap-repair\evidence\classification.json | ec6764ec952dafa171f6cd8b2836a8569d0ca2c0ea1424130e4a93815335ea34 |
+
+## Intake integration correction
+
+The audit was the first local commit2b8b0a6b. During the first required
+pull/rebase, the fresh shared clone's temporary upstream ref incorrectly included
+that unpublished local commit. Rebase consequently excluded it as former-upstream
+and published the registration alone at4a5096afea7e4154b8a7887f857c4e1731680fea.
+The unchanged audit was restored append-only at98088acb76824a726a311ce0f9f300b1ab445f35.
+No published history was rewritten or force-pushed. This is a departure from
+the intended audit-first published ordering and is retained in the final report.
+The supplied file bytes/hash are unchanged, and a structural comparison confirms
+zero unrelated ledger objective/batch rows changed. Only the nine registered
+objectives and nine batches were added; line-ending/JSON formatting accounts for
+the larger textual diff.
+
+A plain-dictionary QA environment key initially failed the duplicate-key launch
+guard before cloning. The original failed manifest is retained; the adapter
+corrected the key's case and used a new E run ID with identical caps/reserve.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: uf061-integration-correction, uf061-bootstrap-repair.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\uf061-intake-correct-ledger\evidence\raw-evidence-index.json | 4127293787c2902b49825d49abd4ca175086f6253af71c9ab71b9cd1cbf31d43 |
+| E:\CodexQA\BTH\runs\uf061-integration-correction\evidence\integration-correction.json | 0f58200477a8d2aae96f341126fbb7791857d55a66e1d4090b14fb97132c29fc |
+| E:\CodexQA\BTH\runs\uf061-bootstrap-repair\evidence\classification.json | ec6764ec952dafa171f6cd8b2836a8569d0ca2c0ea1424130e4a93815335ea34 |
