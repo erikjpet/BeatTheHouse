@@ -34886,6 +34886,96 @@
         "Freeze and package final candidate"
       ],
       "updated_at": "2026-11-11T16:12:34.158509+00:00"
+    },
+    {
+      "id": "BTH061-CLOSE06-SCENARIO-CONTINUE-001",
+      "name": "Gas Casino storm-shelter visuals disappear after Continue or an event response",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "CLOSE-06"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "CLOSE-06 visible product finding on exact NEXTa6ce512640cb. Normal Gas Casino storm-shelter props/people disappear after public Save/reload/Continue (twice, including afternoon), and after Follow the tip without a reload (campaignF). Paid ticket, wallet, RNG and inventory checkpoints tested remain intact. No fix inside CLOSE-06 under the owner rule.",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Normal seed CLOSE061-NORMAL-A, reach generated Gas Casino storm shelter through public route and observe authored props/people.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Record paid Scratch or Pull Tabs public Save, browser reload and Continue; same afternoon scenario heading but storm-shelter props/people missing.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Preserve exact build, screenshots, raw save observations and account/ticket evidence; investigate in a separate authorized fix task.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Additional normal event reproduction: campaignF003 initialstorm ->004 FollowTip ->005 roomlosesscenarioobjectswithoutSave/reload. Diagnose authority/refresh separately; no speculative fix.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_REPRODUCED_RENDERED_SCENARIO_VISUAL_LOSS",
+      "owner": {
+        "name": "Close out0.6.1 audit",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "normal_control_browser_reproduction",
+          "reference": "E:\\CodexQA\\BTH\\runs\\cl061-c06-b\\evidence",
+          "summary": "003-normal-b-gas-arrival.png storm props/people vs006-scratch-b-unopened-continued.png missing objects at2:30PM; same scenario heading. Also campaignA016 vs023. Builda6ce512640cbd98019a6b9a4c5b5081278ba78bb; no game API/save editing."
+        },
+        {
+          "kind": "rendered_reproduction",
+          "reference": "E:\\CodexQA\\BTH\\runs\\cl061-c06-f\\evidence\\005-f-unlock-tip-map.png",
+          "summary": "Same missingstormpropsafterFollowTipbeforeanyreload; compare003."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Separate product investigation/fix after closeout; preserve current exact reproduction and do not normalize away the missing visuals.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Owner instructed no new fixes inside CLOSE-06 except a proven one-line regression from this run; origin not established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-11T22:55:47.963375+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Gas Casino scenario visuals disappear after normal Continue"
+      ],
+      "updated_at": "2026-11-11T22:55:47.878255+00:00"
     }
   ],
   "batches": [
