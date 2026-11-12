@@ -95,5 +95,18 @@
     "risk_and_rng_overridden": false
   },
   "personal_save_reproduction": false,
-  "browser_startup_or_gameplay_verified": false
+  "browser_startup_or_gameplay_verified": false,
+  "delivery": {
+    "verified_at": "2026-11-12T17:34:23.022303+00:00",
+    "source_commit": "37c11a33d36a4352fc3faef7114bb22842cc7420",
+    "source_tree": "176001ee7a1f82e3f9fd0f4aca38e8ceb19145fe",
+    "version": "0.6.0-dev+37c11a33d36a",
+    "archive_sha256": "f1ff607d7164b60e91f46e7329a02e5c7c5dc0e93e387759c0b70f1391f347ca",
+    "served_pck_sha256": "684493124fa02b91ec5d5501848b090c40acbb19bbfb97069ec670ba6b94e984",
+    "verified_http_assets": 6,
+    "verification_receipt_sha256": "35b05a720b9ba9188d5296c594d94ada52b7129b268c848c66e3ca669df8a702",
+    "job_receipt": "E:/CodexQA/BTH/runs/back-alley-next-verify-20261112/evidence/job.json",
+    "browser_startup_and_gameplay_verified": false,
+    "stable_itch_audience_changes": false
+  }
 }

@@ -25,8 +25,16 @@ The alley contract supplies measured low-passage clearance. Its approach now use
 
 Detailed commands, logs, PNGs and guard receipts remain in the named E:/CodexQA/BTH/runs/back-alley-* evidence directories. The compact committed receipt lists exact passing Job hashes.
 
-Status: tested; publication/NEXT verification pending. Existing stable/itch, audience, user saves, dirty developer checkout and audit worker remain unchanged.
+Status: scoped fix complete; native graphical behavior and exact NEXT delivery verified. Existing stable/itch, audience, user saves, dirty developer checkout and audit worker remain unchanged.
 
 Scoped fix commit: 791af903b74fca270e44f4c6aa527e080d39215a. Rebased onto documentation-only main ed0f945a0e3aca11f9cc2e99b92a82266a983696; all tested runtime, data and asset bytes remain identical. Required reconciliation is run with the actual active task and owned-zero Job snapshots; unrelated global backlog findings remain outside this fix.
 
 Manual reconciliation (back-alley-ledger-verified-20261112) reports zero findings for BTH-TRAVEL-BACK-ALLEY-002 and 93 unrelated current/global findings. Cleanup contracts were verified by source review of the maintained supervisor and kill-on-close Job; successful and failing test Job closures were observed. No new timeout/interruption fault-injection run is claimed.
+
+## Exact NEXT delivery
+
+The existing watcher promoted main 37c11a33d36a4352fc3faef7114bb22842cc7420 at 2026-11-12 17:34:11 UTC after its ordinary exact-input cold import, native Web build, export and PCK audit. This uses tree 176001ee7a1f82e3f9fd0f4aca38e8ceb19145fe, version 0.6.0-dev+37c11a33d36a and archive SHA256 f1ff607d7164b60e91f46e7329a02e5c7c5dc0e93e387759c0b70f1391f347ca.
+
+At 17:34:23 UTC, the real NEXT entry redirected to that immutable directory. Served next.json, next-status.json, BUILD.json, build_manifest.json, REF and VERSION agree. Six HTML/JS/engine/PCK/native assets return HTTP 200 with matching installed lengths and correct WASM MIME; current engine/native hashes match the exact-build manifests. The served 124,979,752-byte PCK hashes to 684493124fa02b91ec5d5501848b090c40acbb19bbfb97069ec670ba6b94e984, identical to the promoted installed package. The guarded verifier exits 0 with zero owned processes. GitHub reports no check runs or status contexts for this commit; no CI-green claim is made.
+
+Browser/WASM startup and changed-behavior playback remain unverified. HTTP/package identity and native graphical play are separate evidence classes. Stable, itch, audience, original state, the dirty checkout and other owners remain unchanged. Any subsequent documentation-only ledger commit preserves these tested runtime bytes and this explicit delivery receipt; it does not manufacture a new browser qualification.

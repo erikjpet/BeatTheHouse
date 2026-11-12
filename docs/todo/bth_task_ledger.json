@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T17:25:35.047834+00:00",
+  "updated_at": "2026-11-12T17:35:36.928525+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37491,8 +37491,8 @@
       "kind": "objective",
       "parent_ids": [],
       "group": "current",
-      "state": "open",
-      "status": "NATIVE_GRAPHICAL_QUALIFIED_NEXT_PENDING",
+      "state": "complete",
+      "status": "NEXT_VERIFIED_NATIVE_GRAPHICAL",
       "owner": {
         "name": "dot, Back Alley fix",
         "task_ref": "/root/fix_back_alley_cutscene",
@@ -37505,13 +37505,23 @@
             "docs/testing/back_alley_cutscene_fix.md",
             "docs/testing/back_alley_cutscene_receipt.json"
           ]
+        },
+        {
+          "sha": "37c11a33d36a4352fc3faef7114bb22842cc7420",
+          "evidence": [
+            "docs/testing/back_alley_cutscene_fix.md",
+            "docs/testing/back_alley_cutscene_receipt.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "37c11a33d36a4352fc3faef7114bb22842cc7420",
+        "evidence": [
+          "docs/testing/back_alley_cutscene_fix.md",
+          "docs/testing/back_alley_cutscene_receipt.json"
+        ]
       },
       "evidence": [
         {
@@ -37523,20 +37533,25 @@
           "kind": "focused_native_and_graphical_qualification",
           "reference": "docs/testing/back_alley_cutscene_receipt.json",
           "summary": "Original host fails four focused checks; original overlay fails fallback and all four clearance cases. Fixed native graphical overlay27 and host9 pass; existing overlay/destination-preparation and liveness checks pass. No personal save or browser claim."
+        },
+        {
+          "kind": "exact_next_served_verification",
+          "reference": "docs/testing/back_alley_cutscene_receipt.json",
+          "summary": "Existing watcher promoted37c11a33; exact redirect/BUILD/manifest/REF/VERSION and six served assets verified. Served PCK SHA256 matches installed promoted package. Browser launch/gameplay unverified; native graphical behavior qualified separately."
         }
       ],
-      "next_action": "Publish the reviewed tested fix to current main, submit its exact existing cold-import request and verify normal NEXT identity; browser startup/gameplay remains unverified.",
+      "next_action": "None for this scoped fix. Browser/WASM startup and gameplay remain unverified; native graphical behavior and exact served package identity are verified.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Active investigation; no user input required.",
+        "description": "None. This scoped fix is deployed and qualified within the disclosed native graphical and served-asset boundary.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T17:24:03.184417+00:00",
+        "observed_at": "2026-11-12T17:35:36.928525+00:00",
         "evidence": [
           "docs/testing/back_alley_cutscene_fix.md"
         ]
       },
-      "updated_at": "2026-11-12T17:25:35.047834+00:00",
+      "updated_at": "2026-11-12T17:35:36.928525+00:00",
       "objective": {
         "text": "Correct fresh travel fallback that looks like a frozen cutscene with bottom text and prevent the Back Alley traveler from intersecting its overhang. Preserve existing route outcomes, cash/time/RNG, recovery summaries and audience; deliver tested main through existing NEXT.",
         "source": "docs/testing/back_alley_cutscene_fix.md",
@@ -37566,8 +37581,11 @@
             "id": "3",
             "description": "Focused native checks pass and existing NEXT serves the intended fix; disclose visual/browser limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/back_alley_cutscene_fix.md",
+              "docs/testing/back_alley_cutscene_receipt.json"
+            ]
           }
         ],
         "coverage": {
