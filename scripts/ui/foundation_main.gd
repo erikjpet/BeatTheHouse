@@ -9197,6 +9197,13 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		detail_parts.append(risk_detail)
 	if not detail_parts.is_empty():
 		message = "%s %s." % [message, ", ".join(detail_parts)]
+	# Fresh presentation fallbacks reveal the room automatically. Preserve the
+	# complete incident explanation in its persistent Result panel and journal,
+	# alongside the already-recorded cash/Heat consequences.
+	if bool(route_risk.get("triggered", false)):
+		var incident_message := str(route_risk.get("message", "")).strip_edges()
+		if not incident_message.is_empty():
+			message += " " + incident_message
 	var total_bankroll_delta := -cost + risk_bankroll_delta
 	var total_suspicion_delta := suspicion_delta + risk_suspicion_delta
 	var story_entry := {

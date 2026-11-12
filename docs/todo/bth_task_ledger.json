@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T17:06:00.699830+00:00",
+  "updated_at": "2026-11-12T17:25:14.834652+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37482,6 +37482,95 @@
       ],
       "planned_app_changes": [
         "Shared menu-travel presentation and automatic completion, without settlement changes."
+      ]
+    },
+    {
+      "id": "BTH-TRAVEL-BACK-ALLEY-002",
+      "name": "Fix frozen travel fallback and alley head clearance",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_GRAPHICAL_QUALIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "dot, Back Alley fix",
+        "task_ref": "/root/fix_back_alley_cutscene",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "not_started",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_bug_report",
+          "reference": "docs/testing/back_alley_cutscene_fix.md",
+          "summary": "Nighttime travel to Back Alley appeared frozen with bottom text; the player head clips the overhang. Exact player save unavailable; use labeled source/synthetic and normal-host reproduction."
+        },
+        {
+          "kind": "focused_native_and_graphical_qualification",
+          "reference": "docs/testing/back_alley_cutscene_receipt.json",
+          "summary": "Original host fails four focused checks; original overlay fails fallback and all four clearance cases. Fixed native graphical overlay27 and host9 pass; existing overlay/destination-preparation and liveness checks pass. No personal save or browser claim."
+        }
+      ],
+      "next_action": "Publish the reviewed tested fix to current main, submit its exact existing cold-import request and verify normal NEXT identity; browser startup/gameplay remains unverified.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Active investigation; no user input required.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T17:24:03.184417+00:00",
+        "evidence": [
+          "docs/testing/back_alley_cutscene_fix.md"
+        ]
+      },
+      "updated_at": "2026-11-12T17:24:03.184417+00:00",
+      "objective": {
+        "text": "Correct fresh travel fallback that looks like a frozen cutscene with bottom text and prevent the Back Alley traveler from intersecting its overhang. Preserve existing route outcomes, cash/time/RNG, recovery summaries and audience; deliver tested main through existing NEXT.",
+        "source": "docs/testing/back_alley_cutscene_fix.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Fresh fallback automatically enters the prepared room once; pending/reduced-motion summaries remain readable.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/back_alley_cutscene_fix.md",
+              "docs/testing/back_alley_cutscene_receipt.json"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "All four travel methods fit the painted alley passage without head clipping.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/back_alley_cutscene_fix.md",
+              "docs/testing/back_alley_cutscene_receipt.json"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "Focused native checks pass and existing NEXT serves the intended fix; disclose visual/browser limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        "Presentation fallback completion and measured passage-depth scaling only."
       ]
     }
   ],

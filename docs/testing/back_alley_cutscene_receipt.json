@@ -1,0 +1,99 @@
+{
+  "schema": "bth.back_alley_cutscene_fix/v1",
+  "base_commit": "49594c29c42803f60e89f84c226801f5995910cb",
+  "observed_at": "2026-11-12T17:24:03.184417+00:00",
+  "qualified_jobs": [
+    {
+      "run_id": "back-alley-animation-liveness-without-pointer-20261112",
+      "job_sha256": "d7e83c6188ee60eb132145a949f612023ae1f75c50738edfdc16c4243b3eb384",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": []
+    },
+    {
+      "run_id": "back-alley-graphics-20261112",
+      "job_sha256": "f93c1e1d0688cf942d76e832a68ae412d7ea2781db47eef22690dbc4b4c67fb8",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": [
+        {
+          "suite": "back_alley_cinematic_regression",
+          "checks": 27,
+          "passed": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "run_id": "back-alley-overlay-final-20261112",
+      "job_sha256": "d6f3b602759d6e8d1d161f75b2cb4d4a658f40d9599d6231171183023288e1f4",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": [
+        {
+          "suite": "travel_cinematic_overlay",
+          "checks": 1115,
+          "passed": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "run_id": "back-alley-preparation-final-20261112",
+      "job_sha256": "6996bc689ed89699c26abc4e5fb049aecacd0cf8e0d6ebb454cafeb12713ab6d",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": [
+        {
+          "suite": "travel_destination_preparation",
+          "checks": 152,
+          "passed": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "run_id": "back-alley-readable-result-20261112",
+      "job_sha256": "4ad31430daacd82f898fa1ab9ab3e7b316e0573fc4291c81d992152e2d89f72f",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": [
+        {
+          "suite": "back_alley_incident_host",
+          "checks": 9,
+          "passed": true,
+          "failures": []
+        }
+      ]
+    },
+    {
+      "run_id": "back-alley-standard-travel-overlay-20261112",
+      "job_sha256": "68d1fd2713fc877545372d8cedaf96de440f6808b52d1db2ba81edc3c5eedd8a",
+      "exit_code": 0,
+      "owned_remaining": 0,
+      "reports": [
+        {
+          "suite": "standard_travel_overlay",
+          "checks": 27403,
+          "passed": true,
+          "failures": []
+        }
+      ]
+    }
+  ],
+  "owned_jobs_closed": 16,
+  "owned_remaining": 0,
+  "normal_host_fixture": {
+    "seed": "BACK-ALLEY-NIGHT-1",
+    "home": "apartment",
+    "setup_clock_minutes": 1300,
+    "method": "taxi",
+    "risk": "travel_shakedown",
+    "fare": 9,
+    "incident_cash_delta": -8,
+    "heat_total": 5,
+    "risk_and_rng_overridden": false
+  },
+  "personal_save_reproduction": false,
+  "browser_startup_or_gameplay_verified": false
+}

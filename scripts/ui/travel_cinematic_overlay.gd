@@ -54,6 +54,7 @@ var _skip: Button
 var _continue: Button
 var _stage := Rect2()
 var _static := false
+var _auto_complete := false
 var _high_contrast := false
 
 
@@ -153,6 +154,11 @@ func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: b
 	elapsed = 0.0
 	_high_contrast = high_contrast
 	_static = reduced_motion or receipt_only or not bool(_scene["supported"])
+	# Fresh menu travel must reveal the prepared room even when its truthful
+	# presentation is a static fallback. Recovery and reduced-motion receipts
+	# remain explicit, readable summaries rather than replaying a journey.
+	_auto_complete = receipt.has("base_minutes") and not reduced_motion and not receipt_only \
+		and bool(_receipt.get("arrival_context_current", true))
 	_street = _load_art(str(_scene["street_path"]))
 	_backdrop = _load_art(str(_scene["background_path"]))
 	_doorway = _load_art(str(_scene.get("doorway_path", "")))
@@ -258,25 +264,26 @@ func skip_to_receipt() -> void:
 	elapsed = DURATION_SECONDS
 	_caption.text = ""
 	_caption.visible = false
-	_summary.visible = true
-	_summary_scroll.visible = true
+	_summary.visible = not _auto_complete
+	_summary_scroll.visible = not _auto_complete
 	_summary_scroll.scroll_vertical = 0
 	_skip.visible = false
-	_continue.visible = true
+	_continue.visible = not _auto_complete
 	set_process(false)
 	_layout()
-	_focus_action(_continue)
+	if not _auto_complete:
+		_focus_action(_continue)
 	_update_scene_views()
 	queue_redraw()
-	if not _static:
-		# Natural finish and Skip use the same exactly-once arrival path. Defer
+	if _auto_complete:
+		# Natural finish, Skip and fresh fallback share exactly-once arrival. Defer
 		# emission so the host can refresh/free views without reentering input,
-		# drawing or present(). Static outcome text still waits for Continue.
+		# drawing or present(). Explicit recovery/reduced-motion text waits.
 		call_deferred("_acknowledge_finished_cinematic", _presentation_generation)
 
 
 func _acknowledge_finished_cinematic(generation: int) -> void:
-	if generation != _presentation_generation or _static or not is_inside_tree():
+	if generation != _presentation_generation or not _auto_complete or not is_inside_tree():
 		return
 	acknowledge()
 

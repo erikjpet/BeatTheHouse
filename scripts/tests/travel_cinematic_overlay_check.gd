@@ -195,9 +195,12 @@ func _check_auto_completion_lifecycle(overlay: Control, receipt: Dictionary) -> 
 		overlay.advance_presentation(99.0)
 		await process_frame
 		await process_frame
-		_expect(overlay.active and overlay.phase == "receipt" and overlay.snapshot()["static"] and completions == before, fallback + " remains manually readable")
+		if fallback in ["reduced", "legacy_summary", "reload"]:
+			_expect(overlay.active and overlay.phase == "receipt" and overlay.snapshot()["static"] and completions == before, fallback + " remains manually readable")
+		else:
+			_expect(not overlay.active and completions == before + 1, fallback + " fresh fallback reveals the room automatically")
 		overlay.acknowledge()
-		_expect(completions == before + 1, fallback + " manual acknowledgment remains exactly once")
+		_expect(completions == before + 1, fallback + " acknowledgment remains exactly once")
 	overlay.force_missing_art_for_test = false
 	for action in ["ui_accept", "ui_cancel"]:
 		before = completions

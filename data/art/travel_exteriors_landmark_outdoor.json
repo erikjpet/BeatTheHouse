@@ -24,7 +24,8 @@
       ],
       "layered_scene": true,
       "foreground_kind": "integrated_ground",
-      "setting_kind": "neighborhood_alley"
+      "setting_kind": "neighborhood_alley",
+      "passage_clearance_rect_uv": [0.75, 0.630, 0.072, 0.1028072153]
     },
     "beach": {
       "texture": "res://assets/art/travel/exteriors/beach.png",

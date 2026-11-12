@@ -78,10 +78,11 @@ static func profile(receipt: Dictionary) -> Dictionary:
 		"player_curb_uv": Vector2(threshold.x - 0.12, road)}
 	if exterior.has("approach_waypoint_uv"):
 		motion["approach_waypoint_uv"] = _vector(exterior["approach_waypoint_uv"])
-	if entrance == "dock" and exterior.has("boarding_clearance_rect_uv"):
-		# The painted boarding opening supplies a measured perspective target,
-		# not a fabricated door animation. Recede continuously from quay to ship.
-		var clearance := _rect(exterior["boarding_clearance_rect_uv"])
+	var clearance_key := "passage_clearance_rect_uv" if entrance == "passage" else "boarding_clearance_rect_uv"
+	if entrance in ["dock", "passage"] and exterior.has(clearance_key):
+		# Painted low openings supply a measured perspective target, never a
+		# fabricated door. Recede continuously before reaching the overhang.
+		var clearance := _rect(exterior[clearance_key])
 		var far_scale := clampf(clearance.size.y * 0.82 / avatar_height, 0.15, 0.58)
 		var near_fraction := clampf((threshold.y - inside.y) / maxf(road - inside.y, 0.000001), 0.0, 1.0)
 		motion["walkaway_end_scale"] = far_scale
@@ -243,10 +244,11 @@ static func validated_exterior_contract(value: Variant) -> Dictionary:
 		if not _finite_numbers(value["approach_waypoint_uv"], 2): return {}
 		var waypoint := _vector(value["approach_waypoint_uv"])
 		if waypoint.x < 0.0 or waypoint.x > 1.0 or waypoint.y < 0.0 or waypoint.y > 1.0: return {}
-	if value.has("boarding_clearance_rect_uv"):
-		if not _finite_numbers(value["boarding_clearance_rect_uv"], 4): return {}
-		var boarding := _rect(value["boarding_clearance_rect_uv"])
-		if not boarding.has_area() or not Rect2(Vector2.ZERO, Vector2.ONE).encloses(boarding): return {}
+	for clearance_key in ["boarding_clearance_rect_uv", "passage_clearance_rect_uv"]:
+		if value.has(clearance_key):
+			if not _finite_numbers(value[clearance_key], 4): return {}
+			var clearance := _rect(value[clearance_key])
+			if not clearance.has_area() or not Rect2(Vector2.ZERO, Vector2.ONE).encloses(clearance): return {}
 	var kind: Variant = value.get("arrival_kind")
 	if kind not in ["door", "open", "passage", "dock"]:
 		return {}
