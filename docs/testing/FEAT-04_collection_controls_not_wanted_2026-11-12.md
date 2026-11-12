@@ -42,3 +42,9 @@ Raw files remain outside the repository. The external index lists every file/pat
 | --- | --- |
 | E:\CodexQA\BTH\runs\uf061-feat04-proof\evidence\raw-evidence-index.json | a75d3c797710fd3701ecb1e18ab1f8e63ec3b7cd0be3a4f2ff0727c53031cf7c |
 | E:\CodexQA\BTH\runs\uf061-feat04-apply\evidence\closure-edits.json | 16d0217e7ea5b2370148f06d921de01e0f8d796888fbc32fc9a3456c5f3e89a0 |
+
+## NEXT delivery observation, 2026-11-12 09:20 UTC
+
+The not-wanted disposition is committed in f12f8fa11b36ad7e1d816f3b6d2ccae80cb2b5b3. The combined head fd8bb1581d4e676fb1c86229deaa7dbb3630f7e4 was refused before import because the earlier requested Crossword CSV note changes import inputs: `Asset/importer/settings inputs changed; cold-import qualification required`. NEXT still serves 070fc937ad69de8d152b0dddae769f5206704821. No runtime implementation or pipeline workaround was made. Delivery is pending; this is not a product-test failure.
+
+Raw receipt: `E:\CodexQA\BTH\runs\uf061-next-pending-receipt\evidence\next-pending.json`, SHA-256 `b6fb440d587821aedc0aaa48af182a58d2d491fae4dc6682895417448f525a75`.
