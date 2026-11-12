@@ -1969,14 +1969,14 @@
       "id": "BTH-SCENARIO-ARRIVAL-002",
       "name": "Bringer Show layer-arrival ordering investigation",
       "aliases": [],
-      "kind": "acceptance_check",
+      "kind": "bug",
       "parent_ids": [
         "BTH-11",
         "FEAT-09"
       ],
       "group": "current",
       "objective": {
-        "text": "Investigate Punchline Bringer Show layer-entry arrival ordering through a legitimately visible and available source route. Layer entry queues travel_arrived and the scenario has arrival-pressure branches. The prior prevalidated synthetic trip sealed Punchline without visible route targets; its added travel:leave correctly failed frozen inventory authority and does not prove a player defect. Preserve seals, working content and genuine later-arrival pressure; the speculative alignment experiment was reverted.",
+        "text": "Investigate Punchline Bringer Show layer-entry arrival ordering through a legitimately visible and available source route. Layer entry queues travel_arrived and the scenario has arrival-pressure branches. The prior prevalidated synthetic trip sealed Punchline without visible route targets; its added travel:leave correctly failed frozen inventory authority and does not prove a player defect. Preserve seals, working content and genuine later-arrival pressure; the speculative alignment experiment was reverted. Faithful normal-route reproduction on2026-11-12 confirmed a queued layer arrival replaying as pressure after a later zero-turn task. The scoped transaction flush/rollback fix passes57/57 and full Smoke11/11; exact changed-behavior NEXT acceptance remains pending.",
         "source": "docs/testing/scenario_wedding_arrival_order.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -1984,8 +1984,10 @@
             "id": "faithful-repro",
             "description": "Enter through a legitimately visible/available production source route, compare initial and cached club exit authority, then exercise pending layer-arrival pressure. The invalid prevalidated synthetic sealed-inventory trip is not a faithful defect reproduction.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+            ]
           },
           {
             "id": "disposition",
@@ -2002,13 +2004,20 @@
         }
       },
       "state": "open",
-      "status": "RESUMED_ONLY_NAMED_EXCEPTION_REPRODUCTION_AND_REMAINING_ACCEPTANCE",
+      "status": "FIXED_57_OF_57_SMOKE_11_OF_11_NEXT_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9ebce330ef5d502ba283aca2b69dcf99d55d80cb",
+          "evidence": [
+            "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -2020,22 +2029,27 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Explicit user pause: Pause item and scenario work. Remain incomplete and resume only on user instruction. Before pause: The prevalidated synthetic trip sealed Punchline while it had no visible route targets; return added travel:leave and correctly failed frozen inventory authority. This does not establish a player layer-return defect. Alignment experiment was reverted. Next: enter through a legitimately visible/available source route, compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve seals and working content."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+          "summary": "FIXED_57_OF_57_SMOKE_11_OF_11_NEXT_PENDING"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
+      "next_action": "After normal qualification/promote, verify exact served descendant and render fresh UF061-BRINGER-8 protected arrival and genuine later-return pressure cases; then close proof delivery.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "Owner explicitly resumes only this named defect in FEAT-09. Broader item/scenario pause and BTH-11 remain unchanged.",
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT remains served070fc937; the normal README-only cold-import qualification request for114aa355 is prepared but not submitted. No pipeline changes authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T10:01:18.788777+00:00",
+        "observed_at": "2026-11-12T11:12:37.558121+00:00",
         "evidence": [
-          "docs/todo/BTH_unfinished_features_audit.md"
+          "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T10:01:18.788777+00:00",
+      "updated_at": "2026-11-12T11:12:37.558121+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -36167,22 +36181,31 @@
             "id": "1",
             "description": "Resume Wedding001 and Arrival002 from each recorded next action, reproduce first",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
+            ]
           },
           {
             "id": "2",
             "description": "Rewards settle once across Save Continue travel revisit abort; retain original safety assertions",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
+            ]
           },
           {
             "id": "3",
             "description": "No item-effect/math/BTH11 polish work",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
+            ]
           },
           {
             "id": "4",
@@ -36199,7 +36222,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "WEDDING_VISIBLE_PASS_ARRIVAL_FIXED_SMOKE_GREEN_NEXT_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -36219,6 +36242,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "9ebce330ef5d502ba283aca2b69dcf99d55d80cb",
+          "evidence": [
+            "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -36237,24 +36266,31 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+          "summary": "WEDDING_VISIBLE_PASS_ARRIVAL_FIXED_SMOKE_GREEN_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
         "FEAT-09-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT remains served070fc937; the normal README-only cold-import qualification request for114aa355 is prepared but not submitted. No pipeline changes authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.389670+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T11:12:37.653896+00:00",
+        "evidence": [
+          "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Resume only two concrete scenario exceptions"
       ],
-      "updated_at": "2026-11-12T07:55:31.389670+00:00"
+      "updated_at": "2026-11-12T11:12:37.653896+00:00"
     },
     {
       "id": "FEAT-02",
@@ -39933,7 +39969,7 @@
       "parent_id": "FEAT-09",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "WEDDING_VISIBLE_PASS_ARRIVAL_FIXED_SMOKE_GREEN_NEXT_PENDING",
       "scope": [
         "Resume only two concrete scenario exceptions"
       ],
@@ -39956,6 +39992,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "9ebce330ef5d502ba283aca2b69dcf99d55d80cb",
+          "evidence": [
+            "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39974,18 +40016,25 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
+          "summary": "WEDDING_VISIBLE_PASS_ARRIVAL_FIXED_SMOKE_GREEN_NEXT_PENDING"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT remains served070fc937; the normal README-only cold-import qualification request for114aa355 is prepared but not submitted. No pipeline changes authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.389670+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T11:12:37.653896+00:00",
+        "evidence": [
+          "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T07:55:31.389670+00:00"
+      "updated_at": "2026-11-12T11:12:37.653896+00:00"
     },
     {
       "id": "FEAT-02-BATCH-001",
