@@ -36915,8 +36915,8 @@
       "name": "Bar Dice chips financial label clips return field implementation",
       "parent_id": "BTH061-RC-BARDICE-COVER-CLIP-001",
       "group": "current",
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "state": "complete",
+      "status": "DONE_COVER_LABEL_REPAIR_EXACT_NEXT_VERIFIED",
       "scope": [
         "Qualify and correct rendered cash/chip label width without changing values or ownership."
       ],
@@ -36937,14 +36937,26 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "3a120bce2cd0273c445084f837c5f98f2b023b1c",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -36952,18 +36964,23 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md",
+          "summary": "DONE_COVER_LABEL_REPAIR_EXACT_NEXT_VERIFIED"
         }
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Completed bounded clipping repair; full digit/bounds tests and actual Grand practice header in CLOSE-02.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.320999+00:00",
+        "observed_at": "2026-11-12T01:05:11.350476+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T13:22:42.320999+00:00"
+      "updated_at": "2026-11-12T01:05:11.350476+00:00"
     },
     {
       "id": "BTH061-RC-ACCEPTANCE-COVERAGE-001-BATCH-001",
