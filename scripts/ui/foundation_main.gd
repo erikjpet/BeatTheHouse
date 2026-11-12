@@ -1438,7 +1438,7 @@ func _start_daily_challenge_run_confirmed() -> bool:
 	var today: Dictionary = Time.get_datetime_dict_from_system()
 	var day := int(today.get("day", 1))
 	var month := int(today.get("month", 1))
-	var seed_text := _daily_challenge_seed_for_date(day, month)
+	var seed_text := _daily_challenge_seed_for_date(day, month, int(today.get("year", 1)))
 	var daily_id := _daily_challenge_id_for_datetime(today)
 	var challenge_config: Dictionary = RunState.daily_challenge(daily_id, seed_text, true)
 	if not start_foundation_run(seed_text, challenge_config):
@@ -1448,10 +1448,12 @@ func _start_daily_challenge_run_confirmed() -> bool:
 	return true
 
 
-func _daily_challenge_seed_for_date(day: int, month: int) -> String:
+func _daily_challenge_seed_for_date(day: int, month: int, year: int) -> String:
 	var safe_day := maxi(1, day)
 	var safe_month := maxi(1, month)
-	return "%d/%d" % [safe_day * 32, safe_month * 2]
+	var safe_year := maxi(1, year)
+	var local_date := "%04d-%02d-%02d" % [safe_year, safe_month, safe_day]
+	return ("BTH-DAILY|" + local_date).sha256_text().left(12)
 
 
 func _daily_challenge_id_for_datetime(datetime: Dictionary) -> String:

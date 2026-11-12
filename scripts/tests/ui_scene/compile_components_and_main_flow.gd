@@ -4784,7 +4784,7 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var today: Dictionary = Time.get_datetime_dict_from_system()
-	var expected_daily_seed := str(app.call("_daily_challenge_seed_for_date", int(today.get("day", 1)), int(today.get("month", 1))))
+	var expected_daily_seed := str(app.call("_daily_challenge_seed_for_date", int(today.get("day", 1)), int(today.get("month", 1)), int(today.get("year", 1))))
 	if daily_run_state.seed_text != expected_daily_seed:
 		push_error("Daily Run did not use the date-derived hidden seed formula.")
 		quit(1)
