@@ -183,3 +183,23 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\cl061-rc-perf-receipt\evidence\report-custody.json | b2a0dbb741ec256d2027e43456a39992a7b207055a66b2c7cc0300bedd84f1b5 |
 | E:\CodexQA\BTH\runs\cl061-package-launch-classify\evidence\prechange-classification.json | f5f049ab239c1eedd885cd4960d9fba413857fb1903f117e1dc3f8573cefeea3 |
 | E:\CodexQA\BTH\runs\cl061-final-scope\evidence\scope-receipt.json | b4ed3b229091dff22ff7446a68ececa77d2de128a458eceb12bab20d1e8e4cb0 |
+
+## Final ledger reconciliation
+
+The final ledger reconciliation retains the same1,681 pre-existing unrelated
+errors and0 warnings as the fixed-time baseline (1,671 concern the inherited
+runtime inventory). There are0 owned CLOSE/AUD061/RC metadata errors. The checker
+therefore still exits1 globally; it is not a green repository-wide ledger claim.
+Execution is recorded done with findings open; AUD061-EXECUTION and CLOSEOUT-061
+remain open parent rows because acceptance/deferred children remain open.
+No child dependency or required acceptance was deleted or waived.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-final-ledger, cl061-ledger-parent-reconcile, cl061-ledger-final2.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-ledger-proof-final\evidence\raw-evidence-index.json | 51cc4d6c1793e9cb9d4a2e80cc407db74f2e5a9ccf1a55fa2e4774fc7c69a3e8 |
+| E:\CodexQA\BTH\runs\cl061-final-ledger\evidence\reconciliation.json | 08a7879a20b09f3c8d924e36e43dbdc295715005e692127ec0c4681e157ba2a2 |
+| E:\CodexQA\BTH\runs\cl061-ledger-final2\evidence\reconciliation.json | 3c053287248720b390de62aac2bf7d7eab30f83402e1f5a77e2899c680991e0a |

@@ -191,6 +191,14 @@ Fresh browser startup inspected the menu footer and first tutorial room;
 zero page/console errors/warnings, owned browser closed. Existing watcher,
 audience, limits, pins and stable/itch channels remain unchanged.
 
+The final ledger reconciliation retains the same1,681 pre-existing unrelated
+errors and0 warnings as the fixed-time baseline (1,671 concern the inherited
+runtime inventory). There are0 owned CLOSE/AUD061/RC metadata errors. The checker
+therefore still exits1 globally; it is not a green repository-wide ledger claim.
+Execution is recorded done with findings open; AUD061-EXECUTION and CLOSEOUT-061
+remain open parent rows because acceptance/deferred children remain open.
+No child dependency or required acceptance was deleted or waived.
+
 ## 6. Candidate packages
 
 | Artifact (absolute path) | Bytes | SHA-256 |

@@ -30900,10 +30900,9 @@
             "id": "1",
             "description": "AUD061-12",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-12_web_export_investigation_2026-11-11.md",
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30912,8 +30911,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md",
-              "docs/testing/AUD061-02_leave_without_saving_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30922,8 +30920,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md",
-              "docs/testing/AUD061-01_stale_rollback_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30932,7 +30929,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-09_retry_after_async_failure_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30941,7 +30938,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-10_crew_bankroll_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30950,7 +30947,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/QOL-02_autosave_warning_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30959,7 +30956,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/QOL-03_player_error_wording_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30968,7 +30965,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/QOL-04_whole_number_display_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30977,7 +30974,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/QOL-05_support_diagnostics_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30986,7 +30983,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-16_distribution_fault_gates_2026-11-10.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -30995,7 +30992,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-14_ignored_store_failures_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -31004,7 +31001,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-08_background_save_flush_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -31013,7 +31010,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-15_wrong_sized_install_key_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
@@ -31022,16 +31019,17 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/QOL-01_saved_run_replacement_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
             "id": "15",
             "description": "AUD061-04",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
             ]
           },
           {
@@ -31040,25 +31038,27 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-05_changelog_candidate_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
             "id": "17",
             "description": "AUD061-11",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           },
           {
             "id": "18",
             "description": "AUD061-17",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+              "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
             ]
           }
         ],
@@ -31069,7 +31069,7 @@
         }
       },
       "state": "open",
-      "status": "18_OF_18_PROCESSED_14_DONE_1_NOT_REPRODUCED_1_BLOCKED_2_FAILED_QUALIFICATION",
+      "status": "18_OF_18_PROCESSED_15_DONE_1_NOT_REPRODUCIBLE_2_DONE_FINDINGS_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -31118,14 +31118,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -31138,22 +31150,35 @@
           "kind": "final_execution_report",
           "reference": "docs/testing/AUD061_final_execution_report_2026-11-11.md",
           "summary": "All18 scoped orders have actual dispositions;14 done,1 not reproduced,1 blocked,2 failed qualification. Final conclusion delivery has a supplemental exact-identity receipt."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+          "summary": "18_OF_18_PROCESSED_15_DONE_1_NOT_REPRODUCIBLE_2_DONE_FINDINGS_OPEN"
+        },
+        {
+          "kind": "scope_disposition",
+          "reference": "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+          "summary": "Acceptance entries record completion/disposition of the18 work orders, not a claim every game acceptance path passed; AUD061-11/-17 done with findings open. No original failure evidence removed."
+        },
+        {
+          "kind": "reconciliation_scope",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "Execution is done with findings open. Parent remains open because required child acceptance/deferred measurement rows remain open; no child dependency removed or waived."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Resolve AUD061-04 and the separately registered release qualification findings; choose and fully qualify the next candidate before owner tagging.",
+      "next_action": "Accepted first-run execution plus owner closeout are complete. Follow the separate open findings/coverage rows in the owner handoff; historical failed qualification evidence retained.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "AUD061-04 version admission and unresolved acceptance/final-packaging qualification. All18 execution dispositions are recorded; release is not qualified.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:25:38.735003+00:00",
-        "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-12T01:26:58.113659+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:38:08.478077+00:00"
+      "updated_at": "2026-11-12T01:28:03.646459+00:00"
     },
     {
       "id": "AUD061-02",
@@ -34049,7 +34074,7 @@
     },
     {
       "id": "BTH061-RC-PACKAGING-001",
-      "name": "Final 0.6.1 package qualification remains blocked",
+      "name": "Final Windows/Web candidate packaging qualified in owner-reduced scope",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [
@@ -34057,30 +34082,36 @@
       ],
       "group": "current",
       "objective": {
-        "text": "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate.",
-        "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
+        "text": "Owner C1/CLOSE-04 and CLOSE-05: preserve all pinned stamps, qualify one frozen candidate with Smoke/liveness/Python, unchanged-exporter Windows/Web package audits, startup, paths and SHA256. Acceptance gaps are separately open.",
+        "source": "docs/todo/BTH_0.6.1_closeout_plan.md",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "1",
             "description": "Actual scoped reproduction/diagnosis",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Associated corrective or qualification commit",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Exact current candidate acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34089,8 +34120,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
+      "state": "complete",
+      "status": "DONE_OWNER_C1_REDUCED_STAMPS_EXACT_WINDOWS_WEB_CANDIDATE",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34108,14 +34139,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -34123,24 +34166,34 @@
           "kind": "audit_finding",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Final 0.6.1 package qualification remains blocked"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "DONE_OWNER_C1_REDUCED_STAMPS_EXACT_WINDOWS_WEB_CANDIDATE"
+        },
+        {
+          "kind": "owner_scope_reduction",
+          "reference": "docs/todo/BTH_0.6.1_closeout_plan.md",
+          "summary": "C1 removes stamp bump/re-pinning; CLOSE-05 requires Windows/Web packages and launches. Native properties/presets/internal0.6.0 identity deliberately unchanged."
         }
       ],
       "implementation_batches": [
         "BTH061-RC-PACKAGING-001-BATCH-001"
       ],
-      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
+      "next_action": "No remaining package work in owner-reduced scope; other stamp alignment/re-pinning remains owner-deferred. Acceptance findings stay separately open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.913895+00:00",
+        "observed_at": "2026-11-12T01:26:57.953102+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-12T01:26:57.953102+00:00"
     },
     {
       "id": "CLOSEOUT-061",
@@ -34160,7 +34213,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/todo/BTH_0.6.1_closeout_plan.md"
+              "docs/testing/CLOSE-01_green_smoke_2026-11-11.md"
             ]
           },
           {
@@ -34169,7 +34222,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/todo/BTH_0.6.1_closeout_plan.md"
+              "docs/testing/CLOSE-02_bar_dice_chip_financial_line_2026-11-11.md"
             ]
           },
           {
@@ -34178,7 +34231,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/todo/BTH_0.6.1_closeout_plan.md"
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
             ]
           },
           {
@@ -34187,7 +34240,7 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/todo/BTH_0.6.1_closeout_plan.md"
+              "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
             ]
           },
           {
@@ -34203,8 +34256,10 @@
             "id": "6",
             "description": "CLOSE-05 exact candidate and packages",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34214,7 +34269,7 @@
         }
       },
       "state": "open",
-      "status": "CLOSE01_04_DONE_CLOSE06_RUN_DONE_FINDINGS_OPEN_FINAL_CANDIDATE_PENDING",
+      "status": "DONE_CLOSEOUT_EXECUTION_FINDINGS_AND_NOT_REACHED_REMAIN_OPEN",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34226,35 +34281,59 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+        "evidence": [
+          "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-01_green_smoke_2026-11-11.md",
           "summary": "IN_PROGRESS_LOCAL_02_03_04_QUALIFIED_CLOSE01_NEXT_DONE"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH_0.6.1_owner_playtest_closeout_2026-11-11.md",
+          "summary": "DONE_CLOSEOUT_EXECUTION_FINDINGS_AND_NOT_REACHED_REMAIN_OPEN"
+        },
+        {
+          "kind": "reconciliation_scope",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "Execution is done with findings open. Parent remains open because required child acceptance/deferred measurement rows remain open; no child dependency removed or waived."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Freeze candidate and run CLOSE-05. CLOSE-06 has explicit not-reached/narrower cases and a new open Gas scenery finding.",
+      "next_action": "Owner playtest from handoff. Gas scenery defect, explicitly unreached/narrower acceptance rows and C4 deferred rows remain independently open; this does not claim full release acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T22:21:49.763599+00:00",
+        "observed_at": "2026-11-12T01:26:58.033566+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Finish accepted0.6.1 audit closeout per owner decisions"
       ],
-      "updated_at": "2026-11-11T22:21:49.763599+00:00"
+      "updated_at": "2026-11-12T01:28:03.646459+00:00"
     },
     {
       "id": "CLOSE-LEDGER",
@@ -35031,22 +35110,28 @@
             "id": "1",
             "description": "Exact candidate Smoke/liveness/Python",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Windows and Web export_itch builds and fresh startup",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Paths and SHA256 hashes; no tag/rename/upload",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -35055,8 +35140,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "state": "complete",
+      "status": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35068,31 +35153,51 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+        "evidence": [
+          "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+        ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-05-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Owner playtests frozen NEXT8724 and original packages; no tag/rename/upload performed.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.158509+00:00",
+        "observed_at": "2026-11-12T01:26:57.869875+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Freeze and package final candidate"
       ],
-      "updated_at": "2026-11-11T16:12:34.158509+00:00"
+      "updated_at": "2026-11-12T01:26:57.869875+00:00"
     },
     {
       "id": "BTH061-CLOSE06-SCENARIO-CONTINUE-001",
@@ -37356,11 +37461,11 @@
     },
     {
       "id": "BTH061-RC-PACKAGING-001-BATCH-001",
-      "name": "Final 0.6.1 package qualification remains blocked implementation",
+      "name": "Final Windows/Web candidate packaging qualification",
       "parent_id": "BTH061-RC-PACKAGING-001",
       "group": "current",
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
+      "state": "complete",
+      "status": "DONE_OWNER_C1_REDUCED_STAMPS_EXACT_WINDOWS_WEB_CANDIDATE",
       "scope": [
         "After reviewed existing-pipeline qualification of AUD061-04 inputs, build/audit/test the single-candidate Windows/Web/source set and checksums. No guard/cap bypass or old-save compatibility gate."
       ],
@@ -37381,14 +37486,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -37396,18 +37513,23 @@
           "kind": "audit_finding",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Final 0.6.1 package qualification remains blocked implementation"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "DONE_OWNER_C1_REDUCED_STAMPS_EXACT_WINDOWS_WEB_CANDIDATE"
         }
       ],
-      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
+      "next_action": "No remaining package work in owner-reduced scope; other stamp alignment/re-pinning remains owner-deferred. Acceptance findings stay separately open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.913895+00:00",
+        "observed_at": "2026-11-12T01:26:57.953102+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-12T01:26:57.953102+00:00"
     },
     {
       "id": "AUD061-12-BATCH-002",
@@ -37910,8 +38032,8 @@
       "name": "Freeze and package final candidate bounded execution",
       "parent_id": "CLOSE-05",
       "group": "current",
-      "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "state": "complete",
+      "status": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES",
       "scope": [
         "Freeze and package final candidate"
       ],
@@ -37926,25 +38048,45 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "5657590ac790a9a6814b26958d384d6945c97b27",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "8724a23f6d8979863f4ed024159a0f07a1d4f0ab",
+        "evidence": [
+          "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
+        ]
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES"
+        }
+      ],
+      "next_action": "Owner playtests frozen NEXT8724 and original packages; no tag/rename/upload performed.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.158509+00:00",
+        "observed_at": "2026-11-12T01:26:57.869875+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:34.158509+00:00"
+      "updated_at": "2026-11-12T01:26:57.869875+00:00"
     }
   ]
 }
