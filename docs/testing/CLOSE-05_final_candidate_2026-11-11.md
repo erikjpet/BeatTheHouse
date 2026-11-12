@@ -203,3 +203,32 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\cl061-ledger-proof-final\evidence\raw-evidence-index.json | 51cc4d6c1793e9cb9d4a2e80cc407db74f2e5a9ccf1a55fa2e4774fc7c69a3e8 |
 | E:\CodexQA\BTH\runs\cl061-final-ledger\evidence\reconciliation.json | 08a7879a20b09f3c8d924e36e43dbdc295715005e692127ec0c4681e157ba2a2 |
 | E:\CodexQA\BTH\runs\cl061-ledger-final2\evidence\reconciliation.json | 3c053287248720b390de62aac2bf7d7eab30f83402e1f5a77e2899c680991e0a |
+
+## Final raw-evidence custody and bookkeeping delivery
+
+Final custody verification found one older owner-disposition proof referring
+to a shared index path later reused by CLOSE-01. The old current bytes were
+preserved, and the original17-record index was reconstructed with its exact
+original committed SHA256. Its proof now points at a unique immutable E copy.
+A full verification then checked3,579 unique raw hash references across21
+external indexes with0 mismatches (cl061-proof-hashes-all2). This is an evidence
+reference repair only; no product/test/package/pipeline changes.
+
+Bookkeeping commit672b7292a73c835f07b1d7c49ff757235b1dd3b6 was also promoted and
+verified:10 served identity/assets pass; fresh browser shows its exact footer
+and normal Play first tutorial room;2 batches,0 errors/warnings, exit0/cleanup0.
+Candidate8724 and its original package hashes remain unchanged. Later custody
+documentation continues through the same existing watcher.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-evidence-index-classify, cl061-index-repair, cl061-proof-hashes-all2, cl061-bookkeeping-next, cl061-final-served.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-custody-ledger\evidence\raw-evidence-index.json | f8539351ad85b1c67c3b80b43cfc99dc43479bda7af03f57724648d0f6561181 |
+| E:\CodexQA\BTH\runs\cl061-evidence-index-classify\evidence\classification-before-repair.json | 1d631dc54232736c6785e0df61bc1cb912317ec719e18f680d56340855e207e1 |
+| E:\CodexQA\BTH\runs\cl061-index-repair\evidence\repair-receipt.json | fb3497e2b61550ce85ad932241e52b17d315c2056172880a619ca3c15224a5a9 |
+| E:\CodexQA\BTH\runs\cl061-proof-hashes-all2\evidence\all-proof-raw-hashes.json | c49340576d4e2d7a653fafb8bcf8f21826eefacace94ff6bfc59db78026b693e |
+| E:\CodexQA\BTH\runs\cl061-bookkeeping-next\evidence\served-assets.json | bfbdba59b1c95fb7e4dde2177a5b16a4332d515d3aa97cd030aa5a5fa5dd9e9d |
+| E:\CodexQA\BTH\runs\cl061-final-served\evidence\result.json | ff25ac6656f4a18b7601d85c000d29457301a414067ece2b08657e9904d19d81 |

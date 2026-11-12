@@ -35165,6 +35165,13 @@
           "evidence": [
             "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "d1d1d0f254a801782c3d56afcde059f645b78738",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -35180,6 +35187,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
           "summary": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES"
+        },
+        {
+          "kind": "final_checksum_custody",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "3579 raw hash references/21 indexes verified0 mismatches after exact-original-hash recovery of one reused external index path; no runtime/package/pipeline change."
         }
       ],
       "implementation_batches": [
@@ -35197,7 +35209,7 @@
       "planned_app_changes": [
         "Freeze and package final candidate"
       ],
-      "updated_at": "2026-11-12T01:26:57.869875+00:00"
+      "updated_at": "2026-11-12T01:37:50.151029+00:00"
     },
     {
       "id": "BTH061-CLOSE06-SCENARIO-CONTINUE-001",
@@ -38060,6 +38072,13 @@
           "evidence": [
             "docs/testing/CLOSE-05_final_candidate_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "d1d1d0f254a801782c3d56afcde059f645b78738",
+          "evidence": [
+            "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+            "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
@@ -38075,6 +38094,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
           "summary": "DONE_FROZEN_CANDIDATE_GATES_PACKAGES_AND_LAUNCHES"
+        },
+        {
+          "kind": "final_checksum_custody",
+          "reference": "docs/testing/CLOSE-05_final_candidate_2026-11-11.md",
+          "summary": "3579 raw hash references/21 indexes verified0 mismatches after exact-original-hash recovery of one reused external index path; no runtime/package/pipeline change."
         }
       ],
       "next_action": "Owner playtests frozen NEXT8724 and original packages; no tag/rename/upload performed.",
@@ -38086,7 +38110,7 @@
         "observed_at": "2026-11-12T01:26:57.869875+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-12T01:26:57.869875+00:00"
+      "updated_at": "2026-11-12T01:37:50.151029+00:00"
     }
   ]
 }

@@ -93,7 +93,7 @@ commands, intermediate failures and hashes remain in
 | CLOSE-03 | DONE within stated native/rendered scope. Code f2e42dea380a9650d7e9d6d061cca049356723c6; ledger db9d6b2a; Count 1ed18edd616dd14a1e5f32b7fca81a6f13772732; rendered proof5b13aa71/ledger e9732422; finding batches 3c09deb1. | Exact account/float comparisons pass; NEXT a6 real Delta closing-time dialogue, Take the hint and departure map exercised. Remaining ride beats were0; native 30/0 additionally covers1/2. No claim that rendered Take the hint served an unobserved30-minute callback. |
 | CLOSE-04 | DONE, owner-reduced AUD061-04. Code ceccaf561d79718b69d4fbf499cf923cb0e864d3; ledger 8d9dda72; rendered proof53b2a228/ledger 505a10bc; assessment batch 9f10bb90. | NEXT a6 and candidate 8724 display0.6.0(short commit). Changing only RELEASE_VERSION to0.6.1 changed the actual source-run menu, then was restored byte-for-byte. |
 | CLOSE-06 | EXECUTION DONE; findings/coverage OPEN. Proof a8321cc8; results ledger8724a23f6d8979863f4ed024159a0f07a1d4f0ab; new-finding registration 6ee494e6, parent-view reconciliation 84fecb8b. | NEXT a6, six fresh campaigns,233 normal-control batches / 239 screenshots, all closed with0 page/console errors or warnings. One of 3 flows passes; 2 unreached. Six game checkpoints pass; 4 narrower; Crew Poker unreached. Full results below. |
-| CLOSE-05 | DONE. Frozen source 8724a23f6d8979863f4ed024159a0f07a1d4f0ab; this handoff and its paired proof/ledger commits are documentation after the freeze. | Same candidate passes final gates, is served on NEXT, and supplies both unchanged-exporter packages below. |
+| CLOSE-05 | DONE. Proof 5657590a / ledger 672b7292; frozen source 8724a23f6d8979863f4ed024159a0f07a1d4f0ab; this handoff and its paired proof/ledger commits are documentation after the freeze. | Same candidate passes final gates, is served on NEXT, and supplies both unchanged-exporter packages below. |
 
 Each order has one maintained proof file under docs/testing. Follow-up proof and
 ledger commits keep their own identities. All runtime changes are present in
@@ -198,6 +198,10 @@ therefore still exits1 globally; it is not a green repository-wide ledger claim.
 Execution is recorded done with findings open; AUD061-EXECUTION and CLOSEOUT-061
 remain open parent rows because acceptance/deferred children remain open.
 No child dependency or required acceptance was deleted or waived.
+
+The final evidence check recovered one reused index reference with its exact
+original hash; all 3,579 raw hash references across 21 indexes then verified with
+0 mismatches. Product/tests/packages were unaffected.
 
 ## 6. Candidate packages
 
