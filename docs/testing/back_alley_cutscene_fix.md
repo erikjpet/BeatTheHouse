@@ -26,3 +26,7 @@ The alley contract supplies measured low-passage clearance. Its approach now use
 Detailed commands, logs, PNGs and guard receipts remain in the named E:/CodexQA/BTH/runs/back-alley-* evidence directories. The compact committed receipt lists exact passing Job hashes.
 
 Status: tested; publication/NEXT verification pending. Existing stable/itch, audience, user saves, dirty developer checkout and audit worker remain unchanged.
+
+Scoped fix commit: 791af903b74fca270e44f4c6aa527e080d39215a. Rebased onto documentation-only main ed0f945a0e3aca11f9cc2e99b92a82266a983696; all tested runtime, data and asset bytes remain identical. Required reconciliation is run with the actual active task and owned-zero Job snapshots; unrelated global backlog findings remain outside this fix.
+
+Manual reconciliation (back-alley-ledger-verified-20261112) reports zero findings for BTH-TRAVEL-BACK-ALLEY-002 and 93 unrelated current/global findings. Cleanup contracts were verified by source review of the maintained supervisor and kill-on-close Job; successful and failing test Job closures were observed. No new timeout/interruption fault-injection run is claimed.

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T17:25:14.834652+00:00",
+  "updated_at": "2026-11-12T17:25:35.047834+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37498,10 +37498,18 @@
         "task_ref": "/root/fix_back_alley_cutscene",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "791af903b74fca270e44f4c6aa527e080d39215a",
+          "evidence": [
+            "docs/testing/back_alley_cutscene_fix.md",
+            "docs/testing/back_alley_cutscene_receipt.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "not_started",
+        "state": "pending",
         "commit": null,
         "evidence": []
       },
@@ -37528,7 +37536,7 @@
           "docs/testing/back_alley_cutscene_fix.md"
         ]
       },
-      "updated_at": "2026-11-12T17:24:03.184417+00:00",
+      "updated_at": "2026-11-12T17:25:35.047834+00:00",
       "objective": {
         "text": "Correct fresh travel fallback that looks like a frozen cutscene with bottom text and prevent the Back Alley traveler from intersecting its overhang. Preserve existing route outcomes, cash/time/RNG, recovery summaries and audience; deliver tested main through existing NEXT.",
         "source": "docs/testing/back_alley_cutscene_fix.md",
