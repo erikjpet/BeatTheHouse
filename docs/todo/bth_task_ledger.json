@@ -35582,15 +35582,19 @@
             "id": "1",
             "description": "Record owner decision players hold few items; no implementation",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+            ]
           },
           {
             "id": "2",
             "description": "Retain history and dated references in listed plans",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+            ]
           },
           {
             "id": "3",
@@ -35607,7 +35611,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35627,6 +35631,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f12f8fa11b36ad7e1d816f3b6d2ccae80cb2b5b3",
+          "evidence": [
+            "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35645,24 +35655,29 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
+          "summary": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
         "FEAT-04-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify exact NEXT metadata and clean startup for paired documentation delivery; no controls implementation authorized.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.050638+00:00",
+        "observed_at": "2026-11-12T09:07:51.843523+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Close collection sorting as owner-not-wanted"
       ],
-      "updated_at": "2026-11-12T07:55:31.050638+00:00"
+      "updated_at": "2026-11-12T09:07:51.843523+00:00"
     },
     {
       "id": "FEAT-03",
@@ -39300,7 +39315,7 @@
       "parent_id": "FEAT-04",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING",
       "scope": [
         "Close collection sorting as owner-not-wanted"
       ],
@@ -39323,6 +39338,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f12f8fa11b36ad7e1d816f3b6d2ccae80cb2b5b3",
+          "evidence": [
+            "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39341,18 +39362,23 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
+          "summary": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify exact NEXT metadata and clean startup for paired documentation delivery; no controls implementation authorized.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.050638+00:00",
+        "observed_at": "2026-11-12T09:07:51.843523+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-12T07:55:31.050638+00:00"
+      "updated_at": "2026-11-12T09:07:51.843523+00:00"
     },
     {
       "id": "FEAT-03-BATCH-001",
