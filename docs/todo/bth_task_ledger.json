@@ -36014,6 +36014,11 @@
           "kind": "qualification_diagnosis_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
+        },
+        {
+          "kind": "rendered_off_default_observation",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "Fresh default-off Count replay accepted a normal Crew delivery and showed carried Package controls plus marked Lounge target. No handoff or exact inventory-id claim; defaults remain unchanged pending merchant-stock decision."
         }
       ],
       "implementation_batches": [
@@ -36342,7 +36347,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "INVESTIGATION_PARTIAL_NATIVE_APP_ACCESS_PENDING_NO_ENABLEMENT_SHIPPED",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -36362,6 +36367,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -36380,24 +36391,31 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "INVESTIGATION_PARTIAL_NATIVE_APP_ACCESS_PENDING_NO_ENABLEMENT_SHIPPED"
         }
       ],
       "implementation_batches": [
         "FEAT-02-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Approve native game app access, then attempt Whale from a fresh profile through visible controls; retain private branch only and report actual gameplay stop. Complete Count measurement and explain pre-existing golden drift before acceptance.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.474668+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "Computer Use app approval timed out before first Whale input. Private Web export lacks its pinned template; automatic review rejected the proposed template copy and no workaround was performed. NEXT report delivery also awaits normal cold-import qualification.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T15:23:07.399764+00:00",
+        "evidence": [
+          "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Investigate Whale privately without shipping enablement"
       ],
-      "updated_at": "2026-11-12T07:55:31.474668+00:00"
+      "updated_at": "2026-11-12T15:23:07.399764+00:00"
     },
     {
       "id": "FEAT-07",
@@ -36442,7 +36460,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "COUNT_RENDERED_PARTIAL_86_INPUTS_FULL_ROUTE_NOT_REACHED",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -36462,6 +36480,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -36480,24 +36504,31 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "COUNT_RENDERED_PARTIAL_86_INPUTS_FULL_ROUTE_NOT_REACHED"
         }
       ],
       "implementation_batches": [
         "FEAT-07-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Measure a complete legitimate Count route including Made/escort access, persistence, setup, live hands and getaway in an admitted bounded campaign; do not compare the partial86 UI inputs with the old389/164 full result.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "The18-minute rendered attempt ended while its accepted ordinary delivery awaited Lounge opening. Planning Table and all live-heist beats were not reached; no completion or full action-count pass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.559638+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T15:23:07.489542+00:00",
+        "evidence": [
+          "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Measure Count route alongside private Whale investigation"
       ],
-      "updated_at": "2026-11-12T07:55:31.559638+00:00"
+      "updated_at": "2026-11-12T15:23:07.489542+00:00"
     },
     {
       "id": "BTH-FEAT-PRACTICE-FEEDBACK-001",
@@ -36658,6 +36689,146 @@
         "Enabling route-only item packs adds eighteen items to ordinary merchant pools"
       ],
       "updated_at": "2026-11-12T09:37:37.168878+00:00"
+    },
+    {
+      "id": "BTH-FEAT-COUNT-ACCESS-GUIDE-001",
+      "name": "Public Count walkthrough omits current private-room access prerequisite",
+      "aliases": [],
+      "kind": "documentation_discrepancy",
+      "parent_ids": [
+        "FEAT-02",
+        "FEAT-07"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Public Count walkthrough omits current private-room access prerequisite",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Confirm current Made/escort access against the existing public fresh-Count walkthrough and qualify the legitimate route before correcting that guide; no access guard change authorized.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_REPRODUCED_TEST_OR_DOCUMENT_DISCREPANCY_NO_FIX_AUTHORIZED",
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "OPEN_REPRODUCED_TEST_OR_DOCUMENT_DISCREPANCY_NO_FIX_AUTHORIZED"
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Confirm current Made/escort access against the existing public fresh-Count walkthrough and qualify the legitimate route before correcting that guide; no access guard change authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:23:07.651789+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:23:07.651789+00:00"
+    },
+    {
+      "id": "BTH-FEAT-NOOP-GOLDEN-001",
+      "name": "Existing Crew-ignoring saved golden differs before the feature queue",
+      "aliases": [],
+      "kind": "test_discrepancy",
+      "parent_ids": [
+        "FEAT-02",
+        "FEAT-07"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Existing Crew-ignoring saved golden differs before the feature queue",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Explain61 saved-golden differences on pre-feature070, main2495 and private8cf without refreshing the fixture or exposing nonpublic data; preserve passing direct no-op invariants. No repair authorized in this queue.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_REPRODUCED_TEST_OR_DOCUMENT_DISCREPANCY_NO_FIX_AUTHORIZED",
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "OPEN_REPRODUCED_TEST_OR_DOCUMENT_DISCREPANCY_NO_FIX_AUTHORIZED"
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Explain61 saved-golden differences on pre-feature070, main2495 and private8cf without refreshing the fixture or exposing nonpublic data; preserve passing direct no-op invariants. No repair authorized in this queue.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:23:07.802869+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:23:07.802869+00:00"
     }
   ],
   "batches": [
@@ -40042,7 +40213,7 @@
       "parent_id": "FEAT-02",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "INVESTIGATION_PARTIAL_NATIVE_APP_ACCESS_PENDING_NO_ENABLEMENT_SHIPPED",
       "scope": [
         "Investigate Whale privately without shipping enablement"
       ],
@@ -40065,6 +40236,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -40083,18 +40260,25 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "INVESTIGATION_PARTIAL_NATIVE_APP_ACCESS_PENDING_NO_ENABLEMENT_SHIPPED"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Approve native game app access, then attempt Whale from a fresh profile through visible controls; retain private branch only and report actual gameplay stop. Complete Count measurement and explain pre-existing golden drift before acceptance.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "Computer Use app approval timed out before first Whale input. Private Web export lacks its pinned template; automatic review rejected the proposed template copy and no workaround was performed. NEXT report delivery also awaits normal cold-import qualification.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.474668+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T15:23:07.399764+00:00",
+        "evidence": [
+          "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T07:55:31.474668+00:00"
+      "updated_at": "2026-11-12T15:23:07.399764+00:00"
     },
     {
       "id": "FEAT-07-BATCH-001",
@@ -40102,7 +40286,7 @@
       "parent_id": "FEAT-07",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "COUNT_RENDERED_PARTIAL_86_INPUTS_FULL_ROUTE_NOT_REACHED",
       "scope": [
         "Measure Count route alongside private Whale investigation"
       ],
@@ -40125,6 +40309,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "f853fa69da018b66968659f621fb2bc39453dc75",
+          "evidence": [
+            "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -40143,18 +40333,25 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md",
+          "summary": "COUNT_RENDERED_PARTIAL_86_INPUTS_FULL_ROUTE_NOT_REACHED"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Measure a complete legitimate Count route including Made/escort access, persistence, setup, live hands and getaway in an admitted bounded campaign; do not compare the partial86 UI inputs with the old389/164 full result.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "The18-minute rendered attempt ended while its accepted ordinary delivery awaited Lounge opening. Planning Table and all live-heist beats were not reached; no completion or full action-count pass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.559638+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T15:23:07.489542+00:00",
+        "evidence": [
+          "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T07:55:31.559638+00:00"
+      "updated_at": "2026-11-12T15:23:07.489542+00:00"
     }
   ]
 }

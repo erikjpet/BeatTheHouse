@@ -129,9 +129,10 @@ results, not private-branch or Count-route completion passes.
 Private information contract: PASS, exit0. Direct Crew-ignoring ambient and
 world no-op checks: zero failures. Existing saved-golden comparison:61
 differences on private8cf74d0c, main2495b47e and a post-hoc pre-feature070fc937
-control. All report one saved-golden mismatch, zero same-seed mismatches,
-zero direct ignored-run mutations, zero ambient no-op failures and zero world
-no-op failures. Thus the saved-golden discrepancy predates this queue; its
+control. The detailed private and pre-feature controls report one saved-golden
+mismatch, zero same-seed mismatches, zero direct ignored-run mutations,
+zero ambient no-op failures and zero world no-op failures. The main control
+recorded the aggregate61 only. Thus the saved-golden discrepancy predates this queue; its
 underlying cause is unresolved. No private payload or differing save-key paths were captured.
 The existing synthetic Count financial control passes70/70. It checks
 settlement/accounting compatibility and is not a fresh heist-route replay.
