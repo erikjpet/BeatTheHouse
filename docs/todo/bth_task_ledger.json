@@ -32989,22 +32989,28 @@
             "id": "1",
             "description": "Actual scoped diagnosis and evidence",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Associated corrective or qualification commit where required",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Exact deployed acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -33013,8 +33019,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_REPAIR_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33038,14 +33044,20 @@
           "evidence": [
             "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -33058,24 +33070,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
           "summary": "LOCAL_REPAIR_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-BARDICE-COLD-001-BATCH-001"
       ],
-      "next_action": "Retain open until exact NEXT delivery; see CLOSE-03 proof for classification, unchanged values and rendered Riverboat ride requirement.",
+      "next_action": "Reopen on a real account/value difference or recurrence. Diagnosis, strict comparisons and actual delivery are in CLOSE-03; no production account or save value was rounded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:42:15.140035+00:00",
+        "observed_at": "2026-11-12T00:33:17.204519+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Diagnose the failed post-Call passive-tumble assertion without inferring lost money."
       ],
-      "updated_at": "2026-11-11T21:42:15.140035+00:00"
+      "updated_at": "2026-11-12T00:33:17.204519+00:00"
     },
     {
       "id": "BTH061-RC-SCRATCH-STATE-001",
@@ -33095,22 +33112,28 @@
             "id": "1",
             "description": "Actual scoped diagnosis and evidence",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Associated corrective or qualification commit where required",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Exact deployed acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -33119,8 +33142,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_REPAIR_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33144,14 +33167,20 @@
           "evidence": [
             "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -33164,24 +33193,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
           "summary": "LOCAL_REPAIR_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-SCRATCH-STATE-001-BATCH-001"
       ],
-      "next_action": "Retain open until exact NEXT delivery; see CLOSE-03 proof for classification, unchanged values and rendered Riverboat ride requirement.",
+      "next_action": "Reopen on a real account/value difference or recurrence. Diagnosis, strict comparisons and actual delivery are in CLOSE-03; no production account or save value was rounded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:42:15.305051+00:00",
+        "observed_at": "2026-11-12T00:33:17.374229+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Capture the failing in-memory leaf/type difference and qualify paid ticket boundaries; no loss currently proven."
       ],
-      "updated_at": "2026-11-11T21:42:15.305051+00:00"
+      "updated_at": "2026-11-12T00:33:17.374229+00:00"
     },
     {
       "id": "BTH061-RC-BARDICE-COVER-CLIP-001",
@@ -33813,22 +33847,28 @@
             "id": "1",
             "description": "Actual scoped reproduction/diagnosis",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Associated corrective or qualification commit",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Exact current candidate acceptance before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -33837,8 +33877,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_REPAIR_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33862,14 +33902,20 @@
           "evidence": [
             "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -33882,24 +33928,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
           "summary": "LOCAL_REPAIR_PASS_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "CLOSED_TEST_DISCREPANCY_EXACT_NEXT_QUALIFIED"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-RIVERBOAT-FIXTURE-001-BATCH-001"
       ],
-      "next_action": "Retain open until exact NEXT delivery; see CLOSE-03 proof for classification, unchanged values and rendered Riverboat ride requirement.",
+      "next_action": "Reopen on a real account/value difference or recurrence. Diagnosis, strict comparisons and actual delivery are in CLOSE-03; no production account or save value was rounded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:42:15.223053+00:00",
+        "observed_at": "2026-11-12T00:33:17.285876+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
       ],
-      "updated_at": "2026-11-11T21:42:15.223053+00:00"
+      "updated_at": "2026-11-12T00:33:17.285876+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001",
@@ -34498,29 +34549,37 @@
             "id": "1",
             "description": "Bar Dice normal popup dismissal and separate account/tumble checks",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Reuse/verify already delivered Count exact expectation correction",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Real Riverboat dialogue fixture and rendered Delta Queen closing ride",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           },
           {
             "id": "4",
             "description": "First Scratch leaf+types; no real values normalized away",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34529,8 +34588,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_TEST_REPAIRS_PASS_NEXT_RIDE_PENDING",
+      "state": "complete",
+      "status": "DONE_TEST_REPAIRS_EXACT_NEXT_CLOSING_DEPARTURE_VERIFIED",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34548,13 +34607,21 @@
           "evidence": [
             "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -34566,24 +34633,29 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
           "summary": "LOCAL_TEST_REPAIRS_PASS_NEXT_RIDE_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "DONE_TEST_REPAIRS_EXACT_NEXT_CLOSING_DEPARTURE_VERIFIED"
         }
       ],
       "implementation_batches": [
         "CLOSE-03-BATCH-001"
       ],
-      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; perform rendered Delta Queen closing-time ride, then associate actual delivery. Local Bar Dice76/52/24, Riverboat30 and Scratch9/5 all pass; Count prior delivered1ed18edd.",
+      "next_action": "No further test repair. Native one/two remaining ride beats30/0; rendered normal closing departure passed with0remaining, exact scope in proof. Coverage gaps/finding belong to CLOSE-06.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:42:02.188260+00:00",
+        "observed_at": "2026-11-12T00:33:17.123086+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Repair four diagnosed test discrepancies"
       ],
-      "updated_at": "2026-11-11T21:42:02.188260+00:00"
+      "updated_at": "2026-11-12T00:33:17.122094+00:00"
     },
     {
       "id": "CLOSE-04",
@@ -37390,8 +37462,8 @@
       "name": "Repair four diagnosed test discrepancies bounded execution",
       "parent_id": "CLOSE-03",
       "group": "current",
-      "state": "open",
-      "status": "LOCAL_TEST_REPAIRS_PASS_NEXT_RIDE_PENDING",
+      "state": "complete",
+      "status": "DONE_TEST_REPAIRS_EXACT_NEXT_CLOSING_DEPARTURE_VERIFIED",
       "scope": [
         "Repair four diagnosed test discrepancies"
       ],
@@ -37412,13 +37484,21 @@
           "evidence": [
             "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -37430,18 +37510,23 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
           "summary": "LOCAL_TEST_REPAIRS_PASS_NEXT_RIDE_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "DONE_TEST_REPAIRS_EXACT_NEXT_CLOSING_DEPARTURE_VERIFIED"
         }
       ],
-      "next_action": "Deliver through existing NEXT after CLOSE-01 cold-import qualification; perform rendered Delta Queen closing-time ride, then associate actual delivery. Local Bar Dice76/52/24, Riverboat30 and Scratch9/5 all pass; Count prior delivered1ed18edd.",
+      "next_action": "No further test repair. Native one/two remaining ride beats30/0; rendered normal closing departure passed with0remaining, exact scope in proof. Coverage gaps/finding belong to CLOSE-06.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T21:42:02.188260+00:00",
+        "observed_at": "2026-11-12T00:33:17.123086+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T21:42:02.188260+00:00"
+      "updated_at": "2026-11-12T00:33:17.123086+00:00"
     },
     {
       "id": "CLOSE-04-BATCH-001",
