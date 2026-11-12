@@ -35320,6 +35320,852 @@
         "Gas Casino scenario visuals disappear after normal Continue"
       ],
       "updated_at": "2026-11-12T00:36:18.504184+00:00"
+    },
+    {
+      "id": "FEAT-QUEUE",
+      "name": "Work owner-authorized unfinished-features queue",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Work owner-authorized unfinished-features queue",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Section8 dispositions with room-by-room running evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "FEAT03 local full-date seed without other features",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "FEAT11 defaults with explicit-choice preservation and route evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "FEAT10 three rendered rechecks and FEAT09 recorded-next-action scenario dispositions",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "5",
+            "description": "FEAT02+07 isolated unpushed investigation, public-only report",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "6",
+            "description": "Section9 recorded open/no work and final indexed report",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-QUEUE-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:30.878605+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Work owner-authorized unfinished-features queue"
+      ],
+      "updated_at": "2026-11-12T07:55:30.878605+00:00"
+    },
+    {
+      "id": "FEAT-STALE",
+      "name": "Close Section8 stale plan entries with dated evidence",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Close Section8 stale plan entries with dated evidence",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Verify each non-room claim against current source/history",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Confirm Bar BackAlley Gas Underground KittyCat Jazz Beach Delta and Motel aftermath room by room in running game before closure",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Add dated closed-see lines without deleting history; leave any unverified claim open",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Proof and exact NEXT delivery",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-STALE-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:30.964606+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Close Section8 stale plan entries with dated evidence"
+      ],
+      "updated_at": "2026-11-12T07:55:30.964606+00:00"
+    },
+    {
+      "id": "FEAT-04",
+      "name": "Close collection sorting as owner-not-wanted",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Close collection sorting as owner-not-wanted",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Record owner decision players hold few items; no implementation",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Retain history and dated references in listed plans",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Commit proof and verify NEXT",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-04-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.050638+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Close collection sorting as owner-not-wanted"
+      ],
+      "updated_at": "2026-11-12T07:55:31.050638+00:00"
+    },
+    {
+      "id": "FEAT-03",
+      "name": "Daily Challenge unique full local-date seed",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Daily Challenge unique full local-date seed",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Reproduce same-date cross-year collision",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Change only seed function and required year call binding; keep local-date/streak format/active daily seed",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Focused date/year/consecutive/midnight checks and unchanged Smoke",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Exact NEXT identity startup and normal Daily action",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-03-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.134606+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Daily Challenge unique full local-date seed"
+      ],
+      "updated_at": "2026-11-12T07:55:31.134606+00:00"
+    },
+    {
+      "id": "FEAT-11",
+      "name": "Enable both item packs by default only",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Enable both item packs by default only",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Observe off scenario reward/bench/delivery in running game before edit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Preserve existing explicit off choices; investigate untouched profile behavior without overriding ambiguous saved settings",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "No item effect price text or merchant stock change; defaults only",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Fresh NEXT no RunSetup souvenir and bench evidence; report known three unfixed items",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-11-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.220606+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Enable both item packs by default only"
+      ],
+      "updated_at": "2026-11-12T07:55:31.220606+00:00"
+    },
+    {
+      "id": "FEAT-10",
+      "name": "Recheck BUG10 BUG34 BUG37 in rendered play",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Recheck BUG10 BUG34 BUG37 in rendered play",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Check all3 in1280x720 current running game",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Close supported stale bugs or register fresh reproduced findings without speculative repairs",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Proof counts and exact NEXT delivery",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-10-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.305606+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Recheck BUG10 BUG34 BUG37 in rendered play"
+      ],
+      "updated_at": "2026-11-12T07:55:31.305606+00:00"
+    },
+    {
+      "id": "FEAT-09",
+      "name": "Resume only two concrete scenario exceptions",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resume only two concrete scenario exceptions",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Resume Wedding001 and Arrival002 from each recorded next action, reproduce first",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Rewards settle once across Save Continue travel revisit abort; retain original safety assertions",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "No item-effect/math/BTH11 polish work",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Focused checks Smoke and exact rendered NEXT evidence",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-09-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.389670+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Resume only two concrete scenario exceptions"
+      ],
+      "updated_at": "2026-11-12T07:55:31.389670+00:00"
+    },
+    {
+      "id": "FEAT-02",
+      "name": "Investigate Whale privately without shipping enablement",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Investigate Whale privately without shipping enablement",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Fresh normal-control attempt on local never-pushed branch with scoped enablement",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Public-only stop point/current state/remaining work estimate recommendation together with FEAT07",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Count/no-op/hidden-state safety checks; no hidden values in evidence or fixtures",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Only written report delivered on main; no enabling code ancestry or patch",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-02-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.474668+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Investigate Whale privately without shipping enablement"
+      ],
+      "updated_at": "2026-11-12T07:55:31.474668+00:00"
+    },
+    {
+      "id": "FEAT-07",
+      "name": "Measure Count route alongside private Whale investigation",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Measure Count route alongside private Whale investigation",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Fresh visible Count route replay; distinguish UI bridge/control actions from gameplay actions",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Report where actions go and specific owner recommendations without pacing or rule changes",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Single combined public-only investigation report; no enabling code shipped",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-07-BATCH-001"
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.559638+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Measure Count route alongside private Whale investigation"
+      ],
+      "updated_at": "2026-11-12T07:55:31.559638+00:00"
     }
   ],
   "batches": [
@@ -38111,6 +38957,438 @@
         "evidence": []
       },
       "updated_at": "2026-11-12T01:37:50.151029+00:00"
+    },
+    {
+      "id": "FEAT-QUEUE-BATCH-001",
+      "name": "Work owner-authorized unfinished-features queue bounded execution",
+      "parent_id": "FEAT-QUEUE",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Work owner-authorized unfinished-features queue"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:30.878605+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:30.878605+00:00"
+    },
+    {
+      "id": "FEAT-STALE-BATCH-001",
+      "name": "Close Section8 stale plan entries with dated evidence bounded execution",
+      "parent_id": "FEAT-STALE",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Close Section8 stale plan entries with dated evidence"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:30.964606+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:30.964606+00:00"
+    },
+    {
+      "id": "FEAT-04-BATCH-001",
+      "name": "Close collection sorting as owner-not-wanted bounded execution",
+      "parent_id": "FEAT-04",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Close collection sorting as owner-not-wanted"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.050638+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.050638+00:00"
+    },
+    {
+      "id": "FEAT-03-BATCH-001",
+      "name": "Daily Challenge unique full local-date seed bounded execution",
+      "parent_id": "FEAT-03",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Daily Challenge unique full local-date seed"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.134606+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.134606+00:00"
+    },
+    {
+      "id": "FEAT-11-BATCH-001",
+      "name": "Enable both item packs by default only bounded execution",
+      "parent_id": "FEAT-11",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Enable both item packs by default only"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.220606+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.220606+00:00"
+    },
+    {
+      "id": "FEAT-10-BATCH-001",
+      "name": "Recheck BUG10 BUG34 BUG37 in rendered play bounded execution",
+      "parent_id": "FEAT-10",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Recheck BUG10 BUG34 BUG37 in rendered play"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.305606+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.305606+00:00"
+    },
+    {
+      "id": "FEAT-09-BATCH-001",
+      "name": "Resume only two concrete scenario exceptions bounded execution",
+      "parent_id": "FEAT-09",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Resume only two concrete scenario exceptions"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.389670+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.389670+00:00"
+    },
+    {
+      "id": "FEAT-02-BATCH-001",
+      "name": "Investigate Whale privately without shipping enablement bounded execution",
+      "parent_id": "FEAT-02",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Investigate Whale privately without shipping enablement"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.474668+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.474668+00:00"
+    },
+    {
+      "id": "FEAT-07-BATCH-001",
+      "name": "Measure Count route alongside private Whale investigation bounded execution",
+      "parent_id": "FEAT-07",
+      "group": "current",
+      "state": "open",
+      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "scope": [
+        "Measure Count route alongside private Whale investigation"
+      ],
+      "owner": {
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "2b8b0a6b77219dfdbc93dc7c4d772d6702c0e010",
+          "evidence": [
+            "docs/todo/BTH_unfinished_features_audit.md",
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "queue_intake",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Registered authorized scope before implementation; baseline and delivery pending."
+        }
+      ],
+      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T07:55:31.559638+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-12T07:55:31.559638+00:00"
     }
   ]
 }
