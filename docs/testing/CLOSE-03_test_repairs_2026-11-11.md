@@ -153,3 +153,27 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\native-private-close061-s03-scratch-ok\evidence\results.json | 1a3441ded3b347935ec2610058bdbe69f1d3e17b083c31b993353d66d8a323c9 |
 | E:\CodexQA\BTH\runs\native-private-close061-s03-split\evidence\results.json | bc0bb02f59658be2f1fe9122c2ede57c1fa155a564a4a1c4585d824a8316fd45 |
 | E:\CodexQA\BTH\runs\native-private-close061-s03-split2\evidence\results.json | e6713dba06d11f0b6e9f726d0830daaaffde0285788c72464e70938c81bb6edb |
+
+## Exact NEXT delivery and rendered Delta Queen closeout
+
+All maintained repairs were delivered by the existing watcher on `a6ce512640cbd98019a6b9a4c5b5081278ba78bb` (runtime code `f2e42dea380a9650d7e9d6d061cca049356723c6`; Count reused already-delivered `1ed18edd616dd14a1e5f32b7fca81a6f13772732`). Exact identity/tree and ten served asset checks passed in `cl061-a6-next-identity`. The earlier staged-only claims above are superseded by this actual receipt. No additional runtime repair was made in this rendered follow-up.
+
+Normal fresh browser campaign `cl061-c06-f`, on that immutable NEXT, reached the Delta Queen through Gas -> Motel -> Punchline -> Bar -> Kitty Cat Lounge -> Riverboat. Actual arrival, the Crew loan confirmation and Walk the Deck controls were used; no scene override, save editing, game API or profile migration. At 03:45 the real Walk the Deck action completed its $10 charge and brought up Dorian Pike's closing dialogue. Screenshot039 shows **Take the hint** on the real TalkDock. Normal click040 opens the departure map; route041 offers the free 40-minute walk to Gas Casino; normal Travel042 arrives.
+
+Read-only decoding with the unchanged production RunSaveCodec verifies cash68, chips0, inventory[] and rootRNG522324453 at039,040 and042. The callback did not charge or reroll. The rendered case had **zero remaining ride beats** before and after the response. The observed clock1673->1703 includes ordinary elapsed time and is not evidence of two callback-served ride beats. The unchanged focused native checks separately cover the one- and two-beat branches, checked-turn failure/retry, ordinary closing, independent sweep locks, stale/wrong choices, missing dock/current-entry refusal and duplicate response. Do not conflate those native branches with this browser case.
+
+Rendered result: real Delta Queen closing-time dialogue -> departure map -> normal departure **PASS**, with the stated zero-remaining-beat scope. The historical19-check/10-failure fixture is now30checks/0failures; Bar Dice76+52+24 all pass, Scratch9+5 all pass, and Count26write+8read+70synthetic all pass. These results preserve account/RNG checks and production guards. Raw browser campaign:45 control batches, zero page/console errors, normal closure, workerexit0 and cleanup0.
+
+Paid Scratch evidence was also extended by CLOSE-06: a real bought Crossword ticket survived both unopened and six-letters-open checkpoints, finished No Win, and filed once. That broader acceptance is recorded in CLOSE-06, including the separate open Gas scenery finding.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: cl061-c06-f, cl061-f-save-observe, cl061-f-account-proof, cl061-a6-next-identity.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\cl061-s03-rendered-proof\evidence\raw-evidence-index.json | d9e12e1e6cbb6a236ca707df1953b011f5d094d6f5b872b2216f5e014e572933 |
+| E:\CodexQA\BTH\runs\cl061-c06-f\evidence\result.json | b38c79b1e2839525a9ef4d0e8c63921fb1b9d4ea7077d8550d0773d32392d78a |
+| E:\CodexQA\BTH\runs\cl061-c06-f\evidence\039-delta-after-closing-action.png | c4f52763a6410a827027c4c9e3091cbbd141c92f99cb8493be1b762f9520e1d6 |
+| E:\CodexQA\BTH\runs\cl061-c06-f\evidence\040-delta-take-closing-hint.png | e223d7646263d8a4d64e5d05fb541e99c7757614e5406c8a74dcb5f2dfd3b8b1 |
+| E:\CodexQA\BTH\runs\cl061-c06-f\evidence\042-delta-closing-departure-arrived.png | 7fa0effe648306fb2feed18489ab206956d4d3fb0cbc1688f7b67f979c7e7e4b |
