@@ -1,5 +1,7 @@
 # game06_5 Option C owner decision
 
+Closed 2026-11-12, see docs/testing/FEAT-STALE_plan_closures_2026-11-12.md: the former Crossword hold is superseded; current new-sale availability was confirmed.
+
 Status: **SUPERSEDED 2026-09-02 / HISTORICAL RECORD**
 
 The owner's later instruction selected a denser interlocking Crossword and

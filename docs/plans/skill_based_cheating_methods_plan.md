@@ -1,5 +1,7 @@
 # Skill-Based Cheating Methods Plan
 
+Closed 2026-11-12, see docs/testing/FEAT-STALE_plan_closures_2026-11-12.md: the implemented/active design is a historical completed plan, not new feature work.
+
 Status: **IMPLEMENTED DESIGN LOCK active in the current 0.6 source.**
 Symbol names and shared result contracts remain authoritative; numeric line
 references in the source-check section are historical and should not be used

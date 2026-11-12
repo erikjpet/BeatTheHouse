@@ -1,5 +1,7 @@
 # Dynamic Music System Rework Plan
 
+Closed 2026-11-12, see docs/testing/FEAT-STALE_plan_closures_2026-11-12.md: the implemented/active design is a historical completed plan, not new feature work.
+
 Date: 2026-07-02
 Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** The original
 review describes the pre-rework player; the live implementation in
