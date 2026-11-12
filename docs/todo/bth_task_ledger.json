@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T16:31:36.390585+00:00",
+  "updated_at": "2026-11-12T17:06:00.699830+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37368,8 +37368,8 @@
       "kind": "objective",
       "parent_ids": [],
       "group": "current",
-      "state": "open",
-      "status": "NATIVE_QUALIFIED_SCOPED_INTEGRATION_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_QUALIFIED_MAIN_AND_NEXT_HTTP_VERIFIED",
       "owner": {
         "name": "dot, travel implementation",
         "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
@@ -37381,33 +37381,49 @@
           "evidence": [
             "docs/testing/travel_main_integration.md"
           ]
+        },
+        {
+          "sha": "49594c29c42803f60e89f84c226801f5995910cb",
+          "evidence": [
+            "docs/testing/travel_main_integration.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "49594c29c42803f60e89f84c226801f5995910cb",
+        "evidence": [
+          "E:/CodexQA/BTH/runs/served-49594c29-1703/evidence/next-identity-receipt.json",
+          "E:/CodexQA/BTH/runs/travel-next-http-independent-20261112-01/evidence/next-http-verification.json",
+          "docs/testing/travel_main_integration.md"
+        ],
+        "scope": "Exact-source native changed-behavior qualification plus served NEXT HTTP identity/assets. Browser startup, visual gameplay and save isolation were not run; no browser/WASM gameplay claim."
       },
       "evidence": [
         {
           "kind": "owner_request_and_source_inventory",
           "reference": "docs/testing/travel_main_integration.md",
-          "summary": "Approved f5225ce source integrated onto main 6fea5099. 19 focused Jobs pass 93,128 assertions plus liveness/PCK contracts and 863 script loads. Native qualification is complete; main/NEXT delivery remains pending."
+          "summary": "Product f35ba137 is qualified by 19 capped Jobs, 93,128 assertions and 863 script loads. Existing watcher promoted 49594c29 at 2026-11-12T17:00:06Z; 15 HTTP identity/asset checks and an independent HTTP check passed. Browser startup/gameplay/save isolation remain unverified."
+        },
+        {
+          "kind": "served_next_http",
+          "reference": "docs/testing/travel_main_integration.md",
+          "summary": "Exact-source native changed-behavior qualification plus served NEXT HTTP identity/assets. Browser startup, visual gameplay and save isolation were not run; no browser/WASM gameplay claim."
         }
       ],
-      "next_action": "Review and publish the scoped main integration without force; qualify exact final source through existing NEXT and record actual served acceptance before closing the objective.",
+      "next_action": "None for the requested main/NEXT product delivery. Preserve the recorded native and HTTP scopes; browser startup/gameplay/save isolation remain unverified. This metadata closure is not a new served-build claim.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-12T16:31:36.390585+00:00",
+        "observed_at": "2026-11-12T17:06:00.699830+00:00",
         "evidence": [
           "docs/testing/travel_main_integration.md"
         ]
       },
-      "updated_at": "2026-11-12T16:31:36.390585+00:00",
+      "updated_at": "2026-11-12T17:06:00.699830+00:00",
       "objective": {
         "text": "Integrate approved shared eight-second travel across fifteen exterior destinations and four canonical methods, using the actual game avatar, layered art and integrated doors/interiors. Only Travel-menu journeys animate; reveal the destination automatically at completion without new incidents/routes/gameplay consequences. Deliver qualified main through existing NEXT.",
         "source": "docs/testing/travel_main_integration.md",
@@ -37417,29 +37433,42 @@
             "id": "1",
             "description": "Only explicit Travel-menu confirmations animate; internal, direct, offered and forced moves stay unanimated.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "E:/CodexQA/BTH/runs/travel-main-qualified-summary-20261112-01/evidence/qualification.json",
+              "docs/testing/travel_main_integration.md"
+            ]
           },
           {
             "id": "2",
             "description": "Reveal the prepared destination automatically once after eight seconds, preserving Skip, interruption, focus and static pending receipts.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "E:/CodexQA/BTH/runs/travel-main-qualified-summary-20261112-01/evidence/qualification.json",
+              "docs/testing/travel_main_integration.md"
+            ]
           },
           {
             "id": "3",
             "description": "Preserve current-main fixes and authoritative RNG, cash, time, once-only settlement, save/reload and rollback.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "E:/CodexQA/BTH/runs/travel-main-qualified-summary-20261112-01/evidence/qualification.json",
+              "docs/testing/travel_main_integration.md"
+            ]
           },
           {
             "id": "4",
             "description": "Qualify exact committed main through the existing NEXT watcher; preserve stable, itch and audience and state browser verification limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "E:/CodexQA/BTH/runs/served-49594c29-1703/evidence/next-identity-receipt.json",
+              "E:/CodexQA/BTH/runs/travel-next-http-independent-20261112-01/evidence/next-http-verification.json",
+              "docs/testing/travel_main_integration.md"
+            ]
           }
         ],
         "coverage": {
@@ -41045,8 +41074,8 @@
       "name": "Squash and qualify travel integration on current main",
       "parent_id": "BTH-TRAVEL-CINEMATIC-001",
       "group": "current",
-      "state": "open",
-      "status": "NATIVE_QUALIFIED_SCOPED_INTEGRATION_NEXT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_QUALIFIED_MAIN_AND_NEXT_HTTP_VERIFIED",
       "owner": {
         "name": "dot, travel implementation",
         "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
@@ -41058,33 +41087,49 @@
           "evidence": [
             "docs/testing/travel_main_integration.md"
           ]
+        },
+        {
+          "sha": "49594c29c42803f60e89f84c226801f5995910cb",
+          "evidence": [
+            "docs/testing/travel_main_integration.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "49594c29c42803f60e89f84c226801f5995910cb",
+        "evidence": [
+          "E:/CodexQA/BTH/runs/served-49594c29-1703/evidence/next-identity-receipt.json",
+          "E:/CodexQA/BTH/runs/travel-next-http-independent-20261112-01/evidence/next-http-verification.json",
+          "docs/testing/travel_main_integration.md"
+        ],
+        "scope": "Exact-source native changed-behavior qualification plus served NEXT HTTP identity/assets. Browser startup, visual gameplay and save isolation were not run; no browser/WASM gameplay claim."
       },
       "evidence": [
         {
           "kind": "owner_request_and_source_inventory",
           "reference": "docs/testing/travel_main_integration.md",
-          "summary": "Approved f5225ce source integrated onto main 6fea5099. 19 focused Jobs pass 93,128 assertions plus liveness/PCK contracts and 863 script loads. Native qualification is complete; main/NEXT delivery remains pending."
+          "summary": "Product f35ba137 is qualified by 19 capped Jobs, 93,128 assertions and 863 script loads. Existing watcher promoted 49594c29 at 2026-11-12T17:00:06Z; 15 HTTP identity/asset checks and an independent HTTP check passed. Browser startup/gameplay/save isolation remain unverified."
+        },
+        {
+          "kind": "served_next_http",
+          "reference": "docs/testing/travel_main_integration.md",
+          "summary": "Exact-source native changed-behavior qualification plus served NEXT HTTP identity/assets. Browser startup, visual gameplay and save isolation were not run; no browser/WASM gameplay claim."
         }
       ],
-      "next_action": "Review and publish the scoped main integration without force; qualify exact final source through existing NEXT and record actual served acceptance before closing the objective.",
+      "next_action": "None for the requested main/NEXT product delivery. Preserve the recorded native and HTTP scopes; browser startup/gameplay/save isolation remain unverified. This metadata closure is not a new served-build claim.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-12T16:31:36.390585+00:00",
+        "observed_at": "2026-11-12T17:06:00.699830+00:00",
         "evidence": [
           "docs/testing/travel_main_integration.md"
         ]
       },
-      "updated_at": "2026-11-12T16:31:36.390585+00:00",
+      "updated_at": "2026-11-12T17:06:00.699830+00:00",
       "scope": [
         "Scoped source/assets/tests/docs squash, excluding feature-added review movies and superseded guard/instruction edits.",
         "Resolve current-main seams; test automatic completion, menu boundaries, save/receipt, rollback, modal ownership and liveness."

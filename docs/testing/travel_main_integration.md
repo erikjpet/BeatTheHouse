@@ -1,6 +1,6 @@
 # Travel main integration
 
-Status: native-qualified scoped integration; awaiting reviewed main publication and normal NEXT verification.
+Status: requested main/NEXT product delivery complete, with exact-source native behavior qualification and served HTTP identity/assets verified. Browser startup, visual gameplay and save isolation were not run.
 
 ## Owner scope
 
@@ -10,7 +10,7 @@ Existing travel conversation: message `Sentinel_4aab55378f848191b9bd4ed08521ff1c
 - "Internal travel should not have an animation. Only on travel utilizing the travel menu"
 - "Before that please make a small update so after the animation finishes the environment is automatically loaded instead of waiting for the player to press the button in the bottom right" (message `Sentinel_7aadf8783da08191a1f2d83484d8302a`).
 
-Full objective `BTH-TRAVEL-CINEMATIC-001` and bounded integration `BTH-TRAVEL-CINEMATIC-001-BATCH-001` remain open.
+Full objective `BTH-TRAVEL-CINEMATIC-001` and bounded integration `BTH-TRAVEL-CINEMATIC-001-BATCH-001` are complete within the native and HTTP evidence scopes recorded below.
 
 ## Initial source custody
 
@@ -30,7 +30,7 @@ Main's native Coin Pusher kernel differs from the feature binary inputs. Use an 
 
 Historical feature tests are not merged-source passes. Focus new checks on current-main seams, automatic completion, menu scope, once-only settlement, save/reload, rollback, modal ownership and liveness. Raw evidence stays outside Git. Movies in historical documents are external feature review deliverables, not files shipped in main.
 
-Existing NEXT requires exact-input cold-import qualification. No replacement machinery or relaxed guards. Browser startup/gameplay/TEST save-isolation remain unverified; no alternative browser route is authorized here. Stable, itch and audience remain unchanged.
+The existing NEXT watcher claimed the exact-input cold-import request and built current-source native dependencies through its normal guarded pipeline. No replacement machinery or relaxed guards were used. Browser startup/gameplay/TEST save isolation remain unverified; no alternative browser route was used. Stable, itch and audience remain unchanged.
 
 ## Exact merged-source qualification
 
@@ -45,4 +45,21 @@ Existing NEXT requires exact-input cold-import qualification. No replacement mac
 
 Evidence remains outside Git under `E:\CodexQA\BTH\runs`. The full history/exclusion inventory, 19 Job receipts and assertion counts are recorded in `travel-main-qualified-summary-20261112-01/evidence/qualification.json`, SHA256 `50b1b456614c39bbc2ba2b3a57bd1eaf0b0961a23fcef1c5c864cc72356bc547`. The 1,866-input runtime source manifest is SHA256 `0a9dc98df7b85203bfbf94607726da180c2866b990359d476c15475844cbff94`; no runtime input drift occurred during qualification.
 
-Both task ledgers remain Open. The scoped reconciliation has zero travel findings and 943 unrelated current/global findings on the retained main snapshot; unrelated entries are not modified. Browser gameplay/startup/save-isolation, broad release suites and NEXT publication are not established by this native qualification.
+The native qualification above does not establish browser startup/gameplay/save isolation or broad release acceptance. Both travel ledger entries are now Complete based on that native evidence and the separate actual NEXT delivery below. Scoped reconciliation has zero travel findings; the 943 unrelated current/global findings remain unchanged.
+
+## Actual main and NEXT delivery
+
+- Qualified product commit: `f35ba137b7607c1efd4d9e061be21077451cd863`. Metadata association commit and actual served build: `49594c29c42803f60e89f84c226801f5995910cb`, tree `1adbeadb896a418bde7b41ade458499c6e9e8d1e`. Both were pushed by normal fast-forward; the subsequent closure record changes no runtime input and is not claimed served.
+- The existing watcher promoted that exact build at `2026-11-12T17:00:06Z`, version `0.6.0-dev+49594c29c428`. NEXT: <https://192.168.0.36:8443/p/beat-the-house/play/dev/>. Immutable build: <https://192.168.0.36:8443/p/beat-the-house/play/dev/49594c29c42803f60e89f84c226801f5995910cb/>.
+- Fifteen HTTP identity/asset checks passed, followed by an independent HTTP pass. The served redirect, source commit/tree/version, metadata and selected engine/native bytes match. PCK validation passed with 1,296 entries. PCK and engine side-WASM used local full hashes plus served HTTP HEAD identity/size checks, not new full HTTP-download hashes.
+- Fresh Web native SHA256: `d9a1429962b50acd2ac2ccbc3a325b7f318a368440c2c2cb3b95011f878abdd1`. PCK SHA256: `e2a87e7a9b3093ea22609f5a45cbc0fa9d582ccf2fa380c47105cd6e700dee3e`. Served engine JS SHA256: `0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c`, matching its reviewed GL-handles receipt.
+- Pipeline archive custody records SHA256 `5d533f7435921671c15ebbd04dcdba09a29164537d9877e92ef9fe300ee7a3ca`, 119,062,310 bytes. The original ZIP was removed by normal retention; this is reused pipeline custody, not a newly measured archive-file hash.
+- Pipeline source: `erikjpet/site` commit `2d8a92283c9cf13736b656f3693c8ab0dcc19f18`, with the reviewed exact paired-tool qualification. Cold-import request SHA256: `84f2638958a35da758f969aba1f228c3b4f616a472d7c9d0e8ebea69d8be0a83`. Watcher/build exits were zero. The export log retains known missing Windows GDExtension editor diagnostics from the full-build flow; it is not described as error-free.
+- TEST index/SITE_BUILD and stable pointer fingerprints stayed unchanged. No stable/itch release or audience change occurred. Browser startup, visual gameplay and save isolation were not run; native graphical destination-frame checks and HTTP delivery are separate evidence, not Web gameplay acceptance.
+
+External receipts under `E:\CodexQA\BTH\runs`:
+
+- `served-49594c29-1703/evidence/next-identity-receipt.json`, SHA256 `5ebb7327ba0fd916df75c9b8a3cc3856bfe21cb3feb8365902ea243c4bfc3514`.
+- `travel-next-http-independent-20261112-01/evidence/next-http-verification.json`, SHA256 `2054d1073650f98a1157f23e4584a13e00d305be1fa458973d64a969b7d6ecb4`.
+
+This closes the requested main/product delivery. Future metadata-only deployment identities must be observed separately; this record claims only the actual served `49594c29` build.
