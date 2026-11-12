@@ -35723,22 +35723,28 @@
             "id": "1",
             "description": "Reproduce same-date cross-year collision",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+            ]
           },
           {
             "id": "2",
             "description": "Change only seed function and required year call binding; keep local-date/streak format/active daily seed",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+            ]
           },
           {
             "id": "3",
             "description": "Focused date/year/consecutive/midnight checks and unchanged Smoke",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+            ]
           },
           {
             "id": "4",
@@ -35755,7 +35761,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35775,6 +35781,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "a875a68fbf967c0f51e47785b66ee3289cd1432d",
+          "evidence": [
+            "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35793,24 +35805,31 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md",
+          "summary": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD"
         }
       ],
       "implementation_batches": [
         "FEAT-03-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify the exact promoted Daily run through normal controls after the existing cold-import qualification hold is resolved. Preserve first Smoke failure and separate validator retry.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT import-input classification requires its existing exact qualification request for the earlier requested audit CSV edit; no guard workaround.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.134606+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:34:20.444575+00:00",
+        "evidence": [
+          "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Daily Challenge unique full local-date seed"
       ],
-      "updated_at": "2026-11-12T07:55:31.134606+00:00"
+      "updated_at": "2026-11-12T09:34:20.444575+00:00"
     },
     {
       "id": "FEAT-11",
@@ -39438,7 +39457,7 @@
       "parent_id": "FEAT-03",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD",
       "scope": [
         "Daily Challenge unique full local-date seed"
       ],
@@ -39461,6 +39480,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "a875a68fbf967c0f51e47785b66ee3289cd1432d",
+          "evidence": [
+            "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39479,18 +39504,25 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md",
+          "summary": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify the exact promoted Daily run through normal controls after the existing cold-import qualification hold is resolved. Preserve first Smoke failure and separate validator retry.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT import-input classification requires its existing exact qualification request for the earlier requested audit CSV edit; no guard workaround.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.134606+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:34:20.444575+00:00",
+        "evidence": [
+          "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T07:55:31.134606+00:00"
+      "updated_at": "2026-11-12T09:34:20.444575+00:00"
     },
     {
       "id": "FEAT-11-BATCH-001",
