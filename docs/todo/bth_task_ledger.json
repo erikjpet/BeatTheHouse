@@ -35624,7 +35624,7 @@
         }
       },
       "state": "open",
-      "status": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING",
+      "status": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35647,6 +35647,12 @@
         },
         {
           "sha": "f12f8fa11b36ad7e1d816f3b6d2ccae80cb2b5b3",
+          "evidence": [
+            "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+          ]
+        },
+        {
+          "sha": "b4e0a00fd9374c0092000e0df18034d0dd7604be",
           "evidence": [
             "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
           ]
@@ -35673,24 +35679,31 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
           "summary": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
+          "summary": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
         }
       ],
       "implementation_batches": [
         "FEAT-04-BATCH-001"
       ],
-      "next_action": "Verify exact NEXT metadata and clean startup for paired documentation delivery; no controls implementation authorized.",
+      "next_action": "Verify exact NEXT after the existing cold-import qualification requirement is satisfied; do not implement collection controls.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "Combined documentation head is held by the existing import-input guard; no pipeline workaround is authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:07:51.843523+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:21:56.014854+00:00",
+        "evidence": [
+          "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Close collection sorting as owner-not-wanted"
       ],
-      "updated_at": "2026-11-12T09:07:51.843523+00:00"
+      "updated_at": "2026-11-12T09:21:56.014854+00:00"
     },
     {
       "id": "FEAT-03",
@@ -39341,7 +39354,7 @@
       "parent_id": "FEAT-04",
       "group": "current",
       "state": "open",
-      "status": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING",
+      "status": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION",
       "scope": [
         "Close collection sorting as owner-not-wanted"
       ],
@@ -39370,6 +39383,12 @@
           "evidence": [
             "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "b4e0a00fd9374c0092000e0df18034d0dd7604be",
+          "evidence": [
+            "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39393,18 +39412,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
           "summary": "CLOSED_NOT_WANTED_SOURCE_RECORDED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
+          "summary": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
         }
       ],
-      "next_action": "Verify exact NEXT metadata and clean startup for paired documentation delivery; no controls implementation authorized.",
+      "next_action": "Verify exact NEXT after the existing cold-import qualification requirement is satisfied; do not implement collection controls.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "Combined documentation head is held by the existing import-input guard; no pipeline workaround is authorized.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:07:51.843523+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:21:56.014854+00:00",
+        "evidence": [
+          "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T09:07:51.843523+00:00"
+      "updated_at": "2026-11-12T09:21:56.014854+00:00"
     },
     {
       "id": "FEAT-03-BATCH-001",
