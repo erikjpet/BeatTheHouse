@@ -29,3 +29,12 @@ group0.6.2, unassigned and has no implementation batch, commit or deployment.
 Runtime qualification is reused from unchanged main: Smoke11/11, livenessPASS;
 Count accounting70/70. The older golden discrepancy stays open separately.
 No extra runtime tests were added for this documentation-only record.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: uf061-record-062-queue-proof.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\uf061-record-062-ledger-commit\evidence\raw-evidence-index.json | 3de20e6e0ccfaad45847820efba2512dadb76be0c43d82c59b651c69d0b5ddad |
+| E:\CodexQA\BTH\runs\uf061-record-062-queue-proof\evidence\queue-record-check.json | 26f21374b411171f3216bf64c5a4633b894177d37032316f4f41c90b02245a1d |

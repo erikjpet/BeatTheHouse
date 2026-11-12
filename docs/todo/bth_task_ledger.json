@@ -1805,6 +1805,11 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-02\\task-3\\evidence\\OPS-07-closeout-audit.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Recorded for0.6.2 by owner decision; prior scope, status, owner, pauses and history retained. No implementation authorized."
         }
       ],
       "implementation_batches": [],
@@ -2273,6 +2278,11 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-02\\task-3\\evidence\\OPS-07-closeout-audit.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Recorded for0.6.2 by owner decision; prior scope, status, owner, pauses and history retained. No implementation authorized."
         }
       ],
       "implementation_batches": [
@@ -2397,6 +2407,11 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-02\\task-3\\evidence\\OPS-07-closeout-audit.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Recorded for0.6.2 by owner decision; prior scope, status, owner, pauses and history retained. No implementation authorized."
         }
       ],
       "implementation_batches": [
@@ -36829,6 +36844,409 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-12T15:23:07.802869+00:00"
+    },
+    {
+      "id": "FEAT-062-RECORD",
+      "name": "Record owner-deferred0.6.2 queue without starting it",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Record owner-deferred0.6.2 queue without starting it",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "All five section9 entries open in both ledger views with owner/source/no work authorized",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "Existing BTH-11 BTH-15 BTH-17 pauses and histories retained",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "Proof committed and NEXT docs delivery recorded",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "RECORDED_FIVE_OPEN_NO_WORK_AUTHORIZED_NEXT_PENDING",
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "da53957d8564472c3c56d19d9c9cf5fe33d7fab5",
+          "evidence": [
+            "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "RECORDED_FIVE_OPEN_NO_WORK_AUTHORIZED_NEXT_PENDING"
+        }
+      ],
+      "implementation_batches": [
+        "FEAT-062-RECORD-BATCH-001"
+      ],
+      "next_action": "Verify documentation delivery on normal NEXT after cold-import qualification; future entries remain open and unassigned with no work authorized.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "The existing README-only cold-import qualification remains pending.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:53.259106+00:00",
+        "evidence": [
+          "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+        ]
+      },
+      "planned_app_changes": [
+        "Record owner-deferred0.6.2 queue without starting it"
+      ],
+      "updated_at": "2026-11-12T15:24:53.259106+00:00"
+    },
+    {
+      "id": "FEAT-01",
+      "name": "Full item-effect reassessment before any effect change",
+      "aliases": [],
+      "kind": "deferred_objective",
+      "parent_ids": [],
+      "group": "0.6.2",
+      "objective": {
+        "text": "FEAT-01 parts A-E and docs/item-audit are starting evidence; includes Lucky Penny BTH-15 and Ledger Pencil BTH-17 / LEDGER022. No item effect, text, price or strength work authorized.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Await explicit owner scope and authorization before any implementation. FEAT-01 parts A-E and docs/item-audit are starting evidence; includes Lucky Penny BTH-15 and Ledger Pencil BTH-17 / LEDGER022. No item effect, text, price or strength work authorized.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
+      "owner": {
+        "name": "Owner first, then worker",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No work authorized. FEAT-01 parts A-E and docs/item-audit are starting evidence; includes Lucky Penny BTH-15 and Ledger Pencil BTH-17 / LEDGER022. No item effect, text, price or strength work authorized.",
+      "blocker": {
+        "state": "active",
+        "kind": "owner_decision",
+        "description": "Explicitly set aside for0.6.2; no worker work authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:22.774038+00:00",
+        "evidence": [
+          "docs/todo/BTH_unfinished_features_audit.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+    },
+    {
+      "id": "BTH062-SCENARIO-POLISH",
+      "name": "Scenario polish after owner states scope",
+      "aliases": [],
+      "kind": "deferred_objective",
+      "parent_ids": [],
+      "group": "0.6.2",
+      "objective": {
+        "text": "BTH-11 remains open and under its standing pause. The two named FEAT-09 exceptions do not lift this broader hold.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Await explicit owner scope and authorization before any implementation. BTH-11 remains open and under its standing pause. The two named FEAT-09 exceptions do not lift this broader hold.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
+      "owner": {
+        "name": "Owner first",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No work authorized. BTH-11 remains open and under its standing pause. The two named FEAT-09 exceptions do not lift this broader hold.",
+      "blocker": {
+        "state": "active",
+        "kind": "owner_decision",
+        "description": "Explicitly set aside for0.6.2; no worker work authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:22.774038+00:00",
+        "evidence": [
+          "docs/todo/BTH_unfinished_features_audit.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+    },
+    {
+      "id": "FEAT-08",
+      "name": "Voice and copy pass for all text added in0.6",
+      "aliases": [],
+      "kind": "deferred_objective",
+      "parent_ids": [],
+      "group": "0.6.2",
+      "objective": {
+        "text": "No worker copy or voice edits authorized; perform after item/heist text decisions.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Await explicit owner scope and authorization before any implementation. No worker copy or voice edits authorized; perform after item/heist text decisions.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
+      "owner": {
+        "name": "Owner, by hand",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No work authorized. No worker copy or voice edits authorized; perform after item/heist text decisions.",
+      "blocker": {
+        "state": "active",
+        "kind": "owner_decision",
+        "description": "Explicitly set aside for0.6.2; no worker work authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:22.774038+00:00",
+        "evidence": [
+          "docs/todo/BTH_unfinished_features_audit.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+    },
+    {
+      "id": "BTH062-DAILY-LEADERBOARD",
+      "name": "Local in-game Daily Challenge leaderboard",
+      "aliases": [],
+      "kind": "deferred_objective",
+      "parent_ids": [],
+      "group": "0.6.2",
+      "objective": {
+        "text": "No online service, sharing panel, platform calls or implementation authorized. FEAT-03 changes only the seed.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Await explicit owner scope and authorization before any implementation. No online service, sharing panel, platform calls or implementation authorized. FEAT-03 changes only the seed.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
+      "owner": {
+        "name": "Needs owner design",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No work authorized. No online service, sharing panel, platform calls or implementation authorized. FEAT-03 changes only the seed.",
+      "blocker": {
+        "state": "active",
+        "kind": "owner_decision",
+        "description": "Explicitly set aside for0.6.2; no worker work authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:22.774038+00:00",
+        "evidence": [
+          "docs/todo/BTH_unfinished_features_audit.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+    },
+    {
+      "id": "BTH062-WHALE-TRUST-ARC",
+      "name": "Whale Game and Crew trust arc decision",
+      "aliases": [],
+      "kind": "deferred_objective",
+      "parent_ids": [],
+      "group": "0.6.2",
+      "objective": {
+        "text": "Private FEAT-02/07 report is partial; normal Whale play and complete Count measurement remain open. No enablement, trust restoration or pacing change authorized.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Await explicit owner scope and authorization before any implementation. Private FEAT-02/07 report is partial; normal Whale play and complete Count measurement remain open. No enablement, trust restoration or pacing change authorized.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
+      "owner": {
+        "name": "Owner after investigation",
+        "task_ref": null,
+        "assignment_state": "unassigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_deferred_queue",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No work authorized. Private FEAT-02/07 report is partial; normal Whale play and complete Count measurement remain open. No enablement, trust restoration or pacing change authorized.",
+      "blocker": {
+        "state": "active",
+        "kind": "owner_decision",
+        "description": "Explicitly set aside for0.6.2; no worker work authorized.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:22.774038+00:00",
+        "evidence": [
+          "docs/todo/BTH_unfinished_features_audit.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-12T15:24:22.774038+00:00"
     }
   ],
   "batches": [
@@ -40352,6 +40770,55 @@
         ]
       },
       "updated_at": "2026-11-12T15:23:07.489542+00:00"
+    },
+    {
+      "id": "FEAT-062-RECORD-BATCH-001",
+      "name": "Record owner-deferred0.6.2 queue without starting it bounded execution",
+      "parent_id": "FEAT-062-RECORD",
+      "group": "current",
+      "state": "open",
+      "status": "RECORDED_FIVE_OPEN_NO_WORK_AUTHORIZED_NEXT_PENDING",
+      "scope": [
+        "Record owner-deferred0.6.2 queue without starting it"
+      ],
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "da53957d8564472c3c56d19d9c9cf5fe33d7fab5",
+          "evidence": [
+            "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
+          "summary": "RECORDED_FIVE_OPEN_NO_WORK_AUTHORIZED_NEXT_PENDING"
+        }
+      ],
+      "next_action": "Verify documentation delivery on normal NEXT after cold-import qualification; future entries remain open and unassigned with no work authorized.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "The existing README-only cold-import qualification remains pending.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T15:24:53.259106+00:00",
+        "evidence": [
+          "docs/testing/FEAT-062_queue_record_2026-11-12.md"
+        ]
+      },
+      "updated_at": "2026-11-12T15:24:53.259106+00:00"
     }
   ]
 }
