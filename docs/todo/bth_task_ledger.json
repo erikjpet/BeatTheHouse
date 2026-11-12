@@ -35881,7 +35881,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35901,6 +35901,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "81cae8afd64739825099d8043d149b4988d7273d",
+          "evidence": [
+            "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35919,24 +35925,31 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md",
+          "summary": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION"
         }
       ],
       "implementation_batches": [
         "FEAT-11-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Await the requested choice about narrow merchant-pool exclusions; defaults remain false. Continue rendered off-pack acquisition checks and the other queue items.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.220606+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "The prescribed default flags add 18 route-only items to ordinary shops, contradicting required unchanged shop stock. A concrete resolution choice is pending.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T09:37:37.001962+00:00",
+        "evidence": [
+          "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Enable both item packs by default only"
       ],
-      "updated_at": "2026-11-12T07:55:31.220606+00:00"
+      "updated_at": "2026-11-12T09:37:37.001962+00:00"
     },
     {
       "id": "FEAT-10",
@@ -36431,6 +36444,86 @@
         "Fresh practice room retains previous result acknowledgement"
       ],
       "updated_at": "2026-11-12T09:06:32.024850+00:00"
+    },
+    {
+      "id": "BTH-FEAT-PACK-MERCHANT-001",
+      "name": "Enabling route-only item packs adds eighteen items to ordinary merchant pools",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Enabling route-only item packs adds eighteen items to ordinary merchant pools",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Record the production off/on merchant-pool reproduction without changing item effects, prices or text.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Resolve the default-on versus unchanged-stock conflict only after the owner choice.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_REPRODUCED_SPECIFICATION_CONFLICT_NO_FIX_SHIPPED",
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "81cae8afd64739825099d8043d149b4988d7273d",
+          "evidence": [
+            "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md",
+          "summary": "OPEN_REPRODUCED_SPECIFICATION_CONFLICT_NO_FIX_SHIPPED"
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Await owner choice; retain the eighteen-item reproduction. No group defaults or merchant filtering changed.",
+      "blocker": {
+        "state": "active",
+        "kind": "external",
+        "description": "Newly reproduced conflict between the requested two-flag edit and the unchanged ordinary-stock acceptance.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T09:37:37.168878+00:00",
+        "evidence": [
+          "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+        ]
+      },
+      "planned_app_changes": [
+        "Enabling route-only item packs adds eighteen items to ordinary merchant pools"
+      ],
+      "updated_at": "2026-11-12T09:37:37.168878+00:00"
     }
   ],
   "batches": [
@@ -39530,7 +39623,7 @@
       "parent_id": "FEAT-11",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION",
       "scope": [
         "Enable both item packs by default only"
       ],
@@ -39553,6 +39646,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "81cae8afd64739825099d8043d149b4988d7273d",
+          "evidence": [
+            "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39571,18 +39670,25 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md",
+          "summary": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Await the requested choice about narrow merchant-pool exclusions; defaults remain false. Continue rendered off-pack acquisition checks and the other queue items.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:31.220606+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "The prescribed default flags add 18 route-only items to ordinary shops, contradicting required unchanged shop stock. A concrete resolution choice is pending.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T09:37:37.001962+00:00",
+        "evidence": [
+          "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T07:55:31.220606+00:00"
+      "updated_at": "2026-11-12T09:37:37.001962+00:00"
     },
     {
       "id": "FEAT-10-BATCH-001",
