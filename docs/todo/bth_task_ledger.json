@@ -4217,7 +4217,7 @@
         }
       },
       "state": "open",
-      "status": "HISTORICAL_WEB_COMPLETE_FROZEN_RC_NATIVE_REPEAT_PASS_RENDERED_REPEAT_OPEN",
+      "status": "CURRENT_CREW_OFFER_ACCEPT_RETURN_PASS_OTHER_COLD_REPEAT_OPEN",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -4230,17 +4230,27 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/crew_web_acceptance_20261110.md",
-          "docs/testing/crew_web_acceptance_20261110.json"
-        ],
-        "scope": "Exact immutable NEXT delivered footer, normal HTTPS and recreated played behavior; both fix commits verified ancestors."
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -4272,22 +4282,25 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "CURRENT_CREW_OFFER_ACCEPT_RETURN_PASS_OTHER_COLD_REPEAT_OPEN"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish the exact candidate Web cases in BTH061-RC-ACCEPTANCE-COVERAGE-001; no new product defect inferred.",
+      "next_action": "Current genuine generated Crew offer/confirmation returned to paid PullTabs winner. Keep the broader historical neutral-Close/cold-repeat acceptance limits explicit; no blanket closure.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Earlier browser trust blocker is resolved by the separately authorized CA setup and normal-HTTPS gameplay acceptance.",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T23:02:09.797576+00:00",
-        "evidence": [
-          "docs/testing/crew_web_acceptance_20261110.md"
-        ]
+        "observed_at": "2026-11-12T00:36:18.261871+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-12T00:36:18.261871+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -5830,78 +5843,100 @@
             "id": "game-blackjack",
             "description": "Qualify unfinished Blackjack public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-baccarat",
             "description": "Qualify unfinished Baccarat public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-roulette",
             "description": "Qualify unfinished Roulette public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-craps",
             "description": "Qualify unfinished Craps public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-slots",
             "description": "Qualify unfinished Slots public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-coin-pusher",
             "description": "Qualify unfinished Coin Pusher public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-scratch-tickets",
             "description": "Qualify unfinished Scratch Tickets public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-pull-tabs",
             "description": "Qualify unfinished Pull Tabs public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-video-poker",
             "description": "Qualify unfinished Video Poker public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-bar-dice",
             "description": "Qualify unfinished Bar Dice public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "game-crew-poker",
             "description": "Qualify unfinished Crew Poker public state and relevant paid/pending/settled Save/cold Continue boundaries, with actual one-settlement accounting and declared fixture/build limits.",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "pulltabs-original",
@@ -5918,7 +5953,7 @@
         }
       },
       "state": "open",
-      "status": "FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN",
+      "status": "OPEN_RENDERED_6_GAME_PASSES_4_NARROWER_CREW_NOT_REACHED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -5930,13 +5965,27 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": []
+        "required": true,
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -5958,22 +6007,25 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "FROZEN_RC_ELEVEN_GAME_85_0_WARM_44_1_COLD_FULL_MATRIX_OPEN"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "OPEN_RENDERED_6_GAME_PASSES_4_NARROWER_CREW_NOT_REACHED"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Resolve Scratch owned-state discrepancy and finish all eleven paid/pending/settled public and cold Continue cases; retain unresolved original Pull Tabs cause separately.",
+      "next_action": "Retain unresolved paid-state matrix rows; six explicit rendered/floor-save cases passed. Do not substitute prior native checks or a visually unfinished but financially settled save for an unresolved paid file.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Remaining acceptance and diagnosed test discrepancies require follow-up; no external block established.",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:25:38.735003+00:00",
-        "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-12T00:36:18.179769+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T14:28:39.237109+00:00",
+      "updated_at": "2026-11-12T00:36:18.179769+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -7867,7 +7919,7 @@
         }
       },
       "state": "open",
-      "status": "HISTORICAL_WEB_COMPLETE_FROZEN_RC_NATIVE_REPEAT_PASS_RENDERED_REPEAT_OPEN",
+      "status": "CURRENT_RENDERED_CASE_NOT_REACHED_HISTORICAL_NATIVE_PROOF_RETAINED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -7880,17 +7932,27 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/crew_web_acceptance_20261110.md",
-          "docs/testing/crew_web_acceptance_20261110.json"
-        ],
-        "scope": "Exact immutable NEXT delivered footer, normal HTTPS and recreated played behavior; both fix commits verified ancestors."
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -7917,22 +7979,25 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "CURRENT_RENDERED_CASE_NOT_REACHED_HISTORICAL_NATIVE_PROOF_RETAINED"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish the exact candidate Web cases in BTH061-RC-ACCEPTANCE-COVERAGE-001; no new product defect inferred.",
+      "next_action": "Current normal-control case not reached; see actual route/offer/loadout attempts. Historical product/native evidence retained, no new rendered pass.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Earlier browser trust blocker is resolved by the separately authorized CA setup and normal-HTTPS gameplay acceptance.",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T23:02:09.797576+00:00",
-        "evidence": [
-          "docs/testing/crew_web_acceptance_20261110.md"
-        ]
+        "observed_at": "2026-11-12T00:36:18.342657+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-12T00:36:18.342657+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -29482,7 +29547,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_NEXT_DEPLOYED_NATIVE_57_PASS_WEB_ACCEPTANCE_OPEN",
+      "status": "CURRENT_RENDERED_CASE_NOT_REACHED_HISTORICAL_NATIVE_PROOF_RETAINED",
       "owner": {
         "name": "Integrate Meta showdown correction",
         "task_ref": "/root/integrate_first_closeouts",
@@ -29503,17 +29568,27 @@
             "docs/testing/closeout_meta_integration_20261110.json",
             "Actual scoped Meta choice and escrow product correction."
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "1dd2064d475dd4c6c2391256c7884edaa754d928",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/closeout_meta_delivery_20261110.json",
-          "docs/testing/closeout_meta_integration_20261110.json"
-        ],
-        "scope": "Exact source/tree/NEXT metadata, PCK/native full served bytes, unchanged engine receipts and fresh correct-version rendered menu verified. Actual rendered Meta showdown choice acceptance remains Open."
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -29545,22 +29620,25 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "CURRENT_RENDERED_CASE_NOT_REACHED_HISTORICAL_NATIVE_PROOF_RETAINED"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain permitted rendered Meta showdown choice acceptance on immutable 1dd2064d, keeping normal collection ownership and all broader item/scenario/audit pauses unchanged.",
+      "next_action": "Current normal-control case not reached; see actual route/offer/loadout attempts. Historical product/native evidence retained, no new rendered pass.",
       "blocker": {
-        "state": "active",
-        "kind": "rendered_changed_behavior_unverified",
-        "description": "Actual tested correction is on main and exact NEXT identity/assets/basic rendered menu are verified. Real rendered Meta showdown choice acceptance remains unverified.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-10T18:03:09.646596+00:00",
-        "evidence": [
-          "docs/testing/closeout_meta_delivery_20261110.json"
-        ]
+        "observed_at": "2026-11-12T00:36:18.423027+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-12T00:36:18.423027+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
@@ -33378,7 +33456,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "status": "OPEN_6_GAME_PASSES_4_NARROWER_3_NAMED_CASES_NOT_REACHED",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -33396,14 +33474,26 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -33411,24 +33501,29 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "OPEN_6_GAME_PASSES_4_NARROWER_3_NAMED_CASES_NOT_REACHED"
         }
       ],
       "implementation_batches": [
         "BTH061-RC-ACCEPTANCE-COVERAGE-001-BATCH-001"
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Remaining full matrix: BarDice/VideoPoker/Roulette/Baccarat paid-unresolved limits; CrewPoker made/Rookescort gate; expiredJazzhandoff and offeredMetachoice not reached. New scenery finding separate.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.402695+00:00",
+        "observed_at": "2026-11-12T00:36:18.098479+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Finish exact Web Crew/Jazz/Meta and all-eleven paid/pending/settled Save/Continue matrix."
       ],
-      "updated_at": "2026-11-11T13:22:42.402695+00:00"
+      "updated_at": "2026-11-12T00:36:18.098479+00:00"
     },
     {
       "id": "BTH061-RC-NATIVE-RETENTION-001",
@@ -34063,36 +34158,46 @@
             "id": "1",
             "description": "CLOSE-01 green Smoke and tutorial progression",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/BTH_0.6.1_closeout_plan.md"
+            ]
           },
           {
             "id": "2",
             "description": "CLOSE-02 financial display",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/BTH_0.6.1_closeout_plan.md"
+            ]
           },
           {
             "id": "3",
             "description": "CLOSE-03 four evidence-led test repairs",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/BTH_0.6.1_closeout_plan.md"
+            ]
           },
           {
             "id": "4",
             "description": "CLOSE-04 one displayed version variable",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/BTH_0.6.1_closeout_plan.md"
+            ]
           },
           {
             "id": "5",
             "description": "CLOSE-06 rendered acceptance with explicit not-reached cases",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "6",
@@ -34109,7 +34214,7 @@
         }
       },
       "state": "open",
-      "status": "IN_PROGRESS_LOCAL_02_03_04_QUALIFIED_CLOSE01_NEXT_DONE",
+      "status": "CLOSE01_04_DONE_CLOSE06_RUN_DONE_FINDINGS_OPEN_FINAL_CANDIDATE_PENDING",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34137,7 +34242,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Push the scoped local task/ledger commit pairs, verify actual NEXT identity and changed behavior, run CLOSE-06 normal-control browser cases, then freeze/qualify/package CLOSE-05.",
+      "next_action": "Freeze candidate and run CLOSE-05. CLOSE-06 has explicit not-reached/narrower cases and a new open Gas scenery finding.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -34801,36 +34906,46 @@
             "id": "1",
             "description": "Crew offer/return",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "2",
             "description": "Expired Jazz handoff",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "3",
             "description": "Offered showdown Meta choice",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "4",
             "description": "All11 games paid unfinished save/reload/Continue/one settlement",
             "required": true,
             "state": "open",
-            "evidence": []
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           },
           {
             "id": "5",
             "description": "Wallet/inventory recorded; not-reached distinct from pass",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+            ]
           }
         ],
         "coverage": {
@@ -34840,7 +34955,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "DONE_RENDERED_RUN_FINDINGS_AND_NOT_REACHED_OPEN",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -34852,31 +34967,51 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "DONE_RENDERED_RUN_FINDINGS_AND_NOT_REACHED_OPEN"
+        }
+      ],
       "implementation_batches": [
         "CLOSE-06-BATCH-001"
       ],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "next_action": "Execution recorded: flows1pass/2notreached; games6paid-or-floorpasses/4narrower/1notreached. Keep full acceptance open; separate Gas scenery finding remains open. No inline product fix.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.076786+00:00",
+        "observed_at": "2026-11-12T00:36:17.932977+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Rendered browser acceptance through normal controls"
       ],
-      "updated_at": "2026-11-11T16:12:34.076786+00:00"
+      "updated_at": "2026-11-12T00:36:17.932977+00:00"
     },
     {
       "id": "CLOSE-05",
@@ -35009,18 +35144,33 @@
         }
       },
       "state": "open",
-      "status": "OPEN_REPRODUCED_RENDERED_SCENARIO_VISUAL_LOSS",
+      "status": "OPEN_REPRODUCED_SCENARIO_VISUAL_LOSS_NO_INLINE_FIX",
       "owner": {
         "name": "Close out0.6.1 audit",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
@@ -35032,22 +35182,27 @@
           "kind": "rendered_reproduction",
           "reference": "E:\\CodexQA\\BTH\\runs\\cl061-c06-f\\evidence\\005-f-unlock-tip-map.png",
           "summary": "Same missingstormpropsafterFollowTipbeforeanyreload; compare003."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "OPEN_REPRODUCED_SCENARIO_VISUAL_LOSS_NO_INLINE_FIX"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Separate product investigation/fix after closeout; preserve current exact reproduction and do not normalize away the missing visuals.",
+      "next_action": "Separate product investigation: exact normal Gas storm-shelter visuals disappear after event response or Continue; preserve paid ticket/account evidence. Repro and hashes in CLOSE-06.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Owner instructed no new fixes inside CLOSE-06 except a proven one-line regression from this run; origin not established.",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T22:55:47.963375+00:00",
+        "observed_at": "2026-11-12T00:36:18.504184+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Gas Casino scenario visuals disappear after normal Continue"
       ],
-      "updated_at": "2026-11-11T22:55:47.878255+00:00"
+      "updated_at": "2026-11-12T00:36:18.504184+00:00"
     }
   ],
   "batches": [
@@ -37621,8 +37776,8 @@
       "name": "Rendered browser acceptance through normal controls bounded execution",
       "parent_id": "CLOSE-06",
       "group": "current",
-      "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "state": "complete",
+      "status": "DONE_RENDERED_EXECUTION_RESULTS_RECORDED",
       "scope": [
         "Rendered browser acceptance through normal controls"
       ],
@@ -37637,25 +37792,50 @@
           "evidence": [
             "docs/testing/CLOSE-LEDGER_owner_dispositions_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "a8321cc8c70a2213b3be6e829c391f4a338ecbbc",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md"
+        ]
       },
-      "evidence": [],
-      "next_action": "Execute the owner closeout order; retain raw evidence only under E and commit summary/hash references.",
+      "evidence": [
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "DONE_RENDERED_RUN_FINDINGS_AND_NOT_REACHED_OPEN"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
+          "summary": "DONE_RENDERED_EXECUTION_RESULTS_RECORDED"
+        }
+      ],
+      "next_action": "No additional scripted run in this bounded execution. Parent acceptance and independent findings remain open with exact limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T16:12:34.076786+00:00",
+        "observed_at": "2026-11-12T00:36:18.015247+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T16:12:34.076786+00:00"
+      "updated_at": "2026-11-12T00:36:18.015247+00:00"
     },
     {
       "id": "CLOSE-05-BATCH-001",
