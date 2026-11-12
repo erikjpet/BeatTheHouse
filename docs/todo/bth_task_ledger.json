@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T16:29:39.434783+00:00",
+  "updated_at": "2026-11-12T16:31:36.390585+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37375,7 +37375,14 @@
         "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f35ba137b7607c1efd4d9e061be21077451cd863",
+          "evidence": [
+            "docs/testing/travel_main_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -37395,12 +37402,12 @@
         "kind": "none",
         "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T16:29:39.434783+00:00",
+        "observed_at": "2026-11-12T16:31:36.390585+00:00",
         "evidence": [
           "docs/testing/travel_main_integration.md"
         ]
       },
-      "updated_at": "2026-11-12T16:29:39.434783+00:00",
+      "updated_at": "2026-11-12T16:31:36.390585+00:00",
       "objective": {
         "text": "Integrate approved shared eight-second travel across fifteen exterior destinations and four canonical methods, using the actual game avatar, layered art and integrated doors/interiors. Only Travel-menu journeys animate; reveal the destination automatically at completion without new incidents/routes/gameplay consequences. Deliver qualified main through existing NEXT.",
         "source": "docs/testing/travel_main_integration.md",
@@ -41045,7 +41052,14 @@
         "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f35ba137b7607c1efd4d9e061be21077451cd863",
+          "evidence": [
+            "docs/testing/travel_main_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -41065,12 +41079,12 @@
         "kind": "none",
         "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T16:29:39.434783+00:00",
+        "observed_at": "2026-11-12T16:31:36.390585+00:00",
         "evidence": [
           "docs/testing/travel_main_integration.md"
         ]
       },
-      "updated_at": "2026-11-12T16:29:39.434783+00:00",
+      "updated_at": "2026-11-12T16:31:36.390585+00:00",
       "scope": [
         "Scoped source/assets/tests/docs squash, excluding feature-added review movies and superseded guard/instruction edits.",
         "Resolve current-main seams; test automatic completion, menu boundaries, save/receipt, rollback, modal ownership and liveness."
