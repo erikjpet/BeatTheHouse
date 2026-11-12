@@ -158,3 +158,41 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\uf061-count-visible\evidence\044-first-delivery-confirmed-package.png | 3f73e5c57fba2683d28729fa73b7f89bb514519965caad91e88c32c20eb6c6e8 |
 | E:\CodexQA\BTH\runs\uf061-count-visible\evidence\046-delivery-lounge-hours.png | 514191d544c7e3ce8ecc3d5608535f6b00a48912984696115e80cfef0e71e90f |
 | E:\CodexQA\BTH\runs\uf061-private-setup-log-minimization\evidence\capture-minimization.json | 05e90da89b297c70b1627a1f5aae52fd2af87688599c3fefef41b3b739ff6a58 |
+
+## Bounded-campaign follow-up, still not a gameplay pass
+
+A task-local resident Count campaign was attempted so normal-control play could
+continue across clean bounded segments without migrating the prior profile or
+raising caps. It used the existing storage/resident/capped-Job/suspended-worker
+APIs;12% CPU,2GiB, E paths, and only the already-served070 payload at a
+read-only loopback QA origin. No NEXT file, gate or payload was modified.
+
+The first fresh bootstrap had no default browser page and failed before any
+game action. That assumption was corrected by opening a normal new page; its
+unclean profile was retained untouched and a second fresh campaign was used.
+The second navigation failed with net::ERR_ABORTED before startup/gameplay.
+Both attempts recorded0 actions, unclean custody and final owned active0.
+
+The supervisor also incorrectly treated the existing drain() helper's None
+return as a failure signal. The helper itself drains/terminates owned children;
+this wrapper mistake did not make the game navigation pass. These are new
+ignored QA-adapter failures, not product findings. No third campaign or
+unclean-profile resume was attempted, no security setting was changed, and
+neither bootstrap qualifies Count/Whale acceptance. A working admitted
+longer campaign or approved native app access remains necessary.
+
+## Raw evidence paths and hashes
+
+Raw files remain outside the repository. The external index lists every file/path/size/SHA256 from these runs: uf061-count-resident-adapter-prepare, uf061-count-resident-01, uf061-count-resident-bootstrap-correction, uf061-count-resident-bootstrap2, uf061-count-resident-final-diagnostic, uf061-count-origin-and-drain-contract, uf061-count-origin-byte-contract.
+
+| Absolute path | SHA-256 |
+| --- | --- |
+| E:\CodexQA\BTH\runs\uf061-resident-failure-proof-addendum\evidence\raw-evidence-index.json | 3b16714a1eff74a935e0a8cd46a0245311378148a0af8f2648f104fa0b599311 |
+| E:\CodexQA\BTH\runs\uf061-count-resident-adapter-prepare\evidence\job.json | 75b41c462ab35387371acf60314ff3aa607b4fa1c9312d8ffcf26caf82d9943a |
+| E:\CodexQA\BTH\runs\uf061-count-resident-01\evidence\job.json | 3d7dd826befb868b6f161d1e703743bbe036dd98b81f7c5d745e19a20790af16 |
+| E:\CodexQA\BTH\runs\uf061-count-resident-bootstrap-correction\evidence\job.json | 712a1250ba97e223b43519468a136bd0bc4ab78242add9ad39ec563011381005 |
+| E:\CodexQA\BTH\runs\uf061-count-resident-bootstrap2\evidence\job.json | 644712890b1980ab42bcac2ef550a4104e3bcc878abcc6d060d9c6b29b039f67 |
+| E:\CodexQA\BTH\runs\uf061-count-resident-final-diagnostic\evidence\job.json | e51ca8afee7c09ed67bf94593276f5f0d398b9b09f4bf51c48ada7853d755c67 |
+| E:\CodexQA\BTH\runs\uf061-count-origin-and-drain-contract\evidence\job.json | f5d0a6f5e461a754da11fe868a5cc424bab950bf3b19e8454e1d3d0a03fdbabd |
+| E:\CodexQA\BTH\runs\uf061-count-origin-byte-contract\evidence\job.json | 64ef74808feb09309285e968cdef53e5d4da391439750aa84cddc2c27ff5223e |
+| E:\CodexQA\BTH\runs\uf061-count-resident-bootstrap-correction\evidence\bootstrap-classification.json | 2f6f7813d8c5e7901bea540630b9771f6a88dcfca8c8ce05b940f2d7b91fdc63 |

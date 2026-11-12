@@ -8,7 +8,7 @@ authorization. No future item effect, scenario polish, voice pass, leaderboard
 or heist enablement has been implemented by this record.
 
 After: all five entries are explicitly open in the JSON ledger and the existing
-named plan ledger. Their group is0.6.2, owners/design prerequisites are stated,
+named plan ledger. Their status/text identifies0.6.2; the schema permits only current/historical\ngroups, so they remain in current with an explicit owner no-work policy.\nOwners/design prerequisites are stated,
 and every next action says no work authorized. Existing BTH-11, BTH-15 and
 BTH-17 histories and pauses remain intact.
 
@@ -25,7 +25,7 @@ version changed. No future task is Complete. This documentation batch remains
 pending NEXT delivery; the existing README cold-import hold is unchanged.
 
 Validation: JSON and named-row presence checked; each future state is open,
-group0.6.2, unassigned and has no implementation batch, commit or deployment.
+the current schema group with explicit0.6.2 status, unassigned and has no implementation batch, commit or deployment.
 Runtime qualification is reused from unchanged main: Smoke11/11, livenessPASS;
 Count accounting70/70. The older golden discrepancy stays open separately.
 No extra runtime tests were added for this documentation-only record.
