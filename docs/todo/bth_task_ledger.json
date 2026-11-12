@@ -35496,7 +35496,7 @@
         }
       },
       "state": "open",
-      "status": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING",
+      "status": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35519,6 +35519,12 @@
         },
         {
           "sha": "e52741c9ea88e295e43ee007880abc6218528596",
+          "evidence": [
+            "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+          ]
+        },
+        {
+          "sha": "da990b9c756b6e14103e61c94fadf08b776599a0",
           "evidence": [
             "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
           ]
@@ -35545,24 +35551,31 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
           "summary": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+          "summary": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
         }
       ],
       "implementation_batches": [
         "FEAT-STALE-BATCH-001"
       ],
-      "next_action": "Verify exact paired documentation NEXT promotion/startup, then close stale-history task with Motel sweep-only branch limit retained.",
+      "next_action": "Obtain exact cold-import qualification through the existing owner-operated request mechanism, then verify promoted identity and basic launch; continue the queue meanwhile.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "Existing watcher refused fd8bb158 before import because the requested audit CSV changes import inputs; NEXT remains 070fc937.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:06:31.939194+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:21:50.927634+00:00",
+        "evidence": [
+          "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Close Section8 stale plan entries with dated evidence"
       ],
-      "updated_at": "2026-11-12T09:06:31.939194+00:00"
+      "updated_at": "2026-11-12T09:21:50.927634+00:00"
     },
     {
       "id": "FEAT-04",
@@ -39244,7 +39257,7 @@
       "parent_id": "FEAT-STALE",
       "group": "current",
       "state": "open",
-      "status": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING",
+      "status": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION",
       "scope": [
         "Close Section8 stale plan entries with dated evidence"
       ],
@@ -39273,6 +39286,12 @@
           "evidence": [
             "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "da990b9c756b6e14103e61c94fadf08b776599a0",
+          "evidence": [
+            "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39296,18 +39315,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
           "summary": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+          "summary": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
         }
       ],
-      "next_action": "Verify exact paired documentation NEXT promotion/startup, then close stale-history task with Motel sweep-only branch limit retained.",
+      "next_action": "Obtain exact cold-import qualification through the existing owner-operated request mechanism, then verify promoted identity and basic launch; continue the queue meanwhile.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
+        "state": "active",
+        "kind": "external",
+        "description": "Existing watcher refused fd8bb158 before import because the requested audit CSV changes import inputs; NEXT remains 070fc937.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:06:31.939194+00:00",
-        "evidence": []
+        "observed_at": "2026-11-12T09:21:50.927634+00:00",
+        "evidence": [
+          "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T09:06:31.939194+00:00"
+      "updated_at": "2026-11-12T09:21:50.927634+00:00"
     },
     {
       "id": "FEAT-04-BATCH-001",
