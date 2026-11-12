@@ -63,6 +63,18 @@ Raw files remain outside the repository. The external index lists every file/pat
 
 | Absolute path | SHA-256 |
 | --- | --- |
-| E:\CodexQA\BTH\runs\close061-record-fixture-and-ledger-delivery-20261111\evidence\raw-evidence-index.json | 2b3a7ea5862c35d55746bc80f893d6d13f2da3eafd36d6df16c15edc98f53b36 |
+| E:\CodexQA\BTH\runs\cl061-index-repair\evidence\owner-dispositions-delivery-index.json | 2b3a7ea5862c35d55746bc80f893d6d13f2da3eafd36d6df16c15edc98f53b36 |
 | E:\CodexQA\BTH\runs\close061-ledger-next-assets-20261111\evidence\served-assets.json | d86f9e1338944c98e0a7024031dfd9456f18f4729a2abf116b9e2d0c14e7556e |
 | E:\CodexQA\BTH\runs\close061-ledger-next-startup-20261111\evidence\result.json | e0177b0a72173ec3518453e4a025c3dafbac9539d355481e9756646c6d61ef0e |
+
+## Final checksum custody repair
+
+The final CLOSE-05 custody check found that the original shared external index
+path had been reused for CLOSE-01 later in the same recording run. That current
+index was preserved unchanged. The owner-disposition delivery index above was
+reconstructed from its two original completed evidence runs and its deterministic
+format, recovering the exact originally committed SHA256
+2b3a7ea5862c35d55746bc80f893d6d13f2da3eafd36d6df16c15edc98f53b36.
+Only this proof's external path changes to a unique immutable copy; its original
+hash and every underlying evidence record remain unchanged. No product, test,
+package or pipeline change. Diagnosis/custody: E:\CodexQA\BTH\runs\cl061-evidence-index-classify\evidence.
