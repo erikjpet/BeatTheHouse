@@ -437,25 +437,24 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 	var head_shift := Vector2(float(style.get("head_x", 0.0)), float(style.get("head_y", 0.0))) * scale_value
 	var head := Rect2(pos + Vector2(-12, -78) * scale_value + head_shift, Vector2(24, 24) * scale_value)
 	var body := Rect2(pos + Vector2(-23, -54) * scale_value, Vector2(46, 52) * scale_value)
-	surface.draw_rect(Rect2(pos.x - 25 * scale_value, pos.y - 6 * scale_value, 50 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.34))
+	if bool(style.get("show_shadow", true)):
+		surface.draw_rect(Rect2(pos.x - 25 * scale_value, pos.y - 6 * scale_value, 50 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.34))
 	surface.draw_rect(body, Color("#05060a"))
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
 	var gesture_amount := clampf(float(style.get("gesture_amount", 1.0)), 0.0, 1.0)
 	var gesture_side := int(style.get("gesture_side", 0))
-	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount, gesture_side)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount, gesture_side)
-	surface.draw_rect(head, skin)
+	var walk_stride := clampf(float(style.get("walk_stride", 0.0)), -1.0, 1.0)
+	# A semantic walk pose already exists in room callers. Only consumers that
+	# explicitly provide the stride opt into the new full-body arm animation.
+	var walk_enabled := style.has("walk_stride")
+	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount, gesture_side, walk_stride, walk_enabled)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount, gesture_side, walk_stride, walk_enabled)
+	surface.draw_rect(head, hair if bool(style.get("facing_away", false)) else skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
-	if not faceless:
+	if not faceless and not bool(style.get("facing_away", false)):
 		_draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)
-	if str(style.get("silhouette", "")) == "cap":
-		surface.draw_rect(Rect2(head.position + Vector2(-3, -3) * scale_value, Vector2(head.size.x + 8 * scale_value, 5 * scale_value)), hair)
-	elif str(style.get("silhouette", "")) == "glasses":
-		surface.draw_rect(Rect2(head.position + Vector2(4, 10) * scale_value, Vector2(6, 4) * scale_value), Color("#05060a"), false, 1)
-		surface.draw_rect(Rect2(head.position + Vector2(14, 10) * scale_value, Vector2(6, 4) * scale_value), Color("#05060a"), false, 1)
-	elif str(style.get("silhouette", "")) == "rings":
-		surface.draw_rect(Rect2(pos + Vector2(-30, -22) * scale_value, Vector2(6, 4) * scale_value), C_YELLOW)
+	_draw_character_accessories(surface, style, pos, head, scale_value, hair)
 	if bool(style.get("holding_card", false)):
 		_draw_hidden_card(surface, pos + Vector2(-34, -35) * scale_value, 0.28 * scale_value)
 	var name := str(style.get("name", ""))
@@ -463,7 +462,28 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 		surface.surface_label(name.left(10), pos + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
-static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371"), gesture_amount: float = 1.0, gesture_side: int = 0) -> void:
+static func _draw_character_accessories(surface, style: Dictionary, pos: Vector2, head: Rect2, scale_value: float, hair: Color) -> void:
+	# Legacy callers still get their one authored silhouette. New full-body views
+	# can explicitly layer equipment without replacing the character's identity.
+	var kinds: Array = [str(style.get("silhouette", ""))]
+	var extra_value: Variant = style.get("accessories", [])
+	if typeof(extra_value) == TYPE_ARRAY:
+		for value in extra_value:
+			var kind := str(value)
+			if not kinds.has(kind):
+				kinds.append(kind)
+	for kind in kinds:
+		if kind == "glasses" and bool(style.get("facing_away", false)): continue
+		if kind == "cap":
+			surface.draw_rect(Rect2(head.position + Vector2(-3, -3) * scale_value, Vector2(head.size.x + 8 * scale_value, 5 * scale_value)), hair)
+		elif kind == "glasses":
+			surface.draw_rect(Rect2(head.position + Vector2(4, 10) * scale_value, Vector2(6, 4) * scale_value), Color("#05060a"), false, 1)
+			surface.draw_rect(Rect2(head.position + Vector2(14, 10) * scale_value, Vector2(6, 4) * scale_value), Color("#05060a"), false, 1)
+		elif kind == "rings":
+			surface.draw_rect(Rect2(pos + Vector2(-30, -22) * scale_value, Vector2(6, 4) * scale_value), C_YELLOW)
+
+
+static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371"), gesture_amount: float = 1.0, gesture_side: int = 0, walk_stride: float = 0.0, walk_enabled: bool = false) -> void:
 	var side := -1.0 if left else 1.0
 	var active_side := (left and gesture_side < 0) or (not left and gesture_side >= 0)
 	if gesture_side == 0:
@@ -507,6 +527,8 @@ static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accen
 		hand = pos + Vector2(-side * (3 if active_side else 11), -34 if active_side else -30) * scale_value
 	elif pose == "rub_hands":
 		hand = pos + Vector2(side * 5, -29) * scale_value
+	elif pose == "walk" and walk_enabled:
+		hand = pos + Vector2(side * 32 + walk_stride * side * 6, -22 - walk_stride * side * 10) * scale_value
 	if pose not in ["snitch", "covered", "lookaway", "watching"]:
 		hand = resting_hand.lerp(hand, gesture_amount)
 	surface.draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 6.0 * scale_value))

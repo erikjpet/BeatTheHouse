@@ -146,7 +146,7 @@
   },
   {
     "id": "delta_queen",
-    "label": "The River Queen",
+    "label": "The Delta Queen",
     "destination_archetype": "delta_queen",
     "description": "Riverboat felt. River brass.",
     "decision": {
@@ -168,7 +168,7 @@
         0,
         1
       ],
-      "closed_text": "The River Queen is away from the dock."
+      "closed_text": "The Delta Queen is away from the dock."
     },
     "condition_text": "Boarding opens on the riverboat schedule."
   },

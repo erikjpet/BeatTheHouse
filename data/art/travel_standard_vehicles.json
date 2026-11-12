@@ -1,0 +1,382 @@
+{
+  "version": 1,
+  "notes": "Detailed 2026-11-12 vehicles. Source rectangles are non-destructive visible draw regions. Door and wheel UVs are relative to source_px, not full PNG. Original generated alpha and exact PNG bytes are preserved without cleanup, cropping, resizing or recoloring.",
+  "vehicles": {
+    "taxi": {
+      "texture": "res://assets/art/travel/standard/taxi.png",
+      "reference_size": [
+        2172,
+        724
+      ],
+      "source_px": [
+        132,
+        22,
+        1908,
+        701
+      ],
+      "door_rect_uv": [
+        0.2714884696,
+        0.1940085592,
+        0.2169811321,
+        0.6091298146
+      ],
+      "wheels": [
+        {
+          "center_uv": [
+            0.2122641509,
+            0.8031383738
+          ],
+          "radius_uv": [
+            0.070230608,
+            0.1911554922
+          ]
+        },
+        {
+          "center_uv": [
+            0.8186582809,
+            0.8031383738
+          ],
+          "radius_uv": [
+            0.070230608,
+            0.1911554922
+          ]
+        }
+      ],
+      "visible_baseline_px": 723,
+      "sha256": "b154b6a387df016f7289b9c78654beeb9bfca77f32bfe736bd102ae7915aa5fb",
+      "door_animation": {
+        "kind": "hinged",
+        "aperture_polygon_uv": [
+          [
+            0.3254716981,
+            0.1940085592
+          ],
+          [
+            0.4884696017,
+            0.1940085592
+          ],
+          [
+            0.4884696017,
+            0.8031383738
+          ],
+          [
+            0.2997903564,
+            0.8031383738
+          ],
+          [
+            0.2987421384,
+            0.7389443652
+          ],
+          [
+            0.2945492662,
+            0.6790299572
+          ],
+          [
+            0.286163522,
+            0.6233951498
+          ],
+          [
+            0.2714884696,
+            0.5820256776
+          ],
+          [
+            0.2714884696,
+            0.4493580599
+          ],
+          [
+            0.286163522,
+            0.365192582
+          ],
+          [
+            0.3081761006,
+            0.2524964337
+          ]
+        ],
+        "interior_color": "#16101f",
+        "step_polygon_uv": [
+          [
+            0.3024109015,
+            0.7746077033
+          ],
+          [
+            0.4858490566,
+            0.7746077033
+          ],
+          [
+            0.4858490566,
+            0.8017118402
+          ],
+          [
+            0.3018867925,
+            0.8017118402
+          ]
+        ],
+        "step_color": "#80603f",
+        "edge_color": "#150e24",
+        "panels": [
+          {
+            "polygon_uv": [
+              [
+                0.3254716981,
+                0.1940085592
+              ],
+              [
+                0.4884696017,
+                0.1940085592
+              ],
+              [
+                0.4884696017,
+                0.8031383738
+              ],
+              [
+                0.2997903564,
+                0.8031383738
+              ],
+              [
+                0.2987421384,
+                0.7389443652
+              ],
+              [
+                0.2945492662,
+                0.6790299572
+              ],
+              [
+                0.286163522,
+                0.6233951498
+              ],
+              [
+                0.2714884696,
+                0.5820256776
+              ],
+              [
+                0.2714884696,
+                0.4493580599
+              ],
+              [
+                0.286163522,
+                0.365192582
+              ],
+              [
+                0.3081761006,
+                0.2524964337
+              ]
+            ],
+            "hinge_uv": [
+              [
+                0.4884696017,
+                0.1940085592
+              ],
+              [
+                0.4884696017,
+                0.8031383738
+              ]
+            ],
+            "max_angle_degrees": 70,
+            "depth_uv": [
+              0,
+              0.018
+            ]
+          }
+        ],
+        "measurement_notes": "Measured on the detailed 2026-11-12 native PNG. UVs are relative to source_px; full window/body contours, handles and trim remain original texture pixels. Closed sprite PNG bytes are unchanged by animation."
+      },
+      "interior_texture": "res://assets/art/travel/vehicle_interiors/taxi.png",
+      "interior_reference_size": [
+        1254,
+        1254
+      ]
+    },
+    "night_cab": {
+      "texture": "res://assets/art/travel/standard/night_cab.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "source_px": [
+        15,
+        166,
+        1745,
+        627
+      ],
+      "door_rect_uv": [
+        0.2802292264,
+        0.1547049442,
+        0.1908309456,
+        0.6411483254
+      ],
+      "wheels": [
+        {
+          "center_uv": [
+            0.2063037249,
+            0.7878787879
+          ],
+          "radius_uv": [
+            0.0744985673,
+            0.2073365231
+          ]
+        },
+        {
+          "center_uv": [
+            0.817765043,
+            0.7878787879
+          ],
+          "radius_uv": [
+            0.0744985673,
+            0.2073365231
+          ]
+        }
+      ],
+      "visible_baseline_px": 793,
+      "sha256": "3aae55c0e634d9f5c40ee8c891de1d2fa7f8b1247553482d1d833d49ae637777",
+      "door_animation": {
+        "kind": "hinged",
+        "aperture_polygon_uv": [
+          [
+            0.3111747851,
+            0.1547049442
+          ],
+          [
+            0.4710601719,
+            0.1547049442
+          ],
+          [
+            0.4710601719,
+            0.7958532695
+          ],
+          [
+            0.3020057307,
+            0.7958532695
+          ],
+          [
+            0.2991404011,
+            0.7192982456
+          ],
+          [
+            0.2945558739,
+            0.668261563
+          ],
+          [
+            0.2871060172,
+            0.620414673
+          ],
+          [
+            0.2802292264,
+            0.6028708134
+          ],
+          [
+            0.2802292264,
+            0.4338118022
+          ],
+          [
+            0.2888252149,
+            0.307814992
+          ],
+          [
+            0.2968481375,
+            0.2153110048
+          ],
+          [
+            0.3048710602,
+            0.1722488038
+          ]
+        ],
+        "interior_color": "#100b1e",
+        "step_polygon_uv": [
+          [
+            0.3042979943,
+            0.7607655502
+          ],
+          [
+            0.4687679083,
+            0.7607655502
+          ],
+          [
+            0.4687679083,
+            0.7926634769
+          ],
+          [
+            0.3037249284,
+            0.7926634769
+          ]
+        ],
+        "step_color": "#493152",
+        "edge_color": "#140923",
+        "panels": [
+          {
+            "polygon_uv": [
+              [
+                0.3111747851,
+                0.1547049442
+              ],
+              [
+                0.4710601719,
+                0.1547049442
+              ],
+              [
+                0.4710601719,
+                0.7958532695
+              ],
+              [
+                0.3020057307,
+                0.7958532695
+              ],
+              [
+                0.2991404011,
+                0.7192982456
+              ],
+              [
+                0.2945558739,
+                0.668261563
+              ],
+              [
+                0.2871060172,
+                0.620414673
+              ],
+              [
+                0.2802292264,
+                0.6028708134
+              ],
+              [
+                0.2802292264,
+                0.4338118022
+              ],
+              [
+                0.2888252149,
+                0.307814992
+              ],
+              [
+                0.2968481375,
+                0.2153110048
+              ],
+              [
+                0.3048710602,
+                0.1722488038
+              ]
+            ],
+            "hinge_uv": [
+              [
+                0.4710601719,
+                0.1547049442
+              ],
+              [
+                0.4710601719,
+                0.7958532695
+              ]
+            ],
+            "max_angle_degrees": 73,
+            "depth_uv": [
+              0,
+              0.016
+            ]
+          }
+        ],
+        "measurement_notes": "Measured on the detailed 2026-11-12 native PNG. UVs are relative to source_px; full window/body contours, handles and trim remain original texture pixels. Closed sprite PNG bytes are unchanged by animation."
+      },
+      "interior_texture": "res://assets/art/travel/vehicle_interiors/night_cab.png",
+      "interior_reference_size": [
+        1254,
+        1254
+      ]
+    }
+  }
+}

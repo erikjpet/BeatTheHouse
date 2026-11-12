@@ -1,0 +1,265 @@
+{
+  "version": 2,
+  "exteriors": {
+    "corner_store": {
+      "texture": "res://assets/art/travel/exteriors/corner_store.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.7350620067643743,
+          0.46786922209695603
+        ],
+        [
+          0.8201803833145435,
+          0.46786922209695603
+        ],
+        [
+          0.8201803833145435,
+          0.6899661781285231
+        ],
+        [
+          0.7350620067643743,
+          0.6899661781285231
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.7776211950394588,
+        0.6989853438556933
+      ],
+      "inside_uv": [
+        0.7776211950394588,
+        0.6809470124013529
+      ],
+      "road_y_uv": 0.9503945885005637,
+      "sign_rect_uv": [
+        0.4599774520856821,
+        0.3878241262683202,
+        0.20574971815107101,
+        0.07440811724915446
+      ],
+      "source_top_y_uv": 0.29,
+      "backdrop_texture": "res://assets/art/travel/backdrops/corner_store.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/corner_store.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "gas_station_casino": {
+      "texture": "res://assets/art/travel/exteriors/gas_station_casino.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.7266065388951521,
+          0.5276211950394588
+        ],
+        [
+          0.8213077790304397,
+          0.5276211950394588
+        ],
+        [
+          0.8213077790304397,
+          0.7914317925591883
+        ],
+        [
+          0.7266065388951521,
+          0.7914317925591883
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.7739571589627959,
+        0.8004509582863585
+      ],
+      "inside_uv": [
+        0.7739571589627959,
+        0.7824126268320181
+      ],
+      "road_y_uv": 0.9503945885005637,
+      "sign_rect_uv": [
+        0.5698985343855694,
+        0.5062006764374295,
+        0.12683201803833147,
+        0.06313416009019165
+      ],
+      "setting_kind": "fuel_forecourt",
+      "source_top_y_uv": 0.323,
+      "backdrop_texture": "res://assets/art/travel/backdrops/gas_station_casino.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/gas_station_casino.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "small_underground_casino": {
+      "texture": "res://assets/art/travel/exteriors/small_underground_casino.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.7006764374295378,
+          0.48928974069898534
+        ],
+        [
+          0.8105975197294251,
+          0.48928974069898534
+        ],
+        [
+          0.8105975197294251,
+          0.7576099210822999
+        ],
+        [
+          0.7006764374295378,
+          0.7576099210822999
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.7556369785794814,
+        0.7666290868094702
+      ],
+      "inside_uv": [
+        0.7556369785794814,
+        0.7485907553551296
+      ],
+      "road_y_uv": 0.9503945885005637,
+      "sign_rect_uv": [
+        0.27001127395715896,
+        0.4599774520856821,
+        0.3945885005636979,
+        0.11386696730552424
+      ],
+      "source_top_y_uv": 0.323,
+      "backdrop_texture": "res://assets/art/travel/backdrops/small_underground_casino.png",
+      "backdrop_reference_size": [
+        1773,
+        887
+      ],
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/small_underground_casino.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "bar": {
+      "texture": "res://assets/art/travel/exteriors/bar.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.7209695603156708,
+          0.40586245772266066
+        ],
+        [
+          0.8331454340473506,
+          0.40586245772266066
+        ],
+        [
+          0.8331454340473506,
+          0.7406989853438557
+        ],
+        [
+          0.7209695603156708,
+          0.7406989853438557
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.7770574971815107,
+        0.7497181510710259
+      ],
+      "inside_uv": [
+        0.7770574971815107,
+        0.7316798196166855
+      ],
+      "road_y_uv": 0.9503945885005637,
+      "sign_rect_uv": [
+        0.27677564825253664,
+        0.399098083427283,
+        0.11499436302142052,
+        0.09019165727170236
+      ],
+      "source_top_y_uv": 0.323,
+      "backdrop_texture": "res://assets/art/travel/backdrops/bar.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/bar.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "pawn_shop": {
+      "texture": "res://assets/art/travel/exteriors/pawn_shop.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.7187147688838782,
+          0.5050732807215332
+        ],
+        [
+          0.8162344983089064,
+          0.5050732807215332
+        ],
+        [
+          0.8162344983089064,
+          0.7474633596392334
+        ],
+        [
+          0.7187147688838782,
+          0.7474633596392334
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.7674746335963923,
+        0.7531003382187148
+      ],
+      "inside_uv": [
+        0.7674746335963923,
+        0.7384441939120632
+      ],
+      "road_y_uv": 0.9503945885005637,
+      "sign_rect_uv": [
+        0.17587373167981962,
+        0.47801578354002255,
+        0.5073280721533259,
+        0.12063134160090191
+      ],
+      "source_top_y_uv": 0.323,
+      "backdrop_texture": "res://assets/art/travel/backdrops/pawn_shop.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/pawn_shop.png",
+      "doorway_reference_size": [
+        1086,
+        1448
+      ]
+    }
+  }
+}

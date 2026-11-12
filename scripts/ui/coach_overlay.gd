@@ -90,6 +90,20 @@ var lifecycle_attention_checkpoints: Dictionary = {}
 var lifecycle_attention_checkpoint_counter := 0
 var tutorial_input_owner: Control
 var dismiss_pointer_active := false
+var presentation_suspended := false
+
+
+func set_presentation_suspended(suspended: bool) -> void:
+	# Preserve the current lesson/queue while another exclusive presentation owns
+	# the viewport. The host refreshes the lesson at the next normal boundary.
+	if suspended and not presentation_suspended:
+		# A presentation takes ownership between pointer down and up. The old
+		# release must never dismiss the lesson shown when input resumes.
+		dismiss_pointer_active = false
+	presentation_suspended = suspended
+	set_process_input(not suspended)
+	if suspended:
+		visible = false
 
 
 func _ready() -> void:
@@ -465,6 +479,8 @@ func _consume_dismiss_pointer_input(event: InputEvent) -> bool:
 
 
 func _consume_blocked_pointer_input(event: InputEvent) -> bool:
+	if presentation_suspended:
+		return false
 	if not visible or active_lesson.is_empty() or str(active_lesson.get("scope", "")) != "tutorial_run":
 		return false
 	# Tutorial guidance is advisory. Only an explicitly gated snapshot may own
@@ -676,6 +692,9 @@ func _normal_tip_pending() -> bool:
 
 
 func _render_active(play_motion: bool) -> void:
+	if presentation_suspended:
+		visible = false
+		return
 	if active_lesson.is_empty():
 		return
 	# A written fallback may be shown before its live anchor arrives. Layout or

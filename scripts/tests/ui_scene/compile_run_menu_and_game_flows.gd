@@ -255,6 +255,22 @@ func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> b
 	var success_observed_next := (success_probe.get("lifecycle_refresh_active_ids") as Array).find(NEXT_TIP_ID)
 	var success_new_tween: Variant = success_coach.attention_tween
 	var success_parent := success_coach.get_parent()
+	# The transaction commits the Coach now, but a menu journey owns the viewport
+	# until its animation completes. Normal nonmodal ordering stays exact.
+	var success_cinematic: Control = success_probe.get("travel_cinematic_overlay")
+	var success_focus_scope: RefCounted = success_probe.get("modal_focus_scope")
+	var success_cinematic_active := bool(success_probe.get("travel_presentation_active"))
+	var success_order_exact := success_parent != null and success_coach.get_index() == success_parent.get_child_count() - 1
+	if success_cinematic_active:
+		success_order_exact = success_parent == success_probe \
+				and is_instance_valid(success_cinematic) and success_cinematic.get_parent() == success_parent \
+				and success_cinematic.name == "TravelCinematic" and bool(success_cinematic.get("active")) \
+				and success_cinematic.visible and success_cinematic.mouse_filter == Control.MOUSE_FILTER_STOP \
+				and success_cinematic.z_index > success_coach.z_index \
+				and success_cinematic.get_index() == success_parent.get_child_count() - 1 \
+				and success_coach.get_index() == success_cinematic.get_index() - 1 \
+				and success_coach.presentation_suspended and not success_coach.visible \
+				and success_focus_scope != null and success_focus_scope.call("active_root") == success_cinematic
 	var success_exact: bool = success_ok \
 			and int(success_probe.get("lifecycle_guard_count")) == 1 \
 			and success_run.delivery_resolve_count == 1 \
@@ -266,13 +282,79 @@ func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> b
 			and success_coach.queued_lessons.is_empty() \
 			and success_new_tween is Tween and (success_new_tween as Tween).is_valid() and success_new_tween != success_old_tween \
 			and success_old_tween is Tween and not (success_old_tween as Tween).is_valid() \
-			and success_parent != null and success_coach.get_index() == success_parent.get_child_count() - 1 \
+			and success_order_exact \
 			and success_coach.lifecycle_protected_attention_tweens.is_empty() and success_coach.lifecycle_attention_checkpoints.is_empty()
 	if not success_exact:
 		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s message=%s node=%s selected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens), str(success_probe.get("message_label").text), success_run.current_world_node_id(), str(success_probe.get("selected_travel_target_id"))])
+	var success_resumed_exact := true
+	if success_exact and success_cinematic_active:
+		# Only the overlay's connected Skip/Continue controls are driven here.
+		# Neither acknowledgement nor a repeated Continue may settle travel again.
+		var settled_state := [success_run.bankroll, success_run.game_clock_minutes,
+			success_run.current_world_node_id(), success_run.environment_travel_count(),
+			success_run.rng_seed, success_run.rng_state, success_run.suspicion,
+			success_run.drunk_level, success_run.story_log.duplicate(true)]
+		var settled_result: Dictionary = (success_probe.get("last_hook_result") as Dictionary).duplicate(true)
+		var settled_game: Variant = success_probe.get("current_game")
+		var settled_screen := str(success_probe.get("current_screen"))
+		var settled_journey_id := str(success_run.travel_journey_receipt.get("journey_id", ""))
+		var skip_button: Button = success_cinematic.get("_skip")
+		var continue_button: Button = success_cinematic.get("_continue")
+		var controls_ready := skip_button != null and continue_button != null \
+				and skip_button.is_visible_in_tree() and not skip_button.disabled \
+				and skip_button.has_focus() and not settled_journey_id.is_empty() \
+				and bool(success_run.travel_journey_receipt.get("receipt_pending", false))
+		if controls_ready:
+			skip_button.pressed.emit()
+		var receipt_owned: bool = controls_ready and str(success_cinematic.get("phase")) == "receipt" \
+				and bool(success_cinematic.get("active")) and success_cinematic.visible \
+				and success_focus_scope.call("active_root") == success_cinematic \
+				and continue_button.is_visible_in_tree() and not continue_button.disabled and continue_button.has_focus() \
+				and success_coach.presentation_suspended and not success_coach.visible
+		if receipt_owned:
+			await process_frame
+		var automatically_resumed := not bool(success_probe.get("travel_presentation_active"))
+		if receipt_owned:
+			continue_button.pressed.emit()
+			continue_button.pressed.emit()
+		var resumed_state := [success_run.bankroll, success_run.game_clock_minutes,
+			success_run.current_world_node_id(), success_run.environment_travel_count(),
+			success_run.rng_seed, success_run.rng_state, success_run.suspicion,
+			success_run.drunk_level, success_run.story_log.duplicate(true)]
+		success_resumed_exact = receipt_owned and automatically_resumed \
+				and not bool(success_probe.get("travel_presentation_active")) \
+				and not bool(success_cinematic.get("active")) and not success_cinematic.visible \
+				and success_focus_scope.call("active_root") != success_cinematic \
+				and success_coach.get_parent() == success_parent \
+				and success_coach.get_index() == success_parent.get_child_count() - 1 \
+				and not success_coach.presentation_suspended and success_coach.visible \
+				and success_coach.active_lesson_id() == NEXT_TIP_ID and success_coach.copy_label.text == NEXT_TIP_COPY \
+				and bool(success_coach.seen.get(NEXT_TIP_ID, false)) and not success_coach.queued_ids.has(NEXT_TIP_ID) \
+				and success_coach.queued_lessons.is_empty() and success_coach.lifecycle_protected_attention_tweens.is_empty() \
+				and success_coach.lifecycle_attention_checkpoints.is_empty() \
+				and success_run.delivery_resolve_count == 1 and int(success_probe.get("lifecycle_guard_count")) == 1 \
+				and resumed_state == settled_state and success_probe.get("last_hook_result") == settled_result \
+				and str(success_run.travel_journey_receipt.get("journey_id", "")) == settled_journey_id \
+				and not bool(success_run.travel_journey_receipt.get("receipt_pending", true)) \
+				and success_probe.get("run_state") == success_run and success_probe.get("current_game") == settled_game \
+				and settled_screen in [FoundationMain.SCREEN_ENVIRONMENT, FoundationMain.SCREEN_RESULT] \
+				and str(success_probe.get("current_screen")) == settled_screen \
+				and str(success_probe.get("selected_travel_target_id")).is_empty()
+		if not success_resumed_exact:
+			push_error("Coach did not regain normal foreground ownership after automatic Skip completion without a second travel settlement: %s." % JSON.stringify({
+				"controls_ready":controls_ready, "receipt_owned":receipt_owned, "active":success_probe.get("travel_presentation_active"),
+				"coach_index":success_coach.get_index(), "last_index":success_parent.get_child_count() - 1,
+				"coach_suspended":success_coach.presentation_suspended, "coach_visible":success_coach.visible,
+				"lesson":success_coach.active_lesson_id(), "queued":success_coach.queued_lessons,
+				"protected":success_coach.lifecycle_protected_attention_tweens.size(), "checkpoints":success_coach.lifecycle_attention_checkpoints.size(),
+				"delivery_resolves":success_run.delivery_resolve_count, "guards":success_probe.get("lifecycle_guard_count"),
+				"settlement_unchanged":resumed_state == settled_state, "result_unchanged":success_probe.get("last_hook_result") == settled_result,
+				"receipt":success_run.travel_journey_receipt, "screen":success_probe.get("current_screen")}))
+	if failure_exact and success_exact and success_resumed_exact:
+		print("COACH_LIFECYCLE_TRAVEL_OWNERSHIP_CHECK PASS immediate_lifecycle=true modal_owner=true resumed_foreground=true settlement_once=true")
 	success_probe.queue_free()
 	await process_frame
-	return failure_exact and success_exact
+	return failure_exact and success_exact and success_resumed_exact
 
 
 func _normal_coach_lifecycle_probe(reject_delivery: bool, existing_probe: Control = null) -> Control:

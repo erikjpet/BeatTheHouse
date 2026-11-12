@@ -7,6 +7,7 @@ const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persi
 const INACTIVE_STORAGE_PROJECTION_BUDGET := 4 * 1024 * 1024
 const INACTIVE_CASINO_STORAGE_PREFIX := "casino-room::"
 const RunStateSchemaScript := preload("res://scripts/core/run_state_schema.gd")
+const TravelJourneyReceiptScript := preload("res://scripts/core/travel_journey_receipt.gd")
 const CrewRunFacadeScript := preload("res://scripts/core/crew_run_facade.gd")
 const GrandCasinoRunFacadeScript := preload("res://scripts/core/grand_casino_run_facade.gd")
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
@@ -430,6 +431,8 @@ var music_tempo_state: Dictionary = {}
 var music_choreography_state: Dictionary = {}
 var environment_history: Array = []
 var environment_history_archive_count: int = 0
+# Frozen presentation receipt, never an authority for travel effects.
+var travel_journey_receipt: Dictionary = {}
 var unlocked_travel: Array = []
 var narrative_flags: Dictionary = {}
 var story_flags: Dictionary = {}
@@ -565,6 +568,7 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"rourke_escort_state", "pending_triggered_events", "pending_bags",
 	"active_triggered_event", "event_cadence", "music_arrangement_state",
 	"music_tempo_state", "music_choreography_state", "environment_history",
+	"travel_journey_receipt",
 	"unlocked_travel", "narrative_flags", "story_flags", "story_log", "story_money_archive",
 	"crew_trust_by_member", "crew_grievance_ledger", "crew_jobs",
 	"active_delivery_run", "crew_pattern_memory",
@@ -660,6 +664,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	music_choreography_state = {}
 	environment_history = []
 	environment_history_archive_count = 0
+	travel_journey_receipt = {}
 	unlocked_travel = []
 	narrative_flags = {"crew_delivery_rules_version": 1, "crew_delivery_obligations": 0, "crew_delivery_post_miss": false, "crew_reputation": 0}
 	story_flags = {}
@@ -6140,6 +6145,21 @@ func _reconcile_tier_two_casino_spawn_eligibility() -> void:
 
 func environment_travel_count() -> int:
 	return maxi(0, environment_history_archive_count) + environment_history.size()
+
+
+# Receipt dismissal is presentation-only and must never replay travel. Matching
+# identity prevents a stale Continue button from acknowledging a newer journey.
+func acknowledge_travel_journey_receipt(journey_id: String) -> bool:
+	if travel_journey_receipt.is_empty() or journey_id.is_empty() \
+			or typeof(travel_journey_receipt.get("journey_id")) != TYPE_STRING \
+			or travel_journey_receipt.get("journey_id") != journey_id \
+			or typeof(travel_journey_receipt.get("commit_status")) != TYPE_STRING \
+			or travel_journey_receipt.get("commit_status") != "committed":
+		return false
+	var acknowledged := travel_journey_receipt.duplicate(true)
+	acknowledged["receipt_pending"] = false
+	travel_journey_receipt = acknowledged
+	return true
 
 
 func story_log_entry_count() -> int:
@@ -15608,6 +15628,7 @@ func _run_state_schema_values() -> Dictionary:
 		"music_choreography_state": _normalize_music_choreography_state(music_choreography_state),
 		"environment_history": environment_history.duplicate(true),
 		"environment_history_archive_count": environment_history_archive_count,
+		"travel_journey_receipt": TravelJourneyReceiptScript.normalize(travel_journey_receipt),
 		"unlocked_travel": unlocked_travel.duplicate(true),
 		"narrative_flags": narrative_flags.duplicate(true),
 		"story_flags": story_flags.duplicate(true),
@@ -15825,6 +15846,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"music_choreography_state": music_choreography_state.duplicate(false),
 		"environment_history": environment_history.duplicate(false),
 		"environment_history_archive_count": environment_history_archive_count,
+		"travel_journey_receipt": {} if travel_preview else TravelJourneyReceiptScript.normalize(travel_journey_receipt),
 		"unlocked_travel": unlocked_travel.duplicate(false),
 		"narrative_flags": CharacterOfferModelScript.snapshot_flags(narrative_flags),
 		"story_flags": story_flags.duplicate(false),
@@ -15977,6 +15999,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	music_tempo_state = _normalize_music_tempo_state(JsonCoerceScript._copy_dict(data.get("music_tempo_state", {})))
 	music_choreography_state = _normalize_music_choreography_state(JsonCoerceScript._copy_dict(data.get("music_choreography_state", {})))
 	environment_history_archive_count = maxi(0, int(data.get("environment_history_archive_count", 0)))
+	travel_journey_receipt = TravelJourneyReceiptScript.normalize(data.get("travel_journey_receipt", {}))
 	environment_history = _normalize_environment_history(JsonCoerceScript._copy_array(data.get("environment_history", [])))
 	_compact_environment_history()
 	unlocked_travel = JsonCoerceScript._copy_array(data.get("unlocked_travel", current_environment.get("travel_hooks", [])))

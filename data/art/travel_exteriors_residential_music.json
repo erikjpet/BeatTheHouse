@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "exteriors": {
+    "apartment": {
+      "texture": "res://assets/art/travel/exteriors/apartment.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.71645998,
+          0.4746336
+        ],
+        [
+          0.79594138,
+          0.4746336
+        ],
+        [
+          0.79594138,
+          0.76099211
+        ],
+        [
+          0.71645998,
+          0.76099211
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.75620068,
+        0.76775648
+      ],
+      "inside_uv": [
+        0.75620068,
+        0.74971815
+      ],
+      "road_y_uv": 0.9470124,
+      "source_top_y_uv": 0.323,
+      "foreground_kind": "integrated_courtyard",
+      "setting_kind": "residential_walkup_courtyard",
+      "backdrop_texture": "res://assets/art/travel/backdrops/apartment.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/apartment.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "house": {
+      "texture": "res://assets/art/travel/exteriors/house.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.70293123,
+          0.50394589
+        ],
+        [
+          0.80045096,
+          0.50394589
+        ],
+        [
+          0.80045096,
+          0.75197294
+        ],
+        [
+          0.70293123,
+          0.75197294
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.75169109,
+        0.76662909
+      ],
+      "inside_uv": [
+        0.75169109,
+        0.74182638
+      ],
+      "road_y_uv": 0.9470124,
+      "source_top_y_uv": 0.3,
+      "approach_waypoint_uv": [
+        0.70913191,
+        0.84780158
+      ],
+      "foreground_kind": "integrated_driveway",
+      "setting_kind": "private_garden_driveway",
+      "backdrop_texture": "res://assets/art/travel/backdrops/house.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/house.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "motel": {
+      "texture": "res://assets/art/travel/exteriors/motel.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.71589628,
+          0.50732807
+        ],
+        [
+          0.79932356,
+          0.50732807
+        ],
+        [
+          0.79932356,
+          0.76099211
+        ],
+        [
+          0.71589628,
+          0.76099211
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.75760992,
+        0.77001127
+      ],
+      "inside_uv": [
+        0.75760992,
+        0.74971815
+      ],
+      "road_y_uv": 0.9470124,
+      "source_top_y_uv": 0.323,
+      "sign_rect_uv": [
+        0.27903044,
+        0.45997745,
+        0.156708,
+        0.06651635
+      ],
+      "foreground_kind": "integrated_courtyard",
+      "setting_kind": "motel_reception_parking_courtyard",
+      "backdrop_texture": "res://assets/art/travel/backdrops/motel.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/motel.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "motel_room": {
+      "texture": "res://assets/art/travel/exteriors/motel_room.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.71815107,
+          0.49605411
+        ],
+        [
+          0.80777903,
+          0.49605411
+        ],
+        [
+          0.80777903,
+          0.78466742
+        ],
+        [
+          0.71815107,
+          0.78466742
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.76296505,
+        0.789177
+      ],
+      "inside_uv": [
+        0.76296505,
+        0.77226607
+      ],
+      "road_y_uv": 0.9470124,
+      "source_top_y_uv": 0.323,
+      "foreground_kind": "integrated_courtyard",
+      "setting_kind": "motel_covered_room_courtyard",
+      "backdrop_texture": "res://assets/art/travel/backdrops/motel_room.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/motel_room.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    },
+    "jazz_club": {
+      "texture": "res://assets/art/travel/exteriors/jazz_club.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "door_kind": "hinged",
+      "door_polygon_uv": [
+        [
+          0.71645998,
+          0.45321308
+        ],
+        [
+          0.80608794,
+          0.45321308
+        ],
+        [
+          0.80608794,
+          0.7373168
+        ],
+        [
+          0.71645998,
+          0.7373168
+        ]
+      ],
+      "hinge_side": "left",
+      "threshold_uv": [
+        0.76127396,
+        0.74069899
+      ],
+      "inside_uv": [
+        0.76127396,
+        0.72604284
+      ],
+      "road_y_uv": 0.9470124,
+      "source_top_y_uv": 0.323,
+      "sign_rect_uv": [
+        0.32356257,
+        0.3934611,
+        0.21927847,
+        0.0800451
+      ],
+      "foreground_kind": "integrated_street",
+      "backdrop_texture": "res://assets/art/travel/backdrops/jazz_club.png",
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/jazz_club.png",
+      "doorway_reference_size": [
+        1024,
+        1536
+      ]
+    }
+  }
+}

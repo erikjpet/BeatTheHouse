@@ -5,6 +5,29 @@
     "use_external_icons": true
   },
   "canvas_contracts": {
+    "travel_presentations": {
+      "design_size": [1280, 720],
+      "stage_size": [1152, 500],
+      "stage_position": [64, 116],
+      "placeholder_native_size": [1774, 887],
+      "replacement_layer_size": [2048, 1024],
+      "source_aspect_ratio": "Main layers 2:1; source width 0.80, view height = source width * actual source aspect * 500 / 1152. Same close crop for all modes.",
+      "duration_seconds": 8.0,
+      "main_camera_end_uv": 0.18,
+      "backdrop_camera_rate": 0.35,
+      "exterior_coordinates": "UVs relative to the full PNG; reference_size must match the actual texture dimensions",
+      "vehicle_coordinates": "source_px is relative to reference_size; door, panel, hinge and wheel UVs are relative to the tight source_px rectangle",
+      "view_bottom_uv": {"walk": 1.0, "vehicle": 1.0},
+      "vehicle_ground_policy": "Facade and extended clear arrival ground are painted into one RGBA main image. Wheels and drop-off feet use the measured road_y_uv within that image. No separate material plane or foreground band is rendered.",
+      "vehicle_width_base_uv": {"bus": 0.48, "taxi": 0.34, "night_cab": 0.34},
+      "actor_depth_scale": "Indoor avatar height is min(0.20 * scene_scale, measured_door_height * 0.82), fixed throughout exit/approach/entry, feet at measured sill. Default outdoor walk-away recedes to 0.58. Delta Queen uses its actual 92x59 boarding clearance: full-size exit, ground-Y approach to about 0.656 and gradual gangway shrink to 0.272717, feet at the authored floor. No scale pop.",
+      "gait_and_direction": "Eight-second choreography; base 1.10 cadence with deterministic bounded 6% rate and 0.88-1.0 amplitude variation, continuous phase across beats/turns and frozen phase while stopped. Shared renderer faces back on negative-Y motion and front during horizontal transit/drop-off.",
+      "locomotion_blending": "Travel opt-in snapshot: 0.18s smooth start, 0.20s stop followthrough (final outdoor settle finishes at 8s), independent continuous idle clock. Existing painter gesture blend smoothly returns arms to rest; legs and hip blend too. Legacy empty-snapshot avatar drawing and TableVisuals are unchanged.",
+      "vehicle_suspension": "At most 1.15 logical pixels versus original 1.5; irregular time-based waves independent of wheel angle/radius and RNG. At the 500px stage, body displacement peaks at 1.315px; roof pixels move bus 1px/taxi 1px/night cab 2px while wheels remain grounded. Stops have no suspension motion.",
+      "alpha_compositing": "Preserve exact PNG bytes. travel_scene_cutout.gdshader sets alpha <=2/255 to zero and near-opaque paint >=0.80 to opaque for main/entrance layers, >=0.95 for vehicles. Lower alpha coverage remains transparent.",
+      "arrival_progress": "Actual vehicle approach and authored pedestrian path distance; door arrivals reserve the final 2 percent for physical leaf closure. Not elapsed time or loading progress.",
+      "layers": "separate opaque far backdrop at 0.35 main-camera speed; continuous-clock RGBA facade plus integrated ground at main speed; optional textured vehicle; back entrance; canonical character with portal clipping or outdoor walk-away; front textured door/frame; shared title/details/receipt/input UI with narration hidden"
+    },
     "environment_backgrounds": {
       "size": [900, 430],
       "camera": "first-person venue view, player body unseen",
@@ -17,6 +40,147 @@
     "icons": {
       "size": [32, 32],
       "style": "hard-edge pixel art, transparent background preferred"
+    }
+  },
+  "travel_presentations": {
+    "standard_travel_typical_v1": {
+      "catalog": "res://scripts/ui/travel_presentation_catalog.gd",
+      "overlay": "res://scripts/ui/travel_cinematic_overlay.gd",
+      "timeline": "res://scripts/ui/travel_arrival_timeline.gd",
+      "vehicle_renderer": "res://scripts/ui/travel_vehicle_view.gd",
+      "entrance_renderer": "res://scripts/ui/travel_entrance_view.gd",
+      "player_renderer": "res://scripts/ui/character_avatar_view.gd",
+      "modes": ["walk", "bus", "taxi", "night_cab"],
+      "historical_urban_alpha_foreground": "res://assets/art/travel/back_alley_bar/foreground_strip.png",
+      "historical_unused_ground_materials": {
+        "texture": "res://assets/art/travel/travel_ground_materials.png",
+        "reference_size": [1774, 887],
+        "source_band_height_uv": 0.15,
+        "source_top_uv": {"asphalt": 0.079, "concrete": 0.412, "gravel": 0.745},
+        "assignment": "Superseded by each destination's integrated main image; not loaded or rendered by the current travel catalog."
+      },
+      "vehicle_contracts": ["res://data/art/travel_back_alley_bar.json", "res://data/art/travel_standard_vehicles.json"],
+      "exterior_contracts": ["res://data/art/travel_exteriors_urban.json", "res://data/art/travel_exteriors_residential_music.json", "res://data/art/travel_exteriors_landmark_outdoor.json"],
+      "exterior_assets": {
+        "corner_store": "res://assets/art/travel/exteriors/corner_store.png",
+        "back_alley": "res://assets/art/travel/exteriors/back_alley.png",
+        "motel": "res://assets/art/travel/exteriors/motel.png",
+        "bar": "res://assets/art/travel/exteriors/bar.png",
+        "gas_station_casino": "res://assets/art/travel/exteriors/gas_station_casino.png",
+        "small_underground_casino": "res://assets/art/travel/exteriors/small_underground_casino.png",
+        "jazz_club": "res://assets/art/travel/exteriors/jazz_club.png",
+        "kitty_cat_lounge": "res://assets/art/travel/exteriors/kitty_cat_lounge.png",
+        "delta_queen": "res://assets/art/travel/exteriors/delta_queen.png",
+        "beach": "res://assets/art/travel/exteriors/beach.png",
+        "pawn_shop": "res://assets/art/travel/exteriors/pawn_shop.png",
+        "grand_casino": "res://assets/art/travel/exteriors/grand_casino.png",
+        "motel_room": "res://assets/art/travel/exteriors/motel_room.png",
+        "apartment": "res://assets/art/travel/exteriors/apartment.png",
+        "house": "res://assets/art/travel/exteriors/house.png"
+      },
+      "exterior_aliases": {"punchline_club": "small_underground_casino"},
+      "backdrop_assets": {
+        "corner_store": "res://assets/art/travel/backdrops/corner_store.png",
+        "back_alley": "res://assets/art/travel/backdrops/back_alley.png",
+        "motel": "res://assets/art/travel/backdrops/motel.png",
+        "bar": "res://assets/art/travel/backdrops/bar.png",
+        "gas_station_casino": "res://assets/art/travel/backdrops/gas_station_casino.png",
+        "small_underground_casino": "res://assets/art/travel/backdrops/small_underground_casino.png",
+        "jazz_club": "res://assets/art/travel/backdrops/jazz_club.png",
+        "kitty_cat_lounge": "res://assets/art/travel/backdrops/kitty_cat_lounge.png",
+        "delta_queen": "res://assets/art/travel/backdrops/delta_queen.png",
+        "beach": "res://assets/art/travel/backdrops/beach.png",
+        "pawn_shop": "res://assets/art/travel/backdrops/pawn_shop.png",
+        "grand_casino": "res://assets/art/travel/backdrops/grand_casino.png",
+        "motel_room": "res://assets/art/travel/backdrops/motel_room.png",
+        "apartment": "res://assets/art/travel/backdrops/apartment.png",
+        "house": "res://assets/art/travel/backdrops/house.png"
+      },
+      "cutout_shader": "res://scripts/ui/travel_scene_cutout.gdshader",
+      "doorway_assets": {
+        "bar": {"path": "res://assets/art/travel/doorways/bar.png", "size": [1024, 1536]},
+        "corner_store": {"path": "res://assets/art/travel/doorways/corner_store.png", "size": [1024, 1536]},
+        "gas_station_casino": {"path": "res://assets/art/travel/doorways/gas_station_casino.png", "size": [1024, 1536]},
+        "small_underground_casino": {"path": "res://assets/art/travel/doorways/small_underground_casino.png", "size": [1024, 1536]},
+        "pawn_shop": {"path": "res://assets/art/travel/doorways/pawn_shop.png", "size": [1086, 1448]},
+        "house": {"path": "res://assets/art/travel/doorways/house.png", "size": [1024, 1536]},
+        "apartment": {"path": "res://assets/art/travel/doorways/apartment.png", "size": [1024, 1536]},
+        "motel": {"path": "res://assets/art/travel/doorways/motel.png", "size": [1024, 1536]},
+        "motel_room": {"path": "res://assets/art/travel/doorways/motel_room.png", "size": [1024, 1536]},
+        "jazz_club": {"path": "res://assets/art/travel/doorways/jazz_club.png", "size": [1024, 1536]},
+        "grand_casino": {"path": "res://assets/art/travel/doorways/grand_casino.png", "size": [1536, 1024]},
+        "kitty_cat_lounge": {"path": "res://assets/art/travel/doorways/kitty_cat_lounge.png", "size": [1536, 1024]}
+      },
+      "doorway_composition": "Distinct opaque room glimpse for each indoor destination, drawn behind the actor and source-textured leaf only within the measured aperture. Aspect-preserving cover crop is center-X/bottom-Y aligned to the sill. No doorway/interior is fabricated for passage, beach or dock arrivals. Required missing art fails to static receipt.",
+      "vehicle_cabin_assets": {
+        "bus": {"path": "res://assets/art/travel/vehicle_interiors/bus.png", "size": [1024, 1536]},
+        "taxi": {"path": "res://assets/art/travel/vehicle_interiors/taxi.png", "size": [1254, 1254]},
+        "night_cab": {"path": "res://assets/art/travel/vehicle_interiors/night_cab.png", "size": [1254, 1254]}
+      },
+      "vehicle_cabin_composition": "Bus steps/rails/seat backs and distinct taxi/night-cab rear benches/footwells replace the flat cabin and step fill only within each actual open passenger aperture. Aspect-preserving center/bottom cover crop, original textured folding/swinging leaves on top. Closed sprites stay exact. Production requires valid mapped cabin art; legacy optional-argument callers retain color fallback.",
+      "vehicle_cabin_provenance": "res://assets/art/travel/vehicle_interiors/generation.md",
+      "doorway_provenance": ["res://assets/art/travel/doorways/urban_doorways_generation.md", "res://assets/art/travel/doorways/residential_doorways_generation.md", "res://assets/art/travel/doorways/entertainment_doorways_generation.md"],
+      "provenance": ["res://assets/art/travel/exteriors/urban_generation.md", "res://assets/art/travel/exteriors/residential_music_generation.md", "res://assets/art/travel/exteriors/landmark_outdoor_generation.md", "res://assets/art/travel/vehicle_detail_generation.md"],
+      "documentation": "res://docs/testing/travel_destination_exteriors.md",
+      "smooth_review_media": {
+        "status": "Current smooth-locomotion revision: actual production Godot playback of twelve synthetic catalog combinations at Back Alley, Delta Queen and Grand Casino. Not gameplay route coverage.",
+        "cases": 12, "modes": ["walk", "bus", "taxi", "night_cab"],
+        "per_file": {"cases": 4, "chapters": 4, "frames": 1080, "duration_seconds": 36.0, "size": [1280, 720], "fps": 30, "codec": "H.264", "pixel_format": "yuv420p", "color_range": "tv", "audio": false},
+        "files": [
+          {"destination": "back_alley", "path": "review_artifacts/Smooth_Back_Alley_Four_Modes.mp4", "bytes": 8673451, "sha256": "847bcebd61e6b651420aa1c3d9b82bd9848b5866dbed830a6606d933e19181bd"},
+          {"destination": "delta_queen", "path": "review_artifacts/Smooth_Delta_Queen_Four_Modes.mp4", "bytes": 11358466, "sha256": "83a6d2ab6c0bcd053e62ab50ee06743f2ef8e445a7528dc421fc09ce0f710775"},
+          {"destination": "grand_casino", "path": "review_artifacts/Smooth_Grand_Casino_Four_Modes.mp4", "bytes": 11271150, "sha256": "4c351ea279712d6ff97cb0bbc338f88c8b488e79436aa74d75e0cf92215864fa"}
+        ]
+      },
+      "eight_second_cabin_review_media": {
+        "status": "Historical eight-second interior revision before smooth locomotion, visible suspension restoration and measured Delta perspective. Retained unchanged; synthetic catalog combinations are not gameplay routes.",
+        "cases": 12, "modes": ["walk", "bus", "taxi", "night_cab"],
+        "per_file": {"cases": 4, "chapters": 4, "frames": 1080, "duration_seconds": 36.0, "size": [1280, 720], "fps": 30, "codec": "H.264", "pixel_format": "yuv420p", "color_range": "tv", "audio": false},
+        "files": [
+          {"destination": "bar", "path": "review_artifacts/Cabin_Interior_Bar_Four_Modes.mp4", "bytes": 11189491, "sha256": "ad7397f3c18f12a686fe8a35776fdd99adaf42d0b988917d5729f97f994065d6"},
+          {"destination": "house", "path": "review_artifacts/Cabin_Interior_House_Four_Modes.mp4", "bytes": 11396731, "sha256": "067e4274c182027164c2686fc09a53828c5deaf8a4b988453a40e3853f640ca4"},
+          {"destination": "delta_queen", "path": "review_artifacts/Cabin_Interior_Delta_Queen_Four_Modes.mp4", "bytes": 11362688, "sha256": "9bebb6b3b899bccded9d766f1e972180eb7d3b77a0c77a1f98ccf16fc3d173f0"}
+        ]
+      },
+      "layered_review_media": {
+        "status": "Historical ten-second layered revision, retained unchanged. Superseded by the eight-second grounded doorway refinement; synthetic catalog combinations are not gameplay routes.",
+        "cases": 12, "modes": ["walk", "bus", "taxi", "night_cab"],
+        "per_file": {"cases": 4, "chapters": 4, "frames": 1320, "duration_seconds": 44.0, "size": [1280, 720], "fps": 30, "codec": "H.264", "pixel_format": "yuv420p", "color_range": "tv", "audio": false},
+        "files": [
+          {"destination": "bar", "path": "review_artifacts/Layered_Bar_Four_Modes.mp4", "bytes": 13316695, "sha256": "43d52e3b7eb9e92c6e68398a5e719b460b94375d624238b9dcd7178eb2e5aa3e"},
+          {"destination": "house", "path": "review_artifacts/Layered_House_Four_Modes.mp4", "bytes": 13915366, "sha256": "8ba27515652af38487d95418599291b81e6a84a9f83fa9385d88000a8eafde2d"},
+          {"destination": "delta_queen", "path": "review_artifacts/Layered_Delta_Queen_Four_Modes.mp4", "bytes": 13880425, "sha256": "f34d4bc43f54afd2beca16a2f222ec4e0e2796d8f14218b62c480d66e1cfc6c7"}
+        ]
+      },
+      "review_media": {
+        "path": "review_artifacts/All_60_Travel_Previews.mp4",
+        "status": "Historical previous ground-plane revision; retained unchanged, not verification of current layered art. Synthetic catalog preview, not gameplay route coverage.",
+        "cases": 60, "chapters": 60, "frames": 19800, "duration_seconds": 660.0,
+        "size": [1280, 720], "fps": 30, "codec": "H.264", "pixel_format": "yuv420p", "color_range": "tv", "audio": false,
+        "bytes": 83858744,
+        "sha256": "26017b378efc46ab7e63b1ae1140832938d55e3ec169c7749b4348659564558f"
+      },
+      "compact_review_media": {
+        "path": "review_artifacts/All_60_Travel_Previews_Compact.mp4",
+        "status": "Historical lightweight encoding of the same previous 60 visual previews; full-quality original retained unchanged.",
+        "cases": 60, "chapters": 60, "frames": 9900, "duration_seconds": 660.0,
+        "size": [960, 540], "fps": 15, "codec": "H.264", "pixel_format": "yuv420p", "color_range": "tv", "audio": false,
+        "bytes": 18268285,
+        "sha256": "47ab0057fceb2cbd8704dfeaebb899d67383efb38d2694ed32582e5275941203"
+      },
+      "brief": "Fifteen layered exteriors, twelve destination interiors, three vehicle cabins, four routine modes, one eight-second timeline and shared UI. Integrated facade/ground plus slower city backdrop; detailed source-textured vehicles/doors, gentle wheel-independent suspension, grounded fitted player, direction-aware shared avatar. Outdoor arrivals walk away without invented doorways. No incident variants or travel-rule changes."
+    },
+    "back_alley_bar_typical_v1": {
+      "status": "legacy receipt key using the current shared destination presentation",
+      "street": "res://assets/art/travel/exteriors/bar.png",
+      "backdrop": "res://assets/art/travel/backdrops/bar.png",
+      "historical_foreground": "res://assets/art/travel/back_alley_bar/foreground_strip.png",
+      "historical_street": "res://assets/art/travel/back_alley_bar/street_strip.png",
+      "bus": "res://assets/art/travel/back_alley_bar/bus_arrival.png",
+      "player_renderer": "res://scripts/ui/character_avatar_view.gd",
+      "bus_contract": "res://data/art/travel_back_alley_bar.json",
+      "placeholder_native_size": [1774, 887],
+      "brief": "Retained v1 receipt compatibility; resolves layered Bar exterior and mapped interior through the shared catalog, detailed bus doors, canonical character and eight-second timeline. Earlier generic street, ground-plane, ten- and twelve-second revisions are historical."
     }
   },
   "environment_backgrounds": {

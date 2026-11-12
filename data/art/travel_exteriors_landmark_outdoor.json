@@ -1,0 +1,186 @@
+{
+  "version": 2,
+  "exteriors": {
+    "back_alley": {
+      "texture": "res://assets/art/travel/exteriors/back_alley.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "passage",
+      "threshold_uv": [
+        0.785794814,
+        0.8117249154
+      ],
+      "inside_uv": [
+        0.785794814,
+        0.7328072153
+      ],
+      "road_y_uv": 0.95,
+      "backdrop_texture": "res://assets/art/travel/backdrops/back_alley.png",
+      "backdrop_reference_size": [
+        1774,
+        886
+      ],
+      "layered_scene": true,
+      "foreground_kind": "integrated_ground",
+      "setting_kind": "neighborhood_alley"
+    },
+    "beach": {
+      "texture": "res://assets/art/travel/exteriors/beach.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "open",
+      "threshold_uv": [
+        0.785794814,
+        0.817361894
+      ],
+      "inside_uv": [
+        0.785794814,
+        0.710259301
+      ],
+      "road_y_uv": 0.95,
+      "foreground_kind": "integrated_ground",
+      "setting_kind": "beach_boardwalk",
+      "backdrop_texture": "res://assets/art/travel/backdrops/beach.png",
+      "backdrop_reference_size": [
+        1774,
+        887
+      ],
+      "layered_scene": true
+    },
+    "delta_queen": {
+      "texture": "res://assets/art/travel/exteriors/delta_queen.png",
+      "backdrop_texture": "res://assets/art/travel/backdrops/delta_queen.png",
+      "layered_scene": true,
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "dock",
+      "threshold_uv": [
+        0.8128523112,
+        0.8162344983
+      ],
+      "inside_uv": [
+        0.770011274,
+        0.6674182638
+      ],
+      "boarding_clearance_rect_uv": [
+        0.7440811724915445,
+        0.6009019165727171,
+        0.05186020293122886,
+        0.0665163472378805
+      ],
+      "road_y_uv": 0.95,
+      "foreground_kind": "integrated_ground",
+      "setting_kind": "river_quay",
+      "backdrop_reference_size": [
+        1774,
+        887
+      ]
+    },
+    "grand_casino": {
+      "texture": "res://assets/art/travel/exteriors/grand_casino.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "threshold_uv": [
+        0.7570462232,
+        0.7903043968
+      ],
+      "inside_uv": [
+        0.7570462232,
+        0.7632468997
+      ],
+      "road_y_uv": 0.95,
+      "door_kind": "double_hinged",
+      "door_polygon_uv": [
+        [
+          0.694475761,
+          0.5862457723
+        ],
+        [
+          0.8196166855,
+          0.5862457723
+        ],
+        [
+          0.8196166855,
+          0.7869222097
+        ],
+        [
+          0.694475761,
+          0.7869222097
+        ]
+      ],
+      "hinge_side": "left",
+      "foreground_kind": "integrated_ground",
+      "setting_kind": "casino_forecourt",
+      "backdrop_texture": "res://assets/art/travel/backdrops/grand_casino.png",
+      "backdrop_reference_size": [
+        1774,
+        887
+      ],
+      "layered_scene": true,
+      "doorway_texture": "res://assets/art/travel/doorways/grand_casino.png",
+      "doorway_reference_size": [
+        1536,
+        1024
+      ]
+    },
+    "kitty_cat_lounge": {
+      "texture": "res://assets/art/travel/exteriors/kitty_cat_lounge.png",
+      "reference_size": [
+        1774,
+        887
+      ],
+      "arrival_kind": "door",
+      "threshold_uv": [
+        0.7384441939,
+        0.8105975197
+      ],
+      "inside_uv": [
+        0.7384441939,
+        0.7824126268
+      ],
+      "road_y_uv": 0.95,
+      "door_kind": "double_hinged",
+      "door_polygon_uv": [
+        [
+          0.6820744081,
+          0.5963923337
+        ],
+        [
+          0.7965050733,
+          0.5963923337
+        ],
+        [
+          0.7965050733,
+          0.8027057497
+        ],
+        [
+          0.6820744081,
+          0.8027057497
+        ]
+      ],
+      "hinge_side": "left",
+      "backdrop_texture": "res://assets/art/travel/backdrops/kitty_cat_lounge.png",
+      "backdrop_reference_size": [
+        1774,
+        887
+      ],
+      "layered_scene": true,
+      "foreground_kind": "integrated_ground",
+      "setting_kind": "nightclub_street",
+      "doorway_texture": "res://assets/art/travel/doorways/kitty_cat_lounge.png",
+      "doorway_reference_size": [
+        1536,
+        1024
+      ]
+    }
+  }
+}

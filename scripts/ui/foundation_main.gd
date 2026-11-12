@@ -7,6 +7,9 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durability_bridge.gd")
+const TravelJourneyReceiptScript := preload("res://scripts/core/travel_journey_receipt.gd")
+const TravelCinematicOverlayScript := preload("res://scripts/ui/travel_cinematic_overlay.gd")
+const CharacterAppearanceSnapshotScript := preload("res://scripts/ui/character_appearance_snapshot.gd")
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
@@ -416,6 +419,15 @@ var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
 var selected_run_inventory_item_id: String = ""
 var selected_run_inventory_item_source: String = ""
+# Post-commit presentation does not extend the synchronous transaction flag.
+var travel_presentation_active := false
+var travel_presentation_journey_id := ""
+var travel_cinematic_overlay: Control
+var travel_presentation_return_focus: WeakRef
+# Presentation-only work is advanced one stage per frame, after the overlay has
+# had a draw opportunity. No stage resolves travel or consumes gameplay requests.
+var travel_destination_preparation: Dictionary = {}
+var travel_destination_reuse_on_refresh := false
 var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
@@ -833,6 +845,7 @@ func _process(delta: float) -> void:
 	# clock, HUD and persistence owners wait for this accepted transaction.
 	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
 		return
+	_advance_travel_destination_preparation()
 	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
 		_timed("layout", _apply_run_screen_layout_callable)
@@ -1093,6 +1106,7 @@ func _remove_web_lifecycle_callbacks() -> void:
 func _exit_tree() -> void:
 	_remove_web_lifecycle_callbacks()
 	_cancel_rourke_resolution(false)
+	_cancel_travel_presentation()
 	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
 		modal_focus_scope.call("clear")
 	_drain_script_prewarm_requests_for_shutdown()
@@ -1793,6 +1807,9 @@ func _room_publication_save_blocked() -> bool:
 
 
 func _check_published_room_once() -> void:
+	# Never validate the departure canvas as the newly installed destination.
+	if _travel_destination_preparation_is_current() and not bool(travel_destination_preparation.get("ready", false)):
+		return
 	if room_publication_generation <= room_publication_checked_generation:
 		return
 	if run_state == null or run_state.is_terminal() or _is_meta_session() \
@@ -3677,7 +3694,7 @@ func _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result: 
 		_show_message("Select a travel destination first.")
 		return false
 	var choice := _travel_choice(selected_travel_target_id)
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		_show_message("Travel is already in progress.")
 		return false
 	if choice.is_empty():
@@ -3689,6 +3706,10 @@ func _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result: 
 		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
 		return false
+	# Only an explicit travel-menu confirmation opts into the world cinematic.
+	# Keep this on the submitted choice, never a cached route or screen state.
+	choice = choice.duplicate(true)
+	choice["presentation_from_travel_menu"] = true
 	var travel_result: Variant = _travel_to_with_lifecycle_snapshot(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result, caller_rollback)
 	var travel_ok := bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
 	return travel_ok
@@ -3905,6 +3926,7 @@ func confirm_world_map_travel() -> Dictionary:
 	# publishes its one terminal acknowledgement. Direct travel keeps its default.
 	var travel_choice := JsonCoerceScript._copy_dict(result.get("choice", {}))
 	travel_choice["_caller_presents_travel_failure"] = true
+	travel_choice["presentation_from_travel_menu"] = true
 	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), travel_choice, true, caller_rollback)
 	if bool(travel_result.get("ok", false)):
 		_commit_foundation_coach_attention(caller_rollback)
@@ -4092,7 +4114,7 @@ func _crew_delivery_event_module(event_definition: Dictionary) -> EventModule:
 
 
 func _prepare_event_choice_resolution(event_id: String, choice_id: String, lifecycle_rollback: Dictionary) -> Dictionary:
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
 		return {"terminal_result": {"ok": false, "errors": ["Travel is already in progress."]}}
@@ -4617,7 +4639,7 @@ func _apply_forced_environment_travel(_source: String) -> Dictionary:
 
 
 func _maybe_trigger_unavoidable_event(source: String) -> bool:
-	if _event_choice_popup_is_visible() or run_state == null or library == null:
+	if travel_presentation_active or _event_choice_popup_is_visible() or run_state == null or library == null:
 		return false
 	if _show_next_pending_triggered_event():
 		return true
@@ -5030,7 +5052,7 @@ func _event_environment_for_context(context: Dictionary) -> Dictionary:
 
 
 func _show_next_pending_triggered_event() -> bool:
-	if _event_choice_popup_is_visible() or run_state == null or library == null:
+	if travel_presentation_active or _event_choice_popup_is_visible() or run_state == null or library == null:
 		return false
 	if not run_state.event_cadence_can_open_modal():
 		return false
@@ -5111,7 +5133,7 @@ func _refresh_talk_dock() -> void:
 	# choices were input-blocked, and confirmation clicks could loop forever.
 	# Preserve the queued entry in RunState and reveal it on the refresh after the
 	# blocking event resolves.
-	if _blocking_decision_popup_is_visible() or _tutorial_talk_suspended_by_modal():
+	if travel_presentation_active or _blocking_decision_popup_is_visible() or _tutorial_talk_suspended_by_modal():
 		talk_dock.visible = false
 		return
 	if not suppress_completed_tutorial_acknowledgement_clear:
@@ -5721,7 +5743,7 @@ func _dialogue_choice_effects(choice: Dictionary) -> Dictionary:
 
 
 func _resolve_dialogue_choice(entry: Dictionary, choice_id: String) -> void:
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
 		return
@@ -7513,6 +7535,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		return false
 	if environment_canvas != null:
 		environment_canvas.settle_person_transits()
+	_begin_travel_presentation(run_state.travel_journey_receipt, true)
 	_refresh()
 	# Room verification/rebuilding can take longer than a short timing window.
 	# Resume its saved epoch only once Continue has published the playable room.
@@ -7685,7 +7708,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"pending_event_choice_popup_event_id", "pending_event_choice_popup_focus_choice_id", "pending_event_choice_popup_snapshot",
 		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key", "pending_slot_auto_wager_context",
 		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
-		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label",
+		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label", "travel_presentation_active", "travel_presentation_journey_id",
 		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
@@ -7697,7 +7720,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	var visibility: Dictionary = snapshot["visibility"]
 	for control_name in [
 		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu", "environment_test_menu", "environment_test_overlay",
-		"event_choice_popup_overlay", "run_inventory_overlay", "run_journal_overlay", "run_menu_overlay", "world_map_overlay", "travel_transition_overlay",
+		"event_choice_popup_overlay", "run_inventory_overlay", "run_journal_overlay", "run_menu_overlay", "world_map_overlay", "travel_transition_overlay", "travel_cinematic_overlay",
 	]:
 		var control: Variant = get(control_name)
 		if control is CanvasItem:
@@ -8532,7 +8555,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var present_failure := not bool(choice_data.get("_caller_presents_travel_failure", false))
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."]}
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		if present_failure:
 			_show_message("Travel is already in progress.")
 			_refresh_modal_contract_owner()
@@ -8581,6 +8604,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_commit_foundation_coach_attention(lifecycle_rollback)
 		return meta_result
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
+	# Freeze presentation eligibility before canonical mode normalization can turn
+	# a Door/Inside local action into a distance-derived walking journey.
+	var raw_presentation_method := str(route.get("travel_method", route.get("method", ""))).strip_edges().to_lower()
+	route["presentation_world_travel"] = not local_casino_room_move and not bool(choice_data.get("local_door", false)) and raw_presentation_method not in ["door", "inside", "begin"]
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
@@ -8857,6 +8884,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		return {"ok": false, "errors": ["The offered arrival consequences could not settle safely."]}
+	run_state.travel_journey_receipt = TravelJourneyReceiptScript.build(run_state, previous_environment, run_state.current_environment, target_id, route, departure_route_status, route_risk, travel_result) if bool(applied_travel_result.get("ok", false)) else {}
+	var menu_confirmed: bool = typeof(choice_data.get("presentation_from_travel_menu")) == TYPE_BOOL and choice_data.get("presentation_from_travel_menu") == true
+	if menu_confirmed:
+		# The receipt builder still excludes local doors, Grand rooms and meta.
+		_begin_travel_presentation(run_state.travel_journey_receipt)
+	elif not run_state.travel_journey_receipt.is_empty():
+		# Offered/forced/direct moves retain their ordinary result flow. Their
+		# committed evidence must not reopen as a surprise receipt after reload.
+		run_state.acknowledge_travel_journey_receipt(str(run_state.travel_journey_receipt.get("journey_id", "")))
 	last_hook_result = travel_result.duplicate(true)
 	_queue_room_publication_check()
 	_set_current_screen(SCREEN_RESULT)
@@ -8902,7 +8938,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		# web transaction and otherwise duplicates the next frame's presentation
 		# work while making a normal route appear to hang.
 		if _should_use_atomic_web_travel_transition():
-			call_deferred("_refresh")
+			call_deferred("_refresh_after_atomic_travel", run_state, str(run_state.travel_journey_receipt.get("journey_id", "")), travel_presentation_active, run_state.current_environment)
 		else:
 			_refresh()
 	if perf_corner_store_timing:
@@ -8983,6 +9019,13 @@ func _enqueue_normal_grand_host_greeting_without_refresh(preserve_recent_result_
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), NORMAL_GRAND_HOST_DIALOGUE_ID, str(speaker.get("voice_line_key", "")))
 	var start_node := str(dialogue.get("start", "")).strip_edges()
+	# Atomic web travel defers the room refresh. Deliver presentation transitions
+	# before freezing the greeting context, just as the desktop refresh does.
+	# This does not render the room or consume gameplay event requests.
+	var scenario_transition_message := _consume_scenario_transitions()
+	if not scenario_transition_message.is_empty():
+		_show_message(scenario_transition_message)
+		_autosave_foundation_run("Room presentation saved.")
 	var context := {
 		"trigger": "dialogue",
 		"type": "dialogue",
@@ -9255,6 +9298,192 @@ func _hide_travel_transition() -> void:
 
 func _should_use_atomic_web_travel_transition() -> bool:
 	return travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web"
+
+
+func _build_travel_cinematic_overlay() -> void:
+	if travel_cinematic_overlay != null:
+		return
+	travel_cinematic_overlay = TravelCinematicOverlayScript.new()
+	travel_cinematic_overlay.name = "TravelCinematic"
+	travel_cinematic_overlay.focus_scope = modal_focus_scope
+	add_child(travel_cinematic_overlay)
+	travel_cinematic_overlay.completed.connect(_on_travel_presentation_completed)
+
+
+func _begin_travel_presentation(receipt: Dictionary, receipt_only: bool = false) -> bool:
+	if run_state == null or run_state.is_terminal() or not bool(receipt.get("receipt_pending", false)):
+		return false
+	if receipt.is_empty() or not is_inside_tree():
+		return false
+	_build_travel_cinematic_overlay()
+	var focus := get_viewport().gui_get_focus_owner()
+	travel_presentation_return_focus = weakref(focus) if focus != null else null
+	travel_presentation_active = true
+	travel_presentation_journey_id = str(receipt.get("journey_id", ""))
+	travel_destination_preparation = {
+		"run":run_state, "environment":run_state.current_environment,
+		"journey_id":travel_presentation_journey_id, "stage":0, "requested":false,
+		"ready":false, "start_frame":Engine.get_process_frames(),
+		"next_frame":Engine.get_process_frames() + 2, "stages":[],
+		"started_usec":Time.get_ticks_usec(), "snapshot":{}, "signature":"", "canvas_publications":0,
+	}
+	if talk_dock != null:
+		talk_dock.visible = false
+	if coach_overlay != null:
+		coach_overlay.set_presentation_suspended(true)
+	var reduced := user_settings != null and user_settings.reduce_motion
+	var contrast := user_settings != null and user_settings.high_contrast
+	var text_scale := user_settings.text_scale() * user_settings.ui_scale if user_settings != null else 1.0
+	var presentation_receipt := receipt.duplicate(true)
+	var matches_arrival := str(receipt.get("effective_destination_environment_id", "")) == str(run_state.current_environment.get("id", "")) \
+		and str(receipt.get("effective_destination_node_id", "")) == run_state.current_world_node_id() \
+		and int(receipt.get("travel_count", -1)) == run_state.environment_travel_count()
+	if not matches_arrival:
+		# Recovery/local movement can leave a historical pending summary. Retain
+		# its evidence, but never depict it as a new or current arrival.
+		presentation_receipt["presentation_key"] = "static_receipt"
+		presentation_receipt["arrival_context_current"] = false
+	var player_appearance := CharacterAppearanceSnapshotScript.from_run(run_state, library)
+	travel_cinematic_overlay.present(presentation_receipt, reduced, contrast, text_scale, receipt_only or not matches_arrival, player_appearance)
+	_sync_simulation_pause_owners()
+	return true
+
+
+func _on_travel_presentation_completed(journey_id: String) -> void:
+	if not travel_presentation_active or journey_id != travel_presentation_journey_id:
+		return
+	# Natural finish, Skip and static Continue drain only unfinished stages once.
+	# The ordinary path has completed these behind the cinematic many frames ago.
+	if not bool(travel_destination_preparation.get("requested", false)):
+		_refresh()
+	for _stage in range(6):
+		if not _travel_destination_preparation_is_current() or bool(travel_destination_preparation.get("ready", false)):
+			break
+		_advance_travel_destination_preparation(true)
+	travel_destination_reuse_on_refresh = _travel_destination_preparation_is_current() \
+		and bool(travel_destination_preparation.get("ready", false))
+	# This callback only acknowledges the already-settled receipt. It never calls
+	# travel, applies a result, advances time or rolls an incident.
+	if run_state != null and run_state.acknowledge_travel_journey_receipt(journey_id):
+		_autosave_foundation_run("Journey receipt saved.")
+	travel_presentation_active = false
+	travel_presentation_journey_id = ""
+	if coach_overlay != null:
+		coach_overlay.set_presentation_suspended(false)
+	_sync_simulation_pause_owners()
+	_check_published_room_once()
+	if not _show_next_pending_triggered_event():
+		_refresh_talk_dock()
+	_refresh()
+	travel_destination_reuse_on_refresh = false
+	var focus: Variant = travel_presentation_return_focus.get_ref() if travel_presentation_return_focus != null else null
+	travel_presentation_return_focus = null
+	if is_instance_valid(focus) and focus is Control and focus.is_visible_in_tree() and focus.focus_mode != Control.FOCUS_NONE:
+		focus.grab_focus()
+	else:
+		get_viewport().gui_release_focus()
+
+
+func _cancel_travel_presentation() -> void:
+	travel_destination_preparation = {}
+	travel_destination_reuse_on_refresh = false
+	# Teardown is not acknowledgment. A durable pending receipt reopens as a
+	# static summary on load, without replaying any gameplay effects.
+	travel_presentation_active = false
+	travel_presentation_journey_id = ""
+	travel_presentation_return_focus = null
+	if is_instance_valid(travel_cinematic_overlay):
+		travel_cinematic_overlay.cancel()
+	if is_instance_valid(coach_overlay):
+		coach_overlay.set_presentation_suspended(false)
+	if is_inside_tree():
+		_sync_simulation_pause_owners()
+
+
+func _refresh_after_atomic_travel(expected_run: RunState, journey_id: String, presentation_was_active: bool, expected_environment: Dictionary) -> void:
+	# A queued Web refresh must not touch a replaced run or repeat an early
+	# Continue's completed work. Non-cinematic local moves retain normal refresh.
+	if run_state != expected_run or not is_same(run_state.current_environment, expected_environment) \
+			or str(run_state.travel_journey_receipt.get("journey_id", "")) != journey_id:
+		return
+	if presentation_was_active and not travel_presentation_active:
+		return
+	_refresh()
+
+
+func _travel_destination_preparation_matches_room() -> bool:
+	return not travel_destination_preparation.is_empty() and run_state != null \
+		and run_state == travel_destination_preparation.get("run") \
+		and is_same(run_state.current_environment, travel_destination_preparation.get("environment")) \
+		and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null
+
+
+func _travel_destination_preparation_is_current() -> bool:
+	return travel_presentation_active and _travel_destination_preparation_matches_room() \
+		and travel_presentation_journey_id == str(travel_destination_preparation.get("journey_id", ""))
+
+
+func _advance_travel_destination_preparation(drain: bool = false) -> void:
+	if not _travel_destination_preparation_is_current() \
+			or not bool(travel_destination_preparation.get("requested", false)) \
+			or bool(travel_destination_preparation.get("ready", false)):
+		return
+	if not drain and Engine.get_process_frames() < int(travel_destination_preparation["next_frame"]):
+		return
+	var stage := int(travel_destination_preparation["stage"])
+	var started := Time.get_ticks_usec()
+	var label := ""
+	match stage:
+		0:
+			label = "room_catalog"
+			if not _ensure_run_ui_built(): return
+			_prepare_room_presentation_at_boundary()
+		1:
+			label = "header_layout_and_panels"
+			_render_prepared_environment_header()
+			_render_prepared_environment_details()
+		2:
+			label = "environment_model"
+			travel_destination_preparation["snapshot"] = _environment_view_snapshot()
+			travel_destination_preparation["signature"] = _environment_snapshot_signature()
+		3:
+			# Do not publish a model replaced by a same-room presentation change.
+			if str(travel_destination_preparation["signature"]) != _environment_snapshot_signature():
+				travel_destination_preparation["stage"] = 0
+				travel_destination_preparation["snapshot"] = {}
+				travel_destination_preparation["signature"] = ""
+				return
+			label = "canvas_publication"
+			_render_foundation_snapshots(travel_destination_preparation["snapshot"])
+			travel_destination_preparation["snapshot"] = {}
+		4:
+			label = "overlays_and_music"
+			_render_prepared_environment_overlays()
+		5:
+			label = "publication_check"
+			travel_destination_preparation["ready"] = true
+			travel_destination_preparation["ready_frame"] = Engine.get_process_frames()
+			travel_destination_preparation["ready_ms"] = float(Time.get_ticks_usec() - int(travel_destination_preparation["started_usec"])) / 1000.0
+			_check_published_room_once()
+			_refresh_room_recovery_map_control()
+			_refresh_crew_room_recovery_control()
+	travel_destination_preparation["stages"].append({"name":label,
+		"frame":Engine.get_process_frames(), "duration_ms":float(Time.get_ticks_usec() - started) / 1000.0,
+		"drained":drain})
+	travel_destination_preparation["stage"] = stage + 1
+	travel_destination_preparation["next_frame"] = Engine.get_process_frames() + 1
+
+
+func current_travel_destination_preparation_snapshot() -> Dictionary:
+	# Deliberately excludes the live RunState, environment and unpublished model.
+	var result := {}
+	for key in ["journey_id", "stage", "requested", "ready", "start_frame", "ready_frame", "ready_ms", "stages", "canvas_publications"]:
+		if travel_destination_preparation.has(key): result[key] = travel_destination_preparation[key]
+	return result.duplicate(true)
+
+
+func current_travel_presentation_snapshot() -> Dictionary:
+	return travel_cinematic_overlay.snapshot() if is_instance_valid(travel_cinematic_overlay) else {"active": false, "phase": "idle"}
 
 
 func _initialize_foundation() -> void:
@@ -10913,6 +11142,7 @@ func _build_travel_transition_overlay() -> void:
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	travel_transition_panel.add_child(stack)
+	_build_travel_cinematic_overlay()
 
 	travel_transition_title_label = _label("Traveling", 20)
 	travel_transition_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -12022,6 +12252,7 @@ func _environment_test_hotkey_pressed(event: InputEvent, expected_keycode: Key) 
 
 func _can_refresh_environment_test_session() -> bool:
 	return _is_environment_test_session() \
+		and not travel_presentation_active \
 		and current_screen != SCREEN_START \
 		and run_state != null \
 		and not run_state.current_environment.is_empty() \
@@ -12188,6 +12419,7 @@ func start_environment_test_session() -> Dictionary:
 	_hide_run_journal_popup()
 	_hide_run_menu()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -12683,6 +12915,28 @@ func _refresh() -> void:
 
 
 func _finish_foundation_refresh(room_prepared: bool = false) -> void:
+	if _travel_destination_preparation_is_current():
+		# A later refresh can deliver a new presentation revision while retaining
+		# the same room object. Discard its old model instead of publishing it.
+		var prepared_signature := str(travel_destination_preparation.get("signature", ""))
+		if not prepared_signature.is_empty() and prepared_signature != _environment_snapshot_signature():
+			travel_destination_preparation["stage"] = 0
+			travel_destination_preparation["ready"] = false
+			travel_destination_preparation["snapshot"] = {}
+			travel_destination_preparation["signature"] = ""
+		travel_destination_preparation["requested"] = true
+		return
+	if travel_destination_reuse_on_refresh and _travel_destination_preparation_matches_room() \
+			and bool(travel_destination_preparation.get("ready", false)) \
+			and str(travel_destination_preparation.get("signature", "")) == _environment_snapshot_signature():
+		# Receipt acknowledgment/event modal ownership does not replace the room.
+		# Retain its published canvas and refresh only the newly unblocked chrome.
+		_refresh_financial_hud_if_dirty()
+		_refresh_talk_dock()
+		_refresh_room_recovery_map_control()
+		_refresh_crew_room_recovery_control()
+		_refresh_coach_at_boundary()
+		return
 	if run_state == null or current_screen == SCREEN_START:
 		_render_start_screen()
 		return
@@ -13101,6 +13355,13 @@ func _render_environment_screen() -> void:
 
 
 func _render_prepared_environment_screen() -> void:
+	_render_prepared_environment_header()
+	_render_prepared_environment_details()
+	_render_foundation_snapshots()
+	_render_prepared_environment_overlays()
+
+
+func _render_prepared_environment_header() -> void:
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -13134,10 +13395,15 @@ func _render_prepared_environment_screen() -> void:
 	_apply_hud_mode_visibility()
 	_refresh_active_item_slot()
 	_apply_focus_layout()
+
+
+func _render_prepared_environment_details() -> void:
 	_refresh_environment_result_feedback()
 	_render_run_report()
 	_render_result_panel()
-	_render_foundation_snapshots()
+
+
+func _render_prepared_environment_overlays() -> void:
 	_refresh_talk_dock()
 	_schedule_action_panel_refresh()
 	_refresh_world_map_overlay()
@@ -14985,7 +15251,7 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return _hud_details_is_visible() or travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return _hud_details_is_visible() or travel_transition_active or travel_presentation_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
 
 
 func _hud_details_is_visible() -> bool:
@@ -15004,6 +15270,7 @@ func _simulation_paused_outside_rourke_resolution() -> bool:
 	# normal-run clocks and autonomous systems moving behind the dialogue.
 	return not application_pause_owners.is_empty() \
 		or travel_transition_active \
+		or travel_presentation_active \
 		or _pal_tutorial_time_freeze_active() \
 		or _event_choice_popup_is_visible() \
 		or _meta_item_interaction_is_visible() \
@@ -15065,7 +15332,7 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return _hud_details_is_visible() or travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+	return _hud_details_is_visible() or travel_transition_active or travel_presentation_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
 
 
 func _clear_input_guard_modal_state() -> void:
@@ -15080,12 +15347,13 @@ func _clear_input_guard_modal_state() -> void:
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 
 
 func _blocking_modal_message() -> String:
 	if _hud_details_is_visible():
 		return "Close run details before doing anything else."
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		return "Travel is already in progress."
 	if _event_choice_popup_is_visible():
 		return "Choose a response before doing anything else."
@@ -15131,7 +15399,7 @@ func _guard_player_input_route(force_closing_allowed: bool = false, coach_action
 
 
 func _guard_blocking_decision_or_transition() -> bool:
-	if travel_transition_active:
+	if travel_transition_active or travel_presentation_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
 		return true
@@ -15216,6 +15484,7 @@ func current_overlay_state_snapshot() -> Dictionary:
 		"run_menu_visible": _run_menu_is_visible(),
 		"settings_visible": settings_overlay != null and settings_overlay.visible,
 		"travel_transition_active": travel_transition_active,
+		"travel_presentation_active": travel_presentation_active,
 		"travel_transition_target_id": travel_transition_target_id,
 	}
 	var violations := _overlay_state_contract_violations(snapshot)
@@ -15237,6 +15506,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 			"run_menu_visible": _run_menu_is_visible(),
 			"settings_visible": settings_overlay != null and settings_overlay.visible,
 			"travel_transition_active": travel_transition_active,
+			"travel_presentation_active": travel_presentation_active,
 		}
 	var violations: Array = []
 	var event_visible := bool(snapshot.get("event_choice_popup_visible", false))
@@ -15245,7 +15515,7 @@ func _overlay_state_contract_violations(snapshot: Dictionary = {}) -> Array:
 	var journal_visible := bool(snapshot.get("run_journal_visible", false))
 	var settings_visible := bool(snapshot.get("settings_visible", false))
 	var run_menu_visible := bool(snapshot.get("run_menu_visible", false))
-	var travel_visible := bool(snapshot.get("travel_transition_active", false))
+	var travel_visible := bool(snapshot.get("travel_transition_active", false)) or bool(snapshot.get("travel_presentation_active", false))
 	if travel_visible:
 		for label in ["event_choice_popup_visible", "world_map_visible", "run_inventory_visible", "run_journal_visible", "run_menu_visible", "settings_visible"]:
 			if bool(snapshot.get(label, false)):
@@ -15732,8 +16002,10 @@ func current_screen_snapshot() -> Dictionary:
 		"overlay_state": current_overlay_state_snapshot(),
 		"run_report": current_run_report_snapshot() if run_state != null and run_state.is_terminal() else {},
 		"travel_transition_active": travel_transition_active,
+		"travel_presentation_active": travel_presentation_active,
 		"travel_transition_target_id": travel_transition_target_id,
 		"travel_transition_target_label": travel_transition_target_label,
+		"travel_presentation": current_travel_presentation_snapshot(),
 		"world_map_overlay_visible": world_map_overlay != null and world_map_overlay.visible,
 		"world_map_title_text": world_map_title_label.text if world_map_title_label != null else "",
 		"selected_world_map_node_id": selected_world_map_node_id,
@@ -18116,7 +18388,7 @@ func select_environment_view_object(index: int = 0) -> void:
 		environment_canvas.select_object_at(index)
 
 
-func _render_foundation_snapshots() -> void:
+func _render_foundation_snapshots(prepared_environment_snapshot: Dictionary = {}) -> void:
 	var terminal_report := _is_failure_screen() or _is_victory_screen()
 	# Match _apply_focus_layout(): event/detail overlays retain the active table.
 	# Releasing its renderer while that canvas is visible exposed obsolete controls.
@@ -18124,7 +18396,10 @@ func _render_foundation_snapshots() -> void:
 	var environment_visible := not terminal_report and not game_visible
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
-		_render_environment_canvas_snapshot()
+		if prepared_environment_snapshot.is_empty():
+			_render_environment_canvas_snapshot()
+		else:
+			_apply_environment_canvas_snapshot(prepared_environment_snapshot)
 	if game_surface_canvas != null:
 		# The visible canvas and its renderer share the same ownership predicate,
 		# including while a conversation temporarily selects the EVENT screen.
@@ -18216,13 +18491,20 @@ func _cheat_dock_model_key(game_state: Dictionary) -> String:
 
 
 func _render_environment_canvas_snapshot() -> void:
+	if environment_canvas != null:
+		_apply_environment_canvas_snapshot(_environment_view_snapshot())
+
+
+func _apply_environment_canvas_snapshot(snapshot: Dictionary) -> void:
 	if environment_canvas == null:
 		return
 	environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
 	# _environment_view_snapshot() returns a new presentation root which no host
 	# code retains or mutates. Transfer it directly; the public canvas entry point
 	# keeps its defensive deep copy for shared/external dictionaries.
-	environment_canvas.render_owned_environment_snapshot(_environment_view_snapshot())
+	environment_canvas.render_owned_environment_snapshot(snapshot)
+	if _travel_destination_preparation_matches_room():
+		travel_destination_preparation["canvas_publications"] = int(travel_destination_preparation.get("canvas_publications", 0)) + 1
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
 	rendered_character_offer_presence_stamp = _character_offer_visible_cache_stamp()
 
@@ -20364,6 +20646,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
 	current_game = null
@@ -20416,6 +20699,7 @@ func _exit_meta_session() -> void:
 	_hide_run_journal_popup()
 	_hide_world_map_overlay()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
@@ -21035,6 +21319,7 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 		return {"ok": false, "errors": [install_error]}
 	_bind_run_state_presentation_signals()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
 	_refresh_run_action_service()
@@ -21048,6 +21333,7 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
 	_hide_travel_transition()
+	_cancel_travel_presentation()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -24147,6 +24433,9 @@ func _refresh_coach_at_boundary_if_current(expected_generation: int) -> void:
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
+	if travel_presentation_active:
+		coach_overlay.set_presentation_suspended(true)
+		return
 	if TutorialFlowScript.repair_legacy_tutorial_save(run_state):
 		var repaired_completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 		coach_overlay.begin_tutorial_run(repaired_completed)
@@ -24375,7 +24664,7 @@ func _sync_coach_focus_visibility() -> void:
 	if coach_overlay == null:
 		return
 	var enabled := true
-	if _run_menu_is_visible() or (settings_overlay != null and settings_overlay.visible) or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _event_choice_popup_is_visible():
+	if travel_presentation_active or _run_menu_is_visible() or (settings_overlay != null and settings_overlay.visible) or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _event_choice_popup_is_visible():
 		enabled = false
 	elif _world_map_overlay_is_visible():
 		var anchor_kind: String = coach_overlay.active_anchor_kind()

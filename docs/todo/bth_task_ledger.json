@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-11T02:46:44.133450+00:00",
+  "updated_at": "2026-11-12T16:29:39.434783+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37360,6 +37360,93 @@
         "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
         "resume_only_on_user_instruction": true
       }
+    },
+    {
+      "id": "BTH-TRAVEL-CINEMATIC-001",
+      "name": "Integrate menu travel cinematics with automatic arrival",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_QUALIFIED_SCOPED_INTEGRATION_NEXT_PENDING",
+      "owner": {
+        "name": "dot, travel implementation",
+        "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request_and_source_inventory",
+          "reference": "docs/testing/travel_main_integration.md",
+          "summary": "Approved f5225ce source integrated onto main 6fea5099. 19 focused Jobs pass 93,128 assertions plus liveness/PCK contracts and 863 script loads. Native qualification is complete; main/NEXT delivery remains pending."
+        }
+      ],
+      "next_action": "Review and publish the scoped main integration without force; qualify exact final source through existing NEXT and record actual served acceptance before closing the objective.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T16:29:39.434783+00:00",
+        "evidence": [
+          "docs/testing/travel_main_integration.md"
+        ]
+      },
+      "updated_at": "2026-11-12T16:29:39.434783+00:00",
+      "objective": {
+        "text": "Integrate approved shared eight-second travel across fifteen exterior destinations and four canonical methods, using the actual game avatar, layered art and integrated doors/interiors. Only Travel-menu journeys animate; reveal the destination automatically at completion without new incidents/routes/gameplay consequences. Deliver qualified main through existing NEXT.",
+        "source": "docs/testing/travel_main_integration.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Only explicit Travel-menu confirmations animate; internal, direct, offered and forced moves stay unanimated.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "2",
+            "description": "Reveal the prepared destination automatically once after eight seconds, preserving Skip, interruption, focus and static pending receipts.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "3",
+            "description": "Preserve current-main fixes and authoritative RNG, cash, time, once-only settlement, save/reload and rollback.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "4",
+            "description": "Qualify exact committed main through the existing NEXT watcher; preserve stable, itch and audience and state browser verification limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": [
+        "BTH-TRAVEL-CINEMATIC-001-BATCH-001"
+      ],
+      "planned_app_changes": [
+        "Shared menu-travel presentation and automatic completion, without settlement changes."
+      ]
     }
   ],
   "batches": [
@@ -40945,6 +41032,49 @@
         ]
       },
       "updated_at": "2026-11-12T15:24:53.259106+00:00"
+    },
+    {
+      "id": "BTH-TRAVEL-CINEMATIC-001-BATCH-001",
+      "name": "Squash and qualify travel integration on current main",
+      "parent_id": "BTH-TRAVEL-CINEMATIC-001",
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_QUALIFIED_SCOPED_INTEGRATION_NEXT_PENDING",
+      "owner": {
+        "name": "dot, travel implementation",
+        "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request_and_source_inventory",
+          "reference": "docs/testing/travel_main_integration.md",
+          "summary": "Approved f5225ce source integrated onto main 6fea5099. 19 focused Jobs pass 93,128 assertions plus liveness/PCK contracts and 863 script loads. Native qualification is complete; main/NEXT delivery remains pending."
+        }
+      ],
+      "next_action": "Review and publish the scoped main integration without force; qualify exact final source through existing NEXT and record actual served acceptance before closing the objective.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "Implementation is active; no user decision pending. Existing NEXT requires exact-input cold-import qualification.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T16:29:39.434783+00:00",
+        "evidence": [
+          "docs/testing/travel_main_integration.md"
+        ]
+      },
+      "updated_at": "2026-11-12T16:29:39.434783+00:00",
+      "scope": [
+        "Scoped source/assets/tests/docs squash, excluding feature-added review movies and superseded guard/instruction edits.",
+        "Resolve current-main seams; test automatic completion, menu boundaries, save/receipt, rollback, modal ownership and liveness."
+      ]
     }
   ]
 }

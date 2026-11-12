@@ -52,6 +52,7 @@ const FIELDS := [
 	{"key": "music_choreography_state"},
 	{"key": "environment_history"},
 	{"key": "environment_history_archive_count", "transform": "exact_integer"},
+	{"key": "travel_journey_receipt", "transform": "frozen_travel_receipt"},
 	{"key": "unlocked_travel"},
 	{"key": "narrative_flags"},
 	{"key": "story_flags"},

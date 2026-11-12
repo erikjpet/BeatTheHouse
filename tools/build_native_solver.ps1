@@ -4,7 +4,9 @@ param(
     [ValidateSet("template_debug", "template_release")]
     [string]$Target = "template_debug",
     [string]$GodotPath = "",
-    [string]$OutputPath = ""
+    [string]$OutputPath = "",
+    [ValidateRange(1, 15)]
+    [int]$Jobs = 1
 )
 
 $ErrorActionPreference = "Stop"
@@ -78,7 +80,7 @@ try {
     $arguments = @(
         "scons",
         "-C", $source,
-        "-j", "15",
+        "-j", [string]$Jobs,
         "platform=$($Platform.ToLowerInvariant())",
         "target=$Target",
         "arch=$(if ($Platform -eq 'Web') { 'wasm32' } else { 'x86_64' })",

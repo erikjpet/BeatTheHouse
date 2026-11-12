@@ -58,8 +58,37 @@ def check_directory_selection() -> None:
         raise AssertionError("Invalid package was accepted")
 
 
+def check_godot_shader_paths() -> None:
+    allowed = [
+        "scripts/ui/travel_scene_cutout.gdshader",
+        "assets/shaders/surface.GDSHADER",
+    ]
+    failures = AUDIT_MODULE.audit([entry(path) for path in allowed])
+    if failures:
+        raise AssertionError(f"Shipped Godot shaders were rejected: {failures}")
+    rejected = [
+        "tools/preview.gdshader",
+        "scripts/tests/fixture.gdshader",
+        "native/solver.gdshader",
+        "reports/private/capture.gdshader",
+        "assets/shaders/credentials.gdshader",
+        "assets/shaders/private_key.gdshader",
+        "assets/shaders/secret.gdshader",
+        "assets/shaders/token_dump.gdshader",
+        "scripts/ui/travel_scene_cutout.gdshader.tmp",
+        "scripts/ui/travel_scene_cutout.gdshader.py",
+        "scripts/ui/travel_scene_cutout.gdshader.ps1",
+        "scripts/ui/travel_scene_cutout.gdshader.exe",
+        "scripts/ui/travel_scene_cutout.gdshaderx",
+    ]
+    for path in rejected:
+        if not AUDIT_MODULE.audit([entry(path)]):
+            raise AssertionError(f"Unsafe shader path or suffix was accepted: {path}")
+
+
 def main() -> int:
     check_directory_selection()
+    check_godot_shader_paths()
     allowed = [
         "audio/music/casino_loop.bthpcm",
         "audio/voice/announcer.bthadpcm",

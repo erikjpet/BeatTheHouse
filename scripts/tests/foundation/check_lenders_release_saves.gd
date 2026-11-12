@@ -5291,6 +5291,9 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 				or int(comp_run.narrative_flags.get("grand_casino_net_winnings", -1)) != 0:
 			failures.append("Real Delta Queen-to-Grand confirmation did not preserve the $51 comp stake as the active zero-net entry baseline: selected=%s confirmed=%s bankroll=%d status=%s result=%s." % [comp_selected, comp_confirmed, comp_run.bankroll, comp_run.run_status, JSON.stringify(comp_result)])
 
+	# This is a new independent fare fixture. Tear down the previous menu-owned
+	# presentation before replacing its RunState; do not bypass the input guard.
+	app.call("_cancel_travel_presentation")
 	var paid_run: RunState = RunStateScript.new()
 	paid_run.from_dict(unaffordable_run.to_dict())
 	paid_run.bankroll = 500

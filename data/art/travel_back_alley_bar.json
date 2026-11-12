@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "reference_size": [
+    1774,
+    887
+  ],
+  "bus_source_px": [
+    16,
+    196,
+    1743,
+    555
+  ],
+  "bus_door_rect_uv": [
+    0.8382099828,
+    0.2108108108,
+    0.0917957544,
+    0.6612612613
+  ],
+  "bus_wheels": [
+    {
+      "center_uv": [
+        0.189902467,
+        0.8252252252
+      ],
+      "radius_uv": [
+        0.0516351119,
+        0.1621621622
+      ]
+    },
+    {
+      "center_uv": [
+        0.7641996558,
+        0.8252252252
+      ],
+      "radius_uv": [
+        0.0516351119,
+        0.1621621622
+      ]
+    }
+  ],
+  "notes": "Detailed 2026-11-12 bus. Tight visible draw crop ignores negligible alpha residue without changing PNG bytes. Door/wheel UVs are relative to source_px. Characters remain the existing procedural game model.",
+  "bus_door_animation": {
+    "kind": "bus_fold",
+    "aperture_polygon_uv": [
+      [
+        0.8382099828,
+        0.2108108108
+      ],
+      [
+        0.9300057372,
+        0.2108108108
+      ],
+      [
+        0.9300057372,
+        0.8720720721
+      ],
+      [
+        0.8382099828,
+        0.8720720721
+      ]
+    ],
+    "interior_color": "#100c1c",
+    "step_polygon_uv": [
+      [
+        0.8399311532,
+        0.8414414414
+      ],
+      [
+        0.9282845668,
+        0.8414414414
+      ],
+      [
+        0.9300057372,
+        0.8720720721
+      ],
+      [
+        0.8382099828,
+        0.8720720721
+      ]
+    ],
+    "step_color": "#65516e",
+    "edge_color": "#140c25",
+    "panels": [
+      {
+        "polygon_uv": [
+          [
+            0.8382099828,
+            0.2108108108
+          ],
+          [
+            0.88410786,
+            0.2108108108
+          ],
+          [
+            0.88410786,
+            0.8720720721
+          ],
+          [
+            0.8382099828,
+            0.8720720721
+          ]
+        ],
+        "hinge_uv": [
+          [
+            0.8382099828,
+            0.2108108108
+          ],
+          [
+            0.8382099828,
+            0.8720720721
+          ]
+        ],
+        "max_angle_degrees": 79,
+        "depth_uv": [
+          0,
+          -0.02
+        ]
+      },
+      {
+        "polygon_uv": [
+          [
+            0.88410786,
+            0.2108108108
+          ],
+          [
+            0.9300057372,
+            0.2108108108
+          ],
+          [
+            0.9300057372,
+            0.8720720721
+          ],
+          [
+            0.88410786,
+            0.8720720721
+          ]
+        ],
+        "hinge_uv": [
+          [
+            0.9300057372,
+            0.2108108108
+          ],
+          [
+            0.9300057372,
+            0.8720720721
+          ]
+        ],
+        "max_angle_degrees": 79,
+        "depth_uv": [
+          0,
+          -0.02
+        ]
+      }
+    ],
+    "measurement_notes": "Measured on the detailed 2026-11-12 native PNG. UVs are relative to source_px; full window/body contours, handles and trim remain original texture pixels. Closed sprite PNG bytes are unchanged by animation."
+  },
+  "sha256": "1478110104cf04efe83a5febec78217d73d3db420a23d2ac10e676e344fb543c",
+  "bus_interior_texture": "res://assets/art/travel/vehicle_interiors/bus.png",
+  "bus_interior_reference_size": [
+    1024,
+    1536
+  ]
+}

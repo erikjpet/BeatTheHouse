@@ -45,6 +45,8 @@ func _run() -> void:
 		_check(behind_presses == count_before, "Visible coach dismiss must not activate a later modal control beneath it.")
 		_check(coach.active_lesson_id().is_empty(), "The dismiss click must finish the visible lesson.")
 
+	await _test_presentation_suspension(coach, menu, behind)
+
 	_show(coach, false)
 	await process_frame
 	await process_frame
@@ -74,10 +76,10 @@ func _run() -> void:
 	print("COACH_DISMISS_POINTER_RESULT " + JSON.stringify({"checks": checks, "failures": failures}))
 	quit(0 if failures.is_empty() else 1)
 
-func _show(coach, tutorial: bool) -> void:
+func _show(coach, tutorial: bool, lesson_id: String = "dismiss_pointer_fixture") -> void:
 	coach.restore_seen({})
 	coach.set_lessons([{
-		"id": "dismiss_pointer_fixture", "scope": "tutorial_run" if tutorial else "normal_run",
+		"id": lesson_id, "scope": "tutorial_run" if tutorial else "normal_run",
 		"trigger": {"screen": "ENVIRONMENT"}, "anchor": {"kind": "none"},
 		"copy": "Jobs build standing. Miss one and the crew remembers.",
 		"completion": {"type": "explicit_ok" if tutorial else "any_action"},
@@ -108,3 +110,34 @@ func _check(ok: bool, message: String) -> void:
 	if not ok:
 		failures.append(message)
 		push_error(message)
+
+
+func _test_presentation_suspension(coach, menu: Control, behind: Button) -> void:
+	for release_while_suspended in [true, false]:
+		_show(coach, false, "before_travel")
+		await process_frame
+		await process_frame
+		menu.move_to_front()
+		var rect: Rect2 = coach.ok_button.get_global_rect()
+		behind.position = rect.position - Vector2(8, 8)
+		behind.size = rect.size + Vector2(16, 16)
+		var before := behind_presses
+		await _pointer(rect.get_center(), true)
+		_check(coach.dismiss_pointer_active, "Coach owns the press before travel suspension.")
+		coach.set_presentation_suspended(true)
+		_check(not coach.dismiss_pointer_active, "Entering travel suspension retires the owned dismiss gesture.")
+		if release_while_suspended:
+			await _pointer(rect.get_center(), false)
+		coach.set_presentation_suspended(false)
+		var expected := "before_travel" if release_while_suspended else "different_after_travel"
+		_show(coach, false, expected)
+		await process_frame
+		await process_frame
+		menu.move_to_front()
+		if not release_while_suspended:
+			await _pointer(coach.ok_button.get_global_rect().get_center(), false)
+		_check(coach.active_lesson_id() == expected, "An old release cannot dismiss the resumed or replacement lesson.")
+		_check(behind_presses == before, "Suspended/resumed release cannot activate covered Abandon Run.")
+		await _click(coach.ok_button.get_global_rect().get_center())
+		_check(coach.active_lesson_id().is_empty(), "A fresh gesture still dismisses its intended lesson after travel.")
+		_check(behind_presses == before, "Fresh Coach dismissal after travel leaves the covered control untouched.")

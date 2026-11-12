@@ -28,7 +28,7 @@ FORBIDDEN_SUFFIXES = (
 )
 ALLOWED_SUFFIXES = (
     ".bin", ".binary", ".bthadpcm", ".bthpcm", ".bthsfx", ".bthstems", ".cfg", ".css", ".csv", ".ctex", ".data", ".dll",
-    ".fontdata", ".gd", ".gdc", ".gdextension", ".glsl", ".gz", ".html",
+    ".fontdata", ".gd", ".gdc", ".gdextension", ".gdshader", ".glsl", ".gz", ".html",
     ".ico", ".import", ".ini", ".jpeg", ".jpg", ".js", ".json", ".mo",
     ".mp3", ".ogg", ".otf", ".po", ".png", ".res", ".sample", ".scn",
     ".remap", ".shader", ".svg", ".tres", ".tscn", ".ttf", ".txt", ".uid", ".wasm",

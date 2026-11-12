@@ -61,7 +61,7 @@ func _run()->void:
 		if not check(app.activate_event_choice_action("parking_lot_tip","follow_tip"),mode+" real available Parking Tip"):break
 		await frames()
 		if not check(app.select_travel_option("small_underground_casino") and app.confirm_selected_travel(true),mode+" visible admitted source trip"):break
-		await frames()
+		await wait_for_travel_arrival(mode)
 		check(str(app.run_state.current_environment.get("scenario_id",""))=="punchline_bringer_show",mode+" actual Bringer Show")
 		stage(mode+" initial")
 		if mode=="work_1":
@@ -172,10 +172,20 @@ func check_abort_boundary() -> void:
 	check(app.activate_event_choice_action("parking_lot_tip", "follow_tip"), "abort real offered tip")
 	await frames()
 	check(app.select_travel_option("small_underground_casino") and app.confirm_selected_travel(true), "abort admitted route")
-	await frames()
+	await wait_for_travel_arrival("abort")
 	var before := protected_state()
 	check(public_command("refuse_punchline_bringer_show"), "normal offered refusal")
 	await frames()
 	check(phase() == "terminal_refused" and protected_state() == before, "abort grants no reward")
 	await save_continue("refusal")
 	check(not public_command("open_first_crowd_rope") and protected_state() == before, "aborted route cannot grant late reward")
+
+
+func wait_for_travel_arrival(label: String) -> void:
+	# Menu travel now finishes its cinematic before room input becomes available.
+	# Observe ordinary time; do not skip, alter the timeline or acknowledge it here.
+	var deadline := Time.get_ticks_msec() + 15000
+	while app.travel_presentation_active and Time.get_ticks_msec() < deadline:
+		await process_frame
+	check(not app.travel_presentation_active, label + " menu journey automatically returns room input")
+	await frames()
