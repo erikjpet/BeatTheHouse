@@ -87,6 +87,7 @@ real surface interaction rather than placeholder result buttons.
   Cards. The browser groups entries by collection and exposes tier/float detail;
   dedicated player sort/filter controls and Steam Inventory/community-market
   integration remain deferred.
+  Closed 2026-11-12, see docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md: collection sort/filter is not wanted; players are meant to hold only a few items. The separate platform deferral remains.
 - The guided first night and contextual teaching catalog cover the current
   world and game systems. The five-person cold-player requirement remains a
   human-only acceptance gate.

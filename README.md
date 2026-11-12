@@ -556,6 +556,7 @@ before store submission. itch.io publication is separate from GitHub Releases.
 - The local collection schema still carries `draft: true`. Its browser groups
   entries and exposes tier/float detail, but dedicated sort/filter controls,
   Steam Inventory, and community-market integration remain deferred.
+  Closed 2026-11-12, see docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md: collection sort/filter is not wanted; players are meant to hold only a few items. Steam integration remains deferred.
 - itch.io publishing remains an owner-only action using the upload-ready Web
   and Windows zips produced locally by `tools/export_itch.ps1`.
 - Android and iOS store submission require real signing/team credentials.
