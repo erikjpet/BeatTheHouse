@@ -1877,9 +1877,9 @@
             "id": "next",
             "description": "Verify ordinary visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching deployed build. Exact NEXT247ebe identity/archive/PCK/redirect and scripted menu_idle/BTH_PERF_READY startup pass separately; scripted startup does not qualify visible scenario behavior.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/scenario_wedding_arrival_order.md"
+              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
             ]
           }
         ],
@@ -1890,7 +1890,7 @@
         }
       },
       "state": "open",
-      "status": "RESUMED_ONLY_NAMED_EXCEPTION_REPRODUCTION_AND_REMAINING_ACCEPTANCE",
+      "status": "VISIBLE_ACCEPTANCE_PASS_EXISTING_FIX_SERVED070_PROOF_NEXT_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -1903,6 +1903,12 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "3f08a8e8ad7384887db7ff3b66954d5091df5ecd",
+          "evidence": [
+            "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -1912,29 +1918,32 @@
         "evidence": [
           "docs/testing/scenario_wedding_arrival_order.md"
         ],
-        "scope": "Exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu_idle/BTH_PERF_READY startup only. Normal visible Wedding route and Save/Continue remain Open."
+        "scope": "Existing1c201 fix verified in served070; complete normal visible ceremony, Save/page-reload/Continue and revisit pass. New proof publication pending exact main/NEXT."
       },
       "evidence": [
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Explicit user pause: Pause item and scenario work. Remain incomplete and resume only on user instruction. Before pause: Exact NEXT247ebe source/tree, archive/provenance, served PCK hash, redirect and scripted menu_idle/BTH_PERF_READY startup verified. Original campaign preserved. Next required check: normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. [Report](../testing/scenario_wedding_arrival_order.md)."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md",
+          "summary": "VISIBLE_ACCEPTANCE_PASS_EXISTING_FIX_SERVED070_PROOF_NEXT_PENDING"
         }
       ],
       "implementation_batches": [],
-      "next_action": "Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
+      "next_action": "Publish this proof/ledger through main/NEXT after the prepared114aa cold-import request is consumed; preserve completed visible path and native56+29. No new runtime fix required.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "Owner explicitly resumes only this named defect in FEAT-09. Broader item/scenario pause and BTH-11 remain unchanged.",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T10:01:18.788777+00:00",
-        "evidence": [
-          "docs/todo/BTH_unfinished_features_audit.md"
-        ]
+        "observed_at": "2026-11-12T10:34:32.496185+00:00",
+        "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T10:01:18.788777+00:00",
+      "updated_at": "2026-11-12T10:34:32.496185+00:00",
       "pause": {
         "state": "resumed",
         "requested_by": "user",
