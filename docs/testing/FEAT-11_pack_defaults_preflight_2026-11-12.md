@@ -79,3 +79,7 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\uf061-pack-off-runtime\evidence\worker.log | 9b2e9259f593974f58d9162358b677124a3c55bb6f6b67291128e8ac1b5fb6c1 |
 | E:\CodexQA\BTH\runs\uf061-pack-conflict-proof\evidence\classification.json | 61cb7a29d2b0745b7b2a08f00bcf04afb5313f890deb4716a18e6119c6ec84b8 |
 | E:\CodexQA\BTH\runs\uf061-pack-conflict-proof\evidence\pack_routes_probe.gd | af42701c009fce30a4965786c2f6a9866e16ce1a0b10d991084dc86fb465d426 |
+
+## Qualification diagnosis correction, 2026-11-12
+
+The initial CSV attribution was an unverified inference and was wrong. Exact current Git input rows, using the unchanged classifier exclusions, show only `README.md` differs from served 070fc937; both inventories contain 1420 rows. The required FEAT-04 README closure note is included by that classifier. Files under `docs/`, including the Crossword CSV, are excluded. The refusal itself and pending delivery remain factual; no pipeline rule was changed. Exact raw receipt: `E:\CodexQA\BTH\runs\uf061-next-exact-input-diff\evidence\exact-import-input-diff.json`, SHA-256 `7ded8ae92d9a8676ce5b96e88ef3c76d76e99466b2b25429a89ecb000b96625c`.

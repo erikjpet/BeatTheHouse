@@ -156,3 +156,7 @@ Raw files remain outside the repository. The external index lists every file/pat
 Source closures are committed in e52741c9ea88e295e43ee007880abc6218528596; the watcher observed combined documentation head fd8bb1581d4e676fb1c86229deaa7dbb3630f7e4 and refused before import: `Asset/importer/settings inputs changed; cold-import qualification required`. The changed import input is the requested Crossword audit CSV note. NEXT still serves 070fc937ad69de8d152b0dddae769f5206704821. Delivery remains pending; no guard, cache, pin, cap, pipeline setting or build was substituted. Remaining queue work continues as instructed.
 
 Raw receipt: `E:\CodexQA\BTH\runs\uf061-next-pending-receipt\evidence\next-pending.json`, SHA-256 `b6fb440d587821aedc0aaa48af182a58d2d491fae4dc6682895417448f525a75`.
+
+## Qualification diagnosis correction, 2026-11-12
+
+The initial CSV attribution was an unverified inference and was wrong. Exact current Git input rows, using the unchanged classifier exclusions, show only `README.md` differs from served 070fc937; both inventories contain 1420 rows. The required FEAT-04 README closure note is included by that classifier. Files under `docs/`, including the Crossword CSV, are excluded. The refusal itself and pending delivery remain factual; no pipeline rule was changed. Exact raw receipt: `E:\CodexQA\BTH\runs\uf061-next-exact-input-diff\evidence\exact-import-input-diff.json`, SHA-256 `7ded8ae92d9a8676ce5b96e88ef3c76d76e99466b2b25429a89ecb000b96625c`.
