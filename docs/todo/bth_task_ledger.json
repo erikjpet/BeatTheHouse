@@ -1846,7 +1846,8 @@
       "aliases": [],
       "kind": "acceptance_check",
       "parent_ids": [
-        "BTH-11"
+        "BTH-11",
+        "FEAT-09"
       ],
       "group": "current",
       "objective": {
@@ -1889,10 +1890,10 @@
         }
       },
       "state": "open",
-      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "status": "RESUMED_ONLY_NAMED_EXCEPTION_REPRODUCTION_AND_REMAINING_ACCEPTANCE",
       "owner": {
-        "name": "Resume scenario improvements",
-        "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -1921,21 +1922,21 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
+      "next_action": "Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
       "blocker": {
-        "state": "active",
-        "kind": "user_requested_pause",
-        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
+        "state": "none",
+        "kind": "none",
+        "description": "Owner explicitly resumes only this named defect in FEAT-09. Broader item/scenario pause and BTH-11 remain unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "observed_at": "2026-11-12T10:01:18.788777+00:00",
         "evidence": [
-          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+          "docs/todo/BTH_unfinished_features_audit.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-12T10:01:18.788777+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-04T02:07:49.868676+00:00",
         "instruction": "Pause item and scenario work.",
@@ -1950,7 +1951,9 @@
           "requires_user_input": false,
           "observed_at": "2026-11-04T01:32:35.703920+00:00",
           "evidence": []
-        }
+        },
+        "resumed_at": "2026-11-12T10:01:18.788777+00:00",
+        "resumption_source": "docs/todo/BTH_unfinished_features_audit.md section 0 FEAT-09 owner decision and current explicit two-defect exception"
       }
     },
     {
@@ -1959,7 +1962,8 @@
       "aliases": [],
       "kind": "acceptance_check",
       "parent_ids": [
-        "BTH-11"
+        "BTH-11",
+        "FEAT-09"
       ],
       "group": "current",
       "objective": {
@@ -1989,10 +1993,10 @@
         }
       },
       "state": "open",
-      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "status": "RESUMED_ONLY_NAMED_EXCEPTION_REPRODUCTION_AND_REMAINING_ACCEPTANCE",
       "owner": {
-        "name": "Resume scenario improvements",
-        "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
+        "name": "Work unfinished-features queue",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -2010,21 +2014,21 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
+      "next_action": "Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
       "blocker": {
-        "state": "active",
-        "kind": "user_requested_pause",
-        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
+        "state": "none",
+        "kind": "none",
+        "description": "Owner explicitly resumes only this named defect in FEAT-09. Broader item/scenario pause and BTH-11 remain unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "observed_at": "2026-11-12T10:01:18.788777+00:00",
         "evidence": [
-          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+          "docs/todo/BTH_unfinished_features_audit.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00",
+      "updated_at": "2026-11-12T10:01:18.788777+00:00",
       "pause": {
-        "state": "active",
+        "state": "resumed",
         "requested_by": "user",
         "requested_at": "2026-11-04T02:07:49.868676+00:00",
         "instruction": "Pause item and scenario work.",
@@ -2039,7 +2043,9 @@
           "requires_user_input": false,
           "observed_at": "2026-11-04T01:32:35.703920+00:00",
           "evidence": []
-        }
+        },
+        "resumed_at": "2026-11-12T10:01:18.788777+00:00",
+        "resumption_source": "docs/todo/BTH_unfinished_features_audit.md section 0 FEAT-09 owner decision and current explicit two-defect exception"
       }
     },
     {
@@ -35403,6 +35409,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35421,6 +35433,11 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -35438,7 +35455,7 @@
       "planned_app_changes": [
         "Work owner-authorized unfinished-features queue"
       ],
-      "updated_at": "2026-11-12T07:55:30.878605+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-STALE",
@@ -35528,6 +35545,12 @@
           "evidence": [
             "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35556,6 +35579,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
           "summary": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -35565,9 +35593,9 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Existing watcher refused fd8bb158 before import because the requested audit CSV changes import inputs; NEXT remains 070fc937.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:21:50.927634+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
         ]
@@ -35575,7 +35603,7 @@
       "planned_app_changes": [
         "Close Section8 stale plan entries with dated evidence"
       ],
-      "updated_at": "2026-11-12T09:21:50.927634+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-04",
@@ -35656,6 +35684,12 @@
           "evidence": [
             "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35684,6 +35718,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
           "summary": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -35693,9 +35732,9 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Combined documentation head is held by the existing import-input guard; no pipeline workaround is authorized.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:21:56.014854+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
         ]
@@ -35703,7 +35742,7 @@
       "planned_app_changes": [
         "Close collection sorting as owner-not-wanted"
       ],
-      "updated_at": "2026-11-12T09:21:56.014854+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-03",
@@ -35787,6 +35826,12 @@
           "evidence": [
             "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35810,6 +35855,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md",
           "summary": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -35819,9 +35869,9 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "NEXT import-input classification requires its existing exact qualification request for the earlier requested audit CSV edit; no guard workaround.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:34:20.444575+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
         ]
@@ -35829,7 +35879,7 @@
       "planned_app_changes": [
         "Daily Challenge unique full local-date seed"
       ],
-      "updated_at": "2026-11-12T09:34:20.444575+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-11",
@@ -35907,6 +35957,12 @@
           "evidence": [
             "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35930,6 +35986,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md",
           "summary": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -35949,7 +36010,7 @@
       "planned_app_changes": [
         "Enable both item packs by default only"
       ],
-      "updated_at": "2026-11-12T09:37:37.001962+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-10",
@@ -36024,6 +36085,12 @@
           "evidence": [
             "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -36047,6 +36114,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md",
           "summary": "RECHECKED_3_NOT_REPRODUCED_CURRENT_RENDERED_SAMPLES_DOC_NEXT_PENDING"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "implementation_batches": [
@@ -36056,9 +36128,9 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Documentation branch is held by existing exact cold-import classification; gameplay rechecks used served 070fc937.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:59:16.598649+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md"
         ]
@@ -36066,7 +36138,7 @@
       "planned_app_changes": [
         "Recheck BUG10 BUG34 BUG37 in rendered play"
       ],
-      "updated_at": "2026-11-12T09:59:16.598649+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-09",
@@ -39362,6 +39434,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39380,6 +39458,11 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
@@ -39391,7 +39474,7 @@
         "observed_at": "2026-11-12T07:55:30.878605+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-12T07:55:30.878605+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-STALE-BATCH-001",
@@ -39434,6 +39517,12 @@
           "evidence": [
             "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39462,20 +39551,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
           "summary": "SOURCE_CLOSED_STALE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Obtain exact cold-import qualification through the existing owner-operated request mechanism, then verify promoted identity and basic launch; continue the queue meanwhile.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Existing watcher refused fd8bb158 before import because the requested audit CSV changes import inputs; NEXT remains 070fc937.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:21:50.927634+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-12T09:21:50.927634+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-04-BATCH-001",
@@ -39518,6 +39612,12 @@
           "evidence": [
             "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39546,20 +39646,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md",
           "summary": "CLOSED_NOT_WANTED_SOURCE_NEXT_HELD_COLD_IMPORT_QUALIFICATION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Verify exact NEXT after the existing cold-import qualification requirement is satisfied; do not implement collection controls.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Combined documentation head is held by the existing import-input guard; no pipeline workaround is authorized.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:21:56.014854+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-04_collection_controls_not_wanted_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-12T09:21:56.014854+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-03-BATCH-001",
@@ -39596,6 +39701,12 @@
           "evidence": [
             "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39619,20 +39730,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md",
           "summary": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Verify the exact promoted Daily run through normal controls after the existing cold-import qualification hold is resolved. Preserve first Smoke failure and separate validator retry.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "NEXT import-input classification requires its existing exact qualification request for the earlier requested audit CSV edit; no guard workaround.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:34:20.444575+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-12T09:34:20.444575+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-11-BATCH-001",
@@ -39669,6 +39785,12 @@
           "evidence": [
             "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39692,6 +39814,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md",
           "summary": "PREFLIGHT_CONFIRMED_MERCHANT_POOL_CONFLICT_AWAITING_OWNER_RESOLUTION"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Await the requested choice about narrow merchant-pool exclusions; defaults remain false. Continue rendered off-pack acquisition checks and the other queue items.",
@@ -39705,7 +39832,7 @@
           "docs/testing/FEAT-11_pack_defaults_preflight_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-12T09:37:37.001962+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-10-BATCH-001",
@@ -39742,6 +39869,12 @@
           "evidence": [
             "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39765,20 +39898,25 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md",
           "summary": "RECHECKED_3_NOT_REPRODUCED_CURRENT_RENDERED_SAMPLES_DOC_NEXT_PENDING"
+        },
+        {
+          "kind": "qualification_diagnosis_correction",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
         }
       ],
       "next_action": "Verify documentation delivery after the existing cold-import qualification hold; reopen each historical bug on recurrence. Keep original-seed and practice-noon limits in the proof.",
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "Documentation branch is held by existing exact cold-import classification; gameplay rechecks used served 070fc937.",
+        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:59:16.598649+00:00",
+        "observed_at": "2026-11-12T10:05:00.071899+00:00",
         "evidence": [
           "docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-12T09:59:16.598649+00:00"
+      "updated_at": "2026-11-12T10:05:00.071899+00:00"
     },
     {
       "id": "FEAT-09-BATCH-001",
