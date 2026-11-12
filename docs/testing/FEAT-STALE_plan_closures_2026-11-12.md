@@ -150,3 +150,9 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\uf061-motel-play\evidence\result.json | 778874653e3ab6819cc3374fabd031e508f19447f8d1a90969ec0a207ec7f4ec |
 | E:\CodexQA\BTH\runs\uf061-motel-aftermath\evidence\result.json | d4c96d993bbeb99ec3d7ae73c07f2c354da6a6c71461fb465dd4fb14b1c6470c |
 | E:\CodexQA\BTH\runs\uf061-intake-next\evidence\served-assets.json | 7ea3a787817b84b67f0bec8e124fd83d7cee23fb47f4f7a784a45d668e533cda |
+
+## NEXT delivery observation, 2026-11-12 09:20 UTC
+
+Source closures are committed in e52741c9ea88e295e43ee007880abc6218528596; the watcher observed combined documentation head fd8bb1581d4e676fb1c86229deaa7dbb3630f7e4 and refused before import: `Asset/importer/settings inputs changed; cold-import qualification required`. The changed import input is the requested Crossword audit CSV note. NEXT still serves 070fc937ad69de8d152b0dddae769f5206704821. Delivery remains pending; no guard, cache, pin, cap, pipeline setting or build was substituted. Remaining queue work continues as instructed.
+
+Raw receipt: `E:\CodexQA\BTH\runs\uf061-next-pending-receipt\evidence\next-pending.json`, SHA-256 `b6fb440d587821aedc0aaa48af182a58d2d491fae4dc6682895417448f525a75`.
