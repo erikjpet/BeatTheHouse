@@ -61,7 +61,7 @@ BUG-10 is not presumed fixed: the fix report explicitly left its placement path 
 | BUG-07 | **FAIL — regression** | `verify31_d1/0010.png` through `0012.png` | The new full-screen coach `_input` shield consumes the tutorial TalkDock's own “Pick them up” and “Hide” controls because they are outside the coach panel/anchor rectangles. Harness accepted both real clicks, but Pal's event and choices remained unchanged. |
 | BUG-08 | **FAIL — incomplete fix** | `verify31_c5/0044.png` | A $1 Numbers slip updates internal bankroll to $87 and the Result to `Corner Store takes the slip. $-1`, but the visible wallet remains stale at $88 with the prior `+30` pulse. |
 | BUG-09 | **FAIL — incomplete fix** | `verify31_c6/0102.png` | Silas charges exactly once, rejects retry, and disables the option, but visible wallet remains stale at $50/+45 while canonical bankroll is $38 and Result reports −$12. |
-| BUG-10 | **FAIL — unresolved** | `verify31_c4/0104.png` | Vic Mercer is visibly rendered and semantically enabled at The Punchline, but his exact rendered hit authority is not hittable; activation opens no interaction panel. |
+| BUG-10 | **FAIL — unresolved** | `verify31_c4/0104.png` | Vic Mercer is visibly rendered and semantically enabled at The Punchline, but his exact rendered hit authority is not hittable; activation opens no interaction panel. 2026-11-12 FEAT-10: closed as not reproduced in current rendered sampling; reopen on recurrence. See docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md. Original report and evidence retained. |
 | BUG-11 | PASS | `verify31_b1/0058.png`, `0061.png` | BET+ after draw clears cards/holds and returns to Deal at the new wager. |
 | BUG-12 | **FAIL — still reproduces** | `verify31_c1/0016.png` | Double-clicking Ledger Pencil while Instant Coffee is inspected buys the pencil for $14 and reports that purchase, but the visible selected card remains Instant Coffee with its Buy button. |
 | BUG-13 | PASS | `verify31_b1/0018.png` | Fresh practice reset to $100000 without the prior Craps delta. |
@@ -110,6 +110,8 @@ Likely cause (high confidence): `_challenge_with_home_selection()` writes `home_
 
 ### BUG-34 — Gas Station Casino Numbers Book label is clipped
 
+2026-11-12 FEAT-10: closed as not reproduced in current rendered sampling; reopen on recurrence. See docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md. Original report and evidence retained.
+
 **Severity:** Minor  
 **Area:** Sunset Gas Casino environment presentation  
 **Result:** CONFIRMED — reproduced in two consecutive room views
@@ -133,6 +135,8 @@ After the fourth and final bonus ball drained, the live Pinball screen showed `L
 With bankroll $100000 and chips 0, the player staged $15 of Casino Craps bets and established point 6, leaving bankroll $99985. Taking down the live $5 Place 6 removed the wager and reported `5 returned`, but bankroll stayed $99985 while the Chips header changed from 0 to 5 (`claim06_b5/0020.png`, `0021.png`). `_resolve_take_down()` emits the refund without a currency on the casino branch and only tags `currency="cash"` for Street Craps (`scripts/games/craps.gd:758`–`811`), so the generic result application credits the wrong wallet.
 
 ### BUG-37 — Both newly unlocked Tier-2 destinations reject enabled Travel
+
+2026-11-12 FEAT-10: closed as not reproduced in current rendered sampling; reopen on recurrence. See docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md. Original report and evidence retained.
 
 **Severity:** Major  
 **Area:** World map / scenario destination installation  

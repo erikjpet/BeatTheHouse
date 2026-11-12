@@ -144,6 +144,8 @@ An additional serialized pass (`pt_b9`, `pt_c9`, `pt_d9`) completed 75 visible-i
 
 ### BUG-10: Vic Mercer is not visible or hittable
 
+2026-11-12 FEAT-10: closed as not reproduced in current rendered sampling; reopen on recurrence. See docs/testing/FEAT-10_older_bug_rechecks_2026-11-12.md. Original report and evidence retained.
+
 - **Reported by pt_c:** “In The Punchline back room, enabled interactive Vic Mercer was absent from the rendered room and selecting him twice reported that his hit area was not hittable. Vic should be visible and selectable within the screen.”
 - **Verification:** CONFIRMED: the observable model lists Vic as enabled/interactive, while two exact visible-input attempts found no rendered hit authority and the PNG has no Vic. [Evidence](D:/Projects/Beat-The-House-worktrees/agent-playtest/.tmp/agent_playtest/2026-09-12/pt_c/0115.result.json).
 - **Likely cause:** `environment_interaction_view_model.gd:141-203,470-503` accepts the normalized character rect, but `pixel_scene_canvas.gd:2490-2533,2777-2830` does not produce a matching drawable/hit entry. Confidence medium.
