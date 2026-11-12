@@ -36805,8 +36805,8 @@
       "name": "Bar Dice cold post-Call animation/account qualification implementation",
       "parent_id": "BTH061-RC-BARDICE-COLD-001",
       "group": "current",
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "state": "complete",
+      "status": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED",
       "scope": [
         "Diagnose the failed post-Call passive-tumble assertion without inferring lost money."
       ],
@@ -36827,14 +36827,26 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "f2e42dea380a9650d7e9d6d061cca049356723c6",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -36842,26 +36854,31 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED"
         }
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Completed exact registered diagnosis/test repair. No real account/value difference found; precise native and rendered scopes retained in proof.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.185344+00:00",
+        "observed_at": "2026-11-12T01:05:12.204586+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T13:22:42.185344+00:00"
+      "updated_at": "2026-11-12T01:05:12.204586+00:00"
     },
     {
       "id": "BTH061-RC-SCRATCH-STATE-001-BATCH-001",
       "name": "Scratch current-build cold state discrepancy implementation",
       "parent_id": "BTH061-RC-SCRATCH-STATE-001",
       "group": "current",
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP",
+      "state": "complete",
+      "status": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED",
       "scope": [
         "Capture the failing in-memory leaf/type difference and qualify paid ticket boundaries; no loss currently proven."
       ],
@@ -36882,14 +36899,26 @@
           "evidence": [
             "docs/testing/AUD061_RC_findings_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "f2e42dea380a9650d7e9d6d061cca049356723c6",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061_RC_findings_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -36897,18 +36926,23 @@
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061_RC_findings_2026-11-11.md",
           "summary": "OPEN_DIAGNOSED_FROZEN_RC_FOLLOW_UP"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED"
         }
       ],
-      "next_action": "Carry out the exact diagnosis/qualification in the linked finding; this audit adds no speculative fix.",
+      "next_action": "Completed exact registered diagnosis/test repair. No real account/value difference found; precise native and rendered scopes retained in proof.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T13:22:42.254978+00:00",
+        "observed_at": "2026-11-12T01:05:12.372661+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T13:22:42.254978+00:00"
+      "updated_at": "2026-11-12T01:05:12.372661+00:00"
     },
     {
       "id": "BTH061-RC-BARDICE-COVER-CLIP-001-BATCH-001",
@@ -37253,8 +37287,8 @@
       "name": "Riverboat closing callback fixture is unmounted implementation",
       "parent_id": "BTH061-RC-RIVERBOAT-FIXTURE-001",
       "group": "current",
-      "state": "open",
-      "status": "OPEN_DIAGNOSED_IN_FROZEN_RC_REPORT",
+      "state": "complete",
+      "status": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED",
       "scope": [
         "Replace the stale null-TalkDock unit setup with valid mounted-dialogue/full-route evidence, preserving current UI binding guard and all docking/refusal/duplicate checks."
       ],
@@ -37275,14 +37309,26 @@
           "evidence": [
             "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "f2e42dea380a9650d7e9d6d061cca049356723c6",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "15a3077f7dec4209d601d83a3f5c76780c9966e2",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
         "evidence": [
-          "docs/testing/AUD061-17_release_coverage_2026-11-11.md"
+          "docs/testing/CLOSE-03_test_repairs_2026-11-11.md"
         ]
       },
       "evidence": [
@@ -37290,18 +37336,23 @@
           "kind": "audit_finding",
           "reference": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
           "summary": "Riverboat closing callback fixture is unmounted implementation"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-03_test_repairs_2026-11-11.md",
+          "summary": "DONE_TEST_DISCREPANCY_DIAGNOSED_AND_QUALIFIED"
         }
       ],
-      "next_action": "Reproduce and qualify the separately diagnosed follow-up without assuming a financial/gameplay bug from this test result.",
+      "next_action": "Completed exact registered diagnosis/test repair. No real account/value difference found; precise native and rendered scopes retained in proof.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T14:19:16.847885+00:00",
+        "observed_at": "2026-11-12T01:05:12.287618+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-11T14:36:47.177714+00:00"
+      "updated_at": "2026-11-12T01:05:12.287618+00:00"
     },
     {
       "id": "BTH061-RC-PACKAGING-001-BATCH-001",
