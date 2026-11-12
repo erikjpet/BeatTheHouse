@@ -709,6 +709,14 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		return {"ok": false, "message": "The private room could not provide a safe exit.", "errors": exit_errors}
 	if source_layer_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_layer_id, target_id, "layer")
+		# Settle arrival in the installed destination phase before the player can
+		# accept a zero-turn task. A later room action must not replay this return
+		# as pressure against that newly accepted task.
+		var arrival := run_state.scenario_flush_facts()
+		if not bool(arrival.get("ok", false)) and not bool(arrival.get("inactive", false)):
+			_restore_travel_snapshot(run_state, rollback)
+			var arrival_errors := JsonCoerceScript._copy_array(arrival.get("errors", []))
+			return {"ok": false, "message": str(arrival_errors[0]) if not arrival_errors.is_empty() else "The room arrival could not be recorded.", "errors": arrival_errors}
 	if run_state.has_world_map():
 		run_state.store_current_world_node_environment()
 	return {
