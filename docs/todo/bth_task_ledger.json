@@ -19,8 +19,6 @@
         "state": "active",
         "task_ids": [
           "BTH-11",
-          "BTH-SCENARIO-WEDDING-001",
-          "BTH-SCENARIO-ARRIVAL-002",
           "BTH-15",
           "BTH-17",
           "BTH-15-FACTUAL-HELP-001",
@@ -33,7 +31,29 @@
         "publication_retry_authorized": true,
         "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
         "publication_retry_authorization": "Later explicit user instruction: Yes push all finished work to next",
-        "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action."
+        "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action.",
+        "original_task_ids": [
+          "BTH-11",
+          "BTH-SCENARIO-WEDDING-001",
+          "BTH-SCENARIO-ARRIVAL-002",
+          "BTH-15",
+          "BTH-17",
+          "BTH-15-FACTUAL-HELP-001",
+          "BTH-17-FACTUAL-HELP-001",
+          "LEDGER022"
+        ],
+        "resumption_history": [
+          {
+            "task_ids": [
+              "BTH-SCENARIO-ARRIVAL-002",
+              "BTH-SCENARIO-WEDDING-001"
+            ],
+            "requested_by": "user",
+            "resumed_at": "2026-11-12T15:30:27.212381+00:00",
+            "source": "docs/todo/BTH_unfinished_features_audit.md section0 FEAT-09 owner decision and current explicit two-defect exception",
+            "scope": "Only the two named defects; all other item/scenario tasks retain the pause."
+          }
+        ]
       },
       {
         "schema": "bth.user_work_pause/v1",
@@ -134,6 +154,21 @@
               "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md"
             ]
           }
+        ]
+      },
+      {
+        "id": "unfinished_features_0_6_2_no_work_authorized_20261112",
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "task_ids": [
+          "FEAT-01",
+          "BTH062-SCENARIO-POLISH",
+          "FEAT-08",
+          "BTH062-DAILY-LEADERBOARD",
+          "BTH062-WHALE-TRUST-ARC"
         ]
       }
     ],
@@ -1974,7 +2009,7 @@
       "id": "BTH-SCENARIO-ARRIVAL-002",
       "name": "Bringer Show layer-arrival ordering investigation",
       "aliases": [],
-      "kind": "bug",
+      "kind": "acceptance_check",
       "parent_ids": [
         "BTH-11",
         "FEAT-09"
@@ -35427,7 +35462,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "OPEN_VERIFIED_SOURCE_WORK_WITH_ACCEPTANCE_AND_DELIVERY_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35450,6 +35485,12 @@
         },
         {
           "sha": "4be6c6c423dc8baecd936ddba5c9884fcbf1945a",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
+        },
+        {
+          "sha": "3d48da957e67a1cc64c9cb34b4c65ed212495fec",
           "evidence": [
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
@@ -35476,24 +35517,31 @@
           "kind": "qualification_diagnosis_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "OPEN_VERIFIED_SOURCE_WORK_WITH_ACCEPTANCE_AND_DELIVERY_PENDING"
         }
       ],
       "implementation_batches": [
         "FEAT-QUEUE-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Submit normal exact cold-import qualification for publication head, decide FEAT-11 merchant conflict, approve native game app access; then finish Whale/Count play, positive reward acceptance and exact NEXT Daily/Bringer checks before any parent completion.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:30.878605+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT requires README-only cold-import qualification; pack default specification conflicts with existing merchant behavior; native app access approval timed out and the longer browser campaign is not qualified. No original user save is requested.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T15:49:48.268561+00:00",
+        "evidence": [
+          "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+        ]
       },
       "planned_app_changes": [
         "Work owner-authorized unfinished-features queue"
       ],
-      "updated_at": "2026-11-12T10:05:00.071899+00:00"
+      "updated_at": "2026-11-12T15:49:48.268561+00:00"
     },
     {
       "id": "FEAT-STALE",
@@ -36211,10 +36259,10 @@
             "id": "2",
             "description": "Rewards settle once across Save Continue travel revisit abort; retain original safety assertions",
             "required": true,
-            "state": "pass",
+            "state": "open",
             "evidence": [
-              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md",
-              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md"
+              "docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md",
+              "docs/testing/BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md"
             ]
           },
           {
@@ -36296,7 +36344,7 @@
       "implementation_batches": [
         "FEAT-09-BATCH-001"
       ],
-      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification.",
+      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification. Positive souvenir/grant exactly-once acceptance is not proved by the observed nonfinancial branches and remains open.",
       "blocker": {
         "state": "active",
         "kind": "external",
@@ -36533,8 +36581,8 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "The18-minute rendered attempt ended while its accepted ordinary delivery awaited Lounge opening. Planning Table and all live-heist beats were not reached; no completion or full action-count pass.",
-        "requires_user_input": false,
+        "description": "The18-minute rendered attempt did not reach Planning Table. Two fresh resident bootstraps then failed before gameplay and remain unclean; no valid longer browser campaign is available. Native app access approval is pending. No guard or security change, profile migration or false completion.",
+        "requires_user_input": true,
         "observed_at": "2026-11-12T15:23:07.489542+00:00",
         "evidence": [
           "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
@@ -36709,7 +36757,7 @@
       "id": "BTH-FEAT-COUNT-ACCESS-GUIDE-001",
       "name": "Public Count walkthrough omits current private-room access prerequisite",
       "aliases": [],
-      "kind": "documentation_discrepancy",
+      "kind": "observation",
       "parent_ids": [
         "FEAT-02",
         "FEAT-07"
@@ -36779,7 +36827,7 @@
       "id": "BTH-FEAT-NOOP-GOLDEN-001",
       "name": "Existing Crew-ignoring saved golden differs before the feature queue",
       "aliases": [],
-      "kind": "test_discrepancy",
+      "kind": "observation",
       "parent_ids": [
         "FEAT-02",
         "FEAT-07"
@@ -36942,9 +36990,9 @@
       "id": "FEAT-01",
       "name": "Full item-effect reassessment before any effect change",
       "aliases": [],
-      "kind": "deferred_objective",
+      "kind": "objective",
       "parent_ids": [],
-      "group": "0.6.2",
+      "group": "current",
       "objective": {
         "text": "FEAT-01 parts A-E and docs/item-audit are starting evidence; includes Lucky Penny BTH-15 and Ledger Pencil BTH-17 / LEDGER022. No item effect, text, price or strength work authorized.",
         "source": "docs/todo/BTH_unfinished_features_audit.md",
@@ -36968,7 +37016,7 @@
       "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
       "owner": {
         "name": "Owner first, then worker",
-        "task_ref": null,
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "unassigned"
       },
       "commits": [],
@@ -36983,6 +37031,11 @@
           "kind": "owner_deferred_queue",
           "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
           "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        },
+        {
+          "kind": "decision_task_reference",
+          "reference": "docs/todo/BTH_unfinished_features_audit.md",
+          "summary": "Task reference identifies the current owner-decision/recording conversation, not an assignment or authorization to implement future work."
         }
       ],
       "implementation_batches": [],
@@ -36998,15 +37051,23 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+      "updated_at": "2026-11-12T15:24:22.774038+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "resume_only_on_user_instruction": true
+      }
     },
     {
       "id": "BTH062-SCENARIO-POLISH",
       "name": "Scenario polish after owner states scope",
       "aliases": [],
-      "kind": "deferred_objective",
+      "kind": "objective",
       "parent_ids": [],
-      "group": "0.6.2",
+      "group": "current",
       "objective": {
         "text": "BTH-11 remains open and under its standing pause. The two named FEAT-09 exceptions do not lift this broader hold.",
         "source": "docs/todo/BTH_unfinished_features_audit.md",
@@ -37030,7 +37091,7 @@
       "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
       "owner": {
         "name": "Owner first",
-        "task_ref": null,
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "unassigned"
       },
       "commits": [],
@@ -37045,6 +37106,11 @@
           "kind": "owner_deferred_queue",
           "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
           "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        },
+        {
+          "kind": "decision_task_reference",
+          "reference": "docs/todo/BTH_unfinished_features_audit.md",
+          "summary": "Task reference identifies the current owner-decision/recording conversation, not an assignment or authorization to implement future work."
         }
       ],
       "implementation_batches": [],
@@ -37060,15 +37126,23 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+      "updated_at": "2026-11-12T15:24:22.774038+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "resume_only_on_user_instruction": true
+      }
     },
     {
       "id": "FEAT-08",
       "name": "Voice and copy pass for all text added in0.6",
       "aliases": [],
-      "kind": "deferred_objective",
+      "kind": "objective",
       "parent_ids": [],
-      "group": "0.6.2",
+      "group": "current",
       "objective": {
         "text": "No worker copy or voice edits authorized; perform after item/heist text decisions.",
         "source": "docs/todo/BTH_unfinished_features_audit.md",
@@ -37092,7 +37166,7 @@
       "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
       "owner": {
         "name": "Owner, by hand",
-        "task_ref": null,
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "unassigned"
       },
       "commits": [],
@@ -37107,6 +37181,11 @@
           "kind": "owner_deferred_queue",
           "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
           "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        },
+        {
+          "kind": "decision_task_reference",
+          "reference": "docs/todo/BTH_unfinished_features_audit.md",
+          "summary": "Task reference identifies the current owner-decision/recording conversation, not an assignment or authorization to implement future work."
         }
       ],
       "implementation_batches": [],
@@ -37122,15 +37201,23 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+      "updated_at": "2026-11-12T15:24:22.774038+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "resume_only_on_user_instruction": true
+      }
     },
     {
       "id": "BTH062-DAILY-LEADERBOARD",
       "name": "Local in-game Daily Challenge leaderboard",
       "aliases": [],
-      "kind": "deferred_objective",
+      "kind": "objective",
       "parent_ids": [],
-      "group": "0.6.2",
+      "group": "current",
       "objective": {
         "text": "No online service, sharing panel, platform calls or implementation authorized. FEAT-03 changes only the seed.",
         "source": "docs/todo/BTH_unfinished_features_audit.md",
@@ -37154,7 +37241,7 @@
       "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
       "owner": {
         "name": "Needs owner design",
-        "task_ref": null,
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "unassigned"
       },
       "commits": [],
@@ -37169,6 +37256,11 @@
           "kind": "owner_deferred_queue",
           "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
           "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        },
+        {
+          "kind": "decision_task_reference",
+          "reference": "docs/todo/BTH_unfinished_features_audit.md",
+          "summary": "Task reference identifies the current owner-decision/recording conversation, not an assignment or authorization to implement future work."
         }
       ],
       "implementation_batches": [],
@@ -37184,15 +37276,23 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+      "updated_at": "2026-11-12T15:24:22.774038+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "resume_only_on_user_instruction": true
+      }
     },
     {
       "id": "BTH062-WHALE-TRUST-ARC",
       "name": "Whale Game and Crew trust arc decision",
       "aliases": [],
-      "kind": "deferred_objective",
+      "kind": "objective",
       "parent_ids": [],
-      "group": "0.6.2",
+      "group": "current",
       "objective": {
         "text": "Private FEAT-02/07 report is partial; normal Whale play and complete Count measurement remain open. No enablement, trust restoration or pacing change authorized.",
         "source": "docs/todo/BTH_unfinished_features_audit.md",
@@ -37216,7 +37316,7 @@
       "status": "OPEN_0_6_2_NO_WORK_AUTHORIZED",
       "owner": {
         "name": "Owner after investigation",
-        "task_ref": null,
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
         "assignment_state": "unassigned"
       },
       "commits": [],
@@ -37231,6 +37331,11 @@
           "kind": "owner_deferred_queue",
           "reference": "docs/testing/FEAT-062_queue_record_2026-11-12.md",
           "summary": "Owner decision2026-11-12; record only, no work started or authorized."
+        },
+        {
+          "kind": "decision_task_reference",
+          "reference": "docs/todo/BTH_unfinished_features_audit.md",
+          "summary": "Task reference identifies the current owner-decision/recording conversation, not an assignment or authorization to implement future work."
         }
       ],
       "implementation_batches": [],
@@ -37246,7 +37351,15 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T15:24:22.774038+00:00"
+      "updated_at": "2026-11-12T15:24:22.774038+00:00",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-12T15:28:48.520930+00:00",
+        "instruction": "Record each in the ledger as open with no work authorized. None is started from this document.",
+        "source": "docs/todo/BTH_unfinished_features_audit.md#9-the-062-queue",
+        "resume_only_on_user_instruction": true
+      }
     }
   ],
   "batches": [
@@ -40045,7 +40158,7 @@
       "parent_id": "FEAT-QUEUE",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "OPEN_VERIFIED_SOURCE_WORK_WITH_ACCEPTANCE_AND_DELIVERY_PENDING",
       "scope": [
         "Work owner-authorized unfinished-features queue"
       ],
@@ -40074,6 +40187,12 @@
           "evidence": [
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "3d48da957e67a1cc64c9cb34b4c65ed212495fec",
+          "evidence": [
+            "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -40097,18 +40216,25 @@
           "kind": "qualification_diagnosis_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
+          "summary": "OPEN_VERIFIED_SOURCE_WORK_WITH_ACCEPTANCE_AND_DELIVERY_PENDING"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Submit normal exact cold-import qualification for publication head, decide FEAT-11 merchant conflict, approve native game app access; then finish Whale/Count play, positive reward acceptance and exact NEXT Daily/Bringer checks before any parent completion.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": "",
-        "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:30.878605+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "external",
+        "description": "NEXT requires README-only cold-import qualification; pack default specification conflicts with existing merchant behavior; native app access approval timed out and the longer browser campaign is not qualified. No original user save is requested.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-12T15:49:48.268561+00:00",
+        "evidence": [
+          "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-12T10:05:00.071899+00:00"
+      "updated_at": "2026-11-12T15:49:48.268561+00:00"
     },
     {
       "id": "FEAT-STALE-BATCH-001",
@@ -40612,7 +40738,7 @@
           "summary": "WEDDING_VISIBLE_PASS_ARRIVAL_FIXED_SMOKE_GREEN_NEXT_PENDING"
         }
       ],
-      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification.",
+      "next_action": "Deliver the two local Wedding proof commits and Arrival fix/ledger through existing NEXT; render changed Arrival behavior after qualification. Positive souvenir/grant exactly-once acceptance is not proved by the observed nonfinancial branches and remains open.",
       "blocker": {
         "state": "active",
         "kind": "external",
@@ -40762,8 +40888,8 @@
       "blocker": {
         "state": "active",
         "kind": "external",
-        "description": "The18-minute rendered attempt ended while its accepted ordinary delivery awaited Lounge opening. Planning Table and all live-heist beats were not reached; no completion or full action-count pass.",
-        "requires_user_input": false,
+        "description": "The18-minute rendered attempt did not reach Planning Table. Two fresh resident bootstraps then failed before gameplay and remain unclean; no valid longer browser campaign is available. Native app access approval is pending. No guard or security change, profile migration or false completion.",
+        "requires_user_input": true,
         "observed_at": "2026-11-12T15:23:07.489542+00:00",
         "evidence": [
           "docs/testing/FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md"
