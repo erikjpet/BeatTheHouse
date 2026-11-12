@@ -36468,8 +36468,8 @@
       "name": "Qualify requested 0.6.1 version-stamp update implementation",
       "parent_id": "AUD061-04",
       "group": "current",
-      "state": "open",
-      "status": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING",
+      "state": "complete",
+      "status": "DONE_OWNER_REDUCED_C1_VERSION_SCOPE",
       "scope": [
         "Reproduce current stale stamps and verify whether all mandatory project/export-preset/exporter edits can be delivered through the unchanged existing NEXT pipeline. Apply the exact work order only if compatible; otherwise stop and document the concrete guard conflict without partial substitution."
       ],
@@ -36484,33 +36484,50 @@
           "evidence": [
             "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
           ]
+        },
+        {
+          "sha": "ceccaf561d79718b69d4fbf499cf923cb0e864d3",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
+        },
+        {
+          "sha": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+          "evidence": [
+            "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a6ce512640cbd98019a6b9a4c5b5081278ba78bb",
+        "evidence": [
+          "docs/testing/CLOSE-04_one_release_version_2026-11-11.md"
+        ]
       },
       "evidence": [
         {
           "kind": "audit_proof",
           "reference": "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md",
           "summary": "BLOCKED_VERSION_INPUTS_CONFLICT_ASSESSMENT_RECORDED_REPORT_NEXT_PENDING"
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/CLOSE-04_one_release_version_2026-11-11.md",
+          "summary": "DONE_OWNER_REDUCED_C1_VERSION_SCOPE"
         }
       ],
-      "next_action": "Carry this evidence-only blocked report with the next finished changelog push; separately reviewed0.6.1 input qualification is required before the version change.",
+      "next_action": "Original incompatible pinned-stamp assessment remains recorded. OwnerC1 reduced scope completed by RELEASE_VERSION/menu; all other stamps remain0.6.0; no builder re-pinning.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Required project/preset/exporter edits conflict with fixed existing NEXT object qualification; changing guards is forbidden in this run. No0.6.1 stamp/display change delivered.",
+        "state": "none",
+        "kind": "none",
+        "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-11T12:12:26.062457+00:00",
-        "evidence": [
-          "docs/testing/AUD061-04_version_qualification_block_2026-11-11.md"
-        ]
+        "observed_at": "2026-11-12T00:33:21.898373+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-11T12:12:26.062457+00:00"
+      "updated_at": "2026-11-12T00:33:21.898373+00:00"
     },
     {
       "id": "AUD061-05-BATCH-001",
