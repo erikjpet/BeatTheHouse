@@ -35458,22 +35458,28 @@
             "id": "1",
             "description": "Verify each non-room claim against current source/history",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+            ]
           },
           {
             "id": "2",
             "description": "Confirm Bar BackAlley Gas Underground KittyCat Jazz Beach Delta and Motel aftermath room by room in running game before closure",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+            ]
           },
           {
             "id": "3",
             "description": "Add dated closed-see lines without deleting history; leave any unverified claim open",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+            ]
           },
           {
             "id": "4",
@@ -35490,7 +35496,7 @@
         }
       },
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -35510,6 +35516,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "e52741c9ea88e295e43ee007880abc6218528596",
+          "evidence": [
+            "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -35528,24 +35540,29 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+          "summary": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING"
         }
       ],
       "implementation_batches": [
         "FEAT-STALE-BATCH-001"
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify exact paired documentation NEXT promotion/startup, then close stale-history task with Motel sweep-only branch limit retained.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:30.964606+00:00",
+        "observed_at": "2026-11-12T09:06:31.939194+00:00",
         "evidence": []
       },
       "planned_app_changes": [
         "Close Section8 stale plan entries with dated evidence"
       ],
-      "updated_at": "2026-11-12T07:55:30.964606+00:00"
+      "updated_at": "2026-11-12T09:06:31.939194+00:00"
     },
     {
       "id": "FEAT-04",
@@ -36274,6 +36291,86 @@
         "Measure Count route alongside private Whale investigation"
       ],
       "updated_at": "2026-11-12T07:55:31.559638+00:00"
+    },
+    {
+      "id": "BTH-FEAT-PRACTICE-FEEDBACK-001",
+      "name": "Fresh practice room retains previous result acknowledgement",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "FEAT-QUEUE"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Fresh practice room retains previous result acknowledgement",
+        "source": "docs/todo/BTH_unfinished_features_audit.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "1",
+            "description": "Public normal-control reproduction and scoped proof",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+            ]
+          },
+          {
+            "id": "2",
+            "description": "Owner triage; no fix authorized by unfinished-features queue",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_REPRODUCED_PUBLIC_FEEDBACK_CARRYOVER_NO_FIX_AUTHORIZED",
+      "owner": {
+        "name": "Work unfinished features",
+        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "e52741c9ea88e295e43ee007880abc6218528596",
+          "evidence": [
+            "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "public_rendered_reproduction",
+          "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+          "summary": "Current070 fresh practice spawn preserves previous action Result text although new room geometry resets; no account-loss claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Owner triage separately; no corrective code work authorized here. See practice ServiceWingOpen -> fresh Conventioneers and LobbyJammed -> fresh Stakeout screenshots.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-12T09:06:32.024850+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [
+        "Fresh practice room retains previous result acknowledgement"
+      ],
+      "updated_at": "2026-11-12T09:06:32.024850+00:00"
     }
   ],
   "batches": [
@@ -39132,7 +39229,7 @@
       "parent_id": "FEAT-STALE",
       "group": "current",
       "state": "open",
-      "status": "REGISTERED_BEFORE_IMPLEMENTATION",
+      "status": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING",
       "scope": [
         "Close Section8 stale plan entries with dated evidence"
       ],
@@ -39155,6 +39252,12 @@
             "docs/todo/BTH_unfinished_features_audit.md",
             "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "e52741c9ea88e295e43ee007880abc6218528596",
+          "evidence": [
+            "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -39173,18 +39276,23 @@
           "kind": "intake_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Original first local audit commit excluded by temporary-upstream forkpoint; restored byte-identical append-only before any product implementation. Zero unrelated ledger semantic changes."
+        },
+        {
+          "kind": "closeout_proof",
+          "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+          "summary": "SOURCE_CLOSED_STALE_RENDERED_SCOPE_RECORDED_NEXT_PENDING"
         }
       ],
-      "next_action": "Follow owner order in docs/todo/BTH_unfinished_features_audit.md; reproduce before changes. All broader item/scenario pauses remain; no out-of-scope work authorized.",
+      "next_action": "Verify exact paired documentation NEXT promotion/startup, then close stale-history task with Motel sweep-only branch limit retained.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T07:55:30.964606+00:00",
+        "observed_at": "2026-11-12T09:06:31.939194+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-12T07:55:30.964606+00:00"
+      "updated_at": "2026-11-12T09:06:31.939194+00:00"
     },
     {
       "id": "FEAT-04-BATCH-001",
