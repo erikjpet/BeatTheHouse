@@ -124,3 +124,7 @@ acceptance and recovery of the original campaign remain unverified.
 This correction does not migrate pending arrivals in already-progressed old
 saves or revise completed historical aftermaths. It prevents a newly completed
 world trip from leaving its arrival pending behind later commands.
+
+## 2026-11-12 scoped FEAT-09 continuation
+
+The recorded ordinary visible Wedding path, Save/page-reload/Continue before and after completion, and departure/revisit now pass on served 070fc937. See docs/testing/BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md. The earlier navigation-limited replay is retained as not reached. No new runtime fix was needed; the existing 1c201c9e fix remains. Arrival002 is still investigated separately; BTH-11 remains paused/open.
