@@ -1008,6 +1008,9 @@ func _input(event: InputEvent) -> void:
 	if _handle_environment_test_random_scenario_hotkey(event):
 		get_viewport().set_input_as_handled()
 		return
+	if _handle_environment_art_reload_hotkey(event):
+		get_viewport().set_input_as_handled()
+		return
 	if _handle_environment_test_refresh_hotkey(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -12223,6 +12226,16 @@ func _environment_test_condition_overrides(candidate: RunState, generation_key: 
 # F5 is a practice-room authoring convenience, never a run command. Reusing the
 # retained Environment Library selectors preserves the chosen scenario, layer,
 # weather, calendar, and town-event modes while a new seed rebuilds the room.
+func _handle_environment_art_reload_hotkey(event: InputEvent) -> bool:
+	if not EnvironmentArtPackScript.authoring_reload_available() or not _environment_test_hotkey_pressed(event, KEY_F6):
+		return false
+	if not _can_refresh_environment_test_session() or environment_canvas == null:
+		return false
+	var reloaded := environment_canvas.reload_environment_art_from_disk()
+	_show_message("Room art reloaded." if reloaded else "Room art unavailable; using the room drawing. Check the manifest and PNG sizes.")
+	return true
+
+
 func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
 	if not _environment_test_hotkey_pressed(event, KEY_F5):
 		return false

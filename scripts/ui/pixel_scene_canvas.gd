@@ -4007,6 +4007,18 @@ func _set_environment_art_pack(pack: EnvironmentArtPack) -> void:
 		environment_art_renderer.configure(pack, flicker, bool(foundation_snapshot.get("reduce_motion", reduce_motion)), _grand_casino_web_low_detail())
 
 
+# The caller also gates this to an Environment Library developer practice room.
+func reload_environment_art_from_disk() -> bool:
+	if not EnvironmentArtPackScript.authoring_reload_available():
+		return false
+	_set_environment_art_pack(null)
+	RenderingServer.canvas_item_clear(get_canvas_item())
+	environment_art_waiting = false
+	_set_environment_art_pack(EnvironmentArtPackScript.reload_from_disk(environment_id))
+	queue_redraw()
+	return environment_art_pack != null
+
+
 func _resolve_environment_art_view() -> void:
 	if not is_visible_in_tree() or (use_external_background and background_texture != null):
 		environment_art_waiting = false

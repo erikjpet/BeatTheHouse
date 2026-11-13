@@ -208,12 +208,18 @@ static func _ensure_request(room_id: String) -> void:
 	if _cache.has(room_id) or not _safe_id(room_id):
 		return
 	_cache[room_id] = null
-	if not enabled_environment_ids().has(room_id):
-		return
+	var request := _prepare_request(room_id)
+	if request != null and not request.failed:
+		_pending.append(request)
+
+
+static func _prepare_request(room_id: String) -> LoadRequest:
+	if not _safe_id(room_id) or not enabled_environment_ids().has(room_id):
+		return null
 	var manifest: Variant = _read_json(MANIFEST_ROOT.path_join(room_id + ".json"))
 	if not manifest is Dictionary:
 		push_warning("Environment art pack '%s' ignored: missing or invalid manifest." % room_id)
-		return
+		return null
 	var request := LoadRequest.new()
 	request.room_id = room_id
 	request.manifest = manifest
@@ -232,11 +238,40 @@ static func _ensure_request(room_id: String) -> void:
 		var relative: String = source["texture"]
 		if relative.is_empty() or relative.is_absolute_path() or relative.contains(":") or relative.contains("\\") or relative.split("/").has("..") or relative.get_extension().to_lower() != "png":
 			_request_failed(request, "texture path must stay within the room asset folder")
-			return
+			return null
 		if not request.relatives.has(relative):
 			request.relatives.append(relative)
 			request.paths.append(request.asset_root.path_join(relative))
-	_pending.append(request)
+	return request
+
+
+# Native developer-only authoring seam. Read raw PNG bytes so a save is visible
+# immediately even before the editor importer notices it. Release the view first.
+static func authoring_reload_available() -> bool:
+	return OS.has_feature("editor") and not OS.has_feature("template") and not OS.has_feature("web") and not OS.has_feature("distribution_build")
+
+
+static func reload_from_disk(room_id: String) -> EnvironmentArtPack:
+	if not authoring_reload_available():
+		return null
+	invalidate(room_id)
+	last_error = ""
+	_cache[room_id] = null
+	var request := _prepare_request(room_id)
+	if request == null or request.failed:
+		return null
+	for index in range(request.paths.size()):
+		var image := Image.load_from_file(request.paths[index])
+		if image == null or image.is_empty():
+			_request_failed(request, "missing or unloadable raw PNG at " + request.paths[index])
+			return null
+		request.textures[request.relatives[index]] = ImageTexture.create_from_image(image)
+	var pack := compile_manifest(request.manifest, room_id, request.asset_root, request.counter_rects, request.textures)
+	if pack == null:
+		_request_failed(request, last_error)
+	_cache[room_id] = pack
+	_restrict_cache()
+	return pack
 
 
 static func _request_failed(request: LoadRequest, reason: String) -> void:
