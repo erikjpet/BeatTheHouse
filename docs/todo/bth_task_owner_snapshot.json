@@ -251,8 +251,8 @@
       "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
       "title": "Build layered environment art renderer",
       "state": "active",
-      "observed_at": "2026-11-13T01:59:03.915478+00:00",
-      "source": "Actual active root turn: 20 native base rooms plus Gas menu and exact NEXT Web idle baseline recorded. Seven Smoke IDs and180 Python tests pass; inherited validation/UI and7 unqualified perf findings retained. Branch delivery pending."
+      "observed_at": "2026-11-13T02:44:11.311224+00:00",
+      "source": "Actual active root turn: 65 Godot assertions and224 Python tests pass. Untouched starter fails scanline size and adds1 Smoke copy-gate failure; no renderer integration. Phase1 unqualified; later phases unstarted."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

@@ -284,3 +284,23 @@ ca056ad31a41e3d94210f9163aa0af7ca68d5a5c836428c6c68578334681facb  E:/CodexQA/BTH
 497fedf851bfff4c98c97bc98032e9a38edd10640b8863aea615fdb58d8b4c8f  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-validate-01/evidence/worker.log
 36fb2a58c796fe1c8dea572a594647ea0701b2a3cd825934008aa77efde18cf9  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-summary-01/evidence/phase1.json
 ```
+
+## Ledger checkpoint after the phase commit
+
+Implementation/proof/starter commit: `c126b72cf05debb1289b2ebf5423e8f12c4b0112`. Both ledger views retain the full parent and all eleven phase batches as Open. Phase1 is unqualified; Phases2-7/9 are explicitly unstarted,8/10 await owner final art,11 excluded. The manual checker returned exit1 with the same700 global findings across102 tasks and **zero ENVART-task/owned-instance findings**. No unrelated finding or historical observation was rewritten. The append-only runtime snapshot now includes51 actually assigned ENVART Jobs with verified-zero closure; the final reconciliation worker has its own separate closed receipt.
+
+Reconciliation evidence hashes (all files sealed after worker exit):
+
+```text
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/adapter.py
+6c7246f42f626db6006a975ed34d43c039025ed0358f4703a2a77d640187ef10  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/input-0.6.1_stability_release_plan.md
+ab06ee94d5bd7b95cef67dced5224810c496225dfc3f946e312ee74da2598a2c  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/input-BTH-ENVART-001_phase1_2026-11-12.md
+ae0b3bd826b83f5475562402ad4a70273bba6ba433f1e86a918bc9cf846e9475  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/input-bth_runtime_inventory_20261104.json
+f0d890338ff59c83989a74dd820e15f6fb4832bf77b0eda08c0924d4fb0113c6  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/input-bth_task_ledger.json
+f289f3aa4f19d5799316a4039b15eee05e4dfc27321bf40de48ba4fa7cc46cf7  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/input-bth_task_owner_snapshot.json
+6f401ef88b184aac421ed7921fe024ffa1cce4dc3708b870847b03a13fe4a0d0  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/job.json
+b7740d893656ae57ffe81d8ab685f66f6aad2955126a900a5abe53b3a57df0b3  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/launch-claim.json
+cc9da8a0f1f836e1a2e40877394c6a1b7b8eb9ee41085453a2d2800d27331cd0  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/reconciliation.json
+e97c3d401ac439ad430b41043ab8c24ebd3dd3090ef28e73ca4caa680d1fd59b  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/storage-manifest.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/worker.log
+```
