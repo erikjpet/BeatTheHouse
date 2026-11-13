@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-13T03:09:49.301901+00:00",
+  "updated_at": "2026-11-13T03:30:47.652298+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37625,6 +37625,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "c11b425219de97dec3fa956aef5a852f8fa24f46",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -37658,6 +37664,11 @@
           "kind": "phase_proof",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "Authorized generated scanline and active proof manifest validate;65 Godot assertions and unchanged Smoke content pass. Original supplied files retained; continue ordered branch renderer implementation."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md",
+          "summary": "Background qualified:14 checks; unchanged liveness;20 pixel-identical fallback rooms; Smoke content/runtime0 findings; paired draw CPU2.478→2.396ms. NEXT pending later main merge."
         }
       ],
       "blocker": {
@@ -37665,18 +37676,18 @@
         "kind": "branch_only_delivery",
         "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T03:09:49.301901+00:00",
+        "observed_at": "2026-11-13T03:30:47.652298+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
+          "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T03:09:49.301901+00:00",
+      "updated_at": "2026-11-13T03:30:47.652298+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "TEMP_ASSETS_VALID_CONTENT_AND_CONTRACT_PASS_NEXT_PENDING",
+      "status": "PASS",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -41626,7 +41637,14 @@
         "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c11b425219de97dec3fa956aef5a852f8fa24f46",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -41648,25 +41666,32 @@
           "kind": "user_resumption",
           "reference": "Current user message, 2026-11-12",
           "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md",
+          "summary": "Background qualified:14 checks; unchanged liveness;20 pixel-identical fallback rooms; Smoke content/runtime0 findings; paired draw CPU2.478→2.396ms. NEXT pending later main merge."
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "branch_only_delivery",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T03:03:41.100943+00:00",
-        "evidence": []
+        "observed_at": "2026-11-13T03:30:47.652298+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-13T03:03:41.100943+00:00",
+      "updated_at": "2026-11-13T03:30:47.652298+00:00",
       "id": "BTH-ENVART-001-PHASE-02",
       "name": "Background layer",
       "parent_id": "BTH-ENVART-001",
-      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
+      "status": "PASS",
       "scope": [
         "Background layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
+      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
     },
     {
       "group": "current",

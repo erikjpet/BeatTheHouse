@@ -251,8 +251,8 @@
       "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
       "title": "Build layered environment art renderer",
       "state": "active",
-      "observed_at": "2026-11-13T03:09:49.301901+00:00",
-      "source": "Actual active root turn: Authorized generated scanline and active proof manifest validate;65 Godot assertions and unchanged Smoke content pass. Original supplied files retained; continue ordered branch renderer implementation."
+      "observed_at": "2026-11-13T03:30:47.652298+00:00",
+      "source": "Actual active root turn: Background qualified:14 checks; unchanged liveness;20 pixel-identical fallback rooms; Smoke content/runtime0 findings; paired draw CPU2.478→2.396ms. NEXT pending later main merge."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
