@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-13T06:15:02.740929+00:00",
+  "updated_at": "2026-11-13T06:36:22.543943+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37661,6 +37661,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_phase7_2026-11-13.md"
           ]
+        },
+        {
+          "sha": "8c5345acf3ab0103a33fe6583005a362412ff07c",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
+          ]
         }
       ],
       "deployment": {
@@ -37724,6 +37730,16 @@
           "kind": "phase_proof",
           "reference": "docs/testing/BTH-ENVART-001_phase7_2026-11-13.md",
           "summary": "Native F6 reload14, loading35, exact fallback20, Smoke7 IDs zero; complete artist contract guide."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md",
+          "summary": "Packed menu37 checks, final Web errors0, Smoke7 IDs0, Python224; shutdown cache/token cleanup verified; stop at Phase9."
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-r2-p9-ledger-01\\evidence\\reconciliation.json",
+          "summary": "700 historical global findings;0 ENVART task/instance findings. Guarded reconciliation job closed owned-zero; raw SHA256 62791abb876e592981dd52f80b7f9b3c8402f26f6394d59d78d12a9e97568edc"
         }
       ],
       "blocker": {
@@ -37731,18 +37747,18 @@
         "kind": "branch_only_delivery",
         "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T06:15:02.740929+00:00",
+        "observed_at": "2026-11-13T06:36:22.543943+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase7_2026-11-13.md"
+          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
         ]
       },
-      "updated_at": "2026-11-13T06:15:02.740929+00:00",
+      "updated_at": "2026-11-13T06:36:22.543943+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Implemented on feature branch; authoring proof passed; NEXT pending merge",
+      "status": "Phases0–7 and9 implemented on feature branch; final art and NEXT acceptance pending",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37901,7 +37917,7 @@
         "BTH-ENVART-001-PHASE-09",
         "BTH-ENVART-001-PHASE-10"
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred.",
+      "next_action": "Stop at the requested Phase9 boundary. Await owner notice that the final20-room/12-doorway folder arrived for Phases8/10. After a separately owner-directed merge to main, confirm each phase on the existing NEXT pipeline. Phase11 excluded.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -41604,7 +41620,7 @@
         "observed_at": "2026-11-13T03:03:41.100943+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-13T03:03:41.100943+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-00",
       "name": "Baseline",
       "parent_id": "BTH-ENVART-001",
@@ -41612,7 +41628,7 @@
       "scope": [
         "Baseline per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41674,7 +41690,7 @@
           "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T03:09:49.301901+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-01",
       "name": "Pack loader and validator",
       "parent_id": "BTH-ENVART-001",
@@ -41682,7 +41698,7 @@
       "scope": [
         "Pack loader and validator per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41738,7 +41754,7 @@
           "docs/testing/BTH-ENVART-001_phase2_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T03:30:47.652298+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-02",
       "name": "Background layer",
       "parent_id": "BTH-ENVART-001",
@@ -41746,7 +41762,7 @@
       "scope": [
         "Background layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41802,7 +41818,7 @@
           "docs/testing/BTH-ENVART-001_phase3_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T03:45:57.677528+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-03",
       "name": "Animation layer",
       "parent_id": "BTH-ENVART-001",
@@ -41810,7 +41826,7 @@
       "scope": [
         "Animation layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41866,7 +41882,7 @@
           "docs/testing/BTH-ENVART-001_phase4_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T03:53:16.156671+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-04",
       "name": "Counter layer",
       "parent_id": "BTH-ENVART-001",
@@ -41874,7 +41890,7 @@
       "scope": [
         "Counter layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41930,7 +41946,7 @@
           "docs/testing/BTH-ENVART-001_phase5_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T05:13:46.520491+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-05",
       "name": "Gas Station proof",
       "parent_id": "BTH-ENVART-001",
@@ -41938,7 +41954,7 @@
       "scope": [
         "Gas Station proof per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -41994,7 +42010,7 @@
           "docs/testing/BTH-ENVART-001_phase6_2026-11-13.md"
         ]
       },
-      "updated_at": "2026-11-13T06:06:17.631976+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-06",
       "name": "Loading memory and size",
       "parent_id": "BTH-ENVART-001",
@@ -42002,7 +42018,7 @@
       "scope": [
         "Loading memory and size per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -42058,7 +42074,7 @@
           "docs/testing/BTH-ENVART-001_phase7_2026-11-13.md"
         ]
       },
-      "updated_at": "2026-11-13T06:15:02.740929+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-07",
       "name": "Authoring reload and documentation",
       "parent_id": "BTH-ENVART-001",
@@ -42066,7 +42082,7 @@
       "scope": [
         "Authoring reload and documentation per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -42097,23 +42113,23 @@
       ],
       "blocker": {
         "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "kind": "final_art_delivery",
+        "description": "Owner says final art will be provided when ready. Temporary assets qualify renderer proof only; full20-room/12-doorway rollout is explicitly deferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
+        "observed_at": "2026-11-13T06:36:22.925627+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
+          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
         ]
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "WAITING_OWNER_FINAL_ART_DELIVERY",
+      "status": "Not started; owner final art delivery pending",
       "scope": [
         "All20 room art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Wait for owner announcement of the final20-room/12-doorway art folder; execute this phase only after the required earlier work."
+      "next_action": "Await owner notice of the final same-format art folder, then execute this phase with unchanged paths/geometry and NEXT acceptance."
     },
     {
       "group": "current",
@@ -42123,7 +42139,14 @@
         "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "8c5345acf3ab0103a33fe6583005a362412ff07c",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -42145,25 +42168,37 @@
           "kind": "user_resumption",
           "reference": "Current user message, 2026-11-12",
           "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md",
+          "summary": "Packed menu37 checks, final Web errors0, Smoke7 IDs0, Python224; shutdown cache/token cleanup verified; stop at Phase9."
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-r2-p9-ledger-01\\evidence\\reconciliation.json",
+          "summary": "700 historical global findings;0 ENVART task/instance findings. Guarded reconciliation job closed owned-zero; raw SHA256 62791abb876e592981dd52f80b7f9b3c8402f26f6394d59d78d12a9e97568edc"
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "branch_only_delivery",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T03:03:41.100943+00:00",
-        "evidence": []
+        "observed_at": "2026-11-13T06:36:22.543943+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
+        ]
       },
-      "updated_at": "2026-11-13T03:03:41.100943+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-09",
       "name": "Main menu packed rooms",
       "parent_id": "BTH-ENVART-001",
-      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
+      "status": "Implemented locally; four inherited menu failures; NEXT pending merge",
       "scope": [
         "Main menu packed rooms per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
+      "next_action": "After the later owner-directed merge to main, verify exact identity and changed behavior through the existing NEXT watcher. Preserve local proof and inherited findings."
     },
     {
       "group": "current",
@@ -42194,23 +42229,23 @@
       ],
       "blocker": {
         "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "kind": "final_art_delivery",
+        "description": "Owner says final art will be provided when ready. Temporary assets qualify renderer proof only; full20-room/12-doorway rollout is explicitly deferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
+        "observed_at": "2026-11-13T06:36:22.925627+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
+          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
         ]
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T06:36:22.925627+00:00",
       "id": "BTH-ENVART-001-PHASE-10",
       "name": "Travel doorway art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "WAITING_OWNER_FINAL_ART_DELIVERY",
+      "status": "Not started; owner final art delivery pending",
       "scope": [
         "Travel doorway art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Wait for owner announcement of the final20-room/12-doorway art folder; execute this phase only after the required earlier work."
+      "next_action": "Await owner notice of the final same-format art folder, then execute this phase with unchanged paths/geometry and NEXT acceptance."
     }
   ]
 }
