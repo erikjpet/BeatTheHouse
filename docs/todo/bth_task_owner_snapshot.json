@@ -251,8 +251,8 @@
       "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
       "title": "Build layered environment art renderer",
       "state": "active",
-      "observed_at": "2026-11-13T03:53:16.156671+00:00",
-      "source": "Actual active root turn: Counter first/replay source qualified:11 pixel checks;30 animations; unchanged liveness; Smoke1+6 IDs0 findings. NEXT pending main merge."
+      "observed_at": "2026-11-13T05:13:46.520491+00:00",
+      "source": "Actual active root turn: Gas qualified:45 paired geometry/scenario checks; all5 Web selections and Reduce Motion;30 animation/11 counter/14 background checks;20 exact fallbacks;224 Python;7 Smoke IDs0 findings; CPU2.243 to2.234ms. NEXT pending main merge."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
