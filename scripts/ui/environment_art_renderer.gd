@@ -107,6 +107,11 @@ func configure(pack: EnvironmentArtPack) -> void:
 
 func _mark_presented() -> void:
 	ready_to_present = true
+	# Reduce Motion may need no further idle redraw. Publish the completed
+	# initial surface once, independently of input and the animation cadence.
+	var canvas := get_parent() as CanvasItem
+	if canvas != null:
+		canvas.queue_redraw()
 
 
 func present(clock: float, reduced: bool, low_detail: bool) -> void:

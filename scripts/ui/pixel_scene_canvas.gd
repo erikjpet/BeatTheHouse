@@ -8780,6 +8780,10 @@ func _draw_counter_foreground_art(counter: Dictionary) -> bool:
 	var front := Rect2(Vector2(x0, top_y), Vector2(x1 - x0, front_y - top_y))
 	if not front.has_area():
 		return false
+	if _environment_art_pack_active() and environment_art_pack.counters.has(art_id):
+		var counter_art: EnvironmentArtPackScript.CounterEntry = environment_art_pack.counters[art_id]
+		draw_texture_rect(counter_art.texture, counter_art.rect, false)
+		return true
 	match art_id:
 		"corner_store_register":
 			draw_rect(front, Color("#20203c"))
