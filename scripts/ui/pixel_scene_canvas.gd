@@ -23,6 +23,7 @@ signal developer_placement_undo_requested(request: Dictionary)
 signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const EnvironmentArtPackScript := preload("res://scripts/ui/environment_art_pack.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
@@ -184,6 +185,7 @@ var foundation_scene_objects: Array = []
 var uses_foundation_snapshot := false
 var background_texture: Texture2D
 var use_external_background := false
+var environment_art_pack: EnvironmentArtPack
 var flicker: float = 0.0
 var camera_zoom: float = 1.0
 var camera_offset: Vector2 = Vector2.ZERO
@@ -355,6 +357,7 @@ func _ready() -> void:
 	# redraws for hover state, but must never be the heartbeat for room motion.
 	_arm_animation_heartbeat()
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
@@ -1697,6 +1700,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
 	environment_id = art_key if ["punchline_club", "punchline_back_room"].has(art_key) else archetype_id
+	environment_art_pack = EnvironmentArtPackScript.cached_pack(environment_id)
 	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
 	if texture_scope_key.is_empty():
 		texture_scope_key = environment_id
@@ -3898,6 +3902,8 @@ func _draw() -> void:
 	_bg()
 	if use_external_background and background_texture != null:
 		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
+	elif environment_art_pack != null:
+		draw_texture_rect(environment_art_pack.background, environment_art_pack.background_rect, false)
 	else:
 		match environment_id:
 			"corner_store":
@@ -3947,7 +3953,8 @@ func _draw() -> void:
 	# cannot recolor or approximate the original counter.
 	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
-	_draw_scene_life()
+	if not _environment_art_pack_active():
+		_draw_scene_life()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
@@ -3957,6 +3964,10 @@ func _draw() -> void:
 	_draw_developer_placement_outline()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
+
+
+func _environment_art_pack_active() -> bool:
+	return environment_art_pack != null and not (use_external_background and background_texture != null)
 
 
 func _draw_developer_placement_outline() -> void:

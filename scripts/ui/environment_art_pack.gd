@@ -60,6 +60,28 @@ var counters: Dictionary[String, CounterEntry] = {}
 var texture_paths: Array[String] = []
 var estimated_texture_bytes := 0
 static var last_error := ""
+static var _cache: Dictionary = {}
+static var _cache_order: Array[String] = []
+
+
+static func cached_pack(room_id: String) -> EnvironmentArtPack:
+	if not _cache.has(room_id):
+		_cache[room_id] = load_pack(room_id)
+	if _cache_order.is_empty() or _cache_order[-1] != room_id:
+		_cache_order.erase(room_id)
+		_cache_order.append(room_id)
+		while _cache_order.size() > 2:
+			_cache.erase(_cache_order.pop_front())
+	return _cache.get(room_id) as EnvironmentArtPack
+
+
+static func invalidate(room_id: String = "") -> void:
+	if room_id.is_empty():
+		_cache.clear()
+		_cache_order.clear()
+	else:
+		_cache.erase(room_id)
+		_cache_order.erase(room_id)
 
 
 static func enabled_environment_ids() -> Array[String]:
