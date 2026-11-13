@@ -246,6 +246,13 @@
       "state": "active",
       "observed_at": "2026-11-11T22:21:49.829504+00:00",
       "source": "User authorized exact request submission; watcher accepted/promoted973 and10 asset checks plus fresh rendered Slot6/BackAlley passed. Local CLOSE02/03/04 committed and focused checks pass; push/follow through then normal browser acceptance and final packages."
+    },
+    {
+      "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "title": "Build layered environment art renderer",
+      "state": "active",
+      "observed_at": "2026-11-13T01:28:55.813274+00:00",
+      "source": "Actual current Codex root turn registering branch-only environment renderer implementation before Phase0 baseline."
     }
   ],
   "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."

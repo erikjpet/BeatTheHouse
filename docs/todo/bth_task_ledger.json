@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T17:35:36.928525+00:00",
+  "updated_at": "2026-11-13T01:28:55.813274+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37598,6 +37598,206 @@
       "planned_app_changes": [
         "Presentation fallback completion and measured passage-depth scaling only."
       ]
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001",
+      "name": "Build layered environment art renderer",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "status": "REGISTERED_BRANCH_ONLY_BASELINE_NEXT_PENDING",
+      "objective": {
+        "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
+        "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "phase-00",
+            "description": "Baseline with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-01",
+            "description": "Pack loader and validator with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-02",
+            "description": "Background layer with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-03",
+            "description": "Animation layer with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-04",
+            "description": "Counter layer with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-05",
+            "description": "Gas Station proof with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-06",
+            "description": "Loading memory and size with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-07",
+            "description": "Authoring reload and documentation with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-08",
+            "description": "All20 room art delivery with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-09",
+            "description": "Main menu packed rooms with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          },
+          {
+            "id": "phase-10",
+            "description": "Travel doorway art delivery with measured proof, regression results, commit and required later NEXT acceptance",
+            "required": true,
+            "state": "pending",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Baseline",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Pack loader and validator",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Background layer",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Animation layer",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Counter layer",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Gas Station proof",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Loading memory and size",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Authoring reload and documentation",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "All20 room art delivery",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Main menu packed rooms",
+              "state": "pending",
+              "evidence": []
+            },
+            {
+              "name": "Travel doorway art delivery",
+              "state": "pending",
+              "evidence": []
+            }
+          ]
+        }
+      },
+      "implementation_batches": [
+        "BTH-ENVART-001-PHASE-00",
+        "BTH-ENVART-001-PHASE-01",
+        "BTH-ENVART-001-PHASE-02",
+        "BTH-ENVART-001-PHASE-03",
+        "BTH-ENVART-001-PHASE-04",
+        "BTH-ENVART-001-PHASE-05",
+        "BTH-ENVART-001-PHASE-06",
+        "BTH-ENVART-001-PHASE-07",
+        "BTH-ENVART-001-PHASE-08",
+        "BTH-ENVART-001-PHASE-09",
+        "BTH-ENVART-001-PHASE-10"
+      ],
+      "next_action": "Record Phase0 baseline in guarded E: workspace; then validate exact supplied pack. Await corrected1800x68 scanline before Gas Station proof.",
+      "planned_app_changes": [
+        "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
+      ]
     }
   ],
   "batches": [
@@ -41249,6 +41449,446 @@
         "Scoped source/assets/tests/docs squash, excluding feature-added review movies and superseded guard/instruction edits.",
         "Resolve current-main seams; test automatic completion, menu boundaries, save/receipt, rollback, modal ownership and liveness."
       ]
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-00",
+      "name": "Baseline",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Baseline per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-01",
+      "name": "Pack loader and validator",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Pack loader and validator per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-02",
+      "name": "Background layer",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Background layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-03",
+      "name": "Animation layer",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Animation layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-04",
+      "name": "Counter layer",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Counter layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-05",
+      "name": "Gas Station proof",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Gas Station proof per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-06",
+      "name": "Loading memory and size",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Loading memory and size per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-07",
+      "name": "Authoring reload and documentation",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Authoring reload and documentation per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-08",
+      "name": "All20 room art delivery",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "All20 room art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Wait for owner art delivery."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-09",
+      "name": "Main menu packed rooms",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Main menu packed rooms per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Execute in plan order after preceding phase qualifies."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Build layered environment art renderer",
+        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "docs/todo/BTH_environment_art_layers_plan.md",
+          "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T01:28:55.813274+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "id": "BTH-ENVART-001-PHASE-10",
+      "name": "Travel doorway art delivery",
+      "parent_id": "BTH-ENVART-001",
+      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "scope": [
+        "Travel doorway art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+      ],
+      "next_action": "Wait for owner art delivery."
     }
   ]
 }
