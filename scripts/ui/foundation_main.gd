@@ -1030,6 +1030,7 @@ func _input(event: InputEvent) -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE:
 		_drain_script_prewarm_requests_for_shutdown()
+		EnvironmentArtPackScript.shutdown_loading()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		set_application_pause_owner("focus_out", true)
 		_flush_pending_autosave_for_lifecycle()
@@ -9620,6 +9621,43 @@ func _refresh_run_action_service() -> void:
 
 
 func _select_main_menu_background_environment() -> Dictionary:
+	var enabled := EnvironmentArtPackScript.enabled_environment_ids()
+	if enabled.is_empty():
+		return _select_main_menu_legacy_background_environment()
+	if library == null:
+		return {}
+	var candidates: Array[Dictionary] = []
+	for value in library.environment_archetypes:
+		if not value is Dictionary:
+			continue
+		var data: Dictionary = value
+		var layers: Dictionary = data.get("layers", {})
+		if layers.is_empty():
+			if enabled.has(str(data.get("id", ""))):
+				candidates.append({"room": data, "layer_id": ""})
+		else:
+			for layer_id in layers:
+				var layer: Dictionary = layers[layer_id]
+				var art_key := str(layer.get("art_key", layer.get("visual_context", {}).get("art_key", data.get("id", ""))))
+				if enabled.has(art_key):
+					candidates.append({"room": data, "layer_id": str(layer_id)})
+	if candidates.is_empty():
+		return {}
+	var rng := RandomNumberGenerator.new()
+	rng.seed = int(Time.get_unix_time_from_system() * 1000.0) ^ Time.get_ticks_usec()
+	var selected := candidates[rng.randi_range(0, candidates.size() - 1)]
+	var result: Dictionary = selected["room"].duplicate(true)
+	var layer_id: String = selected["layer_id"]
+	if not layer_id.is_empty():
+		var layer: Dictionary = result["layers"][layer_id]
+		result["current_layer_id"] = layer_id
+		result["layer_display_name"] = str(layer.get("layer_display_name", layer_id))
+		result["visual_context"] = layer.get("visual_context", {}).duplicate(true)
+		result["visual_context"]["art_key"] = str(layer.get("art_key", result["id"]))
+	return result
+
+
+func _select_main_menu_legacy_background_environment() -> Dictionary:
 	if library == null:
 		return {}
 	var candidates: Array = []
@@ -9661,9 +9699,13 @@ func _reroll_main_menu_background() -> void:
 	background_snapshot["display_name"] = str(background_snapshot.get("display_name", background_snapshot.get("name", background_snapshot.get("id", ""))))
 	background_snapshot["reduce_motion"] = _reduce_motion_enabled()
 	var asset_path := str(JsonCoerceScript._copy_dict(background_snapshot.get("visual_context", {})).get("asset_path", "")).strip_edges()
-	var background_asset := load(asset_path) as Texture2D if not asset_path.is_empty() else null
+	# An enabled pack uses precisely the in-play canvas path, including live
+	# code fallback while loading or if validation fails. Flat PNGs are selected
+	# only when the enabled list is empty.
+	var use_legacy := EnvironmentArtPackScript.enabled_environment_ids().is_empty()
+	var background_asset := load(asset_path) as Texture2D if use_legacy and not asset_path.is_empty() else null
 	main_menu_background.set("background_texture", background_asset)
-	main_menu_background.set("use_external_background", background_asset != null)
+	main_menu_background.set("use_external_background", use_legacy and background_asset != null)
 	main_menu_background.render_environment_snapshot(background_snapshot)
 	main_menu_background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	call_deferred("_fit_main_menu_background_to_viewport")

@@ -16,7 +16,7 @@ let observedPage, observedMessages=[], observedEvidence;
   page.on('console', m => {messages.push({type:m.type(),text:m.text()});});
   page.on('pageerror', e => {messages.push({type:'pageerror',text:e.message});});
   await page.setViewportSize({width:1280,height:720});
-  if (['boot','bootgas','library','bootbase'].includes(process.argv[2])) {
+  if (['boot','bootgas','library','bootbase','bootmenu','bootfinal'].includes(process.argv[2])) {
     await page.goto(process.env.BTH_ENVART_WEB_BASE + '/index.html?bth_perf=1&bth_perf_overlay=1', {waitUntil:'domcontentloaded'});
     await page.waitForFunction(() => !document.getElementById('status'), null, {timeout:150000});
     await page.waitForTimeout(3000);
@@ -27,13 +27,25 @@ let observedPage, observedMessages=[], observedEvidence;
     await page.keyboard.press(process.argv[3]);
     await page.waitForTimeout(2000);
   }
+  if (['bootmenu','bootfinal'].includes(process.argv[2])) {
+    await page.mouse.move(3,710);
+    const before=await page.evaluate(()=>({used:performance.memory.usedJSHeapSize,total:performance.memory.totalJSHeapSize}));
+    const a=await page.screenshot({path:path.join(evidence,'menu-after.png')});
+    const sample=await page.evaluate(()=>new Promise(resolve=>{const times=[];let last=performance.now();function tick(now){times.push(now-last);last=now;if(times.length<180)requestAnimationFrame(tick);else resolve({times,heap:{used:performance.memory.usedJSHeapSize,total:performance.memory.totalJSHeapSize}});}requestAnimationFrame(tick);}));
+    await page.waitForTimeout(450);
+    const b=await page.screenshot({path:path.join(evidence,'menu-idle.png')});
+    // The browser build has no native-editor authoring key.
+    await page.keyboard.press('F6'); await page.waitForTimeout(150);
+    fs.writeFileSync(path.join(evidence,'menu-web-idle.json'),JSON.stringify({source:'browser_requestAnimationFrame_whole_frame_upper_bound',before,sample,visible_idle_change:!a.equals(b),packaged_authoring_key_pressed:true},null,2));
+    if(a.equals(b)) throw Error('Packed Web menu did not visibly animate');
+  }
   if (process.argv[2] === 'bootgas') {
     await page.mouse.click(365,48);
     await page.waitForTimeout(700);
     await page.mouse.click(216,334);
     await page.waitForTimeout(200);
   }
-  if (['library','bootbase'].includes(process.argv[2])) {
+  if (['library','bootbase','bootfinal'].includes(process.argv[2])) {
     await page.mouse.click(365,48); await page.waitForTimeout(500);
     await page.mouse.click(216,334); await page.waitForTimeout(150);
     await page.mouse.click(200,353); await page.waitForTimeout(200);
@@ -62,7 +74,7 @@ let observedPage, observedMessages=[], observedEvidence;
     }));
     fs.writeFileSync(path.join(evidence,'gas-web-idle.json'),JSON.stringify({source:'browser_requestAnimationFrame_whole_frame_upper_bound',before,sample},null,2));
   }
-  if (process.argv[2] === 'bootbase') {
+  if (['bootbase','bootfinal'].includes(process.argv[2])) {
     await page.mouse.click(610,395); await page.waitForTimeout(180);
     await page.mouse.click(300,245); await page.keyboard.press('Control+A'); await page.waitForTimeout(100); await page.keyboard.type('LAYOUT-SURVEY-QA',{delay:25});
     await page.screenshot({path:path.join(evidence,'base-selection.png')});
@@ -118,7 +130,7 @@ let observedPage, observedMessages=[], observedEvidence;
   const metadata = {scope:'isolated_branch_Web_QA; not NEXT',source:process.env.BTH_ENVART_SOURCE || 'feature branch'};
   await page.screenshot({path:path.join(evidence,'web.png')});
   fs.writeFileSync(path.join(evidence,'web-observation.json'),JSON.stringify({url:page.url(),metadata,messages,body:await page.locator('body').innerText(),heap:await page.evaluate(() => performance.memory ? {usedJSHeapSize:performance.memory.usedJSHeapSize,totalJSHeapSize:performance.memory.totalJSHeapSize,jsHeapSizeLimit:performance.memory.jsHeapSizeLimit}:null)},null,2));
-  if (['close','bootgas','bootbase','sequence'].includes(process.argv[2])) {
+  if (['close','bootgas','bootbase','sequence','bootmenu','bootfinal'].includes(process.argv[2])) {
     await page.request.post(process.env.BTH_ENVART_WEB_BASE + '/__shutdown');
     const session = await context.newCDPSession(page);
     await session.send('Browser.close');

@@ -27,3 +27,22 @@ func _capture_base_practice(id: String, layer: String) -> void:
 	var file := FileAccess.open(out_dir.path_join("camera_samples.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(camera_samples, "\t"))
 	file.close()
+
+
+func _capture_gas_menu() -> void:
+	app.call("_reroll_main_menu_background")
+	var canvas: Control = app.get("main_menu_background")
+	for frame in range(180):
+		await process_frame
+		if canvas.get("environment_art_pack") != null:
+			break
+	await _settle(8)
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png(out_dir.path_join("gas_station_casino_menu_after.png"))
+	var before: Dictionary = canvas.call("current_view_snapshot")
+	await create_timer(0.45).timeout
+	await RenderingServer.frame_post_draw
+	root.get_texture().get_image().save_png(out_dir.path_join("gas_station_casino_menu_idle.png"))
+	var file := FileAccess.open(out_dir.path_join("menu_liveness.json"), FileAccess.WRITE)
+	file.store_string(JSON.stringify({"before": before, "after": canvas.call("current_view_snapshot"), "pack_active": canvas.get("environment_art_pack") != null}, "\t"))
+	file.close()

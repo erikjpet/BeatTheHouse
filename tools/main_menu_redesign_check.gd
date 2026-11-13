@@ -28,7 +28,13 @@ func _run() -> void:
 	_check(background != null and background.mouse_filter == Control.MOUSE_FILTER_IGNORE, "menu environment was not click-through")
 	_check(is_equal_approx(float(background_view.get("camera_zoom", 0.0)), 1.0), "menu environment did not keep in-game camera framing")
 	_check(bool(background_view.get("scene_idle_animation_active", false)), "menu environment animations were not active")
-	_check(bool(background_view.get("background_texture_loaded", false)) if background_view.has("background_texture_loaded") else background != null and background.get("background_texture") != null, "menu environment did not load its production background")
+	var packed_menu := not EnvironmentArtPack.enabled_environment_ids().is_empty()
+	if packed_menu and background != null:
+		for frame in range(180):
+			if background.get("environment_art_pack") != null or not background.get("environment_art_waiting"):
+				break
+			await process_frame
+	_check(background != null and background.get("environment_art_pack") != null and not background.get("use_external_background") and background.get("background_texture") == null if packed_menu else background != null and background.get("background_texture") != null, "menu environment did not load its production background")
 	var action_row: HBoxContainer = app.get("main_menu_action_row")
 	var marquee_buttons: Array[Button] = [app.get("new_run_button"), app.get("daily_run_button"), app.get("run_config_button"), app.get("replay_tutorial_button"), app.get("collections_button")]
 	_check(action_row != null and action_row.get_child_count() == 3, "main-menu actions were not centered as one grid")

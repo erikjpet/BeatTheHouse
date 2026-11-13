@@ -149,6 +149,17 @@ static func invalidate(room_id: String = "") -> void:
 	_last_advance_frame = -1
 
 
+# Application teardown only, alongside Main's existing prewarm drain. Consume
+# every issued engine token before releasing the static authoring/cache objects.
+# Arrival and scheduled frames continue to use only nonblocking status polling.
+static func shutdown_loading() -> void:
+	invalidate()
+	for request in _pending:
+		for texture_index in request.outstanding:
+			ResourceLoader.load_threaded_get(request.paths[texture_index])
+	_pending.clear()
+
+
 static func select_pack(room_id: String) -> EnvironmentArtPack:
 	if room_id != _current_room:
 		_previous_room = _current_room
