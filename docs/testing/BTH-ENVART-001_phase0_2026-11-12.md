@@ -294,3 +294,9 @@ c09924b1f329b68cee382896e6902e8560d31a431c02045e77e5e1b55016809e  E:/CodexQA/BTH
 6fb7b66bc2b730fb1ac0cbbd23adf8589b7ac8e20fa31eda3ca0b1cbc446d22d  E:/CodexQA/BTH/runs/BTH-ENVART-001-p0-summary-02/evidence/contract-preflight.json
 265ca69e3b2aa54f5cffc83ac236b8010d7f7bee024467726cea1b024069017d  E:/CodexQA/BTH/runs/BTH-ENVART-001-p0-summary-02/evidence/baseline.json
 ```
+
+## Ledger checkpoint after the phase commit
+
+Manual reconciliation ran with both ledger views, the owner snapshot and the append-only runtime inventory. It returned exit1 with700 existing global findings across102 tasks; **zero findings name an ENVART task or its owned instances**. Earlier new-entry schema errors were corrected to the checker's Open acceptance / Remaining coverage enums; the checker was not changed. The31 actual assigned ENVART Jobs recorded so far have verified-zero closure, including unsuccessful tests and bounded browser attempts. The proof/result of the reconciliation worker itself is retained separately. No historical owner/runtime observation was refreshed.
+
+Report: `E:/CodexQA/BTH/runs/BTH-ENVART-001-p0-ledger-04/evidence/reconciliation.json`; SHA-256 `e0fed39199ed7526e38cf340c0beb102d0db94a01c27169cf591fbee8aa6db72`. No task is marked Complete, and branch NEXT delivery remains pending.

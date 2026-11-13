@@ -2,7 +2,7 @@
   "schema": "bth.runtime_inventory/v1",
   "observed_at": "2026-11-11T00:35:50.339373+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed. Plus six actual Gas Web fixture/qualification Job closure receipts, all owned-zero, including retained first Web command-capture failure. Prior records are unchanged and not re-observed; separate compatibility diagnostics are not qualified by these receipts. Plus five integrated Gas/seal focused native/tools Jobs with actual assigned/guarded/finished-zero receipts. Prior runtime records preserved and not re-observed. Plus two manual reconciliation Jobs, exact b039 NEXT verification and fresh independent remote-b039 clone Job, all verified-zero; checker exit1 reflects retained global findings. No other runtimes re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed. Plus 5 nonce-bound task6 Blackjack draft-notice native jobs with actual owned-zero closure receipts; expected baseline and diagnostics retained, prior records unchanged and not re-observed. Plus 4 nonce-bound task6 Pull Tabs journal-currency native jobs with actual owned-zero closures; expected baseline and any diagnostic failures retained, all prior records unchanged and not re-observed. Plus 5 nonce-bound task6 practice-redemption qualification jobs, actual owned-zero closures; prior records unchanged and not re-observed. Plus five nonce-bound closing-fallback owned test Jobs with verified-zero closures; all prior records preserved, not re-observed. Plus16 task9 phase013 owned native jobs with actual assigned/guarded/finished/zero receipts; parser/oracle/time failures retained separately. Prior133records preserved and not re-observed. Plus5 phase014 and1 separate private phase015 task9 owned Jobs, all actualassigned/finished/guarded/zero; prior149objects preserved, failedparse separate from qualification. Plus1 additional original-source key-cost baseline owned Job, exactguarded/finished/zero; prior155objects preserved. Plus10 new task9 phase015 actualowned native Jobs, allassigned/guarded/finished0; prior156objects preserved. Privateprototype alreadyrecorded, no duplicate. FullSystems failed300.242, separatefromclosure. Bar Dice release follow-through adds one native official-slot preparation and three Web Jobs (startup/create/cold), using actual 3%/12% receipt limits; all twenty Bar Dice Jobs ended with zero remaining. Other runtime observations are not refreshed. Final post-commit checkpoint adds one task14 exact dff23f66 startup Job, verified ended/0; the committed twenty-job snapshot remains historical and unchanged. Final post-commit checkpoint adds one task14 exact 7d4b121f startup Job, verified ended/0; the committed twenty-one-job snapshot remains historical and unchanged. Plus two fresh Roulette b6 Web Jobs, both owned-zero closure verified; setup failure and startup timeout retained. Prior observations are unchanged and not re-observed. Plus six actual Gas Web fixture/qualification Job closure receipts, all owned-zero, including retained first Web command-capture failure. Prior records are unchanged and not re-observed; separate compatibility diagnostics are not qualified by these receipts. Plus five integrated Gas/seal focused native/tools Jobs with actual assigned/guarded/finished-zero receipts. Prior runtime records preserved and not re-observed. Plus two manual reconciliation Jobs, exact b039 NEXT verification and fresh independent remote-b039 clone Job, all verified-zero; checker exit1 reflects retained global findings. No other runtimes re-observed. Plus31 ENVART assigned capped Jobs with actual owned-zero closure; prior runtime observations unchanged.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -25,7 +25,8 @@
       "docs/testing/deprecated_code_audit_continuation_015.md",
       "docs/testing/roulette_web_closeout_b6_20261110.json",
       "docs/testing/gas_exit_web_closeout_20261110.json",
-      "docs/testing/gas_seal_integration_20261111.json"
+      "docs/testing/gas_seal_integration_20261111.json",
+      "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
     ]
   },
   "instances": [
@@ -23840,6 +23841,2765 @@
           "E:\\CodexQA\\BTH\\runs\\gas-seal-remote-recovery-setup-20261111\\evidence\\launch-claim.json"
         ],
         "limit": "Actual guarded capped Job ended/0 without timeout/error. Checker exit1 is retained global findings; exact NEXT verifier and fresh clone exit0. No host census or unrelated cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-captures-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-captures-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json:pid:24796",
+        "started_at": "2026-11-13T01:42:56.754184+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:43:30.371924+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json:pid:24796",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:43:30.371924+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:43:30.371924+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-captures-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:43:30.371924+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-captures-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-captures-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json:pid:18888",
+        "started_at": "2026-11-13T01:45:36.529947+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:46:00.863084+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json:pid:18888",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:46:00.863084+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:46:00.863084+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-captures-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:46:00.863084+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-captures-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-cold-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-cold-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json:pid:26880",
+        "started_at": "2026-11-13T01:40:22.922305+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:40:39.306411+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json:pid:26880",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:40:39.306411+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:40:39.306411+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-cold-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:40:39.306411+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-cold-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-dave-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-dave-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json:pid:28624",
+        "started_at": "2026-11-13T01:41:01.158473+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:41:25.534515+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json:pid:28624",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:41:25.534515+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:41:25.534515+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-dave-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:41:25.534515+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-dave-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-import-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-import-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json:pid:29176",
+        "started_at": "2026-11-13T01:34:48.583240+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:35:22.940727+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json:pid:29176",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:35:22.940727+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:35:22.940727+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-import-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:35:22.940727+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-import-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-ledger-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-ledger-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json:pid:23108",
+        "started_at": "2026-11-13T01:59:37.116389+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:59:37.408135+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json:pid:23108",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:59:37.408135+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:59:37.408135+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-ledger-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:59:37.408135+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-ledger-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-ledger-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json:pid:26128",
+        "started_at": "2026-11-13T02:00:04.769887+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T02:00:05.053584+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json:pid:26128",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T02:00:05.053584+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T02:00:05.053584+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-ledger-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T02:00:05.053584+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-ledger-03",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-ledger-03",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json:pid:19860",
+        "started_at": "2026-11-13T02:00:34.341934+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T02:00:34.630834+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json:pid:19860",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T02:00:34.630834+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T02:00:34.630834+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-ledger-03",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T02:00:34.630834+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ledger-03\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-library-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-library-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json:pid:29548",
+        "started_at": "2026-11-13T01:40:39.353188+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:41:01.106379+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json:pid:29548",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:41:01.106379+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:41:01.106379+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-library-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:41:01.106379+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-library-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-liveness-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-liveness-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json:pid:2244",
+        "started_at": "2026-11-13T01:42:49.888462+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:42:56.705762+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json:pid:2244",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:42:56.705762+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:42:56.705762+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-liveness-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:42:56.705762+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-liveness-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-loadcheck-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-loadcheck-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json:pid:25808",
+        "started_at": "2026-11-13T01:46:18.352364+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:47:07.168044+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json:pid:25808",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:47:07.168044+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:47:07.168044+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-loadcheck-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:47:07.168044+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-loadcheck-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-perf-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-perf-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json:pid:2768",
+        "started_at": "2026-11-13T01:41:30.456681+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:42:49.832365+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json:pid:2768",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:42:49.832365+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:42:49.832365+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-perf-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:42:49.832365+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-perf-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-python-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-python-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json:pid:27828",
+        "started_at": "2026-11-13T01:36:04.630664+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:36:47.691637+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json:pid:27828",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:36:47.691637+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:36:47.691637+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-python-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:36:47.691637+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-python-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-roulette-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-roulette-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json:pid:8412",
+        "started_at": "2026-11-13T01:41:25.587092+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:41:30.408423+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json:pid:8412",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:41:30.408423+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:41:30.408423+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-roulette-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:41:30.408423+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-roulette-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-smoke-content-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-smoke-content-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json:pid:29548",
+        "started_at": "2026-11-13T01:35:50.969680+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:36:33.738322+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json:pid:29548",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:36:33.738322+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:36:33.738322+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-smoke-content-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:36:33.738322+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-content-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-smoke-runtime-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-smoke-runtime-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json:pid:22896",
+        "started_at": "2026-11-13T01:39:06.423832+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:40:04.808627+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json:pid:22896",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:40:04.808627+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:40:04.808627+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-smoke-runtime-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:40:04.808627+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-smoke-runtime-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-summary-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-summary-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json:pid:2420",
+        "started_at": "2026-11-13T01:55:37.874842+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:55:38.135140+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json:pid:2420",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:55:38.135140+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:55:38.135140+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-summary-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:55:38.135140+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-summary-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-summary-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json:pid:26652",
+        "started_at": "2026-11-13T01:55:55.476701+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:55:56.376293+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json:pid:26652",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:55:56.376293+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:55:56.376293+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-summary-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:55:56.376293+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-summary-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-ui-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-ui-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json:pid:6464",
+        "started_at": "2026-11-13T01:40:04.853604+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:40:22.872240+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json:pid:6464",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:40:22.872240+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:40:22.872240+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-ui-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:40:22.872240+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-ui-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-validate-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-validate-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json:pid:15820",
+        "started_at": "2026-11-13T01:37:23.987608+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:39:06.382540+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json:pid:15820",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:39:06.382540+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:39:06.382540+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-validate-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:39:06.382540+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-validate-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-boot-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-boot-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json:pid:15540",
+        "started_at": "2026-11-13T01:40:06.474164+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:40:07.491196+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json:pid:15540",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:40:07.491196+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:40:07.491196+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-boot-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:40:07.491196+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-boot-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-boot-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json:pid:1544",
+        "started_at": "2026-11-13T01:48:38.782922+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:48:50.395691+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json:pid:1544",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:48:50.395691+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:48:50.395691+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-boot-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:48:50.395691+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-boot-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-browser-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-browser-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json:pid:23092",
+        "started_at": "2026-11-13T01:39:19.762833+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:44:19.817307+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json:pid:23092",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:44:19.817307+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:44:19.817307+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-browser-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:44:19.817307+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-browser-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-browser-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json:pid:25908",
+        "started_at": "2026-11-13T01:47:25.250770+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:52:25.500206+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json:pid:25908",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:52:25.500206+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:52:25.500206+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-browser-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:52:25.500206+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-browser-03",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-browser-03",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json:pid:20448",
+        "started_at": "2026-11-13T01:53:17.079082+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:53:51.252847+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json:pid:20448",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:53:51.252847+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:53:51.252847+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-browser-03",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:53:51.252847+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-browser-03\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-gas-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-gas-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json:pid:25212",
+        "started_at": "2026-11-13T01:52:39.385634+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:52:40.366571+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json:pid:25212",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:52:40.366571+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:52:40.366571+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-gas-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:52:40.366571+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-gas-02",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-gas-02",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json:pid:15376",
+        "started_at": "2026-11-13T01:53:29.982224+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:53:50.371065+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json:pid:15376",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:53:50.371065+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:53:50.371065+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-gas-02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:53:50.371065+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-gas-02\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-library-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-library-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json:pid:26660",
+        "started_at": "2026-11-13T01:51:29.310484+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:51:32.699365+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json:pid:26660",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:51:32.699365+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:51:32.699365+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-library-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:51:32.699365+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-library-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-selector-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-selector-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json:pid:29608",
+        "started_at": "2026-11-13T01:51:57.846808+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:52:01.038201+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json:pid:29608",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:52:01.038201+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:52:01.038201+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-selector-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:52:01.038201+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-selector-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-p0-web-telemetry-01",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-p0-web-telemetry-01",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json:pid:20600",
+        "started_at": "2026-11-13T01:51:00.480523+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:51:10.968245+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json:pid:20600",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:51:10.968245+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:51:10.968245+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-p0-web-telemetry-01",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:51:10.968245+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-p0-web-telemetry-01\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
+      }
+    },
+    {
+      "instance_id": "envart:BTH-ENVART-001-source2-20261112",
+      "task_id": "BTH-ENVART-001",
+      "owner_task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "BTH-ENVART-001-source2-20261112",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json:pid:23132",
+        "started_at": "2026-11-13T01:26:50.944977+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-13T01:27:00.236567+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json:pid:23132",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-13T01:27:00.236567+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+          ],
+          "failure": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+          ],
+          "timeout": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+          ],
+          "interruption": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-13T01:27:00.236567+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "BTH-ENVART-001-source2-20261112",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-13T01:27:00.236567+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-source2-20261112\\evidence\\storage-manifest.json"
+        ],
+        "limit": "Exact assigned capped Job receipt and owned-zero closure only. Tests/setup failures and timeouts remain failures; profiles/evidence retained. Start timestamp is the exclusive prelaunch claim, not a sampled child start. No unrelated host census or cleanup."
       }
     }
   ],

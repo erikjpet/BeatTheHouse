@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-13T01:28:55.813274+00:00",
+  "updated_at": "2026-11-13T01:59:03.915478+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -682,7 +682,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17â€“1.33s cold versus17â€“40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -777,7 +777,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17â€“1.33s cold versus17â€“40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         },
         {
           "kind": "branch_integration",
@@ -5504,13 +5504,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop â†’ Main Menu â†’ Continue â†’ full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop â†’ Main Menu â†’ Continue â†’ full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5741,13 +5741,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3â€“5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3â€“5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13790,7 +13790,7 @@
                 "docs/testing/deprecated_code_audit_continuation_025.json",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44â†’0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
@@ -13801,7 +13801,7 @@
                 "docs/testing/incremental_cleanup.md",
                 "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-correction-source-peer-r2.json"
               ],
-              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44→0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
+              "scope": "Reuse original completebodyreview for exact unchanged methods plus independentlyqualifiedfourline026correction and actual181publicDTO checks44â†’0. No additionalwholebodyareaclaimed; sourcefbd95aae requiredNEXT stillOpen."
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
@@ -14950,13 +14950,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2â†’1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2â†’1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -22368,7 +22368,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate R08 cash Roulette BET9 on Red: one Spin arms Confirm, one Confirm click returns but no settlement/debit occurs, and Save/refresh/cold entry exposes SEALED ACTION. Preserve the original pending request and all evidence without Retry, Cancel, repeat Confirm, original profile/save/authority/key/RNG access or action replay. Reconstruct independently, classify the exact failure, and fix/test only a confirmed defect while preserving rules, economy, RNG, semantic seals, exactly-once delivery and persistence. A bounded fixture is not the original campaign. Respect item/scenario pause and existing resource/disk gates.",
-        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjack→Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
+        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjackâ†’Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -22540,7 +22540,7 @@
         {
           "kind": "prior_blackjack_continuation",
           "reference": "docs/testing/roulette_sealed_pending_r08.json",
-          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80→71→80, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71→62/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
+          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80â†’71â†’80, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71â†’62/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
         },
         {
           "kind": "seed_b_cold_financial_control",
@@ -22913,7 +22913,7 @@
         {
           "kind": "private_substantive_cause_proposal",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947→candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
+          "summary": "Focusedtelemetrycanonicalization8.96s/capacity28.665sinclusive. Independentproof supportsreplacingfinalacceptedchangedcomparison only; copiedexistingcapacitycase baseline28.292947â†’candidate17.084278s (~39.62%), both0fail. CompleteVariantparityfixturepending; canonicalRuntimeunchanged."
         },
         {
           "kind": "canonical_fix_qualified",
@@ -22923,7 +22923,7 @@
         {
           "kind": "canonical_and_full_sequence_nonregression",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
-          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947→17.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
+          "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947â†’17.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
         },
         {
           "kind": "exact_next_delivery_and_basic_task_browser_launch",
@@ -25677,7 +25677,7 @@
       "group": "current",
       "objective": {
         "text": "Qualify a narrowly measured generic Runtime normalization optimization: cached command results are already deep-owned before scalar normalization and pure shape validation, so the final second deep copy may be redundant. Preserve the initial ownership clone, complete caller isolation, exact values/type flags, saved-float behavior, receipt membership/fingerprint checks, all bounds and default public APIs. No production adoption without substantive measured benefit and compatibility evidence.",
-        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806–1829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
+        "source": "Phase018 current complete capacity case18.212480s and772 actual canonical API calls; phase019 read-only source audit locates fresh cached clone1796, pure closed-shape validator1806â€“1829 and final extra copy1802. ExistingContent006 owns original investigation; screened callback branch excluded.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -27637,7 +27637,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44â†’0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -27774,7 +27774,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44â†’0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -28175,7 +28175,7 @@
         {
           "kind": "qualified_ordinary_DTO_corrective_commit026",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\catalog026-ritual-candidate-root-postcheck-r1.json",
-          "summary": "Actualsame181checks44→0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
+          "summary": "Actualsame181checks44â†’0,30observationrecordsexact14targetscorrected, originalfixturestate/projection/oldgameerrorssame. Fourproductionlinesonly, legacyanchorfallback retained. Localfbd95aae; no main/NEXT/playerauthority/capsule claim."
         }
       ],
       "implementation_batches": [],
@@ -29413,7 +29413,7 @@
         {
           "kind": "precise_current_source_dominance_proof031",
           "reference": "docs/testing/deprecated_code_audit_continuation_031.json",
-          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hint→entry→classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
+          "summary": "Source local assignment census and complete earlier return coverage provePERSON_EVENT_PROPS149,clerk150-151,prop-onlyclerk152 anditem165 dominated. Shipping authored hintâ†’entryâ†’classifier traces and override/downstream normalization limits recorded. No executable alternate classifier, parity run, removal or implementation."
         }
       ],
       "implementation_batches": [],
@@ -30591,7 +30591,7 @@
       "group": "current",
       "objective": {
         "text": "Reconcile remaining branch and dirty worktree contents with current main/NEXT and clean obsolete integrated branches before the next large feature workspace. Preserve all unique work, dirty files, historical diagnostics and active worker branches. Branch cleanup does not close unfinished product objectives or restart paused work.",
-        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we donâ€™t have any merge issues later",
+        "source": "User: What is the work the records state as unfinished? Also what work remains in branches. I want to get everything merged into main / playable on next. We are going to be making a large branch feature implementation off of that in another workspace. I also want all other branches to be cleaned up so we donÃ¢â‚¬â„¢t have any merge issues later",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -31676,7 +31676,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change.",
+        "text": "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving â€” open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change.",
         "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -31769,7 +31769,7 @@
         "evidence": []
       },
       "planned_app_changes": [
-        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving â€” open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
       "updated_at": "2026-11-11T04:23:16.824645+00:00"
     },
@@ -37607,7 +37607,14 @@
         "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a883ecc673bb3754c901327fe00499b72804e1f4",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -37619,23 +37626,30 @@
           "kind": "owner_request",
           "reference": "docs/todo/BTH_environment_art_layers_plan.md",
           "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md",
+          "summary": "20 native base rooms plus Gas menu and exact NEXT Web idle baseline recorded. Seven Smoke IDs and180 Python tests pass; inherited validation/UI and7 unqualified perf findings retained. Branch delivery pending."
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "external",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Current starter scanline16x68 violates required1800x68; art must remain unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T01:28:55.813274+00:00",
-        "evidence": []
+        "observed_at": "2026-11-13T01:59:03.915478+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "updated_at": "2026-11-13T01:59:03.915478+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "REGISTERED_BRANCH_ONLY_BASELINE_NEXT_PENDING",
+      "status": "BASELINE_RECORDED_INHERITED_FAILURES_NEXT_PENDING",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37645,77 +37659,77 @@
             "id": "phase-00",
             "description": "Baseline with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-01",
             "description": "Pack loader and validator with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-02",
             "description": "Background layer with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-03",
             "description": "Animation layer with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-04",
             "description": "Counter layer with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-05",
             "description": "Gas Station proof with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-06",
             "description": "Loading memory and size with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-07",
             "description": "Authoring reload and documentation with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-08",
             "description": "All20 room art delivery with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-09",
             "description": "Main menu packed rooms with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           },
           {
             "id": "phase-10",
             "description": "Travel doorway art delivery with measured proof, regression results, commit and required later NEXT acceptance",
             "required": true,
-            "state": "pending",
+            "state": "open",
             "evidence": []
           }
         ],
@@ -37725,57 +37739,57 @@
           "areas": [
             {
               "name": "Baseline",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Pack loader and validator",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Background layer",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Animation layer",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Counter layer",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Gas Station proof",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Loading memory and size",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Authoring reload and documentation",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "All20 room art delivery",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Main menu packed rooms",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             },
             {
               "name": "Travel doorway art delivery",
-              "state": "pending",
+              "state": "remaining",
               "evidence": []
             }
           ]
@@ -37794,7 +37808,7 @@
         "BTH-ENVART-001-PHASE-09",
         "BTH-ENVART-001-PHASE-10"
       ],
-      "next_action": "Record Phase0 baseline in guarded E: workspace; then validate exact supplied pack. Await corrected1800x68 scanline before Gas Station proof.",
+      "next_action": "Continue ordered branch implementation and compare against Phase0. Corrected starter art is required before Phase5 can pass; NEXT acceptance awaits later owner-directed merge.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -38629,7 +38643,7 @@
       "state": "complete",
       "status": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI",
       "scope": [
-        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving â€” open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
@@ -41458,7 +41472,14 @@
         "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a883ecc673bb3754c901327fe00499b72804e1f4",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -41470,25 +41491,32 @@
           "kind": "owner_request",
           "reference": "docs/todo/BTH_environment_art_layers_plan.md",
           "summary": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md",
+          "summary": "20 native base rooms plus Gas menu and exact NEXT Web idle baseline recorded. Seven Smoke IDs and180 Python tests pass; inherited validation/UI and7 unqualified perf findings retained. Branch delivery pending."
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "external",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Current starter scanline16x68 violates required1800x68; art must remain unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T01:28:55.813274+00:00",
-        "evidence": []
+        "observed_at": "2026-11-13T01:59:03.915478+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
+        ]
       },
-      "updated_at": "2026-11-13T01:28:55.813274+00:00",
+      "updated_at": "2026-11-13T01:59:03.915478+00:00",
       "id": "BTH-ENVART-001-PHASE-00",
       "name": "Baseline",
       "parent_id": "BTH-ENVART-001",
-      "status": "REGISTERED_NOT_STARTED_NEXT_PENDING",
+      "status": "BASELINE_RECORDED_INHERITED_FAILURES_NEXT_PENDING",
       "scope": [
         "Baseline per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Execute in plan order after preceding phase qualifies."
+      "next_action": "Continue ordered branch implementation and compare against Phase0. Corrected starter art is required before Phase5 can pass; NEXT acceptance awaits later owner-directed merge."
     },
     {
       "group": "current",
