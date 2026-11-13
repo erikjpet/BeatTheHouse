@@ -24,6 +24,7 @@ signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentArtPackScript := preload("res://scripts/ui/environment_art_pack.gd")
+const EnvironmentArtRendererScript := preload("res://scripts/ui/environment_art_renderer.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
@@ -186,6 +187,7 @@ var uses_foundation_snapshot := false
 var background_texture: Texture2D
 var use_external_background := false
 var environment_art_pack: EnvironmentArtPack
+var environment_art_renderer: EnvironmentArtRendererScript
 var flicker: float = 0.0
 var camera_zoom: float = 1.0
 var camera_offset: Vector2 = Vector2.ZERO
@@ -1700,7 +1702,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
 	environment_id = art_key if ["punchline_club", "punchline_back_room"].has(art_key) else archetype_id
-	environment_art_pack = EnvironmentArtPackScript.cached_pack(environment_id)
+	_set_environment_art_pack(EnvironmentArtPackScript.cached_pack(environment_id))
 	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
 	if texture_scope_key.is_empty():
 		texture_scope_key = environment_id
@@ -3899,11 +3901,13 @@ func _draw() -> void:
 	selected_info_badge_hit_entries = []
 	draw_rect(Rect2(Vector2.ZERO, size), C_DARK)
 	_scale_canvas()
-	_bg()
+	# A prepared opaque pack surface already retains this identical underlay.
+	if not _environment_art_pack_active() or not environment_art_renderer.ready_to_present:
+		_bg()
 	if use_external_background and background_texture != null:
 		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
 	elif environment_art_pack != null:
-		draw_texture_rect(environment_art_pack.background, environment_art_pack.background_rect, false)
+		_draw_environment_art_animations(environment_art_pack)
 	else:
 		match environment_id:
 			"corner_store":
@@ -3968,6 +3972,28 @@ func _draw() -> void:
 
 func _environment_art_pack_active() -> bool:
 	return environment_art_pack != null and not (use_external_background and background_texture != null)
+
+
+func _set_environment_art_pack(pack: EnvironmentArtPack) -> void:
+	if environment_art_pack == pack:
+		return
+	if environment_art_renderer != null:
+		environment_art_renderer.free()
+		environment_art_renderer = null
+	environment_art_pack = pack
+	if pack != null:
+		environment_art_renderer = EnvironmentArtRendererScript.new()
+		add_child(environment_art_renderer)
+		environment_art_renderer.configure(pack)
+
+
+func _draw_environment_art_animations(_pack: EnvironmentArtPack) -> void:
+	if environment_art_renderer != null:
+		environment_art_renderer.present(flicker, reduce_motion, _grand_casino_web_low_detail())
+		if environment_art_renderer.ready_to_present:
+			draw_texture_rect(environment_art_renderer.viewport.get_texture(), _pack.background_rect, false)
+		else:
+			draw_texture_rect(_pack.background, _pack.background_rect, false)
 
 
 func _draw_developer_placement_outline() -> void:

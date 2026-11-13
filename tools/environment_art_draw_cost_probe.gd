@@ -41,7 +41,8 @@ func _run() -> void:
 	var snapshot: Dictionary = live_canvas.get("foundation_snapshot")
 	snapshot = snapshot.duplicate(true)
 	app.visible = false
-	var before := await _measure(FileAccess.get_file_as_string(original_source), "EnvartOriginalProfileCanvas", snapshot)
+	var original := FileAccess.get_file_as_string(original_source)
+	var before_first := await _measure(original, "EnvartOriginalProfileCanvas", snapshot)
 	var current := FileAccess.get_file_as_string("res://scripts/ui/pixel_scene_canvas.gd")
 	var renderer_path := "res://scripts/ui/environment_art_renderer.gd"
 	if current.contains(renderer_path):
@@ -51,18 +52,30 @@ func _run() -> void:
 		var file := FileAccess.open(path, FileAccess.WRITE)
 		file.store_string(renderer)
 		file.close()
-		current = current.replace(renderer_path, path)
-	var after := await _measure(current, "EnvartCurrentProfileCanvas", snapshot)
-	var passed := int(before.get("root_draw_calls", 0)) >= 180 and int(after.get("root_draw_calls", 0)) >= 180 and float(after.get("mean_cpu_ms_per_root_draw", INF)) <= float(before.get("mean_cpu_ms_per_root_draw", 0.0)) and float(after.get("p95_cpu_ms_per_callback_frame", INF)) <= float(before.get("p95_cpu_ms_per_callback_frame", 0.0))
+		current = current.replace(renderer_path, path.replace("\\", "/"))
+	var after_first := await _measure(current, "EnvartCurrentProfileCanvas", snapshot)
+	var after_second := await _measure(current, "EnvartCurrentProfileCanvas2", snapshot)
+	var before_second := await _measure(original, "EnvartOriginalProfileCanvas2", snapshot)
+	var before := _combine(before_first, before_second)
+	var after := _combine(after_first, after_second)
+	var passed := int(before.get("root_draw_calls", 0)) >= 1200 and int(after.get("root_draw_calls", 0)) >= 1200 and float(after.get("mean_cpu_ms_per_root_draw", INF)) <= float(before.get("mean_cpu_ms_per_root_draw", 0.0)) and float(after.get("p95_cpu_ms_per_callback_frame", INF)) <= float(before.get("p95_cpu_ms_per_callback_frame", 0.0))
 	var result := {"passed": passed, "before_original": before, "after_current": after, "room": "gas_station_casino", "real_generated_snapshot": true, "object_count": snapshot.get("interactable_objects", []).size(), "scope": "Paired native CPU draw bodies, all retained art children included. Excludes GPU timing and instrumentation bookkeeping; no scheduling or pointer intervention."}
 	var file := FileAccess.open(out_dir.path_join("draw_cost.json"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(result, "\t"))
 	file.close()
-	print("ENVART_PAIRED_DRAW_COST " + JSON.stringify(result))
+	print("ENVART_PAIRED_DRAW_COST " + JSON.stringify({"passed": passed, "before_mean_ms": before.get("mean_cpu_ms_per_root_draw"), "after_mean_ms": after.get("mean_cpu_ms_per_root_draw"), "before_p95_ms": before.get("p95_cpu_ms_per_callback_frame"), "after_p95_ms": after.get("p95_cpu_ms_per_callback_frame")}))
 	app.queue_free()
 	await process_frame
 	PackScript.invalidate()
 	quit(0 if passed else 1)
+
+
+func _combine(first: Dictionary, second: Dictionary) -> Dictionary:
+	if first.get("compile_failed", false) or second.get("compile_failed", false):
+		return {"compile_failed": true, "samples": [first, second]}
+	var samples: Array = first["callback_frame_usec"] + second["callback_frame_usec"]
+	samples.sort()
+	return {"root_draw_calls": int(first["root_draw_calls"]) + int(second["root_draw_calls"]), "all_draw_callbacks": int(first["all_draw_callbacks"]) + int(second["all_draw_callbacks"]), "mean_cpu_ms_per_root_draw": (float(first["mean_cpu_ms_per_root_draw"]) + float(second["mean_cpu_ms_per_root_draw"])) / 2.0, "p95_cpu_ms_per_callback_frame": float(samples[int(samples.size() * 0.95)]) / 1000.0, "sampling_order": "original,current,current,original; 600 autonomous root draws each after 180 warmup draws", "samples": [first, second]}
 
 
 func _measure(source: String, class_name_value: String, snapshot: Dictionary) -> Dictionary:
@@ -78,11 +91,11 @@ func _measure(source: String, class_name_value: String, snapshot: Dictionary) ->
 	canvas.call("render_environment_snapshot", snapshot.duplicate(true))
 	_set_profile(canvas, profile)
 	var deadline := Time.get_ticks_msec() + 15000
-	while profile.root_calls < 30 and Time.get_ticks_msec() < deadline:
+	while profile.root_calls < 180 and Time.get_ticks_msec() < deadline:
 		await process_frame
 	profile.reset()
-	deadline = Time.get_ticks_msec() + 15000
-	while profile.root_calls < 180 and Time.get_ticks_msec() < deadline:
+	deadline = Time.get_ticks_msec() + 45000
+	while profile.root_calls < 600 and Time.get_ticks_msec() < deadline:
 		await process_frame
 	var result: Dictionary = profile.result()
 	canvas.free()

@@ -45,6 +45,38 @@ class AnimationEntry:
 	var still_frame := 0
 	var beam_thickness := 0.0
 
+	func clock_time(clock: float, reduced: bool) -> float:
+		return phase if reduced else clock + phase
+
+	func frame_at(clock: float, reduced: bool) -> int:
+		if reduced:
+			return still_frame
+		var frame := int(floor(clock_time(clock, false) * fps))
+		if loop_mode == LoopMode.ONCE_HOLD:
+			return clampi(frame, 0, frame_count - 1)
+		if loop_mode == LoopMode.PINGPONG and frame_count > 1:
+			var step := posmod(frame, (frame_count - 1) * 2)
+			return mini(step, (frame_count - 1) * 2 - step)
+		return posmod(frame, frame_count)
+
+	func pulse_at(clock: float, reduced: bool) -> float:
+		return opacity * lerpf(min_opacity, max_opacity, 0.5 + 0.5 * sin(TAU * clock_time(clock, reduced) / period))
+
+	func mover_visible_at(clock: float, reduced: bool) -> bool:
+		return reduced or fposmod(clock_time(clock, false), duration + gap) < duration
+
+	func mover_at(clock: float, reduced: bool) -> Vector2:
+		if reduced:
+			return from_point
+		return from_point.lerp(to_point, minf(fposmod(clock_time(clock, false), duration + gap) / duration, 1.0))
+
+	func scroll_at(clock: float, reduced: bool) -> Vector2:
+		var time := clock_time(clock, reduced)
+		return Vector2(fposmod(speed.x * time, rect.size.x), fposmod(speed.y * time, rect.size.y))
+
+	func sweep_at(clock: float, reduced: bool) -> Vector2:
+		return from_point.lerp(to_point, 0.5 - 0.5 * cos(TAU * clock_time(clock, reduced) / period))
+
 
 class CounterEntry:
 	extends RefCounted

@@ -6,6 +6,7 @@ var usec := PackedInt64Array()
 var root_calls := 0
 var all_calls := 0
 var total_usec := 0
+var root_usec := 0
 
 
 func _init() -> void:
@@ -20,6 +21,7 @@ func reset() -> void:
 	root_calls = 0
 	all_calls = 0
 	total_usec = 0
+	root_usec = 0
 
 
 func record(elapsed: int, root_call: bool) -> void:
@@ -33,6 +35,7 @@ func record(elapsed: int, root_call: bool) -> void:
 	all_calls += 1
 	if root_call:
 		root_calls += 1
+		root_usec += elapsed
 
 
 func result() -> Dictionary:
@@ -41,4 +44,4 @@ func result() -> Dictionary:
 		if frames[index] >= 0:
 			samples.append(usec[index])
 	samples.sort()
-	return {"root_draw_calls": root_calls, "all_draw_callbacks": all_calls, "mean_cpu_ms_per_root_draw": float(total_usec) / float(maxi(root_calls, 1)) / 1000.0, "p95_cpu_ms_per_callback_frame": float(samples[mini(samples.size() - 1, int(samples.size() * 0.95))]) / 1000.0 if not samples.is_empty() else 0.0, "source": "timed_original_draw_bodies_including_retained_art_children", "frame_samples": samples.size()}
+	return {"root_cpu_ms": float(root_usec) / float(maxi(root_calls, 1)) / 1000.0, "child_cpu_ms": float(total_usec - root_usec) / float(maxi(root_calls, 1)) / 1000.0, "root_draw_calls": root_calls, "all_draw_callbacks": all_calls, "mean_cpu_ms_per_root_draw": float(total_usec) / float(maxi(root_calls, 1)) / 1000.0, "p95_cpu_ms_per_callback_frame": float(samples[mini(samples.size() - 1, int(samples.size() * 0.95))]) / 1000.0 if not samples.is_empty() else 0.0, "source": "timed_original_draw_bodies_including_retained_art_children", "frame_samples": samples.size(), "callback_frame_usec": samples}
