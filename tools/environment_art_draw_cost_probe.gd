@@ -42,7 +42,6 @@ func _run() -> void:
 	snapshot = snapshot.duplicate(true)
 	app.visible = false
 	var original := FileAccess.get_file_as_string(original_source)
-	var before_first := await _measure(original, "EnvartOriginalProfileCanvas", snapshot)
 	var current := FileAccess.get_file_as_string("res://scripts/ui/pixel_scene_canvas.gd")
 	var renderer_path := "res://scripts/ui/environment_art_renderer.gd"
 	if current.contains(renderer_path):
@@ -53,11 +52,13 @@ func _run() -> void:
 		file.store_string(renderer)
 		file.close()
 		current = current.replace(renderer_path, path.replace("\\", "/"))
-	var after_first := await _measure(current, "EnvartCurrentProfileCanvas", snapshot)
-	var after_second := await _measure(current, "EnvartCurrentProfileCanvas2", snapshot)
-	var before_second := await _measure(original, "EnvartOriginalProfileCanvas2", snapshot)
-	var before := _combine(before_first, before_second)
-	var after := _combine(after_first, after_second)
+	# Time both bodies in the same process frames. Long serial blocks had host
+	# clock/load drift up to0.2ms, larger than the measured room-layer difference.
+	# Reverse canvas order for the second pair; retain the same strict gate.
+	var first := await _measure_pair(original, current, snapshot, false)
+	var second := await _measure_pair(original, current, snapshot, true)
+	var before := _combine(first["before"], second["before"])
+	var after := _combine(first["after"], second["after"])
 	var passed := int(before.get("root_draw_calls", 0)) >= 1200 and int(after.get("root_draw_calls", 0)) >= 1200 and float(after.get("mean_cpu_ms_per_root_draw", INF)) <= float(before.get("mean_cpu_ms_per_root_draw", 0.0)) and float(after.get("p95_cpu_ms_per_callback_frame", INF)) <= float(before.get("p95_cpu_ms_per_callback_frame", 0.0))
 	var result := {"passed": passed, "before_original": before, "after_current": after, "room": "gas_station_casino", "real_generated_snapshot": true, "object_count": snapshot.get("interactable_objects", []).size(), "scope": "Paired native CPU draw bodies, all retained art children included. Excludes GPU timing and instrumentation bookkeeping; no scheduling or pointer intervention."}
 	var file := FileAccess.open(out_dir.path_join("draw_cost.json"), FileAccess.WRITE)
@@ -75,30 +76,43 @@ func _combine(first: Dictionary, second: Dictionary) -> Dictionary:
 		return {"compile_failed": true, "samples": [first, second]}
 	var samples: Array = first["callback_frame_usec"] + second["callback_frame_usec"]
 	samples.sort()
-	return {"root_draw_calls": int(first["root_draw_calls"]) + int(second["root_draw_calls"]), "all_draw_callbacks": int(first["all_draw_callbacks"]) + int(second["all_draw_callbacks"]), "mean_cpu_ms_per_root_draw": (float(first["mean_cpu_ms_per_root_draw"]) + float(second["mean_cpu_ms_per_root_draw"])) / 2.0, "p95_cpu_ms_per_callback_frame": float(samples[int(samples.size() * 0.95)]) / 1000.0, "sampling_order": "original,current,current,original; 600 autonomous root draws each after 180 warmup draws", "samples": [first, second]}
+	return {"root_draw_calls": int(first["root_draw_calls"]) + int(second["root_draw_calls"]), "all_draw_callbacks": int(first["all_draw_callbacks"]) + int(second["all_draw_callbacks"]), "mean_cpu_ms_per_root_draw": (float(first["mean_cpu_ms_per_root_draw"]) + float(second["mean_cpu_ms_per_root_draw"])) / 2.0, "p95_cpu_ms_per_callback_frame": float(samples[int(samples.size() * 0.95)]) / 1000.0, "sampling_order": "same-frame original/current then same-frame current/original; 600 autonomous root draws each after 180 warmup draws", "samples": [first, second]}
 
 
-func _measure(source: String, class_name_value: String, snapshot: Dictionary) -> Dictionary:
+func _profiled_canvas(source: String, class_name_value: String, snapshot: Dictionary, profile: RefCounted) -> Control:
 	var script := GDScript.new()
 	script.source_code = source.replace("class_name PixelSceneCanvas", "class_name " + class_name_value).replace("func _draw() -> void:", "func _qa_profile_body() -> void:") + "\nfunc _draw() -> void:\n\tvar began := Time.get_ticks_usec()\n\t_qa_profile_body()\n\tget_meta(\"envart_draw_profile\").record(Time.get_ticks_usec() - began, true)\n"
 	if script.reload() != OK:
-		return {"compile_failed": true}
+		return null
 	var canvas: Control = script.new()
-	var profile := ProfileScript.new()
 	canvas.set_meta("envart_draw_profile", profile)
 	canvas.size = Vector2(900, 430)
 	root.add_child(canvas)
 	canvas.call("render_environment_snapshot", snapshot.duplicate(true))
 	_set_profile(canvas, profile)
+	return canvas
+
+
+func _measure_pair(original: String, current: String, snapshot: Dictionary, reverse: bool) -> Dictionary:
+	var before_profile := ProfileScript.new()
+	var after_profile := ProfileScript.new()
+	var before := _profiled_canvas(original, "EnvartOriginalProfileCanvas", snapshot, before_profile)
+	var after := _profiled_canvas(current, "EnvartCurrentProfileCanvas", snapshot, after_profile)
+	if before == null or after == null:
+		return {"before": {"compile_failed": true}, "after": {"compile_failed": true}}
+	if reverse:
+		root.move_child(after, 0)
 	var deadline := Time.get_ticks_msec() + 15000
-	while profile.root_calls < 180 and Time.get_ticks_msec() < deadline:
+	while mini(before_profile.root_calls, after_profile.root_calls) < 180 and Time.get_ticks_msec() < deadline:
 		await process_frame
-	profile.reset()
+	before_profile.reset()
+	after_profile.reset()
 	deadline = Time.get_ticks_msec() + 45000
-	while profile.root_calls < 600 and Time.get_ticks_msec() < deadline:
+	while mini(before_profile.root_calls, after_profile.root_calls) < 600 and Time.get_ticks_msec() < deadline:
 		await process_frame
-	var result: Dictionary = profile.result()
-	canvas.free()
+	var result := {"before": before_profile.result(), "after": after_profile.result()}
+	before.free()
+	after.free()
 	return result
 
 

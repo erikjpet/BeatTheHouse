@@ -3902,7 +3902,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), C_DARK)
 	_scale_canvas()
 	# A prepared opaque pack surface already retains this identical underlay.
-	if not _environment_art_pack_active() or not environment_art_renderer.ready_to_present:
+	var packed_art := _environment_art_pack_active()
+	if not packed_art or not environment_art_renderer.ready_to_present:
 		_bg()
 	if use_external_background and background_texture != null:
 		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
@@ -3957,7 +3958,7 @@ func _draw() -> void:
 	# cannot recolor or approximate the original counter.
 	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
-	if not _environment_art_pack_active():
+	if not packed_art:
 		_draw_scene_life()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
@@ -3991,7 +3992,7 @@ func _draw_environment_art_animations(_pack: EnvironmentArtPack) -> void:
 	if environment_art_renderer != null:
 		environment_art_renderer.present(flicker, reduce_motion, _grand_casino_web_low_detail())
 		if environment_art_renderer.ready_to_present:
-			draw_texture_rect(environment_art_renderer.viewport.get_texture(), _pack.background_rect, false)
+			draw_texture_rect(environment_art_renderer.texture, _pack.background_rect, false)
 		else:
 			draw_texture_rect(_pack.background, _pack.background_rect, false)
 

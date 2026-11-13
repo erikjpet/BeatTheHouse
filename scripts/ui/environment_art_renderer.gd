@@ -9,6 +9,7 @@ const PackScript := preload("res://scripts/ui/environment_art_pack.gd")
 const StyleScript := preload("res://scripts/ui/visual_style.gd")
 const BOARD := Rect2(0, 0, 900, 430)
 var viewport: SubViewport
+var texture: Texture2D
 var entries: Array[AnimationLayer] = []
 var ready_to_present := false
 
@@ -34,39 +35,37 @@ class AnimationLayer:
 
 	func _draw() -> void:
 		for entry in animations:
-			if not (reduced and entry.still_hidden) and not (low_detail and not entry.web_low_detail):
-				_draw_entry(entry)
-
-	func _draw_entry(entry: PackScript.AnimationEntry) -> void:
-		match entry.kind:
-			PackScript.AnimationKind.FRAMES:
-				draw_texture_rect_region(entry.texture, entry.rect, entry.frame_regions[entry.frame_at(clock, reduced)], entry.modulation)
-			PackScript.AnimationKind.PULSE:
-				var color := entry.modulation
-				color.a = entry.pulse_at(clock, reduced)
-				draw_texture_rect(entry.texture, entry.rect, false, color)
-			PackScript.AnimationKind.MOVER:
-				if entry.mover_visible_at(clock, reduced):
-					_draw_clipped(entry, Rect2(entry.mover_at(clock, reduced), entry.size), entry.frame_regions[entry.frame_at(clock, reduced)], entry.clip if entry.has_clip else BOARD)
-			PackScript.AnimationKind.SCROLL:
-				var offset := entry.scroll_at(clock, reduced)
-				var start := entry.rect.position + offset
-				if offset.x > 0.0:
-					start.x -= entry.rect.size.x
-				if offset.y > 0.0:
-					start.y -= entry.rect.size.y
-				var y := start.y
-				while y < entry.rect.end.y:
-					var x := start.x
-					while x < entry.rect.end.x:
-						_draw_clipped(entry, Rect2(Vector2(x, y), entry.rect.size), entry.frame_regions[0], entry.rect)
-						x += entry.rect.size.x
-					y += entry.rect.size.y
-			PackScript.AnimationKind.SWEEP:
-				var beam := entry.sweep_at(clock, reduced) - entry.origin
-				draw_set_transform(entry.origin, beam.angle(), Vector2.ONE)
-				draw_texture_rect(entry.texture, Rect2(0, -entry.beam_thickness * 0.5, beam.length(), entry.beam_thickness), false, entry.modulation)
-				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+			if (reduced and entry.still_hidden) or (low_detail and not entry.web_low_detail):
+				continue
+			match entry.kind:
+				PackScript.AnimationKind.FRAMES:
+					draw_texture_rect_region(entry.texture, entry.rect, entry.frame_regions[entry.frame_at(clock, reduced)], entry.modulation)
+				PackScript.AnimationKind.PULSE:
+					var color := entry.modulation
+					color.a = entry.pulse_at(clock, reduced)
+					draw_texture_rect(entry.texture, entry.rect, false, color)
+				PackScript.AnimationKind.MOVER:
+					if entry.mover_visible_at(clock, reduced):
+						_draw_clipped(entry, Rect2(entry.mover_at(clock, reduced), entry.size), entry.frame_regions[entry.frame_at(clock, reduced)], entry.clip if entry.has_clip else BOARD)
+				PackScript.AnimationKind.SCROLL:
+					var offset := entry.scroll_at(clock, reduced)
+					var start := entry.rect.position + offset
+					if offset.x > 0.0:
+						start.x -= entry.rect.size.x
+					if offset.y > 0.0:
+						start.y -= entry.rect.size.y
+					var y := start.y
+					while y < entry.rect.end.y:
+						var x := start.x
+						while x < entry.rect.end.x:
+							_draw_clipped(entry, Rect2(Vector2(x, y), entry.rect.size), entry.frame_regions[0], entry.rect)
+							x += entry.rect.size.x
+						y += entry.rect.size.y
+				PackScript.AnimationKind.SWEEP:
+					var beam := entry.sweep_at(clock, reduced) - entry.origin
+					draw_set_transform(entry.origin, beam.angle(), Vector2.ONE)
+					draw_texture_rect(entry.texture, Rect2(0, -entry.beam_thickness * 0.5, beam.length(), entry.beam_thickness), false, entry.modulation)
+					draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 	func _draw_clipped(entry: PackScript.AnimationEntry, destination: Rect2, source: Rect2, bounds: Rect2) -> void:
 		var visible_rect := destination.intersection(bounds)
@@ -83,6 +82,7 @@ func configure(pack: EnvironmentArtPack) -> void:
 	viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
 	viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
 	add_child(viewport)
+	texture = viewport.get_texture()
 	var board := Node2D.new()
 	board.scale = Vector2(2, 2)
 	viewport.add_child(board)
