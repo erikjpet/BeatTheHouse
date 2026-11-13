@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-13T02:44:12.394649+00:00",
+  "updated_at": "2026-11-13T03:09:49.301901+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37619,6 +37619,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "dd6109f43a9ee6499702d78ea314fbd2466994df",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
+          ]
         }
       ],
       "deployment": {
@@ -37642,25 +37648,35 @@
           "kind": "phase_proof",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "65 Godot assertions and224 Python tests pass. Untouched starter fails scanline size and adds1 Smoke copy-gate failure; no renderer integration. Phase1 unqualified; later phases unstarted."
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
+          "summary": "Authorized generated scanline and active proof manifest validate;65 Godot assertions and unchanged Smoke content pass. Original supplied files retained; continue ordered branch renderer implementation."
         }
       ],
       "blocker": {
         "state": "active",
-        "kind": "external_art_pack",
-        "description": "Unedited supplied scanline16x68 must be1800x68 under explicit owner decision. Supplied manifest note adds a release-copy placeholder failure versus Phase0. Do not edit delivered art or weaken/skip tests. Existing perf suite remains unqualified with retained timing findings. NEXT also awaits later owner-directed main merge; no merge now.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
+        "kind": "branch_only_delivery",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T03:09:49.301901+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T02:44:11.311224+00:00",
+      "updated_at": "2026-11-13T03:09:49.301901+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "PHASE1_UNIT_CHECKS_PASS_DELIVERED_PACK_AND_SMOKE_BLOCKED_NEXT_PENDING",
+      "status": "TEMP_ASSETS_VALID_CONTENT_AND_CONTRACT_PASS_NEXT_PENDING",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37819,7 +37835,7 @@
         "BTH-ENVART-001-PHASE-09",
         "BTH-ENVART-001-PHASE-10"
       ],
-      "next_action": "Receive corrected starter scanline and a delivered manifest that passes the unchanged copy gate; retain all red evidence, rerun Phase1 acceptance/Smoke and resolve performance qualification, then begin Phase2. Main merge and NEXT remain later work.",
+      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -41507,27 +41523,30 @@
           "kind": "phase_proof",
           "reference": "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md",
           "summary": "20 native base rooms plus Gas menu and exact NEXT Web idle baseline recorded. Seven Smoke IDs and180 Python tests pass; inherited validation/UI and7 unqualified perf findings retained. Branch delivery pending."
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Current starter scanline16x68 violates required1800x68; art must remain unchanged.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T01:59:03.915478+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase0_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T01:59:03.915478+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-00",
       "name": "Baseline",
       "parent_id": "BTH-ENVART-001",
-      "status": "BASELINE_RECORDED_INHERITED_FAILURES_NEXT_PENDING",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Baseline per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Continue ordered branch implementation and compare against Phase0. Corrected starter art is required before Phase5 can pass; NEXT acceptance awaits later owner-directed merge."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41540,6 +41559,12 @@
       "commits": [
         {
           "sha": "c126b72cf05debb1289b2ebf5423e8f12c4b0112",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
+          ]
+        },
+        {
+          "sha": "dd6109f43a9ee6499702d78ea314fbd2466994df",
           "evidence": [
             "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
           ]
@@ -41561,27 +41586,37 @@
           "kind": "phase_proof",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "65 Godot assertions and224 Python tests pass. Untouched starter fails scanline size and adds1 Smoke copy-gate failure; no renderer integration. Phase1 unqualified; later phases unstarted."
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
+          "summary": "Authorized generated scanline and active proof manifest validate;65 Godot assertions and unchanged Smoke content pass. Original supplied files retained; continue ordered branch renderer implementation."
         }
       ],
       "blocker": {
         "state": "active",
-        "kind": "external_art_pack",
-        "description": "Unedited supplied scanline16x68 must be1800x68 under explicit owner decision. Supplied manifest note adds a release-copy placeholder failure versus Phase0. Do not edit delivered art or weaken/skip tests. Existing perf suite remains unqualified with retained timing findings. NEXT also awaits later owner-directed main merge; no merge now.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
+        "kind": "branch_only_delivery",
+        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-13T03:09:49.301901+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
         ]
       },
-      "updated_at": "2026-11-13T02:44:11.311224+00:00",
+      "updated_at": "2026-11-13T03:09:49.301901+00:00",
       "id": "BTH-ENVART-001-PHASE-01",
       "name": "Pack loader and validator",
       "parent_id": "BTH-ENVART-001",
-      "status": "PHASE1_UNIT_CHECKS_PASS_DELIVERED_PACK_AND_SMOKE_BLOCKED_NEXT_PENDING",
+      "status": "TEMP_ASSETS_VALID_CONTENT_AND_CONTRACT_PASS_NEXT_PENDING",
       "scope": [
         "Pack loader and validator per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Receive corrected starter scanline and a delivered manifest that passes the unchanged copy gate; retain all red evidence, rerun Phase1 acceptance/Smoke and resolve performance qualification, then begin Phase2. Main merge and NEXT remain later work."
+      "next_action": "Continue ordered branch implementation with authorized temporary assets and compare against Phase0. NEXT acceptance awaits later owner-directed merge; final20-room/12-doorway art remains deferred."
     },
     {
       "group": "current",
@@ -41608,27 +41643,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-02",
       "name": "Background layer",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Background layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41655,27 +41693,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-03",
       "name": "Animation layer",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Animation layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41702,27 +41743,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-04",
       "name": "Counter layer",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Counter layer per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41749,27 +41793,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-05",
       "name": "Gas Station proof",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Gas Station proof per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41796,27 +41843,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-06",
       "name": "Loading memory and size",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Loading memory and size per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41843,27 +41893,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-07",
       "name": "Authoring reload and documentation",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Authoring reload and documentation per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
@@ -41937,27 +41990,30 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "NOT_STARTED_PHASE1_GATES_BLOCKED"
+        },
+        {
+          "kind": "user_resumption",
+          "reference": "Current user message, 2026-11-12",
+          "summary": "anything you need please generate yourself as temp assets i will provide full assets when they are done"
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "external_art_pack",
-        "description": "Required earlier Phase1 supplied-pack validation/Smoke gates are red; final art is also absent for Phases8/10.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-13T02:44:12.394649+00:00",
-        "evidence": [
-          "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md"
-        ]
+        "observed_at": "2026-11-13T03:03:41.100943+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-13T02:44:12.394649+00:00",
+      "updated_at": "2026-11-13T03:03:41.100943+00:00",
       "id": "BTH-ENVART-001-PHASE-09",
       "name": "Main menu packed rooms",
       "parent_id": "BTH-ENVART-001",
-      "status": "NOT_STARTED_PHASE1_GATES_BLOCKED",
+      "status": "RESUMED_TEMP_ASSETS_AUTHORIZED_BRANCH_ONLY",
       "scope": [
         "Main menu packed rooms per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
-      "next_action": "Remain unstarted until Phase1 qualifies; proceed in the requested order. Phase9 requires Phase5, independently of the deferred Phase8 delivery."
+      "next_action": "Generate deterministic contract-sized proof assets under latest explicit user authorization, retain original supplied art, qualify Phase1 and continue Phases2-7/9 on the branch. Final20-room/12-doorway art remains deferred; NEXT awaits later merge."
     },
     {
       "group": "current",
