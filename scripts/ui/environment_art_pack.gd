@@ -83,6 +83,23 @@ class CounterEntry:
 	var rect := Rect2()
 
 
+class LoadRequest:
+	extends RefCounted
+	var room_id := ""
+	var manifest: Dictionary
+	var asset_root := ""
+	var counter_rects: Dictionary
+	var relatives: Array[String] = []
+	var paths: Array[String] = []
+	var outstanding: Array[int] = []
+	var textures: Dictionary = {}
+	var progress: Array = [0.0]
+	var next_texture := 0
+	var started := false
+	var retired := false
+	var failed := false
+
+
 var environment_id: String
 var background: Texture2D
 var background_rect := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE))
@@ -93,9 +110,16 @@ var estimated_texture_bytes := 0
 static var last_error := ""
 static var _cache: Dictionary = {}
 static var _cache_order: Array[String] = []
+static var _current_room := ""
+static var _previous_room := ""
+static var _prefetch_room := ""
+static var _pending: Array[LoadRequest] = []
+static var _last_advance_frame := -1
 
 
 static func cached_pack(room_id: String) -> EnvironmentArtPack:
+	# Synchronous validation/compatibility seam. Live views use select_pack and
+	# departure prefetch; they never call this or load_pack on arrival.
 	if not _cache.has(room_id):
 		_cache[room_id] = load_pack(room_id)
 	if _cache_order.is_empty() or _cache_order[-1] != room_id:
@@ -110,9 +134,192 @@ static func invalidate(room_id: String = "") -> void:
 	if room_id.is_empty():
 		_cache.clear()
 		_cache_order.clear()
+		_current_room = ""
+		_previous_room = ""
+		_prefetch_room = ""
 	else:
 		_cache.erase(room_id)
 		_cache_order.erase(room_id)
+	# There is no engine cancellation API. Stop issuing work and nonblockingly
+	# drain only terminal requests, so user load tokens cannot retain old PNGs.
+	for request in _pending:
+		if room_id.is_empty() or request.room_id == room_id:
+			request.retired = true
+			request.textures.clear()
+	_last_advance_frame = -1
+
+
+static func select_pack(room_id: String) -> EnvironmentArtPack:
+	if room_id != _current_room:
+		_previous_room = _current_room
+		_current_room = room_id
+		_prefetch_room = ""
+	_restrict_cache()
+	_ensure_request(room_id)
+	return peek_pack(room_id)
+
+
+static func prefetch_pack(room_id: String) -> void:
+	if room_id == _current_room:
+		return
+	_prefetch_room = room_id
+	_restrict_cache()
+	_ensure_request(room_id)
+
+
+static func prefetch_snapshot(snapshot: Dictionary) -> void:
+	var room_id := str(snapshot.get("archetype_id", snapshot.get("id", "")))
+	var context: Variant = snapshot.get("visual_context", {})
+	if context is Dictionary:
+		var art_key := str(context.get("art_key", room_id)).strip_edges()
+		if art_key == "punchline_club" or art_key == "punchline_back_room":
+			room_id = art_key
+	if not room_id.is_empty():
+		prefetch_pack(room_id)
+
+
+static func peek_pack(room_id: String) -> EnvironmentArtPack:
+	return _cache.get(room_id) as EnvironmentArtPack
+
+
+static func is_loading(room_id: String) -> bool:
+	for request in _pending:
+		if request.room_id == room_id and not request.retired and not request.failed:
+			return true
+	return false
+
+
+static func _wanted(room_id: String) -> bool:
+	return room_id == _current_room or room_id == (_prefetch_room if not _prefetch_room.is_empty() else _previous_room)
+
+
+static func _restrict_cache() -> void:
+	for room_id in _cache.keys():
+		if not _wanted(room_id):
+			_cache.erase(room_id)
+			_cache_order.erase(room_id)
+	for request in _pending:
+		if not _wanted(request.room_id):
+			request.retired = true
+			request.textures.clear()
+
+
+static func _ensure_request(room_id: String) -> void:
+	if _cache.has(room_id) or not _safe_id(room_id):
+		return
+	_cache[room_id] = null
+	if not enabled_environment_ids().has(room_id):
+		return
+	var manifest: Variant = _read_json(MANIFEST_ROOT.path_join(room_id + ".json"))
+	if not manifest is Dictionary:
+		push_warning("Environment art pack '%s' ignored: missing or invalid manifest." % room_id)
+		return
+	var request := LoadRequest.new()
+	request.room_id = room_id
+	request.manifest = manifest
+	request.asset_root = ASSET_ROOT.path_join(room_id)
+	request.counter_rects = room_counter_rectangles(room_id)
+	var sources: Array = [manifest.get("background")]
+	var animations_value: Variant = manifest.get("animations", [])
+	if animations_value is Array:
+		sources.append_array(animations_value)
+	var counters_value: Variant = manifest.get("counters", {})
+	if counters_value is Dictionary:
+		sources.append_array(counters_value.values())
+	for source in sources:
+		if not source is Dictionary or not source.get("texture") is String:
+			continue # The normal compiler reports the exact structural problem.
+		var relative: String = source["texture"]
+		if relative.is_empty() or relative.is_absolute_path() or relative.contains(":") or relative.contains("\\") or relative.split("/").has("..") or relative.get_extension().to_lower() != "png":
+			_request_failed(request, "texture path must stay within the room asset folder")
+			return
+		if not request.relatives.has(relative):
+			request.relatives.append(relative)
+			request.paths.append(request.asset_root.path_join(relative))
+	_pending.append(request)
+
+
+static func _request_failed(request: LoadRequest, reason: String) -> void:
+	if request.failed:
+		return
+	request.failed = true
+	request.textures.clear()
+	last_error = reason
+	push_warning("Environment art pack '%s' ignored: %s" % [request.room_id, reason])
+
+
+static func _texture_room_count() -> int:
+	var count := 0
+	for pack in _cache.values():
+		if pack != null:
+			count += 1
+	for request in _pending:
+		if request.started:
+			count += 1
+	return count
+
+
+static func advance_loading() -> void:
+	if _pending.is_empty():
+		return
+	var frame := Engine.get_process_frames()
+	if frame == _last_advance_frame:
+		return
+	_last_advance_frame = frame
+	# The pinned no-threads Web template runs a request on the calling thread.
+	# Stage one texture per process frame during departure/loading; never call
+	# get on an in-progress resource, nor perform texture IO in a draw function.
+	var requests_left := 1 if OS.has_feature("web") else 2147483647
+	var index := 0
+	while index < _pending.size():
+		var request := _pending[index]
+		var outstanding_index := request.outstanding.size() - 1
+		while outstanding_index >= 0:
+			var texture_index := request.outstanding[outstanding_index]
+			var status := ResourceLoader.load_threaded_get_status(request.paths[texture_index], request.progress)
+			if status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+				var texture: Texture2D
+				if status == ResourceLoader.THREAD_LOAD_LOADED or status == ResourceLoader.THREAD_LOAD_FAILED:
+					texture = ResourceLoader.load_threaded_get(request.paths[texture_index]) as Texture2D
+				request.outstanding.remove_at(outstanding_index)
+				if not request.retired and not request.failed:
+					if texture == null:
+						_request_failed(request, "missing or unloadable texture at " + request.paths[texture_index])
+					else:
+						request.textures[request.relatives[texture_index]] = texture
+			outstanding_index -= 1
+		if request.retired or request.failed:
+			if request.outstanding.is_empty():
+				_pending.remove_at(index)
+			else:
+				index += 1
+			continue
+		if request.started or _texture_room_count() < 2:
+			while request.next_texture < request.paths.size() and requests_left > 0:
+				var texture_index := request.next_texture
+				request.next_texture += 1
+				requests_left -= 1
+				request.started = true
+				if not ResourceLoader.exists(request.paths[texture_index], "Texture2D"):
+					_request_failed(request, "missing or unloadable texture at " + request.paths[texture_index])
+					break
+				var error := ResourceLoader.load_threaded_request(request.paths[texture_index], "Texture2D", false)
+				if error != OK:
+					_request_failed(request, "could not request texture at " + request.paths[texture_index])
+					break
+				request.outstanding.append(texture_index)
+		if not request.failed and request.next_texture == request.paths.size() and request.outstanding.is_empty():
+			# All texture names were collected from this immutable manifest and
+			# every provided resource is loaded. The compiler cannot fall back to
+			# synchronous texture IO here; it still performs all size/type checks.
+			var pack := compile_manifest(request.manifest, request.room_id, request.asset_root, request.counter_rects, request.textures)
+			if pack == null:
+				_request_failed(request, last_error)
+			else:
+				_cache[request.room_id] = pack
+			_pending.remove_at(index)
+		else:
+			index += 1
 
 
 static func enabled_environment_ids() -> Array[String]:

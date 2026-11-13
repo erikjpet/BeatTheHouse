@@ -74,7 +74,7 @@ class AnimationLayer:
 			draw_texture_rect_region(entry.texture, visible_rect, region, entry.modulation)
 
 
-func configure(pack: EnvironmentArtPack) -> void:
+func configure(pack: EnvironmentArtPack, clock: float = 0.0, reduced: bool = false, low_detail: bool = false) -> void:
 	viewport = SubViewport.new()
 	viewport.size = Vector2i(1800, 860)
 	viewport.disable_3d = true
@@ -96,6 +96,9 @@ func configure(pack: EnvironmentArtPack) -> void:
 	for entry in pack.animations:
 		if layer == null or previous_additive != entry.additive:
 			layer = AnimationLayer.new()
+			layer.clock = clock
+			layer.reduced = reduced
+			layer.low_detail = low_detail
 			if entry.additive:
 				layer.material = additive
 			board.add_child(layer)

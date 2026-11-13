@@ -105,6 +105,9 @@ func _measure_pair(original: String, current: String, snapshot: Dictionary, reve
 	var deadline := Time.get_ticks_msec() + 15000
 	while mini(before_profile.root_calls, after_profile.root_calls) < 180 and Time.get_ticks_msec() < deadline:
 		await process_frame
+	# The asynchronous view may create its retained children after publication.
+	# Bind them after warmup too, before any measured samples are admitted.
+	_set_profile(after, after_profile)
 	before_profile.reset()
 	after_profile.reset()
 	deadline = Time.get_ticks_msec() + 45000

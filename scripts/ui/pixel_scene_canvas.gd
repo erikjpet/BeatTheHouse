@@ -188,6 +188,7 @@ var background_texture: Texture2D
 var use_external_background := false
 var environment_art_pack: EnvironmentArtPack
 var environment_art_renderer: EnvironmentArtRendererScript
+var environment_art_waiting := false
 var flicker: float = 0.0
 var camera_zoom: float = 1.0
 var camera_offset: Vector2 = Vector2.ZERO
@@ -364,6 +365,8 @@ func _ready() -> void:
 	clip_contents = true
 	_ensure_drunk_distortion_overlay()
 	_ensure_developer_placement_panel()
+	if uses_foundation_snapshot:
+		_resolve_environment_art_view()
 
 
 func set_developer_placement_mode(enabled: bool) -> void:
@@ -1662,8 +1665,17 @@ func _notification(what: int) -> void:
 		_update_camera_target_if_needed()
 		queue_redraw()
 		view_geometry_changed.emit()
-	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and is_visible_in_tree():
-		_arm_animation_heartbeat()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready():
+		if is_visible_in_tree():
+			_arm_animation_heartbeat()
+			if uses_foundation_snapshot:
+				_resolve_environment_art_view()
+		else:
+			environment_art_waiting = false
+			_set_environment_art_pack(null)
+			# Hidden retained commands can otherwise keep departed counter textures
+			# alive after the view and two-room cache release their references.
+			RenderingServer.canvas_item_clear(get_canvas_item())
 
 
 # Copies a foundation EnvironmentInstance view snapshot into canvas-local state.
@@ -1702,7 +1714,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
 	environment_id = art_key if ["punchline_club", "punchline_back_room"].has(art_key) else archetype_id
-	_set_environment_art_pack(EnvironmentArtPackScript.cached_pack(environment_id))
+	_resolve_environment_art_view()
 	var texture_scope_key := str(foundation_snapshot.get("world_node_id", foundation_snapshot.get("id", environment_id))).strip_edges()
 	if texture_scope_key.is_empty():
 		texture_scope_key = environment_id
@@ -3808,6 +3820,13 @@ func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	EnvironmentArtPackScript.advance_loading()
+	if environment_art_waiting:
+		var ready_pack := EnvironmentArtPackScript.peek_pack(environment_id)
+		if ready_pack != null:
+			_set_environment_art_pack(ready_pack)
+			queue_redraw()
+		environment_art_waiting = EnvironmentArtPackScript.is_loading(environment_id)
 	_flush_developer_drag_redraw()
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
@@ -3985,7 +4004,16 @@ func _set_environment_art_pack(pack: EnvironmentArtPack) -> void:
 	if pack != null:
 		environment_art_renderer = EnvironmentArtRendererScript.new()
 		add_child(environment_art_renderer)
-		environment_art_renderer.configure(pack)
+		environment_art_renderer.configure(pack, flicker, bool(foundation_snapshot.get("reduce_motion", reduce_motion)), _grand_casino_web_low_detail())
+
+
+func _resolve_environment_art_view() -> void:
+	if not is_visible_in_tree() or (use_external_background and background_texture != null):
+		environment_art_waiting = false
+		_set_environment_art_pack(null)
+		return
+	_set_environment_art_pack(EnvironmentArtPackScript.select_pack(environment_id))
+	environment_art_waiting = EnvironmentArtPackScript.is_loading(environment_id)
 
 
 func _draw_environment_art_animations(_pack: EnvironmentArtPack) -> void:

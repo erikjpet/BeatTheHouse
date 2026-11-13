@@ -147,6 +147,7 @@ const CollectionItemResolverScript := preload("res://scripts/core/collection_ite
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
 const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const EnvironmentArtPackScript := preload("res://scripts/ui/environment_art_pack.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -838,6 +839,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	EnvironmentArtPackScript.advance_loading()
 	_poll_script_prewarm_worker()
 	_advance_game_coach_refresh_after_draw()
 	_sync_simulation_pause_owners()
@@ -8885,6 +8887,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		return {"ok": false, "errors": ["The offered arrival consequences could not settle safely."]}
 	run_state.travel_journey_receipt = TravelJourneyReceiptScript.build(run_state, previous_environment, run_state.current_environment, target_id, route, departure_route_status, route_risk, travel_result) if bool(applied_travel_result.get("ok", false)) else {}
+	# Accepted destination identity is known before the departure cinematic.
+	# This presentation-only request changes no travel transaction or camera.
+	if bool(applied_travel_result.get("ok", false)):
+		EnvironmentArtPackScript.prefetch_snapshot(run_state.current_environment)
 	var menu_confirmed: bool = typeof(choice_data.get("presentation_from_travel_menu")) == TYPE_BOOL and choice_data.get("presentation_from_travel_menu") == true
 	if menu_confirmed:
 		# The receipt builder still excludes local doors, Grand rooms and meta.
