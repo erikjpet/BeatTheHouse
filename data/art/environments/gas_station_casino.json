@@ -6,7 +6,6 @@
     430
   ],
   "pixel_scale": 2,
-  "note": "STARTER PACK - placeholder art for building and proving the renderer. It will be replaced by the final pack.",
   "background": {
     "texture": "background.png"
   },
@@ -71,7 +70,7 @@
     {
       "id": "scanline",
       "type": "scroll",
-      "texture": "anim/scanline.png",
+      "texture": "anim/proof_scanline.png",
       "rect": [
         0,
         42,

@@ -304,3 +304,50 @@ cc9da8a0f1f836e1a2e40877394c6a1b7b8eb9ee41085453a2d2800d27331cd0  E:/CodexQA/BTH
 e97c3d401ac439ad430b41043ab8c24ebd3dd3090ef28e73ca4caa680d1fd59b  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/storage-manifest.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  E:/CodexQA/BTH/runs/BTH-ENVART-001-p1-ledger-final-01/evidence/worker.log
 ```
+
+## Authorized continuation — generated temporary assets (2026-11-12)
+
+Latest explicit user instruction: “anything you need please generate yourself as temp assets i will provide full assets when they are done”. This removes the supplied-art dependency for implementation. All earlier red results remain historical evidence; they are not erased.
+
+Added a deterministic1800x68 scanline at `assets/art/environments/gas_station_casino/anim/proof_scanline.png`. The active proof manifest references it and contains only contract fields. The original supplied manifest, including its note, is archived verbatim at `docs/art/starter_pack/gas_station_casino.json`; all seven supplied PNGs remain unchanged. The art contract and Smoke checks are unchanged. The final drop can replace the active manifest/folder normally.
+
+Fresh guarded results: cold import exit0; artist checker valid=true (five animations/one counter); production public loader valid=true; all65 engine assertions pass; Smoke content passes with0 findings, including its unchanged per-frame tripwire. The earlier224 Python checks and six Smoke runtime IDs remain their recorded exact-source qualification (loader/test source is unchanged in this continuation). Existing broad validation/UI/perf baseline limitations remain explicitly open; no all-green Smoke or NEXT claim.
+
+NEXT delivery remains pending the owner's later main merge. Continue ordered renderer implementation on this branch. Raw continuation receipts and hashes:
+
+```text
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-artist-01/evidence/adapter.py
+34c21db76816f5c9080d67acc5aacc7cfbb9e3ecaa2fd1d6ddeae0280c483cc6  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-artist-01/evidence/job.json
+4095ec657a768b6ed3fdfe33ff9c5c8fe657f1ecf98003fd6a0d5af4ce61524c  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-artist-01/evidence/launch-claim.json
+e00af62580dc117fd28ce384b2a889948fa6a1e2c1594118a97b7d18b6acc6d7  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-artist-01/evidence/storage-manifest.json
+83ae398ed60d5f995eb7f8768b9d25d40ef91648c44684bdedeb2f108bf1e8be  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-artist-01/evidence/worker.log
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/adapter.py
+92378710f6206f53da9d0b4adb6360073316c6d5ede5130aba56e2d2e12a1d82  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/content.json
+651ba680a823da151479bf40a0dd137ebbd2df3bf8b0ff6379799247048e074e  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/job.json
+ccbcf7543004be344b4a9e60a339e47ef9c8dfc4929cb21fc2f1a0b8632315b5  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/launch-claim.json
+4db9f7d57854cd59b1843ecd1d103a81e5465c6283e1a1dbf67ab842244955e5  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/storage-manifest.json
+7a63ab99c30d7faa0f5f12d9ce44cb96f3e697469daef4bda06331726152ecb0  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-content-01/evidence/worker.log
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-contract-01/evidence/adapter.py
+2ed085a669d8c9a80730b0abe5e2924317b3db97d079252266ee0c17120954b7  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-contract-01/evidence/job.json
+29cfadfe78b67723fc4652f1e2b83b41e5add2bffa1e41cfbc5922c2bcb121be  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-contract-01/evidence/launch-claim.json
+446f352a7ccc3f1eb6749a4c305b1931224fbea4fa1ea300355061a5a715e6bd  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-contract-01/evidence/storage-manifest.json
+95e50664fe2dff3d50b3eb2ab01edd2697f3e0af8fa5647c2738648aea1de445  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-contract-01/evidence/worker.log
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/adapter.py
+c09924b1f329b68cee382896e6902e8560d31a431c02045e77e5e1b55016809e  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/input-gas_station_casino.json
+b102384ab06d1a1133ecf1bac26d7d39535e7cba929c04563ede2297e3ff9477  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/input-generate_environment_art_proof_assets.py
+f3a547179113b3ee16abe897d6e3cd8a3bf38cfa4cbad8eca6142d2e865fe4f9  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/job.json
+dc850a0f90a885f320b739e5bbe1688e031685531204701801cbc81b4393e998  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/launch-claim.json
+572bf44a64b875fa96fbfe05529408dbb4afd9c611ba7c6ea6d96308ea21a644  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/storage-manifest.json
+e9b7b1ac8d28cd3e8484861c597ab644e88d2e02e770cc7842ff0f09d538ff29  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-generate-01/evidence/worker.log
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-import-01/evidence/adapter.py
+7b399edc5fa615d3bdcd94f100b3b7f14e21ebc5f1966252f44ebcba3d3aa7ea  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-import-01/evidence/job.json
+82e01b944ccc248c4d58751e576ee303aebd2e5ed4151bd450fbd63779fe3856  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-import-01/evidence/launch-claim.json
+0f120ec2e05ac411b59875d41a34d1201b97454b8d363e95a78ef951ffc7f43c  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-import-01/evidence/storage-manifest.json
+a0cc4013ffd2c1f513474c2615fd08e9fffbf4e77dee27abca0fb51122f7e43a  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-import-01/evidence/worker.log
+a91ce5ef35bbc37b24a5d1091c9f9aae2820c60246b89aee15f3704d72c10cd2  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-load-01/evidence/adapter.py
+11249755d5c056dae493005e141ede2fa0fb03379b6317a01a779ca5dc9d2690  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-load-01/evidence/job.json
+922164d2ea70bcf3eb3d366a0f51462def1926bbfe6740b2c8e32d679c2a0e60  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-load-01/evidence/launch-claim.json
+c2419fc6607cdd8c17340e5a2303220f5bcbd13b5ebeab94270e9eb3c6a59758  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-load-01/evidence/storage-manifest.json
+8d849d2fce843e11978dba75dcf696192935df5dcf74a999d2c3027c786fdac6  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-load-01/evidence/worker.log
+abdfc8c7dde4a6c442cfa127c04917d8acb744a75572a6a6da2ceb6ee5f1318e  E:/CodexQA/BTH/runs/BTH-ENVART-001-r2-p1-seal-01/evidence/phase.json
+```

@@ -1,0 +1,117 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "gas_station_casino",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "note": "STARTER PACK - placeholder art for building and proving the renderer. It will be replaced by the final pack.",
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "neon_fascia",
+      "type": "pulse",
+      "texture": "anim/neon_fascia_glow.png",
+      "rect": [
+        0,
+        62,
+        900,
+        24
+      ],
+      "min_opacity": 0.55,
+      "max_opacity": 1.0,
+      "period": 1.6,
+      "blend": "add"
+    },
+    {
+      "id": "soffit_lamp_flicker",
+      "type": "frames",
+      "texture": "anim/soffit_lamp_flicker.png",
+      "frames": 4,
+      "fps": 5,
+      "rect": [
+        12,
+        54,
+        64,
+        10
+      ],
+      "blend": "add",
+      "loop": "loop",
+      "still": 0
+    },
+    {
+      "id": "headlights",
+      "type": "mover",
+      "texture": "anim/headlight_streak.png",
+      "size": [
+        58,
+        6
+      ],
+      "from": [
+        -80,
+        150
+      ],
+      "to": [
+        900,
+        150
+      ],
+      "duration": 6.5,
+      "clip": [
+        50,
+        96,
+        258,
+        96
+      ],
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "scanline",
+      "type": "scroll",
+      "texture": "anim/scanline.png",
+      "rect": [
+        0,
+        42,
+        900,
+        34
+      ],
+      "speed": [
+        0,
+        48
+      ],
+      "opacity": 0.08,
+      "blend": "add",
+      "web_low_detail": false,
+      "still": "hide"
+    },
+    {
+      "id": "camera_laser",
+      "type": "sweep",
+      "texture": "anim/laser.png",
+      "origin": [
+        739,
+        94
+      ],
+      "from": [
+        724,
+        190
+      ],
+      "to": [
+        796,
+        190
+      ],
+      "period": 3.5,
+      "opacity": 0.42,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "gas_station_staff_window": {
+      "texture": "counters/gas_station_staff_window.png"
+    }
+  }
+}
