@@ -1,8 +1,8 @@
-# Public Punchline Club: execution direction v4
+# Public Punchline Club: execution direction v5
 
 Prepared: 2026-11-14
 Art identity: punchline_club
-Status: the single public source authorization has been used. Exact fitting is built and director static visual scope is clear; immutable R2 is being sealed with ELEVEN moving entries and a steady fourth practical. Actual six-context/motion/deep native gates remain pending. No finished package, integration, TEST, owner acceptance, second public source or hidden/private source is authorized by this checkpoint.
+Status: exact public Punchline R2 final NATIVE PASS is sealed with ELEVEN moving entries and a steady fourth practical. Director and complete auditor visual/source/technical gates are clear, no R3 or extra source requested. Exact integration/export and served TEST/Web verification remain separate. Existing conditional hidden v3 source release now applies; no private source. Historical source/static checkpoints below are retained, superseded in acceptance scope by the v5 final section.
 
 ## Identity, story and four reference roles
 
@@ -98,3 +98,34 @@ Fourth physical practical remains steady under Ox, with no separate rim-reflecti
 Preserve internal R1 and its zero-extraction/failed-roster diagnostic; do not seal a zero-pixel moving asset or mutate the trial. Auditor will seal a NEW immutable R2 with11 entries. Director static scope can carry forward if background pixels match the viewed fit, but exact contract/payload seal is required before actual capture. No further empty-board polish cycle is requested.
 
 Next gate is early actual Base plus all five public current scenarios and a genuine real-clock all11-entry excerpt, including practical2 normal/min/peak and fourth steady lamp/body context. Meaningful full-composite/RM/source-paint proofs, exact geometry/hits/selected labels, public authored work/outcomes and honest source exclusions follow. No full native, served Web or owner acceptance is inferred from this static fitting. Public stays the sole unapproved package; hidden clean/preart are reference-only and cannot authorize a hidden image call before public final exact native PASS.
+
+## Version5 exact final native acceptance
+
+Exact public package c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373 is FINAL NATIVE PASS. Background fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448 remains the exact fitted image. Auditor seal E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/audit/punchline_club-v1-r2-PASS.json, SHA-256 9af18f935238d3069eb6da716be7b68f554e25055e04d0d2b48ee53494985698. All14 payloads, protected core/prior art/strict source, actual source snapshots, RGB pairs, reports/archive and twenty drained Job receipts independently verified. No zero-pixel rim effect or additional paint revision was introduced.
+
+Native assertion total14649 is the reported scoped sum:737 current initial,257 eleven-entry/current composite,312 RM,3849 source-context,9414 ordered-hit,71 wrap and9 placement assertions. Mandatory unchanged original no-pointer liveness separately returned literalPASS; eight current cumulative pack validations passed. No invented public counter/replay test: this view has no mapped foreground_art_id. All owned native jobs are released; exact implementation must still verify the seal before target activation.
+
+Full42 actual source contexts were captured through unchanged production publication and personally reviewed as ordinary whole scenes by auditor: OpenMic8, Headliner9, Bringer8, Debt8, Raid9. Ordered-hit comparison covers Base+42,43 contexts/4620 samples, preserving strict normal/RM candidates. This is source-command/fact execution and actual selected-title/control evidence, not all alternative UI routes, save/revisit or gameplay lifecycleE2E.
+
+Director personally reviewed six current initial contexts and twenty representative published work/outcome states (four per family), genuine Base/OpenMic minimum/peak and actual settings-route Reduce Motion, decoded representative, and specifically labeled fixed-art-clock Raid core1 peak/min technical composites. Director does NOT claim personally viewing all42. Exact scoped visual artifact E:/CodexQA/BTH/workspaces/BTH-ENVART-DIRECTOR-20261114/punchline-r2-director-visual-go.json, SHA-256 84ccc00eb0d456dda2d6e7b85813afa5792dc6a9660bbc1aa176d07de00b4fc3. Earlier initial artifact8a164dfa1c63ffb74b73b3f80d1892664c2953ac1cf3ebb2b1a2e047fdc046db is preserved. Artist independently all six initials and a ten-state changed spread. All agree no art-induced material/readability blocker or R3.
+
+### Motion and honest visibility scope
+
+All eleven entries meaningfully change native final composites; all66 current entry/context Reduce Motion pairs are stable. Tiny practical2 is deliberately a compact honey cap with five board/twenty native changing pixels, maximum channel delta12..21 in every current context. OpenMic4/20 andBringer20/20 intersect translucent source paint,zero opaque; actual20/20 motion remains. It is not universally uncovered. Other cores retain228 native changing pixels; Raid core1 has80/228 translucent lookout-adornment overlap,zero opaque and actual228/228 change. Source-painted alpha and exact identical controls support this, not whole-model exclusion boxes.
+
+Raid lookout gold crosses a narrow real first-rim/core region but stays readable at both native diagnostic minimum/peak; accepted as local material variation, not universal unobstructed lettering. Source cap2 title safety is personally checked at genuine recorded Base/OpenMic extrema. No opacity, timing or texture amplification is used for preview. Auditor decoded85frames from84 real recorded frames into11.24seconds/2.19MB. Target-mask retention correlations core1 .9985,cap2 .9936,core3 .9988 establish encoded art-target signal retention, not live paint coverage; native composites provide the latter. Lower enlarged crops are explicitly art-target-only and cannot replace live-composition proof.
+
+Fourth physical practical remains steady beneath Ox. The rejected new-authored rim proposal had no natural warm source pixels despite a geometrically free strip; preserving that diagnostic and choosing11 entries is the correct honest design, not a missing retained legacy effect. Public legacy had only the consolidated floor families.
+
+### Inherited source-layout limits
+
+Both limits are independently bound against exact legacy/R2 actual objects, rectangles, pose and strict full normal/RM layouts:
+- Bringer show_seated Crowd Captain has a high left-side pose after stage props disappear.
+- Raid work2/work3 Reopen Steward takes an elevated stage/side-frame pose.
+No painted platform, moved actor/contact or altered route was added. Neither this art PASS nor the changed background claims universal physical grounding or removal of live/source overlaps. Current gray Comic, gold actors and cyan props remain discernible in the reviewed material contexts; no blanket perfect-title claim.
+
+### Integration and next source
+
+This exact native seal permits scoped target integration only after implementation verifies the fourteen byteset/protected inputs. Bound TEST/Web actual visual/identity/cleanup is a separate gate, currently not implied by native evidence; no owner acceptance or full20 completion. At this checkpoint eight interiors are native-approved while five have completed actual served-browser gates; Pawn/Jazz/public delivery states must be reported precisely rather than inferred. Preserve main/NEXT/audience and all prior accepted art.
+
+Conditional hidden one-source authorization now applies under small_underground_casino_execution_direction-v3.md SHA796e05d0a5566410c2269426a48e4eeb758bce641b9539f9a3d28e5d88fde9a6, frozen clean91bcd8cd/current union3f0aaabc and already-prepared prompt/reference roles. Artist was resumed with explicit do-not-duplicate-if-inflight guidance. Hidden source is the sole next unapproved authoring package; no private back-room source yet. Public raw/prompt/recipe/R1 diagnostic/frozen inputs/progress remain backed up, with later exact delivery proof still separate.

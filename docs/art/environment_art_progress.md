@@ -197,3 +197,8 @@ Exact R2 c617fb48 is a non-active static trial with dedicated native current6/11
 ## Public exact native PASS integration
 
 Public R2 c617fb48 has final exact audit9af18f93 and14approved payloads integrated, prior seven/c5/settings unchanged. Native42source-state/11motion/mandatory liveness evidence is complete and scoped. Immutable TEST export and live Web remain separate; no public/hidden native-to-Web inference. Hidden is the next source only under its measured brief.
+
+
+## Public isolated TEST artifact checkpoint
+
+Exact public R2 is published as74c85e44: eight native-passed rooms enabled, all13normal-TLS files and prior-seven PCK/texture retention verified. Main/NEXT/audience unchanged. Live Web remains unqualified for Pawn/Jazz/Public due supported-control binding failure; five rooms alone have completed full Web delivery. Hidden authoring is next, with no hidden/private trial enabled.

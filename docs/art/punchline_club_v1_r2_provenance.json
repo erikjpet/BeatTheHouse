@@ -1,7 +1,7 @@
 {
   "package_id": "punchline_club-v1-r2",
   "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
-  "acceptance": "NATIVE_PASS_TARGET_INTEGRATED_TEST_PENDING",
+  "acceptance": "NATIVE_PASS_PUBLISHED_TEST_ARTIFACT_PASS_LIVE_WEB_UNVERIFIED",
   "audit_report_sha256": "9af18f935238d3069eb6da716be7b68f554e25055e04d0d2b48ee53494985698",
   "public_audit_copy_sha256": "e0e4aaf7e22b7ba9c56cc200a607f16292f38cfa5e6ac167f2fca6015dd68a9c",
   "payload_files": {
@@ -315,5 +315,6 @@
   "source_checkpoint": "docs/art/punchline_club_v1_r2_source_checkpoint.json",
   "source_archive_sha256": "92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6",
   "live_web_verified": false,
-  "web_blocker": "Existing isolated browser window binding failure; no unsupported browser/CDP substitution or real profile use."
+  "web_blocker": "Existing isolated browser window binding failure; no unsupported browser/CDP substitution or real profile use.",
+  "test_delivery_report": "docs/testing/punchline_club_r2_test_delivery.json"
 }
