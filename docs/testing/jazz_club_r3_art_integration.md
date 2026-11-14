@@ -9,3 +9,15 @@ TEST export/normal-TLS artifact verification is pending this product commit. Cur
 ## Local compatibility and bookkeeping
 
 All272 Python tests pass in51.425seconds. Manual reconciliation checks220objectives/73batches and1,206 runtime records. There are1,524 inherited global findings, with zero assigned room/TEST/Phase08 findings. Old renderer ownership was not falsely refreshed. Report SHA256 `59432f6512eeafed1b78783d5a227f9e82f0e0fcc81b73ad7572790863a489e7`.
+
+## Isolated TEST publication
+
+Product `d4beeb651403135ad4fa5f6fbf989af0d43478b6` is published at [TEST](https://192.168.0.36:8443/p/beat-the-house/play/test/), with immutable source-bound build and exact embedded identity. Normal TLS/current/all13 files,119raw sources/111compiled textures and1,542PCK entries pass. Prior94textures and1,504old PCK entries are unchanged;35Jazz entries were added, no removals, only identity/index/UIDcache changes. Main/NEXT/audience/configuration remain unchanged; no unpassed public Punchline art is enabled.
+
+The TEST flag/deep persistent mount are source/configuration facts, not runtime IndexedDB observations. No real user save/profile was accessed or migrated. Known missing-Windows-DLL diagnostics in the isolated Web-only editor/export are retained; the pinned Web WASM itself is unchanged.
+
+Live UI,1280/1920 appearance, Web motion/ReduceMotion/camera/persistence are NOT RUN. The existing isolated-window binding blocker was not bypassed. Five rooms are fully Web-verified; Pawn and Jazz remain artifact-published with their live gates OPEN. Native audit also retains1,295unattributed source-support residuals rather than claiming every source-painted pixel is semantically accounted.
+
+Build reproduction archive SHA256 `6c85473dbbe15e58f4c2b33b70d713701a5ff73ee07bf368bac0588eadb391ef`. Normal-TLS report SHA256 `68c1feec17ece1e5dc88730bbee3169c564f255bba269501b6892dbc6e0f6246`. Full partial-delivery receipt: `jazz_club_r3_test_delivery.json`.
+
+Final partial-delivery reconciliation:220objectives,73batches,1,218 recorded runtime instances.1,524 inherited global findings remain; zero assigned current room/TEST/Phase08 findings. Report SHA256 `8639596d9ac2c71f54aa119e6e09b8d91682f0e55949637e9e9fd9254559d6e6`. Parent/campaign and Pawn/Jazz batches stay Open; historical renderer owner observations remain unchanged.

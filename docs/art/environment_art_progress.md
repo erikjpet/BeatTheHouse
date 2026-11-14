@@ -182,3 +182,8 @@ JazzR3 source progress is preserved non-active: archive28d33ee3fa918c8925e773f91
 ## Jazz exact native closure and next delivery gate
 
 Jazz R3 exact2c9e93f5 has final auditor PASS c2f90b9e after the unchanged original mandatory liveness supplement. All19 approved files are now integrated with prior six rooms/c5 unchanged. Export and Web gates remain separate. Pawn is artifact-published, live-browser blocked; five interiors remain fully Web-delivered. Public Punchline current6 pre-art is closed737/0 with Tonight Comic generic disabled fixture, not a duplicate mic; no public source is implied. Future hidden/private briefs are reference-only.
+
+
+## Jazz isolated TEST artifact checkpoint
+
+Exact Jazz R3 is now published as d4beeb65, cumulative seven native-passed rooms with normal-TLS/all13-file identity and prior-six PCK/texture retention verified. Main/NEXT/audience unchanged. Live Web remains unqualified for Pawn/Jazz due supported-control binding failure; five rooms alone have completed full Web delivery. No later public/hidden/private art is enabled. Product and partial-proof documentation preserve that difference.

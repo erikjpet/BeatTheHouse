@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T18:13:21.387526+00:00",
+  "updated_at": "2026-11-14T18:23:28.646300+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37709,6 +37709,12 @@
           "evidence": [
             "docs/testing/pawn_shop_r2_art_integration.md"
           ]
+        },
+        {
+          "sha": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+          "evidence": [
+            "docs/testing/jazz_club_r3_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -37719,13 +37725,13 @@
         "note": "Full campaign incomplete; sixth published pack has live-browser tool blocker.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+          "source_commit": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "Six native-passed enabled; only five fully Web-verified. Pawn artifact/configuration proof only.",
+          "artifact_verified": true,
           "live_web_verified": false,
           "last_fully_web_verified_source": "9ac963f185afbc5c54c604e5f68e8111f598d997",
           "evidence": [
-            "docs/testing/pawn_shop_r2_test_delivery.json"
+            "docs/testing/jazz_club_r3_test_delivery.json"
           ]
         }
       },
@@ -37815,20 +37821,20 @@
       "blocker": {
         "state": "active",
         "kind": "tool_connection",
-        "description": "Pawn live Web gate blocked by isolated-window binding failure; native/artifact work and other room authoring continue.",
+        "description": "Pawn and Jazz live Web gates remain blocked by current isolated-window binding failure. Exact native/artifact work and sequential authoring continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T17:56:14.300109+00:00",
+        "observed_at": "2026-11-14T18:23:28.646300+00:00",
         "evidence": [
-          "docs/testing/pawn_shop_r2_test_delivery.json"
+          "docs/testing/jazz_club_r3_test_delivery.json"
         ]
       },
-      "updated_at": "2026-11-14T18:13:21.387526+00:00",
+      "updated_at": "2026-11-14T18:23:28.646300+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "5 of 20 interiors fully Web-delivered; Pawn artifact-published/live blocked; Jazz exact native PASS integration active",
+      "status": "5 of 20 interiors fully Web-delivered; Pawn and Jazz artifact-published/live blocked; public Punchline authoring active",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37995,7 +38001,7 @@
         "BTH-ENVART-001-ART-PAWN-01",
         "BTH-ENVART-001-ART-JAZZ-01"
       ],
-      "next_action": "Publish and artifact-verify exact Jazz R3 cumulative TEST without bypassing the live-browser binding failure; retain Pawn live gate and continue sequential campaign.",
+      "next_action": "Use a qualified supported isolated browser surface for the missing live checks; preserve native/artifact partial scope and continue the sequential art campaign without bypassing browser restrictions.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42212,6 +42218,12 @@
           "evidence": [
             "docs/testing/pawn_shop_r2_art_integration.md"
           ]
+        },
+        {
+          "sha": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+          "evidence": [
+            "docs/testing/jazz_club_r3_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -42222,13 +42234,13 @@
         "note": "Full campaign incomplete; sixth published pack has live-browser tool blocker.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+          "source_commit": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "Six native-passed enabled; only five fully Web-verified. Pawn artifact/configuration proof only.",
+          "artifact_verified": true,
           "live_web_verified": false,
           "last_fully_web_verified_source": "9ac963f185afbc5c54c604e5f68e8111f598d997",
           "evidence": [
-            "docs/testing/pawn_shop_r2_test_delivery.json"
+            "docs/testing/jazz_club_r3_test_delivery.json"
           ]
         }
       },
@@ -42263,22 +42275,22 @@
       "blocker": {
         "state": "active",
         "kind": "tool_connection",
-        "description": "Pawn live Web gate blocked by isolated-window binding failure; native/artifact work and other room authoring continue.",
+        "description": "Pawn and Jazz live Web gates remain blocked by current isolated-window binding failure. Exact native/artifact work and sequential authoring continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T17:56:14.300109+00:00",
+        "observed_at": "2026-11-14T18:23:28.646300+00:00",
         "evidence": [
-          "docs/testing/pawn_shop_r2_test_delivery.json"
+          "docs/testing/jazz_club_r3_test_delivery.json"
         ]
       },
-      "updated_at": "2026-11-14T18:13:21.387526+00:00",
+      "updated_at": "2026-11-14T18:23:28.646300+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "5 of 20 interiors fully Web-delivered; Pawn artifact-published/live blocked; Jazz exact native PASS integration active",
+      "status": "5 of 20 interiors fully Web-delivered; Pawn and Jazz artifact-published/live blocked; public Punchline authoring active",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Publish and artifact-verify exact Jazz R3 cumulative TEST without bypassing the live-browser binding failure; retain Pawn live gate and continue sequential campaign."
+      "next_action": "Use a qualified supported isolated browser surface for the missing live checks; preserve native/artifact partial scope and continue the sequential art campaign without bypassing browser restrictions."
     },
     {
       "group": "current",
@@ -42964,19 +42976,36 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R3 final native PASS integrated; cumulative TEST export and separate live Web gate pending",
+      "status": "Exact R3 published to TEST; artifact/configuration proof PASS, live Web blocked and delivery Open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+          "evidence": [
+            "docs/testing/jazz_club_r3_art_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Isolated cumulative TEST only after exact Jazz full package PASS."
+        "scope": "Exact native-approved TEST publication/artifacts verified; required live Web delivery remains pending.",
+        "test_preview": {
+          "source_commit": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+          "artifact_verified": true,
+          "live_web_verified": false,
+          "last_fully_web_verified_source": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+          "evidence": [
+            "docs/testing/jazz_club_r3_test_delivery.json"
+          ]
+        }
       },
       "scope": [
         "Preserve own Jazz facade/current c5 contacts,rail150..158/foreground shelf404..412 and erased tables/open floor.",
@@ -42993,20 +43022,25 @@
           "kind": "exact_native_audit",
           "reference": "docs/art/jazz_club_v1_r3_audit_pass.json",
           "summary": "Exact2c9e93f5 final PASS, original mandatory liveness supplement bound;33source contexts/all17moving motifs. Not UI E2E or Web acceptance."
+        },
+        {
+          "kind": "partial_test_artifact_proof",
+          "reference": "docs/testing/jazz_club_r3_test_delivery.json",
+          "summary": "Exactd4beeb65:normalTLS13files,119raw/111compiled/1542PCK,prior94textures/1504entries,protected site/NEXT pass. Live UI/sizes/motion/RM/runtime DB NOT RUN."
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "tool_connection",
+        "description": "Pawn and Jazz live Web gates remain blocked by current isolated-window binding failure. Exact native/artifact work and sequential authoring continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T17:16:48.729425+00:00",
+        "observed_at": "2026-11-14T18:23:28.646300+00:00",
         "evidence": [
-          "docs/art/briefs/jazz_club.md"
+          "docs/testing/jazz_club_r3_test_delivery.json"
         ]
       },
-      "next_action": "Run local compatibility tests, commit exact audited payloads, export immutable source and verify isolated TEST artifact identity; preserve explicit live-browser gap.",
-      "updated_at": "2026-11-14T18:13:21.387526+00:00"
+      "next_action": "Use a qualified supported isolated browser surface for the missing live checks; preserve native/artifact partial scope and continue the sequential art campaign without bypassing browser restrictions.",
+      "updated_at": "2026-11-14T18:23:28.646300+00:00"
     }
   ]
 }

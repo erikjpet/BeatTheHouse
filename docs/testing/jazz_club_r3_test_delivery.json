@@ -1,0 +1,278 @@
+{
+  "status": "PARTIAL_NATIVE_AND_TEST_ARTIFACT_PASS_LIVE_WEB_NOT_RUN",
+  "source_commit": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+  "source_tree": "ab15335c54645803e4d840d4c90556019386b0de",
+  "source_archive_sha256": "244291f99872f5b92c571cf5d4a8d64ab5f652ff7cc36103ffb342382dffdc9b",
+  "package_id": "jazz_club-v1-r3",
+  "package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+  "native_audit_sha256": "c2f90b9ea1828d9de27b5950c1df941bb41783a4ffeb969301a84cfe67dc1f57",
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/d4beeb651403135ad4fa5f6fbf989af0d43478b6/index.html",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+    "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+    "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+    "jazz_club": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7"
+  },
+  "build_manifest_sha256": "d0682da6ffbf3686d9c630a6c2ce043a4f193b4fd7d03013bbd95191dedaa8ba",
+  "html_sha256": "ecd27c65c972638c9bcb73c8e71b27339e99dc510839c17c4a48eeebceb962b5",
+  "pck_sha256": "db765399c82d4f90070b68e8bbb9196d5b628c10bb44d0f820d66e253713be15",
+  "embedded_manifest_sha256": "bea370354d9c3a7e10707c08edb216619ef8daf98561f78605e42c3423f6fb17",
+  "embedded_manifest_md5": "729b4ede63401590edad3bb15cd3d6d5",
+  "raw_art_sources": 119,
+  "compiled_art_textures": 111,
+  "pck_entries": 1542,
+  "prior_six_compiled_unchanged": 94,
+  "pck_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/amber_air_0.png-49849da600b016aae4078aa4f5814b5e.ctex",
+      ".godot/imported/amber_air_1.png-f48d8e0dfc754140f51dd2489a925f7e.ctex",
+      ".godot/imported/backbar_magenta_light.png-f3cd221152b0f473c802675e90dddb27.ctex",
+      ".godot/imported/background.png-21171fa93b7a32a65cefd2dee1aa6bef.ctex",
+      ".godot/imported/bar_trim_reflection.png-40df9f02b12dd247836bad9d02551405.ctex",
+      ".godot/imported/cyan_air_0.png-639ea02b5c2c7094ae3999c3d571f1ae.ctex",
+      ".godot/imported/cyan_air_1.png-282689af4b3f47e8a000b70d4e1bcdaa.ctex",
+      ".godot/imported/floor_glint_0.png-b40afeef3f6ff0109ba200530b93256f.ctex",
+      ".godot/imported/floor_glint_1.png-66558e8660e0494b9a967c1c63ae6d63.ctex",
+      ".godot/imported/floor_glint_2.png-c790ec9f046bf7242614749214b47963.ctex",
+      ".godot/imported/floor_glint_3.png-86ada9294fac69348c997da8c9f744b1.ctex",
+      ".godot/imported/floor_glint_4.png-e13d15a178397182e7597f7741a79d68.ctex",
+      ".godot/imported/floor_glint_5.png-df7ca5ca42de443fb2a8ff036ead1d3d.ctex",
+      ".godot/imported/floor_glint_6.png-861c91f8f59a336570fa6f6fa0866136.ctex",
+      ".godot/imported/fold_reflection.png-037fb566e4065f06f0efd640e39111f7.ctex",
+      ".godot/imported/jazz_bar.png-52186e827e20c32641d71cbe5ca3bcd9.ctex",
+      ".godot/imported/jazz_glyph_pulse.png-b478858e7c07a9838cf1bb85606cbefc.ctex",
+      "assets/art/environments/jazz_club/anim/amber_air_0.png.import",
+      "assets/art/environments/jazz_club/anim/amber_air_1.png.import",
+      "assets/art/environments/jazz_club/anim/backbar_magenta_light.png.import",
+      "assets/art/environments/jazz_club/anim/bar_trim_reflection.png.import",
+      "assets/art/environments/jazz_club/anim/cyan_air_0.png.import",
+      "assets/art/environments/jazz_club/anim/cyan_air_1.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_0.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_1.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_2.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_3.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_4.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_5.png.import",
+      "assets/art/environments/jazz_club/anim/floor_glint_6.png.import",
+      "assets/art/environments/jazz_club/anim/fold_reflection.png.import",
+      "assets/art/environments/jazz_club/anim/jazz_glyph_pulse.png.import",
+      "assets/art/environments/jazz_club/background.png.import",
+      "assets/art/environments/jazz_club/counters/jazz_bar.png.import",
+      "data/art/environments/jazz_club.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1504
+  },
+  "python_tests": {
+    "passed": 272,
+    "duration_seconds": 51.425
+  },
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "configuration_not_runtime_DB_observation": true,
+  "normal_TLS_served_report_sha256": "68c1feec17ece1e5dc88730bbee3169c564f255bba269501b6892dbc6e0f6246",
+  "normal_TLS_files_verified_including_manifest": 13,
+  "prior_immutable_all_files": {
+    "ab0b49deeab019deac7ef30b79b17f86ffbc521d": {
+      "manifest_sha256": "b649abdab0bc99582136d0d4c81ff238da14dd3b2a1bbb72b354b34ce9939e26",
+      "files_verified_including_manifest": 13
+    },
+    "9ac963f185afbc5c54c604e5f68e8111f598d997": {
+      "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+      "files_verified_including_manifest": 13
+    }
+  },
+  "protected_site_files_before": {
+    "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+    "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+    "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+    "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+    "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+    ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+  },
+  "protected_site_files_after": {
+    "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+    "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+    "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+    "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+    "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+    ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+  },
+  "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "main_remote_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "source_protected_unchanged": {
+    "project.godot": "36b4ea7bcb66986755cb6f8528e2aba93e214eabeaf383a77f0ca91eb18db645",
+    "export_presets.cfg": "2270c54e6bec3b36bacafc87aa28c1e656fec45dd52f7df8cc28d2e04426aa5f",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "build_source_archive_sha256": "6c85473dbbe15e58f4c2b33b70d713701a5ff73ee07bf368bac0588eadb391ef",
+  "build_source_archive_bytes": 39243,
+  "known_host_import_export_diagnostics": {
+    "jazz-web-import-01": {
+      "known_desktop_extension_error_lines": 10,
+      "unique_forms": [
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND",
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.",
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'."
+      ],
+      "scope": "Windows editor lacks desktop DLL in Web-only snapshot; qualified Web WASM is pinned. Not a live Web runtime pass."
+    },
+    "jazz-web-export-01": {
+      "known_desktop_extension_error_lines": 10,
+      "unique_forms": [
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND",
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.",
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'."
+      ],
+      "scope": "Windows editor lacks desktop DLL in Web-only snapshot; qualified Web WASM is pinned. Not a live Web runtime pass."
+    }
+  },
+  "closed_owned_jobs": {
+    "jazz-python-tests-01": {
+      "job_sha256": "bace8bdef99a0f051ee99717a255a453e12f8140556d96f34e61ade05794d67b",
+      "log_sha256": "90e128109bf5b0c35d77778d59bf0c36474353363c9c24ef95b6c537751f59c8",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-archive-01": {
+      "job_sha256": "daad1c7abd61b6bda26593edf88d8f02243fe2c0bb886b5807db2dac2d63917e",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-extract-01": {
+      "job_sha256": "c78cb4a1eb3886f05b948a6081b440f08319e6c7b4f42513d4cb284a8dd1a172",
+      "log_sha256": "38c5df03caec10022eb38d13c500832d861859def0b3c8dcb2fa0cfaef4b7ea6",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-import-01": {
+      "job_sha256": "d4f78c2ce469a486cdb7760237f09bed3a049696611b19e44a9ecaa8843ffb69",
+      "log_sha256": "6301401967663bfd6b93369569ed6a6774e6a2d6e91a4d0574172661329ae8a9",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-identity-01": {
+      "job_sha256": "33150c36bbf9d4ee7d4c0f31e0086a10e2575233747919ca454a9c3d3438f7f3",
+      "log_sha256": "bea370354d9c3a7e10707c08edb216619ef8daf98561f78605e42c3423f6fb17",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-export-01": {
+      "job_sha256": "0ea1b6b9529fd88bd050d1c5828d5f34187ca2439270d7b959764d98807c8d29",
+      "log_sha256": "5da878e1f02611f2409d2bc6602062e31cb664d1c423da65923ed1b7757c50aa",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-gl-apply-01": {
+      "job_sha256": "ca77f8e7e20b16f42f8dd37566b718eb77ae496014d09a7f3b3a4af2e4c7fe8c",
+      "log_sha256": "01f4aaed48f2bf244c2c7675f64b5e6cc933e613963d84c15735af3bec6541ee",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-gl-verify-01": {
+      "job_sha256": "551a1bd8d73ba3d8244aa26ec9f76ebfc8a3136b6cdf3ce0773cc0b06b2d1fd8",
+      "log_sha256": "6fb7b89d4048bba7c7e2748b3a3e4d4229b324b92658f30b6fb40e0e15c75e9b",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-test-html-01": {
+      "job_sha256": "774762094df008c1b3203e877225a8afd408fd44113143fa199ae7c7caaef0da",
+      "log_sha256": "85d5f14892ea19b12bbce238eddf5d079534f7ecee46bdafe69190d95d1bc00f",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-html-promote-01": {
+      "job_sha256": "b2f21a1be64f08800287595ed7e1a0b13184edb5b7d07cbc32fc01b09f6dd59b",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-web-finalize-01": {
+      "job_sha256": "d96bedb1baf2be5149e1ed8c71a38cb2680424617ae42646ac7f0b3d3a0c4ec2",
+      "log_sha256": "33a8e747efb057c4c732a88fef2223a0df6b989f165b3c135726a93d10513916",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    },
+    "jazz-served-identity-01": {
+      "job_sha256": "68603b7845f58962643ab960132ab30c9cd3086d0568464519522dc815db8873",
+      "log_sha256": "f4c306bcafdd28e013da16d689475277fe7f89e9f41e92a7db2e0bfbfb257233",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "cpu_limit_percent": 12,
+      "memory_limit_bytes": 2147483648
+    }
+  },
+  "live_web_verified": false,
+  "director_served_visual_gate": "NOT_RUN",
+  "NOT_RUN": [
+    "Actual game UI",
+    "1280/1920 client-size appearance",
+    "17 final Web composite motions",
+    "Supported Web Reduce Motion/restoration",
+    "Web camera focus/return",
+    "Runtime IndexedDB/mount observations",
+    "Save/revisit/travel E2E"
+  ],
+  "qualification_blocker": {
+    "scope": "Existing isolated CUA exact-window binding failure; no new game navigation or alternative less-isolated browser was attempted.",
+    "original_report_sha256": "8e75affa85c3ea013b76e4082034ae52b9a5fe7e44d66f90c67117a2731b0f4b",
+    "prior_nonce_qualification_only": true,
+    "current_live_game_job_created": false
+  },
+  "fully_web_verified_interiors": 5,
+  "native_passed_enabled_interiors": 7,
+  "github_combined_statuses": [],
+  "github_ci_scope": "No combined statuses returned; not hosted-CI success. Local272 tests pass.",
+  "campaign_complete": false,
+  "scope": "Exact native-passed Jazz published to isolated TEST with normal-TLS artifact identity. Prior texture/PCK retention is not live gameplay or Web regression proof. Pawn and Jazz live delivery gates remain OPEN."
+}

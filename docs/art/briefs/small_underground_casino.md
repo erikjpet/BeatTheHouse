@@ -1,8 +1,8 @@
-# Hidden Punchline Casino: future execution direction v1
+# Hidden Punchline Casino: future execution direction v2
 
 Prepared: 2026-11-14
 Art identity: small_underground_casino
-Status: planning only. Jazz R3 is in actual/native proof; public Punchline follows Jazz. This hidden room follows the public room. No hidden clean target, source, package, implementation or activation is approved. One coherent hidden source may start only after the public room's explicit exact final native PASS, an independently viewed frozen clean target and current hidden-view pre-art metadata.
+Status: planning only. Jazz R3 is native-approved with its separate delivery gate pending; public Punchline is the sole active source/assembly room. This hidden room follows public Punchline. The hidden clean guide is inspected/frozen as a future reference, but no hidden source, package, implementation or activation is approved. One hidden source still requires public exact final native PASS and current hidden-view pre-art metadata.
 
 ## Identity, story and reference roles
 
@@ -82,3 +82,13 @@ After exact fitting/static GO, send early genuine Base/allcurrent compositions a
 Audit exact background/front bytes, current overrides/core, unchanged geometry/hits/labels, meaningful normal motion and supported RM, wraps, no-pointer liveness, depth replay and room-specific open/closing semantics. Preserve failed diagnostics and resolve their cause with evidence, not blind tolerance relaxation.
 
 Final native exact audit PASS alone permits target integration. Bound TEST/Web actual visual/identity/cleanup is a separate gate; no owner acceptance, full campaign completion, alternative-route UI traversal, save or revisit E2E is implied. Keep source/recipe/provenance, proofs and honest campaign progress backed up; main/NEXT/audience and approved scope stay unchanged.
+
+## Version2 future clean-reference approval
+
+Approved frozen geometry reference: E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/small_underground_casino_clean_geometry_v1_1800x860.png, SHA-256 91bcd8cdaeb80eb5cd7febc09444d660192fc9f1125c6a66f1566bbfb1912f14. Director personally viewed the900x430 review sibling and independently rehashed native1800x860. Original is preserved. Entire native top0..191, including all12 housing/wire sites, and full mapped286-wide right body/cap are independently byte-identical to original. Auditor also verifies cart/top and fixed construction.
+
+Two bottles, eight broad STATIC fog annotations and lower helper marks are removed by restoring original flat planes, not a new invented room. Six card backs were already absent. No left foreground replay, new furniture or timed overlay added. Existing245 contact/five-row transition through250 remains unchanged in guide. Final art will fit floor245 behind the furniture and preserve a coherent material transition, not move the contact to the table bottom.
+
+Edit record: E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/small_underground_casino_clean_geometry_v1_1800x860.edit-record.json, SHA-256 4bedeff7b65c526acd5987f0b6f286d56708daed8e0c7bb36ab1bd2ef664cc85; recipe clean_hidden_guide_v1.py. Native source raster phase is retained; review900 is display-only, not a reversible reconstruction authority. Final production still requires900-to-exact-nearest2x.
+
+Artist may freeze this exact reference for preparation. Current four-context :casino baseline/selected-title/source-painted overlap evidence is still queued behind current export/public proof priorities, not yet completed or inferred. Existing10-moving/12-housing alignment and separate pink-air/floor interpretations remain unchanged. No hidden image call before public final exact native PASS and an updated measured execution release. This v2 approval resolves only the clean-reference prerequisite, not the other gates.
