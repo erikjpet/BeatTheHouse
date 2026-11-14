@@ -7,3 +7,4 @@
 /data/art/environments/index.json -text whitespace=cr-at-eol
 /data/art/environments/corner_store.json -text whitespace=cr-at-eol
 /data/art/environments/back_alley.json -text whitespace=cr-at-eol
+/data/art/environments/motel.json -text whitespace=cr-at-eol

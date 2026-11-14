@@ -2,6 +2,7 @@
   "enabled": [
     "gas_station_casino",
     "corner_store",
-    "back_alley"
+    "back_alley",
+    "motel"
   ]
 }

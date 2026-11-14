@@ -42,8 +42,8 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
 | 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
 | 03 | back_alley | Exact R3 integrated and verified on bound182 TEST | Preserve all three passed packs during later additions |
-| 04 | motel | Exact R3 actual Base/Wedding/Weekly GO; full native proof active | Complete CRT/context/two-front/motion and explicit occlusion proof before final audit |
-| 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
+| 04 | motel | Exact R3 final native PASS; integration/Web active | Verify bound four-room TEST before delivery closes |
+| 05 | bar | Source released after Motel native PASS; current-label preflight preparing | Measure current mirror/Numbers/support union and review source before trial |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
 | 07 | jazz_club | Brief, facade assessment and fixture guide ready | Author brass/amber/wood stage room after prior package passes |
 | 08 | punchline_club | Brief, facade assessment and fixture guide ready | Author public comedy venue, retaining warm marquee identity |
@@ -141,3 +141,8 @@ Motel R2 later Weekly/Wedding review found localized pink Parking/cushion and go
 Exact trial 4b22c9cf is backed up with all 18 payloads, unchanged seal, self-contained recipe, both raw generated originals, full prompts/source provenance and complete frozen inputs. Archive SHA256: ae97db12d94a49a9e2c7ba2f885c1b833dcc2391f3d7299601e71fb99fc2c6cb. R3 actual Base/Wedding/Weekly clears the two bounded material fixes; 500 current-settled checks pass. CRT full-composite diagnostics show meaningful luminance/scan outside actual painted Drink/cup/title/vending, while luminance remains inside the conservative whole-model rectangle through real sprite gaps. Wedding Clerk physically occludes one background glint; source-shaped coverage, not an always-visible assertion, is being reviewed explicitly. Full 40-context/two-front/motion/liveness native acceptance remains active, no final PASS or target activation.
 
 Current Motel brief v3 incorporates measured label shifts and the exact refinement. Future Bar brief v1 is checkpointed as planning only; generation remains gated on Motel final native PASS and no Bar art is claimed.
+
+
+## Motel R3 final native PASS
+
+Exact 4b22c9cf clears native audit report56d4156f:40 source contexts/4,095 checks/711 selected titles,500 initial checks,14 Base full-composite motions,both CRT across all5,RM,two fronts,wrap and no-pointer proof. Wedding Clerk background-glint occlusion and inherited wall-height Trolley placement are explicit accepted limits, not hidden fixes. Integration and separate Web delivery are active; previously served three-room182 remains until new publication. Bar is now the sole source-authoring package; current label/fixture preflight prepares under engine serialization after Motel export priority. Full campaign stays Open.

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T13:55:41.972622+00:00",
+  "updated_at": "2026-11-14T14:25:53.113113+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37971,7 +37971,8 @@
         "BTH-ENVART-001-TEST-01",
         "BTH-ENVART-001-ART-CORNER-01",
         "BTH-ENVART-001-ART-BACK-01",
-        "BTH-ENVART-001-ART-MOTEL-01"
+        "BTH-ENVART-001-ART-MOTEL-01",
+        "BTH-ENVART-001-ART-BAR-01"
       ],
       "next_action": "Complete Motel exact native art audit/integration and remaining17 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
@@ -42684,7 +42685,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R3 actual Base/Wedding/Weekly GO; full native CRT/context/two-front/motion proof active; final audit pending",
+      "status": "Exact R3 final native auditor PASS; cumulative four-room integration active; separate TEST/Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42723,20 +42724,70 @@
           "kind": "non_active_source_backup",
           "reference": "review_artifacts/environment_art_sources/motel-v1-r3/README.md",
           "summary": "Unapproved exact R3 source checkpoint:18 payloads/seal, self-contained recipe, both raw PNGs/full prompts/provenance and all frozen inputs. ZIP SHA ae97db12d94a49a9e2c7ba2f885c1b833dcc2391f3d7299601e71fb99fc2c6cb. No activation; Gas+Corner+Back retained."
+        },
+        {
+          "kind": "native_art_audit",
+          "reference": "docs/testing/motel_r3_art_integration.md",
+          "summary": "Exact4b22c9cf native PASS:40actual contexts/4095checks/711selected titles,500initial checks,all14Base composite/bothCRT all5/RM/twofronts/wrap/liveness; declared Wedding Clerk glint occlusion and inherited floating Trolley. Not Web/UI/save/revisit."
         }
       ],
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "R3 bounded materials passed actual visual review. Full native checks and explicit Wedding Clerk/glint occlusion disposition are still in progress; no final package PASS.",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T13:55:41.972622+00:00",
+        "observed_at": "2026-11-14T14:25:53.113113+00:00",
         "evidence": [
-          "docs/art/environment_art_progress.md"
+          "docs/testing/motel_r3_art_integration.md"
         ]
       },
-      "next_action": "Complete exact R3 full native proof and source-derived occlusion dispositions, then await final auditor PASS before any target integration/TEST publication.",
-      "updated_at": "2026-11-14T13:55:41.972622+00:00"
+      "next_action": "Commit exact18 sealed Motel files, preserve prior three rooms, export bound isolated TEST and verify actual Web CRT/scenarios/14motions/RM/two-front/camera/regressions.",
+      "updated_at": "2026-11-14T14:25:53.113113+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-BAR-01",
+      "name": "Integrate audited Bar art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Bar source released after Motel native PASS; current label/fixture preflight preparing; no Bar art passed",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Cumulative isolated TEST only after exact Bar full package PASS; preserve prior accepted rooms."
+      },
+      "scope": [
+        "Preserve own Bar facade/material identity, current c5 placements, physical bar/mirror/pool/sign supports and live cast/stock bays.",
+        "Measure actual current gold title/body bands in mirror field and cyan Numbers reflow; keep source-derived label/card/visibility proof explicit.",
+        "Preview/audit exact art, motions, counter/replay, RM/liveness and source contexts, then integrate only final PASS and verify bound TEST."
+      ],
+      "evidence": [
+        {
+          "kind": "execution_brief",
+          "reference": "docs/art/briefs/bar.md",
+          "summary": "Frozen clean target and own-facade brief; source released only after Motel exact native PASS. No Bar runtime art activation."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T14:25:53.113113+00:00",
+        "evidence": [
+          "docs/art/briefs/bar.md"
+        ]
+      },
+      "next_action": "Collect strict current-delivered Bar Base+scenario label/fixture union after Motel export priority; then review exact source before QA trial.",
+      "updated_at": "2026-11-14T14:25:53.113113+00:00"
     }
   ]
 }
