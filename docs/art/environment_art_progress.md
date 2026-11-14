@@ -192,3 +192,8 @@ Exact Jazz R3 is now published as d4beeb65, cumulative seven native-passed rooms
 ## Public Punchline static source backup
 
 Exact R2 c617fb48 is a non-active static trial with dedicated native current6/11-motion review underway. Archive 92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6 preserves full original/prompt/frozen inputs/self-contained recipe and all14payloads. Honest roster is7floor+wordmark+3cores; fourth practical stays steady, with R1 zero-natural-pixel diagnostic retained. No counter replay is invented. Seven accepted TEST packs remain unchanged; no public activation. Hidden current4 reference also closes14,867checks/0,71actual objects/titles with unchanged :casino source; it supplies future measured context, not hidden source approval.
+
+
+## Public exact native PASS integration
+
+Public R2 c617fb48 has final exact audit9af18f93 and14approved payloads integrated, prior seven/c5/settings unchanged. Native42source-state/11motion/mandatory liveness evidence is complete and scoped. Immutable TEST export and live Web remain separate; no public/hidden native-to-Web inference. Hidden is the next source only under its measured brief.

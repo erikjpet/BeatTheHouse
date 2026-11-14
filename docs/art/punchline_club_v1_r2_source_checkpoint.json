@@ -1,5 +1,5 @@
 {
-  "status": "NON_ACTIVE_STATIC_TRIAL_NOT_APPROVED",
+  "status": "IMMUTABLE_SOURCE_BACKUP_SUBSEQUENT_NATIVE_PASS",
   "package_id": "punchline_club-v1-r2",
   "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
   "moving_entries": 11,
@@ -19,5 +19,6 @@
     "inherited_global_findings": 1524,
     "assigned_room_TEST_Phase08_findings": 0,
     "report_sha256": "e7ddcb26dea2d38a00f0424d1facaae12a8020829445493963cc9775e59c19f9"
-  }
+  },
+  "subsequent_exact_native_audit_sha256": "9af18f935238d3069eb6da716be7b68f554e25055e04d0d2b48ee53494985698"
 }

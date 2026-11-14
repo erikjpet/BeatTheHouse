@@ -1,8 +1,8 @@
-# Hidden Punchline Casino: future execution direction v2
+# Hidden Punchline Casino: measured execution direction v3
 
 Prepared: 2026-11-14
 Art identity: small_underground_casino
-Status: planning only. Jazz R3 is native-approved with its separate delivery gate pending; public Punchline is the sole active source/assembly room. This hidden room follows public Punchline. The hidden clean guide is inspected/frozen as a future reference, but no hidden source, package, implementation or activation is approved. One hidden source still requires public exact final native PASS and current hidden-view pre-art metadata.
+Status: public Punchline R2 remains the sole active unapproved art package. Hidden clean guide and current four-context pre-art are now complete and personally inspected. This v3 is a CONDITIONAL one-source release: start exactly one coherent hidden source ONLY after auditor explicitly seals public Punchline exact final native PASS and these frozen inputs are read/verified. No hidden image call, package, integration or activation now; no routine second brief is required after that exact gate.
 
 ## Identity, story and reference roles
 
@@ -92,3 +92,43 @@ Two bottles, eight broad STATIC fog annotations and lower helper marks are remov
 Edit record: E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/small_underground_casino_clean_geometry_v1_1800x860.edit-record.json, SHA-256 4bedeff7b65c526acd5987f0b6f286d56708daed8e0c7bb36ab1bd2ef664cc85; recipe clean_hidden_guide_v1.py. Native source raster phase is retained; review900 is display-only, not a reversible reconstruction authority. Final production still requires900-to-exact-nearest2x.
 
 Artist may freeze this exact reference for preparation. Current four-context :casino baseline/selected-title/source-painted overlap evidence is still queued behind current export/public proof priorities, not yet completed or inferred. Existing10-moving/12-housing alignment and separate pink-air/floor interpretations remain unchanged. No hidden image call before public final exact native PASS and an updated measured execution release. This v2 approval resolves only the clean-reference prerequisite, not the other gates.
+
+## Version3 measured current baseline and conditional next-source release
+
+The v1/v2 statements that hidden current pre-art was pending are historical. Current exact union is E:/CodexQA/BTH/runs/BTH-ENVART-HIDDEN-20261114-union-03/evidence/hidden_preart_union.json, SHA-256 3f0aaabc5ec9c648197eaf6a6b2299f10bb8b288dd5e05c2f47ea81a04c30b3b. Metadata E:/CodexQA/BTH/runs/BTH-ENVART-HIDDEN-20261114-capture-01/evidence/hidden_preart_metadata.json, SHA-256 c8e07c8b9a1b07ea075d7515042ea2d1db1618b10ec1f78f63441c2542c924a3. Strict d4beeb651403135ad4fa5f6fbf989af0d43478b6 snapshot, source archive1306e911915bb7260bb2f267d7464c21ede70cf757f61556928344d443bd4885/current protected c5. Correct actual :casino/art identity, no hidden pack active.
+
+Preflight14867checks/0 findings;71 actual canvas objects and71 selected source titles,18 Runtime visual records and3 source-proven hosted task exclusions. Counts are Base12, High-Stakes20, Greased20, New Muscle19. All four naturally settled; all native Jobs drained. This is current initial pre-art, NOT hidden art PASS, work/outcome execution, save/revisit or UI lifecycle evidence. Full evidence ZIP E:/CodexQA/BTH/runs/BTH-ENVART-HIDDEN-20261114-closure-02/evidence/hidden_preart_evidence.zip,22,832,006bytes, SHA-256 41ea53bbf69b628543742e55872d353e05a73da406ad5714c9a4fc47178d5b47.
+
+Director and artist personally inspected all four actual full-apps in capture-01/evidence: __none_actual_play.png, punchline_high_stakes_night_actual_play.png, punchline_greased_week_actual_play.png, punchline_new_muscle_actual_play.png. Auditor independently all four. Their model/name rectangles remain envelopes, not opacity masks. Source-colored dots and procedural card/stock annotations in the old actual renderer are not instructions to bake extra cast/cards into the approved empty guide.
+
+### Actual identities and material bands
+
+- Dealer is Sable, title[285,102,48,15], model[273,119,72,72], body layer-1. Protect the real wall/beam face at102..117; no bright amber beam behind this gold title.
+- Ox title[466,63,48,15], model[454,80,72,80], layer-1. Its gold band crosses the68 beam area. Preserve mapped opaque right body replay and all depth/layers.
+- Numbers title is cyan The Punchline Numbers Book[631,150,126,26], model[658,100,72,48], on the mapped right-table face. Keep that real deep-green/dark-wood face quiet with thin selective rim, not a broad pale felt/metal slab.
+- Video Poker cyan[358.1,71,75.8,15], model[350,88,92,64]; Buy a Drink gold[552.1,73,75.8,15], model[554.0001,90,72,48]. Keep the real68 beam/wall plane subdued, not a continuous hot strip.
+- Blackjack cyan[177.9,109,64.2,15], model[164,126,92,64]; Slot cyan[50,139.4,48,15], model[4.4,156.4,139.2,105.6]. Preserve scaled game geometry; do not paint extra cards, bottles or equipment.
+- Individual lender is lender:street_lender/Vic Mercer ONLY in the three scenario contexts, not Base. Title[392,160,70,15], model[391,177,72,72], body layer+1. Current Crew group exists in Base/Greased/High-Stakes but is absent New Muscle; Crew title[815.7999,300,58.4,15], model[792.9999,220,104,78]. These are source membership facts, not missing props to restore in paint.
+- Other scenario actors/props include ledger/seals, observer rail/chair stack, inspection tray, guard posts and bypass marker. Keep all current and later published visual records live/unchanged; actual full union rather than these examples is authority. No new static shelf/platform for inherited high/odd source placements.
+
+### Ceiling hardware title conflicts to plan before source
+
+The ten independent-phase moving cores remain aligned to first ten of twelve original physical housings as explicitly approved above; last two stay steady. This is deliberate decorative alignment, not exact old helper coordinates or twelve moving cores. Do not paint extra duplicate colored squares beside the housings just because the old actual renderer had offset helper sites.
+
+- Base disabled gray Crew Back Room title[791.4,53,92.6,15] crosses steady housing11 at816,y56. In all three scenarios the title moves to[791.4,27,92.6,15].
+- Comedy Club cyan title[732.1,27,75.8,15] in Base moves to[732.1,53,75.8,15] in all three scenarios and crosses moving housing10 at744,y56.
+- High-Stakes observer rail title[16,50,87,26] and Greased Payoff route ledger[16,50,85.1,15] cross housing1. Greased inspection-seal body/model envelopes cross housings2/3. These are measured geometric overlaps, not proven opaque masks.
+
+Keep housings/strings/beam faces genuine dark plum/metal, with compact source-colored purple/pink/teal cores and restrained resting light. No large cream/white blobs, broad ceiling halo or bright horizontal trim behind route text. Core pixels may be fitted within their same physical housing to a suitable material/aperture surface, without moving housing/contact/title or adding props; any such decorative fitting must be explicit in recipe and actual-composite tested. Do not assume envelope-free means meaningful emissive pixels, as the public fourth-rim trial demonstrated. Natural label/prop/cast coverage must be source-painted and honestly scoped; do not invent a new visible asset merely to force counts.
+
+### Hosted controls and full proof limits
+
+The three logical task_0 projections are source-proven controls on REAL visible hosts: Greased inspection_seals, High-Stakes chair_stack, New Muscle inspection_tray. Preserve attached action identities and selected-production titles, not separate task boxes. Authority membership alone is insufficient; later hidden work/outcome proof still requires actual canvas IDs/geometry/nonempty selected labels/real-host actions and explicit source-hidden/non-room exclusions.
+
+Current pre-art does not waive future outcome bands, full primitive movement/RM, foreground replay, both air families, source controls, wrapping, liveness or exact effective-hit comparison. No universal unobstructed-title or all-idle-pose claim. Left table still has no foreground_art_id; do not add one for actor coverage. Right table remains exact286wide/572x196 opaque, not old258wide.
+
+### Conditional source authorization and priority
+
+After auditor explicitly seals the PUBLIC Punchline final exact native PASS, artist may immediately generate ONE coherent hidden room from this v3, frozen clean91bcd8cd, current union3f0aaabc, own shared facade/backdrop, preferred hard-pixel style and Delta secondary craft, without waiting for another routine briefing. Preserve raw original/prompt/frozen provenance. No image call before that public seal, no private back-room image, no extra cast/card/tool sheets. One floor-only module is justified only by a real returned depth problem, not speculation. Public actual/source proof and pending seven-room delivery work remain priority until their owned jobs release.
+
+The source should be an empty low-ceiling practical basement with worn dark green felt, charcoal/plum beams/walls, battered wood/metal and restrained cheap colored bulbs. It is recognizably beneath the same building, but not the public neon comedy stage, a luxury room or a fog-painted shell. Keep both clocked pink air families as later authored layers, not frozen haze in the background. Ten independent light phases, distinct six-long-band versus five-bobbing-ribbon flow translations, three teal material glints and seven dry-floor movers remain the motion scope. Any source-only, static or actual trial still does not equal final hidden native/served acceptance.

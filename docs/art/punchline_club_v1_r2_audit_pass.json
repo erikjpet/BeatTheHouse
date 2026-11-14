@@ -1,0 +1,816 @@
+{
+  "status": "PASS_NATIVE_ART_PACKAGE",
+  "package_id": "punchline_club-v1-r2",
+  "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+  "package_root": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\packages\\punchline_club-v1-r2",
+  "approved_files": {
+    "assets/art/environments/punchline_club/anim/floor_glint_0.png": {
+      "sha256": "64b41706e29c7f18e0d34dd0e174bc06b3c27555a6f1bcf35970fbd7ab442b0e",
+      "bytes": 196,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_1.png": {
+      "sha256": "da06017db0fe78d443361efb38d27b8864fe3eb84c579b593c87d800c5500055",
+      "bytes": 195,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_2.png": {
+      "sha256": "898048e45f09faa067cab3390a4fb9efb4ef6e02f2b134410be28b92f3e35130",
+      "bytes": 202,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_3.png": {
+      "sha256": "7d4c039210fbec5c51d3c31f7241b828f651aca1cf1098f0c6c28b90d36dd1ad",
+      "bytes": 192,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_4.png": {
+      "sha256": "75a687eb4ddef8475aee82209a73d1f73703375a09faa70fd50dff1ccd6f0eac",
+      "bytes": 197,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_5.png": {
+      "sha256": "d2ef56cdeb6abb9873bc6106e697bcaf8d8bbd62d088f6ade01fe05201a2f3db",
+      "bytes": 212,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/floor_glint_6.png": {
+      "sha256": "0a1f390d28a22b869fddbede162e3f2e9b2e27a07e362a29f49b38650ad00e63",
+      "bytes": 195,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/practical_core_0.png": {
+      "sha256": "6698367414624208f8fe762ca92514b466f4dee26adab454bd511ce4ec8df648",
+      "bytes": 289,
+      "size": [
+        12,
+        36
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        170
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/practical_core_1.png": {
+      "sha256": "1d4289fdd6c7a800706088f11e0ec76f770f78d62f740bade39cc7547d289d9d",
+      "bytes": 123,
+      "size": [
+        12,
+        36
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        170
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/practical_core_2.png": {
+      "sha256": "6698367414624208f8fe762ca92514b466f4dee26adab454bd511ce4ec8df648",
+      "bytes": 289,
+      "size": [
+        12,
+        36
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        170
+      ]
+    },
+    "assets/art/environments/punchline_club/anim/wordmark_pulse.png": {
+      "sha256": "cf2d0ad8d9eccb8b006345bd91ef245820d0cf1af0c2894a7015db632ba3f652",
+      "bytes": 6095,
+      "size": [
+        374,
+        34
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        175
+      ]
+    },
+    "assets/art/environments/punchline_club/background.png": {
+      "sha256": "fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448",
+      "bytes": 884157,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "data/art/environments/index.json": {
+      "sha256": "7ef2050634a9fa1f8c56d6ffdbea0a5112f2a08292ef1a102640d739ca011bc5",
+      "bytes": 178
+    },
+    "data/art/environments/punchline_club.json": {
+      "sha256": "06d926688a02aeea70a55f3935095897cdf6e8dd274716dfd709cd204ad6e00e",
+      "bytes": 4553
+    }
+  },
+  "manifest": "data/art/environments/punchline_club.json",
+  "background_sha256": "fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448",
+  "scope": "ONLY these exact PUBLIC Punchline :club R2 bytes clear native art integration. Not hidden :casino/private :back_room, owner final acceptance, TEST/Web acceptance, UI-click/save/revisit/travel E2E or campaign completion. Cumulative index may add public Punchline to seven separately accepted rooms while preserving prior payloads,c5,code and settings.",
+  "geometry": {
+    "board": [
+      900,
+      430
+    ],
+    "background": [
+      1800,
+      860
+    ],
+    "background_exact_nearest2x": true,
+    "mapped_opaque_fronts": 0,
+    "counter_replay": "NOT APPLICABLE: public source has no mapped front; no invented occluder or counter fixture.",
+    "fixed_contacts": "Floor245; fixed mic/head; four round bodies and practical housings; central296-wide apron and existing dark wings; door and wordmark. No new legs,chairs,platforms or live cast baked into source.",
+    "source_fitting": "Same-scale foreground floor crop; native foreground254..430 equals raw source crop without stretching/repeated grain. Existing narrow transition preserved; source fixture residues repaired only locally. Original raw and R1 candidate are preserved."
+  },
+  "visual_review": {
+    "auditor_personal_scope": "ALL42 ordinary actual full-app authored states via source-hashed unmodified1:1 sheets,all6initial actuals,genuine Base/OpenMic extrema/settingsRM,decoded preview representative,Raid fixed-clock core/title peak-min.",
+    "director_report": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\punchline-r2-director-visual-go.json",
+    "director_report_sha256": "84ccc00eb0d456dda2d6e7b85813afa5792dc6a9660bbc1aa176d07de00b4fc3",
+    "director_personal_scope": "All6initials,20representative ordinary published states(four per five families),genuine Base/OpenMic extrema,actualRM,decoded representative,Raid technical peak/min. Director does not claim all42. No remaining director visual blocker.",
+    "artist_scope": "All6initials,OpenMic recorded extrema,decoded still and ten representative published states spanning all5families. Not an all42 or temporal technical proof claim.",
+    "result": "Own vivid plum masonry,red timber,burgundy cloth,amber practicals and cyan/pink signs retain crisp source clusters and local material ramps. Real apron/wing faces203..252 are detailed dark wood below thin202 contact. Quiet bronze lower practical2 housing protects the cyan signup field while its compact upper honey cap remains. No room-wide grade,floating title backing,moved live name/contact or extra source call.",
+    "readability_limits": "Measured current gold/cyan/gray/pink title fields remain readable across all6initials and all42primary states. Accepted narrow practical-rim/title intersections remain, including Raid core0 peak/min. No claim every letter is universally unobstructed or every source placement universally grounded.",
+    "declared_source_placement_limits": [
+      {
+        "case": "punchline_bringer_show__aftermath_show_seated",
+        "id": "scenario::punchline_bringer_show_aftermath_show_seated_actor",
+        "label": "Crowd Captain",
+        "pose": "arrival",
+        "model_rect": {
+          "aspect_ratio": 0.9,
+          "h": 80.0,
+          "w": 72.0,
+          "x": 96.9999847412109,
+          "y": 152.0
+        },
+        "label_rect": {
+          "aspect_ratio": 5.82666625976563,
+          "h": 15.0,
+          "w": 87.3999938964844,
+          "x": 89.2999877929688,
+          "y": 135.0
+        },
+        "normal_RM_strict_layout_equal": true
+      },
+      {
+        "case": "punchline_raid_jitters__active_phase_work_2",
+        "id": "scenario::punchline_raid_jitters_reopen_steward",
+        "label": "Reopen steward",
+        "pose": "arrival",
+        "model_rect": {
+          "aspect_ratio": 0.9,
+          "h": 80.0,
+          "w": 72.0,
+          "x": 214.000015258789,
+          "y": 110.0
+        },
+        "label_rect": {
+          "aspect_ratio": 6.21333312988281,
+          "h": 15.0,
+          "w": 93.1999969482422,
+          "x": 203.400009155273,
+          "y": 93.0
+        },
+        "normal_RM_strict_layout_equal": true
+      },
+      {
+        "case": "punchline_raid_jitters__active_phase_work_3",
+        "id": "scenario::punchline_raid_jitters_reopen_steward",
+        "label": "Reopen steward",
+        "pose": "arrival",
+        "model_rect": {
+          "aspect_ratio": 0.9,
+          "h": 80.0,
+          "w": 72.0,
+          "x": 214.000015258789,
+          "y": 110.0
+        },
+        "label_rect": {
+          "aspect_ratio": 6.21333312988281,
+          "h": 15.0,
+          "w": 93.1999969482422,
+          "x": 203.400009155273,
+          "y": 93.0
+        },
+        "normal_RM_strict_layout_equal": true
+      }
+    ]
+  },
+  "motion": {
+    "moving_entries": 11,
+    "static_occlusion_entries": 0,
+    "roster": [
+      "7 restrained indoor-floor light movers consolidating legacy common sheen plus lower reflection helper family",
+      "1 newly authored source-glyph wordmark pulse",
+      "3 newly authored independent practical core pulses; physical fourth practical stays steady"
+    ],
+    "roster_decision": "Approved eleven-entry roster after R1 zero-extraction diagnostic. Proposed fourth-rim reflection was deliberately omitted as new-design fallback,not silently dropped legacy motion. No moving stage pool,smoke,air,string lights or hidden-room inheritance.",
+    "actual_full_canvas_pairs": 66,
+    "initial_contexts": 6,
+    "RGB_ranges": {
+      "authored_wordmark_pulse": {
+        "pixels_min": 4680,
+        "pixels_max": 4680,
+        "delta_min": 19,
+        "delta_max": 22
+      },
+      "authored_practical_core_0": {
+        "pixels_min": 228,
+        "pixels_max": 228,
+        "delta_min": 20,
+        "delta_max": 23
+      },
+      "authored_practical_core_1": {
+        "pixels_min": 20,
+        "pixels_max": 20,
+        "delta_min": 12,
+        "delta_max": 21
+      },
+      "authored_practical_core_2": {
+        "pixels_min": 228,
+        "pixels_max": 228,
+        "delta_min": 20,
+        "delta_max": 23
+      },
+      "floor_glint_0": {
+        "pixels_min": 256,
+        "pixels_max": 480,
+        "delta_min": 12,
+        "delta_max": 13
+      },
+      "floor_glint_1": {
+        "pixels_min": 352,
+        "pixels_max": 450,
+        "delta_min": 11,
+        "delta_max": 12
+      },
+      "floor_glint_2": {
+        "pixels_min": 407,
+        "pixels_max": 532,
+        "delta_min": 11,
+        "delta_max": 12
+      },
+      "floor_glint_3": {
+        "pixels_min": 456,
+        "pixels_max": 536,
+        "delta_min": 12,
+        "delta_max": 13
+      },
+      "floor_glint_4": {
+        "pixels_min": 252,
+        "pixels_max": 504,
+        "delta_min": 11,
+        "delta_max": 12
+      },
+      "floor_glint_5": {
+        "pixels_min": 469,
+        "pixels_max": 562,
+        "delta_min": 10,
+        "delta_max": 11
+      },
+      "floor_glint_6": {
+        "pixels_min": 438,
+        "pixels_max": 552,
+        "delta_min": 12,
+        "delta_max": 13
+      }
+    },
+    "tiny_practical2": {
+      "entry": "authored_practical_core_1",
+      "source_board_pixels": 5,
+      "actual_native_changed_pixels": 20,
+      "native_bbox": [
+        400,
+        416,
+        408,
+        420
+      ],
+      "actual_max_channel_delta_range": [
+        12,
+        21
+      ],
+      "natural_recorded_evidence": "Base actual min023/max061 and OpenMic min022/max060,unmodified real-clock clips.",
+      "encoding_retention": "Tiny core temporal source/decoded correlation0.9935754; source mean RGB range7.7333,decoded8.4167. Encoding retention is separate from actual live-composite attribution.",
+      "scope": "A real but deliberately tiny honey-cap change,not a broad lamp-face pulse or equal-salience claim. Actual20/20 source-support pixels change in all6 frozen live composites. OpenMic4pixels lie under translucent lectern body,Bringer20under translucent rope adornment;0opaque. Do not call it universally uncovered. No opacity/timing/preview boost."
+    },
+    "source_painted_coverage": {
+      "independent_report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-painted-alpha-02\\evidence\\public-r2-independent-painted-alpha.json",
+      "sha256": "b518d5457cb6bd5def6cbb592fdc4fa933398c83da5f54feb1a4e24aff9794e1",
+      "pulse_context_pairs": 24,
+      "all_pulse_source_delta_support_retained": true,
+      "opaque_source_paint_intersections": 0,
+      "retained_rows": [
+        {
+          "scenario": "__none",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "__none",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "__none",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 20,
+          "contributors": []
+        },
+        {
+          "scenario": "__none",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_open_mic_night",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_open_mic_night",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_open_mic_night",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 4,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 16,
+          "contributors": [
+            {
+              "id": "scenario::punchline_open_mic_night_signup_lectern",
+              "label": "Open-mic signup lectern",
+              "paint": "body",
+              "nonzero": 4,
+              "opaque": 0
+            }
+          ]
+        },
+        {
+          "scenario": "punchline_open_mic_night",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_headliner_night",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_headliner_night",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_headliner_night",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 20,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_headliner_night",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_bringer_show",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_bringer_show",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_bringer_show",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 20,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 0,
+          "contributors": [
+            {
+              "id": "scenario::punchline_bringer_show_crowd_ropes",
+              "label": "Bringer crowd ropes",
+              "paint": "adorn",
+              "nonzero": 20,
+              "opaque": 0
+            }
+          ]
+        },
+        {
+          "scenario": "punchline_bringer_show",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_debt_court",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_debt_court",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_debt_court",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 20,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_debt_court",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_raid_jitters",
+          "entry": "authored_wordmark_pulse",
+          "source_alpha_pixels": 4680,
+          "actual_changed_pixels": 4680,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 4680,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_raid_jitters",
+          "entry": "authored_practical_core_0",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 80,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 148,
+          "contributors": [
+            {
+              "id": "scenario::punchline_raid_jitters_raid_lookout",
+              "label": "Raid lookout",
+              "paint": "adorn",
+              "nonzero": 80,
+              "opaque": 0
+            }
+          ]
+        },
+        {
+          "scenario": "punchline_raid_jitters",
+          "entry": "authored_practical_core_1",
+          "source_alpha_pixels": 20,
+          "actual_changed_pixels": 20,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 20,
+          "contributors": []
+        },
+        {
+          "scenario": "punchline_raid_jitters",
+          "entry": "authored_practical_core_2",
+          "source_alpha_pixels": 228,
+          "actual_changed_pixels": 228,
+          "source_painted_nonzero_union": 0,
+          "source_painted_opaque_union": 0,
+          "fully_uncovered": 228,
+          "contributors": []
+        }
+      ],
+      "Raid_narrow_intersection": "Core0 retains228/228 native changed pixels;80 intersect translucent lookout adornment,148fullyuncovered. Director and auditor accept readable title at peak/min,not universal glyph freedom."
+    },
+    "ReduceMotion": "All66 frozen entry-context full-composite pairs stable,coherent resting practicals retained. Actual Base settings pair differs19RGBpixels only in analog-clock HUD bbox[697,31,708,48];entire room stable. Raw full-app false preserved,no all-app freeze claim.",
+    "mandatory_unchanged_no_pointer_liveness": {
+      "source": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\scripts\\tests\\animation_liveness_without_pointer_check.gd",
+      "source_sha256": "3f1847771a563537173b738d9e076ea41c552bbc6d32116175834d53459de704",
+      "literal_result": "Animation liveness without pointer input: PASS",
+      "log": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-original-liveness01\\evidence\\worker.log",
+      "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "job": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-original-liveness01\\evidence\\job.json",
+      "job_sha256": "88a1aae8f8a5f68593b24bda41d87d89d62714211e2570fb9f87ff25cff72eb9",
+      "executions": 1
+    }
+  },
+  "native_evidence": {
+    "independent_final_receipt": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\audit\\public-r2-final-receipt-verification.json",
+    "independent_final_receipt_sha256": "6ef103c6fa9daddeaca5c239659467ea98c43fe9557921e76d9c57b4bca423b6",
+    "native_closure": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-final01\\evidence\\public_r2_native_closure.json",
+    "native_closure_sha256": "c7f2a199c8d6063cd76a2304c21134430953b6e87809ead428f73b3c3d1cc9f4",
+    "outer_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-finalseal01\\evidence\\final_receipt.json",
+    "outer_receipt_sha256": "3f37cc6fed1db69e920aa4216c56d72400047dba3849b50eecbecc095c4bfa33",
+    "native_evidence_zip": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-final01\\evidence\\public_r2_native_evidence.zip",
+    "native_evidence_zip_sha256": "e2045f6c7ee640a62351e8d241c85e0a274d0cd6b98984d42a481a98887cb02a",
+    "native_evidence_files": 1785,
+    "native_evidence_ZIP_members": 1786,
+    "native_PNG_hashes": 1319,
+    "native_report_assertions": 14649,
+    "native_findings": 0,
+    "initial_contexts": 6,
+    "initial_assertions": 737,
+    "source_counts": {
+      "cases": 42,
+      "case_types": {
+        "active": 22,
+        "aftermath": 20
+      },
+      "family_counts": {
+        "punchline_open_mic_night": 8,
+        "punchline_headliner_night": 9,
+        "punchline_bringer_show": 8,
+        "punchline_debt_court": 8,
+        "punchline_raid_jitters": 9
+      },
+      "source_checks": 3849,
+      "selected_title_occurrences": 455,
+      "room_visible_source_occurrences": 153,
+      "hidden_source_occurrences": 2,
+      "hidden_ids": {
+        "scenario::punchline_headliner_night_credential_rope": 1,
+        "scenario::punchline_raid_jitters_hide_cart": 1
+      },
+      "source_hosted_control_occurrences": 22,
+      "material_instances": 101,
+      "actor_instances": 52
+    },
+    "explicit_hidden_source_occurrences": [
+      {
+        "case": "punchline_headliner_night__active_phase_work_4",
+        "id": "scenario::punchline_headliner_night_credential_rope",
+        "source_visible": false,
+        "actual_geometry_absent": true
+      },
+      {
+        "case": "punchline_raid_jitters__active_phase_work_4",
+        "id": "scenario::punchline_raid_jitters_hide_cart",
+        "source_visible": false,
+        "actual_geometry_absent": true
+      }
+    ],
+    "hosted_control_semantics": "22 source-hosted controls verified through actual visible hosts and original available actions,not independent invisible geometry or authority-only membership.",
+    "source_assertions": 3849,
+    "full_composite_assertions": 257,
+    "RM_assertions": 312,
+    "floor_wrap_assertions": 71,
+    "placement_24h_boundary_assertions": 9,
+    "true_open_hours": "Source archetype open_hours null. Type-safe QA report represents this as empty dictionary;normal2:29/2:30AM boundaries stay open with no invented closing grace.",
+    "effective_hit_assertions": 9414,
+    "actual_ordered_hit_samples": 4620,
+    "effective_hit_contexts": 43,
+    "hit_scope": "Native original production ordered hit-candidate and interactive-only queries at each object center and four interior corners,normal/RM strictab0legacy versus exactR2. Not mouse activation or UI lifecycle E2E.",
+    "protected_payloads": 14,
+    "production_normalized_files": 862,
+    "prior_seven_art_files": 124,
+    "strict_baseline_files": 7092,
+    "owned_native_campaign_jobs_including_collector": 20,
+    "native_engine_jobs": 18,
+    "all_owned_active_at_release": 0,
+    "original_liveness_executions": 1,
+    "diagnostics": [
+      {
+        "run": "base01",
+        "exit_code": 1,
+        "job_sha256": "3c1f1bf4d6b82bb815f99efc03e7f691cfae682c9921f848d198811ee7761135",
+        "log_sha256": "5127cbebdfd94b2fbaaaf8989eabfc5f893beb8c082ae70993ff80b75da083a0",
+        "assigned_before_execution": true,
+        "cpu_rate": 1200,
+        "memory_bytes": 2147483648,
+        "active_at_release": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "diagnostic": "PowerShell parsed unquoted placeholder as a scriptblock; Godot rejected empty out before capture, corrected quoted invocation in base02."
+      },
+      {
+        "run": "placement01",
+        "exit_code": 1,
+        "job_sha256": "a3a9f260bc48394f999dfdce172b1faa9a327461e04f2702317acaa20def8d1d",
+        "log_sha256": "fa1e015ecfd59c657ccd56e25bde4c97070c4d0ccfe53009983e5f773d1f2e98",
+        "assigned_before_execution": true,
+        "cpu_rate": 1200,
+        "memory_bytes": 2147483648,
+        "active_at_release": 0,
+        "timed_out": true,
+        "cleanup_errors": [],
+        "diagnostic": "QA helper assigned resolved Nil open_hours to Dictionary; production correctly treats Nil as24h. Isolated owned Job reached its bounded180s timeout and drained tozero. Corrected helper type handling only; placement02 authoritative."
+      }
+    ],
+    "bootstrap_diagnostic": {
+      "stage01": "Storage validate_layout was given an existing destination file instead of its directory, rejected not_directory at index.json before copying index or creating any engine Job. Exact asset copies already made were reverified; stage02 validated parent directories. No denial bypass, C fallback, or cap relaxation."
+    },
+    "auditor_diagnostics": [
+      "First painted-alpha helper used the wrong adornment key;corrected to exact native adorn field,failed receipt retained.",
+      "Protected-input verifier initially assumed uniform frozen-input metadata keys;corrected to optional source plus required frozen file path,failed receipts retained.",
+      "Final integrity verifier initially expected native placement report null;confirmed original source null is intentionally normalized to{}by type-safe QA helper. Corrected only verifier assertion,rawfailedreceipt and helper copy retained. No native recapture or source/art change."
+    ],
+    "assertion_limit": "Counts overlap scopes and are not14649independent playthroughs.42canonical Runtime phase/outcome routes executed;120active branch edges catalogued,not every alternate path executed."
+  },
+  "source_reproducibility": {
+    "QA_source_supplement": {
+      "status": "EXACT_QA_SOURCE_REPRODUCIBILITY_SUPPLEMENT_VERIFIED",
+      "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+      "archive_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\qa-source-archive.zip",
+      "archive_sha256": "31d9feb3914afd193b922eabc07867c5ad6c247ba3a23e05af671a6ee4db9522",
+      "archive_bytes": 15318111,
+      "manifest_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\qa-source-archive-manifest.json",
+      "manifest_sha256": "0d031722642c9be438c1edf4cc6d8d2f7a80a889a98e35ef3af702327bf899a7",
+      "files": 1111,
+      "inherited_Jazz_archive_sha256": "2a4d4159ef857db15f1703e7cf12ee7a1605ff244f5d6dbde3f3929950b75a76",
+      "exact_current_source_files": 1020,
+      "production_normalized": 863,
+      "prior_art": 124,
+      "public_payloads": 14,
+      "raw_generation_reproducibility_archive": {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\punchline_club-v1-r2\\punchline_club-v1-r2-source.zip",
+        "sha256": "92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6",
+        "bytes": 10377945,
+        "members": 47
+      },
+      "scope": "Artifact-only source closure; no Godot or production/art edits. Inherited sealed QA source plus exact current raw production/core/prior-seven/public payloads and public helpers/adapter/catalog/identity. Manifest records each byte source. Includes raw c5/project/export/native-script source. Not a native rerun or substitute for separately sealed native evidence. Existing native closure and outer receipt remain immutable."
+    },
+    "QA_source_supplement_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\public-r2-QA-source-supplement.json",
+    "QA_source_supplement_receipt_sha256": "bfa660a17a5b202870c069f86376f7aabd626e342eebff911678a56941c2184d",
+    "QA_source_supplement_job_sha256": "996e10c7139ef96f9e4198203d5440dec8d7f76e95c16d28e803f919124b94a0",
+    "scope": "Native bundle and outer closure remain immutable. Separate1111-file exact current QA-source archive derives from sealed Jazz source plus hash-verified current production/prior7/public payloads/helpers. Artifact-only,no Godot. Full raw source,prompt,frozen references,recipe and R1 diagnostic are in the independently hash-verified non-active raw-generation archive."
+  },
+  "preview": {
+    "saved_items": {
+      "public-punchline-trial-r2-actual-motion.mp4": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\previews\\public-punchline-trial-r2-actual-motion.mp4",
+        "sha256": "ef44681dd33a8425e73de1211df3a8f9cb2c817949bcf26e36056abdfabc9dbb",
+        "bytes": 2185872
+      },
+      "public-punchline-trial-r2-actual-play.png": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\previews\\public-punchline-trial-r2-actual-play.png",
+        "sha256": "b442e04a70bc8d2f414cad137be6e95da7b0a2fe97814cd2de699872b92d01cf",
+        "bytes": 907753
+      }
+    },
+    "status": "Saved as exact R2 TRIAL before this native PASS. Same bytes now passed;parent has Space IDs. This seal does not independently claim user delivery.",
+    "actual_frames": 84,
+    "actual_scene_clock_span_seconds": 11.073338,
+    "encoded_frames": 85,
+    "encoded_duration_seconds": 11.24,
+    "presentation": "Actual full app above,clearly named production-art-target-only crops below. Integer-nearest enlarged pixels,actual frame clock deltas,terminal hold. No opacity,brightness or timing boost. Exact actual PNG saved separately for sharpness judgment.",
+    "decoded_scope": "85decoded frames;representative personally viewed by auditor/director/artist. Core0/core2 retention correlations0.9984966/0.9988175 and tinycore0.9935754. Not substituted for actual native full-composite proof."
+  },
+  "limits": [
+    "Canonical Runtime command/fact routes with unchanged Engine commit and physical-membership publication. Not UI-click, save/revisit/travel end-to-end.",
+    "120 active branch edges catalogued;42 canonical phase/outcome contexts executed, not every alternate route.",
+    "Actual real-clock clips are separate from frozen technical A/B proofs.",
+    "Practical2 is a real but tiny5-board-pixel effect; translucent source-painted overlaps remain. No universal unobstructed-title or all-idle visibility claim.",
+    "Room is24h by source; no invented Jazz closing time or counter test.",
+    "No target activation, branch publication, production renderer/data/settings/geometry changes. Final exact auditor PASS still required.",
+    "Two source-inherited high poses(CrowdCaptain and RaidSteward work2/work3)remain unchanged;no invented painted support or universal grounding claim.",
+    "Eight of20interior identities now have native art PASS;12interiors and later12doorway phase remain unfinished. Campaign remains active.",
+    "Current served Pawn/Jazz qualification is artifact-only due unavailable supported browser binding;five prior rooms have full live Web proof. This public native seal grants no Web acceptance."
+  ],
+  "next": "Integrator may activate ONLY exact PUBLIC PunchlineR2 while preserving seven passed packs/c5/project/export settings and run separate TEST artifact/live Web qualification. Director conditional release now permits exactly ONE hidden-casino first source using approved frozen91bcd8cdguide,current4union/closure and latest measured directorv3. Hidden is sole next source;no private/back-room/other-room generation."
+}

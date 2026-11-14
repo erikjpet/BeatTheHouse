@@ -1,0 +1,248 @@
+{
+  "status": "INDEPENDENT_FINAL_NATIVE_INTEGRITY_AND_SCOPE_VERIFIED_READY_FOR_EXACT_SEAL",
+  "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+  "native_closure": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-final01\\evidence\\public_r2_native_closure.json",
+  "native_closure_sha256": "c7f2a199c8d6063cd76a2304c21134430953b6e87809ead428f73b3c3d1cc9f4",
+  "outer_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-finalseal01\\evidence\\final_receipt.json",
+  "outer_receipt_sha256": "3f37cc6fed1db69e920aa4216c56d72400047dba3849b50eecbecc095c4bfa33",
+  "native_evidence_zip": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-final01\\evidence\\public_r2_native_evidence.zip",
+  "native_evidence_zip_sha256": "e2045f6c7ee640a62351e8d241c85e0a274d0cd6b98984d42a481a98887cb02a",
+  "native_evidence_files": 1785,
+  "native_evidence_PNGs": 1319,
+  "native_evidence_ZIP_members": 1786,
+  "jobs": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-base01\\evidence\\job.json": "3c1f1bf4d6b82bb815f99efc03e7f691cfae682c9921f848d198811ee7761135",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-base02\\evidence\\job.json": "03d79d44ccffc6596b12651e29a6171bd22898cc5c6f65b17d1298452f68b6e8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-composite-rm01\\evidence\\job.json": "338fa5614127eba8df6206d0822ac88aff45efdd64161e0aa938c6bf0fffadb6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-composite01\\evidence\\job.json": "4b95808265878d502d5437b0bd988a2fcf0f9215bab0a15b5026401909e6fe8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-current6-01\\evidence\\job.json": "98b8ac859b379ae6c35929bea0736b8cca6cde8b8c02c5627a0f594453c94415",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-final01\\evidence\\job.json": "7be33adb0999b809f6af879e955615ee51584e7286acbfaa826fd6b7e280dbf5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-floor-wrap01\\evidence\\job.json": "9fc60559dac65246c8c6fce921d75d69fa9e99a00b13dec17fc9c403e69fc666",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-hits01\\evidence\\job.json": "6e73e895b27e3af899cf7e451f2e8c6f2efd26d0083fbc0b9c267a1bc55eac45",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-import01\\evidence\\job.json": "b8d79381cba4426e1f0ca41c3ca50cd657595dd42d58ed0847300934245b2029",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-openmic01\\evidence\\job.json": "adb09328647fe8069111bbda31b6e2086e0efee95566e1a6ee6a7fc7e57305ce",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-original-liveness01\\evidence\\job.json": "88a1aae8f8a5f68593b24bda41d87d89d62714211e2570fb9f87ff25cff72eb9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-placement01\\evidence\\job.json": "a3a9f260bc48394f999dfdce172b1faa9a327461e04f2702317acaa20def8d1d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-placement02\\evidence\\job.json": "a2d47b61be539b05f31553a76a4e3d856c5ca8b80577fdcc233c2556fddbf78e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-bringer-01\\evidence\\job.json": "91bec80c61ba9c04f3d2d15c37b8234065af7f71d257d70670c12ed4351c7ae8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-debt-01\\evidence\\job.json": "c0a6a1c35fa2610d5dc485fba31deec6c7e652269d3dfa6d49730d89001b6a5d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-headliner-01\\evidence\\job.json": "5e3b514e52731cf16b7cd1e630282e5c0e47f65d13ba84feb24e388b8af54a01",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-openmic-01\\evidence\\job.json": "a196c85edb607a925bce8067d35a49931533f546acf2ed4c82eba2b5a7e63a81",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-raid-01\\evidence\\job.json": "80a18fc99918c6acd92b5ceaf412b77a1375a9b0a06abe49cdf3bbb7a15a444d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-source-paint01\\evidence\\job.json": "5f39945a20236551b392599c7051d0c41f111be52205c5ab7707857f16ace4e1",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-validator01\\evidence\\job.json": "981bb6a9b42e0b3ee592d6d965c1550a2bda4d3596b1d57d57eddbe8e121eb71"
+  },
+  "native_report_assertions": 14649,
+  "native_report_findings": 0,
+  "source_review": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-review\\evidence\\public-r2-independent-source-review.json",
+    "sha256": "bd9bb9b644261b40a6989def914c44c68176f74a560a179ca28524de8da18012"
+  },
+  "source_counts": {
+    "cases": 42,
+    "case_types": {
+      "active": 22,
+      "aftermath": 20
+    },
+    "family_counts": {
+      "punchline_open_mic_night": 8,
+      "punchline_headliner_night": 9,
+      "punchline_bringer_show": 8,
+      "punchline_debt_court": 8,
+      "punchline_raid_jitters": 9
+    },
+    "source_checks": 3849,
+    "selected_title_occurrences": 455,
+    "room_visible_source_occurrences": 153,
+    "hidden_source_occurrences": 2,
+    "hidden_ids": {
+      "scenario::punchline_headliner_night_credential_rope": 1,
+      "scenario::punchline_raid_jitters_hide_cart": 1
+    },
+    "source_hosted_control_occurrences": 22,
+    "material_instances": 101,
+    "actor_instances": 52
+  },
+  "effective_hit_assertions": 9414,
+  "actual_hit_samples": 4620,
+  "hit_contexts": 43,
+  "independent_reports": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-review\\evidence\\public-r2-independent-source-review.json",
+      "sha256": "bd9bb9b644261b40a6989def914c44c68176f74a560a179ca28524de8da18012"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-preflight\\evidence\\public-r2-preflight.json",
+      "sha256": "800f0af3c65c0d7d3e7c818c675b7717252681f71475eb9d467b9f899a44fb40"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-RGB-recount\\evidence\\public-r2-independent-composite-RGB.json",
+      "sha256": "6011a09b7615dec0d13d4b3dc6b3a00ba95d0105020dc0024dab2c9615318731"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-painted-alpha-02\\evidence\\public-r2-independent-painted-alpha.json",
+      "sha256": "b518d5457cb6bd5def6cbb592fdc4fa933398c83da5f54feb1a4e24aff9794e1"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-RM-RGB\\evidence\\actual-RM-RGB-difference.json",
+      "sha256": "7933e9b4f626f6c8e224f3a76188f7afd81a28401bfb7acf5b292d813f65dba1"
+    }
+  ],
+  "protected_limits_original_liveness_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-integrity-limits-03\\evidence\\public-r2-independent-protected-limits-liveness.json",
+  "protected_limits_original_liveness_sha256": "06b590ccaba99269f85dad929c5f2f1c05c89b8725033e8fbeb0a81b70b35481",
+  "source_limits": [
+    {
+      "case": "punchline_bringer_show__aftermath_show_seated",
+      "id": "scenario::punchline_bringer_show_aftermath_show_seated_actor",
+      "label": "Crowd Captain",
+      "pose": "arrival",
+      "model_rect": {
+        "aspect_ratio": 0.9,
+        "h": 80.0,
+        "w": 72.0,
+        "x": 96.9999847412109,
+        "y": 152.0
+      },
+      "label_rect": {
+        "aspect_ratio": 5.82666625976563,
+        "h": 15.0,
+        "w": 87.3999938964844,
+        "x": 89.2999877929688,
+        "y": 135.0
+      },
+      "normal_RM_strict_layout_equal": true
+    },
+    {
+      "case": "punchline_raid_jitters__active_phase_work_2",
+      "id": "scenario::punchline_raid_jitters_reopen_steward",
+      "label": "Reopen steward",
+      "pose": "arrival",
+      "model_rect": {
+        "aspect_ratio": 0.9,
+        "h": 80.0,
+        "w": 72.0,
+        "x": 214.000015258789,
+        "y": 110.0
+      },
+      "label_rect": {
+        "aspect_ratio": 6.21333312988281,
+        "h": 15.0,
+        "w": 93.1999969482422,
+        "x": 203.400009155273,
+        "y": 93.0
+      },
+      "normal_RM_strict_layout_equal": true
+    },
+    {
+      "case": "punchline_raid_jitters__active_phase_work_3",
+      "id": "scenario::punchline_raid_jitters_reopen_steward",
+      "label": "Reopen steward",
+      "pose": "arrival",
+      "model_rect": {
+        "aspect_ratio": 0.9,
+        "h": 80.0,
+        "w": 72.0,
+        "x": 214.000015258789,
+        "y": 110.0
+      },
+      "label_rect": {
+        "aspect_ratio": 6.21333312988281,
+        "h": 15.0,
+        "w": 93.1999969482422,
+        "x": 203.400009155273,
+        "y": 93.0
+      },
+      "normal_RM_strict_layout_equal": true
+    }
+  ],
+  "QA_source_supplement": {
+    "status": "EXACT_QA_SOURCE_REPRODUCIBILITY_SUPPLEMENT_VERIFIED",
+    "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+    "archive_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\qa-source-archive.zip",
+    "archive_sha256": "31d9feb3914afd193b922eabc07867c5ad6c247ba3a23e05af671a6ee4db9522",
+    "archive_bytes": 15318111,
+    "manifest_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\qa-source-archive-manifest.json",
+    "manifest_sha256": "0d031722642c9be438c1edf4cc6d8d2f7a80a889a98e35ef3af702327bf899a7",
+    "files": 1111,
+    "inherited_Jazz_archive_sha256": "2a4d4159ef857db15f1703e7cf12ee7a1605ff244f5d6dbde3f3929950b75a76",
+    "exact_current_source_files": 1020,
+    "production_normalized": 863,
+    "prior_art": 124,
+    "public_payloads": 14,
+    "raw_generation_reproducibility_archive": {
+      "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\punchline_club-v1-r2\\punchline_club-v1-r2-source.zip",
+      "sha256": "92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6",
+      "bytes": 10377945,
+      "members": 47
+    },
+    "scope": "Artifact-only source closure; no Godot or production/art edits. Inherited sealed QA source plus exact current raw production/core/prior-seven/public payloads and public helpers/adapter/catalog/identity. Manifest records each byte source. Includes raw c5/project/export/native-script source. Not a native rerun or substitute for separately sealed native evidence. Existing native closure and outer receipt remain immutable."
+  },
+  "QA_source_supplement_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-source-archive-supplement\\evidence\\public-r2-QA-source-supplement.json",
+  "QA_source_supplement_sha256": "bfa660a17a5b202870c069f86376f7aabd626e342eebff911678a56941c2184d",
+  "QA_source_supplement_job_sha256": "996e10c7139ef96f9e4198203d5440dec8d7f76e95c16d28e803f919124b94a0",
+  "original_liveness": {
+    "source": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\scripts\\tests\\animation_liveness_without_pointer_check.gd",
+    "source_sha256": "3f1847771a563537173b738d9e076ea41c552bbc6d32116175834d53459de704",
+    "literal_result": "Animation liveness without pointer input: PASS",
+    "log": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-original-liveness01\\evidence\\worker.log",
+    "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "job": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-original-liveness01\\evidence\\job.json",
+    "job_sha256": "88a1aae8f8a5f68593b24bda41d87d89d62714211e2570fb9f87ff25cff72eb9",
+    "executions": 1
+  },
+  "director_report": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\punchline-r2-director-visual-go.json",
+  "director_sha256": "84ccc00eb0d456dda2d6e7b85813afa5792dc6a9660bbc1aa176d07de00b4fc3",
+  "preview": {
+    "public-punchline-trial-r2-actual-motion.mp4": {
+      "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\previews\\public-punchline-trial-r2-actual-motion.mp4",
+      "sha256": "ef44681dd33a8425e73de1211df3a8f9cb2c817949bcf26e36056abdfabc9dbb",
+      "bytes": 2185872
+    },
+    "public-punchline-trial-r2-actual-play.png": {
+      "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\previews\\public-punchline-trial-r2-actual-play.png",
+      "sha256": "b442e04a70bc8d2f414cad137be6e95da7b0a2fe97814cd2de699872b92d01cf",
+      "bytes": 907753
+    }
+  },
+  "diagnostics": [
+    {
+      "run": "base01",
+      "exit_code": 1,
+      "job_sha256": "3c1f1bf4d6b82bb815f99efc03e7f691cfae682c9921f848d198811ee7761135",
+      "log_sha256": "5127cbebdfd94b2fbaaaf8989eabfc5f893beb8c082ae70993ff80b75da083a0",
+      "assigned_before_execution": true,
+      "cpu_rate": 1200,
+      "memory_bytes": 2147483648,
+      "active_at_release": 0,
+      "timed_out": false,
+      "cleanup_errors": [],
+      "diagnostic": "PowerShell parsed unquoted placeholder as a scriptblock; Godot rejected empty out before capture, corrected quoted invocation in base02."
+    },
+    {
+      "run": "placement01",
+      "exit_code": 1,
+      "job_sha256": "a3a9f260bc48394f999dfdce172b1faa9a327461e04f2702317acaa20def8d1d",
+      "log_sha256": "fa1e015ecfd59c657ccd56e25bde4c97070c4d0ccfe53009983e5f773d1f2e98",
+      "assigned_before_execution": true,
+      "cpu_rate": 1200,
+      "memory_bytes": 2147483648,
+      "active_at_release": 0,
+      "timed_out": true,
+      "cleanup_errors": [],
+      "diagnostic": "QA helper assigned resolved Nil open_hours to Dictionary; production correctly treats Nil as24h. Isolated owned Job reached its bounded180s timeout and drained tozero. Corrected helper type handling only; placement02 authoritative."
+    }
+  ],
+  "bootstrap_diagnostic": {
+    "stage01": "Storage validate_layout was given an existing destination file instead of its directory, rejected not_directory at index.json before copying index or creating any engine Job. Exact asset copies already made were reverified; stage02 validated parent directories. No denial bypass, C fallback, or cap relaxation."
+  },
+  "limits": [
+    "Canonical Runtime command/fact routes with unchanged Engine commit and physical-membership publication. Not UI-click, save/revisit/travel end-to-end.",
+    "120 active branch edges catalogued;42 canonical phase/outcome contexts executed, not every alternate route.",
+    "Actual real-clock clips are separate from frozen technical A/B proofs.",
+    "Practical2 is a real but tiny5-board-pixel effect; translucent source-painted overlaps remain. No universal unobstructed-title or all-idle visibility claim.",
+    "Room is24h by source; no invented Jazz closing time or counter test.",
+    "No target activation, branch publication, production renderer/data/settings/geometry changes. Final exact auditor PASS still required."
+  ],
+  "visual_scope": "Auditor personally ALL42 ordinary whole-scenes via unmodified1:1 source-hashed sheets,all6initials,genuine Base/OpenMic extrema/settingsRM,decoded preview representative,Raid fixed-clock core/title peak-min. Director personally6initials+20representative published states(4per5families)+extrema/RM/decoded/Raid diagnostic,not all42. No art/material blocker. Two inherited high-pose placement limits,accepted narrow rim/title intersections,tiny5-board-pixel cap and translucent attenuation remain explicit.",
+  "archive_scope": "Native closure/evidence and outer receipt left immutable. A separate1111-file artifact-only QA source supplement closes the source-archive layout difference without recapture."
+}

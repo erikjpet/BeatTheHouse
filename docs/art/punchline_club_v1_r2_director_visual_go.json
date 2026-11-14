@@ -1,0 +1,186 @@
+{
+  "schema": "bth-director-visual-gate/v1",
+  "date": "2026-11-14",
+  "room": "punchline_club",
+  "revision": "v1-r2",
+  "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+  "background_sha256": "fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448",
+  "decision": "SCOPED_DIRECTOR_VISUAL_GO_PENDING_INDEPENDENT_FINAL_NATIVE_AUDIT",
+  "initial_gate": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\punchline-r2-director-initial-visual-go.json",
+    "sha256": "8a164dfa1c63ffb74b73b3f80d1892664c2953ac1cf3ebb2b1a2e047fdc046db"
+  },
+  "personal_scope": {
+    "actual_initial_contexts": 6,
+    "representative_ordinary_published_contexts": 20,
+    "all42_personally_claimed": false,
+    "genuine_base_openmic_min_peak": true,
+    "actual_settings_route_rm": true,
+    "decoded_representative": true,
+    "raid_fixed_clock_technical_peak_min": true
+  },
+  "published_images": [
+    {
+      "family": "openmic",
+      "context": "active_phase_work_3",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-openmic-01\\evidence\\punchline_open_mic_night__active_phase_work_3_play.png",
+      "sha256": "74533db1cec43be6e8204a1fc94e322935c190983a1108d6091352196b96f3c2"
+    },
+    {
+      "family": "openmic",
+      "context": "aftermath_bill_reordered",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-openmic-01\\evidence\\punchline_open_mic_night__aftermath_bill_reordered_play.png",
+      "sha256": "1be830d17d007f2b60b9127c8740264a068e1e25bd1510ad31914c8563de25d0"
+    },
+    {
+      "family": "openmic",
+      "context": "aftermath_late_show_running",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-openmic-01\\evidence\\punchline_open_mic_night__aftermath_late_show_running_play.png",
+      "sha256": "2aba2f30bf06cc346d8a09ec28f830cd7977e0a890ae60aa9a11e4830030b71d"
+    },
+    {
+      "family": "openmic",
+      "context": "aftermath_show_refused",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-openmic-01\\evidence\\punchline_open_mic_night__aftermath_show_refused_play.png",
+      "sha256": "63328445da1726eee2a02e720a8cccc00b1062d2a36fb4bc06b60bca8e7c6cc5"
+    },
+    {
+      "family": "headliner",
+      "context": "active_phase_work_4",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-headliner-01\\evidence\\punchline_headliner_night__active_phase_work_4_play.png",
+      "sha256": "44f6d492aaf4a30fd03b6117d71fe8bca6e466deaf6c356033face2e12fe902a"
+    },
+    {
+      "family": "headliner",
+      "context": "aftermath_headliner_reached",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-headliner-01\\evidence\\punchline_headliner_night__aftermath_headliner_reached_play.png",
+      "sha256": "df04a03a0012f8b227245574f52bb80b442ba8b02f4adabc1730138cc0571137"
+    },
+    {
+      "family": "headliner",
+      "context": "aftermath_credential_refused",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-headliner-01\\evidence\\punchline_headliner_night__aftermath_credential_refused_play.png",
+      "sha256": "77383e9aeafb80d935a8e3d7489691a929804ede857d2fda21b2353b5cfac28a"
+    },
+    {
+      "family": "headliner",
+      "context": "aftermath_runner_diverted",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-headliner-01\\evidence\\punchline_headliner_night__aftermath_runner_diverted_play.png",
+      "sha256": "29e70aa4598e879ca9bac5e4dc51c2e750fc5eb7671d2864c636b6e21172e1bc"
+    },
+    {
+      "family": "bringer",
+      "context": "active_phase_work_3",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-bringer-01\\evidence\\punchline_bringer_show__active_phase_work_3_play.png",
+      "sha256": "bf4552ab8c036cc9c5b183dc7931a447975260d97d9c8d121f9a885b42a61117"
+    },
+    {
+      "family": "bringer",
+      "context": "aftermath_hostile_pitch",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-bringer-01\\evidence\\punchline_bringer_show__aftermath_hostile_pitch_play.png",
+      "sha256": "3e2ee6fd569752d89a1989b7a76630f411b384b35eb8b4e3917babf70036be9f"
+    },
+    {
+      "family": "bringer",
+      "context": "aftermath_show_seated",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-bringer-01\\evidence\\punchline_bringer_show__aftermath_show_seated_play.png",
+      "sha256": "2534e656f96e411dba22e873c380c618d0e4a2047d48dd843dff4170c2d3bb48"
+    },
+    {
+      "family": "bringer",
+      "context": "aftermath_ushering_refused",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-bringer-01\\evidence\\punchline_bringer_show__aftermath_ushering_refused_play.png",
+      "sha256": "bd7b18615f154ded2bb64fe04a56b39a0dfc908cb4aeb6416896f0614004be8d"
+    },
+    {
+      "family": "debt",
+      "context": "active_phase_work_3",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-debt-01\\evidence\\punchline_debt_court__active_phase_work_3_play.png",
+      "sha256": "38fe3b512ebb06e4712bb160ebe7b1cc02e4bebc29797f9564555d8d1a8a84d8"
+    },
+    {
+      "family": "debt",
+      "context": "aftermath_room_returns_ordered",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-debt-01\\evidence\\punchline_debt_court__aftermath_room_returns_ordered_play.png",
+      "sha256": "2124f76fd963de69624c45141150191a755b36c9df815575a1425ea30eaebeb8"
+    },
+    {
+      "family": "debt",
+      "context": "aftermath_ruling_contested",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-debt-01\\evidence\\punchline_debt_court__aftermath_ruling_contested_play.png",
+      "sha256": "dde69192bffc4ec5d5d2f219c893828f44d4eb71c944348fd9ad210156a2c9ea"
+    },
+    {
+      "family": "debt",
+      "context": "aftermath_hearing_refused",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-debt-01\\evidence\\punchline_debt_court__aftermath_hearing_refused_play.png",
+      "sha256": "44141a24cc3f3b58f526105fcc37352bc83dbb1be469d4c48d7eb158fb5f3cd1"
+    },
+    {
+      "family": "raid",
+      "context": "active_phase_work_4",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-raid-01\\evidence\\punchline_raid_jitters__active_phase_work_4_play.png",
+      "sha256": "7a178720b65306956c0ebe26d7b41b7f4c02759c4db610b4bcf7564b6028f069"
+    },
+    {
+      "family": "raid",
+      "context": "aftermath_altered_floor_reopened",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-raid-01\\evidence\\punchline_raid_jitters__aftermath_altered_floor_reopened_play.png",
+      "sha256": "8d0b6d9fc29cc646356ed09d9eea94b72e2a856001f18317f21472e279fcd8f9"
+    },
+    {
+      "family": "raid",
+      "context": "aftermath_hide_task_refused",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-raid-01\\evidence\\punchline_raid_jitters__aftermath_hide_task_refused_play.png",
+      "sha256": "5e9163004cd9267fe42146e1b869f46ad0595bd7e5dd272e9c4671805efee1e2"
+    },
+    {
+      "family": "raid",
+      "context": "aftermath_night_aborted",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-sequence-raid-01\\evidence\\punchline_raid_jitters__aftermath_night_aborted_play.png",
+      "sha256": "9bcd0f017c889a4251ab8351002d3249228ddd996210bf5d50747932e4ec9f62"
+    }
+  ],
+  "additional_viewed": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-public-r2-video-verify\\evidence\\decoded-middle.png",
+      "sha256": "169625dd53272b6ce43eb230794c23472fb43b0246824513a461bed4b78c7464"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-composite01\\evidence\\punchline_raid_jitters__authored_practical_core_0_a.png",
+      "sha256": "f6cfe59a5a2d02983f3a82f6b44f070c18bd47bf277b414b3e2db3bf0827f77f"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-composite01\\evidence\\punchline_raid_jitters__authored_practical_core_0_b.png",
+      "sha256": "58c16665a2722a8dd120be11d7c4e1566d3f0e88b02fad69061bfc28c40f2272"
+    }
+  ],
+  "source_paint_reference": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-paint-coverage01\\evidence\\source_painted_pulse_coverage.json",
+    "sha256": "61ac7e2b7602f101e4e268ed897b6605dcdc25f2a643e496b148609c9a0ef529"
+  },
+  "visual_findings": [
+    "Own vivid plum masonry/burgundy/timber/amber and selective cyan-pink hard-pixel materials remain coherent in actual room composites; no further source/R3 paint/module requested.",
+    "Gray Comic variants, cyan Numbers203/signup/changed props and gold guard/comic/participant/current actors remain discernible over real curtain/apron/wings/brick/floor in all personally reviewed scenes.",
+    "Raid lookout gold title stays readable in both explicitly labeled fixed-art-clock technical peak/min composites; narrow real-rim/core intersection accepted, not universal unobstructed-letter claim.",
+    "Genuine Base/OpenMic recorded extrema and settings-route RM retain title safety/resting practicals; native attribution remains separate from a still.",
+    "The actual decoded preview remains crisp and labels lower art-target-only crops honestly; no fake time/opacity boost."
+  ],
+  "motion_scope": [
+    "Eleven real moving entries: seven floor, one new wordmark pulse, three new practical pulses. Fourth physical lamp steady, rejected zero-pixel rim concept preserved as history not counted moving.",
+    "Worker/auditor source-paint result: tiny cap retains20 actual native pixels(5 board) in every current context,maxchannel delta12..21. OpenMic4/20 andBringer20/20 overlap translucent paint,zero opaque; not universally uncovered.",
+    "Other practical cores retain228 pixels; Raid core1 has80/228 translucent lookout-adornment overlap,zero opaque,actual change228/228. Preserve actual attenuation rather than model-envelope assumptions.",
+    "All66 current entry/context RM pairs stable; final exact integrity/source/native receipts remain the auditor seal, not this visual artifact."
+  ],
+  "source_limits": [
+    "Bringer show_seated Crowd Captain has an inherited high left-side pose above floor after stage props disappear. Bind exact legacy/R2 normal/RM geometry/pose; no painted platform or universal grounding claim.",
+    "Narrow real-frame/rim and unchanged live/source intersections remain explicit; do not move labels/objects or remove all highlights to claim perfect text clearance.",
+    "No full42 personal-review claim. Auditor complete ordinary actual/source review is distinct from director representative risk spread."
+  ],
+  "not_claimed": [
+    "No final independent native PASS, target integration/activation or served-Web acceptance until their separate exact gates.",
+    "No owner acceptance, full20 completion, alternate UI route traversal, save/revisit or gameplay lifecycle E2E.",
+    "Fixed-art-clock A/B diagnostics are not genuine autonomous owner-preview footage."
+  ],
+  "release_condition": "If independent audit verifies all42 actual/source contexts and remaining exact motion/RM/wrap/effective-hit/liveness/semantics/integrity/receipt gates with no art failure, director has no remaining visual blocker for exactc617fb48 package. Only that explicit final seal permits integration and triggers the separately prepared conditional hidden source. No extra routine director wait is required."
+}

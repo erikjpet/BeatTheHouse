@@ -15,3 +15,4 @@ review_artifacts/environment_art_sources/pawn_shop-preart-v1/pawn_preart_closure
 /data/art/environments/bar.json -text whitespace=cr-at-eol
 /data/art/environments/pawn_shop.json -text whitespace=cr-at-eol
 /data/art/environments/jazz_club.json -text whitespace=cr-at-eol
+/data/art/environments/punchline_club.json -text whitespace=cr-at-eol
