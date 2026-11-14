@@ -1,8 +1,8 @@
-# Hidden Punchline Casino: measured execution direction v3
+# Hidden Punchline Casino: execution direction v4
 
 Prepared: 2026-11-14
 Art identity: small_underground_casino
-Status: public Punchline R2 remains the sole active unapproved art package. Hidden clean guide and current four-context pre-art are now complete and personally inspected. This v3 is a CONDITIONAL one-source release: start exactly one coherent hidden source ONLY after auditor explicitly seals public Punchline exact final native PASS and these frozen inputs are read/verified. No hidden image call, package, integration or activation now; no routine second brief is required after that exact gate.
+Status: public Punchline R2 final native PASS has satisfied the prior-room gate. Exactly one hidden raw and one justified matching floor-only plate are complete/preserved; hidden is now the sole active unapproved authoring package. Exact fitted static/actual/native gates remain pending. No extra room/module source, private image, target activation or served acceptance is authorized here. Proposed source-faithful roster is31 genuine moving entries, one exact right front and no left replay.
 
 ## Identity, story and reference roles
 
@@ -132,3 +132,36 @@ Current pre-art does not waive future outcome bands, full primitive movement/RM,
 After auditor explicitly seals the PUBLIC Punchline final exact native PASS, artist may immediately generate ONE coherent hidden room from this v3, frozen clean91bcd8cd, current union3f0aaabc, own shared facade/backdrop, preferred hard-pixel style and Delta secondary craft, without waiting for another routine briefing. Preserve raw original/prompt/frozen provenance. No image call before that public seal, no private back-room image, no extra cast/card/tool sheets. One floor-only module is justified only by a real returned depth problem, not speculation. Public actual/source proof and pending seven-room delivery work remain priority until their owned jobs release.
 
 The source should be an empty low-ceiling practical basement with worn dark green felt, charcoal/plum beams/walls, battered wood/metal and restrained cheap colored bulbs. It is recognizably beneath the same building, but not the public neon comedy stage, a luxury room or a fog-painted shell. Keep both clocked pink air families as later authored layers, not frozen haze in the background. Ten independent light phases, distinct six-long-band versus five-bobbing-ribbon flow translations, three teal material glints and seven dry-floor movers remain the motion scope. Any source-only, static or actual trial still does not equal final hidden native/served acceptance.
+
+## Version4 raw material, floor module and thirty-one-entry assembly
+
+Public exact final native seal c617fb48 / audit9af18f93 satisfied the v3 conditional source gate. The already-prepared one hidden source completed exactly once, not duplicate calls:
+- Raw E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/small_underground_casino-v1/source/background-guide-v1.png,1815x867 RGB, SHA-256 27156ddb75d7a70f41d1e78fb333f4ef8dba2a56184104ce1c5b4181bfbb341d.
+- Sole requested matching floor-only module E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/small_underground_casino-v1/source/floor-material-v1.png,1815x867 RGB, SHA-256 159b69b0466557a9b4d3140deb635d80032d4396f948d51ad73676dad18c437c. Its only image reference was this raw source, not another room.
+Both originals/full prompts/frozen provenance remain preserved. No second coherent room source or speculative module is requested.
+
+Director personally inspected both actual images. Raw material identity is strong: patched plum plaster/charcoal low structure, battered timber/metal, deep green and twelve compact colored sites, with empty cast/stock/air. No full redo indicated. Concrete raw floor horizon around native539 leaves328pixels versus370 required under board245; this actual measured42pixel deficit justified the matching floor-only plate rather than stretching/repetition. Plate has matching matte plum/charcoal slabs, coherent shallow joints/scuffs and quiet lower area, with no fixture/horizon/baked motion or wet streaks. Editor owns same-scale crop and exact245 horizon, replaying lower cart/door/table construction as necessary.
+
+Local material corrections remain physical, not global dimming: quiet the hot continuous68/102beam faces beneath known titles, retain selected aged hardware/edges, and avoid gallery-like continuous gilding around table frames. Deep green/dark wood faces support Numbers150 and Vic160 while preserving vivid local color and crisp wear. Exact original/map geometry remains authority; do not chase current game/actor contacts by moving tops, adding legs, a left front or new platforms. Compact hardware apertures and real title bands must be checked in actual normal/minimum/peak compositions.
+
+### Source-faithful individual motion plan
+
+The existing contract supports frame-atlased movers under Web limits, so retain the individual sources rather than needing collapsed fields. Approved assembly plan is31 genuine moving entries:
+-10 independently phased colored bulb cores;
+-6 separate long horizontal pink bands;
+-5 separate thin bobbing pink ribbons;
+-3 teal material glints;
+-7 dry-floor movers consolidating the two generic floor helper families.
+One exact opaque right-table front572x196 remains required; there is NO left foreground replay. Static housings/wires and last two steady pink practicals are not moving entries. No new renderer/schema, broad fog blanket or additional source call. Final exact roster still needs contract/static/actual proof, not a count-only PASS.
+
+For cores, preserve actual helper alpha .16+abs(sin(t*3.2+i*.8))*.24, ten distinct phases and seeded _cycle_color(58+74*i) Purple2/Pink/Teal repeating. Raw aperture hues are locally fitted to this approved identity rather than mistaken for source authority. Ten cores are centered on first ten physical sites96..744,y56 as explicitly authorized; last two816/888 stay steady pink.32 small atlas frames per core can sample the actual abs-sine waveform/phase without an unsupported generic-pulse equivalence claim; bounded tiny textures stay far under4096.
+
+Six long bands retain y116+i*18, width260/height16, alpha.045 and horizontal16board-pixel/second travel with their original wrap/phase family. Five thin ribbons are NOT all one y92 row: preserve y92+i*18, widths180-16*i, source height10, drift10+2*i board-pixels/second and tiny sin(t*1.4+i)*5 bob. Approximately4.49second bob cadence may use an eight-frame180board-wide atlas,2880native width at2x, under4096; frame destinations must accommodate the actual bob without clipping. Preserve placement/density/cadence and distinct air families, not merely labels/entry count.
+
+Three glints remain source-local teal hardware/material reflections with actual rates/phases; source-painted live coverage must be established, not model-envelope invisibility guesses. Seven floor tracks retain coherent dry material light and actual wrapping; no literal helper dashes or rain/water motif imported. All normal motion must remain meaningful in actual composites and stable under supported Reduce Motion with practical resting light coherent.
+
+### Current execution gate
+
+Editor proceeds exact fitting/material/31-entry assembly from these preserved inputs. First sealed static trial and early current-four actual compositions/autonomous motion are next; no hidden static, full native or served PASS exists yet. Source-specific work/outcome contexts, selected-production labels/hosts, effective-hit/geometry/control equality, source-painted visibility/RM, wraps, mandatory no-pointer/room semantics and protected-source/receipt audit remain required.
+
+Public approved export retains native priority until its owned job releases. Hidden trial takes the next appropriate engine slot after static GO. Future private back-room metadata preparation is read-only until separately granted a safe native gap; no private cleanup/new lamp or source. Eight interiors are native-approved; actual served-browser acceptance remains a separately blocked/pending pipeline, not inferred from source generation or publication.

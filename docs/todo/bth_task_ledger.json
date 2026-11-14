@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T19:40:16.158695+00:00",
+  "updated_at": "2026-11-14T19:53:37.022835+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38006,7 +38006,8 @@
         "BTH-ENVART-001-ART-BAR-01",
         "BTH-ENVART-001-ART-PAWN-01",
         "BTH-ENVART-001-ART-JAZZ-01",
-        "BTH-ENVART-001-ART-PUNCHLINE-01"
+        "BTH-ENVART-001-ART-PUNCHLINE-01",
+        "BTH-ENVART-001-ART-HIDDEN-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43127,6 +43128,52 @@
       },
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "updated_at": "2026-11-14T19:40:16.158695+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-HIDDEN-01",
+      "name": "Integrate audited hidden casino art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Exact R1 static trial sealed; early current4 and31-motion actual review active",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Hidden :casino exact native audit then separate immutable cumulative TEST and live Web gates; no current hidden activation."
+      },
+      "scope": [
+        "Correct small_underground_casino:casino only; preserve current c5 and actual four-context physical/title union,not public/private assumptions.",
+        "31genuine movers,first10of12housing cores,last2steady,two distinct pink-air families;one exact opaque rightfront,no invented left replay.",
+        "Actual current4 before deep proof; source-painted glint505136 coverage cannot be replaced by model-box assertions or draw-over-person.",
+        "Source work/outcome/current titles/geometry/orderedhits/motion/RM/wrap/rightreplay/sourcehours/original mandatory liveness then exact final audit and separate TEST."
+      ],
+      "evidence": [
+        {
+          "kind": "static_trial",
+          "reference": "docs/art/briefs/small_underground_casino.md",
+          "summary": "Exact41b7ed31 staticGO/preflight12cea753,30payloads/31moving/right572x196opaque. Raw27156ddb/floor159b69b0 unchanged. Static board is not native acceptance."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T19:53:37.022835+00:00",
+        "evidence": [
+          "docs/art/briefs/small_underground_casino.md"
+        ]
+      },
+      "next_action": "Capture early hidden current4 and genuine31-motion/RM excerpt,inspect actual core/title/505136glint coverage,then deep native scope only after focused actual GO.",
+      "updated_at": "2026-11-14T19:53:37.022835+00:00"
     }
   ]
 }

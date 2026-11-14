@@ -202,3 +202,8 @@ Public R2 c617fb48 has final exact audit9af18f93 and14approved payloads integrat
 ## Public isolated TEST artifact checkpoint
 
 Exact public R2 is published as74c85e44: eight native-passed rooms enabled, all13normal-TLS files and prior-seven PCK/texture retention verified. Main/NEXT/audience unchanged. Live Web remains unqualified for Pawn/Jazz/Public due supported-control binding failure; five rooms alone have completed full Web delivery. Hidden authoring is next, with no hidden/private trial enabled.
+
+
+## Hidden R1 non-active source checkpoint
+
+Exact41b7ed31 static trial is isolated in QA under a dedicated native owner. Raw27156ddb/floor159b69b0, unchanged self-contained recipe398047f3 and all30sealed outputs are backed up in archive1c8c524e (63members). Seven validated inputs/pixel logic remain exact; unused trigger attachment metadata is minimized in the outward copy with both hashes retained.31motions/current4/right replay/glint coverage remain native gates. Eight accepted TEST packs are unchanged, with no hidden/private activation.

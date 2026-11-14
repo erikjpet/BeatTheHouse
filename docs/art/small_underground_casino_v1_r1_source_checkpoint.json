@@ -1,0 +1,38 @@
+{
+  "status": "NON_ACTIVE_STATIC_TRIAL_NOT_APPROVED",
+  "package_id": "small_underground_casino-v1-r1",
+  "package_sha256": "41b7ed31dcceb98c1446d8f43824931768b89b04dc9dc9648546c6a8e86213f6",
+  "moving_entries": 31,
+  "opaque_fronts": 1,
+  "left_replay": false,
+  "sealed_payload_files": 30,
+  "source_sha256": "27156ddb75d7a70f41d1e78fb333f4ef8dba2a56184104ce1c5b4181bfbb341d",
+  "floor_sha256": "159b69b0466557a9b4d3140deb635d80032d4396f948d51ad73676dad18c437c",
+  "recipe_sha256": "398047f33056e2284d87b3b0c74823069dacd4dad5eab3110bc8905a2d7b5127",
+  "recipe_pixel_logic_unchanged": true,
+  "validated_generation_inputs_exact": 7,
+  "metadata_redactions": {
+    "inputs/public_punchline-r2-PASS-trigger.json": {
+      "original_sha256": "9af18f935238d3069eb6da716be7b68f554e25055e04d0d2b48ee53494985698",
+      "archive_sha256": "5de7c895971987e7675b1e90d63ca34e76dec0147f96710d4f6452e77d867d73",
+      "scope": "Unused trigger metadata only: omitted native attachment preview/routing. Not one of seven recipe-validated inputs. Original local bytes preserved."
+    }
+  },
+  "scope": "Full original raw/floor/prompts/provenance/frozen inputs, exact30payloads and self-contained assembly recipe/support. All source/pixel/generation-validation bytes unchanged. Only unused attachment-trigger metadata redacted in outward copy. Current4 actual/31motion/native scope pending; no target/index/TEST activation.",
+  "archive_sha256": "1c8c524e341eaa8dfe2c918db5502cbc7b89c70dbb37bdede7f3382a072aeecf",
+  "archive_bytes": 11729668,
+  "archive_members": 63,
+  "archive_path": "review_artifacts/environment_art_sources/small_underground_casino-v1-r1/small_underground_casino-v1-r1-source.zip",
+  "contract_source_commit": "23f04d29fa6ea5ca441b24b90596ddd5f13fc1b0",
+  "manual_reconciliation": {
+    "objectives": 220,
+    "batches": 75,
+    "runtime_records": 1267,
+    "inherited_global_findings": 1524,
+    "assigned_current_room_TEST_Phase08_findings": 0,
+    "report_sha256": "e95bca54a33eec71804923be281ccadedc494aae41e5514276d89e94e5e942fe"
+  },
+  "direction_source_sha256": "3eadfa67be398c1a67412f3180d774eff7ad4beb4aba7912844b98292c8c181e",
+  "canonical_direction_copy_sha256": "d521a52ee0e18e103b8c8e8189832fb29bc8d292e515658b14ebbb84ea746109",
+  "canonical_direction_copy_note": "Only trailing whitespace normalized in canonical Markdown. Exact handed-off source remains byte-preserved inside the archive."
+}
