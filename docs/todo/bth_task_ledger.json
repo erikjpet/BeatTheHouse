@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T09:37:31.604670+00:00",
+  "updated_at": "2026-11-14T09:49:13.743675+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42390,28 +42390,30 @@
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
         },
-        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md",
+        "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md"
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Active authorized implementation and acceptance gates remain.",
+        "state": "active",
+        "kind": "visual_revision",
+        "description": "Storage safety acceptance passed independently. Latest Gas style candidate still needs exact final art audit before TEST publication.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T08:53:24.870128+00:00",
+        "observed_at": "2026-11-14T09:49:13.743675+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_gas_r6_2026-11-14.md"
+          "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md",
+          "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "updated_at": "2026-11-14T09:49:13.743675+00:00",
       "id": "BTH-ENVART-001-TEST-01",
       "name": "Isolate art TEST save storage",
       "parent_id": "BTH-ENVART-001",
-      "status": "TEST save guard committed locally;13 actual-core checks,234 Python and native fresh-start pass; Web verification pending",
+      "status": "TEST save guard browser PASS; real autosave/reload/Continue and normal-storage isolation verified; deployment waits for latest art",
       "scope": [
         "Add an explicit Web TEST launch opt-in with a separate logical save root and IndexedDB mount; preserve ordinary NEXT/native/development roots and QA override priority.",
         "No personal save copy, migration, deletion, main/NEXT promotion or project/export/toolchain pin change. Actual Web save/reload and separate normal-save sentinel checks required."
       ],
-      "next_action": "Finish scoped implementation and exact TEST verification; parent objective remains Open."
+      "next_action": "Build latest exact visually passed art and verify served separate TEST identity/composition, preserving this accepted mount/root guard and main/NEXT."
     }
   ]
 }
