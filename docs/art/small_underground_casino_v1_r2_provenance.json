@@ -1,7 +1,7 @@
 {
   "package_id": "small_underground_casino-v1-r2",
   "package_sha256": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
-  "acceptance": "NATIVE_PASS_TEST_PENDING",
+  "acceptance": "NATIVE_PASS_TEST_ARTIFACT_DELIVERED_LIVE_WEB_NOT_RUN",
   "audit_report_sha256": "4d0704d865141cc4f20638d98ed871f8a578a10e6b98f737e0cfef8b31a933c9",
   "payload_files": {
     "assets/art/environments/small_underground_casino/anim/floor_glint_0.png": {
@@ -519,5 +519,6 @@
   },
   "moving_entries": 31,
   "native_scope": "ONLY exact hidden casino :casino R2 bytes clear native art integration. Not public :club/private :back_room, owner final acceptance, TEST/Web, UI/save/revisit/travel E2E or campaign completion. Integrator may add this exact room to eight separately accepted rooms while preserving their payloads,c5,production code/project/export/settings/audience.",
-  "live_web_verified": false
+  "live_web_verified": false,
+  "test_delivery_report": "docs/testing/small_underground_casino_r2_test_delivery.json"
 }

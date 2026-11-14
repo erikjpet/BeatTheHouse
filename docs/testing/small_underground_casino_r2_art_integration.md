@@ -8,3 +8,4 @@ TEST export and artifact publication passed at `787257af528e6d37bb39fc39337b9ecc
 
 Live browser visual, save/revisit and interaction acceptance remain **NOT RUN**. This is native plus artifact delivery, not full Web acceptance. See `small_underground_casino_r2_test_delivery.json`. The first Web GL verify command rejected an unsupported argument; corrected invocation passed without payload changes. Raw evidence remains under `E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-hidden-*`.
 
+Ledger reconciliation: 1,524 inherited project findings; zero findings for the updated hidden-casino task. No inherited findings were waived.
