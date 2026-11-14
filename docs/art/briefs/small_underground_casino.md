@@ -1,8 +1,8 @@
-# Hidden Punchline Casino: execution direction v4
+# Hidden Punchline Casino: execution direction v6
 
 Prepared: 2026-11-14
 Art identity: small_underground_casino
-Status: public Punchline R2 final native PASS has satisfied the prior-room gate. Exactly one hidden raw and one justified matching floor-only plate are complete/preserved; hidden is now the sole active unapproved authoring package. Exact fitted static/actual/native gates remain pending. No extra room/module source, private image, target activation or served acceptance is authorized here. Proposed source-faithful roster is31 genuine moving entries, one exact right front and no left replay.
+Status: exact hidden R2 is the sole active unapproved QA package. Static scope and all-four initial actual material/readability gates are clear; the manifest-only +30X middle-glint correction now retains40 genuine native RGB pixels in every current context. Full31-entry/source-outcome/technical proof remains active; no final native, target or served acceptance is implied. Historical v1-v4 text below is preserved; the appended R2 section controls current execution.
 
 ## Identity, story and reference roles
 
@@ -165,3 +165,23 @@ Three glints remain source-local teal hardware/material reflections with actual 
 Editor proceeds exact fitting/material/31-entry assembly from these preserved inputs. First sealed static trial and early current-four actual compositions/autonomous motion are next; no hidden static, full native or served PASS exists yet. Source-specific work/outcome contexts, selected-production labels/hosts, effective-hit/geometry/control equality, source-painted visibility/RM, wraps, mandatory no-pointer/room semantics and protected-source/receipt audit remain required.
 
 Public approved export retains native priority until its owned job releases. Hidden trial takes the next appropriate engine slot after static GO. Future private back-room metadata preparation is read-only until separately granted a safe native gap; no private cleanup/new lamp or source. Eight interiors are native-approved; actual served-browser acceptance remains a separately blocked/pending pipeline, not inferred from source generation or publication.
+
+
+## Version5 exact R2 middle-glint correction and initial actual GO
+
+The fitted R1 package41b7ed31dcceb98c1446d8f43824931768b89b04dc9dc9648546c6a8e86213f6 passed the material/current-name gate but exposed a real visibility failure for middle glint505,136. Its40 native source-support pixels were fully covered by unchanged opaque Ox paint in Base/High-Stakes/New Muscle; Greased left only8 visible residual pixels. These were not accepted as meaningful full-motif visibility. R1 source/preview/focus/paint evidence is preserved in held-seal01/evidence/hidden_r1_held_evidence.zip, SHA-2566696b6450871ba0c2ba1938ff47748209c53c60197285e4f8f5798010b245bef. No opacity boost, hole, higher z-order or moved cast was authorized.
+
+Director approved a narrow decorative translation on the SAME real plaster above the SAME right table: existing middle-glint rect[501,132,8,8] to[531,132,8,8], center535,136, +30boardX only. Same40-pixel source support, texture, size, phase and timing; coherent broken reflected light, not a new lamp or glass prop. Exact R2 packagef5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f changes ONLY manifest position;29 other payloads/BG/front are byte-identical. Background remains884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87. Recipeassemble_hidden_v1r2.py is self-contained; R1 remains immutable. Static visual scope legitimately carries forward, while actual proof is freshR2.
+
+Director personally inspected all4 fresh R2 normal full-apps, actual Base and New Muscle Reduce Motion views, natural observed core0 minimum frame019 and representative pink/teal/core9 peak frame006. Real beam/green-front/floor/door construction supports gold/cyan/gray/pink names; own crisp basement identity, dry floor,12 resting sites and last2 steady pink cores hold. No new palette/material/source request. This is representative natural-extrema review, not a claim to personally view all20 extrema endpoints. The genuine88-frame excerpt spans11.583333seconds and metadata records all32 source frames observed for each of10 cores.
+
+Focused source-painted R2 proof reports40/40 support pixels genuinely changing in ALL4 current composites,0 opaque actual-body/adornment blockers, with identical control/objects/layout/route/label clocks. Director independently recounted each native1800x860 pair:40 changed RGB pixels at bbox[1064,266,1076,276]. Coverage report E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-glint-coverage01/evidence/hidden_glint_coverage.json SHA-256808febd0f89319a4e12b01b60e1f20f6dca260a5bbbc75ebb6bfcb918be78bf6. This cures the specific R1 failure without a model-box opacity assumption or claim of visibility under every future pose. Current4 geometry/71selected-title trial and actual supported-RM2126/0 are reported clean; final integrity audit still owns rehash acceptance.
+
+Exact R2 all-current actual GO is now issued for the full31-entry actual composite/RM/source-paint proof,26 primary source work/outcome contexts, exact right-front replay, air/floor wraps, ordered hits, original mandatory no-pointer liveness and actual room-specific open/closing semantics. Selected-production labels/real hosted controls, source-hidden/non-room exclusions and unchanged legacy/R2 normal/RM geometry remain required. Do not fabricate a closing test for always-open semantics. No R3, extra room/module source, renderer/schema/gameplay/front-hole or actor/contact/title change. No public/hidden motif swap or broad fog.
+
+Director immutable evidence artifact: hidden-r2-director-initial-visual-go.json beside this brief; it binds exact viewed PNG hashes, focused report and remaining gate scope. This v5 is NOT final native PASS, target activation, TEST/Web, owner acceptance or whole-campaign completion; no UI/save/revisit or alternate-route execution is inferred. Private back-room source/cleanup remains held pending hidden final exact PASS, its own actual lifecycle/preart/physical decisions and frozen measured target. Existing private source/helper preparation alone grants no native launch or image call.
+
+
+## Version6 document-header correction
+
+This immutable sibling corrects an unhanded v5 document-header assembly mistake: it restores the Identity heading and places the current R2 status at the top. No source, design decision, package, evidence or gate changed. Use this v6 for canonical handoff; v5 remains preserved as an unhanded document diagnostic. Independent auditor focused recheck also confirms40/40 actual support pixels all4, maxchannel delta20-23,0 body/adornment alpha and0 current label intersections, report b83e13a7bba2d38c1e65d407477b9162dcd42345703c01290eac665dafe68b41.

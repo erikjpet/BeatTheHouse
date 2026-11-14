@@ -33,5 +33,23 @@
     "inherited_global_findings": 1524,
     "assigned_room_TEST_Phase08_findings": 0,
     "report_sha256": "03c674bbdfe663ab7d3275ceb4a978bf889f76db91e1b9a14c568f60469eb576"
+  },
+  "director_initial_visual_checkpoint": {
+    "direction_source_sha256": "e0fd6d237b3b78855423ce22d7a4160daffdfbc6ab2128be4874795a473d846d",
+    "direction_canonical_sha256": "6d2d3fa549f92ac98bffb2c4f87399d185b15470854ca78dea177f373cc59411",
+    "canonical_normalization": "Trailing whitespace and line endings only; exact handed-off bytes preserved in versioned ZIP.",
+    "initial_visual_go_source_sha256": "99b7dd5106660d68bb2a4175c498fa8a9fb15d50bc57ff2e0be3e941726e67cd",
+    "initial_visual_go_canonical_sha256": "99b7dd5106660d68bb2a4175c498fa8a9fb15d50bc57ff2e0be3e941726e67cd",
+    "archive_path": "review_artifacts/environment_art_sources/small_underground_casino-v1-r2/small_underground_casino-v1-r2-direction-v6.zip",
+    "archive_sha256": "d7f4ab22f64401c840f4d36d23d13a4c845f33954ac01b44ac64366a6da9b472",
+    "scope": "ExactR2/current4 actual material GO and40pixel recovery only. Deep31moving/26source-state proof active;not final native/artifact/live Web acceptance."
+  },
+  "director_doc_reconciliation": {
+    "objectives": 220,
+    "batches": 75,
+    "runtime_records": 1276,
+    "inherited_global_findings": 1524,
+    "assigned_room_TEST_Phase08_findings": 0,
+    "report_sha256": "d8846dfff80d4e97af9c9572e3e72e1e04bf099c8278245503d746608a485695"
   }
 }

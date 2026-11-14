@@ -1,0 +1,131 @@
+{
+  "room": "small_underground_casino",
+  "view": "small_underground_casino:casino",
+  "revision": "R2",
+  "package_sha256": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+  "background_sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+  "date_utc": "2026-11-14T20:15:01.685357+00:00",
+  "decision": "Exact all-current actual material/readability GO; release scoped deep native proof. Not final native or TEST/Web acceptance.",
+  "personally_viewed": [
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-base01/evidence/frames/settled_play.png",
+      "sha256": "4310ff63b67a213bbef1734a14e0f8ce577324dda7febeda0c1fd867e7346e89"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-base01/evidence/frames/reduce_motion_play.png",
+      "sha256": "544a544c175c7317cbcdb332cc8714022db11beda394da0995bbfe17f01fbaac"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-base01/evidence/frames/frame_019.png",
+      "sha256": "f44a99a6e506100e5dc51857d129b22a080b271ab4c971ccf9511c958c16b425"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-base01/evidence/frames/frame_006.png",
+      "sha256": "031a8b597434d7349e8f50c0b62b34b6777cfc7ce0941da27f98949f3f243b7d"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current4-01/evidence/punchline_high_stakes_night_actual_play.png",
+      "sha256": "a2334dd13aaa0ea2704e182373c42bdeebb07a15fc1b0520c0e851fa5c5e4ac2"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current4-01/evidence/punchline_greased_week_actual_play.png",
+      "sha256": "1b588d771eb6a775c5759c855a06e2e224c6a0bdc047313e5e03ba3f75259a75"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current4-01/evidence/punchline_new_muscle_actual_play.png",
+      "sha256": "cfac02a29969941f2d8f3eced599437debfdc96cb087ff0fd13ccd023358b683"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current-rm01/evidence/punchline_new_muscle_actual_play.png",
+      "sha256": "719807968704e0281bd218d1250104b29128a9704e43f559c1093574eee1fa3b"
+    }
+  ],
+  "visual_scope": [
+    "All four R2 initial normal compositions.",
+    "Base and New Muscle actual supported Reduce Motion full-apps.",
+    "Natural core0 observed minimum frame019 and representative pink/teal/core9 observed peak frame006, not a claim to personally view every extrema file.",
+    "Same dry floor, real quiet beam/table/door materials, crisp own patched-plum/charcoal/green identity, gold/cyan/gray/pink names and coherent resting colored hardware."
+  ],
+  "r1_diagnostic": {
+    "package_sha256": "41b7ed31dcceb98c1446d8f43824931768b89b04dc9dc9648546c6a8e86213f6",
+    "old_glint_rect": [
+      501,
+      132,
+      8,
+      8
+    ],
+    "original_support_native_pixels": 40,
+    "base_high_new_opaque_coverage": 40,
+    "greased_opaque_coverage": 32,
+    "greased_residual_changes": 8,
+    "decision": "Insufficient meaningful middle-glint visibility; preserve evidence, do not call eight residual pixels a full motif or boost/z-order it."
+  },
+  "approved_r2_delta": {
+    "new_glint_rect": [
+      531,
+      132,
+      8,
+      8
+    ],
+    "center": [
+      535,
+      136
+    ],
+    "translation": [
+      30,
+      0
+    ],
+    "changed_payload": "manifest only",
+    "unchanged": "29 other payloads, background, exact right front, texture/phase/size, 31-entry roster, gameplay geometry and production code",
+    "material": "Same small broken teal reflected-light mark on actual plaster above the same right table; no new emitter or contact."
+  },
+  "focused_report": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-glint-coverage01/evidence/hidden_glint_coverage.json",
+    "sha256": "808febd0f89319a4e12b01b60e1f20f6dca260a5bbbc75ebb6bfcb918be78bf6",
+    "reported_source_paint_rows": [
+      {
+        "scenario": "__none",
+        "source_support_pixels": 40,
+        "opaque_source_painted_covered": 0,
+        "full_composite_changed_pixels": 40,
+        "changed_pixels_on_source_support": 40
+      },
+      {
+        "scenario": "punchline_high_stakes_night",
+        "source_support_pixels": 40,
+        "opaque_source_painted_covered": 0,
+        "full_composite_changed_pixels": 40,
+        "changed_pixels_on_source_support": 40
+      },
+      {
+        "scenario": "punchline_greased_week",
+        "source_support_pixels": 40,
+        "opaque_source_painted_covered": 0,
+        "full_composite_changed_pixels": 40,
+        "changed_pixels_on_source_support": 40
+      },
+      {
+        "scenario": "punchline_new_muscle",
+        "source_support_pixels": 40,
+        "opaque_source_painted_covered": 0,
+        "full_composite_changed_pixels": 40,
+        "changed_pixels_on_source_support": 40
+      }
+    ],
+    "independent_director_rgb_recount": "Each exact native1800x860 A/B pair has40 changed pixels, bbox[1064,266,1076,276]. No whole-model opacity claim."
+  },
+  "released_remaining_gates": [
+    "All31 independent entry/current-context final composites and source-painted coverage; supported RM.",
+    "Source-derived26 primary work/outcome contexts with actual IDs, models/hits, selected-production titles and hosted controls; declare exclusions.",
+    "Exact right-front replay; no left-front invention.",
+    "Air/floor/core/glint source waveform/wraps, ordered effective hits and protected original no-pointer liveness.",
+    "Actual room placement/open/closing semantics, protected source/current geometry/receipts and final independent exact seal."
+  ],
+  "limits": [
+    "R1 remains a held failed-visibility trial; no substitution by its preview.",
+    "No universal unobstructed-title/all-pose claim.",
+    "No renderer/schema/gameplay/front-hole/actor movement, opacity or speed boost.",
+    "No private source/cleanup or new room/module call.",
+    "No final native/target/TEST/Web, owner or whole-campaign acceptance; no UI/save/revisit E2E or alternative-route execution inferred."
+  ]
+}
