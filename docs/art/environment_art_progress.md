@@ -41,7 +41,7 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | --- | --- | --- | --- |
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
 | 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
-| 03 | back_alley | R2 actual-motion trial preserved; R3 refinement active | Complete exact current trial visual/technical audit before integration |
+| 03 | back_alley | R3 actual settled/minimum/peak/Reduce Motion visual GO; technical audit active | Finish room-specific exact technical proof, then full auditor PASS before integration |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
@@ -118,3 +118,6 @@ Source c5d5d17f691a010ac3173ac2a8c42232777081e5 is delivered on the existing TES
 ## Back Alley R3 non-active source checkpoint
 
 The substantial R3 trial is backed up under review_artifacts/environment_art_sources/back_alley-v1-r3 with its unchanged17-file seal, self-contained assembly recipe, two generated originals, all five frozen geometry/facade/style references and execution brief. Package SHA256:f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68. Archive SHA256:1e8a99e01ffe4fe1f3933e64fbc41302fc719fb5589ff65d01b931c192c79c1f. This is NOT APPROVED and does not activate Back. Gas+Corner source index and bound c5 TEST remain unchanged; actual R3 visual/technical proof is active.
+
+
+Back R3 actual review now clears settled room, natural lamp minimum/peak and production Reduce Motion. Its80-frame10.533822s excerpt and exact same-snapshot geometry are preserved. Only16 HUD clock pixels vary under Reduce Motion; room and art texture remain stable. The real four-scenario/24-authored-aftermath,23-entry motion and both mover-family wrap/counter/liveness technical suite is active. Back has no authored opening hours, so no closing-time fixture is invented. This is visual GO, not final package PASS or TEST activation.

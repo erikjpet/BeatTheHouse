@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T12:28:19.101084+00:00",
+  "updated_at": "2026-11-14T12:45:17.190977+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42597,7 +42597,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R2 actual-motion trial preserved; R3 art refinement active; final native audit and target integration pending",
+      "status": "Exact R3 actual settled/minimum/peak/Reduce Motion visual GO; native technical/outcome proofs active; final package audit pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42626,6 +42626,11 @@
           "kind": "non_active_source_backup",
           "reference": "review_artifacts/environment_art_sources/back_alley-v1-r3/README.md",
           "summary": "Unapproved exact R3 f42919a1 checkpoint:17 payloads+unchanged seal+self-contained recipe+two generated originals+five frozen generation references+brief/provenance. ZIP SHA1e8a99e01ffe4fe1f3933e64fbc41302fc719fb5589ff65d01b931c192c79c1f. No active index or TEST change."
+        },
+        {
+          "kind": "actual_trial_visual_gate",
+          "reference": "docs/art/environment_art_progress.md",
+          "summary": "R3 actual80-frame10.533822s excerpt; actual lamp min/peak and production Reduce Motion clear director/auditor visual GO. QA900 exact objects/layout/clocks across80frames; production room+art stable underRM,16HUDclock pixels alone change. Deep technical audit active, no final PASS."
         }
       ],
       "blocker": {
@@ -42638,8 +42643,8 @@
           "docs/art/briefs/back_alley.md"
         ]
       },
-      "next_action": "Capture/audit the exact revised Back trial, then full room-specific native proof; integrate only final PASS and preserve cumulative Gas+Corner TEST.",
-      "updated_at": "2026-11-14T12:28:19.101084+00:00"
+      "next_action": "Complete real four-scenario/24-aftermath native publication,23-entry motion/RM, both mover-family wrap, solid crate replay and no-input checks; integrate only final exact auditor PASS.",
+      "updated_at": "2026-11-14T12:45:17.190977+00:00"
     }
   ]
 }
