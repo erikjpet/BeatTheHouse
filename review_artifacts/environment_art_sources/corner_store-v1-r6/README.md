@@ -1,3 +1,5 @@
+> Historical checkpoint below: this non-active archive was created before approval. The same exact Corner R6 payload later passed native audit and was delivered on bound c5 TEST; see docs/testing/corner_store_r6_art_integration.md. The archived seal/recipe/payloads remain unchanged.
+
 # Corner R6 source backup
 
 NON-ACTIVE TRIAL, NOT APPROVED FOR DEPLOYMENT. No index or asset activation.

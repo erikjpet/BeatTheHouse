@@ -113,3 +113,8 @@ Only the existing TEST lane is in scope for this art rework. Do not replace NEXT
 ## Corner cumulative TEST closeout
 
 Source c5d5d17f691a010ac3173ac2a8c42232777081e5 is delivered on the existing TEST URL with exact Gas+Corner activation and bound footer. Director served art review and independent actual browser/scenario/motion/Reduce Motion/1920/camera/Gas regression checks passed. Proof SHA256:5ef80da77cc015fda9b00b40132b8d3464996c2cc04f1e11dfd5431023a4bd0b. Earlier tooling diagnostics and test scope limits are retained in [delivery evidence](../testing/corner_store_r6_art_integration.md). Main/NEXT and audience remain unchanged. This closes the second room, not the campaign.
+
+
+## Back Alley R3 non-active source checkpoint
+
+The substantial R3 trial is backed up under review_artifacts/environment_art_sources/back_alley-v1-r3 with its unchanged17-file seal, self-contained assembly recipe, two generated originals, all five frozen geometry/facade/style references and execution brief. Package SHA256:f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68. Archive SHA256:1e8a99e01ffe4fe1f3933e64fbc41302fc719fb5589ff65d01b931c192c79c1f. This is NOT APPROVED and does not activate Back. Gas+Corner source index and bound c5 TEST remain unchanged; actual R3 visual/technical proof is active.

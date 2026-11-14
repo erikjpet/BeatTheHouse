@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T12:23:23.714693+00:00",
+  "updated_at": "2026-11-14T12:28:19.101084+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42621,6 +42621,11 @@
           "kind": "execution_brief",
           "reference": "docs/art/briefs/back_alley.md",
           "summary": "Frozen clean guide and facade/material/contact/motion plan. Art authoring and QA-only trial active; no passed Back payload or target activation yet."
+        },
+        {
+          "kind": "non_active_source_backup",
+          "reference": "review_artifacts/environment_art_sources/back_alley-v1-r3/README.md",
+          "summary": "Unapproved exact R3 f42919a1 checkpoint:17 payloads+unchanged seal+self-contained recipe+two generated originals+five frozen generation references+brief/provenance. ZIP SHA1e8a99e01ffe4fe1f3933e64fbc41302fc719fb5589ff65d01b931c192c79c1f. No active index or TEST change."
         }
       ],
       "blocker": {
@@ -42634,7 +42639,7 @@
         ]
       },
       "next_action": "Capture/audit the exact revised Back trial, then full room-specific native proof; integrate only final PASS and preserve cumulative Gas+Corner TEST.",
-      "updated_at": "2026-11-14T12:23:23.714693+00:00"
+      "updated_at": "2026-11-14T12:28:19.101084+00:00"
     }
   ]
 }
