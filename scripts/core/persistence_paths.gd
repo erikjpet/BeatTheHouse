@@ -12,6 +12,9 @@ const DISTRIBUTION_ROOT := "user://distribution"
 # line in its own epoch: the first launch is clean, while data created by this
 # line still persists across ordinary reloads and compatible updates.
 const WEB_DISTRIBUTION_ROOT := "user://distribution/web_0_6_1"
+# Explicit TEST launcher opt-in; ordinary Web/NEXT and native roots stay stable.
+const WEB_ART_TEST_ROOT := "user://distribution/web_0_6_1_art_test"
+const WEB_ART_TEST_ARGUMENT := "--bth-art-test"
 const DISTRIBUTION_ROOT_ENV := "BTH_DISTRIBUTION_DATA_ROOT"
 const DISTRIBUTION_FEATURE_ENV := "BTH_DISTRIBUTION_BUILD"
 
@@ -22,12 +25,24 @@ static func distribution_build() -> bool:
 
 
 static func distribution_root() -> String:
-	var override := _normalized_distribution_root(OS.get_environment(DISTRIBUTION_ROOT_ENV))
+	return _resolve_distribution_root(
+		distribution_build(), OS.has_feature("web"),
+		OS.get_cmdline_user_args(), OS.get_environment(DISTRIBUTION_ROOT_ENV)
+	)
+
+
+static func _resolve_distribution_root(
+	is_distribution: bool, is_web: bool,
+	user_arguments: PackedStringArray, override_value: String
+) -> String:
+	var override := _normalized_distribution_root(override_value)
 	if _distribution_root_valid(override):
 		return override
-	if not distribution_build():
+	if not is_distribution:
 		return ""
-	return WEB_DISTRIBUTION_ROOT if OS.has_feature("web") else DISTRIBUTION_ROOT
+	if not is_web:
+		return DISTRIBUTION_ROOT
+	return WEB_ART_TEST_ROOT if user_arguments.has(WEB_ART_TEST_ARGUMENT) else WEB_DISTRIBUTION_ROOT
 
 
 static func _normalized_distribution_root(value: String) -> String:
