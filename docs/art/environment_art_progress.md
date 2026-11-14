@@ -2,7 +2,7 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12, Corner R6 and Back R3 delivered and verified on cumulative TEST182ae255;3of20 interiors complete. Motel native audit and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
+Release status: Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on cumulative TEST173b235d;4of20 interiors complete. Bar native audit and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
 
 ## Current creative gate
 
@@ -42,8 +42,8 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
 | 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
 | 03 | back_alley | Exact R3 integrated and verified on bound182 TEST | Preserve all three passed packs during later additions |
-| 04 | motel | Exact R3 final native PASS; integration/Web active | Verify bound four-room TEST before delivery closes |
-| 05 | bar | Source released after Motel native PASS; current-label preflight preparing | Measure current mirror/Numbers/support union and review source before trial |
+| 04 | motel | Exact R3 integrated and verified on bound173 TEST | Preserve all four accepted packs during later additions |
+| 05 | bar | R3 actual local contrast findings;R4 static GO/early actual active | Review bounded R4 then full native audit before activation |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
 | 07 | jazz_club | Brief, facade assessment and fixture guide ready | Author brass/amber/wood stage room after prior package passes |
 | 08 | punchline_club | Brief, facade assessment and fixture guide ready | Author public comedy venue, retaining warm marquee identity |
@@ -146,3 +146,10 @@ Current Motel brief v3 incorporates measured label shifts and the exact refineme
 ## Motel R3 final native PASS
 
 Exact 4b22c9cf clears native audit report56d4156f:40 source contexts/4,095 checks/711 selected titles,500 initial checks,14 Base full-composite motions,both CRT across all5,RM,two fronts,wrap and no-pointer proof. Wedding Clerk background-glint occlusion and inherited wall-height Trolley placement are explicit accepted limits, not hidden fixes. Integration and separate Web delivery are active; previously served three-room182 remains until new publication. Bar is now the sole source-authoring package; current label/fixture preflight prepares under engine serialization after Motel export priority. Full campaign stays Open.
+
+
+## Motel bound TEST delivery and next gate
+
+Exact173b235d cumulative TEST verifies four rooms,including Motel R3 only after exact native audit. Independent normal-TLS identity,real UI Base+four cases,two sizes,CRT gaps/fronts,qualified composite motion/RM/restoration,selection-return and prior-three retention pass. Director final served visuals clear; browser exits naturally0/active0 under caps. Proof SHA256:b50799b741299cecd52c35950bae57643c91877de331a61f3542a6460aeab995. See [delivery evidence](../testing/motel_r3_art_integration.md). Known source-placement/occlusion and QA diagnostics stay explicit;not full campaign or UI/save/revisit coverage. Bar R3 failed two local contrasts;R4 adjusts existing pendant/glass materials only and is now in early actual QA. No Bar activation.
+
+Bar R4 update: all eight actual initial compositions have independent director visual GO. The current run passed 1,017 checks with 120 actual objects/selected cards and 38 Runtime visuals. The fresh 84-frame excerpt is preserved; full 17-entry, source-context, counter, Reduce Motion, wrap and no-input proof is running. No final Bar PASS or target activation is implied.

@@ -1,0 +1,723 @@
+{
+  "status": "PASS_EXACT_MOTEL_R3_TEST_DELIVERY",
+  "source_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+  "source_tree": "5d02532e9d561d8803948bc83b7ca7cebe7d593e",
+  "source_archive_sha256": "5a3e3afe74f38e493c4ae91fcdeffc25aae57f1bd1e461bc39d6a86093991a69",
+  "package_id": "motel-v1-r3",
+  "package_sha256": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+  "native_audit_sha256": "56d4156ff4663a26abc908a799e44cd6acd693aeff472375392d47d0117b972c",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971"
+  },
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/173b235da9171a5369894bdfb5e9f901d009e018/index.html",
+  "build_manifest_sha256": "fa88f8ae701e9a92bf8de58610e0be0b7db0e763c897fe4d9b2ca01d9aa98663",
+  "html_sha256": "abb222ae05d6158492f43e26d80790509d1c2331a4a0d65dcc0ba5ef12a1ca93",
+  "pck_sha256": "9f4bb6ee211eda7ffe7cb08304e401e857608ef6dcb694b12c37fb652203e361",
+  "embedded_manifest_sha256": "24258740194cd5a17dc08012d5874d3f27fe28f1849ceb5e5aecc2dcfdb068d3",
+  "embedded_manifest_md5": "46c3271478913b28c96fcca5b989263b",
+  "source_art_files_verified": 65,
+  "compiled_art_textures_verified": 60,
+  "prior_three_room_compiled_unchanged": 44,
+  "pck_content_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/background.png-4341ff7ba86f47950ac23c3bef3fdeba.ctex",
+      ".godot/imported/crt_fast_scan.png-7d0c8cb732adcd7b4136c912e022c2ab.ctex",
+      ".godot/imported/crt_luminance_rows.png-e6b22c93d356787ba55b2a41b8616ae5.ctex",
+      ".godot/imported/curtain_fold_reflection.png-4c3e2ad748b91120f3e0c60b1fb64baf.ctex",
+      ".godot/imported/cyan_glint.png-aad7a37167055458e9be3d4480349cc3.ctex",
+      ".godot/imported/floor_glint_0.png-49e790c129763dbb7c1622eb2982dc8e.ctex",
+      ".godot/imported/floor_glint_1.png-e1a655bbcecb977fce007dfdd3875f32.ctex",
+      ".godot/imported/floor_glint_2.png-21faf3fd49eec0330f8d451e0a0722ac.ctex",
+      ".godot/imported/floor_glint_3.png-cd5457905d4bee43b4c3120ca8ca50e6.ctex",
+      ".godot/imported/floor_glint_4.png-28b5d76eacf119c1bf1a4d4010a46ca1.ctex",
+      ".godot/imported/floor_glint_5.png-133652fe7b8a404a8de9973eadd7ef49.ctex",
+      ".godot/imported/floor_glint_6.png-1dd3c87a8a86019b594ceac3f72efc12.ctex",
+      ".godot/imported/motel_lobby_table.png-ab69afd694569775227c95d259abaec2.ctex",
+      ".godot/imported/motel_merchandise_counter.png-a550aa863b4447f3169642a8be770347.ctex",
+      ".godot/imported/motel_sign_pulse.png-c42b77d8bb7dbb9b55b739e0533ac807.ctex",
+      ".godot/imported/sign_lower_light.png-a93a31478eb9fcded873d944dd79d0d1.ctex",
+      "assets/art/environments/motel/anim/crt_fast_scan.png.import",
+      "assets/art/environments/motel/anim/crt_luminance_rows.png.import",
+      "assets/art/environments/motel/anim/curtain_fold_reflection.png.import",
+      "assets/art/environments/motel/anim/cyan_glint.png.import",
+      "assets/art/environments/motel/anim/floor_glint_0.png.import",
+      "assets/art/environments/motel/anim/floor_glint_1.png.import",
+      "assets/art/environments/motel/anim/floor_glint_2.png.import",
+      "assets/art/environments/motel/anim/floor_glint_3.png.import",
+      "assets/art/environments/motel/anim/floor_glint_4.png.import",
+      "assets/art/environments/motel/anim/floor_glint_5.png.import",
+      "assets/art/environments/motel/anim/floor_glint_6.png.import",
+      "assets/art/environments/motel/anim/motel_sign_pulse.png.import",
+      "assets/art/environments/motel/anim/sign_lower_light.png.import",
+      "assets/art/environments/motel/background.png.import",
+      "assets/art/environments/motel/counters/motel_lobby_table.png.import",
+      "assets/art/environments/motel/counters/motel_merchandise_counter.png.import",
+      "data/art/environments/motel.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1401
+  },
+  "python_unit_tests": 272,
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "normal_save_paths_changed": false,
+  "main_next_commit_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "previous_182_immutable_preserved": true,
+  "site_audience_and_config_unchanged": true,
+  "receipts": {
+    "motel-web-finalize-01/embedded-verification.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-web-finalize-01\\evidence\\embedded-verification.json",
+      "sha256": "267556bd42b7b87224e37f510a05c03cc8de8d6fac8ef87654a3ed431863c8f4"
+    },
+    "motel-web-finalize-01/art-source-import-pck-linkage.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-web-finalize-01\\evidence\\art-source-import-pck-linkage.json",
+      "sha256": "0346e34c8e42474a0e56bfdffea276bc5800856a66b4e2d453f3a87711b0bf24"
+    },
+    "motel-web-finalize-01/pck-diff.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-web-finalize-01\\evidence\\pck-diff.json",
+      "sha256": "bbb1688c796b6bd3ae86001af3fdb83d0cb591c525c1a370df45110d6c85c1f3"
+    },
+    "motel-test-promotion-01/publication.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-test-promotion-01\\evidence\\publication.json",
+      "sha256": "ea7684ce0ecae07a1376ce120572ed24f05f87212ef916692f44180e041cbfb2"
+    },
+    "motel-test-served-identity-01/served-proof.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-test-served-identity-01\\evidence\\served-proof.json",
+      "sha256": "61fb8da2a6f556c42fad5090589a2a2424e202e52380e3bccadbc54e4513f612"
+    }
+  },
+  "host_editor_log_disposition": {
+    "motel-web-import-01": {
+      "log_sha256": "ff224477657a32ae7386c28efa3caa38099e5c225da0907ddbcdb316871c3b43",
+      "counts": {
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND": 6,
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 3,
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 1
+      },
+      "exit_code": 0,
+      "scope": "Known missing native Windows DLL in Web-only snapshot; not native-module qualification. Pinned Web WASM and actual browser are checked separately."
+    },
+    "motel-web-export-01": {
+      "log_sha256": "2ef60f27f514efe0d6c7428c27f1c286ba51a0369f0655846caad1b3b4809cf8",
+      "counts": {
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND": 6,
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 3,
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 1
+      },
+      "exit_code": 0,
+      "scope": "Known missing native Windows DLL in Web-only snapshot; not native-module qualification. Pinned Web WASM and actual browser are checked separately."
+    }
+  },
+  "github_combined_statuses": [],
+  "github_ci_scope": "No combined statuses; no .github/workflows in source. Local272 checks are not hosted-CI success.",
+  "browser_proof": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-final-summary\\evidence\\motel-r3-served-web-qa.json",
+    "sha256": "b50799b741299cecd52c35950bae57643c91877de331a61f3542a6460aeab995",
+    "status": "PASS_SCOPED_ACTUAL_WEB_RUNTIME_AND_DIRECTOR_VISUALS"
+  },
+  "limits": [
+    "Full-composite CRT is visible through actual sprite gaps; conservative whole-model rectangles are not opacity masks.",
+    "Wedding Clerk naturally covers one background glint; no always-visible claim.",
+    "Inherited refused-Stakeout Trolley placement is unchanged, not newly grounded or fixed.",
+    "No UI quest/save/revisit/travel-lifecycle or whole-campaign acceptance."
+  ],
+  "actual_ui": {
+    "seed": "LAYOUT-SURVEY-QA",
+    "scenarios": [
+      "Base / No Scenario",
+      "Conventioneers",
+      "The Stakeout",
+      "Weekly Rates",
+      "Wedding Overflow"
+    ],
+    "scenario_probes": {
+      "Base": 3,
+      "Conventioneers": 19,
+      "The Stakeout": 20,
+      "Weekly Rates": 7,
+      "Wedding Overflow": 9
+    },
+    "selection_via": "Real Environment Library UI. No model-state, clock or alpha injection.",
+    "screen_sizes": [
+      "1280x720",
+      "1920x1080"
+    ],
+    "camera_selection_probe": 22,
+    "camera_return_probe": 23,
+    "camera_scope": "Payout Pamphlet selection/tooltip and blank-floor return; no Buy, quest decision, travel or other outcome clicked."
+  },
+  "web_motion": {
+    "proofs": {
+      "base": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-base-analysis-03\\evidence\\motel-composite-motion.json",
+        "sha256": "bd365310a7a49ea648bec4e2c25145bc79f80011c5c7516af05c20dc4093e631",
+        "bytes": 627958
+      },
+      "priority_scenarios": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-priority-analysis\\evidence\\motel-composite-motion.json",
+        "sha256": "cf8f8f4609e633cf5bfa14b4768252e98760a6ab89070664f9f8438485657cb2",
+        "bytes": 268934
+      },
+      "other_scenarios": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-other-scenarios-analysis\\evidence\\motel-composite-motion.json",
+        "sha256": "f757a42e1324d962f7f69028c72cb0e805174d0c1dc1c20d9d6fca2bb889ae24",
+        "bytes": 268694
+      },
+      "wedding_rm": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-wedding-rm-analysis\\evidence\\motel-composite-motion.json",
+        "sha256": "725e21ada464df766e85f8a4180db6584b2a15490fa7844d3904b8b5597b0dbf",
+        "bytes": 109210
+      },
+      "base_rm": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-base-rm-analysis\\evidence\\motel-composite-motion.json",
+        "sha256": "66b4d8053de1571c9fffa106cd9d6ffdf50dd0b168a2a22065b017ebfae10774",
+        "bytes": 108851
+      },
+      "restored": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-restored-analysis\\evidence\\motel-composite-motion.json",
+        "sha256": "ef360c441dc69d5d3475a976bb8d36fd345c6ffcaf4fb7edb768180e36f1f803",
+        "bytes": 159075
+      },
+      "floor_fit": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-floor-analysis\\evidence\\motel-floor-track-fits.json",
+        "sha256": "35789a64cec18a4613cc109b7565ce05799c6f49ba19e039a8157d61f30bdb1b",
+        "bytes": 31921
+      },
+      "gas": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-gas-analysis\\evidence\\gas-regression.json",
+        "sha256": "51ebe92e15470b989c54502f91f1a35375da380dc90585c068a00bcac489667e",
+        "bytes": 1204
+      },
+      "corner": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-corner-analysis\\evidence\\corner-motion-metrics.json",
+        "sha256": "d7740314a3ef804f0cd8a9fb5dff09d7c455d2463bc814418f6ce22aaa3bbaa5",
+        "bytes": 57092
+      },
+      "back": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB-back-analysis\\evidence\\back-composite-motion.json",
+        "sha256": "065a43d7eae71c99b90bc6153ec1be8d521187b04a292deef8bba9d4e2e07b0d",
+        "bytes": 76396
+      }
+    },
+    "base_frames": 200,
+    "base_duration_ms": 74235,
+    "base_all14_source_masked_composite_regions_change": true,
+    "scenarios_each_frames": 40,
+    "scenario_duration_ms": {
+      "7": 11835,
+      "9": 11889,
+      "19": 11957,
+      "20": 11947
+    },
+    "rm_base_frames": 32,
+    "rm_base_duration_ms": 11486,
+    "rm_wedding_frames": 32,
+    "rm_wedding_duration_ms": 11309,
+    "rm_all14_regions_stationary": true,
+    "restore_frames": 48,
+    "restore_duration_ms": 17444,
+    "restored_all14_regions_change": true,
+    "floor_fit": "All7 known authored speeds have best observed support at the exact expected speed in a0.5CSSpx/s candidate grid. Retrospective composite support is corroboration, not isolated-entry proof.",
+    "crt_visibility": "Actual unenhanced browser bright123/dim174 full screenshots visibly show horizontal glass rows through the painted Drink gaps, while title and baked vending remain unpainted. Source-shaped masks exclude title/body/cup/vending rather than the conservative whole-model rectangle. Luminance and scan overlap; native exact-package single-entry proof supplies isolation. Screenshot cadence does not independently establish80fps scan timing.",
+    "observed_extrema": {
+      "sign_primary_low": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\011.png",
+        "sha256": "dd099d475ae46f634230ca26bc1eed142d495efc31ce74c6478ce9e623f57960",
+        "bytes": 718033
+      },
+      "sign_primary_high": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\022.png",
+        "sha256": "59c216f572d37a301a711e89737be432e05a44719fb27bf9305c31dfa9f46f93",
+        "bytes": 717995
+      },
+      "lower_band_low": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\008.png",
+        "sha256": "fe63f35f8704a0beb15133d9e02b164a0ff610a7264d18966d1797fcc7fa986e",
+        "bytes": 718161
+      },
+      "lower_band_high": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\002.png",
+        "sha256": "137f6852fa8eee40aca07a868376989e6d397153fef768899882b4b4ffbcf6b8",
+        "bytes": 718413
+      },
+      "crt_bright": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\123.png",
+        "sha256": "468ca79ee2cc150b9a0430f0fa035ffd7ce578d2600562c24c6f320ece71108c",
+        "bytes": 717644
+      },
+      "crt_dim": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\frames\\174.png",
+        "sha256": "3d4ec6e44b83ef963034fd9e39638e8df05fd02f5c04042a3eb708d6f03a28b7",
+        "bytes": 718084
+      }
+    },
+    "limits": [
+      "Source-masked browser regions still contain overlapping motifs and some moving live-object pixels; counts are not per-entry isolation.",
+      "Seven floor tracks share four lanes.",
+      "Wedding Clerk naturally occludes glass_glint_1. Its browser ROI can change due to Clerk motion; this is not a Wedding glint visibility claim.",
+      "Extrema are observed samples, not exact mathematical minima or peaks."
+    ]
+  },
+  "director_final_served_visual_gate": {
+    "status": "PASS",
+    "scope": "Personally reviewed Base/Weekly/Wedding1280/1920; Conventioneers1280; Stakeout1280/1920; raw CRT123/174 and sign011/022; confirmed Wedding RM14/15, Base RM16; camera22settled/23returned. Crisp edges, bounded cushion/lip changes, fronts, current colored titles and CRT-through-Drink treatment hold. No new art blocker."
+  },
+  "prior_room_regression": {
+    "gas_five_composite_regions_live": true,
+    "corner_28_composite_regions_live": true,
+    "back_23_composite_regions_live": true,
+    "scope": "Actual Base screenshots and autonomous motion retention only. Prior Gas save/reload/Continue proof is separate and unchanged; no new complete outcomes/save/revisit/travel coverage."
+  },
+  "browser_diagnostics": {
+    "browser_messages": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "location": {
+          "url": "https://192.168.0.36:8443/favicon.ico",
+          "line": 0,
+          "column": 0,
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    ],
+    "runtime_interpretation": "Incidental favicon404 only among captured errors; no game asset/native/parser/pageerror failure observed.",
+    "probe11": "Viewport-resize race prevented attempted RM click and produced incidental camera selection. Kept as diagnostic only, not RM evidence. Confirmed RM uses14/16; restoration18.",
+    "qa_only": "Initial analysis jobs base-analysis and base-analysis-02 exited1 for an incorrect manifest-relative texture path; path corrected only in analyzer. Existing file write-path was rejected by storage guard before mutation; retried with admitted parent directory. All raw failed receipts preserved. Pillow deprecation and inherited numeric-literal SyntaxWarning retained."
+  },
+  "resource_receipts": {
+    "browser_receipt": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-browser\\evidence\\owned-job-receipt.json",
+      "sha256": "e8ae460b6cc1141ee42062039b49bbd57281fa989abbf8cbbeaf11afcc4e6f60",
+      "bytes": 10537
+    },
+    "natural_exit_code": 0,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "forced_termination": false,
+    "peak_job_memory_bytes": 1937166336,
+    "cpu_cap_percent": 12,
+    "memory_cap_bytes": 2147483648,
+    "probe_receipts": [
+      {
+        "probe": 0,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-0\\evidence\\job.json",
+          "sha256": "328bd2f711c7f73f137afeddb33686193f4760a6241a83c7adad87ebb462c09f",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147492864,
+          "cpu_seconds": 0.640625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 1,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-1\\evidence\\job.json",
+          "sha256": "c86e2bb108b4cdb18cc7b6efeddb4715b664faa66f0dcd33282d5f573f9fab39",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 141930496,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 2,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-2\\evidence\\job.json",
+          "sha256": "549947d15b0a3ba353fde257c0d44b1cd22dcc46d1bca882840cbf0548e9ac1d",
+          "bytes": 7309
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 142532608,
+          "cpu_seconds": 0.4375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 3,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-3\\evidence\\job.json",
+          "sha256": "ab1e2ae8cfd1aa32110684847b6de8ce4a0cb4bd01de31dba0cd50b9e430db2e",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147509248,
+          "cpu_seconds": 0.515625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 4,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-4\\evidence\\job.json",
+          "sha256": "ae4ff6aa11e6340623c9cc95920690f12a5a59cba8486752629e6f8a9f069d4a",
+          "bytes": 7310
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147087360,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 5,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-5\\evidence\\job.json",
+          "sha256": "5aae3e124e6339a0dc70a3cf0ac6957c3fc4161b2fb6507958f97334f677545b",
+          "bytes": 7310
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 221483008,
+          "cpu_seconds": 4.59375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 6,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-6\\evidence\\job.json",
+          "sha256": "b1430788e6079c6745419c0b8ae903e0fbb13c17383c45167aea167be6cf767a",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147165184,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 7,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-7\\evidence\\job.json",
+          "sha256": "38b0fd0eb4032f4fc4a19652b4e24db9896a5b9596428a6eb11eb8395e6a08f1",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 145735680,
+          "cpu_seconds": 1.140625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 8,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-8\\evidence\\job.json",
+          "sha256": "6013a68783fa116e3f79681d87735cf0588ab08ca539bd901ad1878117bf5d18",
+          "bytes": 7311
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 153104384,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 9,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-9\\evidence\\job.json",
+          "sha256": "91fb42a15db781411d88f19e2afc8929341a8a258ff2779332503f1a6cce1b60",
+          "bytes": 7309
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 157028352,
+          "cpu_seconds": 1.0625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 10,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-10\\evidence\\job.json",
+          "sha256": "d3c4f801ce48983c4493026fc7174ad3de424408436149652816a3691b1043ef",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 153866240,
+          "cpu_seconds": 0.59375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 11,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-11\\evidence\\job.json",
+          "sha256": "730fcaf1015b019151706a5bcc599ed402f529e540be03b2222fe254cfc60d40",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 212869120,
+          "cpu_seconds": 0.890625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 12,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-12\\evidence\\job.json",
+          "sha256": "134127838326b699d5a1af13531b6a64331040b6295d6936ebae84f386135e96",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 152031232,
+          "cpu_seconds": 0.453125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 13,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-13\\evidence\\job.json",
+          "sha256": "0e54a380016ba37cd09b476510244f043db76421489de08243db1e5cca79c4c8",
+          "bytes": 7362
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147136512,
+          "cpu_seconds": 0.5625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 14,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-14\\evidence\\job.json",
+          "sha256": "d1334623fb349c76cbf5d4e0a8d93f81dd4a0ddf0409f674d03e4980ded30a06",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 218337280,
+          "cpu_seconds": 1.234375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 15,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-15\\evidence\\job.json",
+          "sha256": "6234016f840c6b4c4aa72d49a7aade857a32c35487971fb04850c933fb7c5cc9",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 153706496,
+          "cpu_seconds": 0.46875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 16,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-16\\evidence\\job.json",
+          "sha256": "daf0d196230ca99b1c675a39343e36a5cdd74a60d82ca7613df6241b1fc835b7",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 153747456,
+          "cpu_seconds": 1.65625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 17,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-17\\evidence\\job.json",
+          "sha256": "ae3130b61eb9230f0a82a3b40f75629e1770393b627a87427b8de5ec42075e07",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147218432,
+          "cpu_seconds": 0.578125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 18,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-18\\evidence\\job.json",
+          "sha256": "d72d3754c5d59432ea3542ebcb9ff017106e7a5866ecf97990c3fac119a3ca68",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 188768256,
+          "cpu_seconds": 1.609375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 19,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-19\\evidence\\job.json",
+          "sha256": "e8aae9c9527a37e721e1f3838e1899f0dd654c4cdfcd6346866730d6361342d0",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 155824128,
+          "cpu_seconds": 1.296875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 20,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-20\\evidence\\job.json",
+          "sha256": "6b66e0441d4f1db5ecf6ada8d9bfd22e8a9b6a9d539ee3d2acc49d95db6b03a4",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 155013120,
+          "cpu_seconds": 1.28125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 21,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-21\\evidence\\job.json",
+          "sha256": "2b59a21310088c204db86e79d75971ad9738e0434e4298a0d7ff00cea0acd477",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 153858048,
+          "cpu_seconds": 0.546875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 22,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-22\\evidence\\job.json",
+          "sha256": "2bfefbe69bcfbcc1b44f3b5843647329c2c5c81fbd2b5ed789c21eee2327920b",
+          "bytes": 7358
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 187949056,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 23,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-23\\evidence\\job.json",
+          "sha256": "1272013d68d91bd3b8a7e1f33d96e46609088c638aece28342a5e9902aedf2d3",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 190038016,
+          "cpu_seconds": 0.515625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 24,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-24\\evidence\\job.json",
+          "sha256": "f383e5f7b84a6a9f3dba0062a5864548b1b222618fdabe0390663b9771d3264b",
+          "bytes": 7365
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 145670144,
+          "cpu_seconds": 1.015625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 25,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-25\\evidence\\job.json",
+          "sha256": "bcfdf893efffd7e74927296c7b9b482db90789c0c98a122d471089e839520c82",
+          "bytes": 7363
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 150388736,
+          "cpu_seconds": 1.4375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 26,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-26\\evidence\\job.json",
+          "sha256": "051911cbccda350ecaae9b50d1416295646db6bdc4838ea78719d9dbc0b4ec9b",
+          "bytes": 7364
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 149102592,
+          "cpu_seconds": 1.90625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 27,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-27\\evidence\\job.json",
+          "sha256": "2a2bd3fe968713b86e0daaa9034c1e53495fe621a5efb3bd3381112a32c424f0",
+          "bytes": 7363
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 184467456,
+          "cpu_seconds": 0.6875,
+          "active_at_release": 0
+        }
+      },
+      {
+        "probe": 28,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELWEB01-probe-28\\evidence\\job.json",
+          "sha256": "c3f40d3e42fb3c2eb9c3200c0323325235055ae5b39083c75c5f037aba661cfc",
+          "bytes": 7359
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 147660800,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        }
+      }
+    ]
+  },
+  "web_reproduction_archive_sha256": "9196c556d9746c5511aea5d5323b1f7ae412d21312129da1a502ffeb76333ac6",
+  "save_isolation": {
+    "mount": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test",
+    "args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "fresh_e_profile_only": true,
+    "normal_or_user_profile_writes": false,
+    "proof_count": 29
+  },
+  "ledger_reconciliation": {
+    "source": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motel-closeout-reconcile-03\\evidence\\reconciliation.json",
+    "sha256": "3509b520e2529378f3a70529dec3c46b228f5f69f5b460b4aaa1427252f3bb27",
+    "exit_code": 1,
+    "global_errors": 1524,
+    "scope": "Inherited whole-ledger errors remain open; current assigned room/TEST/phase08 rows and readable Markdown have zero findings. This is not global reconciliation success.",
+    "current_assigned_findings": 0,
+    "markdown_findings": 0,
+    "objectives": 220,
+    "batches": 71,
+    "open_batches": 29,
+    "runtime_instances": 978,
+    "new_closed_owned_receipts": 117,
+    "failed_diagnostic_outcomes_preserved": true
+  }
+}

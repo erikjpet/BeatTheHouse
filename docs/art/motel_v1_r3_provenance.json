@@ -465,7 +465,13 @@
   },
   "scope": "Only these exact Motel R3 bytes clear native art integration. This is not owner acceptance, TEST/Web acceptance, complete UI traversal, save/revisit/travel lifecycle acceptance or campaign completion. Cumulative future index updates require separately passed room packages; existing passed room raster/manifest bytes remain unchanged.",
   "native_QA_source_archive_sha256": "60a997cb03304f3ce11b2043eec6a067fe1b236bc76081cae2e174da912e30f4",
-  "web_delivery": "PENDING exact bound four-room TEST and actual browser acceptance",
+  "web_delivery": {
+    "status": "PASS",
+    "source_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+    "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "evidence": "docs/testing/motel_r3_test_delivery.json",
+    "browser_proof_sha256": "b50799b741299cecd52c35950bae57643c91877de331a61f3542a6460aeab995"
+  },
   "inherited_source_placement": {
     "object": "scenario::motel_stakeout_aftermath_stakeout_refused",
     "display_name": "Untouched Service Trolley",

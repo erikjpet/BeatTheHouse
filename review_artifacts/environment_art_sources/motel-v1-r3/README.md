@@ -1,3 +1,5 @@
+> Historical checkpoint below predates approval. The same exact R3 payload later passed native audit and was delivered on bound173 TEST; see docs/testing/motel_r3_art_integration.md. Archived sources,recipe,seal and payloads remain unchanged.
+
 # Motel R3 source checkpoint
 
 NON-ACTIVE TRIAL, NOT APPROVED. No runtime/index activation. Current source and TEST remain accepted Gas+Corner+Back.
