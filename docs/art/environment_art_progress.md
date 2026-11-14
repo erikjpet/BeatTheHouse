@@ -8,7 +8,7 @@ Release status: HOLD. Documentation and work-in-progress backups are not approva
 
 Gas Station Casino remains the active package. The owner prefers the brighter, sharper, strongly pixel-art design in the supplied Gas screenshot over the muted revisions. The latest explicit direction requires a majority of that design, brighter colors, sharper textures and contrasting accents such as a gold cage border.
 
-The dominant-reference rebuild substantially reuses the preserved original material source while retaining current detailed fixtures, exact functional placement and all 14 moving entries. R10 mechanical assembly defects were caught before staging; the corrected sealed R11 trial now has actual native-motion captures and remains under review. This is a material/design rebuild, not another subtle color grade. It must receive a new exact-package visual and technical audit. No earlier PASS authorizes release of this revised design.
+The dominant-reference rebuild substantially reuses the preserved original material source while retaining current detailed fixtures, exact functional placement and all 14 moving entries. R10 mechanical assembly defects were caught before staging; the corrected R11 trial received actual native-motion review. Narrow R12 cleanup now has actual-motion director visual PASS; full exact technical audit is still underway. This is a material/design rebuild, not another subtle color grade. It must receive a new exact-package visual and technical audit. No earlier PASS authorizes release of this revised design.
 
 Corner Store has a first generated background and separate carton source, plus a frozen cleaned geometry guide. Its final assembly is held until the revised Gas gate clears. It should keep its distinct mint/cream/plum shop identity rather than inherit Gas colors wholesale.
 
@@ -26,7 +26,7 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 
 | Order | Environment | Current state | Next concrete step |
 | --- | --- | --- | --- |
-| 01 | gas_station_casino | R9 rejected for insufficient reference fidelity; corrected R11 actual-motion trial under review | Review dominant-reference design in exact runtime composite, then audit revised sealed package |
+| 01 | gas_station_casino | R9 rejected for insufficient reference fidelity; R12 actual-motion director visual PASS; full technical audit underway | Review dominant-reference design in exact runtime composite, then audit revised sealed package |
 | 02 | corner_store | Brief and facade assessed; cleaned geometry and first source ready | Resume exact modular assembly after Gas gate |
 | 03 | back_alley | Brief, facade assessment and fixture guide ready | Clean baked rain/stock annotations, then author one package |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
@@ -57,7 +57,7 @@ There are 20 production interior art identities, drawn from 18 source archetypes
 - R7 restored all seven floor-light movers at the original rows, speeds and phases. It passed native visual/technical checks: 45 room checks across five scenarios, 71 floor/wrap checks, geometry/labels/hits, Reduce Motion, no-input liveness and counter replay. This is historical evidence, not current style approval.
 - R8 was an explicitly failed palette study. Coarse tonal grouping flattened floor and masonry detail and exposed hard patches. Its actual-motion preview was labelled a failed trial.
 - R9 preserved more fine detail and improved hue separation, but the owner rejected its muted design as too distant from the supplied image. It is not approved.
-- R10 began the substantial design rebuild using authentic original brick/floor/rim material patterns; mechanical assembly defects were found before staging. Corrected R11 has78 actual full-app and78 native-board frames with all14 entries. Its package is d9450011975ac171fa811ebeb4a41d86451f8def0fbbae65d816faa2806c5e48. It is suitable for owner trial preview, not final PASS. Final technical audit, latest-art larger-window/web verification and TEST publication remain outstanding.
+- R10 began the substantial design rebuild using authentic original brick/floor/rim material patterns; mechanical assembly defects were found before staging. Corrected R11 has78 actual full-app and78 native-board frames with all14 entries. Its package is d9450011975ac171fa811ebeb4a41d86451f8def0fbbae65d816faa2806c5e48. It is suitable for owner trial preview, not final PASS. R12 then corrected floor-joint continuity, ledge draw order, compact warm cores and the physical Parking Tip backing. Exact R12 package1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560 has actual-motion director visual PASS. Full technical audit, latest-art larger-window/web verification and TEST publication remain outstanding.
 
 Historical R7 package SHA-256: cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9.
 Rejected R9 package SHA-256: ef3b9b3a303701216705fc45ff5ef88655b5138403498af859a5d15062a9fea8.
@@ -80,3 +80,7 @@ A package advances through source review, exact mechanical assembly, native actu
 Owner previews show actual production-rendered motion for every motif, including quiet floor reflections and security motion. Use truthful named crops when necessary, with no preview-only brightness, timing or opacity boost. Keep attachments within the supported delivery size. A short excerpt plus explicit phase/wrap evidence is sufficient for long cycles.
 
 Only the existing TEST lane is in scope for this art rework. Do not replace NEXT or claim a web release before verifying its exact build/assets and visible result. Prior backups, reports, motion previews and documentation commits do not waive the latest owner feedback.
+
+## Non-active source backup
+
+[Gas R12 reproducible source backup](../../review_artifacts/environment_art_sources/gas_station_casino-v3-r12/README.md) preserves the substantial reference-driven work before final approval. Its archive contains all16 exact R12 payload files, complete pixel inputs, historical input manifest structure and assembly recipe. Private reference-ID metadata alone is redacted, with original/copy hashes retained. Archive SHA2567f63d6b1b622b35c78bb648e7aaa75f93e9615c857b6f6f07edae9da9dcb8f01. This is NOT an active pack or deployment approval. The dedicated folder is editor-ignored and all export presets already exclude review_artifacts.

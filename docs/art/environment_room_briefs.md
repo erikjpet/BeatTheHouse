@@ -272,3 +272,7 @@ Before advancing any queued brief:
 - verify label contrast, counter replay, scenarios, Reduce Motion and no-input liveness;
 - record current owner feedback and exact audit scope;
 - only then integrate the exact passed package and verify TEST.
+
+## Foreground-aware motion addendum
+
+Legacy decorative glints can fall behind the opaque authored counter-front layer. Back Alley glint[792,174] lies inside crate front[638,168,208,50]; Jazz glint[704,196] lies inside bar front[590,188,284,48]; Kitty glint[704,236] lies inside bar front[584,190,268,48]. When authoring those rooms, adapt these decorative glints to visible upper trim or adjacent glass, preserving motion character and contacts. Do not add alpha holes or move counters. Partial occlusion of common floor reflections by real fronts is normal. Source: current pixel_scene_canvas.gd and placement_surfaces.json.
