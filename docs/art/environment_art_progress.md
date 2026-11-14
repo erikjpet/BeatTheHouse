@@ -2,11 +2,11 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Five interiors fully Web-verified. Current TESTab0 contains six native-passed packs; Pawn artifact proof passes but live Web is blocked. Jazz is the active native art trial. The full20-room/12-doorway campaign remains Open.
+Release status: Nine interiors have native PASS and artifact delivery on cumulative TEST `787257af528e`. Five have full live Web verification. Pawn, Jazz, Public Punchline and Hidden casino still require live Web visual acceptance. The full 20-room/12-doorway campaign remains Open.
 
 ## Current queue
 
-Earlier authoritative checkpoint: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative bound9ac TEST, 5 of 20 interiors. Pawn R2 is the sole active art trial with deeper native proof pending; Jazz is reference/preflight preparation only. Main/NEXT and normal saves remain unchanged.
+Hidden casino R2 exact sealed package is delivered. Private Punchline back room is the next source/lifecycle preparation; no private art is approved or activated. Eleven interiors and twelve doorway packages remain. Main/NEXT and normal saves remain unchanged. See `../testing/small_underground_casino_r2_test_delivery.json` for verified build identity and explicit browser gaps.
 
 ### Earlier queue checkpoint
 

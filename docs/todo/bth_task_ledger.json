@@ -43135,19 +43135,34 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R2 native owner suite complete and scoped visual GO;exact independent final audit pending",
+      "status": "R2 exact native PASS; cumulative TEST artifact delivered; live Web NOT RUN",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "1cf1c703acf875982e9a6cb57707863ac606e467",
+          "evidence": [
+            "docs/testing/small_underground_casino_r2_test_delivery.json"
+          ]
+        },
+        {
+          "sha": "787257af528e6d37bb39fc39337b9ecc7bc72279",
+          "evidence": [
+            "docs/testing/small_underground_casino_r2_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Hidden :casino exact native audit then separate immutable cumulative TEST and live Web gates; no current hidden activation."
+        "commit": "787257af528e6d37bb39fc39337b9ecc7bc72279",
+        "evidence": [
+          "docs/testing/small_underground_casino_r2_test_delivery.json"
+        ],
+        "scope": "Nine cumulative native-approved packages on TEST only. Live browser visual and save/revisit gates remain open. Main/NEXT unchanged."
       },
       "scope": [
         "Correct small_underground_casino:casino only; preserve current c5 and actual four-context physical/title union,not public/private assumptions.",
@@ -43175,6 +43190,11 @@
           "kind": "scoped_director_visual_go_v2",
           "reference": "docs/art/small_underground_casino_v1_r2_director_visual_go.json",
           "summary": "Sourcec48ae188 binds personal12 published states,initial/corediagnostic and2inherited limits. Full26/native final integrity remains independent audit gate."
+        },
+        {
+          "kind": "native_and_served_artifact",
+          "reference": "docs/testing/small_underground_casino_r2_test_delivery.json",
+          "summary": "Exact 30 approved files, 272 Python tests, immutable export and normal-TLS served hash verification pass; live Web NOT RUN."
         }
       ],
       "blocker": {
@@ -43187,8 +43207,8 @@
           "docs/art/briefs/small_underground_casino.md"
         ]
       },
-      "next_action": "Preserve immutable native/source closure,obtain exact independent final audit,then integrate only approved bytes and separately verify TEST. Private small baseline yields to approved hidden export.",
-      "updated_at": "2026-11-14T20:49:22.809231+00:00"
+      "next_action": "Complete isolated live Web visual/interaction acceptance without claiming artifact integrity as browser proof.",
+      "updated_at": "2026-11-14T22:05:48.224738+00:00"
     }
   ]
 }
