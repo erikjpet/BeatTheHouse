@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T11:05:55.260515+00:00",
+  "updated_at": "2026-11-14T11:25:21.662399+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42530,23 +42530,28 @@
           "kind": "named_ledger",
           "reference": "docs/art/environment_art_progress.md",
           "summary": "Corner25-entry R3/R5 actual-motion trials preserved. R5 primary tests pass but director found scenario-specific Clerk contrast; R6 real-material/counter correction and expanded outcome QA are underway. No target art integration."
+        },
+        {
+          "kind": "source_backup",
+          "reference": "review_artifacts/environment_art_sources/corner_store-v1-r6/README.md",
+          "summary": "Non-active R6 trial,17 sealed payloads+unchanged seal+self-contained recipe+all4 frozen inputs; ZIP SHAb8f20778e63f43b27f1be70ca5d4e17ecacf6a53cae830e7efb195fa33cd7e91. No activation or finalPASS implied."
         }
       ],
       "blocker": {
         "state": "active",
         "kind": "visual_revision",
-        "description": "R5 Clerk glyphs washed out on pale surfaces in several scenarios. Exact R6 material/counter revision must pass complete independent visual/technical gate; no missing source module or owner-input dependency.",
+        "description": "Exact R6 material/counter correction is in isolated settled-scenario and35 supported outcome/work-context audit. Final visual/technical package PASS still required before any target/TEST activation.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T11:05:55.260515+00:00",
+        "observed_at": "2026-11-14T11:25:21.662399+00:00",
         "evidence": [
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T11:05:55.260515+00:00",
+      "updated_at": "2026-11-14T11:25:21.662399+00:00",
       "id": "BTH-ENVART-001-ART-CORNER-01",
       "name": "Integrate audited Corner Store art",
       "parent_id": "BTH-ENVART-001",
-      "status": "R6 correction/QA active; R5 not approved; no target or TEST integration",
+      "status": "R6 exact trial/static and settled primary visual checks progressing; broader35-context audit active; non-active source backup preserved",
       "scope": [
         "Integrate only exact full-auditor-passed Corner payload; preserve all prior Gas assets/manifest and cumulative enabled index.",
         "Verify25 authored motions, all current scenarios and supported aftermath/work snapshots, geometry/labels/hits, Reduce Motion, liveness, full286-wide counter/replay; record scope limits.",
