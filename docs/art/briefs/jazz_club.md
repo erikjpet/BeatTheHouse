@@ -1,8 +1,8 @@
-# Jazz Club: execution direction v3
+# Jazz Club: execution direction v5
 
 Prepared: 2026-11-14
 Room identity: jazz_club
-Status: future source direction and the inspected clean target are frozen. Pawn Shop remains the active unapproved art package. No Jazz source, package or activation is approved. Jazz source release requires Pawn Shop's explicit exact final native art PASS.
+Status: Jazz authoring is active after Pawn's final native PASS. Exact R3 has static visual GO only; actual-context/deep native/TEST gates remain pending. No Jazz runtime package is accepted or activated.
 
 ## Local story and rendering identity
 
@@ -89,3 +89,36 @@ Seven bottle placeholders and lower helper markers are removed. Open floor is re
 The flat cone shapes are geometry-guide LIGHTING ANNOTATIONS, not mandatory giant opaque triangle graphics or moving spotlights. The first source should translate them into coherent hard-clustered illumination on existing folds/stage planes. Floor246 remains behind existing construction and live bays, not aligned to an actor-foot guess.
 
 Artist may freeze the cleaned input with own facade/backdrop, preferred crisp pixel treatment and Delta craft provenance while Pawn is active. Check any newer current-context metadata before the eventual first source. First Jazz source remains conditional on the exact Pawn final native PASS, without another routine briefing wait; no current runtime asset approval is implied.
+
+## Current five-context pre-art supplement
+
+Strict9ac/current-c5 pre-art union is complete before the first Jazz source:714 checks/0 findings,83 actual canvas objects and83 selected source titles across Base, Guest Legend, Rent Party, Recording Night and Union Trouble. This is initial-context planning, NOT work/outcome coverage or a Jazz art PASS. Authoritative union: E:/CodexQA/BTH/runs/BTH-ENVART-JAZZ-20261114-union-01/evidence/jazz_preart_union.json, SHA-256 a8e15a2c41f1f00ac517234c995b74ed6a0a555dc99ec4722cddaafef6e4c6f9; readable .md sibling. Actual current-five PNGs and metadata are in runs/BTH-ENVART-JAZZ-20261114-current-five-01/evidence.
+
+Director personally viewed the actual Base and Recording production-board captures. Recording's nominal audience_mid/seated_person record renders an UPRIGHT live character with only a feet shadow, no painted chair/table/legs/platform dependency. Model/hit[210,258,68,64], Audience title[214.8,324,58.4,15]. This confirms the open-floor/no-erased-tables decision rather than authorizing new audience furniture. Metadata names alone are not physical art.
+
+Use these exact measured physical material priorities in the first source:
+- Gold upper musician titles are Sax[196,87,70,15], Cello[354.2,87,81.6,15], Drummer[288.7,88,52.6,15], crossing upper curtain/static warm-pool fields. Keep actual burgundy cloth/shadow planes quiet at87..103; retain vivid orange/brass fold EDGES and warm material light elsewhere. No broad pale honey curtain or flat opaque triangle.
+- Bartender gold Malik Stone[724.1,209,75.8,15], with Priya/Ada variants at209, lies ON the mapped barfront188..236. That entire real wood face must be dark detailed walnut/burgundy, with a genuinely thin contact188 highlight.
+- Guest Legend cyan Pull Tabs title[581.9,189,64.2,15] ALSO moves onto that barfront. Other current cases use title[581.9,122,64.2,15] in the upper backbar. Preserve both dark front and quiet glass depth; no broad gilt beam at188.
+- Backbar stock titles include Feature Magnet[643.4,96,93.2,15], Lucky Reel Grease[778.7,107,105.3,15] and their current variants. Empty source bays remain empty; do not reintroduce bottle placeholders or bright second stock behind them.
+- Band Tip Jar[230.2,212,81.6,15], cyan Jazz Band[318.9,212,64.2,15] and gold Cass Venn[68.9,212,64.2,15] cross the low stage face/inset. Dave's Last Stop[122.6,201,104.8,15] straddles its upper edge. Use dark real stage wood through these bands and a thin top208 accent; inset216..224 must not be a broad bright honey strip.
+- Guest Instrument case title[432.5,136,99,15] touches rail150. Recording clean-exit cyan title[16,140,83,26] crosses the left rail area. Keep actual mapped rail150..158 a dark material face with thin selective highlight, not a long glowing foreground beam or new label badge.
+- Foreground shelf404..412 has no title intersections in these five INITIAL cases, but9 body-envelope instances touch it. This is not a waiver for later outcome titles, nor a claim those envelopes are opaque paint. Keep construction restrained and verify later exact source states.
+
+These measured current anchors supersede old promotional positions and foot-anchor guesses. They do not change the frozen guide, protected placements, open floor, narrative palette or required distinct motion families. Glass/light/actor masks require actual source-painted proof rather than envelope exclusion. No additional structure is justified.
+
+Artist should freeze this union and the updated source prompt with the already-approved geometry/facade/pixel-treatment/craft roles. First Jazz source remains conditional on Pawn's explicit exact final native PASS, with no second routine briefing wait; no Jazz runtime asset acceptance is implied here.
+
+## First source and static R3 checkpoint
+
+The Pawn R2 exact final native PASS released one Jazz source. Raw source is E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/jazz_club-v1/source/background-guide-v1.png,1815 x867 opaqueRGB, SHA-256074a63ef8b9998bf03381cc09c2f3c07a9787b5eab623c92643097c01ded59ed. Director personally inspected it. Own cobalt/plum masonry, burgundy/orange cloth and walnut are strong, with ample original-scale floor depth near246; no extra source or floor plate was needed. Raw honey cloth and stage inset were too bright behind measured gold title bands, so they were not accepted unchanged.
+
+Editor used source-shaped local velvet regrading to burnt-orange/burgundy in the real lit folds around87..103 while preserving detailed lower warm folds. The real low-stage inset216 and title-bearing stage/bar faces are dark wood, with thin fitted contact highlights. This is not a global dimming or rectangular label patch. Exact rail150..158, stage208..242, bar188..236 and shelf404..412 remain authority. Wordmark pixels are assembled last within the background so stage-top fitting does not clip lettering.
+
+Three compact practical lights are a deliberate decorative interpretation of the original static cone family: frame-mounted near y72, centers190/330/470. Literal y34 soffit emitters or giant triangles are NOT required. This is not exact emitter-position equivalence or permission to move gameplay contacts. The three remain static unless explicitly incorporated into an already-approved light family; do not invent separate mandatory legacy motions.
+
+First handed-off review candidate is immutable R3, package SHA-2562c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7, background SHA-2563db8f4ee4c90e7de1ecb3de452ecbb5bc6bc08abcc127db42e11d7dcd261f63b. Editor workspace packages/jazz_club-v1-r3 holds it. Internal R1/R2 clipping/micro-emitter studies remain preserved but were not staged or passed.
+
+R3 has19 payloads/17 moving entries: two pulse families, distinct amber/cyan high-air families with two fields each, four material glints including an above-front visible bar-trim reflection near704,185, and seven floor movers. Contract preflight is reported clean. Director and artist personally inspected the exact900-board static and issued STATIC GO only. No source module or wider redesign is requested.
+
+Early actual five-current-context review is next, particularly musician gold87..103, stage212 titles, Guest cyan Pull Tabs189, bar staff209 and rail150 intersections. A clean empty board does not prove those live bands. No full native acceptance, implementation, TEST/Web or owner approval is implied by this checkpoint. Public Punchline remains the next conditional source only after Jazz's explicit exact final native PASS and its own frozen target.

@@ -1,0 +1,13 @@
+# Pawn Shop R2 exact integration
+
+Package:85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3. Original auditor report:3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41. Only19 sealed payloads activate, preserving all88 previous-room files,currentc5,project/export settings and game/renderer/label/contact/save logic. Index retains Gas,Corner,Back,Motel,Bar and adds only Pawn.
+
+Roster:15 genuine moving entries plus1 explicit static binaryalpha replay, never counted as motion. Native source proof confirms41,136opaque/73,104transparent pixels,0BG RGB mismatch and exact no-scan/order/RM behavior. Two fully opaque exact BG fronts:main[316,262,268,42] and shelf[600,184,246,28]. Replays cover5,070/4,638body pixels,0mismatch,upper body unchanged.
+
+Four initials pass445checks.24 normal production-published families pass1,896checks/289selected titles:6stable active+18unique aftermath,not all30terminal routes.60moving pairs visible,4static pairs stable,64RM pairs. Native probe33,full-composite239,RM286,floor-wrap71,scan-wrap4,placement/closing9,no-pointer liveness PASS. Base/Estate full-app RM differences are only16/17analog-clock HUD pixels; room/lower UI/art texture identical,not a full-app freeze claim.
+
+Tray is partially covered in Base/Serial/Mood; Estate is the meaningful exposed view. Estate-success live-object/title crowding equals legacy geometry. Hidden Serial work station is excluded while the real held-object task is present. Director personally reviewed4initial+9risk views/extrema/RM/static/decoded preview; auditor all24states and1174PNGs/171reports/31receipts. Raw observer/attribution diagnostics remain preserved. No forced actor positions,alpha/speed boost or gameplay/save/revisit E2E claim.
+
+Source/recipe/frozen inputs and1,025-file native QA archives remain excluded from runtime. Separate immutable six-room TEST/PCK/TLS verification is pending. Current Browser runtime is unavailable; documented CUA fresh-profile nonce calibration failed at window binding twice,with no UI input/game navigation. Only that owned Job was stopped,active0/cleanup[]. No forbidden Playwright/CDP fallback or weakened profile/TLS/resource rules. Actual live-browser sizes/motion/UI remain unverified. Main/NEXT and the20-room/12-doorway campaign stay unchanged/Open.
+
+Local Python tooling:272 tests passed in45.243s. Manual ledger:220 objectives/73 batches; assigned room/TEST/phase08 and Markdown0findings. Global1,524 inherited findings remain Open (exit1), not green. Reconciliation SHA256:0c3208dec5d13d069960381a5f0cf004388cc79dba5dc10cdb7a986ea629d91b.

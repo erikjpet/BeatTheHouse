@@ -1,0 +1,493 @@
+{
+  "status": "PASS_NATIVE_ART_PACKAGE",
+  "package_id": "pawn_shop-v1-r2",
+  "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+  "package_root": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\packages\\pawn_shop-v1-r2",
+  "approved_files": {
+    "assets/art/environments/pawn_shop/anim/fixed_material_occlusion.png": {
+      "sha256": "dd33ee23ce2154cecbbdedbfd1e5a7b28fb9d9d45c4efbe82d8d266793656763",
+      "bytes": 30661,
+      "size": [
+        476,
+        240
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_0.png": {
+      "sha256": "a8f9ee0437a66388c2d14203be0b404c0e19171da8f6ea9bc8cbd40e57848dce",
+      "bytes": 196,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_1.png": {
+      "sha256": "0a5e5583c186618e8d3c0d41b685784ad9576bf83de11ee9c50c744e89c2a2f0",
+      "bytes": 195,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_2.png": {
+      "sha256": "a24e39320d76dc298058cfbb154c12f4f1173c681825b18384b6a4f76bdb3f12",
+      "bytes": 202,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_3.png": {
+      "sha256": "c88cc4409ac8d33358e3c85daa9068dae1dc14df66c4d87feed92bfe75a3994f",
+      "bytes": 193,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_4.png": {
+      "sha256": "5585b0bb0623a4b85b25fd30c15d9e8fcd39c6966cafa30596155af75e50b266",
+      "bytes": 197,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_5.png": {
+      "sha256": "46ff4e40128b49b941c03b8f0a2687896e262bc89d6e5f6880c2bd86818b4366",
+      "bytes": 212,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/floor_glint_6.png": {
+      "sha256": "d1f2e6e5be1d87cb4c360e8fa8db6561e65a403e11a60adbce4556fa0592fdac",
+      "bytes": 196,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/hardware_glint.png": {
+      "sha256": "58e320a00023e6d4c8536b10d7cc4eb708ef2f14fa844b59d6db9a385de09085",
+      "bytes": 121,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/high_air_0.png": {
+      "sha256": "69972e946bc86fb1a26a99f13062613dbebecdda808330f6f5d8eb097c376946",
+      "bytes": 2447,
+      "size": [
+        1520,
+        176
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        5
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/high_air_1.png": {
+      "sha256": "5018fff5b6b2903530376cb23645dab16cab77b7b255bbb004cbd055aaff9e2d",
+      "bytes": 2009,
+      "size": [
+        1520,
+        176
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        5
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/inspection_tray_breath.png": {
+      "sha256": "d4a1c132740c051d6573e889029d1d718bd7734d1c8765ee8e088c5bc0680c64",
+      "bytes": 203,
+      "size": [
+        144,
+        28
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/sals_sign.png": {
+      "sha256": "7b3ca554843f8850f168c2a154bb09366fff8e99dd2af5fd569374aadb8c6411",
+      "bytes": 8010,
+      "size": [
+        640,
+        136
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        210
+      ]
+    },
+    "assets/art/environments/pawn_shop/anim/security_scan.png": {
+      "sha256": "8a340cdb0824daf4cb6e4cef8ad8a8e107f53fef17016618757ef50c9dab1649",
+      "bytes": 554,
+      "size": [
+        476,
+        240
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        31
+      ]
+    },
+    "assets/art/environments/pawn_shop/background.png": {
+      "sha256": "922b8522eed72005e3b26c9312021e9489f6b6337cdb47dd37419087e44947b5",
+      "bytes": 753112,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/pawn_shop/counters/pawn_counter.png": {
+      "sha256": "6b65f51ceaed27cc421d3b864cd292325ee05ecc7f61b32f837a7571fe6076f8",
+      "bytes": 26318,
+      "size": [
+        536,
+        84
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png": {
+      "sha256": "c6fdbde2baf185b6b29434a5c7b1296ffcdf239f78dc34ddb3df7f1b646cd98f",
+      "bytes": 15530,
+      "size": [
+        492,
+        56
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "data/art/environments/index.json": {
+      "sha256": "a5b367f0d9d617bb8c66331ff839d2601c900a63583d9773c3ffa4b6b868ff0e",
+      "bytes": 137
+    },
+    "data/art/environments/pawn_shop.json": {
+      "sha256": "22f272681a6330eb4a55c71bc3cf2463392fe1acca4c619a9bfbda159a95775b",
+      "bytes": 6521
+    }
+  },
+  "manifest": "data/art/environments/pawn_shop.json",
+  "background_sha256": "922b8522eed72005e3b26c9312021e9489f6b6337cdb47dd37419087e44947b5",
+  "scope": "ONLY these exact PawnR2 bytes clear native art integration. Not owner final acceptance, TEST/Web, UI-click/save/revisit/travel E2E or campaign completion. Cumulative index adds Pawn to five separately accepted rooms without modifying their raster/manifest bytes or c5.",
+  "counters": [
+    {
+      "id": "pawn_counter",
+      "path": "assets/art/environments/pawn_shop/counters/pawn_counter.png",
+      "sha256": "6b65f51ceaed27cc421d3b864cd292325ee05ecc7f61b32f837a7571fe6076f8",
+      "rect": [
+        316,
+        262,
+        268,
+        42
+      ],
+      "size": [
+        536,
+        84
+      ],
+      "alpha": [
+        255,
+        255
+      ],
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exact_BG_RGBA_crop": true,
+      "counter_RGB_mismatches": 0,
+      "synthetic_body_pixels_correctly_covered": 5070,
+      "upper_body_unchanged": true
+    },
+    {
+      "id": "pawn_estate_shelf",
+      "path": "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png",
+      "sha256": "c6fdbde2baf185b6b29434a5c7b1296ffcdf239f78dc34ddb3df7f1b646cd98f",
+      "rect": [
+        600,
+        184,
+        246,
+        28
+      ],
+      "size": [
+        492,
+        56
+      ],
+      "alpha": [
+        255,
+        255
+      ],
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "exact_BG_RGBA_crop": true,
+      "counter_RGB_mismatches": 0,
+      "synthetic_body_pixels_correctly_covered": 4638,
+      "upper_body_unchanged": true
+    }
+  ],
+  "visual_review": {
+    "director_report": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\pawn-r2-director-visual-go.json",
+    "director_report_sha256": "6f3059875863c058cb85ccf9e3587bb4d99017f9e404bf87f42a00c0fb0c6d3e",
+    "director_personal_scope": "Exact static and floor materials,all4 initial actuals,9 representative work/outcome states acrossall3families,actual Estate tray min/peak,Base settings-routeRM,decoded preview still. No remaining director blocker. Not claiming director personally viewed all24.",
+    "auditor_personal_scope": "ALL24 ordinary actual full-app states in unmodified1:1 source-hashed sheets,all4 initial actuals,actual Estate tray min/peak,BaseRM,decoded main/supplement stills,and both front with/without-replay fixture pairs.",
+    "result": "Distinct vivid facade-local plum masonry,cold glass,worn gray metal and dark old wood. Sharp source detail/local ramps preserved on fixed900-grid/1800x860. Generated raised fascia/deep mat corrected to shallow toe-kick236..246 plus flat rubber runner246..298; same-scale single184px floor crop starts246. Exact cases/lips/window/tray/rear rim and both mapped fronts retained. No baked stock,cast or duplicated moving effects.",
+    "readability": "Gold case/staff/shop and cyan task/outcome bands remain readable on real material acrosscurrent scenarios and all24primary states. No label movement,floating backing,extra furniture or global grade.",
+    "unchanged_live_limit": "Estate-success Displayed Lot model[681,74,80,48] intersects Lucky Ladies Compact title[659,105.999985,126,26] in exact unchanged legacy/R2/RM layouts. Retain source live/live crowding; no universal unobstructed-title or newly grounded-every-prop claim."
+  },
+  "motion": {
+    "moving_entries": 15,
+    "static_occlusion_entries": 1,
+    "inventory": [
+      "SAL S PAWN actual gold-glyph pulse; cyan BUY SELL TRADE stays static",
+      "72px/s vertical security scan with main2px and faint19px companion",
+      "Separate compact amber inspection-tray breath",
+      "2veryfaint high-air fields translating5fluorescent/dust ribbons",
+      "3small warm hardware/glass glints",
+      "7dry-room cyan/amber/plum floor-light movers"
+    ],
+    "translations": "Director-approved air-field translation and floor consolidation of common sheen+older lower-bob/stripe helpers, not literal seeded trajectory/count identity. No fog blanket/wet neon or raised dashes.",
+    "static_replay": "Existing-contract one-frame mix entry restores exact fixed BG pixels on physical window/frame/mesh/tray masks afterscan and beforetray. Binary0/255alpha,41136native opaque/73104transparent. Not a moving motif; no-scan exactRGBA equality, native order/RM proof and source-gap scan visibility passed. No schema/renderer change,live cast/text or body-envelope masking.",
+    "actual_motion_scope": "60 moving entry-context pairs acrossall4 current contexts independently RGB-recounted;4STATIC pairs identical. Nonzero tray changes in cast-covered contexts are not claimed equally meaningful. Estate supplies clear actual exposed tray demonstration.",
+    "tray_natural_coverage": {
+      "independent_alpha_recount": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-pawn-r2-independent-tray-alpha\\evidence\\pawn-tray-independent-alpha.json",
+      "sha256": "06bf05aaca587613bd08058c36a5afbe94ae47fb0de7a7ac348c92642c5f6a3a",
+      "source_support_native_pixels": 448,
+      "Base": {
+        "opaque": 412,
+        "partial": 36,
+        "actual_changed": 36,
+        "max_RGB_delta": 5
+      },
+      "Serial": {
+        "opaque": 407,
+        "partial": 41,
+        "actual_changed": 41,
+        "max_RGB_delta": 5
+      },
+      "Mood": {
+        "opaque": 393,
+        "partial": 55,
+        "actual_changed": 44,
+        "max_RGB_delta": 5
+      },
+      "Estate": {
+        "clear": 448,
+        "actual_changed": 448,
+        "max_RGB_delta": 31
+      },
+      "interpretation": "Real event:chatty_clerk body/adornment paint attenuates Base/Serial/Mood. They are neither fully invisible nor meaningfully unobstructed. Estate clear min/peak/full actual loop proves the practical effect. No move,boost or forced draw-order exception."
+    },
+    "ReduceMotion": "64 entry-context pairs stable,including STATIC and coherent practical resting states. Actual room pixels stable; raw full-app pairs retain16/17 analog-clock HUD differences only. No full-app freeze claim. Header tooltip preserved outside art.",
+    "mandatory_unchanged_no_pointer_liveness": "PASS"
+  },
+  "native_evidence": {
+    "summary": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-final-summary-01\\evidence\\pawn_r2_native_summary.json",
+    "summary_sha256": "6bc9f0951bdf57d552d7574415eafec4199f59853bbed2bab1179cfe60217c57",
+    "independent_receipt": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\audit\\pawn-r2-final-receipt-verification.json",
+    "independent_receipt_sha256": "e1f504e91cfa11b0127f1418466ac1d0483c2fd253d510bee4b8b6673ebbec94",
+    "initial_contexts": 4,
+    "initial_assertions": 445,
+    "primary_source_cases": 24,
+    "case_types": {
+      "active": 6,
+      "aftermath": 18
+    },
+    "source_assertions": 1896,
+    "actual_selected_titles": 289,
+    "source_visible_Runtime_occurrences": 41,
+    "source_hidden_exclusions": 1,
+    "exact_hidden_semantics": {
+      "id": "scenario::serial_station",
+      "case": "pawn_shop_serial_check_day__active_phase_work",
+      "role": "primary_task",
+      "hosted_control": false,
+      "source_hide_ref": "data/environments/scenario_sequences/env06_7_shops_streets.json#/scenarios/10/sequence/phase_graph/phases/1/scene_ops/5",
+      "visible": false,
+      "enabled": true,
+      "presentation_mode": "room",
+      "actual_objects": 0,
+      "actual_geometry": 0,
+      "present_direct_interaction": false,
+      "live_task_object": "scenario::hold_object",
+      "live_task_selected_title": "Trace the held serial"
+    },
+    "alternative_resolution_routes_source_cataloged_not_executed": 30,
+    "native_entry_probe_assertions": 33,
+    "actual_composite_assertions": 239,
+    "actual_RM_assertions": 286,
+    "static_assertions": 15,
+    "floor_wrap_assertions": 71,
+    "scan_wrap_assertions": 4,
+    "placement_real9AM_9PM_closing_assertions": 9,
+    "payloads": 19,
+    "protected_core_normalized": 862,
+    "prior_five_art_files": 88,
+    "strict_baseline_files": 7024,
+    "archived_QA_source_files": 1025,
+    "native_PNG_hashes": 1174,
+    "bound_reports": 171,
+    "bound_prior_jobs_plus_collector": 31,
+    "job_scope": "Allowned jobs drained under12%CPU/2GiB, no timeout/cleanup errors. Raw Estate01 observer parse failure preserved exit1; corrected Estate02 passed. Do not claim every historical launch exit0.",
+    "diagnostics": [
+      "prepare-01 was admitted without a worker; one attempted guard run with its occupied ID was rejected before child creation. Derivation then used a fresh admitted run.",
+      "Estate animation attempt01 parsed no scene because the QA observer redeclared an inherited constant. Failed raw receipt preserved, observer-only correction and fresh attempt02 passed.",
+      "Base16-entry RM diagnostic and three-scenario48-entry supplement are separate. Inherited old comment mentioning eight contexts is not a coverage claim; actual four contexts/64 pairs are explicitly reconciled here.",
+      "First RM difference analysis guessed the wrong HUD element. Corrected RGB-bound receipt identifies only the analog-clock hand pixels; original report preserved and not relied upon.",
+      "Auditor receipt helper originally assumed extracted archive,then uniform slash keys. Original failed receipts retained; ZIP content rehash with explicit Windows separator normalization succeeded, no source/art changes."
+    ]
+  },
+  "preview": {
+    "saved_items": {
+      "pawn-trial-r2-actual-motion.mp4": {
+        "operation": "create_library_file",
+        "status": "succeeded",
+        "path": "/pawn-trial-r2-actual-motion.mp4",
+        "file_name": "pawn-trial-r2-actual-motion.mp4",
+        "current_version_number": 0,
+        "restored_from_version_number": null,
+        "xattrs": [
+          {
+            "name": "user.library-file-version",
+            "value": "0"
+          }
+        ],
+        "directory_id": "personal-root:v1",
+        "mime_type": "video/mp4",
+        "file_size_bytes": 3098664,
+        "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/pawn-trial-r2-actual-motion.mp4"
+      },
+      "pawn-trial-r2-actual-play.png": {
+        "operation": "create_library_file",
+        "status": "succeeded",
+        "path": "/pawn-trial-r2-actual-play.png",
+        "file_name": "pawn-trial-r2-actual-play.png",
+        "current_version_number": 0,
+        "restored_from_version_number": null,
+        "xattrs": [
+          {
+            "name": "user.library-file-version",
+            "value": "0"
+          }
+        ],
+        "directory_id": "personal-root:v1",
+        "mime_type": "image/png",
+        "file_size_bytes": 771231,
+        "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/pawn-trial-r2-actual-play.png"
+      },
+      "pawn-trial-r2-estate-live-tray.mp4": {
+        "operation": "create_library_file",
+        "status": "succeeded",
+        "path": "/pawn-trial-r2-estate-live-tray.mp4",
+        "file_name": "pawn-trial-r2-estate-live-tray.mp4",
+        "current_version_number": 0,
+        "restored_from_version_number": null,
+        "xattrs": [
+          {
+            "name": "user.library-file-version",
+            "value": "0"
+          }
+        ],
+        "directory_id": "personal-root:v1",
+        "mime_type": "video/mp4",
+        "file_size_bytes": 2332251,
+        "external_connectors_accessed": false,
+        "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/pawn-trial-r2-estate-live-tray.mp4"
+      }
+    },
+    "status": "Captured as TRIAL; same exact passed package bytes. Parent has confirmed IDs; this seal does not independently assert user delivery.",
+    "main": "92real Base frames+terminalhold,12.32s,3,098,664B. Fullactualapp plus clearly marked production-art-target-only motif crops. Integer-nearest, no timing/opacity enhancement.",
+    "supplement": "92real Estate frames+terminalhold,2,332,251B,actual fullapp plus same-live-app crop; exposed tray min/peak signal retained through decode.",
+    "encoding_retention": "Decoded93frames/main plus93supplement, crisp stills personally viewed. Isolated air signed-RGB temporal correlation.7835 outside scan/glints; floor.9804 outsidefront. Retention is not a substitute for native composite proof."
+  },
+  "limits": [
+    "Native production-model visual/publication/geometry proof,not UI-click/gameplay/save/revisit/travel lifecycle or all30alternative routes.",
+    "Initial and source-arrival contexts overlap; assertion counts are not distinct complete playthrough counts.",
+    "One source-hidden Serial work primary-task visual is deliberately hidden by authored scene_ops; real task belongs to hold_object. This is not a hosted-control exception or missing-art prop.",
+    "TEST/Web identity/actual served rendering remain separate integration gates. Auditor has not deployed anything.",
+    "Six of20interior identities now have native PASS. Fourteen interiors and later12doorway phase remain unfinished; campaign stays active."
+  ],
+  "next": "Integrator may activate ONLY exact PawnR2 while retaining five accepted packs/c5/settings. Jazz is the sole next source: approved frozen clean guide7487a6f0,latest director execution direction and measured current5union. Artist may begin ONE source after incorporating those current bands and frozen provenance; no other room generation. Auditor continues exact assembly/actual previews/gates.",
+  "public_copy_note": {
+    "original_report_sha256": "3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41",
+    "omitted_metadata_paths": [
+      ".preview.saved_items.pawn-trial-r2-actual-motion.mp4.file_id",
+      ".preview.saved_items.pawn-trial-r2-actual-motion.mp4.library_file_id",
+      ".preview.saved_items.pawn-trial-r2-actual-motion.mp4.library_artifact_type",
+      ".preview.saved_items.pawn-trial-r2-actual-play.png.file_id",
+      ".preview.saved_items.pawn-trial-r2-actual-play.png.library_file_id",
+      ".preview.saved_items.pawn-trial-r2-actual-play.png.library_artifact_type",
+      ".preview.saved_items.pawn-trial-r2-estate-live-tray.mp4.file_id",
+      ".preview.saved_items.pawn-trial-r2-estate-live-tray.mp4.library_file_id",
+      ".preview.saved_items.pawn-trial-r2-estate-live-tray.mp4.library_artifact_type"
+    ],
+    "scope": "Attachment/delegation routing metadata omitted; public LF JSON serialization. Approved payloads and technical/visual findings unchanged."
+  }
+}

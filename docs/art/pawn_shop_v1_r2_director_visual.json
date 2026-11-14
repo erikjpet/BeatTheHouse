@@ -1,0 +1,124 @@
+{
+  "schema": "bth.environment.director.visual-gate/v1",
+  "prepared_date": "2026-11-14",
+  "room": "pawn_shop",
+  "candidate": "R2",
+  "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+  "background_sha256": "922b8522eed72005e3b26c9312021e9489f6b6337cdb47dd37419087e44947b5",
+  "status": "SCOPED_NATIVE_VISUAL_GO_NOT_FULL_PACKAGE_PASS",
+  "initial_actual_count": 4,
+  "initial_actuals": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01\\evidence\\__none_actual_play.png",
+      "sha256": "cdd830c19f58c2cabcbf1d33b576730cf3977432e4e0ca35d607d7480cfdabe3",
+      "bytes": 770671
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01\\evidence\\pawn_shop_estate_lot_day_actual_play.png",
+      "sha256": "6c8f38892d64fd297aca69a18e9c56b14283c3bf18684fd1094a099d6087b048",
+      "bytes": 751581
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01\\evidence\\pawn_shop_serial_check_day_actual_play.png",
+      "sha256": "268593de9e7a95f6d55a34221daf74bfc890270a2888a486a4b2cdfb34fe85e8",
+      "bytes": 750411
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01\\evidence\\pawn_shop_sals_mood_actual_play.png",
+      "sha256": "8b70d004daf28d5e20805adf899918e0a9d84f99f0fa5170cfd2ec634894a782",
+      "bytes": 752712
+    }
+  ],
+  "representative_work_outcome_count": 9,
+  "representative_actuals": {
+    "estate": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-estate-01\\evidence\\pawn_shop_estate_lot_day__active_phase_work_play.png",
+        "sha256": "99b53b051879e28f85685bb9fd2cc705c2a935f7500acc544fa55cbab76189f0",
+        "bytes": 752018
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-estate-01\\evidence\\pawn_shop_estate_lot_day__aftermath_failure_play.png",
+        "sha256": "07d0883d75da058614404c513e4d9bad1ffcf88bd2490fc20939cdf441d9d73d",
+        "bytes": 747500
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-estate-01\\evidence\\pawn_shop_estate_lot_day__aftermath_success_play.png",
+        "sha256": "c673e32230da4b1be0557a44b522252952e6923e53233d8129c5aced6aa34564",
+        "bytes": 747592
+      }
+    ],
+    "serial": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-serial-01\\evidence\\pawn_shop_serial_check_day__active_phase_work_play.png",
+        "sha256": "efa5e4ed8fee096fe9f318dd0280969ed5f655f084a59549291f0cb331f9c63e",
+        "bytes": 748885
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-serial-01\\evidence\\pawn_shop_serial_check_day__aftermath_success_play.png",
+        "sha256": "024c8bfdb16fa30fe4fa6674f917a0262887b19b276e963c268f737205dc0084",
+        "bytes": 744776
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-serial-01\\evidence\\pawn_shop_serial_check_day__aftermath_public_play.png",
+        "sha256": "8a0f5a739c38945df8902a72608a1016d8e645f2dabbad582b2385a140453fa8",
+        "bytes": 748222
+      }
+    ],
+    "mood": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-mood-01\\evidence\\pawn_shop_sals_mood__active_phase_work_play.png",
+        "sha256": "701f569c6c5061e68fa207e7eedb2818448cad3626331121794902319f269119",
+        "bytes": 752406
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-mood-01\\evidence\\pawn_shop_sals_mood__aftermath_failure_play.png",
+        "sha256": "bde810e8a8b1f6b8ab8a983bdb218f7f234bb826b911e544fc820773007471a7",
+        "bytes": 750706
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-sequence-mood-01\\evidence\\pawn_shop_sals_mood__aftermath_public_play.png",
+        "sha256": "88826f66d6ad6a97ea5aadc626a4e1306a0135bc023fc10d1986f4077ae4cf40",
+        "bytes": 750807
+      }
+    ]
+  },
+  "tray_actual_min": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-animation-estate-02\\evidence\\frames\\frame_090.png",
+    "sha256": "6bf2ea8bc96b0f4616553d0a332a81b07ba4963f188587bc381a7a3faa83f5e2",
+    "bytes": 752463
+  },
+  "tray_actual_peak": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-animation-estate-02\\evidence\\frames\\frame_045.png",
+    "sha256": "62286674073c5385960b270c71fbde05adcefb0ad4b8168959e92787fc56284a",
+    "bytes": 752362
+  },
+  "reduced_actual": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-animation-base-01\\evidence\\frames\\reduce_motion_play.png",
+    "sha256": "da6261da69d7d524664938ed22fcb0e7859f10b6968abcefc323eac9c50f4a7b",
+    "bytes": 774756
+  },
+  "static": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\packages\\pawn_shop-v1-r2\\background-board-review.png",
+    "sha256": "72c02dbb6452a8e8c2a4c300c66e329a1f615def5b3675196a8c3fc5393cf60b",
+    "bytes": 548193
+  },
+  "converted_preview_still": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-pawn-r2-video-verify\\evidence\\decoded-middle.png",
+    "sha256": "cef9c97355116940358e00a73b9f8450f60588ddb533e032a7b9edd1f93d8ba4",
+    "bytes": 1297317
+  },
+  "findings": [
+    "Own vivid plum masonry, cold glass, worn steel and old wood remain crisp and distinct.",
+    "Generated raised low fascia was corrected to shallow toe-kick and flat floor runner; floor, mapped fronts and fixed architecture remain coherent.",
+    "Measured gold staff/stock, cyan tasks/results and pink current title bands remain readable in the personally reviewed scope.",
+    "Compact honey tray remains lit at actual minimum and visibly varies at actual peak without washing Estate titles.",
+    "Reduced room and static material-clipping presentation are coherent; the one-frame replay is explicitly not a moving motif."
+  ],
+  "declared_limits": [
+    "Estate success Displayed Lot/Lucky Ladies live intersection is an unchanged source-placement watch, subject to independent legacy/R2 geometry binding. No invented shelf or universal unobstructed-title claim.",
+    "Director personally inspected9 representative work/outcome states, not all24. Independent auditor owns complete24 actual/source/selected-title review.",
+    "Converted still proves presentation crispness, not motion by itself. All15 moving families need meaningful actual composite proof; one static replay needs exact alpha/order/BG/RM equivalence separately.",
+    "No full package PASS, integration, served TEST/Web, owner acceptance, full campaign completion or save/revisit/UI-outcome E2E claim."
+  ]
+}

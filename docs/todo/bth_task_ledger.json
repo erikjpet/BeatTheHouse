@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T16:36:32.139845+00:00",
+  "updated_at": "2026-11-14T17:16:48.729425+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37985,7 +37985,8 @@
         "BTH-ENVART-001-ART-BACK-01",
         "BTH-ENVART-001-ART-MOTEL-01",
         "BTH-ENVART-001-ART-BAR-01",
-        "BTH-ENVART-001-ART-PAWN-01"
+        "BTH-ENVART-001-ART-PAWN-01",
+        "BTH-ENVART-001-ART-JAZZ-01"
       ],
       "next_action": "Complete Pawn exact native audit/integration and the remaining 15 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
@@ -42863,7 +42864,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R2 all four actual initial cases visually clear; deep native proof active, no final audit PASS",
+      "status": "Exact R2 final native auditor PASS; six-room integration active; live Web tool binding blocked",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42904,6 +42905,56 @@
           "kind": "r2_non_active_trial",
           "reference": "docs/art/pawn_shop_v1_r2_source_checkpoint.json",
           "summary": "Exact85a22382,445initial checks/0findings,53selected titles/all4visualGO. Static BG replay explicitly separate from15moving motifs. Source backupbe4925ee,full deep24-context proof active; no target activation."
+        },
+        {
+          "kind": "exact_native_art_pass",
+          "reference": "docs/testing/pawn_shop_r2_art_integration.md",
+          "summary": "Exact85a22382/audit3d1a3812:24actual families,15moving+1static,64RM/twofronts/wrap/liveness/source identity pass. No live Web claim; CUA exact-window binding failed safely."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Live Web runtime absent and native CUA window binding failed. Source/PCK/TLS work continues; actual browser scope remains pending.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T17:16:48.729425+00:00",
+        "evidence": [
+          "docs/testing/pawn_shop_r2_art_integration.md"
+        ]
+      },
+      "next_action": "Commit only19 approved files, preserve previous5/c5, bind isolated TEST and report verified artifact scope separately from blocked live-browser UI.",
+      "updated_at": "2026-11-14T17:16:48.729425+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-JAZZ-01",
+      "name": "Integrate audited Jazz Club art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Exact R3 static GO; measured five-context baseline complete; native trial waiting for Pawn export priority",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Isolated cumulative TEST only after exact Jazz full package PASS."
+      },
+      "scope": [
+        "Preserve own Jazz facade/current c5 contacts,rail150..158/foreground shelf404..412 and erased tables/open floor.",
+        "Use current musician/bartender/audience gold label bands; Recording audience is upright live actor,not an invented chair.",
+        "Audit actual17-motion/source/title/geometry/RM/counter/liveness proof,then exact integration and separate cumulative TEST verification."
+      ],
+      "evidence": [
+        {
+          "kind": "measured_direction_and_static_trial",
+          "reference": "docs/art/briefs/jazz_club.md",
+          "summary": "Measuredv4 29f3a93a plus static checkpointv5 76c8338f,guide7487a6f0. Five-context preflight714/0,83objects/titles,24Runtime visuals,4hosted task controls,71contacts,36PNGs. ExactR3 2c9e93f5 staticGO,not actual/native acceptance."
         }
       ],
       "blocker": {
@@ -42911,13 +42962,13 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:54:32.994145+00:00",
+        "observed_at": "2026-11-14T17:16:48.729425+00:00",
         "evidence": [
-          "docs/art/briefs/pawn_shop.md"
+          "docs/art/briefs/jazz_club.md"
         ]
       },
-      "next_action": "Complete exact R2 24-family source proof and 15-moving/one-static contract, counter/RM/wrap/liveness, then independent final audit before activation.",
-      "updated_at": "2026-11-14T16:36:32.139845+00:00"
+      "next_action": "Finish prepared native owner handoff; after Pawn export drains,stage exactR3 QA-only for all5 actual contexts/17-motion excerpt before deep proof.",
+      "updated_at": "2026-11-14T17:16:48.729425+00:00"
     }
   ]
 }

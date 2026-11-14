@@ -1,3 +1,5 @@
+> Later checkpoint: the same exact R2 bytes now pass final native audit and target integration is active. Historical trial status below and original source ZIP remain unchanged. TEST/Web is still pending.
+
 # Pawn R2 non-active source checkpoint
 
 NON-ACTIVE TRIAL, NOT APPROVED. Current target and served TEST contain the five prior native-passed rooms; no Pawn activation. Exact package SHA256: 85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3. Archive SHA256: be4925ee17be792abfd8e1ac894fed26cae355a92d86a034a62681a90a13f4cc.

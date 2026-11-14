@@ -1,0 +1,341 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "pawn_shop",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "sals_sign",
+      "type": "pulse",
+      "texture": "anim/sals_sign.png",
+      "rect": [
+        292,
+        42,
+        320,
+        68
+      ],
+      "min_opacity": 0.13,
+      "max_opacity": 0.26,
+      "period": 0.7853981633974483,
+      "phase": 0.5336504591506379,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "security_scan",
+      "type": "scroll",
+      "texture": "anim/security_scan.png",
+      "rect": [
+        332,
+        98,
+        238,
+        120
+      ],
+      "speed": [
+        0,
+        72
+      ],
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "STATIC_OCCLUSION_fixed_material",
+      "type": "frames",
+      "texture": "anim/fixed_material_occlusion.png",
+      "rect": [
+        332,
+        98,
+        238,
+        120
+      ],
+      "frames": 1,
+      "fps": 1,
+      "blend": "mix",
+      "still": 0
+    },
+    {
+      "id": "inspection_tray_breath",
+      "type": "pulse",
+      "texture": "anim/inspection_tray_breath.png",
+      "rect": [
+        410,
+        148,
+        72,
+        14
+      ],
+      "min_opacity": 0.2,
+      "max_opacity": 0.36,
+      "period": 0.9239978392911157,
+      "phase": -0.23099945982277892,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "high_air_0",
+      "type": "scroll",
+      "texture": "anim/high_air_0.png",
+      "rect": [
+        66,
+        81,
+        760,
+        88
+      ],
+      "speed": [
+        10,
+        0.28
+      ],
+      "opacity": 0.9,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "high_air_1",
+      "type": "scroll",
+      "texture": "anim/high_air_1.png",
+      "rect": [
+        66,
+        81,
+        760,
+        88
+      ],
+      "speed": [
+        16,
+        -0.25
+      ],
+      "opacity": 0.9,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "hardware_glint_0",
+      "type": "pulse",
+      "texture": "anim/hardware_glint.png",
+      "rect": [
+        146,
+        80,
+        8,
+        8
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.36,
+      "period": 0.7479982508547126,
+      "phase": -0.18699956271367815,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "hardware_glint_1",
+      "type": "pulse",
+      "texture": "anim/hardware_glint.png",
+      "rect": [
+        410,
+        114,
+        8,
+        8
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.36,
+      "period": 0.7479982508547126,
+      "phase": 0.21776234204822656,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "hardware_glint_2",
+      "type": "pulse",
+      "texture": "anim/hardware_glint.png",
+      "rect": [
+        686,
+        150,
+        8,
+        8
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.36,
+      "period": 0.7479982508547126,
+      "phase": 0.6225242468101313,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "pawn_counter": {
+      "texture": "counters/pawn_counter.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "pawn_estate_shelf": {
+      "texture": "counters/pawn_estate_shelf.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}
