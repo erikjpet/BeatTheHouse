@@ -8,6 +8,8 @@ import re
 import shutil
 import uuid
 
+from prepare_environment_art_build_identity import verify_embedded_identity
+
 TEST_ROOT = Path("D:/Projects/site/projects/beat-the-house/public/play/test")
 TEST_MOUNT = "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
 MARKER = "BTH_ART_TEST_MANAGED_LAUNCHER_V1"
@@ -66,6 +68,7 @@ def validate_payload(stage, expected_commit, expected_package):
     config, _ = json.JSONDecoder().raw_decode(html[matches[0].end():])
     if config.get("args") != ["--", "--bth-art-test"] or config.get("persistentPaths") != [TEST_MOUNT]:
         raise ValueError("TEST persistent mount/flag missing")
+    verify_embedded_identity(stage / "index.pck", manifest)
     return manifest
 
 

@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import publish_environment_art_test as subject
+from test_prepare_environment_art_build_identity import identity_manifest, synthetic_pck
 
 
 class TestPublisher(unittest.TestCase):
@@ -22,13 +23,20 @@ class TestPublisher(unittest.TestCase):
         self.package = "b" * 64
         config = {"args": ["--", "--bth-art-test"], "persistentPaths": [subject.TEST_MOUNT]}
         (self.stage / "index.html").write_text("const GODOT_CONFIG = " + json.dumps(config) + ";", encoding="utf-8")
-        (self.stage / "index.pck").write_bytes(b"fake pack")
-        self.manifest = {"source_commit": self.commit, "art_package_sha256": self.package, "channel": "test", "files": {p.name: {"bytes": p.stat().st_size, "sha256": subject.digest(p)} for p in self.stage.iterdir()}}
+        self.embedded = identity_manifest()
+        (self.stage / "index.pck").write_bytes(synthetic_pck([("res://build_manifest.json", json.dumps(self.embedded).encode())]))
+        self.manifest = {**self.embedded, "files": {p.name: {"bytes": p.stat().st_size, "sha256": subject.digest(p)} for p in self.stage.iterdir()}}
         self.write_manifest()
         self.target = self.root / "test"
 
     def write_manifest(self):
         (self.stage / "build_manifest.json").write_text(json.dumps(self.manifest), encoding="utf-8")
+
+    def replace_pack(self, entries):
+        path = self.stage / "index.pck"
+        path.write_bytes(synthetic_pck(entries))
+        self.manifest["files"]["index.pck"] = {"bytes": path.stat().st_size, "sha256": subject.digest(path)}
+        self.write_manifest()
 
     def test_publish_isolated_and_idempotent(self):
         (self.root / "dev").mkdir()
@@ -47,6 +55,35 @@ class TestPublisher(unittest.TestCase):
     def test_tamper(self):
         (self.stage / "index.pck").write_bytes(b"bad")
         with self.assertRaises(ValueError):
+            subject.validate_payload(self.stage, self.commit, self.package)
+
+    def test_missing_embedded_identity_rejected_before_publication(self):
+        self.replace_pack([("project.binary", b"game")])
+        with self.assertRaisesRegex(ValueError, "exactly one embedded"):
+            subject.publish(self.stage, self.target, self.commit, self.package, reserve_bytes=0)
+        self.assertFalse(self.target.exists())
+
+    def test_unbound_embedded_identity_rejected(self):
+        self.replace_pack([("build_manifest.json", b"{}")])
+        with self.assertRaisesRegex(ValueError, "identity schema"):
+            subject.validate_payload(self.stage, self.commit, self.package)
+
+    def test_mismatched_embedded_identity_rejected(self):
+        raw = json.dumps({**self.embedded, "source_commit": "c" * 40}).encode()
+        self.replace_pack([("build_manifest.json", raw)])
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            subject.validate_payload(self.stage, self.commit, self.package)
+
+    def test_external_identity_core_is_required(self):
+        del self.manifest["source_tree"]
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "source_tree"):
+            subject.validate_payload(self.stage, self.commit, self.package)
+
+    def test_external_embedded_hash_must_match(self):
+        self.manifest["embedded_manifest_sha256"] = "1" * 64
+        self.write_manifest()
+        with self.assertRaisesRegex(ValueError, "embedded_manifest_sha256 mismatch"):
             subject.validate_payload(self.stage, self.commit, self.package)
 
     def test_extra_file(self):

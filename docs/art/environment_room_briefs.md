@@ -15,7 +15,7 @@ Register and purpose: Street; bright, cheap, watched. Scratchers, machines, road
 
 Facade anchors: plum/magenta masonry; magenta canopy center bounded by cyan; warm amber tube cores and cool blue glass. Existing detailed utility architecture remains.
 
-Current style revision, R10: the supplied screenshot must contribute the majority visual design, not only a muted color influence. Reuse its archived native source's crisp material patterns substantially beneath current detailed fixed fixtures. Rebuild broad wall bays as vivid plum/aubergine masonry with dark mortar; separate columns into strong lavender-gray shadow/face/edge planes; give the cage a full unmistakable bright gold/ochre perimeter and bar facets; use compact honey-white tube cores and cyan/pink/white fascia cores; enrich purple highway glass and reference-derived sharp perspective floor texture. Keep current fine details, all six motion motifs and exact layout. Preserve coherent dark material under live labels. Remove archived baked cast, frozen ray/headlight streaks and raised road-marker dashes. Judge the actual in-game image against the owner screenshot before calling it responsive. R9 is not approved.
+Current native-reviewed treatment, R12: the supplied screenshot must contribute the majority visual design, not only a muted color influence. Reuse its archived native source's crisp material patterns substantially beneath current detailed fixed fixtures. Rebuild broad wall bays as vivid plum/aubergine masonry with dark mortar; separate columns into strong lavender-gray shadow/face/edge planes; give the cage a full unmistakable bright gold/ochre perimeter and bar facets; use compact honey-white tube cores and cyan/pink/white fascia cores; enrich purple highway glass and reference-derived sharp perspective floor texture. Keep current fine details, all six motion motifs and exact layout. Preserve coherent dark material under live labels. Remove archived baked cast, frozen ray/headlight streaks and raised road-marker dashes. Judge the actual in-game image against the owner screenshot before calling it responsive. R9 was rejected. R12 passed the exact native art/technical gate; integration is complete at0c9eeec1; final bound TEST/Web verification remains pending. Its final cleanup restored floor-joint continuity and the attendant ledge, made compact lamp cores warm-white, and uses a pale physical ledge/painted wall bay behind the dark-pink Parking Lot Tip glyphs. This is material treatment, not a moved label or new UI plate.
 
 Fixtures: back wall ends at y248; soffit y34..70; fascia y70..78; columns x90/412/770, width22, ending y212; highway window [50,96,258,96]; service ledges y78 and166; cage [660,104,166,120]; camera origin [739,94]; utility rail [100,244,700,10] and supports; lower rail [100,400,700,8]. Do not add a new foreground desk or paint a person in the cage.
 
@@ -37,7 +37,7 @@ Effective current override contacts include shop items [118,133],[231,135],[92,1
 
 Remove baked stock, giant bottles, flyer blocks, floor dashes and the old central clerk-like black block from the geometry target. Live inventory and the current clerk own those roles. Modest unbranded cardboard cartons may remain as quiet set-dressing in the existing right cluster.
 
-Motion inventory: overhead fluorescent flicker/scan; BEER and LOTTO pulses; moving mint register-top glint; glass/metal sparkles; common floor light. Because animations are below the opaque front, put the register glint's1–2 unit core just above contact, around y203..205, while retaining horizontal x372..536 travel. Do not cut alpha holes through the front. Buried decorative sparkles may adapt to visible top trim or adjacent glass without moving contacts.
+Motion inventory: all ten overhead tube flickers from the background routine; overhead scan; BEER and LOTTO pulses; the moving mint register-top glint; four glass/metal sparkles; seven common floor lights. The original register glint is 22 units wide and moves from x372 to536 at roughly a one-second back-and-forth cadence. Because animations are below the opaque front, put its 1–2 unit visible core just above contact, around y203..205. Sparkles at [384,220] and [478,224] would be hidden inside the solid front; adapt them to visible trim or adjacent glass. The cooler sparkles at [668,138] and [746,144] remain distinct. Do not cut alpha holes through the front or move contacts.
 
 ## 03. Back Alley — back_alley
 
@@ -51,7 +51,7 @@ Counter: back_alley_crate_display [638,168,208,50], PNG416 x 100.
 
 Clean-target annotations to remove: old static rain lines across the canvas, five colored table-stock rectangles at x334/388/442/496/550,y172,36 x 20, and bottom reflection dashes. Keep actual supports.
 
-Motion inventory: bulb pool/cone breathing, rain, low rain-light streaks, puddle rings, sparse warm glints and common floor light. This location may be wet; its wetness must not become the default for homes or every shop.
+Motion inventory: bulb pool/cone breathing, rain, low rain-light streaks, puddle rings, sparse warm glints and common floor light. The old decorative glint at [792,174] falls inside the crate front; place its adapted highlight on visible upper trim, without an alpha hole or contact change. This location may be wet; its wetness must not become the default for homes or every shop.
 
 ## 04. Motel lobby — motel
 
@@ -99,7 +99,7 @@ Materials and fixtures: walnut panels, existing low wood stage, gold/copper curt
 
 Counter: jazz_bar PNG568 x 96.
 
-Motion inventory: existing sign pulses, restrained high smoke/light atmosphere, brass/glass glints and common floor light. Any added practical breathing must stay slow and musical, not a stage strobe.
+Motion inventory: existing sign pulses, restrained high smoke/light atmosphere, brass/glass glints and common floor light. Any added practical breathing must stay slow and musical, not a stage strobe. The old decorative glint at [704,196] falls inside the solid bar front; adapt it to visible upper trim or glass, without alpha holes or contact changes.
 
 ## 08. Punchline public Comedy Club — punchline_club
 
@@ -147,7 +147,7 @@ Keep current stage, booths, champagne bar and live game clearances. Echo the sca
 
 Counter: kitty_champagne_bar PNG536 x 96.
 
-Motion inventory: sign pulse, thin high pink/cool atmosphere, small candle-like floor/table light variation, restrained glints and common floor reflections. Control bright accents so the room reads as maintained hospitality rather than garish spectacle.
+Motion inventory: sign pulse, thin high pink/cool atmosphere, small candle-like floor/table light variation, restrained glints and common floor reflections. Control bright accents so the room reads as maintained hospitality rather than garish spectacle. The old decorative glint at [704,236] falls inside the solid bar front; adapt it to visible upper trim or glass, without alpha holes or contact changes.
 
 ## 12. Delta Queen — delta_queen
 
@@ -272,7 +272,3 @@ Before advancing any queued brief:
 - verify label contrast, counter replay, scenarios, Reduce Motion and no-input liveness;
 - record current owner feedback and exact audit scope;
 - only then integrate the exact passed package and verify TEST.
-
-## Foreground-aware motion addendum
-
-Legacy decorative glints can fall behind the opaque authored counter-front layer. Back Alley glint[792,174] lies inside crate front[638,168,208,50]; Jazz glint[704,196] lies inside bar front[590,188,284,48]; Kitty glint[704,236] lies inside bar front[584,190,268,48]. When authoring those rooms, adapt these decorative glints to visible upper trim or adjacent glass, preserving motion character and contacts. Do not add alpha holes or move counters. Partial occlusion of common floor reflections by real fronts is normal. Source: current pixel_scene_canvas.gd and placement_surfaces.json.
