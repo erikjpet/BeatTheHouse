@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T09:28:12.754470+00:00",
+  "updated_at": "2026-11-14T09:37:31.604670+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37755,12 +37755,13 @@
           "kind": "manual_reconciliation",
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
-        }
+        },
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
         "state": "active",
         "kind": "visual_revision",
-        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
+        "description": "Owner requested substantially brighter reference-driven pixel-art textures and a contrasting gold cage border. Historical r7 PASS and r8/r9 trials do not satisfy this latest direction. Revised sealed candidate and exact audit are underway; no TEST deployment.",
         "requires_user_input": false,
         "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
@@ -42141,12 +42142,13 @@
           "kind": "manual_reconciliation",
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
-        }
+        },
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
         "state": "active",
         "kind": "visual_revision",
-        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
+        "description": "Owner requested substantially brighter reference-driven pixel-art textures and a contrasting gold cage border. Historical r7 PASS and r8/r9 trials do not satisfy this latest direction. Revised sealed candidate and exact audit are underway; no TEST deployment.",
         "requires_user_input": false,
         "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
@@ -42321,12 +42323,13 @@
           "kind": "manual_reconciliation",
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
-        }
+        },
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
         "state": "active",
         "kind": "visual_revision",
-        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
+        "description": "Owner requested substantially brighter reference-driven pixel-art textures and a contrasting gold cage border. Historical r7 PASS and r8/r9 trials do not satisfy this latest direction. Revised sealed candidate and exact audit are underway; no TEST deployment.",
         "requires_user_input": false,
         "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
@@ -42386,7 +42389,8 @@
           "kind": "manual_reconciliation",
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
-        }
+        },
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
         "state": "none",

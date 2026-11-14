@@ -235,5 +235,6 @@
       "sha256": "972de0f1f2b7cbb311987b9afa63fdc7b252740907311ead87a0fb3a5c0b3793",
       "role": "Actual travel facade color and material reference."
     }
-  }
+  },
+  "acceptance_status": "Historical technical/visual PASS superseded by newer owner reference-driven style requirement. Retained WIP checkpoint only; not approved for TEST deployment."
 }
