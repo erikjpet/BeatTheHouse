@@ -207,3 +207,8 @@ Exact public R2 is published as74c85e44: eight native-passed rooms enabled, all1
 ## Hidden R1 non-active source checkpoint
 
 Exact41b7ed31 static trial is isolated in QA under a dedicated native owner. Raw27156ddb/floor159b69b0, unchanged self-contained recipe398047f3 and all30sealed outputs are backed up in archive1c8c524e (63members). Seven validated inputs/pixel logic remain exact; unused trigger attachment metadata is minimized in the outward copy with both hashes retained.31motions/current4/right replay/glint coverage remain native gates. Eight accepted TEST packs are unchanged, with no hidden/private activation.
+
+
+## Hidden focused R2 trial
+
+R1 remains held: source-painted tests show its505136glint fully hidden in3current scenes and only8of40native source pixels exposed inGreased. Director approved only a same-wall decorative translation to535136. ExactR2f5bf6336changes one manifest;29otherpayloads/BG/front/texture/timing unchanged. Full source archive6ed40caf preserves raw/floor/recipe/delta and R1heldreceipt. Current4 actual visibility/RM and final native proof remain gates; no hidden activation.

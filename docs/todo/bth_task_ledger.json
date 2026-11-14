@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T19:53:37.022835+00:00",
+  "updated_at": "2026-11-14T20:12:15.469786+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -43135,7 +43135,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R1 static trial sealed; early current4 and31-motion actual review active",
+      "status": "R1 held for occluded glint; exact R2 focused current4 and31-motion actual trial active",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43160,6 +43160,11 @@
           "kind": "static_trial",
           "reference": "docs/art/briefs/small_underground_casino.md",
           "summary": "Exact41b7ed31 staticGO/preflight12cea753,30payloads/31moving/right572x196opaque. Raw27156ddb/floor159b69b0 unchanged. Static board is not native acceptance."
+        },
+        {
+          "kind": "immutable_r2_source_checkpoint",
+          "reference": "docs/art/small_underground_casino_v1_r2_source_checkpoint.json",
+          "summary": "R1 source40pixels fully covered in3initials,only8/40fringe exposed inGreased,held/notPASS. R2 manifest-only decorative glint+30x,29otherpayloads unchanged. No production placement change or target activation."
         }
       ],
       "blocker": {
@@ -43172,8 +43177,8 @@
           "docs/art/briefs/small_underground_casino.md"
         ]
       },
-      "next_action": "Capture early hidden current4 and genuine31-motion/RM excerpt,inspect actual core/title/505136glint coverage,then deep native scope only after focused actual GO.",
-      "updated_at": "2026-11-14T19:53:37.022835+00:00"
+      "next_action": "Verify R2 glint535136 actual source-painted visibility/current4/RM,then26source-context native scope only after actual GO and independent final audit before target activation.",
+      "updated_at": "2026-11-14T20:12:15.469786+00:00"
     }
   ]
 }

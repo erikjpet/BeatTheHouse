@@ -1,0 +1,37 @@
+{
+  "status": "NON_ACTIVE_STATIC_TRIAL_NOT_APPROVED",
+  "package_id": "small_underground_casino-v1-r2",
+  "package_sha256": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+  "moving_entries": 31,
+  "opaque_fronts": 1,
+  "left_replay": false,
+  "sealed_payload_files": 30,
+  "source_sha256": "27156ddb75d7a70f41d1e78fb333f4ef8dba2a56184104ce1c5b4181bfbb341d",
+  "floor_sha256": "159b69b0466557a9b4d3140deb635d80032d4396f948d51ad73676dad18c437c",
+  "recipe_sha256": "d21ddb8deb31b105d390df54f6fdfdd79f3f146fcbf6436188da9da0d3173768",
+  "recipe_pixel_logic_unchanged": true,
+  "validated_generation_inputs_exact": 7,
+  "metadata_redactions": {
+    "inputs/public_punchline-r2-PASS-trigger.json": {
+      "original_sha256": "9af18f935238d3069eb6da716be7b68f554e25055e04d0d2b48ee53494985698",
+      "archive_sha256": "5de7c895971987e7675b1e90d63ca34e76dec0147f96710d4f6452e77d867d73",
+      "scope": "Unused trigger metadata only: omitted native attachment preview/routing. Not one of seven recipe-validated inputs. Original local bytes preserved."
+    }
+  },
+  "translation": "Manifest-only second glint center505136 to535136;29otherpayloads/BG/front/texture/timing unchanged. R1 held and preserved;no production placement change.",
+  "scope": "Full original raw/floor/prompts/provenance/frozen inputs, exact30payloads and self-contained assembly recipe/support. All source/pixel/generation-validation bytes unchanged. Only unused attachment-trigger metadata redacted in outward copy. Current4 actual/31motion/native scope pending; no target/index/TEST activation.",
+  "archive_sha256": "6ed40caf03d5a694bbef49f338dd26f5e4f4f61341a9166c04121312632c938f",
+  "archive_bytes": 11761279,
+  "archive_members": 65,
+  "archive_path": "review_artifacts/environment_art_sources/small_underground_casino-v1-r2/small_underground_casino-v1-r2-source.zip",
+  "contract_source_commit": "3fc031c851a51fdde6c435a5375761e0db353d91",
+  "R1_held_evidence_archive_sha256": "6696b6450871ba0c2ba1938ff47748209c53c60197285e4f8f5798010b245bef",
+  "manual_reconciliation": {
+    "objectives": 220,
+    "batches": 75,
+    "runtime_records": 1276,
+    "inherited_global_findings": 1524,
+    "assigned_room_TEST_Phase08_findings": 0,
+    "report_sha256": "03c674bbdfe663ab7d3275ceb4a978bf889f76db91e1b9a14c568f60469eb576"
+  }
+}
