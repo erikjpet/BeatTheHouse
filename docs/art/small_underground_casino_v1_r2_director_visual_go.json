@@ -1,0 +1,186 @@
+{
+  "date_utc": "2026-11-14T20:32:13.378651+00:00",
+  "room": "small_underground_casino",
+  "view": "small_underground_casino:casino",
+  "package_sha256": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+  "decision": "Director scoped initial+published-spread material/contrast visual GO. No further art/source revision requested. Full native integrity/auditor seal remains separate.",
+  "initial_gate": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-DIRECTOR-20261114/hidden-r2-director-initial-visual-go.json",
+    "sha256": "99b7dd5106660d68bb2a4175c498fa8a9fb15d50bc57ff2e0be3e941726e67cd"
+  },
+  "personally_viewed_published_scope": "12 ordinary whole-app states, four from each of all three scenario families. Not personal review of all26; auditor owns exhaustive whole-scene gate.",
+  "personally_viewed_published_files": [
+    {
+      "case": "punchline_high_stakes_night__active_phase_work_1",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01/evidence/punchline_high_stakes_night__active_phase_work_1_play.png",
+      "sha256": "8a9ebe95c13344ca51099b6e0a5b9f643281ef2f8b85ab02a5131e20fa865d79"
+    },
+    {
+      "case": "punchline_high_stakes_night__active_phase_work_2",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01/evidence/punchline_high_stakes_night__active_phase_work_2_play.png",
+      "sha256": "aa2edc9a24b594d4a903d1bb9ff84304202a67378befe9af8507d62b3a928a4c"
+    },
+    {
+      "case": "punchline_high_stakes_night__aftermath_floor_remains_protected",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01/evidence/punchline_high_stakes_night__aftermath_floor_remains_protected_play.png",
+      "sha256": "506e5decdc22dc64a25dced20f11e6f178ed7344103bb9623ec997cb981d2241"
+    },
+    {
+      "case": "punchline_high_stakes_night__aftermath_service_refused",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01/evidence/punchline_high_stakes_night__aftermath_service_refused_play.png",
+      "sha256": "eaa70c97a08a7c5dad6573b870b13bd0f14f872dd96e2c7a83fff13cbbdd550d"
+    },
+    {
+      "case": "punchline_greased_week__active_phase_work_1",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-greased-01/evidence/punchline_greased_week__active_phase_work_1_play.png",
+      "sha256": "6538cf21540e37804ca53334774e32310da9239361a32bbbb78982cf4f8a7621"
+    },
+    {
+      "case": "punchline_greased_week__active_phase_work_4",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-greased-01/evidence/punchline_greased_week__active_phase_work_4_play.png",
+      "sha256": "3e763e20247399a5c4fb254aa22aa57953625d46f584e3da329449d87eadd4ae"
+    },
+    {
+      "case": "punchline_greased_week__aftermath_payoff_maintained",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-greased-01/evidence/punchline_greased_week__aftermath_payoff_maintained_play.png",
+      "sha256": "b650dfe51ba7dee0f060fd2c501ffe73d74ed2a4684578a091724447cb5ae2c0"
+    },
+    {
+      "case": "punchline_greased_week__aftermath_route_refused",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-greased-01/evidence/punchline_greased_week__aftermath_route_refused_play.png",
+      "sha256": "ae20ec56d952d4aafd9cbdccbba6a05944d61e2e75eb2ab98d319ed7f1a0b803"
+    },
+    {
+      "case": "punchline_new_muscle__active_phase_work_1",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01/evidence/punchline_new_muscle__active_phase_work_1_play.png",
+      "sha256": "f7e931ed5618f47d25aea9e3ccdcaec757ac24aeb660157b263fb7e74bab9f51"
+    },
+    {
+      "case": "punchline_new_muscle__active_phase_work_4",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01/evidence/punchline_new_muscle__active_phase_work_4_play.png",
+      "sha256": "63f0208e8832ad69d0ab9ad0b8db49c7175ef0a1a5530883af9923de679033a8"
+    },
+    {
+      "case": "punchline_new_muscle__aftermath_checkpoint_entrenched",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01/evidence/punchline_new_muscle__aftermath_checkpoint_entrenched_play.png",
+      "sha256": "59f3e34588e43b34882b3e75e90c80ed6adef519632c80e7f7d720ba7bfb09f0"
+    },
+    {
+      "case": "punchline_new_muscle__aftermath_posts_reassigned",
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01/evidence/punchline_new_muscle__aftermath_posts_reassigned_play.png",
+      "sha256": "2cfb59f91bdc42ae42d599d43d0e7e3e5f2d699c398545d94b4e1accd90aafe2"
+    }
+  ],
+  "published_findings": [
+    "Changed gold guards/runners/guest/Vic and cyan table/rail/seals/post labels retain readable strokes on real quiet material under their washes.",
+    "Removed live furniture/cast expose coherent background, no assembly seam or broad glaze washout.",
+    "Same vivid patched-plum/charcoal/deep-green basement identity and dry floor retain crisp local clusters.",
+    "Inherited live model/title proximity is not a reason to grade the room or move contacts."
+  ],
+  "decoded_representative": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-AUDIT-20261114-hidden-r2-video-verify/evidence/decoded-middle.png",
+    "sha256": "dcdae15f8e6dbc8ce46cd4f597d6fb162f5903a0570b42513e91a758947b4eef",
+    "scope": "Personally viewed one unenhanced decoded representative; actual app and clearly labelled lower ART-TARGET crops remain crisp. No temporal or live-coverage acceptance inferred from one frame."
+  },
+  "independent_reports_read": [
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-AUDIT-20261114-hidden-r2-source-support/evidence/hidden-r2-independent-source-support.json",
+      "sha256": "83067570e87d91e45dbe1e0d703b5697ba4483ecd9195dc030b6f79a113fc15c"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-AUDIT-20261114-hidden-r2-RGB-recount/evidence/hidden-r2-independent-composite-RGB.json",
+      "sha256": "97b4a51c785decbd0117f3af8a7a7b9c1f2da032728e3a56010e3d14050b7dc1"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-rover-source-limit01/evidence/checkpoint_rover_inherited_label_detachment.json",
+      "sha256": "f6c027142c7bd524835f937e11c73bfcad019300bc490f2e39ed738885edb7c1"
+    }
+  ],
+  "motion_report_scope": {
+    "actual_pairs": "Independent auditor124 fixed-clock actual RGB pairs:31 entries x4 initial contexts, all changing. Director independently recounted focused moved-glint4pairs at40pixels each; not an independent recount of all124.",
+    "core_glint_source_support": "All10 cores and3glints retain100% source-delta support in sampled current composites.",
+    "air_floor_source_retention_percent_ranges": {
+      "long": [
+        86.23076923076923,
+        100
+      ],
+      "thin": [
+        43.49734042553192,
+        100
+      ],
+      "floor": [
+        80.68181818181817,
+        100
+      ]
+    },
+    "unattributed_missing_support": 1300,
+    "actual_only_support": 536,
+    "limit": "Residuals remain UNATTRIBUTED, not claimed fully opaque coverage or explained rounding. Actual-only changes are not missing-source explanations. Positive RGB magnitudes and real preview are separate evidence; no universal every-clock perceptibility claim."
+  },
+  "inherited_source_limit": {
+    "case": "punchline_new_muscle__aftermath_posts_reassigned",
+    "id": "scenario::punchline_new_muscle_aftermath_posts_reassigned_actor",
+    "label": "Checkpoint Rover",
+    "label_rect": [
+      547.599975585938,
+      138.999984741211,
+      104.799987792969,
+      15
+    ],
+    "model_rect": [
+      564,
+      181.999984741211,
+      72,
+      80
+    ],
+    "meaning": "Elevated title relative to floor-level actor is inherited source layout, not art contrast failure. Strict legacy/R2 normal and RM complete geometry, normal/RM and actual-current equality are true. No platform, actor/title move or ideal-attachment claim."
+  },
+  "remaining_gates": [
+    "Auditor personal exhaustive26 whole-scene review and independent source/control/receipt integrity.",
+    "Complete remaining native right-front, floor/long/thin wrap and full8-frame bob, ordered hits, placement/actual room-hours semantics, protected source and drained Job closure.",
+    "Final exact native PASS before target activation. TEST artifact and live served-browser visual gates are separate."
+  ],
+  "prohibited_inferences": [
+    "No all26 personal visual review claim.",
+    "No full source-support/opaque attribution for1300 residuals.",
+    "No universally unobstructed titles/every-clock visibility or all-pose coverage.",
+    "No UI/save/revisit/alternate-route E2E.",
+    "No final native/TEST/Web/owner/campaign acceptance.",
+    "No private source/cleanup/lamp/rig decision."
+  ],
+  "supersedes_visual_scope_artifact": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-DIRECTOR-20261114/hidden-r2-director-visual-go.json",
+    "sha256": "2319d6ba6052ba6f89ae80e701d2d7a5b17e7f3b926a65f78efe6800b0162aaf",
+    "reason": "Adds viewed existing technical ceiling-core endpoints and the separately bound inherited ledger/Vic title proximity. No art/source revision."
+  },
+  "personally_viewed_existing_technical_endpoints": [
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-composite01/evidence/punchline_high_stakes_night__string_core_0_b.png",
+      "sha256": "cde25c0d4726581a72f316bd8128b0c2685537c71f88de45a05ea817eaa35f5d"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-composite01/evidence/punchline_high_stakes_night__string_core_9_b.png",
+      "sha256": "24bbc8f8ec29175c1b8bb5b1ee14be04881e8d84ed741d4d6d58bf477a229773"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-composite01/evidence/punchline_high_stakes_night__string_core_9_a.png",
+      "sha256": "b6ee9e7aabfdaeb8b9dfdcc030e43ab2d822eb9404de7bd36ea502c3239e82aa"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-composite01/evidence/punchline_greased_week__string_core_0_b.png",
+      "sha256": "240e160304a37cabb245517d869a643fc4ef8de5bb03ffd64735d3726e7d5481"
+    }
+  ],
+  "technical_endpoint_visual_scope": "Existing native fixed-object single-entry diagnostics, separate from the autonomous owner preview: core0 peak HighStakes/Greased preserves cyan observer/ledger text, and core9 min/peak HighStakes preserves cyan Comedy Club text. No broad glare or title washout, same compact colored housing. No new artificial preview was launched.",
+  "additional_inherited_source_limit": {
+    "case": "punchline_greased_week__aftermath_payoff_maintained",
+    "titles": [
+      "Posted Payoff Ledger",
+      "Vic Mercer"
+    ],
+    "label_rect_intersection_board_area": 705,
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-ledger-source-limit01/evidence/ledger_vic_inherited_title_proximity.json",
+    "sha256": "cd5c703aae5b3176fc1c59fdb2b46c624e68b18114d2c6b2da1bf3285e662ad0",
+    "classification": "Existing source title proximity; complete strict legacy/R2 normal and RM, normal/RM and actual-current geometry equal. Label-envelope intersection is not a glyph-occlusion claim. No repaint, title/actor/platform move or universally unobstructed-name claim."
+  }
+}

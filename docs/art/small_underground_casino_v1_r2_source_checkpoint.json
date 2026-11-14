@@ -51,5 +51,30 @@
     "inherited_global_findings": 1524,
     "assigned_room_TEST_Phase08_findings": 0,
     "report_sha256": "d8846dfff80d4e97af9c9572e3e72e1e04bf099c8278245503d746608a485695"
+  },
+  "director_scoped_visual_checkpoint_v2": {
+    "original_v1_sha256": "2319d6ba6052ba6f89ae80e701d2d7a5b17e7f3b926a65f78efe6800b0162aaf",
+    "source_v2_sha256": "c48ae1880494dcbc7d1cd5794865064c3eb201ff366e75eb826b081bba93eced",
+    "canonical_v2_sha256": "c48ae1880494dcbc7d1cd5794865064c3eb201ff366e75eb826b081bba93eced",
+    "archive_path": "review_artifacts/environment_art_sources/small_underground_casino-v1-r2/small_underground_casino-v1-r2-director-visual-v2.zip",
+    "archive_sha256": "084478d80c13482ed393d494a5f74e2ed45878cb4015c59598f0432c30dbe801",
+    "scope": "Director personal12 published states plus initial/extrema/RM/core diagnostic and inherited2title limits;not final independent native audit or served Web acceptance."
+  },
+  "visual_v2_doc_reconciliation": {
+    "summary": {
+      "objectives_checked": 220,
+      "batches_checked": 75,
+      "open_objectives": 89,
+      "open_batches": 32,
+      "open_work_items": 121,
+      "user_paused_items": 36,
+      "complete_objectives": 131,
+      "errors": 1524,
+      "warnings": 0,
+      "tasks_with_errors": 113
+    },
+    "runtime_records": 1302,
+    "assigned_room_TEST_Phase08_findings": 0,
+    "report_sha256": "fc25767e3f81766643158a162f3be8d9806fbebbbc2150cb1402c798e645caa4"
   }
 }

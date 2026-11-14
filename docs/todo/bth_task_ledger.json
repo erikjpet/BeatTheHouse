@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T20:20:31.345322+00:00",
+  "updated_at": "2026-11-14T20:49:22.809231+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -43135,7 +43135,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R2 current4 actual GO;31-entry and26-source-context deep native proof active",
+      "status": "R2 native owner suite complete and scoped visual GO;exact independent final audit pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43170,6 +43170,11 @@
           "kind": "scoped_director_initial_actual_go",
           "reference": "docs/art/small_underground_casino_v1_r2_director_initial_visual_go.json",
           "summary": "ExactR2current4/material/40pixel glint recovery GO. Directorv6 sourcee0fd6d23/initialJSON99b7dd51 preserved;deep31/26 proof remains active,no activation."
+        },
+        {
+          "kind": "scoped_director_visual_go_v2",
+          "reference": "docs/art/small_underground_casino_v1_r2_director_visual_go.json",
+          "summary": "Sourcec48ae188 binds personal12 published states,initial/corediagnostic and2inherited limits. Full26/native final integrity remains independent audit gate."
         }
       ],
       "blocker": {
@@ -43182,8 +43187,8 @@
           "docs/art/briefs/small_underground_casino.md"
         ]
       },
-      "next_action": "Finish remaining RM/source-painted/case/rightfront/wrap/hit/closure gates,bind already-executed original liveness,and obtain exact independent final audit before activation.",
-      "updated_at": "2026-11-14T20:20:31.345322+00:00"
+      "next_action": "Preserve immutable native/source closure,obtain exact independent final audit,then integrate only approved bytes and separately verify TEST. Private small baseline yields to approved hidden export.",
+      "updated_at": "2026-11-14T20:49:22.809231+00:00"
     }
   ]
 }
