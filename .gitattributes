@@ -8,3 +8,7 @@
 /data/art/environments/corner_store.json -text whitespace=cr-at-eol
 /data/art/environments/back_alley.json -text whitespace=cr-at-eol
 /data/art/environments/motel.json -text whitespace=cr-at-eol
+
+review_artifacts/environment_art_sources/pawn_shop-preart-v1/pawn_preart_union.json -text whitespace=cr-at-eol
+
+review_artifacts/environment_art_sources/pawn_shop-preart-v1/pawn_preart_closure.json -text whitespace=cr-at-eol
