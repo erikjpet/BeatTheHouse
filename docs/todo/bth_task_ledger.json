@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T09:12:20.927204+00:00",
+  "updated_at": "2026-11-14T09:28:12.754470+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37758,22 +37758,22 @@
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
+        "state": "active",
+        "kind": "visual_revision",
+        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T09:12:20.927204+00:00",
+        "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "updated_at": "2026-11-14T09:28:12.754470+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
+      "status": "WIP r7 checkpoint retained; owner reference-driven style revision pending; TEST publication held",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37934,7 +37934,7 @@
         "BTH-ENVART-001-ART-GAS-01",
         "BTH-ENVART-001-TEST-01"
       ],
-      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially.",
+      "next_action": "Complete reference-driven art revision/audit; preserve r7 in requested GitHub WIP checkpoint without TEST deployment. Continue independent internal-only Web save isolation, then replace art only after new exact PASS.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42144,24 +42144,24 @@
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
+        "state": "active",
+        "kind": "visual_revision",
+        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T09:12:20.927204+00:00",
+        "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "updated_at": "2026-11-14T09:28:12.754470+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
+      "status": "WIP r7 checkpoint retained; owner reference-driven style revision pending; TEST publication held",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially."
+      "next_action": "Complete reference-driven art revision/audit; preserve r7 in requested GitHub WIP checkpoint without TEST deployment. Continue independent internal-only Web save isolation, then replace art only after new exact PASS."
     },
     {
       "group": "current",
@@ -42287,7 +42287,14 @@
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "11a82efb626d7eba1eac2e3f684a83ec9bd17660",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -42317,25 +42324,25 @@
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
+        "state": "active",
+        "kind": "visual_revision",
+        "description": "Owner supplied a new style reference and requested preserving current detail with its color/sharpness/pixel theme. R7 PASS is superseded for that visual requirement. Hold art publication until revised exact audit PASS; independent TEST isolation continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T09:12:20.927204+00:00",
+        "observed_at": "2026-11-14T09:23:24.630132+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "updated_at": "2026-11-14T09:28:12.754470+00:00",
       "id": "BTH-ENVART-001-ART-GAS-01",
       "name": "Integrate audited Gas Station art",
       "parent_id": "BTH-ENVART-001",
-      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
+      "status": "WIP r7 checkpoint retained; owner reference-driven style revision pending; TEST publication held",
       "scope": [
-        "Copy only exact gas_station_casino-v3-r6 sealed art/data after final audit PASS; preserve all placements, gameplay, camera and old sources.",
+        "Integrate only the latest exact sealed Gas package after full auditor PASS; r7 checkpoint retains historical PASS but is superseded by the newer owner style requirement. Preserve all placements, gameplay, camera and old sources.",
         "Qualify exact Web/larger-window/camera behavior and publish to separate TEST only."
       ],
-      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially."
+      "next_action": "Complete reference-driven art revision/audit; preserve r7 in requested GitHub WIP checkpoint without TEST deployment. Continue independent internal-only Web save isolation, then replace art only after new exact PASS."
     },
     {
       "group": "current",

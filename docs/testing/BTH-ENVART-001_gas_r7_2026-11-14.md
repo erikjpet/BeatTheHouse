@@ -28,3 +28,7 @@ No TEST deployment or owner acceptance is claimed yet. Keep cumulative enabled r
 Manual reconciliation gas-v3r7-reconciliation-01 retains1524 historical/global errors, mostly stale prior observations;0 findings concern the current objective/Phase8/Gas/TEST owner scope or43 newly recorded closed Jobs. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b. Existing unrelated errors remain explicit.
 
 Per-file Git attributes preserve the two sealed CRLF JSON files byte-exactly; no content normalization or raster edits are performed.
+
+Owner supplied a new visual reference after local checkpoint11a82efb. R7 PASS is superseded for this newer style requirement; the local commit is preserved but neither it nor TEST-safety commit a74a2707 has been pushed. No TEST publication occurred. Internal-only Web save-isolation QA may use this recoverable checkpoint; final art publication waits for revised exact audit PASS.
+
+The owner subsequently requested progress checkpoints on GitHub. This branch-only WIP checkpoint preserves the historical r7 art and TEST safety changes, explicitly without a TEST deployment or current visual acceptance. The existing NEXT watcher is configured for main only; its deployed source remains e5152c34bfe146600214fb206ec80a5e3e8a27cb. Latest revised art is QA-only until a new full exact-package PASS.
