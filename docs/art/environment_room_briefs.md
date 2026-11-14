@@ -41,6 +41,8 @@ Motion inventory: all ten overhead tube flickers from the background routine; ov
 
 ## 03. Back Alley — back_alley
 
+Detailed [execution brief](briefs/back_alley.md) is frozen and approved as a reference only. Generation starts after the preceding Corner exact art gate.
+
 Register and purpose: Street; wet, electric, dangerous bargains. A real service alley, not a theatrical criminal lair.
 
 Facade anchors: irregular dark-purple masonry, amber exposed bulb, cyan/magenta open-passage light, wet stone/asphalt and restrained reflections.

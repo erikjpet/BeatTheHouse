@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T11:25:21.662399+00:00",
+  "updated_at": "2026-11-14T11:30:04.328292+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42539,19 +42539,19 @@
       ],
       "blocker": {
         "state": "active",
-        "kind": "visual_revision",
-        "description": "Exact R6 material/counter correction is in isolated settled-scenario and35 supported outcome/work-context audit. Final visual/technical package PASS still required before any target/TEST activation.",
+        "kind": "qa_fixture_publication",
+        "description": "Initial35-context helper omitted normal physical-membership/publication, so expected live props were absent. Old403count is diagnostic only. Corrected Delivery smoke23checks passes actual canvas membership/labels; full35actual-render audit remains pending before target integration.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T11:25:21.662399+00:00",
+        "observed_at": "2026-11-14T11:30:04.328292+00:00",
         "evidence": [
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T11:25:21.662399+00:00",
+      "updated_at": "2026-11-14T11:30:04.328292+00:00",
       "id": "BTH-ENVART-001-ART-CORNER-01",
       "name": "Integrate audited Corner Store art",
       "parent_id": "BTH-ENVART-001",
-      "status": "R6 exact trial/static and settled primary visual checks progressing; broader35-context audit active; non-active source backup preserved",
+      "status": "R6 genuine primary/motion proofs valid; corrected rendered-outcome QA pending;403metadata-only visual claim withdrawn",
       "scope": [
         "Integrate only exact full-auditor-passed Corner payload; preserve all prior Gas assets/manifest and cumulative enabled index.",
         "Verify25 authored motions, all current scenarios and supported aftermath/work snapshots, geometry/labels/hits, Reduce Motion, liveness, full286-wide counter/replay; record scope limits.",
