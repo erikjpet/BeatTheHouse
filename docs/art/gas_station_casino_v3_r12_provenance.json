@@ -2,7 +2,7 @@
   "package_id": "gas_station_casino-v3-r12",
   "package_sha256": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
   "audit_report_sha256": "dd456d9bf2bc564bde426fa459a3830808eacfa91b2d537252f0e1c15215c679",
-  "acceptance_status": "Exact visual/native art package PASS; final Web/TEST acceptance pending. Not campaign completion or owner acceptance.",
+  "acceptance_status": "Exact R12 native art and final served Web/TEST delivery PASS. First room only, not campaign completion or explicit owner acceptance.",
   "files": {
     "assets/art/environments/gas_station_casino/anim/floor_glint_0.png": {
       "sha256": "2b9db98e9dc077c4186c2ba63788651fa889e10417dc45c64c33544a1e3c198a",
@@ -195,5 +195,9 @@
     "project.godot": "36b4ea7bcb66986755cb6f8528e2aba93e214eabeaf383a77f0ca91eb18db645",
     "export_presets.cfg": "2270c54e6bec3b36bacafc87aa28c1e656fec45dd52f7df8cc28d2e04426aa5f",
     "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
-  }
+  },
+  "deployed_source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "build_manifest_sha256": "0968e2acfb7df8a4ef7877fb94cf21ce3a6943aca124ce4b77ca19ba6d8b8f0a",
+  "final_browser_report_sha256": "b4cc858280e93485a531b0a53549fabc746c527efe5c4d5637d73bcf21787d98"
 }

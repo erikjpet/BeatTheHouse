@@ -2,7 +2,7 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: R12 art PASS and integrated; TEST installed with exact served bytes; final embedded-identity correction/verification active. Documentation and work-in-progress backups are not approval to deploy unreviewed art.
+Release status: Gas R12 delivered on bound TEST975a107d1484 and fully verified. The20-room campaign remains active; Corner R6 is pending its exact final audit. Documentation and work-in-progress backups are not approval to deploy unreviewed art.
 
 ## Current creative gate
 
@@ -30,8 +30,8 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 
 | Order | Environment | Current state | Next concrete step |
 | --- | --- | --- | --- |
-| 01 | gas_station_casino | Exact R12 full art PASS; integrated/source0c9 and TEST installed | Correct embedded runtime identity in a new immutable build, then finish served Web acceptance |
-| 02 | corner_store | Active modular assembly; brief, facade, cleaned geometry and source ready | Review exact fitted static package, then actual all-motion composition and technical gate |
+| 01 | gas_station_casino | Exact R12 delivered; bound source975a107d1484 verified on TEST | Preserve passed files and cumulative index while qualifying later packages |
+| 02 | corner_store | R6 scenario-label material/counter correction; R5 rejected in several contexts | Complete exact R6 all25-motion/scenario/outcome audit, then branch/TEST integration only after PASS |
 | 03 | back_alley | Brief, facade assessment and fixture guide ready | Clean baked rain/stock annotations, then author one package |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
@@ -96,3 +96,11 @@ R12 product source0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c and TEST-only publish
 Local Web tests cover all five Gas scenarios, actual floor/sweep/all-motif motion, Reduce Motion stop/resume,1920x1080 and camera. Independent storage proof confirms real save/reload/Continue with no normal-storage writes. Final served bound-footer/Base/large proof remains pending. Main/NEXT/source pins/homepage/audience stay unchanged.
 
 [Non-active Gas R12 source backup](../../review_artifacts/environment_art_sources/gas_station_casino-v3-r12/README.md) retains all16 payloads and complete pixel inputs/recipe; archive SHA2567f63d6b1b622b35c78bb648e7aaa75f93e9615c857b6f6f07edae9da9dcb8f01. Private reference IDs alone were redacted. Archive editor/export exclusion remains in force.
+
+## Final Gas delivery checkpoint
+
+The embedded manifest correction is complete. Exact R12 is served by source975a107d148433a5bc702dcc8e469523a5d02869 at the canonical TEST URL, with matching external/embedded identity and visible bound footer. Final served Base/1920/camera/motion and independent director Web gates pass. All1341 prior PCK entries are directly byte-identical; only the missing root identity was added. Main/NEXT/homepage/audience remain untouched. Gas/TEST-setup bounded batches are complete, not the full20-room campaign.
+
+Corner R5 technical primary checks passed but yellow Clerk contrast failed several actual scenarios. R6 physical material panels and matching solid-counter replay are pending; all25 animation entries remain intact.35 supported outcome/work contexts are prepared beyond the five primary scenarios, with fixture-derived rather than full UI/end-to-end scope explicitly retained. See the ongoing Corner batch; no unpassed Corner art is active.
+
+Authoring lessons: measure actual support/lip contact rows, not just resized outer module boxes. Use exact runtime label metadata rather than guessing small text: the pink LOTTO-side actor is event:chatty_clerk, Chatty Clerk. Decorative guide cartons are removable annotations; grounded set dressing does not authorize any gameplay-contact change.

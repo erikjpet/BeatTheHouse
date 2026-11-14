@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T10:45:26.894928+00:00",
+  "updated_at": "2026-11-14T11:05:55.260515+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37673,6 +37673,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
@@ -37680,9 +37686,16 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "source_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "deployed_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "note": "TEST installed and HTTPS bytes verified; required final browser acceptance pending. Main/NEXT unchanged."
+        "note": "Only Gas R12 preview delivery is verified; campaign remains incomplete.",
+        "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
+        "test_preview": {
+          "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+          "scope": "First package only",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
+        }
       },
       "evidence": [
         {
@@ -37768,22 +37781,23 @@
         "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
-        "state": "active",
-        "kind": "packaging_identity",
-        "description": "External source/art/file identity and all5 Web scenarios/motion/Reduce Motion/large view passed. Runtime footer remains UNBOUND because root build manifest was omitted from PCK; standard packaging correction is active, no user input or art revision needed.",
+        "state": "none",
+        "kind": null,
+        "description": "First Gas package and TEST setup are accepted. Remaining19 interiors and12 travel doorways are unfinished; Corner R6 material/technical gate is actively progressing.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T10:45:26.894928+00:00",
+        "observed_at": "2026-11-14T11:05:55.260515+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T10:45:26.894928+00:00",
+      "updated_at": "2026-11-14T11:05:55.260515+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "R12 art/Web visuals pass; TEST diagnostic installed; embedded build identity correction active",
+      "status": "Gas R12 and TEST setup delivered/verified;1of20 interiors complete; Corner R6 active; full campaign remains Open",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37942,9 +37956,10 @@
         "BTH-ENVART-001-PHASE-09",
         "BTH-ENVART-001-PHASE-10",
         "BTH-ENVART-001-ART-GAS-01",
-        "BTH-ENVART-001-TEST-01"
+        "BTH-ENVART-001-TEST-01",
+        "BTH-ENVART-001-ART-CORNER-01"
       ],
-      "next_action": "Rebuild a new immutable TEST artifact with standard embedded build identity, verify bound footer/served Base/larger view and preserve all R12 bytes/main/NEXT; then continue remaining packages.",
+      "next_action": "Complete Corner R6 exact audit and cumulative-index integration/TEST verification, then remaining interiors sequentially; preserve main/NEXT and the full20-room/12-doorway scope.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42125,6 +42140,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
@@ -42132,9 +42153,16 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "source_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "deployed_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "note": "TEST installed and HTTPS bytes verified; required final browser acceptance pending. Main/NEXT unchanged."
+        "note": "Only Gas R12 preview delivery is verified; campaign remains incomplete.",
+        "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
+        "test_preview": {
+          "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+          "scope": "First package only",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
+        }
       },
       "evidence": [
         {
@@ -42165,24 +42193,25 @@
         "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
       ],
       "blocker": {
-        "state": "active",
-        "kind": "packaging_identity",
-        "description": "External source/art/file identity and all5 Web scenarios/motion/Reduce Motion/large view passed. Runtime footer remains UNBOUND because root build manifest was omitted from PCK; standard packaging correction is active, no user input or art revision needed.",
+        "state": "none",
+        "kind": null,
+        "description": "First Gas package and TEST setup are accepted. Remaining19 interiors and12 travel doorways are unfinished; Corner R6 material/technical gate is actively progressing.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T10:45:26.894928+00:00",
+        "observed_at": "2026-11-14T11:05:55.260515+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T10:45:26.894928+00:00",
+      "updated_at": "2026-11-14T11:05:55.260515+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "R12 art/Web visuals pass; TEST diagnostic installed; embedded build identity correction active",
+      "status": "Gas R12 and TEST setup delivered/verified;1of20 interiors complete; Corner R6 active; full campaign remains Open",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Rebuild a new immutable TEST artifact with standard embedded build identity, verify bound footer/served Base/larger view and preserve all R12 bytes/main/NEXT; then continue remaining packages."
+      "next_action": "Complete Corner R6 exact audit and cumulative-index integration/TEST verification, then remaining interiors sequentially; preserve main/NEXT and the full20-room/12-doorway scope."
     },
     {
       "group": "current",
@@ -42302,7 +42331,7 @@
     },
     {
       "group": "current",
-      "state": "open",
+      "state": "complete",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42320,16 +42349,25 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "source_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "deployed_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "note": "TEST installed and HTTPS bytes verified; required final browser acceptance pending. Main/NEXT unchanged."
+        "state": "verified",
+        "commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "deployed_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+        ],
+        "scope": "Only the first exact Gas R12 package and separate TEST setup; no main/NEXT promotion or campaign completion."
       },
       "evidence": [
         {
@@ -42352,32 +42390,37 @@
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
         },
-        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md"
+        "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md",
+        {
+          "kind": "test_report",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "summary": "Exact R12 package/native audit, real save/reload/Continue with normal-storage isolation, all5 local Web scenarios/RM, direct1341-entry byte equivalence, final bound served Base/1920/camera/motion and independent director served visual PASS; main/NEXT unchanged."
+        }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "packaging_identity",
-        "description": "External source/art/file identity and all5 Web scenarios/motion/Reduce Motion/large view passed. Runtime footer remains UNBOUND because root build manifest was omitted from PCK; standard packaging correction is active, no user input or art revision needed.",
+        "state": "none",
+        "kind": null,
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T10:45:26.894928+00:00",
+        "observed_at": "2026-11-14T11:05:55.260515+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T10:45:26.894928+00:00",
+      "updated_at": "2026-11-14T11:05:55.260515+00:00",
       "id": "BTH-ENVART-001-ART-GAS-01",
       "name": "Integrate audited Gas Station art",
       "parent_id": "BTH-ENVART-001",
-      "status": "R12 art/Web visuals pass; TEST diagnostic installed; embedded build identity correction active",
+      "status": "Delivered exact R12 on isolated TEST975; native/Web/served/camera/motion/identity and save-isolation acceptance verified",
       "scope": [
         "Integrate only the latest exact sealed Gas package after full auditor PASS; r7 checkpoint retains historical PASS but is superseded by the newer owner style requirement. Preserve all placements, gameplay, camera and old sources.",
         "Qualify exact Web/larger-window/camera behavior and publish to separate TEST only."
       ],
-      "next_action": "Rebuild a new immutable TEST artifact with standard embedded build identity, verify bound footer/served Base/larger view and preserve all R12 bytes/main/NEXT; then continue remaining packages."
+      "next_action": "Bounded first delivery complete. Preserve accepted art/index and TEST persistence/identity guards while remaining room packages proceed; new feedback requires a new sealed version."
     },
     {
       "group": "current",
-      "state": "open",
+      "state": "complete",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42395,16 +42438,25 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "source_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "deployed_commit": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
-        "note": "TEST installed and HTTPS bytes verified; required final browser acceptance pending. Main/NEXT unchanged."
+        "state": "verified",
+        "commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "deployed_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+        ],
+        "scope": "Only the first exact Gas R12 package and separate TEST setup; no main/NEXT promotion or campaign completion."
       },
       "evidence": [
         {
@@ -42428,29 +42480,79 @@
           "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
         },
         "docs/testing/BTH-ENVART-001_style_revision_2026-11-14.md",
-        "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md"
+        "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md",
+        {
+          "kind": "test_report",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "summary": "Exact R12 package/native audit, real save/reload/Continue with normal-storage isolation, all5 local Web scenarios/RM, direct1341-entry byte equivalence, final bound served Base/1920/camera/motion and independent director served visual PASS; main/NEXT unchanged."
+        }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "packaging_identity",
-        "description": "External source/art/file identity and all5 Web scenarios/motion/Reduce Motion/large view passed. Runtime footer remains UNBOUND because root build manifest was omitted from PCK; standard packaging correction is active, no user input or art revision needed.",
+        "state": "none",
+        "kind": null,
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T10:45:26.894928+00:00",
+        "observed_at": "2026-11-14T11:05:55.260515+00:00",
         "evidence": [
           "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T10:45:26.894928+00:00",
+      "updated_at": "2026-11-14T11:05:55.260515+00:00",
       "id": "BTH-ENVART-001-TEST-01",
       "name": "Isolate art TEST save storage",
       "parent_id": "BTH-ENVART-001",
-      "status": "R12 art/Web visuals pass; TEST diagnostic installed; embedded build identity correction active",
+      "status": "Delivered exact R12 on isolated TEST975; native/Web/served/camera/motion/identity and save-isolation acceptance verified",
       "scope": [
         "Add an explicit Web TEST launch opt-in with a separate logical save root and IndexedDB mount; preserve ordinary NEXT/native/development roots and QA override priority.",
         "No personal save copy, migration, deletion, main/NEXT promotion or project/export/toolchain pin change. Actual Web save/reload and separate normal-save sentinel checks required.",
         "TEST-only immutable static publisher tools/publish_environment_art_test.py; no homepage/site source/audience/NEXT changes."
       ],
-      "next_action": "Rebuild a new immutable TEST artifact with standard embedded build identity, verify bound footer/served Base/larger view and preserve all R12 bytes/main/NEXT; then continue remaining packages."
+      "next_action": "Bounded first delivery complete. Preserve accepted art/index and TEST persistence/identity guards while remaining room packages proceed; new feedback requires a new sealed version."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Separate cumulative art TEST only after exact Corner package PASS."
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/art/environment_art_progress.md",
+          "summary": "Corner25-entry R3/R5 actual-motion trials preserved. R5 primary tests pass but director found scenario-specific Clerk contrast; R6 real-material/counter correction and expanded outcome QA are underway. No target art integration."
+        }
+      ],
+      "blocker": {
+        "state": "active",
+        "kind": "visual_revision",
+        "description": "R5 Clerk glyphs washed out on pale surfaces in several scenarios. Exact R6 material/counter revision must pass complete independent visual/technical gate; no missing source module or owner-input dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T11:05:55.260515+00:00",
+        "evidence": [
+          "docs/art/environment_art_progress.md"
+        ]
+      },
+      "updated_at": "2026-11-14T11:05:55.260515+00:00",
+      "id": "BTH-ENVART-001-ART-CORNER-01",
+      "name": "Integrate audited Corner Store art",
+      "parent_id": "BTH-ENVART-001",
+      "status": "R6 correction/QA active; R5 not approved; no target or TEST integration",
+      "scope": [
+        "Integrate only exact full-auditor-passed Corner payload; preserve all prior Gas assets/manifest and cumulative enabled index.",
+        "Verify25 authored motions, all current scenarios and supported aftermath/work snapshots, geometry/labels/hits, Reduce Motion, liveness, full286-wide counter/replay; record scope limits.",
+        "Publish verified cumulative TEST only, preserving save mount/build identity, main/NEXT and original source material."
+      ],
+      "next_action": "Finish exact R6 preview plus scenario/outcome/motion/counter/liveness audit, then integrate only full PASS and verify cumulative TEST; preserve Gas R12."
     }
   ]
 }
