@@ -2,7 +2,7 @@
 
 Prepared: 2026-11-14
 Room identity: back_alley
-Status: reference/brief ready. Source generation begins only after Corner Store's exact final art gate passes.
+Status: Back Alley is the active package. Exact R3 has cleared static and base/settled-scenario/minimum/peak/Reduce Motion visual review, but full native motion/outcome/technical audit is still pending. No Back integration or TEST publication is authorized by this brief.
 
 Read the shared environment art direction, room briefs and animation translation ledger. This brief is not approval of an unmade package.
 
@@ -41,7 +41,7 @@ Coordinates are board units. Native textures are twice these values.
 - Hanging wire: x450 from the ceiling to the lamp.
 - Lamp fixture: [420,104,60,16], with the existing small lower light core around [432,120,36,10].
 - Right crate/front: [638,168,208,50].
-- Right crate counter PNG: back_alley_crate_display, exactly416 x 100, opaque over its physical front.
+- Right crate counter PNG: back_alley_crate_display, exactly 416 x 100, opaque over its physical front.
 - Ordinary bin bodies: [118,248,42,54] and [742,248,42,54], retaining their existing lid/support positions.
 - Keep side-access areas clear: approximately x0..88 and x812..900, y220..414.
 
@@ -80,7 +80,7 @@ Read BOTH the room's drawing routine and its scene-life branch, plus shared help
 
 Required meaningful treatments:
 - exposed bulb/pool breathing and the small practical light-cone variation;
-- falling rain, from the original18-streak family, with diagonal drift roughly [92,156.4] board units/second;
+- falling rain, from the original 18-streak family, with diagonal drift roughly [92,156.4] board units/second;
 - eight faster low rain-light streaks, around y282/294/306, from the original90-unit/second family;
 - three puddle-ring locations: [180,304], [420,292], [710,312];
 - two restrained warm glints; the old [792,174] point would be hidden inside the opaque crate front, so adapt it to visible top trim or adjacent material without an alpha hole;
@@ -91,19 +91,31 @@ NO HEAT and PAY CASH are static source signage, not legacy clocked pulses. Do no
 The background source must not bake falling streaks, expanding rings or frozen lower dashes. Separate actual motion layers carry those effects. Static wet-material reflections are allowed when they are clearly material/light structure rather than frozen copies of moving assets.
 
 Art direction explicitly approves two coherent translations for this forthcoming package:
-- A full-field scroll/rain asset may represent the old18 trajectory family if actual visible density, diagonal drift and cadence remain comparable. Exact960/360 wraps and seed trajectories need not be copied. This is visual translation, not claimed frame equivalence.
+- A full-field scroll/rain asset may represent the old 18 trajectory family if actual visible density, diagonal drift and cadence remain comparable. Exact 960/360 wraps and seed trajectories need not be copied. This is visual translation, not claimed frame equivalence.
 - Seven wet-material floor-light movers may consolidate the common sheen plus older lower reflection-marker family, rather than literal lower bobbing rectangles. Keep the separate falling rain, eight fast ground streaks and three puddle rings visibly distinct. Bulb pool/cone may share a synchronized pulse.
 
 These are concept decisions only. Actual assets still need visible runtime proof and a final exact-package audit.
 
 Use the existing five renderer primitives only. Check Web texture limits before selecting wide frame atlases; prefer an appropriately bounded strip or existing mover/scroll behavior rather than new renderer code.
 
+## Current R3 art-only refinement and evidence scope
+
+The first actual trial revealed two label/material collisions. The director approved the following narrow decorative adaptation without moving a fixture, live object, label or contact:
+- Preserve the complete lamp silhouette at y104..130. Put a compact honey emitting strip inside its upper housing at [436,109,28,5], above the measured Thermos name band[432,116,126,26]. Lower housing/glass y115..130 is dark bronze/plum. The same breathing cadence and synchronized source-derived warm-brick pool remain.
+- Keep the table's bright thin contact rim y192..193. Its real wood face y194..216 is darker, preserving grain/chips beneath Shoe-Cut Marker's measured name band[361.5,194,99,15].
+
+The broad floor source is assembled at the same 900-grid scale using its y100..294 region to fill floor y236..430, with no vertical stretch. Table legs and bins are replayed at their original supports. The preliminary flat pool/cone wash was replaced by a source-derived delta mask on the actual warm brick footprint.
+
+Exact current R3 package: f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68. Background SHA-256 a8533e7dbd30cd75153e961cbf999acb0ffb1577e49111c3ed1eabba5704ffb6. It contains 23 authored entries across the distinct required motifs. Raw generated sources and earlier trials remain preserved.
+
+Director and independent artist/auditor have reviewed the corrected actual base view, natural lamp minimum/peak and supported Reduce Motion view. The director has also personally reviewed naturally settled Street Craps, Cruiser Parked, Fence Night and Nothing Moving. No new art-induced material/label failure was found in that scope. This is NOT full package PASS: all 23 per-entry visibility, published work/outcome contexts, counter replay, geometry, liveness and other technical receipts remain final gates. Actual rendered-object assertions must cover room-visible authored content, not merely authority keys. Do not infer browser/TEST acceptance from native evidence.
+
 ## Package and review sequence
 
-- One opaque1800 x 860 background.
+- One opaque 1800 x 860 background.
 - Exact room manifest at data/art/environments/back_alley.json.
 - Separated animation textures under assets/art/environments/back_alley/anim/.
-- Exact opaque416 x 100 crate-front texture under the mapped counter ID.
+- Exact opaque 416 x 100 crate-front texture under the mapped counter ID.
 - Source files and all handed-off candidates remain immutable; corrections receive a new version/path/seal.
 - Review static exact-grid material and all physical contact edges first.
 - Then capture actual production full-room motion plus faithful named crops. Show every authored asset/motif, without preview-only amplification, pans or fake motion.

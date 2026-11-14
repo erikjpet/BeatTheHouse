@@ -41,7 +41,7 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | --- | --- | --- | --- |
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
 | 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
-| 03 | back_alley | R3 actual settled/minimum/peak/Reduce Motion visual GO; technical audit active | Finish room-specific exact technical proof, then full auditor PASS before integration |
+| 03 | back_alley | Exact R3 final native PASS; integration/Web active | Verify cumulative bound TEST before delivery closes |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
@@ -121,3 +121,8 @@ The substantial R3 trial is backed up under review_artifacts/environment_art_sou
 
 
 Back R3 actual review now clears settled room, natural lamp minimum/peak and production Reduce Motion. Its80-frame10.533822s excerpt and exact same-snapshot geometry are preserved. Only16 HUD clock pixels vary under Reduce Motion; room and art texture remain stable. The real four-scenario/24-authored-aftermath,23-entry motion and both mover-family wrap/counter/liveness technical suite is active. Back has no authored opening hours, so no closing-time fixture is invented. This is visual GO, not final package PASS or TEST activation.
+
+
+## Back R3 final native PASS and Motel release
+
+Exact Back f42919a1 native art PASS is sealed by report662b2108. All28 actual production-published work/aftermath views,785 native assertions,85 separately scoped read-only pixel checks,23 motions/RM/wrap/crate/liveness clear the final gate. Integration and TEST/Web are separate and active; the existing served c5 remains Gas+Corner until the new bound artifact is published. Motel is now the sole source-authoring package, released after Back native PASS from frozen guide f22befd8 and brief v2 2459f874, including visible-glass CRT masking around static vending overlap. See [Back integration](../testing/back_alley_r3_art_integration.md) and [Motel brief](briefs/motel.md). No Back UI/save/revisit or full campaign claim.

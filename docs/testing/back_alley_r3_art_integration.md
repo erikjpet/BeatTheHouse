@@ -1,0 +1,9 @@
+# Back Alley R3 art integration
+
+Exact native auditor PASS clears package `f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68`. Audit report SHA256:`662b2108b1a49c36f6c0cf4d7637c7e29b1d0a22768c98e17dd98e0203e594fd`. See [payload provenance](../art/back_alley_v1_r3_provenance.json).
+
+785 native assertions pass:48 settled/always-open,538 actual sequence,47 animation,71 slow-wrap and81 fast-wrap.85 read-only overlapping pixel checks are separate, not extra gameplay executions.28 actual published contexts contain24 aftermaths and4 work phases,39 visible sources,1 explicit hidden/non-room exclusion and8 correct interaction-label overrides. All23 animation entries, Reduce Motion, both mover families, exact opaque416x100 crate replay (5070 covered pixels,0 mismatches) and mandatory no-pointer liveness pass. Director and auditor each reviewed all28 actual whole-scene views plus Base/all four settled scenarios/minimum/peak/Reduce Motion.12 R3 Jobs exit0/active0. The room has no authored opening hours; no closing-time fixture is fabricated.
+
+Only17 sealed files are activated, including a cumulative Gas+Corner+Back index. All37 prior Gas/Corner source files, c5 placements, project/export settings and game code remain unchanged. Original generated sources, recipe, seal and frozen references remain in the non-active source archive; exact native QA helpers are archived alongside. This is not UI quest/save/revisit/travel lifecycle proof, owner acceptance or campaign completion.
+
+TEST/Web export and actual browser acceptance are pending. Keep source/served build identity, deep isolated TEST persistence, prior accepted rooms, main/NEXT and site audience unchanged. Full-field rain means overlapping Web pixel regions cannot independently prove every motif; native per-entry isolation remains separate.

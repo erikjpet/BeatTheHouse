@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T12:45:17.190977+00:00",
+  "updated_at": "2026-11-14T13:00:51.456673+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37964,7 +37964,8 @@
         "BTH-ENVART-001-ART-GAS-01",
         "BTH-ENVART-001-TEST-01",
         "BTH-ENVART-001-ART-CORNER-01",
-        "BTH-ENVART-001-ART-BACK-01"
+        "BTH-ENVART-001-ART-BACK-01",
+        "BTH-ENVART-001-ART-MOTEL-01"
       ],
       "next_action": "Complete Back Alley exact native art audit/integration and remaining18 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
@@ -42597,7 +42598,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R3 actual settled/minimum/peak/Reduce Motion visual GO; native technical/outcome proofs active; final package audit pending",
+      "status": "Exact R3 final native auditor PASS; cumulative Gas+Corner+Back integration active; TEST/Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42631,6 +42632,11 @@
           "kind": "actual_trial_visual_gate",
           "reference": "docs/art/environment_art_progress.md",
           "summary": "R3 actual80-frame10.533822s excerpt; actual lamp min/peak and production Reduce Motion clear director/auditor visual GO. QA900 exact objects/layout/clocks across80frames; production room+art stable underRM,16HUDclock pixels alone change. Deep technical audit active, no final PASS."
+        },
+        {
+          "kind": "native_art_audit",
+          "reference": "docs/testing/back_alley_r3_art_integration.md",
+          "summary": "Exact f42919a1 final native PASS;785 native assertions plus85 overlapping read-only pixel checks,28 actually published model contexts,23motions/RM/wrap/crate/liveness. No TEST/UI/save/revisit claim."
         }
       ],
       "blocker": {
@@ -42638,13 +42644,58 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T12:05:53.093248+00:00",
+        "observed_at": "2026-11-14T13:00:51.456673+00:00",
         "evidence": [
-          "docs/art/briefs/back_alley.md"
+          "docs/testing/back_alley_r3_art_integration.md"
         ]
       },
-      "next_action": "Complete real four-scenario/24-aftermath native publication,23-entry motion/RM, both mover-family wrap, solid crate replay and no-input checks; integrate only final exact auditor PASS.",
-      "updated_at": "2026-11-14T12:45:17.190977+00:00"
+      "next_action": "Commit only exact17 sealed Back files, preserve Gas+Corner, export bound isolated TEST and verify actual Web identity/scenarios/motion/RM/camera.",
+      "updated_at": "2026-11-14T13:00:51.456673+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-MOTEL-01",
+      "name": "Integrate audited Motel lobby art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Motel source authoring released after Back native PASS; frozen v2 brief/guide ready; no Motel art passed",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Cumulative isolated art TEST only after exact Motel full package PASS; preserve prior accepted rooms."
+      },
+      "scope": [
+        "Author the public Motel lobby identity, distinct from motel_room; preserve fixed contacts, geometry and current placements.",
+        "Mask CRT effects to actually visible glass excluding overlapping vending body; validate real Drink/Phone/staff/table labels under actual scenarios.",
+        "Preview and audit exact motion/counter/geometry/Reduce Motion/liveness and model-state context evidence, then integrate only full PASS and verify isolated TEST."
+      ],
+      "evidence": [
+        {
+          "kind": "execution_brief",
+          "reference": "docs/art/briefs/motel.md",
+          "summary": "Frozen guide f22befd8 and exact v2 brief2459f874; CRT mask/label planning explicit. Source authoring released only after Back exact native PASS; no target activation."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T13:00:51.456673+00:00",
+        "evidence": [
+          "docs/art/briefs/motel.md"
+        ]
+      },
+      "next_action": "Collect unchanged c5 actual layout/label/occlusion metadata after Back export priority, then author and review exact Motel source before native trial.",
+      "updated_at": "2026-11-14T13:00:51.456673+00:00"
     }
   ]
 }

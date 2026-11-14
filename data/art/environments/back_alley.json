@@ -1,0 +1,495 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "back_alley",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "bulb_core_breathe",
+      "type": "pulse",
+      "texture": "anim/bulb_core.png",
+      "rect": [
+        436,
+        109,
+        28,
+        5
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.58,
+      "period": 0.7853981633974483,
+      "phase": -0.19634954084936207,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "lamp_pool_cone_breathe",
+      "type": "pulse",
+      "texture": "anim/lamp_pool_cone.png",
+      "rect": [
+        332,
+        116,
+        236,
+        128
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.3,
+      "period": 0.7853981633974483,
+      "phase": -0.19634954084936207,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "falling_rain_field",
+      "type": "scroll",
+      "texture": "anim/rain_field.png",
+      "rect": [
+        0,
+        0,
+        900,
+        430
+      ],
+      "speed": [
+        92,
+        156.4
+      ],
+      "opacity": 1,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_0",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        282
+      ],
+      "to": [
+        900,
+        282
+      ],
+      "duration": 10,
+      "phase": 0.0,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_1",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        294
+      ],
+      "to": [
+        900,
+        294
+      ],
+      "duration": 10,
+      "phase": 1.2555555555555555,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_2",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        306
+      ],
+      "to": [
+        900,
+        306
+      ],
+      "duration": 10,
+      "phase": 2.511111111111111,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_3",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        282
+      ],
+      "to": [
+        900,
+        282
+      ],
+      "duration": 10,
+      "phase": 3.7666666666666666,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_4",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        294
+      ],
+      "to": [
+        900,
+        294
+      ],
+      "duration": 10,
+      "phase": 5.022222222222222,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_5",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        306
+      ],
+      "to": [
+        900,
+        306
+      ],
+      "duration": 10,
+      "phase": 6.277777777777778,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_6",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        282
+      ],
+      "to": [
+        900,
+        282
+      ],
+      "duration": 10,
+      "phase": 7.533333333333333,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "ground_rain_streak_7",
+      "type": "mover",
+      "texture": "anim/ground_rain_streak.png",
+      "size": [
+        34,
+        2
+      ],
+      "from": [
+        0,
+        294
+      ],
+      "to": [
+        900,
+        294
+      ],
+      "duration": 10,
+      "phase": 8.78888888888889,
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "puddle_ring_0",
+      "type": "frames",
+      "texture": "anim/puddle_rings.png",
+      "rect": [
+        154,
+        301,
+        52,
+        6
+      ],
+      "frames": 12,
+      "fps": 10.695212175775366,
+      "phase": 0.0,
+      "loop": "loop",
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "puddle_ring_1",
+      "type": "frames",
+      "texture": "anim/puddle_rings.png",
+      "rect": [
+        394,
+        289,
+        52,
+        6
+      ],
+      "frames": 12,
+      "fps": 10.695212175775366,
+      "phase": 0.35714285714285715,
+      "loop": "loop",
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "puddle_ring_2",
+      "type": "frames",
+      "texture": "anim/puddle_rings.png",
+      "rect": [
+        684,
+        309,
+        52,
+        6
+      ],
+      "frames": 12,
+      "fps": 10.695212175775366,
+      "phase": 0.7142857142857143,
+      "loop": "loop",
+      "opacity": 1,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "warm_glint_0",
+      "type": "pulse",
+      "texture": "anim/warm_glint.png",
+      "rect": [
+        108,
+        168,
+        8,
+        8
+      ],
+      "min_opacity": 0.22,
+      "max_opacity": 0.48,
+      "period": 0.7479982508547126,
+      "phase": -0.18699956271367815,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "warm_glint_1",
+      "type": "pulse",
+      "texture": "anim/warm_glint.png",
+      "rect": [
+        788,
+        161,
+        8,
+        8
+      ],
+      "min_opacity": 0.22,
+      "max_opacity": 0.48,
+      "period": 0.7479982508547126,
+      "phase": 0.05109567538155993,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "back_alley_crate_display": {
+      "texture": "counters/back_alley_crate_display.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}
