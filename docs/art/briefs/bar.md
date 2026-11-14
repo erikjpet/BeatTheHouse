@@ -2,7 +2,7 @@
 
 Prepared: 2026-11-14
 Room identity: bar
-Status: read-only direction and clean geometry target are ready. Source generation is conditional on the Motel's explicit final native art PASS. This is not approval of an unmade Bar package.
+Status: R4 has static visual GO for isolated trial capture after bounded R3 material corrections. Actual R4, full native proof and TEST acceptance remain pending. No final Bar package approval is implied.
 
 ## Narrative and local identity
 
@@ -96,3 +96,24 @@ Use the existing five renderer primitives only. Bound frame atlases for Web text
 - Verify geometry/hits/labels, exact counter replay, per-entry actual motion/Reduce Motion, floor wraps, no-input liveness and converted-preview visibility.
 - Only the exact passed package may enter the existing art branch, retaining prior accepted packs. TEST/Web identity and actual browser visual review are separate post-integration gates.
 - Keep planning, source/recipe backup and honest review state checkpointed to GitHub. Do not enable unapproved art, change main/NEXT/audience or modify current travel facades/doorways during this interior package.
+
+## Current trial checkpoint: R4, not accepted
+
+Motel R3 received exact final native art PASS and the Bar source was released. The first raw source is preserved at artist/bar-v1/source/background-guide-v1.png, SHA-256 11a65a14a8dd9d60e371e6b3abb111b132527c76ffc3e65d73b6443148f269f6. Its own teal/amber/burgundy identity and ample floor depth are retained; no second material source was needed.
+
+R3 trial package b053927dba7b7531cc6585d7deab4b464ed8ddd395647cc106afb90b50483894 has 17 entries: two signs, two independent balls, two smoke fields translating five ribbons, four glints and seven floor movers. The old [780,166] sparkle is now a tiny broken timber-grain reflection at the same material site, not a glass star. Smoke cores are sparse stepped 3-6-pixel ribbons. The actual effective peak is 11/255 * 0.9 = 0.0388, approximately the intended 0.035 density, not a strict <=0.035 claim. The correction is recorded separately without changing sealed bytes.
+
+The director, artist and auditor viewed the actual Base and priority Fight Night, Wake and Payday Rush scenes. Base is clear. Fight Night's Betting Book title is pink and readable, correcting an earlier assumed-gold planning label. Two real, bounded material failures were identified: cyan Remembrance tray middle strokes cross the bright pendant diffuser in Wake; Payday's gold Rush bartender tail crosses an upper-left amber mirror hotspot. The R3 actual-motion trial remains honest review evidence, not a final PASS.
+
+R4 package 398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39, background SHA-256 22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f, corrects only these physical surfaces:
+- Keep pendant outer [654,124,112,14], wire, frame and position. Its real diffuser y128..136 becomes dark warm bronze; compact honey emission remains only in the existing right internal end [736,128,24,4]. Current Base plus all seven initial scenarios have no label/model intersection with that pocket. The lower row137 was not chosen because the Wake title band still covers it.
+- Dim only the source-shaped amber hotspot pixels within actual mirror glass x72..221, y70..106. Preserve ripple detail, amber hue, the frame and other reflection pools. No flat text badge, moved label, blur or global grade.
+- All 17 motion payloads, counter, manifest and index bytes remain identical to R3. Exactly 2,771 board background pixels differ in the two allowed regions.
+
+The director personally inspected exact R4 board pixels and issued static GO. This authorizes isolated early actual Wake, Payday and Base review, not implementation. Full current initial-context coverage is Base plus seven scenarios; check the complete current catalog rather than the three early priority examples. Follow with room-specific work/outcome proofs, exact geometry/label equivalence, counter, motion, Reduce Motion and liveness before any exact-package PASS. No final Bar PASS or TEST activation is recorded here.
+
+Pawn Shop is the next read-only prepared room. Its frozen guide and separate execution brief are ready, but its source generation remains conditional on the Bar's explicit exact final native art PASS. Do not add another routine briefing wait after that gate.
+
+## Later checkpoint status
+
+Exact R4 initial actual review clears all eight current cases (1,017 checks, no findings). Full native acceptance remains in progress. This source checkpoint is non-active, not an audit PASS or deployment. Served TEST remains the four accepted rooms on source 173b235d.

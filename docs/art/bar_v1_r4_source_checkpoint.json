@@ -1,0 +1,23 @@
+{
+  "package_id": "bar-v1-r4",
+  "status": "NON_ACTIVE_TRIAL_NOT_APPROVED",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "scope": "Durable source checkpoint only. Target and served TEST remain Gas, Corner, Back and Motel; no Bar activation or final PASS.",
+  "provenance": "Original generated room and complete prompts/frozen inputs; nearest-only 900-grid exact2x assembly; bounded actual-union physical light/material corrections; 17 authored motions, solid counter; unchanged contacts/placements/labels/renderer.",
+  "raw_source_sha256": "11a65a14a8dd9d60e371e6b3abb111b132527c76ffc3e65d73b6443148f269f6",
+  "recipe_sha256": "497edc6180d6a7193fcdee01c86d58666fc0060e62075ef13ea2ef996e0e7ec7",
+  "actual_preart_union_sha256": "48f49554d10d82a5cb24fe29256f93b15e6b2c276bb5660f20464999b921f431",
+  "recipe_scope": "Self-contained from original source, input-provenance and actual union; no parent-package dependency. Original absolute paths need mapping to frozen copies in a new admitted E: QA run without pixel logic changes.",
+  "archive_sha256": "ec9eecbe75ed37435ffa8deee53ce9874f257fd67f28a8404262a3b167a72c03",
+  "archive_bytes": 9447039,
+  "archive_members": 37,
+  "archive_path": "review_artifacts/environment_art_sources/bar-v1-r4/bar-v1-r4-source.zip",
+  "sealed_payload_files": 19,
+  "non_active": true,
+  "active_target_rooms_unchanged": [
+    "gas_station_casino",
+    "corner_store",
+    "back_alley",
+    "motel"
+  ]
+}
