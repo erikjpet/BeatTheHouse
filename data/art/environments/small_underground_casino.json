@@ -1,0 +1,642 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "small_underground_casino",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "string_core_0",
+      "type": "frames",
+      "texture": "anim/string_core_0.png",
+      "rect": [
+        92,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 0.0,
+      "blend": "add",
+      "still": 0
+    },
+    {
+      "id": "string_core_1",
+      "type": "frames",
+      "texture": "anim/string_core_1.png",
+      "rect": [
+        164,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 0.25,
+      "blend": "add",
+      "still": 8
+    },
+    {
+      "id": "string_core_2",
+      "type": "frames",
+      "texture": "anim/string_core_2.png",
+      "rect": [
+        236,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 0.5,
+      "blend": "add",
+      "still": 16
+    },
+    {
+      "id": "string_core_3",
+      "type": "frames",
+      "texture": "anim/string_core_3.png",
+      "rect": [
+        308,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 0.7500000000000001,
+      "blend": "add",
+      "still": 24
+    },
+    {
+      "id": "string_core_4",
+      "type": "frames",
+      "texture": "anim/string_core_4.png",
+      "rect": [
+        380,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 1.0,
+      "blend": "add",
+      "still": 1
+    },
+    {
+      "id": "string_core_5",
+      "type": "frames",
+      "texture": "anim/string_core_5.png",
+      "rect": [
+        452,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 1.25,
+      "blend": "add",
+      "still": 9
+    },
+    {
+      "id": "string_core_6",
+      "type": "frames",
+      "texture": "anim/string_core_6.png",
+      "rect": [
+        524,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 1.5000000000000002,
+      "blend": "add",
+      "still": 17
+    },
+    {
+      "id": "string_core_7",
+      "type": "frames",
+      "texture": "anim/string_core_7.png",
+      "rect": [
+        596,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 1.75,
+      "blend": "add",
+      "still": 25
+    },
+    {
+      "id": "string_core_8",
+      "type": "frames",
+      "texture": "anim/string_core_8.png",
+      "rect": [
+        668,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 2.0,
+      "blend": "add",
+      "still": 1
+    },
+    {
+      "id": "string_core_9",
+      "type": "frames",
+      "texture": "anim/string_core_9.png",
+      "rect": [
+        740,
+        52,
+        8,
+        8
+      ],
+      "frames": 32,
+      "fps": 32.594932345220165,
+      "phase": 2.25,
+      "blend": "add",
+      "still": 9
+    },
+    {
+      "id": "long_pink_drift_0",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        116
+      ],
+      "to": [
+        900,
+        116
+      ],
+      "duration": 72.5,
+      "phase": 8.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "long_pink_drift_1",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        134
+      ],
+      "to": [
+        900,
+        134
+      ],
+      "duration": 72.5,
+      "phase": 18.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "long_pink_drift_2",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        152
+      ],
+      "to": [
+        900,
+        152
+      ],
+      "duration": 72.5,
+      "phase": 28.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "long_pink_drift_3",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        170
+      ],
+      "to": [
+        900,
+        170
+      ],
+      "duration": 72.5,
+      "phase": 38.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "long_pink_drift_4",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        188
+      ],
+      "to": [
+        900,
+        188
+      ],
+      "duration": 72.5,
+      "phase": 48.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "long_pink_drift_5",
+      "type": "mover",
+      "texture": "anim/long_pink_band.png",
+      "size": [
+        260,
+        16
+      ],
+      "from": [
+        -260,
+        206
+      ],
+      "to": [
+        900,
+        206
+      ],
+      "duration": 72.5,
+      "phase": 58.75,
+      "opacity": 0.95625,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "thin_bobbing_ribbon_0",
+      "type": "mover",
+      "texture": "anim/thin_pink_ribbon_0.png",
+      "size": [
+        180,
+        20
+      ],
+      "from": [
+        -180,
+        87
+      ],
+      "to": [
+        900,
+        87
+      ],
+      "duration": 108.0,
+      "phase": 9.4,
+      "frames": 8,
+      "fps": 1.7825353626292277,
+      "opacity": 0.9807692307692307,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "thin_bobbing_ribbon_1",
+      "type": "mover",
+      "texture": "anim/thin_pink_ribbon_1.png",
+      "size": [
+        164,
+        20
+      ],
+      "from": [
+        -164,
+        105
+      ],
+      "to": [
+        900,
+        105
+      ],
+      "duration": 88.66666666666667,
+      "phase": 19.0,
+      "frames": 8,
+      "fps": 1.7825353626292277,
+      "opacity": 0.9807692307692307,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "thin_bobbing_ribbon_2",
+      "type": "mover",
+      "texture": "anim/thin_pink_ribbon_2.png",
+      "size": [
+        148,
+        20
+      ],
+      "from": [
+        -148,
+        123
+      ],
+      "to": [
+        900,
+        123
+      ],
+      "duration": 74.85714285714286,
+      "phase": 25.857142857142858,
+      "frames": 8,
+      "fps": 1.7825353626292277,
+      "opacity": 0.9807692307692307,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "thin_bobbing_ribbon_3",
+      "type": "mover",
+      "texture": "anim/thin_pink_ribbon_3.png",
+      "size": [
+        132,
+        20
+      ],
+      "from": [
+        -132,
+        141
+      ],
+      "to": [
+        900,
+        141
+      ],
+      "duration": 64.5,
+      "phase": 31.0,
+      "frames": 8,
+      "fps": 1.7825353626292277,
+      "opacity": 0.9807692307692307,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "thin_bobbing_ribbon_4",
+      "type": "mover",
+      "texture": "anim/thin_pink_ribbon_4.png",
+      "size": [
+        116,
+        20
+      ],
+      "from": [
+        -116,
+        159
+      ],
+      "to": [
+        900,
+        159
+      ],
+      "duration": 56.44444444444444,
+      "phase": 35.0,
+      "frames": 8,
+      "fps": 1.7825353626292277,
+      "opacity": 0.9807692307692307,
+      "blend": "mix",
+      "still": "hide"
+    },
+    {
+      "id": "teal_material_glint_0",
+      "type": "pulse",
+      "texture": "anim/teal_material_glint_0.png",
+      "rect": [
+        150,
+        130,
+        8,
+        8
+      ],
+      "min_opacity": 0.16,
+      "max_opacity": 0.32,
+      "period": 0.7479982508547126,
+      "phase": -0.18699956271367815,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "teal_material_glint_1",
+      "type": "pulse",
+      "texture": "anim/teal_material_glint_1.png",
+      "rect": [
+        531,
+        132,
+        8,
+        8
+      ],
+      "min_opacity": 0.16,
+      "max_opacity": 0.32,
+      "period": 0.7479982508547126,
+      "phase": 0.21776234204822656,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "teal_material_glint_2",
+      "type": "pulse",
+      "texture": "anim/teal_material_glint_2.png",
+      "rect": [
+        768,
+        138,
+        8,
+        8
+      ],
+      "min_opacity": 0.16,
+      "max_opacity": 0.32,
+      "period": 0.7479982508547126,
+      "phase": 0.6225242468101313,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        278
+      ],
+      "to": [
+        950,
+        278
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        292
+      ],
+      "to": [
+        950,
+        292
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        306
+      ],
+      "to": [
+        950,
+        306
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        320
+      ],
+      "to": [
+        950,
+        320
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        278
+      ],
+      "to": [
+        950,
+        278
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        292
+      ],
+      "to": [
+        950,
+        292
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        306
+      ],
+      "to": [
+        950,
+        306
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.16,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "punchline_right_table": {
+      "texture": "counters/punchline_right_table.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}
