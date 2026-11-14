@@ -1,0 +1,7 @@
+# Bar R4 served Web proof sources
+
+The exact9ac963f1 five-room TEST passed scoped actual Web/director review. Reproduction archive SHA256:5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e;1108 members. Original helper ZIP SHA256:74cb3c2027c3bc3483ff3121344da7ddb6801e2934ba64794aa7405862db0043. Each retained member is authenticated in archive-manifest.json; five metadata-only routing fields/files were sanitized with original/copy hashes. Runnable code, inputs and pixel payload bytes are unchanged. Three exact build recipes are included.
+
+780 raw screenshots/frames are retained at indexed E: paths, bound by raw-capture-sha256.json SHA3f33149a7c42ea1ff5de22d33ab42556a57ca7bac704b12885b81c25e444e4c8. Raw frame bulk and browser profiles/IndexedDB are not duplicated in Git. Use fresh admitted E: storage/run IDs with12%CPU/2GiB assigned-before-resume owned Jobs; map historical paths without altering source/model/clock/alpha/speed. Full exact-source art/identity approval is required.
+
+Composite regions and known-speed fits corroborate actual behavior, not isolated motifs or exact mathematical extrema. Two smoke fields overlap and seven floor tracks share four lanes. Native isolated-entry proof supplies timing/visibility bounds. Payday's tray hides one glint; actor ROI changes do not make it visible. Darts/Lock-In baseline label overlaps and source/lifecycle limits remain explicit in the final report. No save/revisit or all141-route E2E claim.

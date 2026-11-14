@@ -1,3 +1,5 @@
+> Later delivery closure: the same exact R4 package is integrated and independently verified on bound9ac TEST. Historical checkpoint status below is retained; original source/native ZIPs remain unchanged. See docs/testing/bar_r4_test_delivery.json.
+
 > Historical non-active checkpoint below predates the exact native PASS. The same R4 payload now passes native audit and is being integrated; TEST/Web is still pending. Original sources, recipe, seal and ZIP remain unchanged.
 
 # Bar R4 source checkpoint

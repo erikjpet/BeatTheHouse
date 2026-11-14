@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T15:54:32.994145+00:00",
+  "updated_at": "2026-11-14T16:36:32.139845+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37697,6 +37697,12 @@
           "evidence": [
             "docs/testing/motel_r3_art_integration.md"
           ]
+        },
+        {
+          "sha": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+          "evidence": [
+            "docs/testing/bar_r4_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -37704,14 +37710,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "First four cumulative interior previews verified; full campaign remains incomplete.",
+        "note": "First five cumulative interior previews verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+          "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First four passed interiors only; remaining 16 interiors and 12 travel doorways Open.",
+          "scope": "First five passed interiors only; remaining 15 interiors and 12 travel doorways Open.",
           "evidence": [
-            "docs/testing/motel_r3_test_delivery.json"
+            "docs/testing/bar_r4_test_delivery.json"
           ]
         }
       },
@@ -37801,21 +37807,21 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Four interiors delivered; remaining 16 interiors and 12 travel doorways unfinished. Bar exact native trial active.",
+        "description": "Five interiors delivered; remaining 15 interiors and 12 travel doorways unfinished. Pawn exact native trial active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:54:32.994145+00:00",
+        "observed_at": "2026-11-14T16:36:32.139845+00:00",
         "evidence": [
-          "docs/testing/motel_r3_test_delivery.json",
+          "docs/testing/bar_r4_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T15:09:53.102835+00:00",
+      "updated_at": "2026-11-14T16:36:32.139845+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on TEST; 4 of 20 interiors complete; Bar active; campaign Open",
+      "status": "Gas, Corner, Back, Motel and Bar delivered and verified on TEST; 5 of 20 interiors complete; Pawn active; campaign Open",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37981,7 +37987,7 @@
         "BTH-ENVART-001-ART-BAR-01",
         "BTH-ENVART-001-ART-PAWN-01"
       ],
-      "next_action": "Complete Bar exact native audit/integration and the remaining 16 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT.",
+      "next_action": "Complete Pawn exact native audit/integration and the remaining 15 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42186,6 +42192,12 @@
           "evidence": [
             "docs/testing/motel_r3_art_integration.md"
           ]
+        },
+        {
+          "sha": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+          "evidence": [
+            "docs/testing/bar_r4_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -42193,14 +42205,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "First four cumulative interior previews verified; full campaign remains incomplete.",
+        "note": "First five cumulative interior previews verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+          "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First four passed interiors only; remaining 16 interiors and 12 travel doorways Open.",
+          "scope": "First five passed interiors only; remaining 15 interiors and 12 travel doorways Open.",
           "evidence": [
-            "docs/testing/motel_r3_test_delivery.json"
+            "docs/testing/bar_r4_test_delivery.json"
           ]
         }
       },
@@ -42235,23 +42247,23 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Four interiors delivered; remaining 16 interiors and 12 travel doorways unfinished. Bar exact native trial active.",
+        "description": "Five interiors delivered; remaining 15 interiors and 12 travel doorways unfinished. Pawn exact native trial active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:54:32.994145+00:00",
+        "observed_at": "2026-11-14T16:36:32.139845+00:00",
         "evidence": [
-          "docs/testing/motel_r3_test_delivery.json",
+          "docs/testing/bar_r4_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T15:09:53.102835+00:00",
+      "updated_at": "2026-11-14T16:36:32.139845+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on TEST; 4 of 20 interiors complete; Bar active; campaign Open",
+      "status": "Gas, Corner, Back, Motel and Bar delivered and verified on TEST; 5 of 20 interiors complete; Pawn active; campaign Open",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Complete Bar exact native audit/integration and the remaining 16 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT."
+      "next_action": "Complete Pawn exact native audit/integration and the remaining 15 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT."
     },
     {
       "group": "current",
@@ -42776,20 +42788,29 @@
       "name": "Integrate audited Bar art",
       "parent_id": "BTH-ENVART-001",
       "group": "current",
-      "state": "open",
-      "status": "Exact R4 final native auditor PASS; cumulative five-room integration active; TEST/Web pending",
+      "state": "complete",
+      "status": "Exact R4 integrated and bound9ac TEST verified; native and scoped served Web/director gates PASS",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+          "evidence": [
+            "docs/testing/bar_r4_art_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Cumulative isolated TEST only after exact Bar full package PASS; preserve prior accepted rooms."
+        "state": "verified",
+        "commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+        "evidence": [
+          "docs/testing/bar_r4_test_delivery.json"
+        ],
+        "scope": "Exact five-room isolated TEST only; main/NEXT and normal saves unchanged."
       },
       "scope": [
         "Preserve own Bar facade/material identity, current c5 placements, physical bar/mirror/pool/sign supports and live cast/stock bays.",
@@ -42816,6 +42837,11 @@
           "kind": "exact_native_art_pass",
           "reference": "docs/testing/bar_r4_art_integration.md",
           "summary": "Exact package398469b2/native audit aa382fd4; all58 real published contexts, 17 motions/RM/counter/wrap/liveness, source and receipts verified. Natural Payday glint coverage and unchanged Lock-In overlap declared. TEST/Web separate."
+        },
+        {
+          "kind": "served_web_acceptance",
+          "reference": "docs/testing/bar_r4_test_delivery.json",
+          "summary": "Exact9ac/398469b2:all8current UI cases at1280/1920,17composite motion/RM/restore,qualified floor fits/selection-return,prior4 retention,normal TLS/all-file+PCK identity and natural clean browser closure. Source crowding/occlusion/E2E limits explicit."
         }
       ],
       "blocker": {
@@ -42823,13 +42849,13 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:54:32.994145+00:00",
+        "observed_at": "2026-11-14T16:36:32.139845+00:00",
         "evidence": [
-          "docs/art/briefs/bar.md"
+          "docs/testing/bar_r4_test_delivery.json"
         ]
       },
-      "next_action": "Commit only the 19 approved payloads, preserve all four earlier rooms and c5, then export and independently verify bound isolated TEST.",
-      "updated_at": "2026-11-14T15:54:32.994145+00:00"
+      "next_action": "Preserve five accepted rooms; continue Pawn and remaining campaign. No whole-campaign, all-route or save/revisit lifecycle completion claim.",
+      "updated_at": "2026-11-14T16:36:32.139845+00:00"
     },
     {
       "id": "BTH-ENVART-001-ART-PAWN-01",
@@ -42837,7 +42863,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source released after Bar native PASS; measured current four-context preflight complete; no Pawn art passed",
+      "status": "Exact R2 all four actual initial cases visually clear; deep native proof active, no final audit PASS",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42873,6 +42899,11 @@
           "kind": "non_active_preart_backup",
           "reference": "review_artifacts/environment_art_sources/pawn_shop-preart-v1/README.md",
           "summary": "Archiveca69b0d6 contains actual source/helper/metadata/PNG/Job proof. All owned Jobs drained; normal source and placements unchanged. Not an outcome/UI/save/revisit lifecycle sweep."
+        },
+        {
+          "kind": "r2_non_active_trial",
+          "reference": "docs/art/pawn_shop_v1_r2_source_checkpoint.json",
+          "summary": "Exact85a22382,445initial checks/0findings,53selected titles/all4visualGO. Static BG replay explicitly separate from15moving motifs. Source backupbe4925ee,full deep24-context proof active; no target activation."
         }
       ],
       "blocker": {
@@ -42885,8 +42916,8 @@
           "docs/art/briefs/pawn_shop.md"
         ]
       },
-      "next_action": "Review the one released Pawn source against the measured current brief/guide, assemble exact layers, then show actual motion and audit before activation.",
-      "updated_at": "2026-11-14T15:54:32.994145+00:00"
+      "next_action": "Complete exact R2 24-family source proof and 15-moving/one-static contract, counter/RM/wrap/liveness, then independent final audit before activation.",
+      "updated_at": "2026-11-14T16:36:32.139845+00:00"
     }
   ]
 }

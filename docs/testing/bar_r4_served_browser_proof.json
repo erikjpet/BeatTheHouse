@@ -1,0 +1,2722 @@
+{
+  "schema": "bth.bar-r4-served-web-qa/v1",
+  "status": "PASS_SCOPED_ACTUAL_SERVED_WEB",
+  "created_utc": "2026-11-14T16:30:35.059114+00:00",
+  "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+  "source_tree": "9177cde65e14f2418a90760c1a56509c4b5d9a1f",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "native_report": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\audit\\bar-v1-r4-PASS.json",
+    "bytes": 15234,
+    "sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650"
+  },
+  "normal_tls_identity": {
+    "status": "PASS_SERVED_BYTES_EMBEDDED_IDENTITY_AND_ART",
+    "canonical_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/index.html",
+    "current": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "source_tree": "9177cde65e14f2418a90760c1a56509c4b5d9a1f",
+    "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+    "embedded_manifest_sha256": "7d6cbdbac9112af4600318bd931afd1d20f854b15a735eba1535278a31222169",
+    "embedded_manifest_md5": "03064c81d2f0a6b0bf49caf3b529e2ec",
+    "active_art_packages": {
+      "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+      "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+      "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+      "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+      "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39"
+    },
+    "art_source_file_count": 83,
+    "compiled_texture_count": 77,
+    "enabled_rooms": [
+      "gas_station_casino",
+      "corner_store",
+      "back_alley",
+      "motel",
+      "bar"
+    ],
+    "files": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+        "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+        "bytes": 340415,
+        "status": 200
+      },
+      "index.apple-touch-icon.png": {
+        "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+        "bytes": 4099,
+        "status": 200
+      },
+      "index.audio.position.worklet.js": {
+        "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+        "bytes": 2973,
+        "status": 200
+      },
+      "index.audio.worklet.js": {
+        "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+        "bytes": 7298,
+        "status": 200
+      },
+      "index.html": {
+        "sha256": "3f111daee02ff5c63df896a989dfe990fe3754c27b9df099e928355c53a07356",
+        "bytes": 5632,
+        "status": 200
+      },
+      "index.icon.png": {
+        "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+        "bytes": 14818,
+        "status": 200
+      },
+      "index.js": {
+        "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "bytes": 2828608,
+        "status": 200
+      },
+      "index.pck": {
+        "sha256": "c9bc7c1c47a43dd1cd8dd99241146d45eeddefbe6296ec0d91a17dc653723dc0",
+        "bytes": 127872212,
+        "status": 200
+      },
+      "index.png": {
+        "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+        "bytes": 21443,
+        "status": 200
+      },
+      "index.side.wasm": {
+        "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "bytes": 21802358,
+        "status": 200
+      },
+      "index.wasm": {
+        "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "bytes": 1508237,
+        "status": 200
+      },
+      "web-gl-handles.json": {
+        "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd",
+        "bytes": 1295,
+        "status": 200
+      }
+    },
+    "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+    "normal_tls_no_bypass": true,
+    "streamed_1MiB_blocks": true,
+    "game_unloaded_before_hashing": {
+      "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/build_manifest.json",
+      "game_canvas_present": false,
+      "godot_config_present": false
+    },
+    "pck_content_audit_files": 1472,
+    "limitations": [
+      "Main/source/audience preservation is separately verified by integrator. This read-only check observes NEXT pointer, not Git remote state."
+    ]
+  },
+  "identity_report": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-identity-01\\evidence\\final-served-identity.json",
+    "bytes": 3976,
+    "sha256": "4de6606502a6531a20ef6a8e6a3b8e4bbd84b22f1eb6069f913fc1de0235fe11"
+  },
+  "director_visual_gate": {
+    "status": "FINAL_SCOPED_SERVED_VISUAL_GO",
+    "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "verbatim": "FINAL scoped served visual GO for exact9ac963f1 / Bar R4. Personally reviewed Base+ALL7 initial cases at1280/1920; raw DIVE039/016 and high-mirror181/067 samples; supported Wake RM33/34, Base RM36, restoration38; actual selection39/returned framing40. Crispness, fixed furniture/fronts, local materials and both bounded contrast fixes hold. Retain native Payday glint coverage and pre-art Darts/Lock live-label limits; no universal unobstructed-name or outcome/save/revisit E2E claim. Bind this visual gate to final streamed exact identity, retention and clean closure."
+  },
+  "browser_boot_identity": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-0\\evidence\\served-browser-identity.json",
+    "bytes": 3290,
+    "sha256": "90793b57eac390bd03456758cd605788e45eb261b7fd66ba580635df1943953a"
+  },
+  "scenario_cases": [
+    {
+      "scenario": "Base",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-6\\evidence\\screen.png",
+          "bytes": 790591,
+          "sha256": "cf6a38919a04332357e770d2cdd0d1ff27b2dd3b0d48809d03e01c46d57abc29"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-5\\evidence\\screen.png",
+          "bytes": 941767,
+          "sha256": "a9f51c4db116778aec4528df02e70c6dc913a730253f8105429b58986f504b91"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "The Wake",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-10\\evidence\\screen.png",
+          "bytes": 768691,
+          "sha256": "79589b4dfaac45abd39c484827bc8f3f42bc03e75747e62ff7d39d1b2d85d80b"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-11\\evidence\\screen.png",
+          "bytes": 924285,
+          "sha256": "1e9f0e762fafcbad028aa0999b30c6c71516409dfffd8d18fa900990e0dff9d5"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Payday Rush",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-13\\evidence\\screen.png",
+          "bytes": 776754,
+          "sha256": "9c2611485a199d40482a0a083378a989da8be1ae8a83b816790b2fdbfa04ad71"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-14\\evidence\\screen.png",
+          "bytes": 941614,
+          "sha256": "bfc7b0eab2a8b6e7924c121b47ef8c1a00194465d9e7c2e83ea47a09588a9cbe"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Fight Night",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-16\\evidence\\screen.png",
+          "bytes": 771035,
+          "sha256": "bae967b02fc8e8c0013684976aa4f8ab2f6cad1da8a28dd5d1b876de5f0005c8"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-17\\evidence\\screen.png",
+          "bytes": 938496,
+          "sha256": "4a751ec9e96c5dfb10a6b21227a34410c26de838fd26470d2bda7a4d49dd4bcc"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Lock-In",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-19\\evidence\\screen.png",
+          "bytes": 770697,
+          "sha256": "6af11a32e212a2eaa5092d4087888b61a921342de226a6ec892219f2be401e9e"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-20\\evidence\\screen.png",
+          "bytes": 929038,
+          "sha256": "0818ab09ee6705539952270280a93e3ea50d5a1561a72033899a9dab864db7da"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Darts League Night",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-22\\evidence\\screen.png",
+          "bytes": 773728,
+          "sha256": "68b011ce9253b4eaeb3d6c53d9c0eb72185af7ea5e6ef84d1287b48dda2cc7f9"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-23\\evidence\\screen.png",
+          "bytes": 934242,
+          "sha256": "4aaf50cefdd67df9cc927d52f237cab92e5d4c5e38c101def9e3b776ac7292ad"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Live Band",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-25\\evidence\\screen.png",
+          "bytes": 765624,
+          "sha256": "0c5713a11c6ef4cbec3ff14d96fff9330ee7b00775875000ff770f205638b2f7"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-26\\evidence\\screen.png",
+          "bytes": 920388,
+          "sha256": "95b2b178ce1d502d0e0590310482e3c666338e639340c6c5cf05789de96a11dc"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Dead Tuesday",
+      "screenshots": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-28\\evidence\\screen.png",
+          "bytes": 773526,
+          "sha256": "5538dc679d92d7a72a51d919fc8998350d522628d40df76a93f9ad379b041c3b"
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-29\\evidence\\screen.png",
+          "bytes": 928031,
+          "sha256": "b54711fc8ab8091ba33fe8c8ca76c24877dd976728ad7a35d9fbd6b2853b4879"
+        }
+      ],
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    }
+  ],
+  "motion_analysis": {
+    "base": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-base-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 1082009,
+        "sha256": "0b789f9f377bdd526e3806ae20a55d43e57209664bcc5d0f0d2a5ef70c780d7f"
+      },
+      "captures": [
+        {
+          "scenario": "__none",
+          "frames": 200,
+          "duration_ms": 91009,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 834,
+            "cold_beer_sign": 1752,
+            "pool_ball_0": 470,
+            "pool_ball_1": 282,
+            "high_smoke_0": 67823,
+            "high_smoke_1": 67823,
+            "warm_glint_0": 21,
+            "warm_glint_1": 16,
+            "warm_glint_2": 24,
+            "warm_glint_3": 13,
+            "floor_glint_0": 2488,
+            "floor_glint_1": 3732,
+            "floor_glint_2": 3732,
+            "floor_glint_3": 2488,
+            "floor_glint_4": 2488,
+            "floor_glint_5": 3732,
+            "floor_glint_6": 3732
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "priority": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-priority-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 460670,
+        "sha256": "2f44c739c0d460fae1355b2de44d84a36245f34d8bbda962926035806a9fb86c"
+      },
+      "captures": [
+        {
+          "scenario": "bar_wake",
+          "frames": 40,
+          "duration_ms": 14936,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 28501,
+            "high_smoke_1": 28501,
+            "warm_glint_0": 16,
+            "warm_glint_1": 15,
+            "warm_glint_2": 9,
+            "warm_glint_3": 7,
+            "floor_glint_0": 2103,
+            "floor_glint_1": 1550,
+            "floor_glint_2": 1528,
+            "floor_glint_3": 1735,
+            "floor_glint_4": 2103,
+            "floor_glint_5": 1550,
+            "floor_glint_6": 1528
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        },
+        {
+          "scenario": "bar_payday_rush",
+          "frames": 40,
+          "duration_ms": 15172,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 28309,
+            "high_smoke_1": 28309,
+            "warm_glint_0": 16,
+            "warm_glint_1": 13,
+            "warm_glint_2": 16,
+            "warm_glint_3": 7,
+            "floor_glint_0": 2042,
+            "floor_glint_1": 2245,
+            "floor_glint_2": 1658,
+            "floor_glint_3": 1222,
+            "floor_glint_4": 2042,
+            "floor_glint_5": 2245,
+            "floor_glint_6": 1658
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "fight-lock": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-fight-lock-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 461306,
+        "sha256": "f18be984902474f3b9e3776a56e5b7e28809185949c4a7938c11295395c3c6e8"
+      },
+      "captures": [
+        {
+          "scenario": "bar_fight_night",
+          "frames": 40,
+          "duration_ms": 15076,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 29821,
+            "high_smoke_1": 29821,
+            "warm_glint_0": 15,
+            "warm_glint_1": 15,
+            "warm_glint_2": 9,
+            "warm_glint_3": 7,
+            "floor_glint_0": 3027,
+            "floor_glint_1": 2505,
+            "floor_glint_2": 2165,
+            "floor_glint_3": 1510,
+            "floor_glint_4": 3027,
+            "floor_glint_5": 2505,
+            "floor_glint_6": 2165
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        },
+        {
+          "scenario": "bar_lock_in",
+          "frames": 40,
+          "duration_ms": 15165,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 29513,
+            "high_smoke_1": 29513,
+            "warm_glint_0": 15,
+            "warm_glint_1": 16,
+            "warm_glint_2": 16,
+            "warm_glint_3": 7,
+            "floor_glint_0": 1695,
+            "floor_glint_1": 1229,
+            "floor_glint_2": 1116,
+            "floor_glint_3": 1644,
+            "floor_glint_4": 1695,
+            "floor_glint_5": 1229,
+            "floor_glint_6": 1116
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "other-scenarios": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-other-scenarios-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 691854,
+        "sha256": "4e417678a97a0856d74a527885930be019926c5b1659e2015bd610b5d64aa78d"
+      },
+      "captures": [
+        {
+          "scenario": "bar_darts_league_night",
+          "frames": 40,
+          "duration_ms": 15030,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1553,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 28356,
+            "high_smoke_1": 28356,
+            "warm_glint_0": 14,
+            "warm_glint_1": 13,
+            "warm_glint_2": 12,
+            "warm_glint_3": 7,
+            "floor_glint_0": 2427,
+            "floor_glint_1": 2047,
+            "floor_glint_2": 2424,
+            "floor_glint_3": 1791,
+            "floor_glint_4": 2427,
+            "floor_glint_5": 2047,
+            "floor_glint_6": 2424
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        },
+        {
+          "scenario": "bar_live_band",
+          "frames": 40,
+          "duration_ms": 14894,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 29502,
+            "high_smoke_1": 29502,
+            "warm_glint_0": 15,
+            "warm_glint_1": 13,
+            "warm_glint_2": 9,
+            "warm_glint_3": 7,
+            "floor_glint_0": 1862,
+            "floor_glint_1": 1448,
+            "floor_glint_2": 1528,
+            "floor_glint_3": 1883,
+            "floor_glint_4": 1862,
+            "floor_glint_5": 1448,
+            "floor_glint_6": 1528
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        },
+        {
+          "scenario": "bar_dead_tuesday",
+          "frames": 40,
+          "duration_ms": 14995,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 26054,
+            "high_smoke_1": 26054,
+            "warm_glint_0": 16,
+            "warm_glint_1": 15,
+            "warm_glint_2": 12,
+            "warm_glint_3": 7,
+            "floor_glint_0": 2629,
+            "floor_glint_1": 2070,
+            "floor_glint_2": 2232,
+            "floor_glint_3": 1806,
+            "floor_glint_4": 2629,
+            "floor_glint_5": 2070,
+            "floor_glint_6": 2232
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "wake-rm": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-wake-rm-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 187410,
+        "sha256": "ac327e322d50301008dbb0985819c708d0de2bf19e27bbedb4147755419a3b02"
+      },
+      "captures": [
+        {
+          "scenario": "bar_wake",
+          "frames": 32,
+          "duration_ms": 11481,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 0,
+            "cold_beer_sign": 0,
+            "pool_ball_0": 0,
+            "pool_ball_1": 0,
+            "high_smoke_0": 0,
+            "high_smoke_1": 0,
+            "warm_glint_0": 0,
+            "warm_glint_1": 0,
+            "warm_glint_2": 0,
+            "warm_glint_3": 0,
+            "floor_glint_0": 0,
+            "floor_glint_1": 0,
+            "floor_glint_2": 0,
+            "floor_glint_3": 0,
+            "floor_glint_4": 0,
+            "floor_glint_5": 0,
+            "floor_glint_6": 0
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "base-rm": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-base-rm-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 185976,
+        "sha256": "13f4914601f3906badbe9bc2f83db6997c650a5300740070dc72c9e4f7ff0215"
+      },
+      "captures": [
+        {
+          "scenario": "__none",
+          "frames": 32,
+          "duration_ms": 11479,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 0,
+            "cold_beer_sign": 0,
+            "pool_ball_0": 0,
+            "pool_ball_1": 0,
+            "high_smoke_0": 0,
+            "high_smoke_1": 0,
+            "warm_glint_0": 0,
+            "warm_glint_1": 0,
+            "warm_glint_2": 0,
+            "warm_glint_3": 0,
+            "floor_glint_0": 0,
+            "floor_glint_1": 0,
+            "floor_glint_2": 0,
+            "floor_glint_3": 0,
+            "floor_glint_4": 0,
+            "floor_glint_5": 0,
+            "floor_glint_6": 0
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    },
+    "restoration": {
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-restoration-analysis-01\\evidence\\bar-composite-motion.json",
+        "bytes": 273226,
+        "sha256": "f0b7dffc01c50c4917449acd94e9dc019490fb46dbc173966fc0a7755ee7a764"
+      },
+      "captures": [
+        {
+          "scenario": "__none",
+          "frames": 48,
+          "duration_ms": 17633,
+          "changed_pixels_by_source_region": {
+            "dive_sign": 712,
+            "cold_beer_sign": 1554,
+            "pool_ball_0": 436,
+            "pool_ball_1": 266,
+            "high_smoke_0": 34914,
+            "high_smoke_1": 34914,
+            "warm_glint_0": 16,
+            "warm_glint_1": 16,
+            "warm_glint_2": 16,
+            "warm_glint_3": 7,
+            "floor_glint_0": 2868,
+            "floor_glint_1": 2034,
+            "floor_glint_2": 2140,
+            "floor_glint_3": 2037,
+            "floor_glint_4": 2868,
+            "floor_glint_5": 2034,
+            "floor_glint_6": 2140
+          },
+          "limits": [
+            "Raw actual screenshot composite observations, no model, clock, scenario or alpha injection.",
+            "The full atlas mask can include moving actors and overlapping art. Conservative free masks exclude initial model and name envelopes with two CSS pixels of margin, not all future motion.",
+            "Scroll masks cover the translated source envelope rather than a single fixed alpha frame. Two smoke fields overlap; no per-field isolation claim.",
+            "Seven floor tracks share four lanes. Retrospective known-speed fitting is corroboration only.",
+            "Payday warm_glint_0 is naturally hidden by a live actor. ROI change is not background-glint visibility.",
+            "Observed screenshot extrema are samples, not exact mathematical peaks or minima."
+          ]
+        }
+      ]
+    }
+  },
+  "prior_four_retention": {
+    "gas": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-42\\evidence\\screen.png",
+        "bytes": 377818,
+        "sha256": "c2de05ce3233ce3e1cc12f12e8a20e4faef54a44bf37b60a419bed41fe1f5305"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-gas-retention-01\\evidence\\gas-regression.json",
+          "bytes": 1202,
+          "sha256": "b30edd6192547473ba4fe6ef8d39dd71d8aca78fc56e0d10cf5eb09fab8b5a1b"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "corner": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-44\\evidence\\screen.png",
+        "bytes": 503967,
+        "sha256": "3bad7ec7cabf975d18ecc8bdbbc95ed0d15d1cc365b90bae41dfe561d07c3c9c"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-corner-retention-01\\evidence\\corner-motion-metrics.json",
+          "bytes": 47483,
+          "sha256": "412f54c3b63bec2a96bf0c142c3926da20a0e6a455ba352215dc208f8e991089"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "back": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-46\\evidence\\screen.png",
+        "bytes": 783248,
+        "sha256": "17798b366d16dd703dcff07599926fa2e3971c885c63d738e861681f8766463b"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-back-retention-01\\evidence\\back-composite-motion.json",
+          "bytes": 63630,
+          "sha256": "754c32110965b3574a8bea2def4e0ed4a2607e145d7038604b79851248fefde8"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "motel": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-48\\evidence\\screen.png",
+        "bytes": 713965,
+        "sha256": "4980e23062303aa3c7d736678bc8a74e4651321a4902f64b93c22fc3dc6c87cf"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-motel-retention-01\\evidence\\motel-composite-motion.json",
+          "bytes": 109987,
+          "sha256": "d13298c81f29c25d6c25bd917075961081850e61bec20c16d6397451ad1b8892"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    }
+  },
+  "floor_speed_and_wrap": {
+    "evidence_directory": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-floor-analysis-01\\evidence",
+    "frames": 200,
+    "duration_ms": 91009,
+    "best_fit_matches": 7,
+    "scope": "Retrospective known-speed periodic-wrap corroboration; exact native timing remains separate."
+  },
+  "settings_and_framing": {
+    "wake_rm": [
+      33,
+      34
+    ],
+    "base_rm": [
+      36
+    ],
+    "restoration": [
+      38
+    ],
+    "selection_tooltip_camera": [
+      39
+    ],
+    "returned_room": [
+      40
+    ],
+    "action": "Selected book only; Open Book and outcomes were not clicked."
+  },
+  "save_isolation": {
+    "test_only": true,
+    "args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "mount": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test",
+    "fresh_profile": true,
+    "real_user_data_accessed": false
+  },
+  "resources": {
+    "cpu_rate": 1200,
+    "memory_cap_bytes": 2147483648,
+    "expected_write_bytes_per_run": 4294967296,
+    "reserve_bytes": 21474836480,
+    "assigned_before_resume": true,
+    "browser_independent_from_probe_jobs": true,
+    "browser": {
+      "kind": "browser",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence\\storage-manifest.json",
+      "gate_before_job": {
+        "E:\\CodexQA\\BTH": {
+          "probe": "E:\\CodexQA\\BTH",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-BAR-WEB-20261114": {
+          "probe": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-BAR-WEB-20261114",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\appdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\appdata",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\localappdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\localappdata",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\cache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\cache",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\save_dir": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\save_dir",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\pycache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\pycache",
+          "available_bytes": 255796314112
+        }
+      },
+      "cleanup_errors": [],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "controlled_environment": {
+        "TEMP": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp",
+        "TMP": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp",
+        "APPDATA": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\appdata",
+        "LOCALAPPDATA": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\localappdata",
+        "USERPROFILE": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home",
+        "HOME": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home",
+        "BTH_QA_PROFILE_DIR": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile",
+        "BTH_QA_EVIDENCE_DIR": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence"
+      },
+      "command": [
+        "C:\\Users\\theep\\AppData\\Local\\ms-playwright\\chromium-1243\\chrome-win64\\chrome.exe",
+        "--headless=new",
+        "--remote-debugging-port=0",
+        "--user-data-dir=E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile",
+        "--disk-cache-dir=E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\cache",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--window-size=1280,720",
+        "about:blank"
+      ],
+      "gate_before_child": {
+        "E:\\CodexQA\\BTH": {
+          "probe": "E:\\CodexQA\\BTH",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-BAR-WEB-20261114": {
+          "probe": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-BAR-WEB-20261114",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\profile",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\temp",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\evidence",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\appdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\appdata",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\localappdata": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\localappdata",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\home",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\cache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\cache",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\save_dir": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\save_dir",
+          "available_bytes": 255796314112
+        },
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\pycache": {
+          "probe": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-browser\\pycache",
+          "available_bytes": 255796314112
+        }
+      },
+      "pid": 19172,
+      "assigned_before_resume": true,
+      "phase_resource_samples": [
+        {
+          "probe": 0,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 17.609375,
+          "active_processes": 13
+        },
+        {
+          "probe": 1,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 26.671875,
+          "active_processes": 11
+        },
+        {
+          "probe": 2,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 38.25,
+          "active_processes": 11
+        },
+        {
+          "probe": 3,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 43.703125,
+          "active_processes": 11
+        },
+        {
+          "probe": 4,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 54.046875,
+          "active_processes": 11
+        },
+        {
+          "probe": 5,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 72.015625,
+          "active_processes": 11
+        },
+        {
+          "probe": 6,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 193.84375,
+          "active_processes": 11
+        },
+        {
+          "probe": 7,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 195.5625,
+          "active_processes": 11
+        },
+        {
+          "probe": 8,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 222.453125,
+          "active_processes": 11
+        },
+        {
+          "probe": 9,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 241.90625,
+          "active_processes": 11
+        },
+        {
+          "probe": 10,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 290.171875,
+          "active_processes": 11
+        },
+        {
+          "probe": 11,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 293.578125,
+          "active_processes": 11
+        },
+        {
+          "probe": 12,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 320.84375,
+          "active_processes": 11
+        },
+        {
+          "probe": 13,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 375.03125,
+          "active_processes": 11
+        },
+        {
+          "probe": 14,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 378.796875,
+          "active_processes": 11
+        },
+        {
+          "probe": 15,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 429.984375,
+          "active_processes": 11
+        },
+        {
+          "probe": 16,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 486.625,
+          "active_processes": 11
+        },
+        {
+          "probe": 17,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 490.171875,
+          "active_processes": 11
+        },
+        {
+          "probe": 18,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 520.59375,
+          "active_processes": 11
+        },
+        {
+          "probe": 19,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 569.015625,
+          "active_processes": 11
+        },
+        {
+          "probe": 20,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 572.703125,
+          "active_processes": 11
+        },
+        {
+          "probe": 21,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 596.78125,
+          "active_processes": 11
+        },
+        {
+          "probe": 22,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 649.96875,
+          "active_processes": 11
+        },
+        {
+          "probe": 23,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 653.671875,
+          "active_processes": 11
+        },
+        {
+          "probe": 24,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 670.078125,
+          "active_processes": 11
+        },
+        {
+          "probe": 25,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 723.8125,
+          "active_processes": 11
+        },
+        {
+          "probe": 26,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 727.078125,
+          "active_processes": 11
+        },
+        {
+          "probe": 27,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 771.828125,
+          "active_processes": 11
+        },
+        {
+          "probe": 28,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 827.953125,
+          "active_processes": 11
+        },
+        {
+          "probe": 29,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 831.296875,
+          "active_processes": 11
+        },
+        {
+          "probe": 30,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 871.875,
+          "active_processes": 11
+        },
+        {
+          "probe": 31,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 897.375,
+          "active_processes": 11
+        },
+        {
+          "probe": 32,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 912.546875,
+          "active_processes": 11
+        },
+        {
+          "probe": 33,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 947.0625,
+          "active_processes": 11
+        },
+        {
+          "probe": 34,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 948.84375,
+          "active_processes": 11
+        },
+        {
+          "probe": 35,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 968.1875,
+          "active_processes": 11
+        },
+        {
+          "probe": 36,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1002.609375,
+          "active_processes": 11
+        },
+        {
+          "probe": 37,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1008.09375,
+          "active_processes": 11
+        },
+        {
+          "probe": 38,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1162.75,
+          "active_processes": 11
+        },
+        {
+          "probe": 39,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1186.21875,
+          "active_processes": 11
+        },
+        {
+          "probe": 40,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1204.234375,
+          "active_processes": 11
+        },
+        {
+          "probe": 41,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1214.640625,
+          "active_processes": 11
+        },
+        {
+          "probe": 42,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1255.90625,
+          "active_processes": 11
+        },
+        {
+          "probe": 43,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1273.375,
+          "active_processes": 11
+        },
+        {
+          "probe": 44,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1302.84375,
+          "active_processes": 11
+        },
+        {
+          "probe": 45,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1308.375,
+          "active_processes": 11
+        },
+        {
+          "probe": 46,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1334.1875,
+          "active_processes": 11
+        },
+        {
+          "probe": 47,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1336.171875,
+          "active_processes": 11
+        },
+        {
+          "probe": 48,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1361.5625,
+          "active_processes": 11
+        },
+        {
+          "probe": 49,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1408.8125,
+          "active_processes": 11
+        },
+        {
+          "probe": 50,
+          "peak_job_memory_bytes": 1963638784,
+          "cpu_seconds": 1409.15625,
+          "active_processes": 9
+        }
+      ],
+      "peak_job_memory_bytes": 1963638784,
+      "cpu_seconds": 1409.21875,
+      "active_at_release": 0,
+      "exit_code": 0
+    },
+    "jobs": [
+      {
+        "run": "BTH-ENVART-BARWEB-back-retention-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-back-retention-01\\evidence\\job.json",
+          "bytes": 7688,
+          "sha256": "3907e022427deb9bde623978c33f11a8c561ea490e6801c4e694246fc10a4dcc"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 46768128,
+          "cpu_seconds": 1.0625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-base-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-base-analysis-01\\evidence\\job.json",
+          "bytes": 7526,
+          "sha256": "b67e4fb76c092a14ff9b48cce1134d7b06ad50e826961abcddc0ef6292bcfec0"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 596008960,
+          "cpu_seconds": 6.421875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-base-rm-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-base-rm-analysis-01\\evidence\\job.json",
+          "bytes": 7685,
+          "sha256": "4cadd521e7108382e95a8ca1caa987fd3c5d47c94076036d051038f311a13428"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 593154048,
+          "cpu_seconds": 1.578125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-bound-stage-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-bound-stage-01\\evidence\\job.json",
+          "bytes": 8949,
+          "sha256": "67a751a9c01ebdca18dd45c9caeff79af55c3c0df2eed336086601c958ea6bd6"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 20062208,
+          "cpu_seconds": 0.4375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-corner-retention-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-corner-retention-01\\evidence\\job.json",
+          "bytes": 7673,
+          "sha256": "dfbda5ce1f0242e3b17565a1b65d02c58a9391837562c1e00a1352c862e84fe7"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 40165376,
+          "cpu_seconds": 1.15625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-fight-lock-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-fight-lock-analysis-01\\evidence\\job.json",
+          "bytes": 7938,
+          "sha256": "6922abd1f3f8aa684e965a3cd6f898fc9901829a575d3245db02f443269a0fd2"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 595542016,
+          "cpu_seconds": 2.859375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-final-identity-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-identity-01\\evidence\\job.json",
+          "bytes": 7580,
+          "sha256": "2c8cae078c5bc71687723dfc6a0a4cee66e85496601c14cc76b344727733cd2e"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 27287552,
+          "cpu_seconds": 1.203125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-final-summary-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-summary-01\\evidence\\job.json",
+          "bytes": 7437,
+          "sha256": "b58c582622e813ba415eb060927e81384d67e986f6b0e11bef0ca689acaa9bee"
+        },
+        "exit_code": 1,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 23834624,
+          "cpu_seconds": 1.375,
+          "active_at_release": 0
+        },
+        "natural_exit": false
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-floor-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-floor-analysis-01\\evidence\\job.json",
+          "bytes": 7582,
+          "sha256": "73e551099717ba0b44ae55d3e5f92fe9c86cda16bae5328044182d4c7dcfd2ac"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 795291648,
+          "cpu_seconds": 10.953125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-gas-retention-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-gas-retention-01\\evidence\\job.json",
+          "bytes": 7511,
+          "sha256": "bd23d2ef5da85ed8ef1ac37bd50dc920b7406271f0a6a2a37ee804c5e08af787"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 38674432,
+          "cpu_seconds": 2.109375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-motel-retention-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-motel-retention-01\\evidence\\job.json",
+          "bytes": 7732,
+          "sha256": "c08981772a882425e64773aa1b3d457d6d932b4f3ad2c9a548fa346f4b42a067"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 582475776,
+          "cpu_seconds": 1.515625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-other-scenarios-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-other-scenarios-analysis-01\\evidence\\job.json",
+          "bytes": 8297,
+          "sha256": "27148ded97b3781264ade5de20702622307ec0f6c0e4597294a648c03d210c5f"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 597413888,
+          "cpu_seconds": 4.0625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-preparation-summary-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-preparation-summary-01\\evidence\\job.json",
+          "bytes": 8821,
+          "sha256": "37089a7abc2b2d7f645ee0f7f4654fa98d9fabafdb9fe86473dfa3f7ef31d53b"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 21585920,
+          "cpu_seconds": 0.28125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-prepare-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-prepare-01\\evidence\\job.json",
+          "bytes": 13204,
+          "sha256": "7c298b39237795d0ed88245511b6464513514da425a1aee527eff6cadf649598"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {},
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-prepare-02",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-prepare-02\\evidence\\job.json",
+          "bytes": 9228,
+          "sha256": "0f2cff5f0cc1f4e433cce80020fa834edf70b7f8ac65df86769e383db00e8e8a"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {},
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-priority-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-priority-analysis-01\\evidence\\job.json",
+          "bytes": 7826,
+          "sha256": "215047d63c70147146333c6050ff116803c0aa36f5dc52d2f468b952cdc163b8"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 596176896,
+          "cpu_seconds": 2.9375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-probe-syntax-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-probe-syntax-01\\evidence\\job.json",
+          "bytes": 7337,
+          "sha256": "02771901c5ee88013e60afc69a628defbf5daf209f8ded74fbe469136c0a0eb7"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 29122560,
+          "cpu_seconds": 0.046875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-restoration-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-restoration-analysis-01\\evidence\\job.json",
+          "bytes": 7879,
+          "sha256": "650440dd601d04d0566608432694d022da1a1aa019a7de32347e98e97abcb272"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 592474112,
+          "cpu_seconds": 1.96875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-retention-inputs-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-retention-inputs-01\\evidence\\job.json",
+          "bytes": 9222,
+          "sha256": "6ce00a79ffc4fccc02f52cc2e910cec6ebc7bd862bb26248bc6d0caff5f39a79"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 20545536,
+          "cpu_seconds": 0.203125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-smoke-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-smoke-analysis-01\\evidence\\job.json",
+          "bytes": 10065,
+          "sha256": "fb21c3999c95a291cb0df4cd2023d56175215078cb6cdd52d8e62140484c94cc"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 760360960,
+          "cpu_seconds": 3.875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-source-bind-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-source-bind-01\\evidence\\job.json",
+          "bytes": 10426,
+          "sha256": "a11778d1e76f46b2dae9cfbd418e95ce08de218de6a55ba5d598e817d6bb0f9e"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 61034496,
+          "cpu_seconds": 1.296875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB-wake-rm-analysis-01",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-wake-rm-analysis-01\\evidence\\job.json",
+          "bytes": 7687,
+          "sha256": "7734c2a4b4897cbfa31cc09e225df784dc7613007f514e3f39828a91fa7089a3"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 592924672,
+          "cpu_seconds": 1.5625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-0",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-0\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "f3205e54abce6efbcda449b3a49b1641eadfd1fde22363e9491a830f6a513450"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147468288,
+          "cpu_seconds": 0.53125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-1",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-1\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "bacfd0fc92dee4735313239d9f40fc4a1d5007cf662ba547006a8ac462c2247c"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 142393344,
+          "cpu_seconds": 0.453125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-10",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-10\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "c665f33783aaecdd6eeeaf7b01387ec18b5d291c186bd135d98ff444bbaee998"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 143949824,
+          "cpu_seconds": 1.328125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-11",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-11\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "90d35876e960b70e1b1480a86169c7ed6766e3486f2cf81333e326f28c05a5d4"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147361792,
+          "cpu_seconds": 0.453125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-12",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-12\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "2a78ee9ed6eabb8b2c07f42b08ed258c1d642ce13c206f9212fa2a643593f177"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 157151232,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-13",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-13\\evidence\\job.json",
+          "bytes": 7235,
+          "sha256": "85e07722b46dc5f6432f480f38c1639a544ce08b198f9e062674b4333d17b18b"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144199680,
+          "cpu_seconds": 1.5625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-14",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-14\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "ea13533b2392d6acc97e11cf7b804747b9c6be7bbcb49f6f7d2f640a796619e0"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 155164672,
+          "cpu_seconds": 0.453125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-15",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-15\\evidence\\job.json",
+          "bytes": 7230,
+          "sha256": "1408e5347df8365c41e3178eecc508861e7a0479d940e3b1c376716182238f6e"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 155394048,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-16",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-16\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "4b1f8de84639de557a325429e5b72f6126aef6b2495660acc7f4c0a568648291"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144269312,
+          "cpu_seconds": 1.765625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-17",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-17\\evidence\\job.json",
+          "bytes": 7234,
+          "sha256": "0c2b1c2ee7fa2e8d1d0f5a6557b088b5a063d07497c2fa41eaaec249ee32043f"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 154501120,
+          "cpu_seconds": 0.375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-18",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-18\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "41670bc76fa1c4e4c4c5e0a1b7e709247cda2ff0738db92ed2f73f2a4857ed82"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153169920,
+          "cpu_seconds": 0.453125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-19",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-19\\evidence\\job.json",
+          "bytes": 7235,
+          "sha256": "f27f09d186fb3419693228d81e9b8832ea8568a33e676b7f448ef5e3a4cf057b"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153890816,
+          "cpu_seconds": 1.5625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-2",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-2\\evidence\\job.json",
+          "bytes": 7181,
+          "sha256": "c43c644be9da093238416ca21299e5fa183a5c2e6842dafa4f06b5196d7ac3ed"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 143609856,
+          "cpu_seconds": 0.46875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-20",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-20\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "fbd7c32e1890f0a0511c2abab39db1b1a18cefa8c3930f58691d8600af7a0d44"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 154353664,
+          "cpu_seconds": 0.46875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-21",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-21\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "c5b38a8f606ced3ad85d39dcaa652a9858724409333552a593c70abb38639fe3"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 152596480,
+          "cpu_seconds": 0.515625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-22",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-22\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "b3f63054a78f42252b8711c3c3288f184f2fdf54106ff45bb3f06930b5fed6a4"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 154435584,
+          "cpu_seconds": 1.671875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-23",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-23\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "416bf5bdcd5f34254d404443d05b59f067ecc95cb4511b8639e3bc0b1268598a"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 155140096,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-24",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-24\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "2ce317d6022f0b0f5867f8bf4e2a4482b50428ce217e1733e440b0463b1272f3"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153362432,
+          "cpu_seconds": 0.46875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-25",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-25\\evidence\\job.json",
+          "bytes": 7232,
+          "sha256": "722075ccf45787ae762bccad681b525290fefbcfad03653232f0e5a44f8945a1"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 148127744,
+          "cpu_seconds": 1.25,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-26",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-26\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "f75168ff6c71d68ed8d5ec46a0112319bf04a9538759ef19dca6832495448335"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153726976,
+          "cpu_seconds": 0.40625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-27",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-27\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "52487a49626aceeac3060f84504ff40fbedd48988e3b0e10a51219518db773ba"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 149995520,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-28",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-28\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "f116b813116a8175e451bc7274e55086cbed447350e3b477aaf9e0a1e046a2be"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 160423936,
+          "cpu_seconds": 1.578125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-29",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-29\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "31af58d64ef75fe8541dd7156a41b5b8552307dcfdde183c30ba4dbb68222ec9"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153268224,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-3",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-3\\evidence\\job.json",
+          "bytes": 7183,
+          "sha256": "b092de182de385b0ed7f3aba4a7e443037f193f008288299901c3b0eff16319b"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 142721024,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-30",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-30\\evidence\\job.json",
+          "bytes": 7235,
+          "sha256": "b5e8f18934db7e4a23fd24aedb7b5d724d7bca1374cb457ea6336c0b4e436312"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 150876160,
+          "cpu_seconds": 0.515625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-31",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-31\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "b66083d9069c5886e8b00eb1477d7dd395ee4a9a1949b9456354c785907cee6b"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144912384,
+          "cpu_seconds": 0.578125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-32",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-32\\evidence\\job.json",
+          "bytes": 7234,
+          "sha256": "faec890de33cfb383c8f5c21a322e0029c74db2fbadb1d40c92816745134d4fe"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147316736,
+          "cpu_seconds": 0.5625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-33",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-33\\evidence\\job.json",
+          "bytes": 7232,
+          "sha256": "322bc6cdb573366d4f2ec054bf99abc635455baa79d270c17f611725b4db0a04"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 192958464,
+          "cpu_seconds": 1.25,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-34",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-34\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "4fcfbaa67c400538883c171337fe648f1a9d9ef544bf5787101a2efe4de54795"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 154525696,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-35",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-35\\evidence\\job.json",
+          "bytes": 7234,
+          "sha256": "9950e577c652b36efe9814123372e4f4a23aa94236ccd9fd8ffa4208e2367be1"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 151547904,
+          "cpu_seconds": 0.4375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-36",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-36\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "4018446fe3f8d364b9ee9823880b39055aaecfc2c13d3535b522f189df1ab07d"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 149168128,
+          "cpu_seconds": 1.390625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-37",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-37\\evidence\\job.json",
+          "bytes": 7232,
+          "sha256": "4a2ac804cd1a21c70d73844a10250e50437bb168d307837fca78d2895db3cb84"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147439616,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-38",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-38\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "13d28f91b57338446c6c90b383b15a27c2a4cf955a47baef90d66c547ac34f61"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 200695808,
+          "cpu_seconds": 1.59375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-39",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-39\\evidence\\job.json",
+          "bytes": 7231,
+          "sha256": "2458b67132816a3e0d77307c254b39953032e5bf2e0f7439d15ae5eb627e1146"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 186318848,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-4",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-4\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "e9e011c6ffd22b6014373c0ea38d5c0bd1d5b235a42263b31a83308604798e22"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 146432000,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-40",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-40\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "31a5490e1d6f05b2d5bbdabcb3dc976be53f947b6652296780c0414e2fbc5cdd"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 153022464,
+          "cpu_seconds": 0.484375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-41",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-41\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "2151bfd62544e48f3e9e4d7bb351244b2a170229fac7a2fe132a920292d9b2d0"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 185430016,
+          "cpu_seconds": 0.53125,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-42",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-42\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "af196b4cfa5e4448d1a31a4a03d646c7f20287d0a57a856b5d8fc95bc2ede810"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144293888,
+          "cpu_seconds": 0.921875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-43",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-43\\evidence\\job.json",
+          "bytes": 7235,
+          "sha256": "f743a8ac500ccb176d00deb42cdc8ca0f5ebb3db4db2225408963e004bd15d9e"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 185253888,
+          "cpu_seconds": 0.5625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-44",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-44\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "20b4ba1f1549a362f229c342dc198e8e412fdce75cee5bb57072739ce0c7d289"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 143810560,
+          "cpu_seconds": 0.921875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-45",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-45\\evidence\\job.json",
+          "bytes": 7232,
+          "sha256": "40700a4fa5925ee1dbe8b5a910954a19799ac1453ada0109a404918ff246c021"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 186019840,
+          "cpu_seconds": 0.5,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-46",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-46\\evidence\\job.json",
+          "bytes": 7232,
+          "sha256": "57be20f765e91f072a08ae0558e2fc9a191c14e388e12afbc792d238f3b8b362"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 148029440,
+          "cpu_seconds": 1.5,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-47",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-47\\evidence\\job.json",
+          "bytes": 7237,
+          "sha256": "c33e4fa2dc9b2f7ef273a4979ea5ec2b9248900fd0f3b2d4ebd6f8b478bfbda4"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 185634816,
+          "cpu_seconds": 0.546875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-48",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-48\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "f15487982021a244e5b539393462d547445f041f091b65cc33be50c81b92232a"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144998400,
+          "cpu_seconds": 1.21875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-49",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-49\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "3249955702f221dcfbfd84377602d318d1b839af64aefefb6d4a1ec2b7877fae"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 141819904,
+          "cpu_seconds": 0.40625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-5",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-5\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "809933b00df02e071c774382c4f592a72e8b351b7e53d1b83c0278bc0e25043e"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147537920,
+          "cpu_seconds": 0.40625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-50",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-50\\evidence\\job.json",
+          "bytes": 7236,
+          "sha256": "5bd7657e9e7bbb11b088ae43e19ca9d68094eba2e36a38b67359ad9dd8109cdd"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 147738624,
+          "cpu_seconds": 0.46875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-6",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-6\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "9338c377e917ec39fb2fd544e210c7a3b077225d893b09f6d83a17074fad739c"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 221278208,
+          "cpu_seconds": 6.34375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-7",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-7\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "edc04ec8aa09166c9e164743d464a3cc4e8b579b0d7bdc91219d2a6180257719"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 142393344,
+          "cpu_seconds": 0.421875,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-8",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-8\\evidence\\job.json",
+          "bytes": 7182,
+          "sha256": "a0870b2fdc5da80593de143f4427ed780fb6f13a4b5f39f2e3d660e309ab0684"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 144019456,
+          "cpu_seconds": 0.390625,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      },
+      {
+        "run": "BTH-ENVART-BARWEB01-probe-9",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-9\\evidence\\job.json",
+          "bytes": 7183,
+          "sha256": "0dd6290fefe60fb9e8558e07d5fbeed5570bfb4720aee48f2148019f23515f1a"
+        },
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "cleanup_errors": [],
+        "resources": {
+          "peak_job_memory_bytes": 142635008,
+          "cpu_seconds": 0.359375,
+          "active_at_release": 0
+        },
+        "natural_exit": true
+      }
+    ]
+  },
+  "browser_closure": {
+    "natural_exit": true,
+    "forced_termination": false,
+    "basis": "Browser.close completed in probe50; process was already exited0 before supervisor finally, so raw receipt omits forced_owned_termination. Owned job drained to0, cleanup empty."
+  },
+  "diagnostic_failures_preserved": [
+    {
+      "run": "BTH-ENVART-BARWEB-final-summary-01",
+      "receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-summary-01\\evidence\\job.json",
+        "bytes": 7437,
+        "sha256": "b58c582622e813ba415eb060927e81384d67e986f6b0e11bef0ca689acaa9bee"
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "resources": {
+        "peak_job_memory_bytes": 23834624,
+        "cpu_seconds": 1.375,
+        "active_at_release": 0
+      },
+      "natural_exit": false
+    }
+  ],
+  "console_messages": [
+    {
+      "run": "BTH-ENVART-BARWEB01-probe-0",
+      "message": {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "location": {
+          "url": "https://192.168.0.36:8443/favicon.ico",
+          "line": 0,
+          "column": 0,
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    },
+    {
+      "run": "BTH-ENVART-BARWEB01-probe-0",
+      "message": {
+        "type": "log",
+        "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org",
+        "location": {
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/index.js",
+          "line": 558,
+          "column": 15,
+          "lineNumber": 558,
+          "columnNumber": 15
+        }
+      }
+    },
+    {
+      "run": "BTH-ENVART-BARWEB01-probe-0",
+      "message": {
+        "type": "log",
+        "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL",
+        "location": {
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/index.js",
+          "line": 558,
+          "column": 15,
+          "lineNumber": 558,
+          "columnNumber": 15
+        }
+      }
+    },
+    {
+      "run": "BTH-ENVART-BARWEB01-probe-0",
+      "message": {
+        "type": "log",
+        "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support.",
+        "location": {
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/index.js",
+          "line": 558,
+          "column": 15,
+          "lineNumber": 558,
+          "columnNumber": 15
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Only actual Environment Library initial Base and all seven current Bar scenarios were exercised. The 58 native model contexts are not Web UI outcome, save or revisit E2E.",
+    "LAYOUT-SURVEY-QA is the sole seed. No clock, scenario, model, animation alpha, or hidden-state injection. Automatic initial scenario narration is not a manually exercised outcome.",
+    "Source masks are meaningful emitted-pixel composite observations, not isolated per-entry proof. Smoke fields overlap; seven floor tracks share four lanes. Native source-authoritative single-entry tests supply isolation and exact timing.",
+    "Conservative free masks exclude initial source model/name envelopes, not every future actor position. Temporal low-range smoke filtering is declared diagnostic selection, not independent isolation.",
+    "Payday warm_glint_0 is naturally covered by tray on 38 of 40 source support pixels; two residual pixels are not meaningful visibility. ROI changes do not establish hidden background-glint visibility.",
+    "Darts scorer/exit labels overlap by 33.8001 x 15 board pixels in unchanged pre-art source: scorer [683.2001,307,81.6,15], exit [731,304,126,26]. Lock-In live names also overlap in the baseline. No universal unobstructed-name claim.",
+    "Probe 4 is early arrival Base1280 evidence only; settled probe6 is the final1280 counter/name framing proof.",
+    "Screenshot extrema are observed samples, not mathematical minima or peaks. Seven known-speed fits corroborate motion/wrap and are not isolated speed measurement.",
+    "Read-only verifier did not change source, site, audience, primary worktree, real saves or user profiles. NEXT pointer independently checked; main/source/site/audience preservation remains integrator-owned evidence.",
+    "Fresh disposable TEST persistence was observed only; real user saves were never read, copied or migrated. No claim of save/revisit E2E.",
+    "Raw frame acquisition outputs are retained at indexed E paths and SHA256-bound separately. Source ZIP includes all code, art/union inputs, masks, commands, expected identities, measurements and diagnostics, not browser profiles or raw IndexedDB records.",
+    "Final-summary01 packaging failed because its assertion expected game arguments even in close-probe50 after deliberate unload. Actual game-phase arguments and TEST isolation passed. The original script and failed receipt/log are preserved; the packaging phase check was corrected without rerunning browser captures."
+  ],
+  "screenshot_index": "raw-capture-sha256.json",
+  "source_archive": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-summary-02\\evidence\\bar-r4-web-proof-source.zip",
+    "bytes": 4983838,
+    "sha256": "74cb3c2027c3bc3483ff3121344da7ddb6801e2934ba64794aa7405862db0043",
+    "entries": 1104
+  },
+  "public_copy_note": {
+    "original_report_sha256": "02b4c2ed15fd345688857e5f94db933be75ceb8abfd3802e157b062604e2b1c3",
+    "omitted_metadata_paths": [
+      ".director_visual_gate.source"
+    ],
+    "scope": "Attachment/delegation routing metadata omitted and public JSON serialized with LF line endings; technical claims, images, masks and artifact bytes unchanged."
+  }
+}

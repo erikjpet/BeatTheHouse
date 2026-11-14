@@ -1,0 +1,417 @@
+{
+  "status": "PASS_EXACT_BAR_R4_TEST_DELIVERY",
+  "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+  "source_tree": "9177cde65e14f2418a90760c1a56509c4b5d9a1f",
+  "source_archive_sha256": "6ed801b6150ca775bc9f92ac9dfe136aaf16bd40fb821d77e37da3ab2195b9c1",
+  "package_id": "bar-v1-r4",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "native_audit_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+    "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39"
+  },
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/9ac963f185afbc5c54c604e5f68e8111f598d997/index.html",
+  "build_manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+  "html_sha256": "3f111daee02ff5c63df896a989dfe990fe3754c27b9df099e928355c53a07356",
+  "pck_sha256": "c9bc7c1c47a43dd1cd8dd99241146d45eeddefbe6296ec0d91a17dc653723dc0",
+  "embedded_manifest_sha256": "7d6cbdbac9112af4600318bd931afd1d20f854b15a735eba1535278a31222169",
+  "embedded_manifest_md5": "03064c81d2f0a6b0bf49caf3b529e2ec",
+  "source_art_files_verified": 83,
+  "compiled_art_textures_verified": 77,
+  "prior_four_room_compiled_unchanged": 60,
+  "pck_content_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/background.png-073ced750c057b8110ceb89e250ef71b.ctex",
+      ".godot/imported/bar_main_counter.png-ab6d24f96e3d50dc51bf4886933c6b8c.ctex",
+      ".godot/imported/cold_beer_sign.png-69e68abe07f899370a6eaad6f580e079.ctex",
+      ".godot/imported/dive_sign.png-af4de32c8b7086bb57ec4a2d3a2b5b2c.ctex",
+      ".godot/imported/floor_glint_0.png-c00b42291cbb8e07461e489135cfa01b.ctex",
+      ".godot/imported/floor_glint_1.png-7eacbc40c037509f03f43b2e4478ad8c.ctex",
+      ".godot/imported/floor_glint_2.png-d4f27568bfe33b5147ac5562f466ad51.ctex",
+      ".godot/imported/floor_glint_3.png-bc6c7d63b2f1010747ef4643842dd10d.ctex",
+      ".godot/imported/floor_glint_4.png-bb5c8a9fc97a12fc989f853e7082135b.ctex",
+      ".godot/imported/floor_glint_5.png-62bc62a5cf06b61f99ac49f11c2e459e.ctex",
+      ".godot/imported/floor_glint_6.png-952fe8a105ba1c9792745f3bf63e5af9.ctex",
+      ".godot/imported/high_smoke_0.png-b90a6728f6b93eca98b5ee8e60ee2f0c.ctex",
+      ".godot/imported/high_smoke_1.png-e0c6f263fe2a6cb7970db5c6c7adcd15.ctex",
+      ".godot/imported/pool_ball_0.png-4755945c357431d1effc5451af7283ad.ctex",
+      ".godot/imported/pool_ball_1.png-9346ce9f31aaf4d3778cb77368305afc.ctex",
+      ".godot/imported/timber_reflection.png-abb058b9c6a2577f9dfcb5c25c27d4ae.ctex",
+      ".godot/imported/warm_glint.png-561d03bab29f938f72799d576a31d0a7.ctex",
+      "assets/art/environments/bar/anim/cold_beer_sign.png.import",
+      "assets/art/environments/bar/anim/dive_sign.png.import",
+      "assets/art/environments/bar/anim/floor_glint_0.png.import",
+      "assets/art/environments/bar/anim/floor_glint_1.png.import",
+      "assets/art/environments/bar/anim/floor_glint_2.png.import",
+      "assets/art/environments/bar/anim/floor_glint_3.png.import",
+      "assets/art/environments/bar/anim/floor_glint_4.png.import",
+      "assets/art/environments/bar/anim/floor_glint_5.png.import",
+      "assets/art/environments/bar/anim/floor_glint_6.png.import",
+      "assets/art/environments/bar/anim/high_smoke_0.png.import",
+      "assets/art/environments/bar/anim/high_smoke_1.png.import",
+      "assets/art/environments/bar/anim/pool_ball_0.png.import",
+      "assets/art/environments/bar/anim/pool_ball_1.png.import",
+      "assets/art/environments/bar/anim/timber_reflection.png.import",
+      "assets/art/environments/bar/anim/warm_glint.png.import",
+      "assets/art/environments/bar/background.png.import",
+      "assets/art/environments/bar/counters/bar_main_counter.png.import",
+      "data/art/environments/bar.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1434
+  },
+  "python_unit_tests": {
+    "passed": 272,
+    "duration_seconds": 44.896,
+    "job": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-python-tests-01\\evidence\\job.json"
+  },
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "normal_save_paths_changed": false,
+  "main_next_commit_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "previous_173_immutable_preserved": true,
+  "site_audience_and_config_unchanged": true,
+  "receipts": {
+    "served_identity": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-served-verify-01\\evidence\\served-proof.json",
+    "served_identity_sha256": "7e06a7cd60c9ac937afae2e4c06c9ae3069e7c4fbd498cd615e845d0e2569a04",
+    "pck_linkage": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-web-finalize-01\\evidence\\art-source-import-pck-linkage.json",
+    "pck_linkage_sha256": "872308f7104e329c140ed63fa8fae7ec73f3571d1c9e7385e37c94f9c3f09fea",
+    "publication": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-publication-01\\evidence\\publication.json"
+  },
+  "host_editor_log_disposition": {
+    "bar-web-import-01": {
+      "job": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-web-import-01\\evidence\\job.json",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "known_error_forms": [
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND",
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.",
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'."
+      ],
+      "disposition": "Windows host editor snapshot has only the qualified Web WASM; missing desktop DLL messages are expected. No script/art errors. Actual Web runtime judged separately."
+    },
+    "bar-web-export-01": {
+      "job": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-web-export-01\\evidence\\job.json",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "known_error_forms": [
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND",
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.",
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'."
+      ],
+      "disposition": "Windows host editor snapshot has only the qualified Web WASM; missing desktop DLL messages are expected. No script/art errors. Actual Web runtime judged separately."
+    }
+  },
+  "github_combined_statuses": [],
+  "github_ci_scope": "No combined statuses returned; no hosted-CI success claim.272 local tooling tests pass.",
+  "browser_proof": {
+    "source": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-summary-02\\evidence\\bar-r4-served-web-qa.json",
+    "original_sha256": "02b4c2ed15fd345688857e5f94db933be75ceb8abfd3802e157b062604e2b1c3",
+    "public_copy": "docs/testing/bar_r4_served_browser_proof.json",
+    "public_copy_sha256": "20f10b3f38693a6f31d4c413df3d798d25ec215638a86330ecc1ca291ab261f6"
+  },
+  "director_final_served_visual_gate": {
+    "status": "FINAL_SCOPED_SERVED_VISUAL_GO",
+    "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "verbatim": "FINAL scoped served visual GO for exact9ac963f1 / Bar R4. Personally reviewed Base+ALL7 initial cases at1280/1920; raw DIVE039/016 and high-mirror181/067 samples; supported Wake RM33/34, Base RM36, restoration38; actual selection39/returned framing40. Crispness, fixed furniture/fronts, local materials and both bounded contrast fixes hold. Retain native Payday glint coverage and pre-art Darts/Lock live-label limits; no universal unobstructed-name or outcome/save/revisit E2E claim. Bind this visual gate to final streamed exact identity, retention and clean closure."
+  },
+  "limits": [
+    "Only actual Environment Library initial Base and all seven current Bar scenarios were exercised. The 58 native model contexts are not Web UI outcome, save or revisit E2E.",
+    "LAYOUT-SURVEY-QA is the sole seed. No clock, scenario, model, animation alpha, or hidden-state injection. Automatic initial scenario narration is not a manually exercised outcome.",
+    "Source masks are meaningful emitted-pixel composite observations, not isolated per-entry proof. Smoke fields overlap; seven floor tracks share four lanes. Native source-authoritative single-entry tests supply isolation and exact timing.",
+    "Conservative free masks exclude initial source model/name envelopes, not every future actor position. Temporal low-range smoke filtering is declared diagnostic selection, not independent isolation.",
+    "Payday warm_glint_0 is naturally covered by tray on 38 of 40 source support pixels; two residual pixels are not meaningful visibility. ROI changes do not establish hidden background-glint visibility.",
+    "Darts scorer/exit labels overlap by 33.8001 x 15 board pixels in unchanged pre-art source: scorer [683.2001,307,81.6,15], exit [731,304,126,26]. Lock-In live names also overlap in the baseline. No universal unobstructed-name claim.",
+    "Probe 4 is early arrival Base1280 evidence only; settled probe6 is the final1280 counter/name framing proof.",
+    "Screenshot extrema are observed samples, not mathematical minima or peaks. Seven known-speed fits corroborate motion/wrap and are not isolated speed measurement.",
+    "Read-only verifier did not change source, site, audience, primary worktree, real saves or user profiles. NEXT pointer independently checked; main/source/site/audience preservation remains integrator-owned evidence.",
+    "Fresh disposable TEST persistence was observed only; real user saves were never read, copied or migrated. No claim of save/revisit E2E.",
+    "Raw frame acquisition outputs are retained at indexed E paths and SHA256-bound separately. Source ZIP includes all code, art/union inputs, masks, commands, expected identities, measurements and diagnostics, not browser profiles or raw IndexedDB records.",
+    "Final-summary01 packaging failed because its assertion expected game arguments even in close-probe50 after deliberate unload. Actual game-phase arguments and TEST isolation passed. The original script and failed receipt/log are preserved; the packaging phase check was corrected without rerunning browser captures."
+  ],
+  "preserved_setup_diagnostics": [
+    "GL verify initially rejected unsupported extra --owned-root before validation/mutation; corrected verify-only-stage command passed.",
+    "A PowerShell unquoted tree-selector metadata query failed after successful push; quoted read resolved exact tree, no product mutation."
+  ],
+  "actual_ui": [
+    {
+      "scenario": "Base",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "The Wake",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Payday Rush",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Fight Night",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Lock-In",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Darts League Night",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Live Band",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    },
+    {
+      "scenario": "Dead Tuesday",
+      "viewports": [
+        [
+          1280,
+          720
+        ],
+        [
+          1920,
+          1080
+        ]
+      ]
+    }
+  ],
+  "web_motion": {
+    "base_frames": 200,
+    "base_duration_seconds": 91.009,
+    "base_source_regions_changed": 17,
+    "supported_rm_contexts": [
+      "Base",
+      "The Wake"
+    ],
+    "rm_frames_each": 32,
+    "all_17_rm_regions_exactly_stationary": true,
+    "restored_17_regions_live": true,
+    "floor_speed_best_matches": 7,
+    "source": "See exact masked metrics and limits in browser proof; two smoke fields/actor overlap are not isolated."
+  },
+  "prior_four_retention": {
+    "gas": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-42\\evidence\\screen.png",
+        "bytes": 377818,
+        "sha256": "c2de05ce3233ce3e1cc12f12e8a20e4faef54a44bf37b60a419bed41fe1f5305"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-gas-retention-01\\evidence\\gas-regression.json",
+          "bytes": 1202,
+          "sha256": "b30edd6192547473ba4fe6ef8d39dd71d8aca78fc56e0d10cf5eb09fab8b5a1b"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "corner": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-44\\evidence\\screen.png",
+        "bytes": 503967,
+        "sha256": "3bad7ec7cabf975d18ecc8bdbbc95ed0d15d1cc365b90bae41dfe561d07c3c9c"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-corner-retention-01\\evidence\\corner-motion-metrics.json",
+          "bytes": 47483,
+          "sha256": "412f54c3b63bec2a96bf0c142c3926da20a0e6a455ba352215dc208f8e991089"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "back": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-46\\evidence\\screen.png",
+        "bytes": 783248,
+        "sha256": "17798b366d16dd703dcff07599926fa2e3971c885c63d738e861681f8766463b"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-back-retention-01\\evidence\\back-composite-motion.json",
+          "bytes": 63630,
+          "sha256": "754c32110965b3574a8bea2def4e0ed4a2607e145d7038604b79851248fefde8"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    },
+    "motel": {
+      "screen": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-48\\evidence\\screen.png",
+        "bytes": 713965,
+        "sha256": "4980e23062303aa3c7d736678bc8a74e4651321a4902f64b93c22fc3dc6c87cf"
+      },
+      "reports": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-motel-retention-01\\evidence\\motel-composite-motion.json",
+          "bytes": 109987,
+          "sha256": "d13298c81f29c25d6c25bd917075961081850e61bec20c16d6397451ad1b8892"
+        }
+      ],
+      "scope": "Actual UI Base at 1280, 32 untouched temporal samples, focused composite retention only."
+    }
+  },
+  "settings_and_framing": {
+    "wake_rm": [
+      33,
+      34
+    ],
+    "base_rm": [
+      36
+    ],
+    "restoration": [
+      38
+    ],
+    "selection_tooltip_camera": [
+      39
+    ],
+    "returned_room": [
+      40
+    ],
+    "action": "Selected book only; Open Book and outcomes were not clicked."
+  },
+  "save_isolation": {
+    "test_only": true,
+    "args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "mount": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test",
+    "fresh_profile": true,
+    "real_user_data_accessed": false
+  },
+  "browser_closure": {
+    "natural_exit": true,
+    "forced_termination": false,
+    "basis": "Browser.close completed in probe50; process was already exited0 before supervisor finally, so raw receipt omits forced_owned_termination. Owned job drained to0, cleanup empty."
+  },
+  "resource_receipts": {
+    "browser_receipt": "E:/CodexQA/BTH/runs/BTH-ENVART-BARWEB01-browser/evidence/owned-job-receipt.json",
+    "browser_receipt_sha256": "92311c7ec985a56074e7ee6028460162593a4f89e55b92324ae87c2ac6fdfe2f",
+    "natural_exit": true,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "forced_termination": false,
+    "cpu_percent": 12,
+    "memory_cap_bytes": 2147483648,
+    "peak_job_memory_bytes": 1963638784
+  },
+  "browser_diagnostics": [
+    {
+      "run": "BTH-ENVART-BARWEB-final-summary-01",
+      "receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB-final-summary-01\\evidence\\job.json",
+        "bytes": 7437,
+        "sha256": "b58c582622e813ba415eb060927e81384d67e986f6b0e11bef0ca689acaa9bee"
+      },
+      "exit_code": 1,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "resources": {
+        "peak_job_memory_bytes": 23834624,
+        "cpu_seconds": 1.375,
+        "active_at_release": 0
+      },
+      "natural_exit": false
+    }
+  ],
+  "console_scope": "No game runtime errors; unrelated root favicon404 only. Original packaging assertion after deliberate game unload failed and was corrected without rerunning captures.",
+  "web_reproduction_archive_sha256": "5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e",
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-closeout-reconcile-01\\evidence\\reconciliation.json",
+    "sha256": "fd4722fb241fc07cf913e4c3c87f318086019cc9267990e0656500860cc3cf0a",
+    "exit_code": 1,
+    "global_inherited_findings": 1524,
+    "assigned_room_test_phase08_findings": 0,
+    "markdown_findings": 0,
+    "objectives": 220,
+    "batches": 72,
+    "open_batches": 29,
+    "runtime_instances": 1123,
+    "new_closed_owned_receipts": 145,
+    "scope": "Only this delivery closes; global inherited findings and incomplete/active runtime observations remain open. Failed diagnostic outcomes preserved."
+  }
+}

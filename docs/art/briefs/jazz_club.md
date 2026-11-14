@@ -1,8 +1,8 @@
-# Jazz Club: read-only execution direction v2
+# Jazz Club: execution direction v3
 
 Prepared: 2026-11-14
 Room identity: jazz_club
-Status: future direction only. Bar R4 remains the active art package and Pawn Shop is next. No Jazz source, package or activation is approved. Jazz source release requires Pawn Shop's explicit exact final native art PASS and a separately inspected, frozen clean geometry target.
+Status: future source direction and the inspected clean target are frozen. Pawn Shop remains the active unapproved art package. No Jazz source, package or activation is approved. Jazz source release requires Pawn Shop's explicit exact final native art PASS.
 
 ## Local story and rendering identity
 
@@ -14,7 +14,7 @@ The owner's preferred supplied design/accepted Gas R12 control crisp local color
 
 ## Exact references and provenance
 
-- Original empty geometry guide: E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/jazz_club_legacy_geometry_1800x860.png, SHA-256 c9939f31709ed0edc3ac9f117cf13bb455fbfe4b49f29522bbeffed59c6cfda7. Director personally viewed this exact source. A cleaned target is not yet approved.
+- Original empty geometry guide: E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/jazz_club_legacy_geometry_1800x860.png, SHA-256 c9939f31709ed0edc3ac9f117cf13bb455fbfe4b49f29522bbeffed59c6cfda7. Director personally viewed this exact source. The cleaned target has now been inspected and frozen in the checkpoint below.
 - Own facade assets/art/travel/exteriors/jazz_club.png, SHA-256 ab2de52725a394d14a332f98859fe6ca3da0a4f4e4de78b3d5b5c1bcf5bfb47a; matching backdrop SHA-256 ef87c080730fd0733853eba568de04ef552d24c0cd1805a32dcf61bdec5bc562.
 - Artist read-only inventory E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/jazz-club-readonly-prep-v2.txt, SHA-256 fa3bcea7e36adb40995de3899118a5f7b8800b2fdaa492b7c3d14761d90219dc. It records full source/reference hashes and exact erased-table draw order.
 - Protected effective override SHA-256 c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f remains unchanged. base_saved:false does not disable current saved anchors.
@@ -79,3 +79,13 @@ Keep direction, source/provenance/recipe, honest trials and findings backed up i
 ## Provenance correction
 
 The artist inventory is now an immutable versioned v2. Its former working v1 was appended after an earlier hash handoff, so the old path/hash pairing is superseded. This correction changes only the inventory citation. All actual facade/guide/source observations, physical decisions, future conditions and no-generation hold remain unchanged.
+
+## Frozen clean geometry checkpoint
+
+Approved future input: E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/jazz_club_clean_geometry_v1_1800x860.png, SHA-256 7487a6f07a4953f48b473f2bfb4986c5c55a2d01de028cd806af2b8eadaa61d3. Director personally inspected its900-board derivative and independently verified native1800x860 pixels are exact nearest2x. Original c9939f31 source remains unchanged.
+
+Seven bottle placeholders and lower helper markers are removed. Open floor is retained with no revealed erased tables. Actual band rail now matches mapped150..158 and front service shelf404..412; source-plane/light-membership donors restore old decorative rows without a game-data edit. Stage, bar, wordmarks and three static practical-light placements remain.
+
+The flat cone shapes are geometry-guide LIGHTING ANNOTATIONS, not mandatory giant opaque triangle graphics or moving spotlights. The first source should translate them into coherent hard-clustered illumination on existing folds/stage planes. Floor246 remains behind existing construction and live bays, not aligned to an actor-foot guess.
+
+Artist may freeze the cleaned input with own facade/backdrop, preferred crisp pixel treatment and Delta craft provenance while Pawn is active. Check any newer current-context metadata before the eventual first source. First Jazz source remains conditional on the exact Pawn final native PASS, without another routine briefing wait; no current runtime asset approval is implied.

@@ -2,9 +2,13 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on cumulative TEST173b235d;4of20 interiors complete. Bar R4 is now native-approved and entering separate TEST/Web verification; the overall campaign remains active. Documentation and work-in-progress backups do not approve unreviewed art.
+Release status: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative TEST9ac963f1; 5 of 20 interiors complete. Pawn is active, and the full campaign remains Open. Documentation/source backups do not approve unreviewed art.
 
 ## Current queue
+
+Authoritative current status: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative bound9ac TEST, 5 of 20 interiors. Pawn R2 is the sole active art trial with deeper native proof pending; Jazz is reference/preflight preparation only. Main/NEXT and normal saves remain unchanged.
+
+### Earlier queue checkpoint
 
 Four interiors are delivered on bound173 TEST. Exact Bar R4 has final native PASS and target integration is active; its Web delivery remains pending. Pawn is the sole active source-authoring package after Bar native release, with current four-context metadata frozen before its first image call. No unpassed Pawn pack is active. Main/NEXT, audience, normal saves and the remaining campaign scope are unchanged.
 
@@ -165,3 +169,5 @@ Pawn current pre-art reference is durable under review_artifacts/environment_art
 Bar exact final native PASS: package398469b2, original auditor reportaa382fd4. All19 sealed payloads are integrated with 70 prior-room source files and protected c5/settings unchanged. Full native summary96163597 and 982-file QA source bundlef63ad0a5 are preserved. Independent bound TEST/Web verification remains pending; no Bar deployment claim.
 
 Pawn R2 non-active source checkpoint: archive `be4925ee17be792abfd8e1ac894fed26cae355a92d86a034a62681a90a13f4cc`, 11,104,204 bytes and 50 members. The exact19 payloads/seal, originals/prompts/full frozen inputs, recipe and qualified validator/geometry support are preserved.15 moving entries plus1static replay are explicitly distinct; no Pawn final PASS or activation. Bar bound9ac is published with identity/TLS/source isolation verified and its separate served Web review still active. Pawn v3/Punchline read-only direction are checkpointed; Punchline source remains held for later Jazz/frozen-target gates.
+
+Bar delivery closure: exact native398469b2 and served9ac pass all scoped gates; final browser proof02b4c2ed, archive 5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e. Natural browser cleanup is verified. Source crowding/natural occlusions and all-route/save/revisit limits remain explicit. Five interiors complete; the full campaign and travel-doorway phase stay Open.

@@ -384,6 +384,6 @@
       "preview.mp4.library_file_id",
       "preview.png.library_file_id"
     ],
-    "scope": "Attachment routing metadata only; approved payload bytes and technical/visual findings unchanged."
+    "scope": "Attachment routing metadata omitted and public JSON serialized with LF line endings; approved payload bytes and technical/visual findings unchanged."
   }
 }

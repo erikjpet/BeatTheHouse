@@ -1,9 +1,9 @@
 {
   "package_id": "bar-v1-r4",
   "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
-  "acceptance": "EXACT_NATIVE_PASS_TARGET_INTEGRATION_TEST_WEB_PENDING",
+  "acceptance": "EXACT_NATIVE_AND_SCOPED_SERVED_WEB_PASS",
   "audit_report_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
-  "public_audit_copy_sha256": "0b9f3086138da6d18e5e26025b2083cc42efb16eca0a8c59d20c5857b1d96d01",
+  "public_audit_copy_sha256": "35826af78c759bb890cd0e3c46cda5bb93d58c11324c28f169745daa61c2dcbb",
   "payload_files": {
     "assets/art/environments/bar/anim/cold_beer_sign.png": {
       "sha256": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
@@ -355,5 +355,11 @@
     "personal_representative_work_views": 27,
     "scope": "Director scoped review differs from auditor personal full58; exact record retained."
   },
-  "web_delivery": "PENDING"
+  "web_delivery": {
+    "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "browser_proof_sha256": "02b4c2ed15fd345688857e5f94db933be75ceb8abfd3802e157b062604e2b1c3",
+    "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+    "report": "docs/testing/bar_r4_test_delivery.json",
+    "main_next_saves_audience_unchanged": true
+  }
 }
