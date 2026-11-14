@@ -1,0 +1,5 @@
+# Bar R4 native QA sources
+
+Exact package398469b2 passed final native audit after the source checkpoint. The 982-file QA source bundle preserves helpers, actual case catalog, inputs, source verification and commands. SHA256:f63ad0a587d329290b0edfe66fcc2d7f8f9915318df8fa9473ac06685adfca5d. Reproduce only in fresh admitted E: storage under assigned-before-resume capped Jobs; map historical paths without changing logic. Do not reuse occupied run IDs or copy user saves/profiles. This archive is excluded from runtime exports.
+
+58 cases represent 30 stable active phases and 28 unique aftermath families through normal production publication, not all141 alternative interaction routes or UI/save/revisit lifecycle. Payday glint0 has38/40 support pixels naturally covered by an opaque tray;2 residual pixels are not meaningful visibility. Other seven initial contexts show the glint. Lock-In's existing live-label overlap is unchanged. No forced movement, alpha/speed boost or geometry/label change was made. Exact bound TEST/Web remains a separate pending delivery gate.

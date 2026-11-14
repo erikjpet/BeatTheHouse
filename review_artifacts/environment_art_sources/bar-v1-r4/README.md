@@ -1,3 +1,5 @@
+> Historical non-active checkpoint below predates the exact native PASS. The same R4 payload now passes native audit and is being integrated; TEST/Web is still pending. Original sources, recipe, seal and ZIP remain unchanged.
+
 # Bar R4 source checkpoint
 
 NON-ACTIVE TRIAL, NOT APPROVED. This archive does not activate its included index. Target and served TEST retain exactly the four passed Gas, Corner, Back and Motel packages.

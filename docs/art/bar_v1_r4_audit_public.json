@@ -1,0 +1,389 @@
+{
+  "status": "PASS_NATIVE_ART_PACKAGE",
+  "package_id": "bar-v1-r4",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "package_root": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\packages\\bar-v1-r4",
+  "scope": "ONLY these exact Bar R4 bytes clear native art integration. Not owner acceptance, TEST/Web, UI-click/save/revisit/travel lifecycle acceptance or campaign completion. Cumulative index contains five separately passed rooms; existing passed raster/manifest bytes stay unchanged.",
+  "approved_files": {
+    "assets/art/environments/bar/anim/cold_beer_sign.png": {
+      "sha256": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+      "bytes": 5253,
+      "size": [
+        272,
+        56
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/anim/dive_sign.png": {
+      "sha256": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+      "bytes": 2972,
+      "size": [
+        158,
+        72
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_0.png": {
+      "sha256": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b",
+      "bytes": 196,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_1.png": {
+      "sha256": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+      "bytes": 196,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_2.png": {
+      "sha256": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+      "bytes": 202,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_3.png": {
+      "sha256": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+      "bytes": 193,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_4.png": {
+      "sha256": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+      "bytes": 197,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_5.png": {
+      "sha256": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+      "bytes": 212,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_6.png": {
+      "sha256": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+      "bytes": 196,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/high_smoke_0.png": {
+      "sha256": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+      "bytes": 2126,
+      "size": [
+        848,
+        180
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        11
+      ]
+    },
+    "assets/art/environments/bar/anim/high_smoke_1.png": {
+      "sha256": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+      "bytes": 1652,
+      "size": [
+        848,
+        180
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        11
+      ]
+    },
+    "assets/art/environments/bar/anim/pool_ball_0.png": {
+      "sha256": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+      "bytes": 1119,
+      "size": [
+        2400,
+        22
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/bar/anim/pool_ball_1.png": {
+      "sha256": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+      "bytes": 956,
+      "size": [
+        1824,
+        18
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/bar/anim/timber_reflection.png": {
+      "sha256": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+      "bytes": 132,
+      "size": [
+        12,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        175
+      ]
+    },
+    "assets/art/environments/bar/anim/warm_glint.png": {
+      "sha256": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+      "bytes": 113,
+      "size": [
+        12,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/background.png": {
+      "sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f",
+      "bytes": 849190,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/bar/counters/bar_main_counter.png": {
+      "sha256": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+      "bytes": 82976,
+      "size": [
+        1096,
+        112
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "data/art/environments/bar.json": {
+      "sha256": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+      "bytes": 6718
+    },
+    "data/art/environments/index.json": {
+      "sha256": "030c7f2b2da7123c237c587560759c210b08d27666def7567cff3cf3d772e95d",
+      "bytes": 119
+    }
+  },
+  "manifest": "data/art/environments/bar.json",
+  "background_sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f",
+  "counter": {
+    "id": "bar_main_counter",
+    "path": "assets/art/environments/bar/counters/bar_main_counter.png",
+    "sha256": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+    "rect": [
+      38,
+      178,
+      548,
+      56
+    ],
+    "size": [
+      1096,
+      112
+    ],
+    "alpha": [
+      255,
+      255
+    ],
+    "bleed": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "exact_BG_crop": true,
+    "synthetic_replay": "0 mismatched counter pixels,5070 body pixels correctly covered,upper person unchanged. Both actual with/without replay images personally viewed."
+  },
+  "visual_review": {
+    "director_confirmed": true,
+    "director_report": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\bar-r4-director-visual-go.json",
+    "director_report_sha256": "a8f0d47423e96327165c3963ea99f43e6dd6b4bf1f08b3c9534f99317d3786e1",
+    "director_personal_scope": "Exact static,all8 initial actuals,27 representative source work/outcome states acrossALL7families,decoded preview still and actual settings-route Reduce Motion. No remaining director blocker. Not falsely claiming personal58 director views.",
+    "auditor_personal_scope": "ALL58 ordinary actual full-app states via exact1:1 source-hashed sheets,all8 initial actuals,actual900 Base study,ReduceMotion fullapp,native smoke A/B pairs,decoded actual-motion preview,both counter fixture images and source-painted glint masks.",
+    "aesthetic_result": "Distinct facade-linked deep teal timber,burgundy wood,amber rippled glass,pink/cyan signs,green pool felt,wine booth and dry low-polish floor. Fine source texture/crisp fixed900-grid construction retained, exact2x output. Same mirror/counter/6stools/pool/pendant/dartboard/booth supports, no baked cast/stock/balls/smoke duplicate.",
+    "readability": "Actual Wake cyan tray title and Payday gold Rush bartender contrast corrected using existing shaded diffuser/source-shaped amber glass, not UI badges or moved labels. Other material bands hold across current washes and all primary source states.",
+    "unchanged_live_limit": "Lock-In work2/work3 After-hours regular and Silas Crow retain overlapping live bodies/names; other ordinary source live/live crowding persists. Exact legacy/R4 geometry unchanged. No claim every name universally unobstructed or every legacy prop newly grounded; no invented platform/contact move."
+  },
+  "motion": {
+    "entries": 17,
+    "inventory": [
+      "2 actual painted-glyph sign pulses",
+      "2 independent sin/cos48-frame pool balls",
+      "2 sparse high-air drift fields translating5 broken ribbons",
+      "4 material reflections,including timber-grain reflection at780166",
+      "7 local amber/teal/pink floor-light movers"
+    ],
+    "translation_scope": "Director-approved high-air visual translation, not literal legacy trajectory/count equivalence. Seven floor movers consolidate shared sheen plus old lower-bob/stripe family, no literal raised markers.",
+    "exact_math_correction": "Preserved sealed shorthand says smoke alpha<=.035; actual texture11/255*manifest.9=.0388235. Separate audit/bar-v1-r3-motion-translation-note.json and director briefv2 correct it without mutating originals. Same motion bytes R4.",
+    "actual_composite": "17entries x8 current contexts =136 actual isolated-entry full-composite pairs,600 assertions. Base per-entryRM75,native probe35,floor wraps71,smoke wraps11,placement/3AMclosing9. All reported scoped assertions pass; sources/receipts independently reverified.",
+    "declared_natural_coverage": "Payday warm_glint_0 is not meaningfully unobstructed:38/40 native support pixels are covered by actual Carrying tray alpha255;2 residual pixels under alpha11 adornment are not claimed meaningful. Base/other6 initial contexts each show40 meaningful pixels. Independent actual RGBA/source-order recheck accepted by director; no hole/move/brightness boost.",
+    "exception_report": "audit/bar-r4-Payday-glint-occlusion-review.json",
+    "mandatory_unchanged_no_pointer_liveness": "PASS",
+    "ReduceMotion": "Actual settings route stable full app/art; all17 per-entry RM stable; physical balls/signs retain coherent fixed resting states."
+  },
+  "independent_receipts": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\audit\\bar-r4-final-receipt-verification.json",
+    "sha256": "8bbdbe16293eba42e0d1d8f7932b56e4687d72bf4b10918aa3af7f40cc6076b3",
+    "source_cases": 58,
+    "source_case_types": {
+      "active": 30,
+      "aftermath": 28
+    },
+    "family_counts": {
+      "bar_darts_league_night": 10,
+      "bar_dead_tuesday": 6,
+      "bar_fight_night": 10,
+      "bar_live_band": 9,
+      "bar_lock_in": 9,
+      "bar_payday_rush": 7,
+      "bar_wake": 7
+    },
+    "source_assertions": 5780,
+    "actual_selected_titles": 787,
+    "source_visible_occurrences": 194,
+    "material_occurrences": 126,
+    "actor_occurrences": 68,
+    "declared_nonroom_exclusions": 6,
+    "initial_assertions": 1017,
+    "initial_contexts": 8,
+    "payloads": 19,
+    "protected_core_normalized": 862,
+    "prior_fourroom_files": 70,
+    "strict_baseline_tracked_files": 6997,
+    "QA_archive_files": 982,
+    "native_PNG_hashes": 1215,
+    "bound_reports": 106,
+    "native_jobs": 21,
+    "all_jobs_plus_collector": 35,
+    "diagnostic": "Raw Wake01 leftover template count guard rejected before any case, preserved exit1; QA-only observer corrected to58, Wake02 fully covers7. Two shell setup failures before child/run creation preserved. All bound jobs drainedactive0, no timeouts/cleanup errors; do not claim every historical launch exit0."
+  },
+  "native_summary": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-final-summary-01\\evidence\\bar_r4_native_summary.json",
+    "sha256": "961635976f67c72e985aeff9d3a9f4711d7a7f6bc9030d6353513ba15b1a20dd"
+  },
+  "preview": {
+    "mp4": {
+      "operation": "create_library_file",
+      "status": "succeeded",
+      "path": "/bar-trial-r4-actual-motion.mp4",
+      "file_id": "file_0000000023d081f6a3e1d3ee9b0de9fe",
+      "file_name": "bar-trial-r4-actual-motion.mp4",
+      "current_version_number": 0,
+      "restored_from_version_number": null,
+      "xattrs": [
+        {
+          "name": "user.library-file-version",
+          "value": "0"
+        }
+      ],
+      "directory_id": "personal-root:v1",
+      "mime_type": "video/mp4",
+      "library_artifact_type": "other",
+      "file_size_bytes": 2607523,
+      "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/bar-trial-r4-actual-motion.mp4"
+    },
+    "png": {
+      "operation": "create_library_file",
+      "status": "succeeded",
+      "path": "/bar-trial-r4-actual-play.png",
+      "file_id": "file_000000009f9c81f6a5cce2899c0a8eda",
+      "file_name": "bar-trial-r4-actual-play.png",
+      "current_version_number": 0,
+      "restored_from_version_number": null,
+      "xattrs": [
+        {
+          "name": "user.library-file-version",
+          "value": "0"
+        }
+      ],
+      "directory_id": "personal-root:v1",
+      "mime_type": "image/png",
+      "library_artifact_type": "other",
+      "file_size_bytes": 842890,
+      "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/bar-trial-r4-actual-play.png"
+    },
+    "status": "Previously captured as TRIAL; same exact passed bytes. Parent has confirmed native IDs; this report does not claim user delivery.",
+    "scope": "84 real autonomous frames + terminal hold,11.20s,2.61MB,full actual game and explicitly named art-target crops. No opacity/speed boost. Hard pixels independently decoded; subtle source/decoded temporal correlation0.938 smoke and0.981 floor excludes glint contamination. Not a substitute for native visibility proof."
+  },
+  "limits": [
+    "Native production-model publication and visual/geometry checks, not full UI-click/save/revisit/travel lifecycle or all141 alternative interaction routes.",
+    "Initial arrival cases overlap authored primary states; counts are not claims of additional distinct playthroughs.",
+    "TEST/Web served identity/compatibility is a separate implementation gate. No target publication by auditor.",
+    "Five room identities now have exact native PASS; fifteen interiors and later doorway phase remain unfinished."
+  ],
+  "next": "Integrator may activate ONLY exact Bar R4 retaining passed GasR12/CornerR6/BackR3/MotelR3 and c5. Artist may begin ONE Pawn source using approved frozen guidee1d09c3c and current measured briefv2cf349376/union9ade78ef. Auditor continues exact assembly,actual-motion previews and final gate. Campaign remains active.",
+  "public_copy_note": {
+    "original_report_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
+    "omitted_fields": [
+      "preview.mp4.library_file_id",
+      "preview.png.library_file_id"
+    ],
+    "scope": "Attachment routing metadata only; approved payload bytes and technical/visual findings unchanged."
+  }
+}

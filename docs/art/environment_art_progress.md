@@ -2,9 +2,13 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on cumulative TEST173b235d;4of20 interiors complete. Bar native audit and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
+Release status: Gas R12, Corner R6, Back R3 and Motel R3 delivered and verified on cumulative TEST173b235d;4of20 interiors complete. Bar R4 is now native-approved and entering separate TEST/Web verification; the overall campaign remains active. Documentation and work-in-progress backups do not approve unreviewed art.
 
-## Current creative gate
+## Current queue
+
+Four interiors are delivered on bound173 TEST. Exact Bar R4 has final native PASS and target integration is active; its Web delivery remains pending. Pawn is the sole active source-authoring package after Bar native release, with current four-context metadata frozen before its first image call. No unpassed Pawn pack is active. Main/NEXT, audience, normal saves and the remaining campaign scope are unchanged.
+
+## Historical creative checkpoints
 
 Gas Station Casino R12 is delivered to the existing TEST lane and independently verified in actual browser views at 1280 x720 and 1920 x1080. The bound MENU footer reads 0.6.0(975a107d1484). Source/served identity, normal TLS file integrity, motion, camera and prior scenario/Reduce Motion checks are clear. The final packaging fix embedded the established build manifest; it did not change approved R12 art. Homepage, audience, NEXT and main remain unchanged.
 
@@ -157,3 +161,5 @@ Bar R4 update: all eight actual initial compositions have independent director v
 Bar R4 non-active source backup: `00fd8916c00aa9800d08c34d0e77a4408b2e8a936a78b3d86e887ed71e622f8e`, 9,447,039 bytes, 37 archive members. The exact 19 payloads/seal, original source, full prompt/frozen inputs, self-contained recipe and required eight-case union are durable. No Bar activation. Canonical Bar v2, conditional Pawn brief and read-only Jazz v2 direction are checkpointed; Pawn generation still waits for Bar full native PASS, and Jazz has no approved clean target/source.
 
 Pawn current pre-art reference is durable under review_artifacts/environment_art_sources/pawn_shop-preart-v1: strict173/c5 Base plus all three current scenarios, 449 checks/0 findings, 53 actual objects/selected titles and 12 PNGs. The measured four-context union is 9ade78ef and the updated conditional brief v2 is cf349376. This is a non-active legacy reference, not Pawn art or a generation/release PASS. All Jobs drained and the engine is free for approved Bar export.
+
+Bar exact final native PASS: package398469b2, original auditor reportaa382fd4. All19 sealed payloads are integrated with 70 prior-room source files and protected c5/settings unchanged. Full native summary96163597 and 982-file QA source bundlef63ad0a5 are preserved. Independent bound TEST/Web verification remains pending; no Bar deployment claim.

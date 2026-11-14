@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T15:09:53.102835+00:00",
+  "updated_at": "2026-11-14T15:54:32.994145+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37803,7 +37803,7 @@
         "kind": null,
         "description": "Four interiors delivered; remaining 16 interiors and 12 travel doorways unfinished. Bar exact native trial active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:09:53.102835+00:00",
+        "observed_at": "2026-11-14T15:54:32.994145+00:00",
         "evidence": [
           "docs/testing/motel_r3_test_delivery.json",
           "docs/art/environment_art_progress.md"
@@ -37978,7 +37978,8 @@
         "BTH-ENVART-001-ART-CORNER-01",
         "BTH-ENVART-001-ART-BACK-01",
         "BTH-ENVART-001-ART-MOTEL-01",
-        "BTH-ENVART-001-ART-BAR-01"
+        "BTH-ENVART-001-ART-BAR-01",
+        "BTH-ENVART-001-ART-PAWN-01"
       ],
       "next_action": "Complete Bar exact native audit/integration and the remaining 16 interiors sequentially; preserve the full 20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
@@ -42236,7 +42237,7 @@
         "kind": null,
         "description": "Four interiors delivered; remaining 16 interiors and 12 travel doorways unfinished. Bar exact native trial active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T15:09:53.102835+00:00",
+        "observed_at": "2026-11-14T15:54:32.994145+00:00",
         "evidence": [
           "docs/testing/motel_r3_test_delivery.json",
           "docs/art/environment_art_progress.md"
@@ -42776,7 +42777,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact R4 all eight actual initial cases visually clear; deep native proof active, no final audit PASS",
+      "status": "Exact R4 final native auditor PASS; cumulative five-room integration active; TEST/Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42810,6 +42811,11 @@
           "kind": "r4_current_actual_visual_gate",
           "reference": "docs/art/environment_art_progress.md",
           "summary": "All eight actual initial compositions independently clear the bounded light/name corrections: 1,017 checks, 120 actual objects and selected cards, 38 Runtime visuals, no findings. Fresh 84-frame excerpt delivered for review; deep acceptance remains pending."
+        },
+        {
+          "kind": "exact_native_art_pass",
+          "reference": "docs/testing/bar_r4_art_integration.md",
+          "summary": "Exact package398469b2/native audit aa382fd4; all58 real published contexts, 17 motions/RM/counter/wrap/liveness, source and receipts verified. Natural Payday glint coverage and unchanged Lock-In overlap declared. TEST/Web separate."
         }
       ],
       "blocker": {
@@ -42817,13 +42823,70 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T14:25:53.113113+00:00",
+        "observed_at": "2026-11-14T15:54:32.994145+00:00",
         "evidence": [
           "docs/art/briefs/bar.md"
         ]
       },
-      "next_action": "Finish exact R4 full 17-motion, source-context, counter, Reduce Motion, wrap and no-input proof under exclusive native ownership; no target activation before final exact audit PASS.",
-      "updated_at": "2026-11-14T15:09:53.102835+00:00"
+      "next_action": "Commit only the 19 approved payloads, preserve all four earlier rooms and c5, then export and independently verify bound isolated TEST.",
+      "updated_at": "2026-11-14T15:54:32.994145+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-PAWN-01",
+      "name": "Integrate audited Pawn Shop art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source released after Bar native PASS; measured current four-context preflight complete; no Pawn art passed",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "761d0f781afff1a9a4dd14e011b0215518861fae",
+          "evidence": [
+            "review_artifacts/environment_art_sources/pawn_shop-preart-v1/README.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Cumulative isolated TEST only after exact Pawn full package PASS; preserve every prior accepted room."
+      },
+      "scope": [
+        "Preserve own Pawn facade/material identity, c5 contacts and central transaction glass/tray, counter, Sal and right-shelf supports.",
+        "Use actual four-context label/contact union, natural arrival and production visual membership rather than legacy planning guesses.",
+        "Author and audit one exact package with clear motions/counter/RM/liveness and source-context proof, then separately integrate and verify isolated cumulative TEST."
+      ],
+      "evidence": [
+        {
+          "kind": "measured_execution_brief",
+          "reference": "docs/art/briefs/pawn_shop.md",
+          "summary": "Current brief v2 cf349376; strict173/c5 Base plus Estate, Serial and Mood preflight449/0,53 actual objects/selected titles,12 PNGs. Exact union9ade78ef and closure6dfaab82 preserved. No art/generation approval supplied by metadata alone."
+        },
+        {
+          "kind": "non_active_preart_backup",
+          "reference": "review_artifacts/environment_art_sources/pawn_shop-preart-v1/README.md",
+          "summary": "Archiveca69b0d6 contains actual source/helper/metadata/PNG/Job proof. All owned Jobs drained; normal source and placements unchanged. Not an outcome/UI/save/revisit lifecycle sweep."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T15:54:32.994145+00:00",
+        "evidence": [
+          "docs/art/briefs/pawn_shop.md"
+        ]
+      },
+      "next_action": "Review the one released Pawn source against the measured current brief/guide, assemble exact layers, then show actual motion and audit before activation.",
+      "updated_at": "2026-11-14T15:54:32.994145+00:00"
     }
   ]
 }

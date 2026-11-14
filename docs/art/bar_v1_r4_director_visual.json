@@ -1,0 +1,234 @@
+{
+  "schema": "bth.environment.director.visual-gate/v1",
+  "prepared_date": "2026-11-14",
+  "room": "bar",
+  "candidate": "R4",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "background_sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f",
+  "status": "SCOPED_NATIVE_VISUAL_GO_NOT_FULL_PACKAGE_PASS",
+  "initial_actual_count": 8,
+  "initial_actuals": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\__none_actual_play.png",
+      "sha256": "15ac5c1218cac3bdca3c99ff7b7ac3d8da3761e074739925458b47c30c316389",
+      "bytes": 842760
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_wake_actual_play.png",
+      "sha256": "67ac622ec889475b15a3c91b2eb52ea872c543a0eb998aefb83b4487681e4814",
+      "bytes": 823358
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_payday_rush_actual_play.png",
+      "sha256": "117e32922d67c106bd62e2905e4d0e070a15d8ae045835c006c315f67bc4ce5d",
+      "bytes": 835809
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_fight_night_actual_play.png",
+      "sha256": "dd24466ff1bfa975477beb396d2789af5b8172619ad94600c4c917863c460379",
+      "bytes": 826523
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_lock_in_actual_play.png",
+      "sha256": "e877416bafc0767fc23b4b349642f5b1f18d464c1bee266dc9865c1a226580a4",
+      "bytes": 828341
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_darts_league_night_actual_play.png",
+      "sha256": "f2b6554dd5fba68c4089e2e3a84cb7892a2336333940005e45951578ad48d6fd",
+      "bytes": 828477
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_live_band_actual_play.png",
+      "sha256": "a5075f29b3b966334a27da0a2c31ccad8d1f5e3027442181d2debb11dcd07671",
+      "bytes": 822257
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-settled-01\\evidence\\bar_dead_tuesday_actual_play.png",
+      "sha256": "85ab806363109805dbc8b2f7edbf415f13f115b72e2ae10a7b925752b5d26b57",
+      "bytes": 830761
+    }
+  ],
+  "representative_work_outcome_count": 27,
+  "representative_actuals": {
+    "wake": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-wake-02\\evidence\\bar_wake__active_phase_work_1_play.png",
+        "sha256": "f92ade5656d52b0ddc3d7ae285cab719214e90bd20d36ff1db97c7fde11312a7",
+        "bytes": 823649
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-wake-02\\evidence\\bar_wake__aftermath_toast_shared_play.png",
+        "sha256": "979c1d8a54b876c9b5801411dad73f2ce63cfceaafb85c6c4e1f1af7f094ddd1",
+        "bytes": 824219
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-wake-02\\evidence\\bar_wake__aftermath_toast_withheld_play.png",
+        "sha256": "45942360f4c6cbe7f750b035abd2841cb9036919bb47745dd5d7988724146f58",
+        "bytes": 821093
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-wake-02\\evidence\\bar_wake__aftermath_interrupted_play.png",
+        "sha256": "3a9093d5035992f93ea180e7bc808e6243e40596eddbd6ec3af4c7d555905b8e",
+        "bytes": 824507
+      }
+    ],
+    "fight": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_fight_night-01\\evidence\\bar_fight_night__active_phase_work_5_play.png",
+        "sha256": "399fecb4ef6072a8f6b47dfa7ebb1c2aed4f54999ae662cc857c0b18966d75b8",
+        "bytes": 825891
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_fight_night-01\\evidence\\bar_fight_night__aftermath_broken_room_play.png",
+        "sha256": "d5acdb2ee53010bebc76f951d2e269839a278026a4c34d0a55b99ea981fff553",
+        "bytes": 823604
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_fight_night-01\\evidence\\bar_fight_night__aftermath_deescalated_play.png",
+        "sha256": "d995a102fa083d3abb15ed23d3d01590db102b9a3bb5a9a08b2f3f83ef9a2535",
+        "bytes": 821680
+      }
+    ],
+    "payday": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_payday_rush-01\\evidence\\bar_payday_rush__active_phase_work_2_play.png",
+        "sha256": "9c3ea15581884c3dcf962dd7c4376ee696ca1281a71f514c12e326bac3f5e19c",
+        "bytes": 835328
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_payday_rush-01\\evidence\\bar_payday_rush__aftermath_queue_cleared_play.png",
+        "sha256": "a3ed2d7affa27dc4d3ac14375da084308e0c417e60d815e54c273888ee45bfee",
+        "bytes": 825926
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_payday_rush-01\\evidence\\bar_payday_rush__aftermath_tabs_deferred_play.png",
+        "sha256": "50f1afe6be359067b49f004ab411c742ab5ba43bc69cdadc9025a3cf884f3e68",
+        "bytes": 827763
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_payday_rush-01\\evidence\\bar_payday_rush__aftermath_orders_spilled_play.png",
+        "sha256": "bf1b23e0757337cf8aa08ec633866c63c33d1ddced4f68dc042b3e054811b4d2",
+        "bytes": 832896
+      }
+    ],
+    "lockin": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_lock_in-01\\evidence\\bar_lock_in__active_phase_work_4_play.png",
+        "sha256": "317171ad31f76573eabe2efee1180b4da59990d1c1e5436b210e0a73c9904600",
+        "bytes": 828923
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_lock_in-01\\evidence\\bar_lock_in__aftermath_included_play.png",
+        "sha256": "9f7bbe38d00e011db2b2290940a5cee78d1fa108a357a6c3f8080566b62034f2",
+        "bytes": 823370
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_lock_in-01\\evidence\\bar_lock_in__aftermath_sweep_interrupted_play.png",
+        "sha256": "42b1d8509286dd01c6f29beaca6a48c997233b7fe68e4da3a6538fbe44f72aa3",
+        "bytes": 827637
+      }
+    ],
+    "darts": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_darts_league_night-01\\evidence\\bar_darts_league_night__active_phase_work_5_play.png",
+        "sha256": "69c40b802b30bcdcea83e08e0e358475bd340d1cf096ba519b8fd64920000b90",
+        "bytes": 826107
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_darts_league_night-01\\evidence\\bar_darts_league_night__aftermath_bracket_confirmed_play.png",
+        "sha256": "12cef7f85775f852dfebd87503bb976c7ff23b2a5ffb473694ea9a9a4aff8869",
+        "bytes": 827513
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_darts_league_night-01\\evidence\\bar_darts_league_night__aftermath_dispute_upheld_play.png",
+        "sha256": "b04b085d4888bd55c026a843db3c2a5d67d250300150641efb51143c3574b78f",
+        "bytes": 823349
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_darts_league_night-01\\evidence\\bar_darts_league_night__aftermath_league_paused_play.png",
+        "sha256": "e7147126aece58c668564aa9bc8cbfb0eba06c39493fa274bcb4c6e6f1f6b425",
+        "bytes": 825942
+      }
+    ],
+    "liveband": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_live_band-01\\evidence\\bar_live_band__active_phase_work_4_play.png",
+        "sha256": "8cb00382231eba6b87dbd39c0fe5ac3bb87faef24db8bec5054bb07e8289420c",
+        "bytes": 821490
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_live_band-01\\evidence\\bar_live_band__aftermath_set_completed_play.png",
+        "sha256": "8a04fa3c408270d0826b09167c9ec565f19cea9907f2e5abcbc981f8b6de74e8",
+        "bytes": 824336
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_live_band-01\\evidence\\bar_live_band__aftermath_set_failed_play.png",
+        "sha256": "7773fe8cc838fd17fe21ee13cd412737e4ab130a18fd78f9eb84c2998f8f7fec",
+        "bytes": 823347
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_live_band-01\\evidence\\bar_live_band__aftermath_show_interrupted_play.png",
+        "sha256": "400c46af5e7a45df3f768121d3270edda4770b11fd07fa49735f3293a21b8f38",
+        "bytes": 825118
+      }
+    ],
+    "deadtuesday": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_dead_tuesday-01\\evidence\\bar_dead_tuesday__active_phase_work_1_play.png",
+        "sha256": "4034ffab306670937f6315727d647492a8044f54c7839a320389f6573295062c",
+        "bytes": 829140
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_dead_tuesday-01\\evidence\\bar_dead_tuesday__aftermath_bartender_zone_kept_play.png",
+        "sha256": "56b08f079ec9b1e33ffd8db4569e068dc93bc65c35515f45c5a0262384a22b5d",
+        "bytes": 828702
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_dead_tuesday-01\\evidence\\bar_dead_tuesday__aftermath_patron_zone_kept_play.png",
+        "sha256": "094b2381961f62deebffb71d9063a0ed1465cf7bb3bb059beb1d75b2d518f851",
+        "bytes": 829872
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_dead_tuesday-01\\evidence\\bar_dead_tuesday__aftermath_booth_zone_kept_play.png",
+        "sha256": "bba37be6f0c63451d99465308b297fbf9aa7595cd6925460f52371720b94aa12",
+        "bytes": 825552
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-sequence-bar_dead_tuesday-01\\evidence\\bar_dead_tuesday__aftermath_night_left_empty_play.png",
+        "sha256": "93abbfc9aeb7cd009d6e314471483b036a74b040e36858b77bdaad9679cee104",
+        "bytes": 831122
+      }
+    ]
+  },
+  "reduced_actual": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARTRIAL-20261114-r4-base-preview-01\\evidence\\base\\reduce_motion_play.png",
+    "sha256": "c3bf822ce81b18b6d9a880f23c7939c0c4a5dfccb875606a245a4ff752ade127",
+    "bytes": 842710
+  },
+  "static": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261114\\packages\\bar-v1-r4\\background-board-review.png",
+    "sha256": "3ab1cfe35dec64b1a38c672920aeb7344aebc84051f04a4ec62d0b21698b9235",
+    "bytes": 611179
+  },
+  "converted_preview_still": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-AUDIT-20261114-bar-r4-video-verify\\evidence\\decoded-middle.png",
+    "sha256": "ff85cbb36ba8f807d4ec333594572b40cd9d873f2f829eab15e09a6844794c87",
+    "bytes": 1340201
+  },
+  "findings": [
+    "Own deep-teal timber, burgundy wood, warm amber glass and selective neon remain distinct, crisp and coherent.",
+    "Wake cyan title now reads on the shaded real pendant, with its honey pocket retained at the verified clear right end.",
+    "Payday gold staff title separates from the shaped upper-left amber glass hotspot without flattening the material.",
+    "Fixed construction, quiet material faces and reduced-mode practical/ball resting states show no new art-induced visual blocker in the personally inspected scope."
+  ],
+  "declared_exceptions": [
+    "Payday glint0:38 of40 underlying pixels are covered by actual Carrying tray opaque paint;2 low-alpha adornment residuals are not meaningful visibility. Meaningful40-pixel visibility remains in7 other initial contexts, independently verified by auditor. No decorative move/hole/boost.",
+    "Lock-In work2/work3 has unchanged source live/live name overlap (After-hours regular/Silas Crow); art does not claim universally unobstructed names."
+  ],
+  "limits": [
+    "Director personally inspected27 representative source-published work/outcome views, not all58. Independent auditor must finish full58 actual/source/hash/receipt review.",
+    "A converted still confirms crispness and presentation scope, not motion by itself. Native and decoded motion proofs are independently owned audit evidence.",
+    "No final package PASS, integration, TEST/Web acceptance, owner approval, full campaign completion or UI save/revisit/outcome E2E claim."
+  ]
+}

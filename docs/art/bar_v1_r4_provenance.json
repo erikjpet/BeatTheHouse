@@ -1,0 +1,359 @@
+{
+  "package_id": "bar-v1-r4",
+  "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+  "acceptance": "EXACT_NATIVE_PASS_TARGET_INTEGRATION_TEST_WEB_PENDING",
+  "audit_report_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
+  "public_audit_copy_sha256": "0b9f3086138da6d18e5e26025b2083cc42efb16eca0a8c59d20c5857b1d96d01",
+  "payload_files": {
+    "assets/art/environments/bar/anim/cold_beer_sign.png": {
+      "sha256": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+      "bytes": 5253,
+      "size": [
+        272,
+        56
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/anim/dive_sign.png": {
+      "sha256": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+      "bytes": 2972,
+      "size": [
+        158,
+        72
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_0.png": {
+      "sha256": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b",
+      "bytes": 196,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_1.png": {
+      "sha256": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+      "bytes": 196,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_2.png": {
+      "sha256": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+      "bytes": 202,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_3.png": {
+      "sha256": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+      "bytes": 193,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_4.png": {
+      "sha256": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+      "bytes": 197,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_5.png": {
+      "sha256": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+      "bytes": 212,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/floor_glint_6.png": {
+      "sha256": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+      "bytes": 196,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/bar/anim/high_smoke_0.png": {
+      "sha256": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+      "bytes": 2126,
+      "size": [
+        848,
+        180
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        11
+      ]
+    },
+    "assets/art/environments/bar/anim/high_smoke_1.png": {
+      "sha256": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+      "bytes": 1652,
+      "size": [
+        848,
+        180
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        11
+      ]
+    },
+    "assets/art/environments/bar/anim/pool_ball_0.png": {
+      "sha256": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+      "bytes": 1119,
+      "size": [
+        2400,
+        22
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/bar/anim/pool_ball_1.png": {
+      "sha256": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+      "bytes": 956,
+      "size": [
+        1824,
+        18
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/bar/anim/timber_reflection.png": {
+      "sha256": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+      "bytes": 132,
+      "size": [
+        12,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        175
+      ]
+    },
+    "assets/art/environments/bar/anim/warm_glint.png": {
+      "sha256": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+      "bytes": 113,
+      "size": [
+        12,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        220
+      ]
+    },
+    "assets/art/environments/bar/background.png": {
+      "sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f",
+      "bytes": 849190,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/bar/counters/bar_main_counter.png": {
+      "sha256": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+      "bytes": 82976,
+      "size": [
+        1096,
+        112
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "data/art/environments/bar.json": {
+      "sha256": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+      "bytes": 6718
+    },
+    "data/art/environments/index.json": {
+      "sha256": "030c7f2b2da7123c237c587560759c210b08d27666def7567cff3cf3d772e95d",
+      "bytes": 119
+    }
+  },
+  "prior_four_room_source_files_unchanged": {
+    "assets/art/environments/gas_station_casino/background.png": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_0.png": "2b9db98e9dc077c4186c2ba63788651fa889e10417dc45c64c33544a1e3c198a",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_1.png": "b68e27c269ce6be2b4b4198ebb9b04719dc820cd72c13ef050cbf6fb36ca4f0c",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_2.png": "4509090a642bf7fbd823efa530e32553611300a1e007d3712f93a4d234fa65db",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_3.png": "fe8f5fad54977a20145f89245c55885f08115a8d5a39959d00f1268fcc4bb12c",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_4.png": "495688570e106e78d503051fb297e46bdcbc816530bb385f0708dfac2c7dec89",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_5.png": "d3ac9a0c4ee9e3b7cb8001f6c8440197fad7fbee4a1d483d32e53d5570bd3b80",
+    "assets/art/environments/gas_station_casino/anim/floor_glint_6.png": "cbc79e092e8bdefdc71fbbcbca3c9beb8a071ad095ad1ea47f17534429b6ca4d",
+    "assets/art/environments/gas_station_casino/anim/fluorescent_scan.png": "1fca4f22a2465510b4e9f9b03237a0868b761e7a49482ad4ef604d2a99fdc8bd",
+    "assets/art/environments/gas_station_casino/anim/fluorescent_tube.png": "c3da303b8132bf2bc4034e42b3fc27e114585f340719cc635712914a276ff46f",
+    "assets/art/environments/gas_station_casino/anim/headlights.png": "be228da04eac2d1870faa5b2838d7345d9b2065fecdcb6958634f9661a08bfd6",
+    "assets/art/environments/gas_station_casino/anim/headlight_streak.png": "38599195079207c3a72b062adb544154e333dcadc370b2468ec8e3a520e51633",
+    "assets/art/environments/gas_station_casino/anim/laser.png": "a416e40ef36a986fae7098d3bce0973836bfe6337e3c5f186a4cc67d9dac095d",
+    "assets/art/environments/gas_station_casino/anim/neon_fascia.png": "6d63511e19aa17c4aa615fca5aee990291152b9d4f6baac3fe9c252eca6fce7a",
+    "assets/art/environments/gas_station_casino/anim/neon_fascia_glow.png": "41d8c45c20bbb3cb617cb0c183f0709765271f356d8afd20066649fc4e64a443",
+    "assets/art/environments/gas_station_casino/anim/proof_scanline.png": "d9019f2603fbf5a5330e0ea0b84933ae98732411c0f04c73c94d946dbcf27ffb",
+    "assets/art/environments/gas_station_casino/anim/scanline.png": "611c79bf6af088bcd202376a1060798ec60fdd1159859235be051c0fc128a847",
+    "assets/art/environments/gas_station_casino/anim/security_sweep.png": "ad8d7d0ef1d026c43aff1b1ed16dc6b4fe0c64eb0e498342a03dab221d6df752",
+    "assets/art/environments/gas_station_casino/anim/soffit_lamp_flicker.png": "192cfe3d9645a2e0e299e46930ccf3a86bd0942c9872b5e6d0d97e5dc4f28826",
+    "assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png": "5115a771fd021170b2ddac2dd4177b90a167fe5be1f100b18625d8ac66ef5cf9",
+    "data/art/environments/gas_station_casino.json": "1a09e5939d43c6bd17fba70590693664925aad133986815cd05057af26f4da83",
+    "assets/art/environments/corner_store/background.png": "54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80e74f3fd1fc5aec59e3",
+    "assets/art/environments/corner_store/anim/beer_pulse.png": "15ba98f6e5e64acd7296e6de7e472fa6f25a95aeb4c5803d6cc2aec5f590c581",
+    "assets/art/environments/corner_store/anim/floor_glint_0.png": "0cf136bdc2923bec3e7d38bc2500269b97aaa3a557be328fc76440282e5b6277",
+    "assets/art/environments/corner_store/anim/floor_glint_1.png": "35c8a9805f67e6646c4b24fc0af1597aa8eb0e7eb954e7352cd6c182844d99d7",
+    "assets/art/environments/corner_store/anim/floor_glint_2.png": "f776276db09f87c870d3a4fe44ddcf7d7c26fc0fd7fdc513696784250938c516",
+    "assets/art/environments/corner_store/anim/floor_glint_3.png": "5e2a3f693d146c517dcfa9a6b60459671bcea76aea503cbdea5684413b0c0610",
+    "assets/art/environments/corner_store/anim/floor_glint_4.png": "c25f331d18027290b210c2c2f8d830d4457919b4cf8dda5620aaf13a77c51650",
+    "assets/art/environments/corner_store/anim/floor_glint_5.png": "0e6031c4ad2443996e11b57b4fed49bab567df338d1133b71aa777083c2db141",
+    "assets/art/environments/corner_store/anim/floor_glint_6.png": "87d38eb4b81aad131f9562ba6bf9152511e3731d0a458ee134127c2157916385",
+    "assets/art/environments/corner_store/anim/glass_glint.png": "fd11eb98ce606ca0f6e8dab7d2f0874515b5883932019ce68e8e949430c144c2",
+    "assets/art/environments/corner_store/anim/lotto_pulse.png": "ebfcaa1686fb053fae66df8ac2e7227acd0760a7924997ea6fa102559b62ff43",
+    "assets/art/environments/corner_store/anim/overhead_scan.png": "8491efe7e0ee1efa941fbc07669a5473ba3359224e4eeec5323b825f2b9e6292",
+    "assets/art/environments/corner_store/anim/register_scanner.png": "f649f4555bbb2c0e730bcd97dca967c7e8a5111c9395847b0cb2b5c801c1eb60",
+    "assets/art/environments/corner_store/anim/tube_core.png": "9b9f36530a0102f116154167ae669e31652f05631cca5df97725b4eeb6d661f7",
+    "assets/art/environments/corner_store/counters/corner_store_register.png": "8639097e5c3dcd2c5929a44962fa9291a674da996875e3e59329796902f94010",
+    "data/art/environments/corner_store.json": "d0a1e7153d421465390355e028ccc72a1f5049d095ecab7a111aa42e85dd5d28",
+    "assets/art/environments/back_alley/background.png": "a8533e7dbd30cd75153e961cbf999acb0ffb1577e49111c3ed1eabba5704ffb6",
+    "assets/art/environments/back_alley/anim/bulb_core.png": "a9ba0d230f95b60078fb80780dbeb6f6bfe220123b60fbf834723f8a9ac943aa",
+    "assets/art/environments/back_alley/anim/floor_glint_0.png": "15654c88a985b33daa2c2f19f429d05095d12cfa13118f5cf9777be2e33c8696",
+    "assets/art/environments/back_alley/anim/floor_glint_1.png": "272b7de92e0ffbf9f9bdf653230b3432eb8f98d94ec20214200192612724bff7",
+    "assets/art/environments/back_alley/anim/floor_glint_2.png": "c77aadf50c5bd5e631c18314eab2da34677e612a40d41e10439febf93a885899",
+    "assets/art/environments/back_alley/anim/floor_glint_3.png": "3b3e960ab5bb823f7131922bee2ea65942673098fe8936f643ce35710498d2f3",
+    "assets/art/environments/back_alley/anim/floor_glint_4.png": "a26bd9e07d1ddbf03916f5ee64ed12ad96e827e497df44842b3dbf89d67996d7",
+    "assets/art/environments/back_alley/anim/floor_glint_5.png": "766e7a81dd2a8e48d7c158f93b35efa6097a4c2ec9b56592f964a90e9ebdcb27",
+    "assets/art/environments/back_alley/anim/floor_glint_6.png": "b24b9cf993444a3bed644f4cb3ac5ee579748064a876a1607e5369f90bcdcc36",
+    "assets/art/environments/back_alley/anim/ground_rain_streak.png": "1836f3766f277b1def65ed762b0f266fc3d3cefb61dedf6199f97b93789ff27d",
+    "assets/art/environments/back_alley/anim/lamp_pool_cone.png": "91fcd48f1e476892df55127c55cbd1118c763da5a7f4733207d7887a252e94ac",
+    "assets/art/environments/back_alley/anim/puddle_rings.png": "42322fa42bcd5442e3f3e3baaf03d262cdaa1bcf2d79bf475b5b0998cc728989",
+    "assets/art/environments/back_alley/anim/rain_field.png": "ab91c82737da6e9f6eb9d9f0b25027e8a2903dc461fd074845d98fd91a7c8d21",
+    "assets/art/environments/back_alley/anim/warm_glint.png": "e5a0c355ba969923d829c1f211995e8bc2783d5254759de80cdabda19b03ec3f",
+    "assets/art/environments/back_alley/counters/back_alley_crate_display.png": "7c14f4a116e5b585908bb03a49177f7e527dfe9357b6a940d0ac31e0c5913f94",
+    "data/art/environments/back_alley.json": "79bb8a15b3b2e5de523aad990277fe8e149ada30443b94e3077cd78d22c164ce",
+    "assets/art/environments/motel/anim/crt_fast_scan.png": "d5098cde064221993b1f1959112f8ec17ddba727407cd571563ff33fb8fa538d",
+    "assets/art/environments/motel/anim/crt_luminance_rows.png": "11266fb078daf72c546bb5dc2fb30425b35b797058da48543529dc7f300c757f",
+    "assets/art/environments/motel/anim/curtain_fold_reflection.png": "60a02424854d222c702230d67e576efc4d574d6b064e62b440353144c56f243d",
+    "assets/art/environments/motel/anim/cyan_glint.png": "1da1fbbc762a7878df2c01570d3dfb3003221669813605fb3fc2beb0e8fc1eff",
+    "assets/art/environments/motel/anim/floor_glint_0.png": "84d9528e7009576ad69281bb9d5f991424ad124e80ffb9ce0d0e4ffa88da93ad",
+    "assets/art/environments/motel/anim/floor_glint_1.png": "5c43a64a12ad15cbc9d16034c487e771e85cbae1deb0c28a50e4d34d3952055b",
+    "assets/art/environments/motel/anim/floor_glint_2.png": "73a7ee3572ab0a11f49d50f91d3245f26deed80470db55d656f60b508f84e0c0",
+    "assets/art/environments/motel/anim/floor_glint_3.png": "2c786e0ec24e1f2b46155c6138a6310a076327ae4479b162a9e185280cc7f436",
+    "assets/art/environments/motel/anim/floor_glint_4.png": "41a5a39106a659622581c86446dc77a25eaa2e17d8adc6f3182e75752ee4b7df",
+    "assets/art/environments/motel/anim/floor_glint_5.png": "111425540c68c2bfbd497a27b797c2a9691f392681cf1ca31622e72335ffe9e4",
+    "assets/art/environments/motel/anim/floor_glint_6.png": "beb3474d19683dcbd14786f50d575060f681f8c78792d1394c6a8d559d0b70af",
+    "assets/art/environments/motel/anim/motel_sign_pulse.png": "663b64bcceaa06403288fa327be955dc12d5a2f8e7106655e7c6342e80c185cd",
+    "assets/art/environments/motel/anim/sign_lower_light.png": "d207812914248108644a39c432715a44a29fc314ad5f045fb225677c38fed193",
+    "assets/art/environments/motel/background.png": "b23d84e7a320189a5343cd2be2b1655d58f2c54e4c8e27d8943af8a7ed164fb0",
+    "assets/art/environments/motel/counters/motel_lobby_table.png": "7a9c84b9456a9d2112d4d049042ce631f9a73842a79291c1ced0789362b220b2",
+    "assets/art/environments/motel/counters/motel_merchandise_counter.png": "a3303da4abce92190a3c2cbcdb8609e143b2ed93b07823ca551bebb2dee54357",
+    "data/art/environments/motel.json": "efaf7ffff76a064d711b31ee4821a3e09fbbd5cd88247fb3d0ddd8cb731c2bc5"
+  },
+  "protected_unchanged": {
+    "project.godot": "36b4ea7bcb66986755cb6f8528e2aba93e214eabeaf383a77f0ca91eb18db645",
+    "export_presets.cfg": "2270c54e6bec3b36bacafc87aa28c1e656fec45dd52f7df8cc28d2e04426aa5f",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "native_summary_sha256": "961635976f67c72e985aeff9d3a9f4711d7a7f6bc9030d6353513ba15b1a20dd",
+  "native_QA_source_archive_sha256": "f63ad0a587d329290b0edfe66fcc2d7f8f9915318df8fa9473ac06685adfca5d",
+  "native_assertions": {
+    "initial_contexts": 8,
+    "initial_checks": 1017,
+    "source_contexts": 58,
+    "source_context_checks": 5780,
+    "actual_objects_and_selected_cards": 787,
+    "full_composite_pairs": 136,
+    "full_composite_checks": 600,
+    "reduce_motion_checks": 75,
+    "native_entry_checks": 35,
+    "floor_wrap_checks": 71,
+    "smoke_wrap_checks": 11,
+    "counter_covered_body_pixels": 5070,
+    "counter_mismatches": 0,
+    "placement_closing_checks": 9,
+    "mandatory_unchanged_liveness": "PASS"
+  },
+  "source_catalog": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_bar_sequence_cases.json",
+    "sha256": "409effd4f52b7df42b196c3263793a40fb4e878c0953e8d3f2585c2eaf461c3a",
+    "source": "data/environments/scenario_sequences/env06_7_bars_road.json",
+    "source_sha256": "93d850f39cdf5d327b50c75d476bbd3398f110f229eb6587f1ec288f66ecdc2d",
+    "counts": {
+      "scenarios": 7,
+      "active_phase_cases": 30,
+      "aftermath_cases": 28,
+      "primary_cases": 58,
+      "identity_decision_contexts": 7,
+      "identity_decision_routes": 21,
+      "alternate_routes": 141
+    }
+  },
+  "declared_natural_occlusion": "Payday warm_glint_0:38/40source-support pixels covered by actual Carrying tray opaque alpha255;2residual pixels not meaningful visibility. Base and other6initial contexts each40visible. Auditor/director accepted exact natural partial occlusion; no forced visibility, art move or boost.",
+  "limits": [
+    "Native production-model publication and visual/geometry checks, not full UI-click/save/revisit/travel lifecycle or all141 alternative interaction routes.",
+    "Initial arrival cases overlap authored primary states; counts are not claims of additional distinct playthroughs.",
+    "TEST/Web served identity/compatibility is a separate implementation gate. No target publication by auditor.",
+    "Five room identities now have exact native PASS; fifteen interiors and later doorway phase remain unfinished."
+  ],
+  "director_visual_record": {
+    "original_sha256": "a8f0d47423e96327165c3963ea99f43e6dd6b4bf1f08b3c9534f99317d3786e1",
+    "personal_initial_views": 8,
+    "personal_representative_work_views": 27,
+    "scope": "Director scoped review differs from auditor personal full58; exact record retained."
+  },
+  "web_delivery": "PENDING"
+}
