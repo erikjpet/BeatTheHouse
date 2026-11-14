@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T10:06:11.789428+00:00",
+  "updated_at": "2026-11-14T10:28:01.992228+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37667,6 +37667,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
           ]
+        },
+        {
+          "sha": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
@@ -42110,7 +42116,14 @@
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -42295,6 +42308,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+          ]
         }
       ],
       "deployment": {
@@ -42394,26 +42413,26 @@
         "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md"
       ],
       "blocker": {
-        "state": "active",
-        "kind": "visual_revision",
-        "description": "Storage safety acceptance passed independently. Latest Gas style candidate still needs exact final art audit before TEST publication.",
+        "state": "none",
+        "kind": null,
+        "description": "Exact R12 art PASS and storage safety accepted; final Web/served TEST qualification is actively underway.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T09:49:13.743675+00:00",
+        "observed_at": "2026-11-14T10:28:01.992228+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_test_storage_2026-11-14.md",
-          "docs/art/environment_art_progress.md"
+          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-14T09:49:13.743675+00:00",
+      "updated_at": "2026-11-14T10:28:01.992228+00:00",
       "id": "BTH-ENVART-001-TEST-01",
       "name": "Isolate art TEST save storage",
       "parent_id": "BTH-ENVART-001",
-      "status": "TEST save guard browser PASS; real autosave/reload/Continue and normal-storage isolation verified; deployment waits for latest art",
+      "status": "TEST storage browser PASS; exact R12 Web boot/served local identity pass; final TEST qualification active",
       "scope": [
         "Add an explicit Web TEST launch opt-in with a separate logical save root and IndexedDB mount; preserve ordinary NEXT/native/development roots and QA override priority.",
-        "No personal save copy, migration, deletion, main/NEXT promotion or project/export/toolchain pin change. Actual Web save/reload and separate normal-save sentinel checks required."
+        "No personal save copy, migration, deletion, main/NEXT promotion or project/export/toolchain pin change. Actual Web save/reload and separate normal-save sentinel checks required.",
+        "TEST-only immutable static publisher tools/publish_environment_art_test.py; no homepage/site source/audience/NEXT changes."
       ],
-      "next_action": "Build latest exact visually passed art and verify served separate TEST identity/composition, preserving this accepted mount/root guard and main/NEXT."
+      "next_action": "Publish the sealed0c9eeec1 R12 build through the tested TEST-only installer, then finish actual served scenario/motion/larger-window acceptance while preserving main/NEXT."
     }
   ]
 }
