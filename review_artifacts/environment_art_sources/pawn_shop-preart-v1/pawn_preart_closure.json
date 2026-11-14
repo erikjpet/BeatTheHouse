@@ -1,0 +1,180 @@
+{
+  "status": "PASS_SMALL_CURRENT_PREART_ONLY",
+  "source_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+  "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+  "source_archive": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-PAWN-BASELINE-20261114\\delivered-173b235d.zip",
+  "source_archive_sha256": "23dfa6df057dacd61577210460e583d7b0cdc2dc8a90c4ddeb2e8a1175fdc5ec",
+  "source_identity_manifest": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-PAWN-BASELINE-20261114\\pawn_source_identity.json",
+  "source_identity_manifest_sha256": "dcd9254b9662c43170b773861f00063185a4c9531d6bad8065c9eb2382076998",
+  "native_checks": 449,
+  "findings": [],
+  "contexts": {
+    "__none": {
+      "objects": 10,
+      "selected_cards": 10,
+      "remaining_arrivals": 0,
+      "hidden_nonroom_count": 0,
+      "authored_hosted_or_hidden_exclusions": []
+    },
+    "pawn_shop_estate_lot_day": {
+      "objects": 15,
+      "selected_cards": 15,
+      "remaining_arrivals": 0,
+      "hidden_nonroom_count": 0,
+      "authored_hosted_or_hidden_exclusions": []
+    },
+    "pawn_shop_sals_mood": {
+      "objects": 14,
+      "selected_cards": 14,
+      "remaining_arrivals": 0,
+      "hidden_nonroom_count": 0,
+      "authored_hosted_or_hidden_exclusions": []
+    },
+    "pawn_shop_serial_check_day": {
+      "objects": 14,
+      "selected_cards": 14,
+      "remaining_arrivals": 0,
+      "hidden_nonroom_count": 0,
+      "authored_hosted_or_hidden_exclusions": []
+    }
+  },
+  "totals": {
+    "selected_cards": 53,
+    "actual_canvas_objects": 53,
+    "runtime_visual_records": 12,
+    "published_records": 53,
+    "authored_exclusions": 0
+  },
+  "unique_object_ids": 39,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-union-01\\evidence\\pawn_preart_union.json",
+  "union_sha256": "9ade78efe6ed2e596c7c7911f8d5b76f9906f2148bcacbe0a0810f80049a46d2",
+  "metadata_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-current-four-01\\evidence\\pawn_preart_metadata.json",
+  "metadata_sha256": "b32585ca108dfca6398f5c59a6fa32fd99f708efbd2abb44bb402e4cedbf8d26",
+  "helpers": {
+    "pawn_adapter.py": "d7b50dd8d4ce4c120f019993e3645a6dde0027474eaa7ed35b4ce536c32f56aa",
+    "tools/envart_pawn_preart_metadata.gd": "4bc64819ab4d4aa64311e61f7821516a631ef21138d1804fcb4902d21fdb814c",
+    "tools/envart_pawn_preart_metadata_lf_v2.gd": "9dcf8dc89f91f00dc9e656aa92a3014baba373b4fca79f2b553abd83d27d50c1",
+    "tools/envart_pawn_preart_union.py": "341260c74bd37b8819246c8281c875156a12ccd5cac93db7e238f7b460f156f6",
+    "tools/envart_pawn_preart_closure.py": "54c359ca0e5ef6101879a426f22bf55548e18a37be7c4c116655d18f3efc106c",
+    "pawn_capture_inputs.json": "af31219a12caff9124b741bca1ab55c6eaeb8eb4f3af80ee4e736cbecc2deca2"
+  },
+  "png_sha256": {
+    "pawn_shop_estate_lot_day_actual_play.png": "754cffb1ffd7716ac7c3af85719389a990f998d355d6f4ac6833cb8b463c6d93",
+    "pawn_shop_estate_lot_day_production_board_1800x860.png": "044a51c25196c6b68b1c6612401792b7c5dc9ceeb77bb7121f27086df946fa2b",
+    "pawn_shop_estate_lot_day_selected_00.png": "5739b7799f224c2a43878010b8571e550bda8246b068f09747f22302e3240293",
+    "pawn_shop_sals_mood_actual_play.png": "95d5ec4e1c3517a27cf5d9a0e0416311103ee00b2ad70f297f9573440d614e70",
+    "pawn_shop_sals_mood_production_board_1800x860.png": "2a9827c2f2f3b387da7f1332632c68c3293637d520c45cc28c62315b6dcae4c1",
+    "pawn_shop_sals_mood_selected_00.png": "f7048a9c1d4be190c06eee03ca952edcc6ad605edf0a3b8c8312a68b05a56300",
+    "pawn_shop_serial_check_day_actual_play.png": "c55cbd7d453ae3343b642c640794de85d2b8178055c7ae294d9867daf167604e",
+    "pawn_shop_serial_check_day_production_board_1800x860.png": "002de07932e284c7f2df966ce734b8d7a73e78260ccf2aaab402e1b985d9f016",
+    "pawn_shop_serial_check_day_selected_00.png": "a61f4286411c5ceabae4aa23b0d43c8017a112f506e4d3f87ee526b2f9dadd75",
+    "__none_actual_play.png": "0480f2628074c83d644a73711837e8fca5d01bd4d767f138127863c6d42d913f",
+    "__none_production_board_1800x860.png": "fe6ce84fa8bdc33464d971a0ebf3acd2d2589967a7159b050591eb147ea31e3d",
+    "__none_selected_00.png": "6c554df02013681a722124610f49c2979c8194cec45fbeb043a2bc7746f140f8"
+  },
+  "job_receipts": {
+    "source": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-source\\evidence\\job.json",
+      "sha256": "8271c75508943bd1fa7ce1d3fb03d7d5e296926d52bc30e51e500239fad04f72",
+      "exit_code": null,
+      "active_at_release": 0,
+      "assigned_before_execution": null,
+      "error": "[WinError 2] The system cannot find the file specified",
+      "cleanup_errors": [],
+      "timed_out": null,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "source2": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-source2\\evidence\\job.json",
+      "sha256": "1d264ff730876b0bba651375efa8dc35d348aa826deeb648a0023bb7c7562663",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "cold-import-01": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-cold-import-01\\evidence\\job.json",
+      "sha256": "4d0895c8cfc102e92332a9b673b8c5746aa9b38c3eab860d5736850f91033949",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "current-four-01": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-current-four-01\\evidence\\job.json",
+      "sha256": "71c5ec2fedf07c82012a7e3706ba75854b21b4914eeae0c0cf5090eb6d2c9929",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "union-01": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWN-20261114-union-01\\evidence\\job.json",
+      "sha256": "b688993a6b443d0d2624b4e0afc72ced6c62b909651ffb349a8f96df265caa75",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    }
+  },
+  "engine_release": "Both owned native Jobs are complete and drained with active_at_release=0. No further Godot is planned. Native ownership explicitly released to parent before union.",
+  "scope": "Unchanged strict173 production app, code, data, placement and art index. Actual Base and each current initial settled scenario. Production practice menu generation, unchanged Engine same-initial-state commit, RunState physical-membership publication and native arrivals. No work/outcome transitions. Observational helpers only. This is PRE-ART layout metadata, not a Pawn art PASS or work/outcome coverage.",
+  "caveats": [
+    "Coordinates are board900x430 geometry, not exact opaque paint masks.",
+    "Source-current initial contexts only; no work/outcome/save/revisit lifecycle or art acceptance.",
+    "Initial source contains no hidden/non-room/hosted visual exclusions in these four contexts; all 12 Runtime visuals are accounted for in canvas geometry.",
+    "One early archive attempt failed before worker execution because bare git executable was not resolved; absolute-path retry completed cleanly."
+  ]
+}

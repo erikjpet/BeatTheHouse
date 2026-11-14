@@ -2,7 +2,7 @@
 
 Prepared: 2026-11-14
 Room identity: pawn_shop
-Status: reference preparation only. Frozen clean target and direction are ready; source generation is conditional on Bar's explicit exact final native art PASS. No Pawn package is approved or active.
+Status: frozen geometry, own-facade direction and current four-context pre-art union are ready. Source generation remains conditional on Bar's explicit exact final native art PASS. No Pawn package is approved or active.
 
 ## Narrative and own facade
 
@@ -94,3 +94,24 @@ All authored assets must move in normal production pixels and stop under the sup
 - Verify exact geometry/hits/labels, both opaque front replays, per-entry actual-composite motion/RM, floor wraps, no-input liveness and converted-preview visibility. Declare genuine natural occlusion with source/painted-mask evidence rather than drawing an effect above people.
 - Only exact final native PASS permits integration into the existing art branch; retain earlier accepted packs. TEST/Web identity and actual browser visuals are separate gates. Do not imply UI/save/revisit end-to-end coverage.
 - Checkpoint direction, source recipes/backup and honest review state on GitHub. Do not activate unapproved assets, move main/NEXT, alter audience or modify travel facades/doorways in this interior package.
+
+## Current measured four-context pre-art supplement
+
+The strict173/c5 baseline is now captured and closed BEFORE the first source image. The director personally inspected all four actual full-app PNGs: Base, Estate Lot Day, Serial-Check Day and Sal's Mood. Source publication, normal settled arrivals, actual object/geometry/hit rectangles and selected-card titles were measured without a Pawn pack. This is pre-art planning evidence, not a Pawn art PASS or work/outcome coverage.
+
+Authoritative union: E:/CodexQA/BTH/runs/BTH-ENVART-PAWN-20261114-union-01/evidence/pawn_preart_union.json, SHA-256 9ade78efe6ed2e596c7c7911f8d5b76f9906f2148bcacbe0a0810f80049a46d2. Readable .md sibling. Initial scope449 checks/0 findings,53 actual canvas objects and selected titles,39 distinct IDs across four contexts; no hidden/non-room/hosted exclusions in these initial cases. Full exact evidence ZIP ca69b0d6d15c57a7c25e2df0c1de256acba031d991b63183d5c0908bc966e409 is at runs/BTH-ENVART-PAWN-20261114-closure-01/evidence/pawn_preart_evidence.zip. Native and closure Jobs are drained.
+
+Actual PNG root is E:/CodexQA/BTH/runs/BTH-ENVART-PAWN-20261114-current-four-01/evidence: __none_actual_play.png, pawn_shop_estate_lot_day_actual_play.png, pawn_shop_serial_check_day_actual_play.png and pawn_shop_sals_mood_actual_play.png. These current positions supersede any older promotional capture or guessed name bands.
+
+Use these real physical material priorities in the FIRST source, retaining vivid facade colors and selective aged-metal accents elsewhere:
+- Main counter front262..304 stays dark detailed old wood. Base/Serial/Mood gold Sal title[424,288,48,15] and Mood Sal Shopkeeper[319.4,288,93.2,15] share it. Do not make this face pale or aged-yellow.
+- Lower transaction/cage construction needs quiet dark depth and thin worn metal edges. Estate gold Sal moves to[424,197,48,15], Estate Appraiser[314.6,185,104.8,15], Serial Records Clerk[318.3,188,87.4,15]. Do not flatten the whole room or paint a label plaque; retain actual frame/mesh/plinth construction.
+- Base/Serial/Mood Chatty Clerk is PINK, title[407.2,113,81.6,15], above the transaction-frame top116. Its actual model[416,130,64,82] covers the tray center, but envelopes are not opaque masks. Keep this source bay empty, not a frozen cast substitute.
+- Mood Private Appraisal is CYAN, title[310.7,138,110.6,15], model[330,155,72,48]. Its title crosses glass and the LEFT EDGE of the tray envelope. Keep the surrounding glass genuinely dark; the amber tray is a compact inspection accent, not a large bright panel. Editor must mask real frame/mesh/title restrictions and prove motion through actual painted gaps or another current context, rather than blanket-model exclusions or forced effects above actors. This does not move the physical tray.
+- Estate task 'Establish the estate provenance' is CYAN, title[200,185,126,26], not assumed gold. Gold lower-left stock names also begin184 and211; Serial held-item title[139,240,126,26] and task[59,266,126,26] extend onto the flat runner/floor. Keep actual left case faces, runner and toe-kick quiet; thin selective support edges, no broad glowing rail or new platform.
+- Right stock titles include gold bands183/184 and106..132, while Estate False-Bottom Cup and pink Estate Map extend to248/247. Preserve the exact mapped opaque right front184..212 and current effective item contacts; use a dark real shelf face with restrained edge light, not a pale/yellow slab.
+- Lower floor needs quiet room-local dry materials for current provenance/task/exit titles. Retain the flat runner interpretation and existing clear exits, with no raised stage or new supports.
+
+Model, label and hit rectangles in the union are geometric envelopes, not opaque paint. Contact metadata does not authorize drawing furniture for every support ID. Preserve effective overrides and the two exact foreground fronts. When later context/object occlusion is expected, prove actual source-painted coverage and meaningful motif visibility somewhere; do not invent holes, move labels or make a hidden asset look present through preview-only boosts.
+
+No further structural reinterpretation is needed from these baseline views. The original frozen guide/geometry, own-facade identity, empty inventory/cast bays and meaningful motion inventory remain unchanged. This supplement authorizes source-prompt planning only. Pawn source generation still waits for Bar's explicit exact final native art PASS; later Pawn static, actual, full source-context and TEST gates remain separate.
