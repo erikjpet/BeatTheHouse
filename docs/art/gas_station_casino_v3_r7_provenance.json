@@ -1,0 +1,239 @@
+{
+  "package_id": "gas_station_casino-v3-r7",
+  "package_sha256": "cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9",
+  "audit_report_sha256": "71d1fc4a466e8dd4760663c07d1eda7bd15a9e4815e81b0055874d2b8ba93c35",
+  "files": {
+    "assets/art/environments/gas_station_casino/anim/floor_glint_0.png": {
+      "sha256": "2b9db98e9dc077c4186c2ba63788651fa889e10417dc45c64c33544a1e3c198a",
+      "bytes": 204,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_1.png": {
+      "sha256": "b68e27c269ce6be2b4b4198ebb9b04719dc820cd72c13ef050cbf6fb36ca4f0c",
+      "bytes": 213,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_2.png": {
+      "sha256": "4509090a642bf7fbd823efa530e32553611300a1e007d3712f93a4d234fa65db",
+      "bytes": 209,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_3.png": {
+      "sha256": "fe8f5fad54977a20145f89245c55885f08115a8d5a39959d00f1268fcc4bb12c",
+      "bytes": 202,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_4.png": {
+      "sha256": "495688570e106e78d503051fb297e46bdcbc816530bb385f0708dfac2c7dec89",
+      "bytes": 206,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_5.png": {
+      "sha256": "d3ac9a0c4ee9e3b7cb8001f6c8440197fad7fbee4a1d483d32e53d5570bd3b80",
+      "bytes": 216,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_6.png": {
+      "sha256": "cbc79e092e8bdefdc71fbbcbca3c9beb8a071ad095ad1ea47f17534429b6ca4d",
+      "bytes": 190,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/fluorescent_scan.png": {
+      "sha256": "1fca4f22a2465510b4e9f9b03237a0868b761e7a49482ad4ef604d2a99fdc8bd",
+      "bytes": 621,
+      "size": [
+        1800,
+        68
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        64
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/fluorescent_tube.png": {
+      "sha256": "c509ff935bbb7f865361a6096db204322fe5c820bec009bbf20f2c8352b5c089",
+      "bytes": 6887,
+      "size": [
+        832,
+        20
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/headlights.png": {
+      "sha256": "be228da04eac2d1870faa5b2838d7345d9b2065fecdcb6958634f9661a08bfd6",
+      "bytes": 159,
+      "size": [
+        116,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        235
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/neon_fascia.png": {
+      "sha256": "bf1ae23fc5ac3d4c771e6f010977898859dc10282b8e1995ad622d3ca113f116",
+      "bytes": 9991,
+      "size": [
+        1800,
+        16
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        150
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/security_sweep.png": {
+      "sha256": "ad8d7d0ef1d026c43aff1b1ed16dc6b4fe0c64eb0e498342a03dab221d6df752",
+      "bytes": 116,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        48,
+        220
+      ]
+    },
+    "assets/art/environments/gas_station_casino/background.png": {
+      "sha256": "d993f3cc9c6cfdcd7dc72cb07f83baeccb46aa3d2c2ca18f0ab82f28e7adce62",
+      "bytes": 498611,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png": {
+      "sha256": "0d1377f99c6f7d3bcf3c2789fc6f123efdd86713556b6cd71d999dff7587280b",
+      "bytes": 1074,
+      "size": [
+        208,
+        16
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "data/art/environments/gas_station_casino.json": {
+      "sha256": "1a09e5939d43c6bd17fba70590693664925aad133986815cd05057af26f4da83",
+      "bytes": 5700
+    },
+    "data/art/environments/index.json": {
+      "sha256": "6b9b1e2f8cc21006a4ed32421c1b84bb721217fc6a98382f3670323348028caa",
+      "bytes": 53
+    }
+  },
+  "integration_policy": "Exact audited bytes copied without raster edits. Preserve all prior source art and original game geometry. R6 PASS was superseded by r7 for common floor-motion completeness.",
+  "generation_provenance": {
+    "background-guide-v3.png": {
+      "sha256": "5b2a61fd192a28716c10d5326ce355602e09a58e436ce0ec87b969814187046a",
+      "size": [
+        1815,
+        867
+      ]
+    },
+    "floor-material-v1.png": {
+      "sha256": "43bb3ee12d2c8c6797bd40a0885233fe5c1fc54d169f896e10201e1e43f6867f",
+      "size": [
+        1815,
+        867
+      ]
+    },
+    "window-material-v1.png": {
+      "sha256": "92b55e73260e230e57a24dd6550ce08fd155962d4daf024ff0d04b5d2f415f43",
+      "size": [
+        1774,
+        887
+      ]
+    },
+    "lamp-source-v1.png": {
+      "sha256": "a90b479e3b5822947c4eb77f5ca17e1894e175e0c827c407e27daedd1f680408",
+      "size": [
+        2172,
+        724
+      ]
+    },
+    "brick-material-facade-v1.png": {
+      "sha256": "1cde36add24cd767bfe840c2ab306247a88567257f63913659037a71ebeda5ca",
+      "size": [
+        1815,
+        867
+      ]
+    },
+    "gas_facade": {
+      "sha256": "fa013a104cbd1445cb418cf568d7f7131a0205a359f6b0cffc18704a40d2a837",
+      "role": "Actual travel facade color and material reference."
+    },
+    "gas_backdrop": {
+      "sha256": "972de0f1f2b7cbb311987b9afa63fdc7b252740907311ead87a0fb3a5c0b3793",
+      "role": "Actual travel facade color and material reference."
+    }
+  }
+}

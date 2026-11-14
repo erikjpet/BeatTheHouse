@@ -2,3 +2,6 @@
 /scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_environment_depth_bar_dice.custody.json -text
 /scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_game_depth_slot.custody.json -text
 /scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_world_depth_crew_debt.custody.json -text
+# Audited art-pack JSON retains exact sealed bytes across Git operations.
+/data/art/environments/gas_station_casino.json -text whitespace=cr-at-eol
+/data/art/environments/index.json -text whitespace=cr-at-eol

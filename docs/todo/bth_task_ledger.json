@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-13T06:36:22.543943+00:00",
+  "updated_at": "2026-11-14T09:12:20.927204+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37603,8 +37603,8 @@
       "group": "current",
       "state": "open",
       "owner": {
-        "name": "Build layered environment art renderer",
-        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -37740,25 +37740,40 @@
           "kind": "manual_reconciliation",
           "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-001-r2-p9-ledger-01\\evidence\\reconciliation.json",
           "summary": "700 historical global findings;0 ENVART task/instance findings. Guarded reconciliation job closed owned-zero; raw SHA256 62791abb876e592981dd52f80b7f9b3c8402f26f6394d59d78d12a9e97568edc"
+        },
+        {
+          "kind": "owner_request",
+          "reference": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+          "summary": "Owner directs sequential artist/director/auditor/implementation delivery on the existing art branch, with exact visual audit PASS before target copy and separate TEST updates as approved packages finish. Main/NEXT stay unchanged. Owner permits auditor raster editing and requires crisp actual-motion previews and facade continuity."
+        },
+        {
+          "kind": "exact_art_audit",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md",
+          "summary": "Revised Gas r7 restores all original common floor glints and has final exact PASS cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9. R6 remains superseded."
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
+          "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "branch_only_delivery",
-        "description": "Owner requires branch-only work for later merge; existing NEXT builds main only. Temporary proof assets are now authorized and remove the starter-art dependency for implementation. Final art remains deferred for Phases8/10.",
+        "state": "none",
+        "kind": null,
+        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T06:36:22.543943+00:00",
+        "observed_at": "2026-11-14T09:12:20.927204+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
+          "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-13T06:36:22.543943+00:00",
+      "updated_at": "2026-11-14T09:12:20.927204+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Phases0–7 and9 implemented on feature branch; final art and NEXT acceptance pending",
+      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37915,9 +37930,11 @@
         "BTH-ENVART-001-PHASE-07",
         "BTH-ENVART-001-PHASE-08",
         "BTH-ENVART-001-PHASE-09",
-        "BTH-ENVART-001-PHASE-10"
+        "BTH-ENVART-001-PHASE-10",
+        "BTH-ENVART-001-ART-GAS-01",
+        "BTH-ENVART-001-TEST-01"
       ],
-      "next_action": "Stop at the requested Phase9 boundary. Await owner notice that the final20-room/12-doorway folder arrived for Phases8/10. After a separately owner-directed merge to main, confirm each phase on the existing NEXT pipeline. Phase11 excluded.",
+      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42088,8 +42105,8 @@
       "group": "current",
       "state": "open",
       "owner": {
-        "name": "Build layered environment art renderer",
-        "task_ref": "01a1d27f-f52f-7f01-ab5b-dcdc774473a9",
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -42109,27 +42126,42 @@
           "kind": "stop_checkpoint",
           "reference": "docs/testing/BTH-ENVART-001_phase1_2026-11-12.md",
           "summary": "WAITING_OWNER_FINAL_ART_DELIVERY"
+        },
+        {
+          "kind": "owner_request",
+          "reference": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+          "summary": "Owner directs sequential artist/director/auditor/implementation delivery on the existing art branch, with exact visual audit PASS before target copy and separate TEST updates as approved packages finish. Main/NEXT stay unchanged. Owner permits auditor raster editing and requires crisp actual-motion previews and facade continuity."
+        },
+        {
+          "kind": "exact_art_audit",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md",
+          "summary": "Revised Gas r7 restores all original common floor glints and has final exact PASS cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9. R6 remains superseded."
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
+          "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "final_art_delivery",
-        "description": "Owner says final art will be provided when ready. Temporary assets qualify renderer proof only; full20-room/12-doorway rollout is explicitly deferred.",
+        "state": "none",
+        "kind": null,
+        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-13T06:36:22.925627+00:00",
+        "observed_at": "2026-11-14T09:12:20.927204+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_phase9_2026-11-13.md"
+          "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
         ]
       },
-      "updated_at": "2026-11-13T06:36:22.925627+00:00",
+      "updated_at": "2026-11-14T09:12:20.927204+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "Not started; owner final art delivery pending",
+      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
       "scope": [
-        "All20 room art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
+        "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Await owner notice of the final same-format art folder, then execute this phase with unchanged paths/geometry and NEXT acceptance."
+      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially."
     },
     {
       "group": "current",
@@ -42246,6 +42278,129 @@
         "Travel doorway art delivery per unchanged implementation plan; branch only, later main merge and NEXT delivery required."
       ],
       "next_action": "Await owner notice of the final same-format art folder, then execute this phase with unchanged paths/geometry and NEXT acceptance."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+          "summary": "Owner directs sequential artist/director/auditor/implementation delivery on the existing art branch, with exact visual audit PASS before target copy and separate TEST updates as approved packages finish. Main/NEXT stay unchanged. Owner permits auditor raster editing and requires crisp actual-motion previews and facade continuity."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r6_2026-11-14.md",
+          "summary": "Audit PASS and native checks complete; target integration and Web/TEST acceptance active"
+        },
+        {
+          "kind": "exact_art_audit",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md",
+          "summary": "Revised Gas r7 restores all original common floor glints and has final exact PASS cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9. R6 remains superseded."
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
+          "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "R6 floor-sheen hold resolved by revised exact r7 audit PASS. Authorized integration and Web/TEST acceptance remain active;19 other room packs and12 doorways remain unfinished.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T09:12:20.927204+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
+        ]
+      },
+      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "id": "BTH-ENVART-001-ART-GAS-01",
+      "name": "Integrate audited Gas Station art",
+      "parent_id": "BTH-ENVART-001",
+      "status": "Gas r7 exact audit/native PASS; branch integration active; Web/TEST verification pending",
+      "scope": [
+        "Copy only exact gas_station_casino-v3-r6 sealed art/data after final audit PASS; preserve all placements, gameplay, camera and old sources.",
+        "Qualify exact Web/larger-window/camera behavior and publish to separate TEST only."
+      ],
+      "next_action": "Qualify and publish exact Gas r7 to separate TEST, preserve cumulative enabled rooms and main/NEXT, then continue remaining packages sequentially."
+    },
+    {
+      "group": "current",
+      "state": "open",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "a74a270715cfc8d9dfa0cf33305d8f706289d0e2",
+          "evidence": [
+            "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "owner_request",
+          "reference": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+          "summary": "Owner directs sequential artist/director/auditor/implementation delivery on the existing art branch, with exact visual audit PASS before target copy and separate TEST updates as approved packages finish. Main/NEXT stay unchanged. Owner permits auditor raster editing and requires crisp actual-motion previews and facade continuity."
+        },
+        {
+          "kind": "phase_proof",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r6_2026-11-14.md",
+          "summary": "Prototype30 checks pass; actual branch and Web verification pending"
+        },
+        {
+          "kind": "implementation_proof",
+          "reference": "docs/testing/BTH-ENVART-001_gas_r7_2026-11-14.md",
+          "summary": "TEST save guard committed locally;13 actual-core checks,234 Python and native fresh-start pass; Web verification pending"
+        },
+        {
+          "kind": "manual_reconciliation",
+          "reference": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gas-v3r7-reconciliation-01\\evidence\\reconciliation.json",
+          "summary": "Current report retains1524 historical/global errors,0 findings for the current objective/Phase8/Gas/TEST owner scope or43 new runtime instances. Prior observations were not falsely refreshed. Report SHA256fc73cccaca12c5c60b282b02f43fd6d69f9392f48131653e0f598225036f908b."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Active authorized implementation and acceptance gates remain.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T08:53:24.870128+00:00",
+        "evidence": [
+          "docs/testing/BTH-ENVART-001_gas_r6_2026-11-14.md"
+        ]
+      },
+      "updated_at": "2026-11-14T09:12:20.927204+00:00",
+      "id": "BTH-ENVART-001-TEST-01",
+      "name": "Isolate art TEST save storage",
+      "parent_id": "BTH-ENVART-001",
+      "status": "TEST save guard committed locally;13 actual-core checks,234 Python and native fresh-start pass; Web verification pending",
+      "scope": [
+        "Add an explicit Web TEST launch opt-in with a separate logical save root and IndexedDB mount; preserve ordinary NEXT/native/development roots and QA override priority.",
+        "No personal save copy, migration, deletion, main/NEXT promotion or project/export/toolchain pin change. Actual Web save/reload and separate normal-save sentinel checks required."
+      ],
+      "next_action": "Finish scoped implementation and exact TEST verification; parent objective remains Open."
     }
   ]
 }

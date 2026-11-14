@@ -1,5 +1,4 @@
 {
-  "schema": "bth.environment_art_index/v1",
   "enabled": [
     "gas_station_casino"
   ]

@@ -13,83 +13,117 @@
     {
       "id": "neon_fascia",
       "type": "pulse",
-      "texture": "anim/neon_fascia_glow.png",
+      "texture": "anim/neon_fascia.png",
       "rect": [
         0,
-        62,
+        70,
         900,
-        24
+        8
       ],
-      "min_opacity": 0.55,
-      "max_opacity": 1.0,
+      "min_opacity": 0.15,
+      "max_opacity": 0.6,
       "period": 1.6,
-      "blend": "add"
+      "blend": "add",
+      "still": "first"
     },
     {
-      "id": "soffit_lamp_flicker",
+      "id": "fluorescent_tube_left",
       "type": "frames",
-      "texture": "anim/soffit_lamp_flicker.png",
-      "frames": 4,
-      "fps": 5,
+      "texture": "anim/fluorescent_tube.png",
       "rect": [
-        12,
-        54,
-        64,
+        148,
+        48,
+        104,
         10
       ],
-      "blend": "add",
+      "frames": 4,
+      "fps": 5,
       "loop": "loop",
-      "still": 0
+      "still": 1
     },
     {
-      "id": "headlights",
+      "id": "fluorescent_tube_center",
+      "type": "frames",
+      "texture": "anim/fluorescent_tube.png",
+      "rect": [
+        500,
+        48,
+        104,
+        10
+      ],
+      "frames": 4,
+      "fps": 5,
+      "loop": "loop",
+      "phase": 0.2,
+      "still": 1
+    },
+    {
+      "id": "fluorescent_tube_right",
+      "type": "frames",
+      "texture": "anim/fluorescent_tube.png",
+      "rect": [
+        792,
+        48,
+        104,
+        10
+      ],
+      "frames": 4,
+      "fps": 5,
+      "loop": "loop",
+      "phase": 0.4,
+      "still": 1
+    },
+    {
+      "id": "highway_headlights",
       "type": "mover",
-      "texture": "anim/headlight_streak.png",
+      "texture": "anim/headlights.png",
       "size": [
         58,
         6
       ],
       "from": [
-        -80,
-        150
+        -60,
+        155
       ],
       "to": [
-        900,
-        150
+        330,
+        155
       ],
       "duration": 6.5,
+      "gap": 1.0,
       "clip": [
         50,
         96,
         258,
         96
       ],
+      "opacity": 0.75,
       "blend": "add",
       "still": "hide"
     },
     {
-      "id": "scanline",
+      "id": "fluorescent_scan",
       "type": "scroll",
-      "texture": "anim/proof_scanline.png",
+      "texture": "anim/fluorescent_scan.png",
       "rect": [
         0,
-        42,
+        34,
         900,
         34
       ],
       "speed": [
         0,
-        48
+        24
       ],
-      "opacity": 0.08,
+      "opacity": 0.3,
       "blend": "add",
       "web_low_detail": false,
       "still": "hide"
     },
     {
-      "id": "camera_laser",
+      "id": "security_sweep",
       "type": "sweep",
-      "texture": "anim/laser.png",
+      "texture": "anim/security_sweep.png",
       "origin": [
         739,
         94
@@ -103,14 +137,174 @@
         190
       ],
       "period": 3.5,
-      "opacity": 0.42,
+      "opacity": 0.55,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.18,
       "blend": "add",
       "still": "hide"
     }
   ],
   "counters": {
     "gas_station_staff_window": {
-      "texture": "counters/gas_station_staff_window.png"
+      "texture": "counters/gas_station_staff_window.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
     }
   }
 }
