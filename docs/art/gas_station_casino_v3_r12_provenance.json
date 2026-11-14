@@ -1,0 +1,199 @@
+{
+  "package_id": "gas_station_casino-v3-r12",
+  "package_sha256": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+  "audit_report_sha256": "dd456d9bf2bc564bde426fa459a3830808eacfa91b2d537252f0e1c15215c679",
+  "acceptance_status": "Exact visual/native art package PASS; final Web/TEST acceptance pending. Not campaign completion or owner acceptance.",
+  "files": {
+    "assets/art/environments/gas_station_casino/anim/floor_glint_0.png": {
+      "sha256": "2b9db98e9dc077c4186c2ba63788651fa889e10417dc45c64c33544a1e3c198a",
+      "bytes": 204,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_1.png": {
+      "sha256": "b68e27c269ce6be2b4b4198ebb9b04719dc820cd72c13ef050cbf6fb36ca4f0c",
+      "bytes": 213,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_2.png": {
+      "sha256": "4509090a642bf7fbd823efa530e32553611300a1e007d3712f93a4d234fa65db",
+      "bytes": 209,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_3.png": {
+      "sha256": "fe8f5fad54977a20145f89245c55885f08115a8d5a39959d00f1268fcc4bb12c",
+      "bytes": 202,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_4.png": {
+      "sha256": "495688570e106e78d503051fb297e46bdcbc816530bb385f0708dfac2c7dec89",
+      "bytes": 206,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_5.png": {
+      "sha256": "d3ac9a0c4ee9e3b7cb8001f6c8440197fad7fbee4a1d483d32e53d5570bd3b80",
+      "bytes": 216,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/floor_glint_6.png": {
+      "sha256": "cbc79e092e8bdefdc71fbbcbca3c9beb8a071ad095ad1ea47f17534429b6ca4d",
+      "bytes": 190,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        110
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/fluorescent_scan.png": {
+      "sha256": "1fca4f22a2465510b4e9f9b03237a0868b761e7a49482ad4ef604d2a99fdc8bd",
+      "bytes": 621,
+      "size": [
+        1800,
+        68
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        64
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/fluorescent_tube.png": {
+      "sha256": "c3da303b8132bf2bc4034e42b3fc27e114585f340719cc635712914a276ff46f",
+      "bytes": 6616,
+      "size": [
+        832,
+        20
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        255
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/headlights.png": {
+      "sha256": "be228da04eac2d1870faa5b2838d7345d9b2065fecdcb6958634f9661a08bfd6",
+      "bytes": 159,
+      "size": [
+        116,
+        12
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        235
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/neon_fascia.png": {
+      "sha256": "6d63511e19aa17c4aa615fca5aee990291152b9d4f6baac3fe9c252eca6fce7a",
+      "bytes": 508,
+      "size": [
+        1800,
+        16
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        0,
+        150
+      ]
+    },
+    "assets/art/environments/gas_station_casino/anim/security_sweep.png": {
+      "sha256": "ad8d7d0ef1d026c43aff1b1ed16dc6b4fe0c64eb0e498342a03dab221d6df752",
+      "bytes": 116,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        48,
+        220
+      ]
+    },
+    "assets/art/environments/gas_station_casino/background.png": {
+      "sha256": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+      "bytes": 368588,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png": {
+      "sha256": "5115a771fd021170b2ddac2dd4177b90a167fe5be1f100b18625d8ac66ef5cf9",
+      "bytes": 1033,
+      "size": [
+        208,
+        16
+      ],
+      "mode": "RGBA",
+      "alpha_extrema": [
+        255,
+        255
+      ]
+    },
+    "data/art/environments/gas_station_casino.json": {
+      "sha256": "1a09e5939d43c6bd17fba70590693664925aad133986815cd05057af26f4da83",
+      "bytes": 5700
+    },
+    "data/art/environments/index.json": {
+      "sha256": "6b9b1e2f8cc21006a4ed32421c1b84bb721217fc6a98382f3670323348028caa",
+      "bytes": 53
+    }
+  },
+  "protected_source_hashes": {
+    "project.godot": "36b4ea7bcb66986755cb6f8528e2aba93e214eabeaf383a77f0ca91eb18db645",
+    "export_presets.cfg": "2270c54e6bec3b36bacafc87aa28c1e656fec45dd52f7df8cc28d2e04426aa5f",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  }
+}
