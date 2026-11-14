@@ -15,11 +15,11 @@ Register and purpose: Street; bright, cheap, watched. Scratchers, machines, road
 
 Facade anchors: plum/magenta masonry; magenta canopy center bounded by cyan; warm amber tube cores and cool blue glass. Existing detailed utility architecture remains.
 
-Current native-reviewed treatment, R12: the supplied screenshot must contribute the majority visual design, not only a muted color influence. Reuse its archived native source's crisp material patterns substantially beneath current detailed fixed fixtures. Rebuild broad wall bays as vivid plum/aubergine masonry with dark mortar; separate columns into strong lavender-gray shadow/face/edge planes; give the cage a full unmistakable bright gold/ochre perimeter and bar facets; use compact honey-white tube cores and cyan/pink/white fascia cores; enrich purple highway glass and reference-derived sharp perspective floor texture. Keep current fine details, all six motion motifs and exact layout. Preserve coherent dark material under live labels. Remove archived baked cast, frozen ray/headlight streaks and raised road-marker dashes. Judge the actual in-game image against the owner screenshot before calling it responsive. R9 was rejected. R12 passed the exact native art/technical gate; integration0c9eeec1 and bound TEST975a107d1484 are verified. Its final cleanup restored floor-joint continuity and the attendant ledge, made compact lamp cores warm-white, and uses a pale physical ledge/painted wall bay behind the dark-pink Parking Lot Tip glyphs. This is material treatment, not a moved label or new UI plate.
+Current native-reviewed treatment, R12: the supplied screenshot must contribute the majority visual design, not only a muted color influence. Reuse its archived native source's crisp material patterns substantially beneath current detailed fixed fixtures. Rebuild broad wall bays as vivid plum/aubergine masonry with dark mortar; separate columns into strong lavender-gray shadow/face/edge planes; give the cage a full unmistakable bright gold/ochre perimeter and bar facets; use compact honey-white tube cores and cyan/pink/white fascia cores; enrich purple highway glass and reference-derived sharp perspective floor texture. Keep current fine details, all six motion motifs and exact layout. Preserve coherent dark material under live labels. Remove archived baked cast, frozen ray/headlight streaks and raised road-marker dashes. Judge the actual in-game image against the owner screenshot before calling it responsive. R9 was rejected. R12 passed the exact native art/technical gate and is verified on the existing TEST lane, with bound footer 0.6.0(975a107d1484). Its final cleanup restored floor-joint continuity and the attendant ledge, made compact lamp cores warm-white, and uses a pale physical ledge/painted wall bay behind the dark-pink Parking Lot Tip glyphs. This is material treatment, not a moved label or new UI plate.
 
 Fixtures: back wall ends at y248; soffit y34..70; fascia y70..78; columns x90/412/770, width22, ending y212; highway window [50,96,258,96]; service ledges y78 and166; cage [660,104,166,120]; camera origin [739,94]; utility rail [100,244,700,10] and supports; lower rail [100,400,700,8]. Do not add a new foreground desk or paint a person in the cage.
 
-Counter: gas_station_staff_window [532,80,104,8], PNG208 x 16. Current Nell override contact is [742,200], not the unoverridden default [600,84]. Preserve both fixture and effective live geometry rather than moving Nell.
+Counter: gas_station_staff_window [532,80,104,8], PNG 208 x 16. Current Nell override contact is [742,200], not the unoverridden default [600,84]. Preserve both fixture and effective live geometry rather than moving Nell.
 
 Motion inventory: magenta/cyan fascia pulse; three phase-offset fluorescent tube placements; clipped highway headlights; fluorescent scan; continuous narrow security sweep; seven restrained floor glints. All 14 manifest entries must remain represented in the current revision. Sweep must visibly aim left/right, without a disappearing tip or a frozen duplicate ray.
 
@@ -31,17 +31,15 @@ Facade anchors: purple masonry reveals, cyan/magenta stripe rhythm, cooler-blue 
 
 Fixtures: preserve left shelf unit [42,64,258,148], shelf contacts y108/136/164/192; clerk recess [338,92,246,114] and crosspiece y142..149; full counter [338,206,286,48]; right cooler/support; low phone ledge [170,270,100,16] and legs; floor boundary y245; columns ending y238; clear side access. Do not interpret the clerk recess as an outdoor skyline window.
 
-Counter: corner_store_register, PNG572 x 96. The foreground map is 286 units wide even though one old body drawing was only246. Never narrow the contact to match that old body.
+Counter: corner_store_register, PNG 572 x 96. The reviewed R6 arrangement keeps pale material in the left Phone bay x338..412, with dark plum/navy staff faces x412..624; the recess shelf similarly keeps pale x352..412 and dark x412..570 faces. Preserve a thin cream contact edge and the original detail. The identical counter-front replay texture must match the background crop. This union-of-scenarios treatment keeps dark-pink Phone and yellow staff names readable whether the label falls above or below the counter. The foreground map is 286 units wide even though one old body drawing was only246. Never narrow the contact to match that old body.
 
 Effective current override contacts include shop items [118,133],[231,135],[92,190],[176,189],[260,190]; clerk[449,227]; phone[374,202]; coin pusher[220,274]; Crew[696,290]; drink[684,183]; Numbers[598,203]; exit[868,390]. Read current data again before final capture.
 
-Remove baked stock, giant bottles, flyer blocks, floor dashes and the old central clerk-like black block from the geometry target. Live inventory and the current clerk own those roles. Modest unbranded cardboard cartons may remain as quiet set-dressing in the existing right cluster.
+Remove baked stock, giant bottles, flyer blocks, floor dashes and the old central clerk-like black block from the geometry target. Live inventory and the current clerk own those roles. Four modest unbranded cardboard cartons remain as quiet set-dressing in the existing right cluster, grounded in a low row at the same x positions with bottoms y252, rather than reproducing the old unsupported staircase annotation.
 
 Motion inventory: all ten overhead tube flickers from the background routine; overhead scan; BEER and LOTTO pulses; the moving mint register-top glint; four glass/metal sparkles; seven common floor lights. The original register glint is 22 units wide and moves from x372 to536 at roughly a one-second back-and-forth cadence. Because animations are below the opaque front, put its 1–2 unit visible core just above contact, around y203..205. Sparkles at [384,220] and [478,224] would be hidden inside the solid front; adapt them to visible trim or adjacent glass. The cooler sparkles at [668,138] and [746,144] remain distinct. Do not cut alpha holes through the front or move contacts.
 
 ## 03. Back Alley — back_alley
-
-Detailed [execution brief](briefs/back_alley.md) is frozen and approved as a reference only. Generation starts after the preceding Corner exact art gate.
 
 Register and purpose: Street; wet, electric, dangerous bargains. A real service alley, not a theatrical criminal lair.
 
@@ -49,7 +47,7 @@ Facade anchors: irregular dark-purple masonry, amber exposed bulb, cyan/magenta 
 
 Keep the room's own table/crate/bin positions, not the exterior's right-side table location. Preserve central folding table[282,192,336,24] and legs, hanging lamp/wire, right crate front, side access and wall/floor boundary y236. Leave live sale bays empty; do not paint hooded cast or duplicate watch merchandise.
 
-Counter: back_alley_crate_display [638,168,208,50], PNG416 x 100.
+Counter: back_alley_crate_display [638,168,208,50], PNG 416 x 100.
 
 Clean-target annotations to remove: old static rain lines across the canvas, five colored table-stock rectangles at x334/388/442/496/550,y172,36 x 20, and bottom reflection dashes. Keep actual supports.
 
@@ -63,7 +61,7 @@ Facade anchors: faded rose/plum plaster and brick base, oxidized teal coping/met
 
 Materials: worn low-cost veneer, faded upholstery, cool CRT glass, modest phone/service surfaces. Keep existing table, merchandise counter, door and low phone support. Avoid polished hotel luxury.
 
-Counters: motel_lobby_table PNG520 x 104; motel_merchandise_counter PNG340 x 80.
+Counters: motel_lobby_table PNG 520 x 104; motel_merchandise_counter PNG 340 x 80.
 
 Motion inventory: motel/vacancy sign pulse, TV static/scan and light bands, small glass glints and common floor reflections. No baked caller, clerk, card dealer or live merchandise.
 
@@ -75,7 +73,7 @@ Facade anchors: weathered DEEP TEAL painted paneling, burgundy timber, amber pat
 
 Materials and fixtures: scarred warm brown-red counter, teal/indigo bottle-mirror surroundings, green pool felt, existing stools, booth and dartboard. Keep all current supports. Do not fill live service surfaces with a second painted drink stock.
 
-Counter: bar_main_counter PNG1096 x 112.
+Counter: bar_main_counter PNG 1096 x 112.
 
 Motion inventory: DIVE/beer sign breathing, tiny existing pool-ball movement, thin high smoke, glass glints and common floor light. Keep practical pools warm and localized; avoid generic purple-brick substitution.
 
@@ -87,7 +85,7 @@ Facade anchors: violet/plum masonry, cold cyan-lit barred glass, aged yellow/gol
 
 Materials: mismatched old wood, dusty glass, dull metal and security mesh. Retain counter, estate shelf and separate display bays. Do not bake the exterior's guitar/camera/jewelry into live sale slots, or turn the room into a luxury jeweler.
 
-Counters: pawn_counter PNG536 x 84; pawn_estate_shelf PNG492 x 56.
+Counters: pawn_counter PNG 536 x 84; pawn_estate_shelf PNG 492 x 56.
 
 Motion inventory: sign pulse, mesh/glass scan, display/practical pulse, very thin high haze, sparse metal glints and common floor light.
 
@@ -99,7 +97,7 @@ Facade anchors: plum brick, cobalt-blue edge light, orange-gold curtains, warm b
 
 Materials and fixtures: walnut panels, existing low wood stage, gold/copper curtain folds, dark warm tables and bar. Preserve stage/bar/surface geometry. The live band owns its musicians and instruments; do not paint duplicate players.
 
-Counter: jazz_bar PNG568 x 96.
+Counter: jazz_bar PNG 568 x 96.
 
 Motion inventory: existing sign pulses, restrained high smoke/light atmosphere, brass/glass glints and common floor light. Any added practical breathing must stay slow and musical, not a stage strobe. The old decorative glint at [704,196] falls inside the solid bar front; adapt it to visible upper trim or glass, without alpha holes or contact changes.
 
@@ -123,7 +121,7 @@ Facade continuity: share the building's plum masonry/red timber and a faint inhe
 
 Preserve existing table and cart/door supports and low ceiling. Do not copy the public marquee room, add a luxury poker den, or bake live games/cast into the image.
 
-Counter: punchline_right_table PNG572 x 196. Keep the left table's existing physical fixture too.
+Counter: punchline_right_table PNG 572 x 196. Keep the left table's existing physical fixture too.
 
 Motion inventory: low drifting smoke bands, high haze, independent string bulbs, sparse glints and common floor light.
 
@@ -147,7 +145,7 @@ Facade anchors: wine/burgundy velvet, pink scalloped gold-edged canopy rhythm, h
 
 Keep current stage, booths, champagne bar and live game clearances. Echo the scallop/curtain motif in existing valance geometry, not a new canopy across the room. No explicit cast, crowd, new cat statues or extra live-host duplicates.
 
-Counter: kitty_champagne_bar PNG536 x 96.
+Counter: kitty_champagne_bar PNG 536 x 96.
 
 Motion inventory: sign pulse, thin high pink/cool atmosphere, small candle-like floor/table light variation, restrained glints and common floor reflections. Control bright accents so the room reads as maintained hospitality rather than garish spectacle. The old decorative glint at [704,236] falls inside the solid bar front; adapt it to visible upper trim or glass, without alpha holes or contact changes.
 
@@ -159,7 +157,7 @@ Facade anchors: white/cream painted structure with magenta edges, honey windows,
 
 Retain warm varnished wood and green felt, but make cream structural trim and selective magenta accents visible. Preserve all table, window, rail and boarding/access geometry. Do not paint the exterior boat or an extra paddlewheel inside the room.
 
-Counter: delta_right_table PNG540 x 184.
+Counter: delta_right_table PNG 540 x 184.
 
 Motion inventory: sign breathing, both authored water/ripple motifs translated coherently, passing dock light through correct openings, sparse brass glints and common floor light. Do not add water beneath live walkable actors merely to make the room feel nautical.
 
@@ -171,7 +169,7 @@ Anchors: tawny warm sand, amber weathered timber boardwalk, cyan surf/foam, a mo
 
 Keep towel stall, access and boardwalk supports. No resort casino, new tables, tropical pool or generic purple indoor floor. Dry sand should not mirror neon like wet asphalt.
 
-Counter: beach_towel_stall PNG340 x 72.
+Counter: beach_towel_stall PNG 340 x 72.
 
 Motion inventory: coherent surf motion from both old drawing paths, small distant boat, restrained BEACH sign pulse/glints and common moving light adapted to timber/sand rather than neon stripes.
 
@@ -183,7 +181,7 @@ Facade anchors: plum/magenta panels, disciplined broad gold framing, warm chande
 
 Preserve actual machine bays, two table supports, host station, kiosk/cocktail supports and room doors. Live machines and staff remain separate. Use current detailed pixel treatment, measured symmetry and clearly separated green felt/gold/plum materials, not a blue-gray arcade or chaotic treasure hall.
 
-Counters: grand_table_left PNG544 x 72; grand_table_right PNG544 x 72; grand_host_station PNG424 x 96.
+Counters: grand_table_left PNG 544 x 72; grand_table_right PNG 544 x 72; grand_host_station PNG 424 x 96.
 
 Motion inventory: architectural lamp pulses, title/sign glow, sparse expensive glints and common floor reflections. Respect the existing Web detail/cadence path.
 
@@ -195,7 +193,7 @@ Facade continuity: the same plum/gold/amber institution, deepened into quieter v
 
 Keep the exact two-table support geometry and private central desk. Do not inherit the public machine bank, cocktail shelf or HOST identity. No unrelated hotel-lobby décor.
 
-Counters: grand_table_left PNG544 x 72; grand_table_right PNG544 x 72.
+Counters: grand_table_left PNG 544 x 72; grand_table_right PNG 544 x 72.
 
 Motion inventory: restrained practical/sign breathing, sparse highlights and common floor light. Preserve the old room's meaningful ambient motifs without public-floor spectacle.
 
@@ -207,7 +205,7 @@ Facade continuity: immaculate dark plum/wood, restrained brass/gold institutiona
 
 Preserve table/desk fixtures and guarded routes. No crowd, violent trophies, giant surveillance display or new dramatic spotlight. Keep clear green felt and the existing private OFFICE identity rather than public HOST signs.
 
-Counters: grand_table_left PNG544 x 72; grand_table_right PNG544 x 72.
+Counters: grand_table_left PNG 544 x 72; grand_table_right PNG 544 x 72.
 
 Motion inventory: the existing low-energy lamp/sign variation, tiny highlights and common floor light, treated with the lowest visual energy of the public House rooms.
 
@@ -219,7 +217,7 @@ Facade continuity: restrained plum/gold lintel, threshold and counter metal ties
 
 Keep three teller openings, trays, gift-case supports, separated ATM and return door. Leave live stock bays empty of baked offers. Linda remains the existing featureless live silhouette; never paint a face or second body.
 
-Counter: grand_cage_teller_counter PNG776 x 112.
+Counter: grand_cage_teller_counter PNG 776 x 112.
 
 Motion inventory: sign pulse, terminal scan, moving bar reflections and common floor light. This is not a pawn shop or a flashy public machine room.
 

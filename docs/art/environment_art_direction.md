@@ -18,7 +18,7 @@ The latest supplied screenshot requires substantial design fidelity, not a loose
 
 The owner rejected the muted r9 treatment because it did not use a majority of the supplied design. Keep the current authored content and fine detail, but rebuild the material treatment with substantially closer fidelity and brighter color separation. The uploaded example has rich aubergine/pink masonry, sharply separated lavender-gray columns, compact honey-white lamp cores, crisp cyan/magenta trim, warm ochre booth details and a strongly readable violet floor.
 
-Current Gas r7 through r9 retain useful detail and geometry but are too muted and gray by comparison. R10 through R12 developed a surface/design rebuild, not another slight grade: broad vivid plum brick wall bays, decisive lavender-gray shadow/face/edge column planes, a full unmistakable gold/ochre cage border and bar facets, compact bright honey-white and cyan/pink lamp cores, rich purple highway glass, and a sharper reference-derived purple perspective floor. The exact R12 package passed its complete native art/technical gate; integration0c9eeec1 and final bound TEST975a107d1484 are verified; full campaign delivery remains separate. Preserve all real motion and fixed geometry. Use coherent quiet material behind labels: dark where appropriate, or a pale painted/laminated plane for intrinsically dark glyphs. A global saturation wash, blur/sharpen pass, uniform grain, or crude low-color quantizer does not satisfy this direction.
+Current Gas r7 through r9 retain useful detail and geometry but are too muted and gray by comparison. R10 through R12 developed a surface/design rebuild, not another slight grade: broad vivid plum brick wall bays, decisive lavender-gray shadow/face/edge column planes, a full unmistakable gold/ochre cage border and bar facets, compact bright honey-white and cyan/pink lamp cores, rich purple highway glass, and a sharper reference-derived purple perspective floor. The exact R12 package passed its complete native art/technical gate and is now verified on the existing TEST lane, with bound footer 0.6.0(975a107d1484). Every subsequent package still needs its own exact integration and served Web gate. Preserve all real motion and fixed geometry. Use coherent quiet material behind labels: dark where appropriate, or a pale painted/laminated plane for intrinsically dark glyphs. A global saturation wash, blur/sharpen pass, uniform grain, or crude low-color quantizer does not satisfy this direction.
 
 This philosophy applies strongly to future designs, adapted to their own facades and narrative registers. It does not mean giving private homes the Gas Station's neon palette.
 
@@ -101,6 +101,16 @@ A nonzero clock or changing endpoint metadata alone is not proof of visible move
 Show every real animated asset/motif. Use a 10-12 second room excerpt plus clearly labelled faithful crops when necessary. Longer wrap cycles can be checked with fixed-phase probes rather than making the owner watch a minute-long GIF. Preserve pixel edges and sufficient palette detail during GIF conversion.
 
 The owner wants previews of failures as well as passes, with the revision and remaining issue stated honestly.
+
+## Live-state visual evidence
+
+Plan quiet real materials for the UNION of base, scenario, work-phase and outcome labels, not just one initial layout. Verify measured support/lip rows, not merely a resized module's outer bounds. Inspect settled actors at their real supports; an arrival shot with an empty counter does not exercise a counter-name contrast fix.
+
+For outcome evidence, authority-dictionary membership alone is insufficient. Assert each room-visible authored visual in the actual canvas object list, exported geometry and a nonempty label rectangle. Declare genuinely hidden or non-room exclusions explicitly. Capture through the normal production state commit and physical-membership publication boundary, and visually inspect populated output.
+
+Expected labels must follow unchanged production selection policy, including interaction/action text that overrides a static semantic name. Derive the expectation from source rather than relaxing a failed string comparison blindly. Preserve failed or limited fixtures as diagnostics and separate later focused rechecks from original assertion totals.
+
+Model-state visual coverage does not by itself prove UI click paths, complete quest causality, revisit or save/load. Claim those only when separately exercised.
 
 ## Sequential production and release gate
 

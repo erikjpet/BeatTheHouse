@@ -5,3 +5,4 @@
 # Audited art-pack JSON retains exact sealed bytes across Git operations.
 /data/art/environments/gas_station_casino.json -text whitespace=cr-at-eol
 /data/art/environments/index.json -text whitespace=cr-at-eol
+/data/art/environments/corner_store.json -text whitespace=cr-at-eol

@@ -1,5 +1,6 @@
 {
   "enabled": [
-    "gas_station_casino"
+    "gas_station_casino",
+    "corner_store"
   ]
 }

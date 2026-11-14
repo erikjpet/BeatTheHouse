@@ -2,24 +2,33 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12 delivered on bound TEST975a107d1484 and fully verified. The20-room campaign remains active; Corner R6 is pending its exact final audit. Documentation and work-in-progress backups are not approval to deploy unreviewed art.
+Release status: Gas R12 delivered and verified on TEST; Corner R6 native PASS with its integration/Web gate pending; Back Alley source authoring active. Documentation and work-in-progress backups do not approve unreviewed art.
 
 ## Current creative gate
 
-Gas Station Casino R12 has passed the exact native art and technical gate. The dominant reference treatment is now plainly visible: broad vivid plum brick, lavender column planes, a full gold cage, rich purple perspective floor and retained fine fixture detail. Final cleanup repaired floor continuity and the attendant ledge, improved dark-pink label contrast using physical material, and kept compact warm-white lamp cores.
+Gas Station Casino R12 is delivered to the existing TEST lane and independently verified in actual browser views at 1280 x720 and 1920 x1080. The bound MENU footer reads 0.6.0(975a107d1484). Source/served identity, normal TLS file integrity, motion, camera and prior scenario/Reduce Motion checks are clear. The final packaging fix embedded the established build manifest; it did not change approved R12 art. Homepage, audience, NEXT and main remain unchanged.
 
-Exact R12 package SHA-256: 1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560.
-Native background SHA-256: 3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5.
-Final native PASS report SHA-256: dd456d9bf2bc564bde426fa459a3830808eacfa91b2d537252f0e1c15215c679.
+Gas package SHA-256: 1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560.
+Gas native PASS report SHA-256: dd456d9bf2bc564bde426fa459a3830808eacfa91b2d537252f0e1c15215c679.
+Final bound served report SHA-256: b4cc858280e93485a531b0a53549fabc746c527efe5c4d5637d73bcf21787d98.
 
-The gate includes independent actual-image review, all five scenario tints, 16-file identity/contract checks, 45 room checks, 71 floor/wrap checks, counter replay, Reduce Motion, no-input liveness, visible security sweep and actual converted-preview movement. Native approval is not a TEST/Web verification or a claim of explicit owner acceptance.
+Corner Store R6 has passed the exact final native art and technical gate. Its own mint-white, cream, plum and blue-glass identity remains distinct. Fixed shelf/cooler contacts, grounded cartons and coherent dark staff/pale Phone material zones solve the actual scenario-label problems without moving objects.
 
-Corner Store is now the single active art package. It has a first background, separate carton source and frozen cleaned geometry guide. Modular assembly is underway with its distinct mint/cream/plum shop identity. Gas integration and post-integration verification are tracked separately; any new owner feedback or deployment failure must be reconciled before release.
+Corner package SHA-256: 6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb.
+Corner native background SHA-256: 54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80e74f3fd1fc5aec59e3.
+Corner final native PASS report SHA-256: afb2b32bfdef225b92f9f2f17c85f0217becf0f8bbd73b648dfbf7e3c89f5f97.
+Corner final native QA summary SHA-256: 7c8f0674598481abc273c284c815c675904d05284746851a31d8a86e0c652eb5.
+
+Corner's integration and TEST/Web verification are pending. Native/model-state outcome visual coverage is not a UI end-to-end quest, revisit or save/load claim.
+
+Back Alley is now the single active art package. Its cleaned reference target and detailed execution brief are frozen, its actual facade and current anchors have been reviewed, and the first source and a matching floor plate are delivered, and exact assembly is active. The raw source's wall/floor drift is being corrected; no Back Alley finished package or audit PASS is claimed.
 
 ## Durable deliverables
 
 - environment_art_direction.md: shared philosophy, reference hierarchy, narrative findings, fixed contracts, animation completeness and release gates.
 - environment_room_briefs.md: all 20 room briefs, local facade/material identities, fixed fixture concerns, counter dimensions and motion requirements.
+- environment_motion_translations.md: explicit source-to-authored motion decisions and limits.
+- briefs/back_alley.md: detailed next-room execution geometry, reference roles and motion plan.
 - This file: queue, current revision gate and feedback history.
 - environment_art_packs.md: renderer package schema, dimensions and supported animation primitives.
 - ../todo/BTH_environment_art_layers_plan.md: implementation plan and repository-level scope.
@@ -30,9 +39,9 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 
 | Order | Environment | Current state | Next concrete step |
 | --- | --- | --- | --- |
-| 01 | gas_station_casino | Exact R12 delivered; bound source975a107d1484 verified on TEST | Preserve passed files and cumulative index while qualifying later packages |
-| 02 | corner_store | R6 scenario-label material/counter correction; R5 rejected in several contexts | Complete exact R6 all25-motion/scenario/outcome audit, then branch/TEST integration only after PASS |
-| 03 | back_alley | Brief, facade assessment and fixture guide ready | Clean baked rain/stock annotations, then author one package |
+| 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
+| 02 | corner_store | Exact R6 final native package PASS | Integrate passed bytes, preserve Gas, then verify TEST/Web |
+| 03 | back_alley | Active exact assembly; first source/floor plate and frozen guide ready | Fit exact contacts/floor and review the layered static package before runtime trial |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
@@ -63,11 +72,22 @@ There are 20 production interior art identities, drawn from 18 source archetypes
 - R9 preserved more fine detail and improved hue separation, but the owner rejected its muted design as too distant from the supplied image. It is not approved.
 - R10 substantially reused authentic original brick/floor/rim patterns, but mechanical overlaps and floor cleanup artifacts were caught before acceptance. It was not passed.
 - R11 was the first visibly dominant-reference trial reviewed in actual runtime. It retained all 14 moving entries and current fine details; final craft issues were still open.
-- R12 fixed those narrow craft issues and passed the exact complete native gate. All five scenario tints preserve readable Parking Lot Tip and Buy Drink labels. Integration0c9, native/larger local Web checks and all five Web scenarios passed. TEST source0c9 is installed and all served bytes match, but footer UNBOUND exposed omitted embedded build metadata. Correct packaging and final served bound-identity verification remain outstanding; art bytes/PASS are unchanged.
+- R12 fixed those narrow craft issues and passed the exact complete native gate. All five scenario tints preserve readable Parking Lot Tip and Buy Drink labels. Integration and actual served TEST browser checks, including 1920 x1080 and the bound 975a107d1484 footer, are complete.
 
 Historical R7 package SHA-256: cc36ff86969d2c2dca931c4665724575ea10ac14c7a3cfe4efc4962660a9e8f9.
 Rejected R9 package SHA-256: ef3b9b3a303701216705fc45ff5ef88655b5138403498af859a5d15062a9fea8.
-These historical identifiers do not authorize a release. R12 is the current exact native-passed candidate; post-integration verification is still required.
+These historical identifiers do not authorize a release. R12 is the current exact native-passed and TEST-verified Gas package.
+
+## Corner revision and evidence history
+
+- The first source preserved the local facade identity and empty live bays. No whole-room regeneration was needed.
+- Early trials exposed wide register atlas dimensions, a misread scan extent, unsupported decorative cartons, broad pale shelf/apron faces behind colored labels, and fitted-source support rows that drifted from the exact map.
+- R5 corrected the physical shelf/cooler edges, grounded the cartons and improved shop/low-table labels. Full scenario review then found gold staff names on the pale central front/recess shelf; the base view alone had not exercised that placement.
+- R6 retained a pale left Phone bay and changed central/right real cabinet and shelf faces to dark plum/navy, with matching solid counter replay. Actual settled staff views confirmed the fix.
+- An early 35-context fixture asserted authority keys without publishing the intended room objects. That receipt is retained as limited diagnostics, not actual outcome coverage.
+- The corrected fixture uses the normal production commit/publication boundary and asserts actual canvas objects, geometry and nonempty labels. The auditor viewed all 35 populated contexts. The director independently reviewed all35 critical counter regions, settled full rooms, the corrected smoke and representative full outcome/work rooms.
+- Native evidence evaluated 870 assertions: 54 settled scenario/Base, 86 motion/Reduce Motion, 71 floor/wrap and 659 live outcome checks. Twelve label-expectation diagnostics were resolved by 226 separate source-derived rechecks of unchanged interaction-label precedence; they are not inflated into extra original native assertions. All 25 animation entries, exact 17-file identity, counter coverage and no-input liveness are clear.
+- The scope includes 28 authored aftermath families plus seven active work phases at the production-model visual boundary. UI click-path causality, revisit and save/load were not claimed.
 
 ## Reference provenance
 
@@ -88,27 +108,3 @@ Owner previews show actual production-rendered motion for every motif, including
 Progress backups confirmed on the art branch include documentation commit ff493bcdc7b15147c12ab8210bb7736aac785312 and non-active pixel/source/recipe checkpoint 3efb978200a5ba1b9219ca2b559503d3a7c042c3. The source snapshot is isolated from active assets and runtime export.
 
 Only the existing TEST lane is in scope for this art rework. Do not replace NEXT or claim a web release before verifying its exact build/assets and visible result. Prior backups, reports, motion previews and documentation commits do not waive the latest owner feedback.
-
-## Current integration and release facts
-
-R12 product source0c9eeec1202ed9fe4e56bfc1fce8bea2e2daae1c and TEST-only publisher99c74cfd47a550f62e9c965c52e59de4e906fb00 are on GitHub. Canonical TEST route https://192.168.0.36:8443/p/beat-the-house/play/test/ is restored. Its first immutable0c9 artifact has correct external identity/art hashes but visibly unbound internal metadata; it is retained as a diagnostic, not final release acceptance. A new bound build will replace only the TEST pointer.
-
-Local Web tests cover all five Gas scenarios, actual floor/sweep/all-motif motion, Reduce Motion stop/resume,1920x1080 and camera. Independent storage proof confirms real save/reload/Continue with no normal-storage writes. Final served bound-footer/Base/large proof remains pending. Main/NEXT/source pins/homepage/audience stay unchanged.
-
-[Non-active Gas R12 source backup](../../review_artifacts/environment_art_sources/gas_station_casino-v3-r12/README.md) retains all16 payloads and complete pixel inputs/recipe; archive SHA2567f63d6b1b622b35c78bb648e7aaa75f93e9615c857b6f6f07edae9da9dcb8f01. Private reference IDs alone were redacted. Archive editor/export exclusion remains in force.
-
-## Final Gas delivery checkpoint
-
-The embedded manifest correction is complete. Exact R12 is served by source975a107d148433a5bc702dcc8e469523a5d02869 at the canonical TEST URL, with matching external/embedded identity and visible bound footer. Final served Base/1920/camera/motion and independent director Web gates pass. All1341 prior PCK entries are directly byte-identical; only the missing root identity was added. Main/NEXT/homepage/audience remain untouched. Gas/TEST-setup bounded batches are complete, not the full20-room campaign.
-
-Corner R5 technical primary checks passed but yellow Clerk contrast failed several actual scenarios. R6 physical material panels and matching solid-counter replay are pending; all25 animation entries remain intact.35 supported outcome/work contexts are prepared beyond the five primary scenarios, with fixture-derived rather than full UI/end-to-end scope explicitly retained. See the ongoing Corner batch; no unpassed Corner art is active.
-
-Authoring lessons: measure actual support/lip contact rows, not just resized outer module boxes. Use exact runtime label metadata rather than guessing small text: the pink LOTTO-side actor is event:chatty_clerk, Chatty Clerk. Decorative guide cartons are removable annotations; grounded set dressing does not authorize any gameplay-contact change.
-
-## Corner R6 non-active source checkpoint
-
-[Reproducible Corner R6 backup](../../review_artifacts/environment_art_sources/corner_store-v1-r6/README.md) preserves all17 exact payloads, unchanged original seal, exact self-contained recipe and all4 frozen source/guide/facade inputs, without a parent-package dependency. ZIP SHA256b8f20778e63f43b27f1be70ca5d4e17ecacf6a53cae830e7efb195fa33cd7e91; original seal SHA256603beeb19c4ce9af53c26b0ef61958d6528ead2784472148a3684c10e652bfd1. Editor/export exclusions remain in force, and no Corner index/asset is active.
-
-R6 actual settled primary screenshots and corrected supported-clock closing fixture pass54checks; broader35-context fixture review is in progress. Initial QA assumptions that leave_safely meant interrupted were wrong in four authored branches, which actually return refused. Failed receipts are retained and only QA recipes are being corrected to the supported travel_departed fact. The earlier synthetic closing fixture also had a noon-clock precondition flaw; current evidence advances the actual clock to the authored1am boundary. None of these fixture corrections changes game code or approved art. Final audit remains pending.
-
-The initial403/403 metadata receipt is retained only as a LIMITED DIAGNOSTIC, not rendered-outcome acceptance. Independent audit found intended Delivery props/labels absent from actual images because the older QA resolver skipped normal RunState physical membership/publication. That visual-coverage claim is withdrawn. A corrected Delivery smoke uses unchanged production ScenarioEngine commit plus RunState publication and passes23 actual canvas-ID/geometry/label/authority checks for stocked_rack and delivery_clerk. The corrected full35-context run still requires independent actual-image review. Genuine settled primary54, per-entry/RM86, floor/wrap71, exact replay and unchanged liveness evidence remain valid. No game/art/renderer changes or target activation. Current source-checkpoint reconciliation retains0 assigned-scope findings and1524 historical/global findings.

@@ -1,0 +1,484 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "corner_store",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "lotto_pulse",
+      "type": "pulse",
+      "texture": "anim/lotto_pulse.png",
+      "rect": [
+        376,
+        42,
+        142,
+        34
+      ],
+      "min_opacity": 0.08,
+      "max_opacity": 0.42,
+      "period": 1.0134169850289656,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "beer_pulse",
+      "type": "pulse",
+      "texture": "anim/beer_pulse.png",
+      "rect": [
+        642,
+        56,
+        146,
+        42
+      ],
+      "min_opacity": 0.08,
+      "max_opacity": 0.42,
+      "period": 1.3659098493868667,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_0",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        24,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 2.6666666666666665,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_1",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        108,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 12.0,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_2",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        192,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 21.333333333333332,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_3",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        276,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 30.666666666666668,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_4",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        360,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 40.0,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_5",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        444,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 49.333333333333336,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_6",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        528,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 58.666666666666664,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_7",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        612,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 68.0,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_8",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        696,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 77.33333333333333,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_tube_9",
+      "type": "pulse",
+      "texture": "anim/tube_core.png",
+      "rect": [
+        780,
+        22,
+        60,
+        8
+      ],
+      "min_opacity": 0.33,
+      "max_opacity": 0.57,
+      "period": 0.6981317007977318,
+      "phase": 86.66666666666667,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "overhead_scan",
+      "type": "scroll",
+      "texture": "anim/overhead_scan.png",
+      "rect": [
+        36,
+        20,
+        784,
+        52
+      ],
+      "speed": [
+        0,
+        38
+      ],
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "register_edge_scanner",
+      "type": "frames",
+      "texture": "anim/register_scanner.png",
+      "rect": [
+        372,
+        203,
+        186,
+        2
+      ],
+      "frames": 10,
+      "fps": 9.549296585513721,
+      "loop": "loop",
+      "opacity": 0.72,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "glass_glint_0",
+      "type": "pulse",
+      "texture": "anim/glass_glint.png",
+      "rect": [
+        382,
+        201,
+        5,
+        5
+      ],
+      "min_opacity": 0,
+      "max_opacity": 0.32,
+      "period": 1.8,
+      "phase": 0.0,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "glass_glint_1",
+      "type": "pulse",
+      "texture": "anim/glass_glint.png",
+      "rect": [
+        476,
+        201,
+        5,
+        5
+      ],
+      "min_opacity": 0,
+      "max_opacity": 0.32,
+      "period": 2.11,
+      "phase": 0.27,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "glass_glint_2",
+      "type": "pulse",
+      "texture": "anim/glass_glint.png",
+      "rect": [
+        666,
+        136,
+        5,
+        5
+      ],
+      "min_opacity": 0,
+      "max_opacity": 0.32,
+      "period": 2.42,
+      "phase": 0.54,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "glass_glint_3",
+      "type": "pulse",
+      "texture": "anim/glass_glint.png",
+      "rect": [
+        744,
+        142,
+        5,
+        5
+      ],
+      "min_opacity": 0,
+      "max_opacity": 0.32,
+      "period": 2.73,
+      "phase": 0.81,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.18,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "corner_store_register": {
+      "texture": "counters/corner_store_register.png",
+      "bleed": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  }
+}
