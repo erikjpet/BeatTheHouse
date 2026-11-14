@@ -2,7 +2,7 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12 and Corner R6 delivered and verified on cumulative TEST c5d5d17f;2of20 interiors complete. Back Alley trial/refinement and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
+Release status: Gas R12, Corner R6 and Back R3 delivered and verified on cumulative TEST182ae255;3of20 interiors complete. Motel native audit and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
 
 ## Current creative gate
 
@@ -41,8 +41,8 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | --- | --- | --- | --- |
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
 | 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
-| 03 | back_alley | Exact R3 final native PASS; integration/Web active | Verify cumulative bound TEST before delivery closes |
-| 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
+| 03 | back_alley | Exact R3 integrated and verified on bound182 TEST | Preserve all three passed packs during later additions |
+| 04 | motel | R2 local contrast findings; bounded R3 material revision active | Review new exact R3, then complete CRT/current-context/motion/two-front native acceptance |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
 | 07 | jazz_club | Brief, facade assessment and fixture guide ready | Author brass/amber/wood stage room after prior package passes |
@@ -126,3 +126,11 @@ Back R3 actual review now clears settled room, natural lamp minimum/peak and pro
 ## Back R3 final native PASS and Motel release
 
 Exact Back f42919a1 native art PASS is sealed by report662b2108. All28 actual production-published work/aftermath views,785 native assertions,85 separately scoped read-only pixel checks,23 motions/RM/wrap/crate/liveness clear the final gate. Integration and TEST/Web are separate and active; the existing served c5 remains Gas+Corner until the new bound artifact is published. Motel is now the sole source-authoring package, released after Back native PASS from frozen guide f22befd8 and brief v2 2459f874, including visible-glass CRT masking around static vending overlap. See [Back integration](../testing/back_alley_r3_art_integration.md) and [Motel brief](briefs/motel.md). No Back UI/save/revisit or full campaign claim.
+
+
+## Back bound TEST delivery
+
+Exact182ae255 cumulative TEST is verified: Gas+Corner+Back only. Independent normal-TLS file identity, real UI Base+four scenarios, both sizes, sampled honey/RM states, honest composite motion and biased track fits, camera and prior-room retention clear the scoped gate. Director personally confirms final served visuals. Browser proof SHA256:c5a431247c8fe27e78c539ddf90f5e215ca5fbba40fa7ec11f4dd9aceb1727f1. Natural browser exit0/active0 under caps; incidental diagnostics retained. See [delivery evidence](../testing/back_alley_r3_art_integration.md). Three interiors delivered, not full campaign completion. Motel R2 actual preview cleared its early visual gate; full native acceptance including actual composite CRT visibility is active.
+
+
+Motel R2 later Weekly/Wedding review found localized pink Parking/cushion and gold/teal-lip contrasts. R3 will darken the first cushion face below top224 while retaining weave/wine piping, and keep bright teal only at contact row286 with dark face below. No geometry or broad palette redo. All five persisted R2 actual layouts exactly equal strict c5; the five in-memory equality findings were Vector2/JSON representation mismatch, preserved and resolved by independent zero-tolerance persisted comparisons. R2 remains a trial, not final PASS; no Motel source activation or TEST publication.

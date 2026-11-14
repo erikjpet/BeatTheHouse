@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T13:00:51.456673+00:00",
+  "updated_at": "2026-11-14T13:38:21.119518+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37685,6 +37685,12 @@
           "evidence": [
             "docs/testing/corner_store_r6_art_integration.md"
           ]
+        },
+        {
+          "sha": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+          "evidence": [
+            "docs/testing/back_alley_r3_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -37692,14 +37698,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "Gas and Corner cumulative preview delivery verified; full campaign remains incomplete.",
+        "note": "First three cumulative interior previews verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+          "source_commit": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First two passed interiors only; remaining18+12travel doorways open",
+          "scope": "First three passed interiors only; remaining17+12travel doorways open",
           "evidence": [
-            "docs/testing/corner_store_r6_test_delivery.json"
+            "docs/testing/back_alley_r3_test_delivery.json"
           ]
         }
       },
@@ -37789,21 +37795,21 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Two passed interiors are delivered. Remaining18 interiors and12 travel doorways are unfinished; Back Alley refinement/native audit is active.",
+        "description": "Three passed interiors are delivered. Remaining17 interiors and12 travel doorways unfinished; Motel exact native art audit active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T12:23:23.714693+00:00",
+        "observed_at": "2026-11-14T13:30:43.997912+00:00",
         "evidence": [
-          "docs/testing/corner_store_r6_test_delivery.json",
+          "docs/testing/back_alley_r3_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T12:23:23.714693+00:00",
+      "updated_at": "2026-11-14T13:30:43.997912+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Gas R12 and Corner R6 delivered/verified on TEST;2of20 interiors complete; Back active; campaign remains Open",
+      "status": "Gas R12, Corner R6 and Back R3 delivered/verified on TEST;3of20 interiors complete; Motel active; campaign remains Open",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37967,7 +37973,7 @@
         "BTH-ENVART-001-ART-BACK-01",
         "BTH-ENVART-001-ART-MOTEL-01"
       ],
-      "next_action": "Complete Back Alley exact native art audit/integration and remaining18 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT.",
+      "next_action": "Complete Motel exact native art audit/integration and remaining17 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42160,6 +42166,12 @@
           "evidence": [
             "docs/testing/corner_store_r6_art_integration.md"
           ]
+        },
+        {
+          "sha": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+          "evidence": [
+            "docs/testing/back_alley_r3_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -42167,14 +42179,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "Gas and Corner cumulative preview delivery verified; full campaign remains incomplete.",
+        "note": "First three cumulative interior previews verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+          "source_commit": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First two passed interiors only; remaining18+12travel doorways open",
+          "scope": "First three passed interiors only; remaining17+12travel doorways open",
           "evidence": [
-            "docs/testing/corner_store_r6_test_delivery.json"
+            "docs/testing/back_alley_r3_test_delivery.json"
           ]
         }
       },
@@ -42209,23 +42221,23 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Two passed interiors are delivered. Remaining18 interiors and12 travel doorways are unfinished; Back Alley refinement/native audit is active.",
+        "description": "Three passed interiors are delivered. Remaining17 interiors and12 travel doorways unfinished; Motel exact native art audit active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T12:23:23.714693+00:00",
+        "observed_at": "2026-11-14T13:30:43.997912+00:00",
         "evidence": [
-          "docs/testing/corner_store_r6_test_delivery.json",
+          "docs/testing/back_alley_r3_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T12:23:23.714693+00:00",
+      "updated_at": "2026-11-14T13:30:43.997912+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "Gas R12 and Corner R6 delivered/verified on TEST;2of20 interiors complete; Back active; campaign remains Open",
+      "status": "Gas R12, Corner R6 and Back R3 delivered/verified on TEST;3of20 interiors complete; Motel active; campaign remains Open",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Complete Back Alley exact native art audit/integration and remaining18 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT."
+      "next_action": "Complete Motel exact native art audit/integration and remaining17 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT."
     },
     {
       "group": "current",
@@ -42597,20 +42609,29 @@
       "name": "Integrate audited Back Alley art",
       "parent_id": "BTH-ENVART-001",
       "group": "current",
-      "state": "open",
-      "status": "Exact R3 final native auditor PASS; cumulative Gas+Corner+Back integration active; TEST/Web pending",
+      "state": "complete",
+      "status": "Exact R3 integrated and cumulative bound182 TEST verified; native and scoped served Web/director gates PASS",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+          "evidence": [
+            "docs/testing/back_alley_r3_art_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Separate cumulative art TEST only after exact Back Alley package PASS; preserve Gas and Corner."
+        "state": "verified",
+        "commit": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+        "evidence": [
+          "docs/testing/back_alley_r3_test_delivery.json"
+        ],
+        "scope": "Exact cumulative Gas R12+Corner R6+Back R3 isolated TEST only; main/NEXT unchanged."
       },
       "scope": [
         "Preserve actual Back Alley facade, fixed supports/current placements and distinct wet masonry/rain/light motion families.",
@@ -42637,6 +42658,11 @@
           "kind": "native_art_audit",
           "reference": "docs/testing/back_alley_r3_art_integration.md",
           "summary": "Exact f42919a1 final native PASS;785 native assertions plus85 overlapping read-only pixel checks,28 actually published model contexts,23motions/RM/wrap/crate/liveness. No TEST/UI/save/revisit claim."
+        },
+        {
+          "kind": "served_web_acceptance",
+          "reference": "docs/testing/back_alley_r3_test_delivery.json",
+          "summary": "Bound182/current/13HTTPS files; real Base+four scenarios, honest rain-overlap motion/RM/restore/tracks,1280/1920/camera and prior-room retention. Director final Web visual PASS; natural browser closure. Native outcomes remain model-state, not UI/save/revisit proof."
         }
       ],
       "blocker": {
@@ -42644,13 +42670,13 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T13:00:51.456673+00:00",
+        "observed_at": "2026-11-14T13:30:43.997912+00:00",
         "evidence": [
-          "docs/testing/back_alley_r3_art_integration.md"
+          "docs/testing/back_alley_r3_test_delivery.json"
         ]
       },
-      "next_action": "Commit only exact17 sealed Back files, preserve Gas+Corner, export bound isolated TEST and verify actual Web identity/scenarios/motion/RM/camera.",
-      "updated_at": "2026-11-14T13:00:51.456673+00:00"
+      "next_action": "Preserve accepted Gas+Corner+Back; continue Motel exact art audit and later packages. No UI/save/revisit/travel-lifecycle or full-campaign acceptance claim.",
+      "updated_at": "2026-11-14T13:30:43.997912+00:00"
     },
     {
       "id": "BTH-ENVART-001-ART-MOTEL-01",
@@ -42658,7 +42684,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel source authoring released after Back native PASS; frozen v2 brief/guide ready; no Motel art passed",
+      "status": "R2 localized Weekly/Wedding contrast findings; bounded R3 cushion/lowdesk revision active; no final native PASS",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42682,20 +42708,30 @@
           "kind": "execution_brief",
           "reference": "docs/art/briefs/motel.md",
           "summary": "Frozen guide f22befd8 and exact v2 brief2459f874; CRT mask/label planning explicit. Source authoring released only after Back exact native PASS; no target activation."
+        },
+        {
+          "kind": "current_preart_and_early_trial",
+          "reference": "docs/art/briefs/motel.md",
+          "summary": "Strict-c5 Base+four current scenarios:392checks/0findings,914production files exact; actual unionSHA81b9688a. R2 actual88frames/11.59493s+Conventioneers match baseline geometry/labels. Early visual GO only; CRT full-composite pairs and deep proof pending."
+        },
+        {
+          "kind": "actual_trial_findings",
+          "reference": "docs/art/environment_art_progress.md",
+          "summary": "Weekly/Wedding exposed localized cushion/teal-lip contrast. All five persisted R2 layouts exactly match strict c5; five in-memory comparison findings were Vector2-versus-JSON representation, preserved/resolved by exact-file comparison with zero tolerance. No production geometry edit."
         }
       ],
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "art_contrast_revision",
+        "description": "R2 pink Parking crosses bright first-cushion piping and lowdesk teal lip needs a one-row contact edge/dark face. Bounded R3 material correction is underway; no geometry/source redo or user input required. R2 remains unapproved.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T13:00:51.456673+00:00",
+        "observed_at": "2026-11-14T13:38:21.119518+00:00",
         "evidence": [
-          "docs/art/briefs/motel.md"
+          "docs/art/environment_art_progress.md"
         ]
       },
-      "next_action": "Collect unchanged c5 actual layout/label/occlusion metadata after Back export priority, then author and review exact Motel source before native trial.",
-      "updated_at": "2026-11-14T13:00:51.456673+00:00"
+      "next_action": "Stage only the new exact R3 seal after static GO, review actual affected contexts, then complete native CRT-composite/current-context/two-front/motion/RM/wrap/liveness proof.",
+      "updated_at": "2026-11-14T13:38:21.119518+00:00"
     }
   ]
 }

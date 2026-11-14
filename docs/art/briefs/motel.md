@@ -2,7 +2,7 @@
 
 Prepared: 2026-11-14
 Room identity: motel, not motel_room
-Status: exact brief and clean target frozen for conditional source release after Back Alley's explicit final native art PASS. No Motel source generation or package has started.
+Status: exact brief and clean target frozen. Back R3 has received explicit final native art PASS and Motel source authoring is now released/active. No Motel package is passed or activated.
 
 ## Narrative and room-specific identity
 

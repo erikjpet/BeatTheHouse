@@ -1,3 +1,5 @@
+> Historical checkpoint below was created before approval. The same exact R3 payload later passed native audit and was delivered on bound182 TEST; see docs/testing/back_alley_r3_art_integration.md. Archived sources, recipe, seal and payloads remain unchanged.
+
 # Back Alley R3 source checkpoint
 
 NON-ACTIVE TRIAL, NOT APPROVED. Do not activate its index or copy unpassed bytes into runtime assets. Gas R12 and Corner R6 remain the only passed active packs.

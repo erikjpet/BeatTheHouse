@@ -312,5 +312,11 @@
   },
   "scope": "Only these exact Back Alley R3 bytes clear art integration. Native art, actual published model views, geometry, counter, all23 animations, Reduce Motion and no-pointer liveness are accepted. Not owner acceptance, TEST/Web, UI end-to-end, save/revisit/travel-lifecycle acceptance or campaign completion.",
   "qa_source_archive_sha256": "2b53efe2f964c4a1ea53df43e221db3420b9159d93b0520b315e087a8f478635",
-  "web_delivery": "PENDING exact bound cumulative TEST and actual browser acceptance"
+  "web_delivery": {
+    "status": "PASS",
+    "source_commit": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+    "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "evidence": "docs/testing/back_alley_r3_test_delivery.json",
+    "browser_proof_sha256": "c5a431247c8fe27e78c539ddf90f5e215ca5fbba40fa7ec11f4dd9aceb1727f1"
+  }
 }

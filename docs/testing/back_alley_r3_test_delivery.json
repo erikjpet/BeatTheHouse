@@ -1,0 +1,771 @@
+{
+  "status": "PASS_EXACT_BACK_R3_TEST_DELIVERY",
+  "source_commit": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+  "source_tree": "77422a09ce9d0598ae5bcad7aaea02e8bb6c55b1",
+  "source_archive_sha256": "d33fded06b6237b92a3599054a0107725ef0848b45447fff3dd38af02fc20107",
+  "package_id": "back_alley-v1-r3",
+  "package_sha256": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+  "native_audit_sha256": "662b2108b1a49c36f6c0cf4d7637c7e29b1d0a22768c98e17dd98e0203e594fd",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68"
+  },
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/182ae255d04bd1fbd81e1542a0d153475cfb1e6a/index.html",
+  "build_manifest_sha256": "37cf2baab508177905db5350320cfe2a1d2ae0a390debd4e71dbcef661b70641",
+  "html_sha256": "e054f63c6fc3a4facd0506d264228202d2c472250b09f0dfec95fd28701822ab",
+  "pck_sha256": "d5db3cdfeaf0ebc1506e802b5c95ebbdcf4dd3e550808ba5ae48d08711ecdc07",
+  "embedded_manifest_sha256": "2e090dd815c1778d4e50346f16fc242cf6444a51d340f9e49be10f90520f9ce9",
+  "embedded_manifest_md5": "5288073ab82e6d1ffdce8c2ff8c2fdba",
+  "source_art_files_verified": 48,
+  "compiled_art_textures_verified": 44,
+  "prior_Gas_Corner_compiled_unchanged": 29,
+  "pck_content_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/back_alley_crate_display.png-6cfda7f8e42413af20495556a836c79f.ctex",
+      ".godot/imported/background.png-e0c097f9cd72fe44b5c44163b1533893.ctex",
+      ".godot/imported/bulb_core.png-e355e8f0653c24b4de9c37dc38f487fc.ctex",
+      ".godot/imported/floor_glint_0.png-2fbd6229264504912058abdf8c74daa1.ctex",
+      ".godot/imported/floor_glint_1.png-575de26bb8527252d43ebf7ff9443712.ctex",
+      ".godot/imported/floor_glint_2.png-c9560b95072e9c107759b6b3c2c7e787.ctex",
+      ".godot/imported/floor_glint_3.png-214440c9dedf118e01b8c693a69f5987.ctex",
+      ".godot/imported/floor_glint_4.png-69a591a5cdd6502b338a53a8c78c9bf8.ctex",
+      ".godot/imported/floor_glint_5.png-2aa4fd647f8f3fd1b149918d0533cc85.ctex",
+      ".godot/imported/floor_glint_6.png-b368006a4edc903699b08553a30d4c6b.ctex",
+      ".godot/imported/ground_rain_streak.png-f7204d50583abec631e2ea29373c5aa4.ctex",
+      ".godot/imported/lamp_pool_cone.png-589a900c79fa9ac9aa20c37983b5f8d1.ctex",
+      ".godot/imported/puddle_rings.png-bac6bb619f24bc33c5ecc3d4d2771702.ctex",
+      ".godot/imported/rain_field.png-307a70759ff43363beaaa1718ae5fd0d.ctex",
+      ".godot/imported/warm_glint.png-3688e35923c78e283479c4a4cedd8712.ctex",
+      "assets/art/environments/back_alley/anim/bulb_core.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_0.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_1.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_2.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_3.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_4.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_5.png.import",
+      "assets/art/environments/back_alley/anim/floor_glint_6.png.import",
+      "assets/art/environments/back_alley/anim/ground_rain_streak.png.import",
+      "assets/art/environments/back_alley/anim/lamp_pool_cone.png.import",
+      "assets/art/environments/back_alley/anim/puddle_rings.png.import",
+      "assets/art/environments/back_alley/anim/rain_field.png.import",
+      "assets/art/environments/back_alley/anim/warm_glint.png.import",
+      "assets/art/environments/back_alley/background.png.import",
+      "assets/art/environments/back_alley/counters/back_alley_crate_display.png.import",
+      "data/art/environments/back_alley.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1370
+  },
+  "python_unit_tests": 272,
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "normal_save_paths_changed": false,
+  "main_next_commit_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "previous_c5_immutable_preserved": true,
+  "site_audience_and_config_unchanged": true,
+  "receipts": {
+    "back-web-finalize-01/embedded-verification.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-back-web-finalize-01\\evidence\\embedded-verification.json",
+      "sha256": "63461f6b4b5d47666f279fae58aafe5ac556d5848cfaed47004bc5fab32679f8"
+    },
+    "back-web-finalize-01/art-source-import-pck-linkage.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-back-web-finalize-01\\evidence\\art-source-import-pck-linkage.json",
+      "sha256": "00a5250adf565a6d05a00222f99dd16ab1f3f7e01b5020f5a16aed34849f54e0"
+    },
+    "back-web-finalize-01/pck-diff.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-back-web-finalize-01\\evidence\\pck-diff.json",
+      "sha256": "79f9d120cacd3e75087e5e95975d32d7caf0fa7e761b6d65f1455366555ef097"
+    },
+    "back-test-promotion-01/publication.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-back-test-promotion-01\\evidence\\publication.json",
+      "sha256": "69d698bd85fdee09ff1aa9e9fcb0d43ce48761fac5ee473cb15f41e759251f59"
+    },
+    "back-test-served-identity-01/served-proof.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-back-test-served-identity-01\\evidence\\served-proof.json",
+      "sha256": "4d66516d3945558d24fcee3390f80d1d3ed2a2cc8bda6b8743b944b95ad2a8ce"
+    }
+  },
+  "host_editor_log_disposition": {
+    "back-web-import-01": {
+      "log_sha256": "b305f94e1b55c99a886745bb1aef663dbd0913cfefffa95f5595e9a9c23ddd77",
+      "counts": {
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND": 6,
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 3,
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 1
+      },
+      "exit_code": 0,
+      "scope": "Expected missing native Windows DLL in Web-only snapshot; not native-module qualification. Qualified Web WASM and actual served runtime checked separately."
+    },
+    "back-web-export-01": {
+      "log_sha256": "85976ff6beca9d7b30b17cff569bc67ce1f083d3c4cbaeb19eced510a4dfacae",
+      "counts": {
+        "ERROR: Condition \"!FileAccess::exists(path)\" is true. Returning: ERR_FILE_NOT_FOUND": 6,
+        "ERROR: GDExtension dynamic library not found: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 3,
+        "ERROR: Error loading extension: 'res://addons/coin_pusher_native/coin_pusher_native.gdextension'.": 1
+      },
+      "exit_code": 0,
+      "scope": "Expected missing native Windows DLL in Web-only snapshot; not native-module qualification. Qualified Web WASM and actual served runtime checked separately."
+    }
+  },
+  "github_combined_statuses": [],
+  "github_ci_scope": "No combined commit statuses returned; no .github/workflows directory in source. Local272-test result is separate, not hosted CI success.",
+  "browser_proof": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-final-summary\\evidence\\back-r3-served-web-qa.json",
+    "sha256": "c5a431247c8fe27e78c539ddf90f5e215ca5fbba40fa7ec11f4dd9aceb1727f1",
+    "status": "PASS_SCOPED_ACTUAL_WEB_RUNTIME_AND_DIRECTOR_VISUALS"
+  },
+  "limits": [
+    "Native785 assertions and85 overlapping read-only pixel checks are separately scoped.",
+    "Full-field rain overlaps most Web regions; composite ROI deltas cannot independently prove each underlying motif. Native per-entry isolation remains separate.",
+    "No UI quest/save/revisit/travel-lifecycle end-to-end or whole-campaign claim."
+  ],
+  "actual_ui": {
+    "seed": "LAYOUT-SURVEY-QA",
+    "scenarios": [
+      "Base / No Scenario",
+      "Street Craps",
+      "Cruiser Parked",
+      "Fence Night",
+      "Nothing Moving"
+    ],
+    "scenario_probes": [
+      2,
+      6,
+      7,
+      8,
+      9
+    ],
+    "selection_via": "Real Environment Library UI; no model-state or clock injection",
+    "camera_selection_return_probe": 18,
+    "screen_sizes": [
+      "1280x720",
+      "1920x1080"
+    ]
+  },
+  "web_motion": {
+    "composite_proof": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-scenario-rm-analysis\\evidence\\back-composite-motion.json",
+      "sha256": "dd04d18c8ddc3535b5503298ea5d9dcde664f9cdbf8dabdec04c8097efb5bce3",
+      "bytes": 640704
+    },
+    "restore_proof": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-restored-analysis\\evidence\\back-composite-motion.json",
+      "sha256": "35f6624c5d37b50c0791ae4e30be0417c605ce84471476ef0d8e25996114f2ca",
+      "bytes": 76446
+    },
+    "base_frames": 200,
+    "base_duration_ms": 75452,
+    "all23_composite_regions_live_in_base_and_four_scenarios": true,
+    "reduce_motion_all23_regions_unchanged": true,
+    "restoration_all23_regions_live": true,
+    "rm_frames": 32,
+    "rm_duration_ms": 11584,
+    "restored_frames": 40,
+    "restored_duration_ms": 15001,
+    "warm_signatures": "Raw positive red-minus-blue varied in bulb/cone/both warm-glint regions. Sample extrema are observed screenshots, not exact mathematical minima/peaks.",
+    "ground_streak_fit": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-ground-analysis\\evidence\\back-ground-streak-fit.json",
+      "sha256": "45b7bc738df41a6a0972209a3ce92ecc714ac8d2552535741d1510206a4c2f06",
+      "bytes": 3992
+    },
+    "ground_fit_interpretation": "Composite fit using eight authored phase positions across3lanes peaks at91boardpx/s versus authored90; all8phase scores positive. Timing/overlap bias is disclosed, not an isolated8-entry PASS.",
+    "floor_track_fit": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-floor-analysis\\evidence\\back-floor-track-fits.json",
+      "sha256": "3b530b9e5c5a01c0c280a201e7f83fc8dfbb79cd2ca26acfb7e789f4682358e6",
+      "bytes": 32003
+    },
+    "floor_fit_interpretation": "All7slow tracks have best observed support within0.5CSSpx/s of authored speed. Corroboration only; rain/overlays can bias fits.",
+    "limits": "Full-field rain overlaps nearly every ROI. Composite deltas, puddle-region motion and timing/color signatures do not replace native isolated23-entry proof. No alpha/contrast/brightness/timing changes."
+  },
+  "director_final_served_visual_gate": {
+    "served_visual_gate": "PASS for inspected exact182ae255/f42919a1 artifact",
+    "scope": "Personally reviewed Base1280/1920, four scenarios1280, NothingMoving1920, sampled honey-low/high, supported RM1280/1920, camera settled/return, bound footer. No art revision requested.",
+    "baseline_geometry_note": "Existing lookout/NO HEAT and trail/Shutter Gap text intersections remain narrow baseline geometry, not new broad washout."
+  },
+  "prior_room_regression": {
+    "gas": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-gas-analysis\\evidence\\gas-regression.json",
+      "sha256": "15ea7c167cc8cb983526af82c8fbdf13c050fce9ef247af62b870d24bc5e0006",
+      "bytes": 1203
+    },
+    "corner": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-corner-analysis\\evidence\\corner-motion-metrics.json",
+      "sha256": "7c63fb8246432e37104d3a6bd0a8eeba5d7fab7b10d2236e9cf43deaf4a47365",
+      "bytes": 45295
+    },
+    "gas_all5_regions_live": true,
+    "corner_all28_regions_live": true,
+    "scope": "Actual Base visual/liveness retention only; not new full outcomes or save/reload/Continue proof."
+  },
+  "browser_diagnostics": {
+    "engine_gdextension_page_errors": [],
+    "page_console_diagnostics": [
+      {
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "location": {
+          "url": "https://192.168.0.36:8443/favicon.ico",
+          "line": 0,
+          "column": 0,
+          "lineNumber": 0,
+          "columnNumber": 0
+        }
+      }
+    ],
+    "browser_stderr": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-browser\\evidence\\stdout.log",
+      "sha256": "929627d9e222bf387f5c410e13da82215cc0e200209fdfac84e2e1606be03507",
+      "bytes": 1275
+    },
+    "browser_stderr_note": "One early network-service restart and background GCM registration errors preserved. All game requests/runtime checks/final byte hashes succeeded; no claim that Chromium stderr is error-free.",
+    "excluded_attempt": "Probe11 attempted RM after viewport resize, missed Settings and selected Returning Regular. Retained but excluded from RM proof; corrected actual checkbox/probe13 and overview/probe14 used."
+  },
+  "resource_receipts": {
+    "browser_receipt": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-browser\\evidence\\owned-job-receipt.json",
+      "sha256": "7ed4f53f3c26fbf40973148c5b705bad7dd5a613cf4cca5ebbd8034e3d9063d4",
+      "bytes": 9966
+    },
+    "browser_peak_job_memory_bytes": 1930649600,
+    "browser_cpu_seconds": 624.28125,
+    "browser_natural_exit_code": 0,
+    "forced_termination": false,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "cpu_hard_cap_percent": 12,
+    "job_memory_cap_bytes": 2147483648,
+    "all_assigned_before_resume": true,
+    "probes": [
+      {
+        "index": 0,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-0\\evidence\\job.json",
+          "sha256": "84df59d9b0fcbd4204a3f418912eebc31491dbac75226d532d858cfdc8c6ca59",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 148004864,
+        "cpu_seconds": 0.671875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 1,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-1\\evidence\\job.json",
+          "sha256": "9e3afcf5646278e77468a8de2e31946a653134e24afff9f75887c3c56c479b73",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 143757312,
+        "cpu_seconds": 0.390625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 2,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-2\\evidence\\job.json",
+          "sha256": "012072cc1c3ba2a29af9e17c762587696e4a7c163e873a119c85eb78d5305e4e",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 150421504,
+        "cpu_seconds": 0.546875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 3,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-3\\evidence\\job.json",
+          "sha256": "a040efdfa30c787b17575e4e46f2163b91eb34c46a22b98a5e602a34fd2b7a2a",
+          "bytes": 7245
+        },
+        "peak_job_memory_bytes": 147439616,
+        "cpu_seconds": 0.4375,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 4,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-4\\evidence\\job.json",
+          "sha256": "c08f73f81b6e6387d503c0104a1564dc43e4fa824ad29686cf4887694fa0375c",
+          "bytes": 7245
+        },
+        "peak_job_memory_bytes": 233869312,
+        "cpu_seconds": 5.3125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 5,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-5\\evidence\\job.json",
+          "sha256": "380573014541827b86b7b80979f82820b80240de2e910d49070832f4832ab650",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 146956288,
+        "cpu_seconds": 0.453125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 6,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-6\\evidence\\job.json",
+          "sha256": "8ed0482ad2777ea09e27528a2f43613cf378d929d266b6fcb1edf90e4477c454",
+          "bytes": 7246
+        },
+        "peak_job_memory_bytes": 158384128,
+        "cpu_seconds": 1.28125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 7,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-7\\evidence\\job.json",
+          "sha256": "e613bbd49239b54a04edcf257346fc0ac8d81f1581ea028f14f9a374d08ed0ca",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 144015360,
+        "cpu_seconds": 1.515625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 8,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-8\\evidence\\job.json",
+          "sha256": "0a0cb5f7dbafd5e60b0d8123d9cb3e21e021895adacc60ac141ea3cd16a34777",
+          "bytes": 7245
+        },
+        "peak_job_memory_bytes": 147263488,
+        "cpu_seconds": 1.3125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 9,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-9\\evidence\\job.json",
+          "sha256": "45754a3927a383f7de97a1a267a027836f11ff3a20c3c4281be2afa31f976bfc",
+          "bytes": 7247
+        },
+        "peak_job_memory_bytes": 145506304,
+        "cpu_seconds": 1.609375,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 10,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-10\\evidence\\job.json",
+          "sha256": "e26756a0f11cbacc1043c0fd5a370621403e1571b653b041f799a393945f23cd",
+          "bytes": 7300
+        },
+        "peak_job_memory_bytes": 154034176,
+        "cpu_seconds": 0.53125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 11,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-11\\evidence\\job.json",
+          "sha256": "046d1c352af84d7b31345e567f197c3fc3350ed2331be17818778ab8c3b3fa36",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 220913664,
+        "cpu_seconds": 0.859375,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 12,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-12\\evidence\\job.json",
+          "sha256": "6d73c3870e4e3c7edd12ff2f0c242f187dd51d9b0b3743c817a1e132e45507e7",
+          "bytes": 7298
+        },
+        "peak_job_memory_bytes": 183250944,
+        "cpu_seconds": 0.46875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 13,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-13\\evidence\\job.json",
+          "sha256": "2cc186f27ca8b1eaf816321295d0d2c21f504e93bf74a647a6c6ff52130402d8",
+          "bytes": 7298
+        },
+        "peak_job_memory_bytes": 185470976,
+        "cpu_seconds": 0.5625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 14,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-14\\evidence\\job.json",
+          "sha256": "af29564b79f8b8aea836957e841038351177dc43a150206a6f4f8603e6d1b162",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 189505536,
+        "cpu_seconds": 1.203125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 15,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-15\\evidence\\job.json",
+          "sha256": "27fa2e4216a5639f5ec5efc2b6e6729cfb29c615f147bdf82494e635b7c19583",
+          "bytes": 7299
+        },
+        "peak_job_memory_bytes": 154595328,
+        "cpu_seconds": 0.4375,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 16,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-16\\evidence\\job.json",
+          "sha256": "1fda97d22a1b571ac53e2e19aa6233b27dbdbc3c6514b2cb176192bc8e42e056",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 147603456,
+        "cpu_seconds": 0.515625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 17,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-17\\evidence\\job.json",
+          "sha256": "edd4787826cf9789430df6329349a7ed09ea25557a63f8e104161ab2693ab3a4",
+          "bytes": 7299
+        },
+        "peak_job_memory_bytes": 199118848,
+        "cpu_seconds": 1.46875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 18,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\job.json",
+          "sha256": "3393f5dfb0edfb5af6e5cc3a7600f5e285494d81310b74a8bd1bce96479c4e86",
+          "bytes": 7300
+        },
+        "peak_job_memory_bytes": 191995904,
+        "cpu_seconds": 0.546875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 19,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-19\\evidence\\job.json",
+          "sha256": "9e20af7e9315b318960f292c57e19355af48f0410f0546ec4c80cb5942b86bce",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 143953920,
+        "cpu_seconds": 0.546875,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 20,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-20\\evidence\\job.json",
+          "sha256": "6ef3b32c8e6cc4d66432b744cb45ac713983d6ed0187204cb2c7a5b989748fc3",
+          "bytes": 7300
+        },
+        "peak_job_memory_bytes": 154398720,
+        "cpu_seconds": 0.484375,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 21,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-21\\evidence\\job.json",
+          "sha256": "7fb205d5c4b9b41c3755061e09969b9f053b47da21d2541bc519bc3fcc43ed09",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 145743872,
+        "cpu_seconds": 0.765625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 22,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-22\\evidence\\job.json",
+          "sha256": "a07c53a969ae08e9486decdaa2cb21fb7000a164b17666969109b2a9b267daf7",
+          "bytes": 7299
+        },
+        "peak_job_memory_bytes": 144961536,
+        "cpu_seconds": 1.3125,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 23,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-23\\evidence\\job.json",
+          "sha256": "44349c741353e501df7060e86c8e5562591f4369df5f484d64f4f4f8b20b693f",
+          "bytes": 7299
+        },
+        "peak_job_memory_bytes": 184795136,
+        "cpu_seconds": 0.5625,
+        "exit_code": 0,
+        "active_at_release": 0
+      },
+      {
+        "index": 24,
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-24\\evidence\\job.json",
+          "sha256": "fd08ba9dc67e674ba0d0e74596bfbe85f81cc14ddf088dd9679c2da71a79c476",
+          "bytes": 7301
+        },
+        "peak_job_memory_bytes": 147783680,
+        "cpu_seconds": 0.421875,
+        "exit_code": 0,
+        "active_at_release": 0
+      }
+    ],
+    "analysis_jobs": [
+      {
+        "kind": "floor",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-floor-analysis\\evidence\\job.json",
+          "sha256": "bb1e2ea5ea221c171708b03198c67c6e7652a6a860e05ffa1b80de1bd064dd00",
+          "bytes": 7458
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 799408128,
+          "cpu_seconds": 11.4375,
+          "active_at_release": 0
+        }
+      },
+      {
+        "kind": "ground",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-ground-analysis\\evidence\\job.json",
+          "sha256": "3f7da167922e471d27521f41ca4d79c84072e63b81fd08712e92ba17e7218ddb",
+          "bytes": 7504
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 795578368,
+          "cpu_seconds": 9.390625,
+          "active_at_release": 0
+        }
+      },
+      {
+        "kind": "scenario-rm",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-scenario-rm-analysis\\evidence\\job.json",
+          "sha256": "f8278cf3b82b0d7596adbf384412f6eda57c6a49189cdb5dfa1c96f5cf24bacc",
+          "bytes": 8267
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 50589696,
+          "cpu_seconds": 8.828125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "kind": "restored",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-restored-analysis\\evidence\\job.json",
+          "sha256": "08c7dd620f6d47e5ac0bfb6ffa84d8df8bb9eb8bb7b358cc544b86222e28af8c",
+          "bytes": 7751
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 48226304,
+          "cpu_seconds": 1.28125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "kind": "gas",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-gas-analysis\\evidence\\job.json",
+          "sha256": "9bf196212c4292456e672b74ac41201a1c4addddb3d6bf99664defce526e4267",
+          "bytes": 7351
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 38731776,
+          "cpu_seconds": 1.8125,
+          "active_at_release": 0
+        }
+      },
+      {
+        "kind": "corner",
+        "receipt": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB-corner-analysis\\evidence\\job.json",
+          "sha256": "8b52c75058808e4ec4dccb368c55d32b6ad1ed32d44de5256a6727309f218a0c",
+          "bytes": 7515
+        },
+        "resource_measurements": {
+          "peak_job_memory_bytes": 39669760,
+          "cpu_seconds": 1.078125,
+          "active_at_release": 0
+        }
+      }
+    ],
+    "earlier_preparation_receipts": "Helper syntax and first base-only analysis used stock guarded runner; caps/assigned-before-resume/exit0/active0 recorded, but no peak-memory instrumentation. Final full analysis rerun has measured peaks."
+  },
+  "screenshots": {
+    "footer": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-0\\evidence\\screen.png",
+      "sha256": "bb848967d9760de73c1f05ee52c52fa5f50b68e5f52736b684dff40dc5643444",
+      "bytes": 782234
+    },
+    "base1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-2\\evidence\\screen.png",
+      "sha256": "e24bc3c98e51886d835793496931583feb277829b24b2f62749974cd85c2fc7a",
+      "bytes": 787531
+    },
+    "base1920": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-3\\evidence\\screen.png",
+      "sha256": "8261f70c60267bb57bcce06ceeaac9b480d547447bd78adb552cda5546755fa8",
+      "bytes": 951576
+    },
+    "street_craps1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-6\\evidence\\screen.png",
+      "sha256": "88b1f81be3febd22d3ac3158903495bf100ce95b3ade3b8a467c9d9bdfbc95f2",
+      "bytes": 769262
+    },
+    "cruiser_parked1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-7\\evidence\\screen.png",
+      "sha256": "b648b10661a4bbfedfb3f079803bcf5c2f7279b3038821b4584da93f9209916a",
+      "bytes": 760539
+    },
+    "fence_night1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-8\\evidence\\screen.png",
+      "sha256": "6fe187725b723ffe2f3e57aef1bb1402a9f825d08baf92672863ab1225b595ef",
+      "bytes": 764101
+    },
+    "nothing_moving1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-9\\evidence\\screen.png",
+      "sha256": "c0bf3b6a6854f70b53a771cc92433fe42f63ed7111dae09eef344310def9d254",
+      "bytes": 765951
+    },
+    "nothing_moving1920": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-10\\evidence\\screen.png",
+      "sha256": "cd617df0d04fd04470addd8c04329c47d1b669e4d1a86fb83e94a4e74d9974d7",
+      "bytes": 933111
+    },
+    "reduce_motion1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-14\\evidence\\screen.png",
+      "sha256": "3f6993995c1a3c5aedfe8e5cc395bb312e817ae30f722e534787ff871b3f4ce7",
+      "bytes": 762391
+    },
+    "reduce_motion1920": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-15\\evidence\\screen.png",
+      "sha256": "6bfb813ee9273e83bb5109143481ae163007d9d305c5ac8c3299a892b76d2996",
+      "bytes": 924556
+    },
+    "motion_restored1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-17\\evidence\\screen.png",
+      "sha256": "1d27f50410267b7ed5d1e05b33a2482a1d2666552d94085bd1e0704f36652c6d",
+      "bytes": 765571
+    },
+    "street_craps1920": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-20\\evidence\\screen.png",
+      "sha256": "fe5eda1b9ffa7c9dc77006b8d322aa4545fd6cc1449265f5aa0050a64217ab40",
+      "bytes": 937488
+    },
+    "gas_retained1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-21\\evidence\\screen.png",
+      "sha256": "1b354c8492787f1cc5cd67e94d92a15d5ae690e2474ffbfac2167a50152a3de8",
+      "bytes": 377123
+    },
+    "corner_retained1280": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-22\\evidence\\screen.png",
+      "sha256": "7712497ee3ceb8135d4349d6df15db10ce0cca4adf098f1297b892e0f17c6d0c",
+      "bytes": 504002
+    },
+    "camera-before": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\camera-before.png",
+      "sha256": "8e05a7e359bffa4f9d2d804ab188a5102cb7e969270e403f415412fd709d6421",
+      "bytes": 935333
+    },
+    "camera-early": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\camera-early.png",
+      "sha256": "6d50d3f7f1652dd0f5f07fbba6d52807ce1f361dc1e6ba9f8819462249a08241",
+      "bytes": 655937
+    },
+    "camera-middle": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\camera-middle.png",
+      "sha256": "6f025a199ae5b117940d9303d28bd88d31a28fc046d67d11640eb4da9f0ac6b1",
+      "bytes": 561565
+    },
+    "camera-settled": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\camera-settled.png",
+      "sha256": "a990593ae54b8e0e65bb175ecd66f026e1aa99ad481ee4e1aa52cec8b16dd553",
+      "bytes": 556604
+    },
+    "camera-returned": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-18\\evidence\\camera-returned.png",
+      "sha256": "19a94cc2882c1ccab79dfa7c4514ffeee0617f56afd6229cdbc8b8e386907205",
+      "bytes": 930494
+    },
+    "bulb_lowest_observed_sample": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-4\\evidence\\frames\\187.png",
+      "sha256": "e2be8a80496f4b71534185c558c25f091f69c88374726bf0c454de7cc5849268",
+      "bytes": 786588
+    },
+    "bulb_highest_observed_sample": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-4\\evidence\\frames\\170.png",
+      "sha256": "446853497ae16f260d596899bec4542cf9d5a410b14c6022d2d39c2fe2bd4333",
+      "bytes": 787772
+    },
+    "rm_checkbox_checked": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-13\\evidence\\reduce-motion-selected.png",
+      "sha256": "606df22efc94b9c79244e9d35008d0115e46a3a06b05551709fde2ba639a74a7",
+      "bytes": 100962
+    },
+    "rm_checkbox_unchecked": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-17\\evidence\\reduce-motion-unchecked.png",
+      "sha256": "1e596950a170f50e7d9f8c883ee84b1c232f5e1d855cf200fe6fa004bf365b2e",
+      "bytes": 147641
+    }
+  },
+  "web_reproduction_archive_sha256": "180638e5a986d382f410ad634b2806a2471ee83c39cda46ee6cd172f5cfe5532",
+  "save_isolation": {
+    "mount": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test",
+    "args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "fresh_e_profile_only": true,
+    "normal_or_user_profile_writes": false,
+    "proof_count": 25
+  },
+  "manual_reconciliation": {
+    "report_sha256": "6338bc349e7ea03dc301221a2091e198a1ebd20c25effe7ce2387a43a7d863df",
+    "global_exit_code": 1,
+    "global_inherited_errors": 1524,
+    "assigned_Gas_Corner_Back_Motel_TEST_findings": 0,
+    "markdown_drift_findings": 0,
+    "scope": "Inherited historical/global ownership/runtime findings remain open; no global clean claim."
+  }
+}
