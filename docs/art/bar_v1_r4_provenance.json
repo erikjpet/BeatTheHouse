@@ -3,7 +3,7 @@
   "package_sha256": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
   "acceptance": "EXACT_NATIVE_AND_SCOPED_SERVED_WEB_PASS",
   "audit_report_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
-  "public_audit_copy_sha256": "35826af78c759bb890cd0e3c46cda5bb93d58c11324c28f169745daa61c2dcbb",
+  "public_audit_copy_sha256": "2d60bbd13c20681c6a3ebd0aef413ea1913df9e48f970a0dfbbc70457f9d17c8",
   "payload_files": {
     "assets/art/environments/bar/anim/cold_beer_sign.png": {
       "sha256": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",

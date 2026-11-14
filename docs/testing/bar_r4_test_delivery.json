@@ -399,7 +399,7 @@
     }
   ],
   "console_scope": "No game runtime errors; unrelated root favicon404 only. Original packaging assertion after deliberate game unload failed and was corrected without rerunning captures.",
-  "web_reproduction_archive_sha256": "5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e",
+  "web_reproduction_archive_sha256": "5b90e839594b27fc38a844af55bf11abf93f8026ce5ec79620d79e7ffbd32350",
   "ledger_reconciliation": {
     "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bar-closeout-reconcile-01\\evidence\\reconciliation.json",
     "sha256": "fd4722fb241fc07cf913e4c3c87f318086019cc9267990e0656500860cc3cf0a",

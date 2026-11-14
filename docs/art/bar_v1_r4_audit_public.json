@@ -332,7 +332,6 @@
       "operation": "create_library_file",
       "status": "succeeded",
       "path": "/bar-trial-r4-actual-motion.mp4",
-      "file_id": "file_0000000023d081f6a3e1d3ee9b0de9fe",
       "file_name": "bar-trial-r4-actual-motion.mp4",
       "current_version_number": 0,
       "restored_from_version_number": null,
@@ -344,7 +343,6 @@
       ],
       "directory_id": "personal-root:v1",
       "mime_type": "video/mp4",
-      "library_artifact_type": "other",
       "file_size_bytes": 2607523,
       "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/bar-trial-r4-actual-motion.mp4"
     },
@@ -352,7 +350,6 @@
       "operation": "create_library_file",
       "status": "succeeded",
       "path": "/bar-trial-r4-actual-play.png",
-      "file_id": "file_000000009f9c81f6a5cce2899c0a8eda",
       "file_name": "bar-trial-r4-actual-play.png",
       "current_version_number": 0,
       "restored_from_version_number": null,
@@ -364,7 +361,6 @@
       ],
       "directory_id": "personal-root:v1",
       "mime_type": "image/png",
-      "library_artifact_type": "other",
       "file_size_bytes": 842890,
       "local_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/previews/bar-trial-r4-actual-play.png"
     },
@@ -382,7 +378,11 @@
     "original_report_sha256": "aa382fd46cd28343656b616bc71bea477f2b05b1f708780b7708e3f607e23650",
     "omitted_fields": [
       "preview.mp4.library_file_id",
-      "preview.png.library_file_id"
+      "preview.png.library_file_id",
+      "preview.mp4.file_id",
+      "preview.mp4.library_artifact_type",
+      "preview.png.file_id",
+      "preview.png.library_artifact_type"
     ],
     "scope": "Attachment routing metadata omitted and public JSON serialized with LF line endings; approved payload bytes and technical/visual findings unchanged."
   }

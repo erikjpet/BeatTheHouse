@@ -44,6 +44,6 @@ Deep TEST-only args/storage and fresh disposable profiles prevent normal/user sa
 
 The manual ledger check covers 220 objectives and 72 batches, with 29 batches Open. Assigned room/TEST/phase08 rows and readable Markdown have zero findings. The global check exits 1 with 1,524 inherited findings still Open. Report `fd4722fb241fc07cf913e4c3c87f318086019cc9267990e0656500860cc3cf0a`. The inventory adds 145 exact closed owned-Job receipts, preserves diagnostic outcomes and excludes active/incomplete jobs.
 
-The Web source archive has 1,108 members, SHA256 `5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e`. Metadata-only routing redactions are listed with original/copy hashes; runnable code and pixel payload bytes are unchanged. Raw frame bulk is separately indexed on E:, not duplicated in Git.
+The Web source archive has 1,108 members, SHA256 `5b90e839594b27fc38a844af55bf11abf93f8026ce5ec79620d79e7ffbd32350`. Metadata-only routing redactions are listed with original/copy hashes; runnable code and pixel payload bytes are unchanged. Raw frame bulk is separately indexed on E:, not duplicated in Git.
 
 This closes only interior 5 of 20. The campaign and 12 travel-doorway scope remain Open. Pawn R2 remains an unapproved isolated native trial.
