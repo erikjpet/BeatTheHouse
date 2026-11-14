@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T13:38:21.119518+00:00",
+  "updated_at": "2026-11-14T13:55:41.972622+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42684,7 +42684,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R2 localized Weekly/Wedding contrast findings; bounded R3 cushion/lowdesk revision active; no final native PASS",
+      "status": "Exact R3 actual Base/Wedding/Weekly GO; full native CRT/context/two-front/motion proof active; final audit pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -42718,20 +42718,25 @@
           "kind": "actual_trial_findings",
           "reference": "docs/art/environment_art_progress.md",
           "summary": "Weekly/Wedding exposed localized cushion/teal-lip contrast. All five persisted R2 layouts exactly match strict c5; five in-memory comparison findings were Vector2-versus-JSON representation, preserved/resolved by exact-file comparison with zero tolerance. No production geometry edit."
+        },
+        {
+          "kind": "non_active_source_backup",
+          "reference": "review_artifacts/environment_art_sources/motel-v1-r3/README.md",
+          "summary": "Unapproved exact R3 source checkpoint:18 payloads/seal, self-contained recipe, both raw PNGs/full prompts/provenance and all frozen inputs. ZIP SHA ae97db12d94a49a9e2c7ba2f885c1b833dcc2391f3d7299601e71fb99fc2c6cb. No activation; Gas+Corner+Back retained."
         }
       ],
       "blocker": {
-        "state": "active",
-        "kind": "art_contrast_revision",
-        "description": "R2 pink Parking crosses bright first-cushion piping and lowdesk teal lip needs a one-row contact edge/dark face. Bounded R3 material correction is underway; no geometry/source redo or user input required. R2 remains unapproved.",
+        "state": "none",
+        "kind": null,
+        "description": "R3 bounded materials passed actual visual review. Full native checks and explicit Wedding Clerk/glint occlusion disposition are still in progress; no final package PASS.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T13:38:21.119518+00:00",
+        "observed_at": "2026-11-14T13:55:41.972622+00:00",
         "evidence": [
           "docs/art/environment_art_progress.md"
         ]
       },
-      "next_action": "Stage only the new exact R3 seal after static GO, review actual affected contexts, then complete native CRT-composite/current-context/two-front/motion/RM/wrap/liveness proof.",
-      "updated_at": "2026-11-14T13:38:21.119518+00:00"
+      "next_action": "Complete exact R3 full native proof and source-derived occlusion dispositions, then await final auditor PASS before any target integration/TEST publication.",
+      "updated_at": "2026-11-14T13:55:41.972622+00:00"
     }
   ]
 }
