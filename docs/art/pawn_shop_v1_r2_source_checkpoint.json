@@ -1,0 +1,28 @@
+{
+  "package_id": "pawn_shop-v1-r2",
+  "status": "NON_ACTIVE_STATIC_GO_TRIAL_NOT_APPROVED",
+  "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+  "scope": "Source checkpoint only; target and TEST contain accepted Gas,Corner,Back,Motel,Bar, no Pawn. Final Pawn native/Web acceptance pending.",
+  "source_commit_for_validator_and_geometry": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+  "recipe_sha256": "8a73de8b18d154e07f08fb0354c6e22fab725264e9d8697d90d14a95ae8b677d",
+  "motion_roster": {
+    "moving_entries": 15,
+    "static_occlusion_entries": 1,
+    "static_id": "STATIC_OCCLUSION_fixed_material",
+    "static_alpha_values": [
+      0,
+      255
+    ],
+    "static_board_pixels": 10284,
+    "order": "sign,scan,exact-BG static material replay,tray,air,glints,floor",
+    "no_scan_equivalence": "all opaque static replay pixels are exact fitted BG pixels; native no-scan equality pending"
+  },
+  "recipe_scope": "Original room+floor and frozen generation provenance only, no parent-package dependency. Qualified source validator/storage and geometry maps included; historical paths must be mapped without pixel logic changes.",
+  "provenance": "Original generated room and matching floor preserved; same-scale lower-field crop, exact900-grid/nearest2x assembly, flat runner/toe-kick, physical frames/counter contacts unchanged.15 genuine movers plus1explicit binaryalpha static BG geometry replay, not16 moving motifs.",
+  "archive_sha256": "be4925ee17be792abfd8e1ac894fed26cae355a92d86a034a62681a90a13f4cc",
+  "archive_bytes": 11104204,
+  "archive_members": 50,
+  "archive_path": "review_artifacts/environment_art_sources/pawn_shop-v1-r2/pawn_shop-v1-r2-source.zip",
+  "sealed_payload_files": 19,
+  "non_active": true
+}

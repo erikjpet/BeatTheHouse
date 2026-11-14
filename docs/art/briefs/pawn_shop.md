@@ -2,7 +2,7 @@
 
 Prepared: 2026-11-14
 Room identity: pawn_shop
-Status: frozen geometry, own-facade direction and current four-context pre-art union are ready. Source generation remains conditional on Bar's explicit exact final native art PASS. No Pawn package is approved or active.
+Status: Pawn authoring is active after the Bar final native PASS. First room/floor sources exist; exact assembly and every Pawn audit/runtime gate remain pending. No Pawn runtime package is approved or activated.
 
 ## Narrative and own facade
 
@@ -115,3 +115,26 @@ Use these real physical material priorities in the FIRST source, retaining vivid
 Model, label and hit rectangles in the union are geometric envelopes, not opaque paint. Contact metadata does not authorize drawing furniture for every support ID. Preserve effective overrides and the two exact foreground fronts. When later context/object occlusion is expected, prove actual source-painted coverage and meaningful motif visibility somewhere; do not invent holes, move labels or make a hidden asset look present through preview-only boosts.
 
 No further structural reinterpretation is needed from these baseline views. The original frozen guide/geometry, own-facade identity, empty inventory/cast bays and meaningful motion inventory remain unchanged. This supplement authorizes source-prompt planning only. Pawn source generation still waits for Bar's explicit exact final native art PASS; later Pawn static, actual, full source-context and TEST gates remain separate.
+
+## First source and art-only scan clipping checkpoint
+
+Bar R4 exact package398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39 received final native PASS, so the conditional Pawn source release took effect. This does not approve a Pawn pack or claim Bar TEST acceptance.
+
+Raw Pawn room source: E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/pawn_shop-v1/source/background-guide-v1.png,1815 x867 opaqueRGB,SHA-25672b0794caeaff74a02d0472259d4da6ea9fe6171b1899279383da368ec68cc01. Director personally viewed it. Its own vivid plum masonry, cold glass, worn metal and old wood are strong and crisp; no full-room regeneration is requested. It is SOURCE ONLY, not geometry-conformant: the broad low field became a raised-looking fascia/deep mat and the side floor horizon is too low.
+
+Editor must restore only the actual toe-kick236..246, continuous floor246 onward, FLAT runner246..298, exact main front262..304, existing rear plinth224..236 and other frozen contacts. Do not keep a vertical runner face, raised stage, step, invented support or extra furniture merely because the generator drew it. Preserve detailed fixture surfaces and selective accent color while repairing assembly. The full-width unoccluded raw floor is only about80 board pixels deep, insufficient for the required184 without repetition/stretch, so one matching floor-only source was justified.
+
+Matching floor source: artist/pawn_shop-v1/source/floor-material-v1.png,1815 x867 opaqueRGB,SHA-256e7c878d9e2ce1e33b640dfee6564699b64c5a11447b694a93aee1d817cf4d031. Director personally inspected its dry plum/charcoal shallow tile joints and controlled scuffs; suitable for a same-scale184-board-depth crop. No additional room source, wet effect or extra runner was generated. Exact perspective/runner integration remains an assembly gate, not a package PASS.
+
+The director approves the following OPTIONAL art-only layered clipping technique if the unchanged existing contract supports it:
+1. A continuous vertical scan scroll retains its72px/s cadence and main/faint19px companion relationship.
+2. A subsequent one-frame STATIC RGBA replay restores exact fitted-background pixels only on fixed frame/mesh/tray and source-shaped quiet-glass masks.
+3. Separate tray breath, air and local glints follow as appropriate. Live objects remain above these existing animation layers; counter foreground/replay remains unchanged.
+
+The replay mask MUST NOT scroll with the scan. It contains no cast, live label glyphs, substitute body envelope, floating badge or invented architecture. It is exact-material clipping, not an alpha hole in either opaque foreground front. Use genuine fixed physical/source-shaped masks, not a broad unverified model rectangle.
+
+This option avoids a full-width horizontal scan atlas exceeding Web limits. It requires NO renderer/schema/validator change; if a one-frame entry is unsupported, report the constraint and choose another existing-primitive design rather than modifying code. Declare the entry explicitly STATIC OCCLUSION in external asset/audit rosters. It is not one of the moving motifs and must not be counted as an animated asset that failed to move. Still include its hash, alpha/order, exact BG equivalence with scan absent and Reduce Motion stability in proof.
+
+Every actual moving family remains mandatory and must produce meaningful native canvas changes somewhere in current contexts. Prove static architecture stays fixed and other effects survive. Natural live coverage is acceptable only with painted-mask evidence; showcase another actual context or correctly scoped art target when needed, without promising that a hidden effect shows through a person. No frame-timing, opacity or preview amplification may hide a missing motif.
+
+Pawn remains the sole active unapproved source/assembly package. Bar's served gate is separate, and Jazz clean-guide preparation may occur only in genuine idle time without delaying Pawn. No Jazz source release before Pawn's explicit exact final native PASS.
