@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T11:57:30.727528+00:00",
+  "updated_at": "2026-11-14T12:23:23.714693+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37679,6 +37679,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+          "evidence": [
+            "docs/testing/corner_store_r6_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -37686,14 +37692,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "Only Gas R12 preview delivery is verified; campaign remains incomplete.",
+        "note": "Gas and Corner cumulative preview delivery verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First package only",
+          "scope": "First two passed interiors only; remaining18+12travel doorways open",
           "evidence": [
-            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+            "docs/testing/corner_store_r6_test_delivery.json"
           ]
         }
       },
@@ -37783,21 +37789,21 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "First Gas package and TEST setup are accepted. Remaining19 interiors and12 travel doorways are unfinished; Corner R6 material/technical gate is actively progressing.",
+        "description": "Two passed interiors are delivered. Remaining18 interiors and12 travel doorways are unfinished; Back Alley refinement/native audit is active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T11:05:55.260515+00:00",
+        "observed_at": "2026-11-14T12:23:23.714693+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "docs/testing/corner_store_r6_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T11:05:55.260515+00:00",
+      "updated_at": "2026-11-14T12:23:23.714693+00:00",
       "id": "BTH-ENVART-001",
       "name": "Build layered environment art renderer",
       "aliases": [],
       "kind": "objective",
       "parent_ids": [],
-      "status": "Gas R12 and TEST setup delivered/verified;1of20 interiors complete; Corner R6 active; full campaign remains Open",
+      "status": "Gas R12 and Corner R6 delivered/verified on TEST;2of20 interiors complete; Back active; campaign remains Open",
       "objective": {
         "text": "Implement phases0-7 and9 in order, each with separate product/proof and ledger commits on codex/environment-art-layers. Preserve exact v1 art contract, no-input animation, fallback pixels and all object/game geometry and rules. Defer phases8/10 until owner art delivery; phase11 excluded. Branch is to merge later; NEXT delivery remains pending until that merge.",
         "source": "Current user task and branch-only follow-up; docs/todo/BTH_environment_art_layers_plan.md. Owner confirmed full-rectangle scroll size rule; delivered scanline is16x68 instead of1800x68 and must not be edited.",
@@ -37957,9 +37963,10 @@
         "BTH-ENVART-001-PHASE-10",
         "BTH-ENVART-001-ART-GAS-01",
         "BTH-ENVART-001-TEST-01",
-        "BTH-ENVART-001-ART-CORNER-01"
+        "BTH-ENVART-001-ART-CORNER-01",
+        "BTH-ENVART-001-ART-BACK-01"
       ],
-      "next_action": "Complete Corner R6 exact audit and cumulative-index integration/TEST verification, then remaining interiors sequentially; preserve main/NEXT and the full20-room/12-doorway scope.",
+      "next_action": "Complete Back Alley exact native art audit/integration and remaining18 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT.",
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
@@ -42146,6 +42153,12 @@
           "evidence": [
             "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
           ]
+        },
+        {
+          "sha": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+          "evidence": [
+            "docs/testing/corner_store_r6_art_integration.md"
+          ]
         }
       ],
       "deployment": {
@@ -42153,14 +42166,14 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "note": "Only Gas R12 preview delivery is verified; campaign remains incomplete.",
+        "note": "Gas and Corner cumulative preview delivery verified; full campaign remains incomplete.",
         "scope": "Full parent delivery/main-NEXT promotion is still pending; first Gas TEST delivery does not fulfill this parent.",
         "test_preview": {
-          "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+          "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
           "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
-          "scope": "First package only",
+          "scope": "First two passed interiors only; remaining18+12travel doorways open",
           "evidence": [
-            "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md"
+            "docs/testing/corner_store_r6_test_delivery.json"
           ]
         }
       },
@@ -42195,23 +42208,23 @@
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "First Gas package and TEST setup are accepted. Remaining19 interiors and12 travel doorways are unfinished; Corner R6 material/technical gate is actively progressing.",
+        "description": "Two passed interiors are delivered. Remaining18 interiors and12 travel doorways are unfinished; Back Alley refinement/native audit is active.",
         "requires_user_input": false,
-        "observed_at": "2026-11-14T11:05:55.260515+00:00",
+        "observed_at": "2026-11-14T12:23:23.714693+00:00",
         "evidence": [
-          "docs/testing/BTH-ENVART-001_gas_r12_2026-11-14.md",
+          "docs/testing/corner_store_r6_test_delivery.json",
           "docs/art/environment_art_progress.md"
         ]
       },
-      "updated_at": "2026-11-14T11:05:55.260515+00:00",
+      "updated_at": "2026-11-14T12:23:23.714693+00:00",
       "id": "BTH-ENVART-001-PHASE-08",
       "name": "All20 room art delivery",
       "parent_id": "BTH-ENVART-001",
-      "status": "Gas R12 and TEST setup delivered/verified;1of20 interiors complete; Corner R6 active; full campaign remains Open",
+      "status": "Gas R12 and Corner R6 delivered/verified on TEST;2of20 interiors complete; Back active; campaign remains Open",
       "scope": [
         "All20 room art delivery with unchanged geometry. Current owner direction permits rolling exact-package PASS integration on the existing feature branch and separate TEST deployment; main/NEXT remain unchanged. Preserve cumulative enabled-room index and all prior accepted room files."
       ],
-      "next_action": "Complete Corner R6 exact audit and cumulative-index integration/TEST verification, then remaining interiors sequentially; preserve main/NEXT and the full20-room/12-doorway scope."
+      "next_action": "Complete Back Alley exact native art audit/integration and remaining18 interiors sequentially; preserve full20-room/12-doorway scope and main/NEXT."
     },
     {
       "group": "current",
@@ -42511,19 +42524,28 @@
     },
     {
       "group": "current",
-      "state": "open",
+      "state": "complete",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+          "evidence": [
+            "docs/testing/corner_store_r6_art_integration.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Separate cumulative art TEST only after exact Corner package PASS."
+        "state": "verified",
+        "commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+        "evidence": [
+          "docs/testing/corner_store_r6_test_delivery.json"
+        ],
+        "scope": "Exact cumulative Gas R12+Corner R6 isolated TEST only; main/NEXT unchanged."
       },
       "evidence": [
         {
@@ -42540,6 +42562,11 @@
           "kind": "native_art_audit",
           "reference": "docs/testing/corner_store_r6_art_integration.md",
           "summary": "Exact6f1e76d5 native PASS; genuine35 model-state rendered contexts,870 assertions with12 source-label expectation diagnostics resolved by226 focused rechecks. No TEST/UI end-to-end/save/revisit claim."
+        },
+        {
+          "kind": "served_web_acceptance",
+          "reference": "docs/testing/corner_store_r6_test_delivery.json",
+          "summary": "Exact c5 footer/current/13HTTPS files; actual Base+five UI scenarios,25 calibrated motion regions/RM/restore/floor tracks,1920/camera and Gas regression. Director final served visual PASS; clean final browser closure, prior diagnostics retained."
         }
       ],
       "blocker": {
@@ -42547,22 +42574,67 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-14T11:57:30.727528+00:00",
+        "observed_at": "2026-11-14T12:23:23.714693+00:00",
         "evidence": [
-          "docs/testing/corner_store_r6_art_integration.md"
+          "docs/testing/corner_store_r6_test_delivery.json"
         ]
       },
-      "updated_at": "2026-11-14T11:57:30.727528+00:00",
+      "updated_at": "2026-11-14T12:23:23.714693+00:00",
       "id": "BTH-ENVART-001-ART-CORNER-01",
       "name": "Integrate audited Corner Store art",
       "parent_id": "BTH-ENVART-001",
-      "status": "Exact R6 native auditor PASS; cumulative Gas+Corner integration active; TEST/Web pending",
+      "status": "Exact R6 integrated and cumulative bound c5 TEST verified; scoped native+served Web/visual gates PASS",
       "scope": [
         "Integrate only exact full-auditor-passed Corner payload; preserve all prior Gas assets/manifest and cumulative enabled index.",
         "Verify25 authored motions, all current scenarios and supported aftermath/work snapshots, geometry/labels/hits, Reduce Motion, liveness, full286-wide counter/replay; record scope limits.",
         "Publish verified cumulative TEST only, preserving save mount/build identity, main/NEXT and original source material."
       ],
-      "next_action": "Commit exact17-file R6 payload, preserve Gas R12 and placements, export bound isolated TEST and verify actual Web behavior."
+      "next_action": "Preserve accepted Gas+Corner; continue Back Alley exact art audit and later packages. No UI quest/save/revisit or whole-campaign acceptance claim."
+    },
+    {
+      "id": "BTH-ENVART-001-ART-BACK-01",
+      "name": "Integrate audited Back Alley art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "R2 actual-motion trial preserved; R3 art refinement active; final native audit and target integration pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Separate cumulative art TEST only after exact Back Alley package PASS; preserve Gas and Corner."
+      },
+      "scope": [
+        "Preserve actual Back Alley facade, fixed supports/current placements and distinct wet masonry/rain/light motion families.",
+        "Preview isolated exact trial bytes before full native/scenario/outcome/motion/Reduce Motion/counter/liveness audit.",
+        "Integrate only exact full PASS, preserve cumulative Gas+Corner index, verify bound isolated TEST without main/NEXT changes."
+      ],
+      "evidence": [
+        {
+          "kind": "execution_brief",
+          "reference": "docs/art/briefs/back_alley.md",
+          "summary": "Frozen clean guide and facade/material/contact/motion plan. Art authoring and QA-only trial active; no passed Back payload or target activation yet."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T12:05:53.093248+00:00",
+        "evidence": [
+          "docs/art/briefs/back_alley.md"
+        ]
+      },
+      "next_action": "Capture/audit the exact revised Back trial, then full room-specific native proof; integrate only final PASS and preserve cumulative Gas+Corner TEST.",
+      "updated_at": "2026-11-14T12:23:23.714693+00:00"
     }
   ]
 }

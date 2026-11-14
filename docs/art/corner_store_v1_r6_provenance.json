@@ -257,5 +257,11 @@
   },
   "scope": "Only these exact Corner Store R6 bytes clear art integration. Native visual, geometry, animation, counter, Reduce Motion and no-input checks are accepted with the limits below. This is not owner acceptance, TEST/Web acceptance, UI end-to-end traversal, save/revisit acceptance or campaign completion.",
   "qa_reproduction_archive_sha256": "35ddfcf10151b5dc17da6a5a461f87a7fb80a778092d4a0aa7385700fec7ed0b",
-  "web_delivery": "PENDING exact bound TEST export and actual browser verification"
+  "web_delivery": {
+    "status": "PASS",
+    "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+    "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "evidence": "docs/testing/corner_store_r6_test_delivery.json",
+    "browser_proof_sha256": "5ef80da77cc015fda9b00b40132b8d3464996c2cc04f1e11dfd5431023a4bd0b"
+  }
 }

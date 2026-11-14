@@ -2,7 +2,7 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12 delivered and verified on TEST; Corner R6 native PASS with its integration/Web gate pending; Back Alley source authoring active. Documentation and work-in-progress backups do not approve unreviewed art.
+Release status: Gas R12 and Corner R6 delivered and verified on cumulative TEST c5d5d17f;2of20 interiors complete. Back Alley trial/refinement and the overall campaign remain active. Documentation and work-in-progress backups do not approve unreviewed art.
 
 ## Current creative gate
 
@@ -19,7 +19,7 @@ Corner native background SHA-256: 54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80
 Corner final native PASS report SHA-256: afb2b32bfdef225b92f9f2f17c85f0217becf0f8bbd73b648dfbf7e3c89f5f97.
 Corner final native QA summary SHA-256: 7c8f0674598481abc273c284c815c675904d05284746851a31d8a86e0c652eb5.
 
-Corner's integration and TEST/Web verification are pending. Native/model-state outcome visual coverage is not a UI end-to-end quest, revisit or save/load claim.
+Corner's exact17-file integration and bound c5d5d17f TEST/Web verification are complete; Gas remains active. See ../testing/corner_store_r6_art_integration.md and its machine-readable delivery proof. Native/model-state outcome visual coverage is not a UI end-to-end quest, revisit or save/load claim.
 
 Back Alley is now the single active art package. Its cleaned reference target and detailed execution brief are frozen, its actual facade and current anchors have been reviewed, and the first source and a matching floor plate are delivered, and exact assembly is active. The raw source's wall/floor drift is being corrected; no Back Alley finished package or audit PASS is claimed.
 
@@ -40,8 +40,8 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | Order | Environment | Current state | Next concrete step |
 | --- | --- | --- | --- |
 | 01 | gas_station_casino | R12 delivered and verified on TEST | Preserve the passed pack while adding later rooms |
-| 02 | corner_store | Exact R6 final native package PASS | Integrate passed bytes, preserve Gas, then verify TEST/Web |
-| 03 | back_alley | Active exact assembly; first source/floor plate and frozen guide ready | Fit exact contacts/floor and review the layered static package before runtime trial |
+| 02 | corner_store | Exact R6 integrated and verified on cumulative c5 TEST | Preserve Gas+Corner while adding later passed rooms |
+| 03 | back_alley | R2 actual-motion trial preserved; R3 refinement active | Complete exact current trial visual/technical audit before integration |
 | 04 | motel | Brief, facade assessment and fixture guide ready | Author warm faded-plaster reception after prior package passes |
 | 05 | bar | Brief, facade assessment and fixture guide ready | Author teal-panel/burgundy-wood room after prior package passes |
 | 06 | pawn_shop | Brief, facade assessment and fixture guide ready | Author barred blue-glass/plum/ochre room after prior package passes |
@@ -108,3 +108,8 @@ Owner previews show actual production-rendered motion for every motif, including
 Progress backups confirmed on the art branch include documentation commit ff493bcdc7b15147c12ab8210bb7736aac785312 and non-active pixel/source/recipe checkpoint 3efb978200a5ba1b9219ca2b559503d3a7c042c3. The source snapshot is isolated from active assets and runtime export.
 
 Only the existing TEST lane is in scope for this art rework. Do not replace NEXT or claim a web release before verifying its exact build/assets and visible result. Prior backups, reports, motion previews and documentation commits do not waive the latest owner feedback.
+
+
+## Corner cumulative TEST closeout
+
+Source c5d5d17f691a010ac3173ac2a8c42232777081e5 is delivered on the existing TEST URL with exact Gas+Corner activation and bound footer. Director served art review and independent actual browser/scenario/motion/Reduce Motion/1920/camera/Gas regression checks passed. Proof SHA256:5ef80da77cc015fda9b00b40132b8d3464996c2cc04f1e11dfd5431023a4bd0b. Earlier tooling diagnostics and test scope limits are retained in [delivery evidence](../testing/corner_store_r6_art_integration.md). Main/NEXT and audience remain unchanged. This closes the second room, not the campaign.
