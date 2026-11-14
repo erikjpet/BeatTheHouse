@@ -1,0 +1,20 @@
+{
+  "package_id": "jazz_club-v1-r3",
+  "status": "IMMUTABLE_NON_ACTIVE_SOURCE_BACKUP_SUBSEQUENT_NATIVE_PASS",
+  "package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+  "source_sha256": "074a63ef8b9998bf03381cc09c2f3c07a9787b5eab623c92643097c01ded59ed",
+  "recipe_sha256": "ca4c7bfaa8f7f8043d7b7b29c777af9f3a95c98771754a23b42683387fced13d",
+  "moving_entries": 17,
+  "static_occlusion_entries": 0,
+  "floor_module": false,
+  "scope": "Historical immutable trial source backup, subsequently native-audited. Payload activation and separate TEST/live Web scope are recorded in the integration provenance. No source-archive bytes changed.",
+  "source_contract_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+  "provenance": "Original generated room,complete prompt/provenance/full frozen inputs, same-scale depth fitting and exact nearest900-grid/2x output. Current source/contacts/labels unchanged,17 genuine authored motions. No parent-package dependency.",
+  "archive_sha256": "28d33ee3fa918c8925e773f911a9a493e81e8124cbd57f70463b2a2180910114",
+  "archive_bytes": 15146298,
+  "archive_members": 49,
+  "archive_path": "review_artifacts/environment_art_sources/jazz_club-v1-r3/jazz_club-v1-r3-source.zip",
+  "sealed_payload_files": 19,
+  "non_active": true,
+  "subsequent_exact_native_audit_sha256": "c2f90b9ea1828d9de27b5950c1df941bb41783a4ffeb969301a84cfe67dc1f57"
+}

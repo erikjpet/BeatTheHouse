@@ -1,0 +1,1269 @@
+{
+  "status": "INDEPENDENT_NATIVE_INTEGRITY_VERIFIED_MANDATORY_UNCHANGED_LIVENESS_RECEIPT_STILL_REQUIRED_BEFORE_PASS",
+  "package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+  "summary_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-final-summary-02\\evidence\\jazz_r3_native_closure.json",
+  "summary_sha256": "8e413d13427d35c9a7ce35eeb64bf0cfa8e292031d4bd1a4a37b3728ab3595af",
+  "payloads": 19,
+  "protected_core_normalized": 862,
+  "prior_accepted_art": 106,
+  "strict_baseline_files": 7060,
+  "qa_source_archive_files": 1079,
+  "native_evidence_files": 1772,
+  "raw_PNGs": 1133,
+  "bound_JSON_reports": 183,
+  "jobs_including_collector": 23,
+  "native_assertions": 15325,
+  "source_cases": 33,
+  "source_case_types": {
+    "active": 17,
+    "aftermath": 16
+  },
+  "family_counts": {
+    "jazz_club_guest_legend": 10,
+    "jazz_club_rent_party": 8,
+    "jazz_club_recording_night": 7,
+    "jazz_club_union_trouble": 8
+  },
+  "source_assertions": 3517,
+  "selected_title_occurrences": 492,
+  "source_visible_occurrences": 118,
+  "source_hidden_exclusions": 2,
+  "hosted_controls": 17,
+  "actual_moving_RGB_pairs_recomputed": 85,
+  "counter_exact_RGBA": true,
+  "source_painted_unattributed_residual_pixels": 1295,
+  "declared_layout_limits": {
+    "scope": "Exact actual source-published object geometry copied from completed normal/RM strict9ac versus R3 native evidence. This records existing source-layout limitations, not new art defects or fixes.",
+    "cases": [
+      {
+        "case_id": "jazz_club_rent_party__aftermath_creditor_occupies",
+        "source_report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-rent-01\\evidence\\jazz_sequence_live_proof.json",
+        "source_report_sha256": "2ad01774f9a3505e8e26bdd4257406352ff2c884ba3c943e65ca5b90a6ee66d1",
+        "normal_layout_equal": true,
+        "RM_layout_equal": true,
+        "objects": [
+          {
+            "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+            "label": "Takeover notice",
+            "type": "scenario_object",
+            "selected_title": "Takeover notice",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 1.5,
+                "h": 64.0,
+                "w": 96.0,
+                "x": 168.0,
+                "y": 40.0
+              },
+              "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+              "interaction_rect": {
+                "aspect_ratio": 1.66666666666667,
+                "h": 48.0,
+                "w": 80.0,
+                "x": 176.0,
+                "y": 48.0
+              },
+              "label_rect": {
+                "aspect_ratio": 6.6,
+                "h": 15.0,
+                "w": 99.0,
+                "x": 166.5,
+                "y": 31.0
+              },
+              "layout_authority_identity": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+              "rect": {
+                "aspect_ratio": 1.66666666666667,
+                "h": 48.0,
+                "w": 80.0,
+                "x": 176.0,
+                "y": 48.0
+              },
+              "scenario_owned": true,
+              "type": "scenario_object",
+              "z_order": 0
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.5,
+                  "h": 64.0,
+                  "w": 96.0,
+                  "x": 168.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.6,
+                  "h": 15.0,
+                  "w": 99.0,
+                  "x": 166.5,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.5,
+                  "h": 64.0,
+                  "w": 96.0,
+                  "x": 168.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.6,
+                  "h": 15.0,
+                  "w": 99.0,
+                  "x": 166.5,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.5,
+                  "h": 64.0,
+                  "w": 96.0,
+                  "x": 168.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.6,
+                  "h": 15.0,
+                  "w": 99.0,
+                  "x": 166.5,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.5,
+                  "h": 64.0,
+                  "w": 96.0,
+                  "x": 168.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.6,
+                  "h": 15.0,
+                  "w": 99.0,
+                  "x": 166.5,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_rent_party_aftermath_creditor_occupies_prop",
+                "rect": {
+                  "aspect_ratio": 1.66666666666667,
+                  "h": 48.0,
+                  "w": 80.0,
+                  "x": 176.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              }
+            }
+          },
+          {
+            "id": "musician:jazz_sax",
+            "label": "Sax Player",
+            "type": "character",
+            "selected_title": "Sax Player",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 0.916666666666667,
+                "h": 96.0,
+                "w": 88.0,
+                "x": 187.0,
+                "y": 96.0
+              },
+              "id": "musician:jazz_sax",
+              "interaction_rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 195.0,
+                "y": 104.0
+              },
+              "label_rect": {
+                "aspect_ratio": 4.66666666666667,
+                "h": 15.0,
+                "w": 70.0,
+                "x": 196.0,
+                "y": 186.0
+              },
+              "layout_authority_identity": "",
+              "rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 195.0,
+                "y": 104.0
+              },
+              "scenario_owned": false,
+              "type": "character",
+              "z_order": 12
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 12
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 12
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 12
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 12
+              }
+            }
+          }
+        ],
+        "declared_limit": "Takeover notice is elevated in the architectural wordmark band. Source positions/labels and selected title are unchanged, but no claim that every underlying decorative glyph remains unobstructed."
+      },
+      {
+        "case_id": "jazz_club_union_trouble__aftermath_management_entry",
+        "source_report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-union-01\\evidence\\jazz_sequence_live_proof.json",
+        "source_report_sha256": "545d3ea689bfaa6bfd94bfe98c48388c8ff65cc3739f6426b5c3f0bfc5f12fe0",
+        "normal_layout_equal": true,
+        "RM_layout_equal": true,
+        "objects": [
+          {
+            "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+            "label": "Floor manager",
+            "type": "character",
+            "selected_title": "Floor manager",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 0.816326374910316,
+                "h": 98.0,
+                "w": 79.9999847412109,
+                "x": 190.000015258789,
+                "y": 80.0
+              },
+              "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+              "interaction_rect": {
+                "aspect_ratio": 0.780487804878049,
+                "h": 82.0,
+                "w": 64.0,
+                "x": 198.000015258789,
+                "y": 88.0
+              },
+              "label_rect": {
+                "aspect_ratio": 5.82666625976563,
+                "h": 15.0,
+                "w": 87.3999938964844,
+                "x": 186.300018310547,
+                "y": 71.0
+              },
+              "layout_authority_identity": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+              "rect": {
+                "aspect_ratio": 0.780487804878049,
+                "h": 82.0,
+                "w": 64.0,
+                "x": 198.000015258789,
+                "y": 88.0
+              },
+              "scenario_owned": true,
+              "type": "character",
+              "z_order": 0
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.816326374910316,
+                  "h": 98.0,
+                  "w": 79.9999847412109,
+                  "x": 190.000015258789,
+                  "y": 80.0
+                },
+                "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 5.82666625976563,
+                  "h": 15.0,
+                  "w": 87.3999938964844,
+                  "x": 186.300018310547,
+                  "y": 71.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 0
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.816326374910316,
+                  "h": 98.0,
+                  "w": 79.9999847412109,
+                  "x": 190.000015258789,
+                  "y": 80.0
+                },
+                "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 5.82666625976563,
+                  "h": 15.0,
+                  "w": 87.3999938964844,
+                  "x": 186.300018310547,
+                  "y": 71.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 0
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.816326374910316,
+                  "h": 98.0,
+                  "w": 79.9999847412109,
+                  "x": 190.000015258789,
+                  "y": 80.0
+                },
+                "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 5.82666625976563,
+                  "h": 15.0,
+                  "w": 87.3999938964844,
+                  "x": 186.300018310547,
+                  "y": 71.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 0
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.816326374910316,
+                  "h": 98.0,
+                  "w": 79.9999847412109,
+                  "x": 190.000015258789,
+                  "y": 80.0
+                },
+                "id": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 5.82666625976563,
+                  "h": 15.0,
+                  "w": 87.3999938964844,
+                  "x": 186.300018310547,
+                  "y": 71.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_union_trouble_aftermath_management_entry_actor",
+                "rect": {
+                  "aspect_ratio": 0.780487804878049,
+                  "h": 82.0,
+                  "w": 64.0,
+                  "x": 198.000015258789,
+                  "y": 88.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 0
+              }
+            }
+          },
+          {
+            "id": "musician:jazz_sax",
+            "label": "Sax Player",
+            "type": "character",
+            "selected_title": "Sax Player",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 0.916666666666667,
+                "h": 96.0,
+                "w": 88.0,
+                "x": 187.0,
+                "y": 96.0
+              },
+              "id": "musician:jazz_sax",
+              "interaction_rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 195.0,
+                "y": 104.0
+              },
+              "label_rect": {
+                "aspect_ratio": 4.66666666666667,
+                "h": 15.0,
+                "w": 70.0,
+                "x": 196.0,
+                "y": 186.0
+              },
+              "layout_authority_identity": "",
+              "rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 195.0,
+                "y": 104.0
+              },
+              "scenario_owned": false,
+              "type": "character",
+              "z_order": 11
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 11
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 11
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 11
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 187.0,
+                  "y": 96.0
+                },
+                "id": "musician:jazz_sax",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 4.66666666666667,
+                  "h": 15.0,
+                  "w": 70.0,
+                  "x": 196.0,
+                  "y": 186.0
+                },
+                "layout_authority_identity": "",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 195.0,
+                  "y": 104.0
+                },
+                "scenario_owned": false,
+                "type": "character",
+                "z_order": 11
+              }
+            }
+          }
+        ],
+        "declared_limit": "Floor manager and Sax remain in the same source stage area with a declared live-object overlap. No claim of universal unobstructed bodies."
+      },
+      {
+        "case_id": "jazz_club_recording_night__aftermath_take_saved",
+        "source_report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-recording-01\\evidence\\jazz_sequence_live_proof.json",
+        "source_report_sha256": "e9d8ba0c6dc3118af4e532749619cd7f02558543b12597bcd4e99a7a195d5f65",
+        "normal_layout_equal": true,
+        "RM_layout_equal": true,
+        "objects": [
+          {
+            "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+            "label": "Labeled take case",
+            "type": "scenario_object",
+            "selected_title": "Labeled take case",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 1.375,
+                "h": 64.0,
+                "w": 88.0,
+                "x": 448.0,
+                "y": 40.0
+              },
+              "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+              "interaction_rect": {
+                "aspect_ratio": 1.5,
+                "h": 48.0,
+                "w": 72.0,
+                "x": 456.0,
+                "y": 48.0
+              },
+              "label_rect": {
+                "aspect_ratio": 7.37333170572917,
+                "h": 15.0,
+                "w": 110.599975585938,
+                "x": 436.700012207031,
+                "y": 31.0
+              },
+              "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+              "rect": {
+                "aspect_ratio": 1.5,
+                "h": 48.0,
+                "w": 72.0,
+                "x": 456.0,
+                "y": 48.0
+              },
+              "scenario_owned": true,
+              "type": "scenario_object",
+              "z_order": 0
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.375,
+                  "h": 64.0,
+                  "w": 88.0,
+                  "x": 448.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 7.37333170572917,
+                  "h": 15.0,
+                  "w": 110.599975585938,
+                  "x": 436.700012207031,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.375,
+                  "h": 64.0,
+                  "w": 88.0,
+                  "x": 448.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 7.37333170572917,
+                  "h": 15.0,
+                  "w": 110.599975585938,
+                  "x": 436.700012207031,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.375,
+                  "h": 64.0,
+                  "w": 88.0,
+                  "x": 448.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 7.37333170572917,
+                  "h": 15.0,
+                  "w": 110.599975585938,
+                  "x": 436.700012207031,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 1.375,
+                  "h": 64.0,
+                  "w": 88.0,
+                  "x": 448.0,
+                  "y": 40.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "interaction_rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 7.37333170572917,
+                  "h": 15.0,
+                  "w": 110.599975585938,
+                  "x": 436.700012207031,
+                  "y": 31.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_prop",
+                "rect": {
+                  "aspect_ratio": 1.5,
+                  "h": 48.0,
+                  "w": 72.0,
+                  "x": 456.0,
+                  "y": 48.0
+                },
+                "scenario_owned": true,
+                "type": "scenario_object",
+                "z_order": 0
+              }
+            }
+          },
+          {
+            "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+            "label": "Sound engineer",
+            "type": "character",
+            "selected_title": "Sound engineer",
+            "actual_geometry": {
+              "actor_route_position": "(-1.0, -1.0)",
+              "actor_route_stage": {},
+              "footprint": {
+                "aspect_ratio": 0.916666666666667,
+                "h": 96.0,
+                "w": 88.0,
+                "x": 446.0,
+                "y": 238.0
+              },
+              "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+              "interaction_rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 454.0,
+                "y": 246.0
+              },
+              "label_rect": {
+                "aspect_ratio": 6.21333211263021,
+                "h": 15.0,
+                "w": 93.1999816894531,
+                "x": 443.399993896484,
+                "y": 229.0
+              },
+              "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+              "rect": {
+                "aspect_ratio": 0.9,
+                "h": 80.0,
+                "w": 72.0,
+                "x": 454.0,
+                "y": 246.0
+              },
+              "scenario_owned": true,
+              "type": "character",
+              "z_order": 1
+            },
+            "strict_legacy_R3_normal_RM_geometry": {
+              "normal_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 446.0,
+                  "y": 238.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.21333211263021,
+                  "h": 15.0,
+                  "w": 93.1999816894531,
+                  "x": 443.399993896484,
+                  "y": 229.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 1
+              },
+              "normal_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 446.0,
+                  "y": 238.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.21333211263021,
+                  "h": 15.0,
+                  "w": 93.1999816894531,
+                  "x": 443.399993896484,
+                  "y": 229.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 1
+              },
+              "RM_before": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 446.0,
+                  "y": 238.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.21333211263021,
+                  "h": 15.0,
+                  "w": 93.1999816894531,
+                  "x": 443.399993896484,
+                  "y": 229.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 1
+              },
+              "RM_after": {
+                "actor_route_position": "(-1.0, -1.0)",
+                "actor_route_stage": {},
+                "footprint": {
+                  "aspect_ratio": 0.916666666666667,
+                  "h": 96.0,
+                  "w": 88.0,
+                  "x": 446.0,
+                  "y": 238.0
+                },
+                "id": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "interaction_rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "label_rect": {
+                  "aspect_ratio": 6.21333211263021,
+                  "h": 15.0,
+                  "w": 93.1999816894531,
+                  "x": 443.399993896484,
+                  "y": 229.0
+                },
+                "layout_authority_identity": "scenario::jazz_club_recording_night_aftermath_take_saved_actor",
+                "rect": {
+                  "aspect_ratio": 0.9,
+                  "h": 80.0,
+                  "w": 72.0,
+                  "x": 454.0,
+                  "y": 246.0
+                },
+                "scenario_owned": true,
+                "type": "character",
+                "z_order": 1
+              }
+            }
+          }
+        ],
+        "declared_limit": "Labeled take case remains in its elevated source position; artwork does not move or repair the source placement. Sound engineer remains a real live actor."
+      }
+    ]
+  },
+  "job_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-validator-01\\evidence\\job.json": "d52f03379d5d71420eeae070967b6a6e537e3d222d196b64399ce763163cfd02",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-import-01\\evidence\\job.json": "e72b6c7fda516468cc7db0486120d546f01ff0499f2772d09acfdc88aacf1f70",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01\\evidence\\job.json": "000587b3eeabfd2820b33ad788bc641a9c19020c8e57553682e0cb6c857d1b6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-animation-base-01\\evidence\\job.json": "f827419949a44be189d012b998a3b3e14dbbb08ae05328e8191c0da19539ba79",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-full-composite-01\\evidence\\job.json": "8b3ef5d8e9599553be61d8edb26687c02682d33f187a641b4a74b541693d4467",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-full-composite-rm-01\\evidence\\job.json": "8ef0ad3b3037701c1d63cbe0a92187447d97aa6a1fdce9db608efbe1bda912ff",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-guest-01\\evidence\\job.json": "9512dd8f4dab456fc04a7969b727ecfc69d04b38d6edeacf9a2247881ea9f593",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-rent-01\\evidence\\job.json": "2b6acebd65a4a30a8c997aa8faea7ff7875f2dab1debcff65db8c9993f91f639",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-recording-01\\evidence\\job.json": "e3df7cde50bd3ae438beb393e5744a4b2b7077b04619118d6a17cd84b030cca2",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-sequence-union-01\\evidence\\job.json": "871279d54ec995010de04392ae4f37c75dc9f2637d9725af103c83aa983a78d2",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-source-summary-01\\evidence\\job.json": "c4332e128094cae99d8303d95b8478d8d27a4947ae58c791f3828a2f95aa0ef1",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-source-paint-01\\evidence\\job.json": "9ec8e4689c60d5c05d0740d8ff2f5b3258d4f35ce5d35e97a1ee3569b6ae4a90",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-matching-source-01\\evidence\\job.json": "ef31e70812b1f40e709db3d6f3ffbcd0e210b30d973ca5649ac1b99fe651fd0c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-floor-wrap-01\\evidence\\job.json": "59061d43cc54257af0234a9f85c7c0e812143e2ac20bf4fd9ad99ea9f5112041",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-air-wrap-01\\evidence\\job.json": "48f6fa33af28dfdec2e71dbf4b6ec418d39c0539eee5420ea5d5f889a9c941e1",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-counter-replay-01\\evidence\\job.json": "6a442e5e12d80430c3fc1022264b7ddba6cee409908f83435a8a4168b33eaaf4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-placement-closing-01\\evidence\\job.json": "9b18043bbe1813c8d1da8a458a50947bf8329cc5d82cdf65b6f601be23c111c5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-effective-hits-03\\evidence\\job.json": "ca6716f207e5acc5c65d0edeab9a23700fc73894a16b0a8dd67fb8ec93ef5d33",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-paint-coverage-01\\evidence\\job.json": "73c384bfd9d2d8bd316420742bebb803513f9a5f7b47a5ef7596829c69aaa447",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-effective-hits-01\\evidence\\job.json": "5372d25656b37e9becfd2ad22047186d0813223778ea967e3f0e29654c19036a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-effective-hits-02\\evidence\\job.json": "a61ccf667f1f3b5882e3d26552e88cf059241a3cb35eb3366dffec466c4ba007",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-final-summary-01\\evidence\\job.json": "6799643d3d1189440eda73444600e58dc2fc8dd364a412fa1cc07134a72ede5b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-final-summary-02\\evidence\\job.json": "69a51d51e1e5226f13ff17577f51b9556b79e650ca7990c9018d89c25108b0bf"
+  },
+  "diagnostics": {
+    "r3-effective-hits-01": "QA helper parse error: an inferred Variant path needed explicit String. No game/art source change. Corrected in helper-fix run before rerun.",
+    "r3-effective-hits-02": "QA helper supplied JSON-serialized object dictionaries to native interaction-rect method, where Vector2 position had become String. Corrected to original active canvas dictionaries. Failed assertions are invalid harness observations, not game/art defects. Exact raw log, helper and receipt preserved; replacement run03 is authoritative.",
+    "r3-final-summary-01": "Python-only collector used Windows backslashes from prior manifest as literal ZIP member names. Normalize separators before reading. All native/identity gates already verified; no rerun or production change."
+  },
+  "director_report": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DIRECTOR-20261114\\jazz-r3-director-visual-go.json",
+  "director_sha256": "2aa10f3ae9c285bfb3d2a459e1789117bb31cd64695ae15b5ae0593dc0da9ed5",
+  "limits": [
+    "33 primary source paths executed;93 branch edges cataloged, not93 independently executed playthroughs.",
+    "Normal Runtime to Engine to RunState membership and actual native object geometry/titles/hits proven; not save, revisit, mouse-click or full UI E2E.",
+    "Actual reduced-motion room is stable;17 HUD clock RGB pixels change, so no full-app freeze claim.",
+    "Declared legacy overlaps/elevated source placements retained; no universal unobstructed-label/body claim.",
+    "Root/auditor own crisp user deliverables. Native technical pass does not replace auditor final art seal."
+  ],
+  "mandatory_liveness": "Current closure has placement clock/redraw no-input proof but not yet the original required unchanged liveness script receipt. Separate immutable supplement must be independently verified before final PASS.",
+  "visual_scope": "Auditor personally viewed all33 ordinary full-app source states in1:1 source-hashed sheets,all5initials,actual settingsRM,decoded preview representative,and exact counter with/without-replay fixture pair. Director personally5initials+16risk states+RM/decoded/static,not all33."
+}

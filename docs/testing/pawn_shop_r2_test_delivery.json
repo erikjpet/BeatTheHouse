@@ -1,0 +1,123 @@
+{
+  "status": "PARTIAL_NATIVE_AND_TEST_ARTIFACT_PASS_LIVE_WEB_NOT_RUN",
+  "source_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+  "source_tree": "de6973f05fac17cb19fe03f26c5bc0a00f4cdd5b",
+  "source_archive_sha256": "13a60a027b36dbe8888cf2fb77866a519f5f728faacb818beddc886d05162f84",
+  "package_id": "pawn_shop-v1-r2",
+  "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+  "native_audit_sha256": "3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41",
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/ab0b49deeab019deac7ef30b79b17f86ffbc521d/index.html",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+    "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+    "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3"
+  },
+  "build_manifest_sha256": "b649abdab0bc99582136d0d4c81ff238da14dd3b2a1bbb72b354b34ce9939e26",
+  "html_sha256": "852cb0c8d22d90e1f3ff8c3fa4267ac67cccbca2b3be0ca962e1525d6896944b",
+  "pck_sha256": "e47794ab4e9eef0acd95f5a6ae345deadb9e6054e26086a8a3def1d45be6f3b2",
+  "embedded_manifest_sha256": "8f4f58ef4208bc1b233aa2660d36d1c100d77d26c08eb9c807e4ea90996d0401",
+  "embedded_manifest_md5": "679793e86078bd4c97b1649c984db43d",
+  "raw_art_sources": 101,
+  "compiled_art_textures": 94,
+  "pck_entries": 1507,
+  "prior_five_compiled_unchanged": 77,
+  "pck_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/background.png-33aae85391490e269ca48ac109a84f47.ctex",
+      ".godot/imported/fixed_material_occlusion.png-2dd3059715325f3272a63877aff76726.ctex",
+      ".godot/imported/floor_glint_0.png-7d3cae3dea8491c9831d45312ae2c46f.ctex",
+      ".godot/imported/floor_glint_1.png-d06ed22a2192fa3445920f7f59b25fbb.ctex",
+      ".godot/imported/floor_glint_2.png-e19b9f5171a4414c3dd143be7c409855.ctex",
+      ".godot/imported/floor_glint_3.png-c51f6948372b298981a1936a9804eeea.ctex",
+      ".godot/imported/floor_glint_4.png-5e0f14e61c153bb4354f75d64cf4bab7.ctex",
+      ".godot/imported/floor_glint_5.png-d048209ec78a8095d67990300a87006e.ctex",
+      ".godot/imported/floor_glint_6.png-0a75e30c2c8b9b596ac3383c44ac4727.ctex",
+      ".godot/imported/hardware_glint.png-02a88ca2f612a313b5c33e18795f563c.ctex",
+      ".godot/imported/high_air_0.png-afaf13c578b8fff865c37202aa9c8fcb.ctex",
+      ".godot/imported/high_air_1.png-783e6dca8fddd47c7ccde7f48eb0cca7.ctex",
+      ".godot/imported/inspection_tray_breath.png-0167f6bb2ae42eee38accc2fa0c5e496.ctex",
+      ".godot/imported/pawn_counter.png-9a317dbb39565683a3f15dd5cf5982e5.ctex",
+      ".godot/imported/pawn_estate_shelf.png-ac6a918a1ad6cd2e6f97b94cdd7203d7.ctex",
+      ".godot/imported/sals_sign.png-2bb2ffae29020fe1b36c060833b26c88.ctex",
+      ".godot/imported/security_scan.png-d07eb7d475f695925b60e28dca9fcc09.ctex",
+      "assets/art/environments/pawn_shop/anim/fixed_material_occlusion.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_0.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_1.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_2.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_3.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_4.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_5.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_6.png.import",
+      "assets/art/environments/pawn_shop/anim/hardware_glint.png.import",
+      "assets/art/environments/pawn_shop/anim/high_air_0.png.import",
+      "assets/art/environments/pawn_shop/anim/high_air_1.png.import",
+      "assets/art/environments/pawn_shop/anim/inspection_tray_breath.png.import",
+      "assets/art/environments/pawn_shop/anim/sals_sign.png.import",
+      "assets/art/environments/pawn_shop/anim/security_scan.png.import",
+      "assets/art/environments/pawn_shop/background.png.import",
+      "assets/art/environments/pawn_shop/counters/pawn_counter.png.import",
+      "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png.import",
+      "data/art/environments/pawn_shop.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1469
+  },
+  "python_tests": {
+    "passed": 272,
+    "duration_seconds": 45.243
+  },
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "configuration_not_runtime_DB_observation": true,
+  "independent_partial_report": {
+    "original_sha256": "c851ed36e6886a26895bd09b236c5746dfbfae83cc121821898f1167826ff20d",
+    "public_copy": "docs/testing/pawn_shop_r2_partial_web_proof.json",
+    "public_copy_sha256": "e7a9abf7e6c793494df4982b8817e02d50e8fcc73c326d34d1246b53a2c5611a"
+  },
+  "web_reproduction_archive_sha256": "259eea60871f1fb0e0ec8c494b6cddf70145c01e981777aac7cbcdc2a64bd545",
+  "build_source_archive_sha256": "3b533abef80c4cd956e2882ac099bc037587555d01b356a660ef175e2252bdb1",
+  "live_web_verified": false,
+  "director_served_visual_gate": "NOT_RUN",
+  "NOT_RUN": [
+    "Actual game UI",
+    "1280/1920 client-size appearance",
+    "Moving/static final Web composites",
+    "Supported Web Reduce Motion/restoration",
+    "Runtime IndexedDB/mount observations",
+    "Save/revisit/travel E2E"
+  ],
+  "qualification_blocker": {
+    "scope": "Owned nonce calibration page only; exact window binding failed twice, no UI input or game navigation.",
+    "local_report_sha256": "8e75affa85c3ea013b76e4082034ae52b9a5fe7e44d66f90c67117a2731b0f4b",
+    "owned_receipt_sha256": "ea4b9a97a4c7ca52f562f6ae6b8f0c707cc82724412a0155971dc170d362339c",
+    "forced_owned_termination": true,
+    "active_at_release": 0,
+    "cleanup_errors": [],
+    "peak_job_memory_bytes": 409767936
+  },
+  "previous_9ac_immutable_preserved": true,
+  "normal_save_source_paths_unchanged": true,
+  "main_next_commit_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "site_audience_home_and_config_unchanged": true,
+  "fully_web_verified_interiors": 5,
+  "native_passed_enabled_interiors": 6,
+  "campaign_complete": false,
+  "github_combined_statuses": [],
+  "github_ci_scope": "No combined statuses returned; not hosted-CI success. Local tests pass.",
+  "scope": "Exact native-approved Pawn is published to isolated TEST and artifact identity verified. Live Web gate remains open; prior compiled-byte retention is not a live regression test."
+}

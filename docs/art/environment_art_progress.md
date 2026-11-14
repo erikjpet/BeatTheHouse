@@ -2,11 +2,11 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative TEST9ac963f1; 5 of 20 interiors complete. Pawn is active, and the full campaign remains Open. Documentation/source backups do not approve unreviewed art.
+Release status: Five interiors fully Web-verified. Current TESTab0 contains six native-passed packs; Pawn artifact proof passes but live Web is blocked. Jazz is the active native art trial. The full20-room/12-doorway campaign remains Open.
 
 ## Current queue
 
-Authoritative current status: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative bound9ac TEST, 5 of 20 interiors. Pawn R2 is the sole active art trial with deeper native proof pending; Jazz is reference/preflight preparation only. Main/NEXT and normal saves remain unchanged.
+Earlier authoritative checkpoint: Gas R12, Corner R6, Back R3, Motel R3 and Bar R4 are delivered and verified on cumulative bound9ac TEST, 5 of 20 interiors. Pawn R2 is the sole active art trial with deeper native proof pending; Jazz is reference/preflight preparation only. Main/NEXT and normal saves remain unchanged.
 
 ### Earlier queue checkpoint
 
@@ -173,3 +173,12 @@ Pawn R2 non-active source checkpoint: archive `be4925ee17be792abfd8e1ac894fed26c
 Bar delivery closure: exact native398469b2 and served9ac pass all scoped gates; final browser proof02b4c2ed, archive 5b90e839594b27fc38a844af55bf11abf93f8026ce5ec79620d79e7ffbd32350. Natural browser cleanup is verified. Source crowding/natural occlusions and all-route/save/revisit limits remain explicit. Five interiors complete; the full campaign and travel-doorway phase stay Open.
 
 Pawn exact R2 native PASS is integrated as19 sealed files with prior88/c5 unchanged; separate artifact verification pending and live Web blocked by permitted tool binding,not bypassed. Jazz R3 static GO is ready for isolated actual trial after Pawn export; its current five-context714/0 baseline and measured direction are frozen. Five interiors remain fully delivered; no sixth Web completion claim.
+
+Current partial release: PawnR2 is published onab0 with independent artifact proofc851ed36 and exact prior byte retention. The current browser tool could not bind an isolated calibration window, so no Pawn live-Web acceptance is inferred. Five full deliveries remain complete. JazzR3 actual5/source33 proof is positive; final technical/audit closure pending.
+
+JazzR3 source progress is preserved non-active: archive28d33ee3fa918c8925e773f911a9a493e81e8124cbd57f70463b2a2180910114, 15,146,298bytes/49members, exact19payloads/full originals/provenance/recipe/frozen inputs/preart/director records. Native worker technical closure is positive; independent final audit still gates implementation. Future public/hidden/private briefs are documented,not source releases. Current TEST remains native6/artifact-only for Pawn,with5 full Web deliveries.
+
+
+## Jazz exact native closure and next delivery gate
+
+Jazz R3 exact2c9e93f5 has final auditor PASS c2f90b9e after the unchanged original mandatory liveness supplement. All19 approved files are now integrated with prior six rooms/c5 unchanged. Export and Web gates remain separate. Pawn is artifact-published, live-browser blocked; five interiors remain fully Web-delivered. Public Punchline current6 pre-art is closed737/0 with Tonight Comic generic disabled fixture, not a duplicate mic; no public source is implied. Future hidden/private briefs are reference-only.

@@ -1,7 +1,7 @@
 {
   "package_id": "pawn_shop-v1-r2",
   "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
-  "acceptance": "EXACT_NATIVE_PASS_TARGET_INTEGRATION_TEST_WEB_PENDING",
+  "acceptance": "NATIVE_PASS_PUBLISHED_TEST_ARTIFACT_PASS_LIVE_WEB_UNVERIFIED",
   "audit_report_sha256": "3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41",
   "public_audit_copy_sha256": "036493aa1e170c086e4b253508af79cfb990e7a2068846ab83b86a7bb72978ba",
   "payload_files": {
@@ -530,6 +530,12 @@
     "scope": "Director scoped review differs from auditor personal all24; exact record retained."
   },
   "integration_diagnostic": "Nested preview routing metadata stopped initial public-copy assertion after exact19 files copied; copied payloads/prior88/protected bytes independently reverified before metadata-only continuation. No committed unsanitized Pawn report or product-byte change.",
-  "web_delivery": "PENDING",
-  "web_tool_limit": "Associated Browser runtime unavailable. Allowed fresh E-profile CUA calibration stopped at exact window binding; no game UI ran, no prohibited fallback. Source/PCK/TLS checks continue; live browser claims remain pending."
+  "web_delivery": {
+    "source_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+    "artifact_only": true,
+    "partial_proof_sha256": "c851ed36e6886a26895bd09b236c5746dfbfae83cc121821898f1167826ff20d",
+    "live_web_verified": false,
+    "report": "docs/testing/pawn_shop_r2_test_delivery.json"
+  },
+  "web_tool_limit": "The isolated qualification window could not be bound by the current tool. No game UI ran; source/PCK/TLS/configuration checks pass separately. No alternative user profile or less isolated session was used."
 }

@@ -1,0 +1,45 @@
+{
+  "status": "CAMPAIGN_ACTIVE_PUBLIC_PUNCHLINE_NEXT_PENDING_FINAL_SOURCE_BRIEF",
+  "native_passed_rooms": [
+    "gas_station_casino",
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "pawn_shop",
+    "jazz_club"
+  ],
+  "latest_pass": {
+    "package": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/packages/jazz_club-v1-r3",
+    "package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+    "report": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/audit/jazz_club-v1-r3-PASS.json",
+    "report_sha256": "c2f90b9ea1828d9de27b5950c1df941bb41783a4ffeb969301a84cfe67dc1f57",
+    "independent_full_integrity_sha256": "473c984dd0a95c3a231ac3bd0bbc929cd5318ca69b4bf320e32247d5bb3eaa1b",
+    "independent_original_liveness_supplement_sha256": "39b3d9715ba2e34aded5b134bf557430069be26a4d004f2286c59dcba9b82c1d",
+    "technical_scope": "33 primary source contexts, 3517 source assertions, 492 selected-title occurrences, 118 visible Runtime occurrences, 17 hosted controls, two deliberately hidden Guest-table occurrences. All 33 ordinary actual full scenes personally viewed. All 17 motions across five current contexts have 85 independently RGB-recounted pairs. Total native assertions 15325; 5060 effective ordered hit samples. Exact opaque front, Reduce Motion, wraps, placement and closing passed. Original unchanged mandatory liveness script separately executed and verified before seal.",
+    "limits": "Native art only. Three unchanged source-layout limits and 1295 unattributed missing source-support pixels are explicit. No universal unobstructed-label/body, full support, Web/TEST, UI/save/revisit or all-alternative-route claim."
+  },
+  "integration": "Integrator owns exact Jazz activation and separate Web qualification. Six prior accepted packs and c5 remain protected. Auditor has not deployed anything. Last fully reported served TEST was Bar source9ac with five rooms; Pawn sourceab0 exported but actual browser binding was blocked, so do not claim served Pawn/Jazz acceptance.",
+  "current_art": "punchline_club",
+  "source_owner": "implementation task",
+  "source_release": "Hold until director final current-six mic/practical decision and frozen final target/brief release. Jazz final native condition is now satisfied. Only ONE public Punchline first source, never duplicate a simultaneous director/root release. Hidden casino remains later.",
+  "public_clean_guide": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/punchline_club_clean_geometry_v1_1800x860.png",
+    "sha256": "5c52ee99b4907d66fb3f489e0d04cb7b684052cebfc41c1c4e30264cd134c3a2",
+    "status": "Inspected provisional geometry cleanup. Only lower helper rows changed. Four round bodies/practicals, central apron/dark wings, side door, wordmark, white mic and pink static pool retained. Native original raster phase is preserved; 900 derivative is display-only, not reversible exact2x. Final production art still must be 900 to nearest exact2x."
+  },
+  "public_preart": {
+    "archive": "E:/CodexQA/BTH/runs/BTH-ENVART-PUNCHLINE-20261114-closure-02/evidence/punchline_preart_evidence.zip",
+    "archive_sha256": "ddd65f0eced5c00b0249487a502a6aa4556df9ac736c3a8eeba268f76b9317e8",
+    "closure_sha256": "9264c571f434f4797641139a6e41677885460d22bbe744f3194bc8ed2e257834",
+    "scope": "Current Base plus five scenarios, 737 checks, 73 actual objects and selected titles, 30 Runtime visuals, five explicit exclusions. Auditor personally viewed all six actual full apps.",
+    "mic": "Actual Tonight's Comic is a disabled generic cyan fixture, not a painted performer or microphone. Director provisional KEEP of architectural white mic/pink pool is supported by all six actuals; final director release still needed.",
+    "fourth_practical": "Core is fully covered by real Ox paint in all six samples. A source-shaped table rim strip [810,216,4,18] is exposed, label-free and clipped by fixed doorx814. Auditor accepts a tiny same-table reflection pulse trial if director chooses; three new pulses plus a steady fourth is also honest because public legacy has no dedicated practical-motion family. Never force a count by moving Ox, adding a prop or painting over live cast."
+  },
+  "media_saved": {
+    "Jazz_actual_MP4": "libfile_fde3_f-14eb1dbc3ee081919f4a28c1097c9820_b2e6deecb030819197ad6510125a1c29",
+    "Jazz_actual_PNG": "libfile_fde3_f-382e80dd1ac88191a621d675b914c4fd_b2e6deecb030819197ad6510125a1c29",
+    "status": "Both saves confirmed and IDs sent parent. Parent owns user delivery. Captured TRIAL caption is truthful historical context for the same now-passed bytes; no reupload."
+  },
+  "campaign_remaining": "Thirteen of 20 interiors remain, beginning public Punchline, then a separate 12-doorway phase. Campaign stays active."
+}

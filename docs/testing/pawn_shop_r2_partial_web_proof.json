@@ -1,0 +1,508 @@
+{
+  "status": "PARTIAL_ARTIFACT_PASS_LIVE_WEB_NOT_RUN",
+  "source_commit": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+  "source_tree": "de6973f05fac17cb19fe03f26c5bc0a00f4cdd5b",
+  "package_sha256": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+  "native_pass_report_sha256": "3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41",
+  "canonical_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/ab0b49deeab019deac7ef30b79b17f86ffbc521d/index.html",
+  "current_pointer": "ab0b49deeab019deac7ef30b79b17f86ffbc521d",
+  "managed_launcher_marker": true,
+  "normal_TLS_validation_no_bypass": true,
+  "stream_block_bytes": 1048576,
+  "served_manifest_sha256": "b649abdab0bc99582136d0d4c81ff238da14dd3b2a1bbb72b354b34ce9939e26",
+  "served_html_sha256": "852cb0c8d22d90e1f3ff8c3fa4267ac67cccbca2b3be0ca962e1525d6896944b",
+  "served_pck_sha256": "e47794ab4e9eef0acd95f5a6ae345deadb9e6054e26086a8a3def1d45be6f3b2",
+  "served_embedded_manifest_sha256": "8f4f58ef4208bc1b233aa2660d36d1c100d77d26c08eb9c807e4ea90996d0401",
+  "served_embedded_manifest_md5": "679793e86078bd4c97b1649c984db43d",
+  "served_files_plus_root_manifest": 13,
+  "served_files": {
+    "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+      "bytes": 340415,
+      "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+      "http_status": 200
+    },
+    "index.apple-touch-icon.png": {
+      "bytes": 4099,
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+      "http_status": 200
+    },
+    "index.audio.position.worklet.js": {
+      "bytes": 2973,
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+      "http_status": 200
+    },
+    "index.audio.worklet.js": {
+      "bytes": 7298,
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+      "http_status": 200
+    },
+    "index.html": {
+      "bytes": 5632,
+      "sha256": "852cb0c8d22d90e1f3ff8c3fa4267ac67cccbca2b3be0ca962e1525d6896944b",
+      "http_status": 200
+    },
+    "index.icon.png": {
+      "bytes": 14818,
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+      "http_status": 200
+    },
+    "index.js": {
+      "bytes": 2828608,
+      "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+      "http_status": 200
+    },
+    "index.pck": {
+      "bytes": 128596508,
+      "sha256": "e47794ab4e9eef0acd95f5a6ae345deadb9e6054e26086a8a3def1d45be6f3b2",
+      "http_status": 200
+    },
+    "index.png": {
+      "bytes": 21443,
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+      "http_status": 200
+    },
+    "index.side.wasm": {
+      "bytes": 21802358,
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "http_status": 200
+    },
+    "index.wasm": {
+      "bytes": 1508237,
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "http_status": 200
+    },
+    "web-gl-handles.json": {
+      "bytes": 1295,
+      "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd",
+      "http_status": 200
+    }
+  },
+  "served_config": {
+    "args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "canvasResizePolicy": 2,
+    "emscriptenPoolSize": 4,
+    "ensureCrossOriginIsolationHeaders": true,
+    "executable": "index",
+    "experimentalVK": false,
+    "fileSizes": {
+      "index.pck": 128596508,
+      "index.wasm": 1508237
+    },
+    "focusCanvas": true,
+    "gdextensionLibs": [
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm"
+    ],
+    "godotPoolSize": 1,
+    "persistentPaths": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+    ]
+  },
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+    "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+    "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3"
+  },
+  "raw_art_sources_verified": 101,
+  "actual_compiled_art_verified": 94,
+  "pck_entries": 1507,
+  "enabled_rooms": [
+    "gas_station_casino",
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "pawn_shop"
+  ],
+  "prior_immutable": {
+    "source_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+    "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+    "pck_sha256": "c9bc7c1c47a43dd1cd8dd99241146d45eeddefbe6296ec0d91a17dc653723dc0",
+    "served_files_plus_root_manifest": 13,
+    "served_files": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+        "bytes": 340415,
+        "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+        "http_status": 200
+      },
+      "index.apple-touch-icon.png": {
+        "bytes": 4099,
+        "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+        "http_status": 200
+      },
+      "index.audio.position.worklet.js": {
+        "bytes": 2973,
+        "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+        "http_status": 200
+      },
+      "index.audio.worklet.js": {
+        "bytes": 7298,
+        "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+        "http_status": 200
+      },
+      "index.html": {
+        "bytes": 5632,
+        "sha256": "3f111daee02ff5c63df896a989dfe990fe3754c27b9df099e928355c53a07356",
+        "http_status": 200
+      },
+      "index.icon.png": {
+        "bytes": 14818,
+        "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+        "http_status": 200
+      },
+      "index.js": {
+        "bytes": 2828608,
+        "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "http_status": 200
+      },
+      "index.pck": {
+        "bytes": 127872212,
+        "sha256": "c9bc7c1c47a43dd1cd8dd99241146d45eeddefbe6296ec0d91a17dc653723dc0",
+        "http_status": 200
+      },
+      "index.png": {
+        "bytes": 21443,
+        "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+        "http_status": 200
+      },
+      "index.side.wasm": {
+        "bytes": 21802358,
+        "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "http_status": 200
+      },
+      "index.wasm": {
+        "bytes": 1508237,
+        "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "http_status": 200
+      },
+      "web-gl-handles.json": {
+        "bytes": 1295,
+        "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd",
+        "http_status": 200
+      }
+    }
+  },
+  "prior_pck_byte_retention": {
+    "prior_entries": 1472,
+    "current_entries": 1507,
+    "identical_existing_entries": 1469,
+    "directly_compared_identical_bytes": 127640338,
+    "changed_existing_entries": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "added_entries": [
+      ".godot/imported/background.png-33aae85391490e269ca48ac109a84f47.ctex",
+      ".godot/imported/fixed_material_occlusion.png-2dd3059715325f3272a63877aff76726.ctex",
+      ".godot/imported/floor_glint_0.png-7d3cae3dea8491c9831d45312ae2c46f.ctex",
+      ".godot/imported/floor_glint_1.png-d06ed22a2192fa3445920f7f59b25fbb.ctex",
+      ".godot/imported/floor_glint_2.png-e19b9f5171a4414c3dd143be7c409855.ctex",
+      ".godot/imported/floor_glint_3.png-c51f6948372b298981a1936a9804eeea.ctex",
+      ".godot/imported/floor_glint_4.png-5e0f14e61c153bb4354f75d64cf4bab7.ctex",
+      ".godot/imported/floor_glint_5.png-d048209ec78a8095d67990300a87006e.ctex",
+      ".godot/imported/floor_glint_6.png-0a75e30c2c8b9b596ac3383c44ac4727.ctex",
+      ".godot/imported/hardware_glint.png-02a88ca2f612a313b5c33e18795f563c.ctex",
+      ".godot/imported/high_air_0.png-afaf13c578b8fff865c37202aa9c8fcb.ctex",
+      ".godot/imported/high_air_1.png-783e6dca8fddd47c7ccde7f48eb0cca7.ctex",
+      ".godot/imported/inspection_tray_breath.png-0167f6bb2ae42eee38accc2fa0c5e496.ctex",
+      ".godot/imported/pawn_counter.png-9a317dbb39565683a3f15dd5cf5982e5.ctex",
+      ".godot/imported/pawn_estate_shelf.png-ac6a918a1ad6cd2e6f97b94cdd7203d7.ctex",
+      ".godot/imported/sals_sign.png-2bb2ffae29020fe1b36c060833b26c88.ctex",
+      ".godot/imported/security_scan.png-d07eb7d475f695925b60e28dca9fcc09.ctex",
+      "assets/art/environments/pawn_shop/anim/fixed_material_occlusion.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_0.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_1.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_2.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_3.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_4.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_5.png.import",
+      "assets/art/environments/pawn_shop/anim/floor_glint_6.png.import",
+      "assets/art/environments/pawn_shop/anim/hardware_glint.png.import",
+      "assets/art/environments/pawn_shop/anim/high_air_0.png.import",
+      "assets/art/environments/pawn_shop/anim/high_air_1.png.import",
+      "assets/art/environments/pawn_shop/anim/inspection_tray_breath.png.import",
+      "assets/art/environments/pawn_shop/anim/sals_sign.png.import",
+      "assets/art/environments/pawn_shop/anim/security_scan.png.import",
+      "assets/art/environments/pawn_shop/background.png.import",
+      "assets/art/environments/pawn_shop/counters/pawn_counter.png.import",
+      "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png.import",
+      "data/art/environments/pawn_shop.json"
+    ],
+    "removed_entries": [],
+    "prior_compiled_textures_identical": 77,
+    "current_compiled_textures": 94
+  },
+  "source_archive_sha256": "13a60a027b36dbe8888cf2fb77866a519f5f728faacb818beddc886d05162f84",
+  "source_commit_tree_read_from_git": true,
+  "protected_site_file_count": 6,
+  "protected_site_bytes_unchanged": true,
+  "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "artifact_gate": {
+    "artifact_admitted": true,
+    "browser_admission_denied": true,
+    "browser_denial": "PREPARATION ONLY: exact independent auditor PASS, finalized source and parent GO have not been supplied",
+    "game_approved_target_present": false,
+    "closed_qualification_receipt_sha256": "ea4b9a97a4c7ca52f562f6ae6b8f0c707cc82724412a0155971dc170d362339c"
+  },
+  "final_gate": {
+    "artifact_admitted": true,
+    "browser_admission_denied": true,
+    "browser_denial": "PREPARATION ONLY: exact independent auditor PASS, finalized source and parent GO have not been supplied",
+    "game_approved_target_present": false,
+    "closed_qualification_receipt_sha256": "ea4b9a97a4c7ca52f562f6ae6b8f0c707cc82724412a0155971dc170d362339c"
+  },
+  "browser_qualification": {
+    "status": "BLOCKED_CUA_WINDOW_OWNERSHIP_BINDING",
+    "selected_real_profiles": false,
+    "UI_inputs_sent": false,
+    "owned_qualification_receipt_sha256": "ea4b9a97a4c7ca52f562f6ae6b8f0c707cc82724412a0155971dc170d362339c",
+    "owned_job_closed": true
+  },
+  "NOT_RUN": [
+    "Actual browser canonical redirect/visible footer",
+    "Actual 1280/1920 game client sizes",
+    "Live four-scenario UI/cast/name framing",
+    "Live motion/scan/static alignment/tray extrema",
+    "Supported UI Reduce Motion/restoration",
+    "Selection/tooltip/return framing",
+    "Previous-five-room live composite retention",
+    "Runtime IndexedDB access or mounted-path observation",
+    "Save/revisit E2E"
+  ],
+  "limits": [
+    "Artifact identity/configuration/source/PCK facts are not runtime UI or IndexedDB observations.",
+    "No browser/game attempt or alternative automation was performed for this artifact-only verification.",
+    "Prior-room byte retention does not prove live motion or outcome E2E. Native artwork acceptance remains separately scoped.",
+    "Main Git branch preservation is not inferred from the read-only NEXT pointer/manifest and protected site-byte checks."
+  ],
+  "verified_source_report_sha256": "4726156c6633f0d139e1f6cf23ffd50ac7accf921b352091dda6f03cb373faea",
+  "verified_source_report_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNWEB-artifact-verify-01\\evidence\\pawn-r2-partial-served-artifact-report.json",
+  "completed_worker_jobs": {
+    "BTH-ENVART-PAWNWEB-inputs-01": {
+      "exit_code": 1,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 21635072,
+        "cpu_seconds": 0.4375,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "9cc9ad338fd692399a0e97d9a62f9e3a807b6220481ae1060d0de131b5291538"
+    },
+    "BTH-ENVART-PAWNWEB-inputs-02": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 21180416,
+        "cpu_seconds": 0.421875,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "7229f7c3c29f9b879d3f697833111abc3ce916e047e79e1c6b43976b751e2351"
+    },
+    "BTH-ENVART-PAWNWEB-inputs-03": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 21008384,
+        "cpu_seconds": 0.5,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "73cb5606c51b393f960a95f837a896ead4c363be826f05bb93c4da52ab0924a1"
+    },
+    "BTH-ENVART-PAWNWEB-masks-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 649289728,
+        "cpu_seconds": 2.8125,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "713c4fb6aecb8a7fa69b1ab77836c34ab1dba2d599a1d288f3eaa6c3047ea786"
+    },
+    "BTH-ENVART-PAWNWEB-selfcheck-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 35176448,
+        "cpu_seconds": 0.375,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "58442622d63ca73cae70867479ba1e0f49f46ea50979ffb29ddb99c0b9c4419c"
+    },
+    "BTH-ENVART-PAWNWEB-selfcheck-02": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 34746368,
+        "cpu_seconds": 0.453125,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "d3f5f1256072bbb3fd698ece4247850a5ff077ea28b448b43cd3f76ff90b0c79"
+    },
+    "BTH-ENVART-PAWNWEB-repro-scan-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 29741056,
+        "cpu_seconds": 0.640625,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "95fa9034e7afd4b74891be32bd0590e99b4968bbaf9794888fc3f8f7d2103a03"
+    },
+    "BTH-ENVART-PAWNWEB-preparation-seal-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 72454144,
+        "cpu_seconds": 1.4375,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "fea4fe3bce48c94e7d229b4871bf4ff6004db8cb62265d9a333719d5b5b8a541"
+    },
+    "BTH-ENVART-PAWNWEB-archive-verify-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 61554688,
+        "cpu_seconds": 0.65625,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "a222ba9bff9d5846418aae2d1cb949407d6029eb71e13677b75c190bafbd30fc"
+    },
+    "BTH-ENVART-PAWNWEB-qualification-plan-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 85065728,
+        "cpu_seconds": 0.21875,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "bdccb7fc98b18cfff873a7a4b0271124e980034d6cc584b641f40a13dabae2a7"
+    },
+    "BTH-ENVART-PAWNWEB-artifact-commit-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 43831296,
+        "cpu_seconds": 0.03125,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "3c21a6dfa676a90568cd5350a9f3e58c03faf98d6900a7b99da020a11d99f9b5"
+    },
+    "BTH-ENVART-PAWNWEB-artifact-verify-01": {
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cleanup_errors": [],
+      "natural_termination": true,
+      "resources": {
+        "peak_job_memory_bytes": 35774464,
+        "cpu_seconds": 5.34375,
+        "active_at_release": 0
+      },
+      "receipt_sha256": "c35824ac50db702d27a38d54799fca1c45f22c6acadfb114dab685178ba68818"
+    }
+  },
+  "qualification_resource_receipt": {
+    "sha256": "ea4b9a97a4c7ca52f562f6ae6b8f0c707cc82724412a0155971dc170d362339c",
+    "natural_exit": false,
+    "forced_owned_termination": true,
+    "active_at_release": 0,
+    "peak_job_memory_bytes": 409767936,
+    "cleanup_errors": []
+  },
+  "metadata_copy_changes": [
+    {
+      "file": "reference-bar/bar-r4-served-web-qa.json",
+      "kind": "metadata_only",
+      "original_sha256": "02b4c2ed15fd345688857e5f94db933be75ceb8abfd3802e157b062604e2b1c3",
+      "copy_sha256": "001c07117037856a3545dbe62bfd9df2b0f8f9d31095b069ee74a91b4531b5a7"
+    },
+    {
+      "file": "reference-bar/bar-r4-web-proof-source.zip!evidence/BTH-ENVART-BARWEB-source-bind-01/verified-native-pass.json",
+      "kind": "metadata_only",
+      "original_sha256": "0cd057cc4df764b05b2e2874fad054cec564b7b3ae420136f456854cbd5f4d87",
+      "copy_sha256": "08584a00ca0627a92371483c428967ea6e7a0f8611e604020a0906cdd5d5a233"
+    },
+    {
+      "file": "reference-bar/bar-r4-web-proof-source.zip!native-approved-pass.json",
+      "kind": "metadata_only",
+      "original_sha256": "0cd057cc4df764b05b2e2874fad054cec564b7b3ae420136f456854cbd5f4d87",
+      "copy_sha256": "08584a00ca0627a92371483c428967ea6e7a0f8611e604020a0906cdd5d5a233"
+    },
+    {
+      "file": "reference-bar/bar-r4-web-proof-source.zip",
+      "kind": "nested_metadata_only_container",
+      "original_sha256": "5b517aed9348a6e4734e98b4c15b01a85bf2c68c315ef6958d5d1c038a09b49e",
+      "copy_sha256": "050dd1dfe5f1dcfbb148cfeca551acc145a537327d99dc337c26c1c274732185"
+    },
+    {
+      "file": "evidence/BTH-ENVART-PAWNWEB-repro-scan-01/metadata-scan.json",
+      "kind": "metadata_only",
+      "original_sha256": "2c0a97238c29b8d012cae556cf12af353eac7585c182aa7e2edd494a6e747781",
+      "copy_sha256": "5cce86bef7728c61ae9b9e7ebf583ffce87a8e423a058492b2f73afc3159ebd1"
+    },
+    {
+      "file": "evidence/BTH-ENVART-PAWNWEB-repro-scan-01/worker.log",
+      "kind": "metadata_only",
+      "original_sha256": "f403780ad1880e76adbc6ce5da0715b5bb4e38df0820cbb0539c3267bd812f99",
+      "copy_sha256": "55c57dd12ceedb8018f379aed066cd07663c2fb983fc1c4a367854389cc64273"
+    },
+    {
+      "file": "native-final-pass.json",
+      "kind": "metadata_only",
+      "original_sha256": "3d1a38121f845f363db5d93b3273dd5e0db1435316462ee503199662c64a9c41",
+      "copy_sha256": "4c2416e7995e4a08ab335099d4fc08dd3585c059ffcb60ed1bd0670221bda646"
+    },
+    {
+      "file": "input-manifest.json",
+      "kind": "reference_copy_hash_reconciliation",
+      "original_sha256": "705ac70f00a1a15f93dae6721326c51cb31ae78d4ab09c3e65cde1d6c7702962",
+      "copy_sha256": "2a7e6405a84fb1abc7150c6b458e01eb0fb37d53c3b553cf71e08adee84698a0"
+    }
+  ],
+  "byte_unchanged_code_files": 34,
+  "byte_unchanged_PNG_inputs_and_masks": 443,
+  "native_source_archive_exact_sha256": "f3642463d98c0200a332d0b6a2bfee3f832f861b8235126510544afc9bf1e867",
+  "outward_qualification_scope": "Only owned nonce/window failure facts, authored calibration and capped closure/storage receipts. No CUA inventory, real-profile windows/tabs, clipboard or profile records.",
+  "archive_scope": "Executable verification/analyzer/guard sources, exact selected immutable source/config/art, native full QA source, union/source-paint/masks, all relevant commands/receipts/diagnostics. Served PCKs/engine binaries and full 1.147 GB Git source tar are hash-bound and redownloadable from the exact immutable source; not duplicated in this source ZIP.",
+  "current_seal_job_receipt": "job.json adjacent to the final report, finalized after this worker exits",
+  "source_archive": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNWEB-partial-final-01\\evidence\\pawn-r2-partial-web-proof-source.zip",
+    "sha256": "259eea60871f1fb0e0ec8c494b6cddf70145c01e981777aac7cbcdc2a64bd545",
+    "bytes": 24579517,
+    "files": 586,
+    "indexed_files": 585
+  },
+  "public_copy_note": {
+    "original_report_sha256": "c851ed36e6886a26895bd09b236c5746dfbfae83cc121821898f1167826ff20d",
+    "scope": "Canonical LF JSON copy. No live UI/size/motion/runtime DB claim."
+  }
+}

@@ -1,8 +1,8 @@
-# Jazz Club: execution direction v5
+# Jazz Club: execution direction v6
 
 Prepared: 2026-11-14
 Room identity: jazz_club
-Status: Jazz authoring is active after Pawn's final native PASS. Exact R3 has static visual GO only; actual-context/deep native/TEST gates remain pending. No Jazz runtime package is accepted or activated.
+Status: exact Jazz R3 final NATIVE PASS is sealed. Source/native proof and director/auditor visual gates are complete; no R4 or further polish requested. Integration/export and served TEST/Web verification remain separate; no served delivery is claimed here. Public Punchline is now the sole next source under its measured v3 brief.
 
 ## Local story and rendering identity
 
@@ -122,3 +122,25 @@ First handed-off review candidate is immutable R3, package SHA-2562c9e93f50f1502
 R3 has19 payloads/17 moving entries: two pulse families, distinct amber/cyan high-air families with two fields each, four material glints including an above-front visible bar-trim reflection near704,185, and seven floor movers. Contract preflight is reported clean. Director and artist personally inspected the exact900-board static and issued STATIC GO only. No source module or wider redesign is requested.
 
 Early actual five-current-context review is next, particularly musician gold87..103, stage212 titles, Guest cyan Pull Tabs189, bar staff209 and rail150 intersections. A clean empty board does not prove those live bands. No full native acceptance, implementation, TEST/Web or owner approval is implied by this checkpoint. Public Punchline remains the next conditional source only after Jazz's explicit exact final native PASS and its own frozen target.
+
+## Version6 exact final native acceptance checkpoint
+
+Exact package2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7 is accepted NATIVE only. Auditor report E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/audit/jazz_club-v1-r3-PASS.json, SHA-256 c2f90b9ea1828d9de27b5950c1df941bb41783a4ffeb969301a84cfe67dc1f57. All package/core/archive/source/PNG/Job receipts independently verified. Earlier static-only checkpoints above are dated history, superseded in acceptance scope by this section, not new source revisions.
+
+Auditor personally inspected all33 ordinary published work/outcome whole scenes: Guest10, Rent8, Recording7, Union8, in addition to all five current initial contexts and actual Reduce Motion/decoded motion. Director personally inspected all five initials,16 representative risk work/outcomes across all four families, actual settings-route RM and decoded representative; artist reviewed all five initials plus a published spread. Director does NOT claim personally viewing all33. Exact scoped director artifact E:/CodexQA/BTH/workspaces/BTH-ENVART-DIRECTOR-20261114/jazz-r3-director-visual-go.json, SHA-256 2aa10f3ae9c285bfb3d2a459e1789117bb31cd64695ae15b5ae0593dc0da9ed5; prior initial artifact SHA710635e1d43a1aa5080ab15f93409e70af019ea05681de36972433bce61da352 preserved.
+
+Native current initial suite passed719checks/0; published33 contexts3517/0; effective-hit proof10258/0 across Base+33 contexts preserves normal/RM ordered hit candidates. These are separate scoped counts, not an asserted additive universal test total. Actual92-frame excerpt spans12.124seconds of normal animation. Both85-entry/context normal composite and85 RM pairs are bound; all17 moving entries retain meaningful actual changing pixels. Four warm glints retain40/40/40/32 pixels with channel deltas17..34 in all five contexts; amber/cyan air retain thousands of subtle actual pixels and floor entries205..562. No opacity/speed boost, asset substitution or art-target-only visibility waiver.
+
+Honest support limit:1295 source-support pixels across85 pairs are UNATTRIBUTED residual attenuation. They are not claimed opaque actor occlusion, universal100% support or a motif omission; every entry remains meaningfully visible and glyph/glint support is complete. No R4 is needed merely to force source/composite support equality. Native source-painted analysis, protected-control equality and actual scene review remain the evidence, not conservative model boxes.
+
+Counter replay, floor/air wraps, exact placement/03:00 closing semantics and mandatory unchanged-script no-pointer liveness passed. The original liveness gap was closed by a scoped supplement; preserve earlier diagnostics/history, do not imply it had already passed. QA-only helper type-inference parse diagnostic was corrected before the successful effective-hit rerun; production art/core/placement remained unchanged.
+
+Three unchanged source-layout limitations are explicitly normal/RM-baseline bound:
+- Rent creditor_occupies Takeover Notice overlaps the upper architectural wordmark.
+- Recording take_saved has an elevated take-case near the wordmark/frame.
+- Union management_entry Floor manager overlaps the Sax live stage area.
+These are not art-induced material washout or instructions to paint platforms, move records, erase cast or claim every title universally unobstructed.
+
+All33 proof contexts use unchanged production commit/publication with actual canvas objects/geometry/selected source titles and explicit source exclusions. Alternative terminal/nonterminal routes are cataloged, not all executed. No UI choice-path traversal, save/revisit or owner/campaign acceptance is inferred. Native gate permits exact integration only after implementation verifies the seal; bound TEST/Web actual visual/identity/cleanup remains later. At this checkpoint five interiors are fully served-browser verified; Pawn's served-browser qualification blocker and Jazz's later delivery gate remain distinct from seven native-approved packages.
+
+Public Punchline source is now released only under measured execution_direction-v3 SHA0672967b653c4395f6b6fd10d4f2d3eec6c8129493922d85b8e7ad22b51f2d8c, approved clean5c52ee99, current unionc31cb578 and resolved mic/fourth-rim design. Hidden casino and private back room remain planning only. Preserve main/NEXT/audience and exact cumulative accepted-art isolation.

@@ -1,0 +1,42 @@
+{
+  "status": "INDEPENDENT_ORIGINAL_MANDATORY_LIVENESS_SUPPLEMENT_VERIFIED_PASS",
+  "package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+  "native_supplement_evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-mandatory-liveness-supplement-01\\evidence",
+  "original_script": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\scripts\\tests\\animation_liveness_without_pointer_check.gd",
+  "script_sha256": "3f1847771a563537173b738d9e076ea41c552bbc6d32116175834d53459de704",
+  "identical_to_strict_baseline_and_v02_archived_source": true,
+  "log_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-mandatory-liveness-supplement-01\\evidence\\worker.log",
+  "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "literal_result": "Animation liveness without pointer input: PASS",
+  "job_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-mandatory-liveness-supplement-01\\evidence\\job.json",
+  "job_sha256": "c76cef94f1b24041bf0c6e27843491a1584690c5a1e444b77d18669233f60511",
+  "job_exit": 0,
+  "job_owned_active_at_release": 0,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "exact_unchanged_command": [
+    "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+    "--headless",
+    "--path",
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-INTEGRATION-20261114",
+    "--script",
+    "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+  ],
+  "protected_files_rechecked": {
+    "Jazz_payloads": 19,
+    "production_normalized": 862,
+    "prior_six_art": 106,
+    "c5_raw": true
+  },
+  "identity_sha256": "4d8986721921caf71f1829486f043f09dfad636bf8814f935698300024acf8dd",
+  "post_verification_sha256": "fae29bc7e4730e8613e3ff3e6d61bfb9d5ee1f90a8dccd4a99938eefe11730eb",
+  "original_v02_closure_sha256": "8e413d13427d35c9a7ce35eeb64bf0cfa8e292031d4bd1a4a37b3728ab3595af",
+  "scope": "Original unchanged required global liveness script explicitly executed once. It proves environment processing recovery/slot-placement idle redraw without pointer, plus blackjack between-hands native15FPS dealer/patron motion. Jazz-specific actual motion/placement pixels and17-entry composites remain separate already-passed evidence. No asset/game/source or v02 archive changes. This closes the final missing mandatory receipt; it is not an extra complete gameplay playthrough."
+}

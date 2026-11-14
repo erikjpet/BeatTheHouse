@@ -1,74 +1,82 @@
-# Public Punchline Club: read-only direction v1
+# Public Punchline Club: execution direction v3
 
 Prepared: 2026-11-14
 Art identity: punchline_club
-Status: future planning only. Pawn Shop is active; Jazz is next. No public Punchline source, clean target, package or activation is approved. First source waits for Jazz's explicit exact final native PASS and a frozen inspected public clean target.
+Status: ONE coherent public source is now released after the exact Jazz R3 native PASS and completed current public pre-art/microphone/practical decisions below. This is source generation only, not a finished package, integration, TEST or owner-acceptance gate. No hidden casino or private back-room source is released.
 
-## Correct identity and local story
+## Identity, story and four reference roles
 
-This is the public comedy cover, not the basement casino or private back room. Art/environment ID punchline_club uses archetype small_underground_casino, public view/override key small_underground_casino:club, placement art_key comedy_club and runtime visual_context art_key punchline_club. Its actual facade/backdrop filenames are small_underground_casino.png. Do not invent punchline_club.png exterior files or use basement overrides/motions.
+This is the public comedy cover: tired stage, hopeful performance, two drinks buy a chair, bad jokes are free and the plain door watches more closely than the comic. It is not the hidden gambling basement or private Crew refuge. Correct archetype is small_underground_casino, view/override key small_underground_casino:club, art ID punchline_club, placement art_key comedy_club. Runtime visual_context art_key is punchline_club. Public base_saved:true/current c5 overrides apply. Do not inherit :casino or :back_room fixtures, placements, surveillance, smoke or bulbs.
 
-The public mood is thin, hopeful and performing: a tired stage works for every laugh; two drinks buy a chair and bad jokes are free. The door watches more closely than the comic. Use ordinary worn club materials and modest warm hospitality, not a casino floor, lavish cabaret, new band, private gambling cues or a painted audience.
+Own actual facade/backdrop filenames are small_underground_casino.png. Use rich plum masonry, red/burgundy timber, restrained stepped cyan/magenta and cheap warm amber practical/marquee character; indoor floor is dry, not wet street pavement. No pasted facade masks/posters/windows, new brands, casino equipment, audience or performer.
 
-The director personally inspected the actual shared-building facade and public empty guide. Own cues are rich plum brick, warm amber marquee/practicals, red timber door and restrained stepped cyan/magenta accents. Carry these into burgundy curtain depth, worn dark timber and small quiet table surfaces. Indoor floor is dry, not the wet exterior pavement. Do not copy facade comedy-mask/poster art into live bays or add brand copy.
+Reference roles: exact clean guide controls geometry; own actual facade/backdrop controls palette/material identity; owner-preferred/accepted Gas R12 controls brighter decisive local ramps, crisp hard contours, sharp clustered texture and selective contrasting cores; Delta Queen is secondary detail/material craft. No global quantizer, muddy midtone grade, brush noise, blur, copied Gas brick or copied Bar teal.
 
-Owner-preferred pixel treatment controls sharp contours, decisive local ramps, vivid selective accents and clustered detail; own facade controls local colors/materials. Delta Queen remains secondary craft. No global quantizer, muddy grade, blanket blur, gratuitous haze or stock borrowed from another room.
+## Exact approved inputs and release evidence
 
-## Provenance and pending clean target
+- FINAL geometry target is E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/punchline_club_clean_geometry_v1_1800x860.png, SHA-256 5c52ee99b4907d66fb3f489e0d04cb7b684052cebfc41c1c4e30264cd134c3a2. Director personally inspected its900board sibling. Mic decision is now resolved KEEP, so no new target image is needed.
+- Original public guide SHA-256 172271892c63fd5f7779b315d9d981e7b62a648bd965424c1c8cc8b50885ce47 is preserved at runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/punchline_club_legacy_geometry_1800x860.png.
+- Native clean image was edited directly from original; every pixel above native744 is identical. Review900 is a nearest downsample, not a reversible reconstruction authority. Original and clean share exactly1636 inherited nonreversible curve/line pixels within[160,204,1713,500]. Final production art still must be authored900 and exact nearest2x. See public-guide-raster-qualify/evidence/public-punchline-guide-raster-provenance.json. Do not normalize the frozen guide.
+- Actual facade SHA-256 49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69; backdrop d6a8149da1eae25f472b2379e3bedbad7a948981761e2d3f4094f753cae1eefa.
+- Artist read-only inventory punchline-club-readonly-prep-v1.txt SHA-256 20ee228e3b0c5eab0d6a38ab95c8fdd36c5e903a49e964a9e217dfd46d5f3697 is preserved. Director v1/v2 directions are historical; this v3 resolves their pending target/mic/current-union holds.
+- Current public union E:/CodexQA/BTH/runs/BTH-ENVART-PUNCHLINE-20261114-union-01/evidence/punchline_preart_union.json, SHA-256 c31cb578fb02d51b51c2b89fa7083e3538a5c1daf40399292355328394d289cb. Readable .md sibling SHA-256 0971957239e9181ee429ad6ebbe3a2aeabebe8a18236040fee5d9c8a72539c9a.
+- Pre-art is strict ab0b49deeab019deac7ef30b79b17f86ffbc521d/tree de6973f05fac17cb19fe03f26c5bc0a00f4cdd5b/current protected c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f. Six initial contexts: Base, Bringer Show, Debt Court, Headliner Night, Open Mic Night, Raid Jitters.737 checks/0 findings;73 actual canvas rows/selected source titles,30 Runtime visual records and5 explicit authored projection exclusions. No work/outcome coverage claimed.
+- Full closure E:/CodexQA/BTH/runs/BTH-ENVART-PUNCHLINE-20261114-closure-02/evidence/punchline_preart_closure.json, SHA-256 9264c571f434f4797641139a6e41677885460d22bbe744f3194bc8ed2e257834; evidence.zip SHA-256 ddd65f0eced5c00b0249487a502a6aa4556df9ac736c3a8eeba268f76b9317e8. All Jobs drained.
+- Jazz R3 exact native package2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7 PASS is sealed in auditor/audit/jazz_club-v1-r3-PASS.json, SHA-256 c2f90b9ea1828d9de27b5950c1df941bb41783a4ffeb969301a84cfe67dc1f57. This satisfies the prior-room source gate, not a Jazz served-Web claim.
 
-- Artist frozen read-only inventory: E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/punchline-club-readonly-prep-v1.txt, SHA-256 20ee228e3b0c5eab0d6a38ab95c8fdd36c5e903a49e964a9e217dfd46d5f3697. Includes source/alias/override hashes.
-- Actual facade assets/art/travel/exteriors/small_underground_casino.png, SHA-256 49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69; matching backdrop SHA-256 d6a8149da1eae25f472b2379e3bedbad7a948981761e2d3f4094f753cae1eefa.
-- Original public guide E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/punchline_club_legacy_geometry_1800x860.png, SHA-256 172271892c63fd5f7779b315d9d981e7b62a648bd965424c1c8cc8b50885ce47. Director personally viewed it. No cleaned public target is approved yet.
-- Effective override c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f is protected. Public base_saved:true and explicit view key apply.
+Director personally inspected public Base production board, separate transparent Comic body, and all five actual scenario full-apps; artist independently all six. Freeze/read the exact current union and v3 before the single source call. Keep complete prompt/reference provenance, originals and every handoff immutable.
 
-Use the original guide as geometry, not final pixel painting. Cast was already omitted. Lower helper markers/stripe must be removed from the eventual background. Current brick, stage, four tables, small practical marks and side door are not sale-stock annotations.
+## Fixed physical construction
 
-## Physical interpretation and fixed dimensions
+Board900x430, final opaque background1800x860 exact nearest2x. Wall/floor245, floor begins BEHIND deck/tables. No mapped foreground_art_id exists in this public view: no invented counter/replay PNG, opaque-front contract, renderer change, transparency hole or new support.
 
-Board900 x430, final opaque background1800 x860, nearest exact2x construction. No mapped opaque foreground fronts exist in this public room: do not invent a counter/replay PNG or require one merely because logical surfaces have names.
+- Backdrop[248,62,404,192], curtain[264,80,372,150]. Keep visible center stage apron[302,202,296,50]. Mapped stage[264,202,372,50] describes existing dark side-wing/backdrop extents; do not create a new broad bright beam or legs.
+- Current pre-art confirms wing envelope intersections from Bringer ropes, Open Mic lectern, Numbers titles, Headliner runner and Collector. These do not require new furniture. Preserve dark real wing material and exact anchors.
+- KEEP architectural microphone: stemx450,y120..192,width3; head450,116,r8. All six live Tonight's Comic records are disabled environment_layer floor_fixture, model/hit[403,113,92,64], no character_actor or asset_path, and generic cyan fixture/light paint, not a performer/mic/stand. The diagonal slash is _draw_disabled_scene_mark, not equipment. Do not paint a comic/body, remove the structural mic or fix production disabled status through art.
+- Keep static pink stage-light interpretation around450,138,r36 as restrained source material lighting, not a literal broad pale disc or extra moving cone. No animated stage-pool family in the first trial.
+- Four round compact table bodies: centers108,194 /202,222 /704,194 /790,222, outerr28/innerr20. Preserve counts, positions, compact silhouettes and practical marks. No long table legs, chairs, new rectangular tables or floor obstructions. Detail tops/undersides within those bodies so they read as worn useful table material, not luminous floating signage.
+- Each6x18 amber mark[x-3,y-15] is an existing small practical, not a second drink service or bottle stock. Keep all four physical central practicals fixed. The fourth brightness effect is adapted only as described below.
+- Logical left_table74..230/right_table670..826 top194/front232 span pairs of circles; they do not authorize broad new tabletops. Logical refreshment_shelf670..846,y108..132 is not painted furniture; do not invent a shelf.
+- Door[814,78,64,164], inner[826,96,40,108], handle854,156,r3. It overlays the fourth table at x814 onward. Preserve this architecture/order/access, no new guard or route door.
+- Preserve THE PUNCHLINE architectural wordmark at319,42,size24 and source-local amber character. No new slogans/posters/masks.
 
-- Wall/floor245. Floor starts BEHIND the deck/tables, not at their lowest silhouettes.
-- Stage backdrop[248,62,404,192], curtain[264,80,372,150].
-- Preserve the visible central stage apron[302,202,296,50]. The mapped stage[264,202,372,50] can describe the existing dark side-wing/backdrop extent; it is not an instruction to invent a new broad bright beam or additional legs. Base live hosts fit the center apron. Future actual current preflight must identify any side-wing support dependency before further interpretation.
-- The stage remains empty of a baked comic/body. Existing architectural microphone is stemx450,y120..192,width3, head[450,116],radius8. Keep provisionally; future actual Tonight Comic rendering must be inspected before any duplicate-equipment decision. Do not assume the static pink circle[450,138],radius36 is legacy animation.
-- Preserve four round table silhouettes centered[108,194], [202,222], [704,194], [790,222], radius28 outer/radius20 inner. No long legs, new chairs, broad rectangular replacement tables or new floor obstructions. Detailed tops/undersides stay inside the existing silhouettes.
-- Interpret each small amber mark[x-3,y-15,6,18] as an ordinary compact TABLE PRACTICAL, not a second drink service, bottle array or merchandise. Preserve count/position. Existing two-drink service owns live beverages.
-- Logical left_table74..230 and right_table670..826, top194/front232, span pairs of round tables. They do not authorize two new long rectangular tabletops.
-- Logical refreshment_shelf670..846,y108..132 is not a separately painted fixture. Do not add one from its name.
-- Side door[814,78,64,164], inner[826,96,40,108], handle[854,156],radius3. Existing side exit lanes stay clear.
-- Preserve architectural THE PUNCHLINE identity at[319,42], size24. No extra posters, masks or slogans required.
+Three table-side silhouettes in _draw_punchline_club lines4784..4786 are noninteractive procedural legacy cast, not actual canvas records. Their omission from the empty guide/new background is deliberate. Do not paint a new audience to replace them. All current interactive/live canvas actors, games, fixtures, props, labels/hits/routes and authored scenario visuals remain production-owned.
 
-These are deliberate director interpretations grounded in the current visible code/guide, not renderer/layout edits. Any new support interpretation needs actual runtime evidence and an explicit decision first.
+## Measured contrast planning
 
-## Current live content and contrast
+Use the full current union, not contact guesses. Fixed ambient title Tonight's Comic is disabled C_SOFT alpha.56, NOT nominal bright cyan. Rect[399.5,96,99,15] in Base/Bringer/Raid;[399.5,179,99,15] in Open Mic/Headliner/Debt. Model remains the same. The entire real curtain needs dark rich burgundy/fold planes, with thin warm frame accents rather than pale cloth or a bright spotlight behind these bands.
 
-Current effective examples: Tonight's Comic/stage449,177; two-drink minimum339,203; Numbers560,201; Ox777,247; side door848,211; layer exit848,136; Leave868,394. Event standing contacts212,329 /282,356 /353,385 /425,394 /498,393 /568,368 /634,349 /702,315. Public Bringer Show/Raid Jitters have local overrides. Read the current six initial contexts: Base plus Open Mic Night, Headliner Night, Bringer Show, Debt Court and Raid Jitters.
+Two-Drink Minimum gold title[283.7,138,110.6,15]; Numbers cyan[497,125,126,26] in Base and some cases, moves to[497,203,126,26] in Debt/Open Mic across apron/right wing. Current cyan chairs/ropes/steps/hearing/fixture names occupy upper curtain and side stage bands; gold performer/host/guard/runner/witness names vary among brick/wing/apron/floor. Keep real whole material faces quiet, not label-sized badges.
 
-Measure actual selected-production titles, models, hits, footprints and public view identity before final assembly. Preserve gold names on genuinely dark curtain/brick/wood, cyan service/Numbers bands near the stage edge, pink door/task bands and crowded floor content. Keep thin warm highlights; no bright stage beam behind a name, floating text badge or moved label.
+No broad pale stage beam, bright cream tabletop/frame face behind colored names, moved label or globally dark room. Vivid plum brick planes, discrete timber wear, restrained warm edges and compact practical cores can carry brightness outside the title-supporting faces. Dry floor uses crisp shallow joints/clustered scuffs without fine brush mottling or wet asphalt.
 
-A correct logical support name does not mean a visible furniture module exists. Current effective positions can differ from old support assumptions. Do not relocate tables/stage to chase those anchors. Preserve the public/comedy variant and its side-door behavior; no casino/backroom pack fallback.
+## Explicit authored motion roster: twelve planned entries
 
-## Motion: retained source versus authored design
+SOURCE FACT: public dispatch has NO dedicated scene-life branch. Legacy timed life is only common sheen plus older lower reflection/bob helper. No inherited basement pink fields, smoke, string cores, local glints or clocked mic pool.
 
-SOURCE FACT: the public punchline_club dispatch has NO dedicated _draw_scene_life branch. Its current clocked room motion is common seven floor sheen plus the older _floor_reflections helper. The static wordmark, pink microphone-circle light and amber table marks are not legacy timed effects. Do not inherit basement smoke, pink drift/string bulbs or casino glints merely because the archetype/building is shared.
+Retained/consolidated: SEVEN restrained room-colored dry-floor movers represent common sheen plus older lower bob/helper-stripe family. No literal road-dash row, wet puddles, raised neon bars or new dust/smoke.
 
-The director explicitly approves SEVEN restrained room-colored floor movers as the public dry-floor consolidation of common sheen and the older lower-bob/stripe family. No literal raised neon dashes or wet street puddles.
+NEW director-authored additions, never claimed retained legacy:
+1. ONE gentle warm wordmark/practical-pixel pulse following actual THE PUNCHLINE glyph/light pixels. No flashing whole wall or strobe.
+2. THREE compact independent practical-core brightness variations at first three round tables, retaining fixed silhouettes and distinct restrained phases.
+3. ONE fourth-table warm material-reflection variation on the exposed rim of the SAME fourth round table. Keep its central practical fixed/static beneath real Ox coverage; do not draw light over Ox or move any object.
 
-The following are modest DIRECTOR-AUTHORED lighting interpretations, not retained procedural animation or approved finished assets:
-1. A gentle warm wordmark/light-surface pulse following actual THE PUNCHLINE glyph/practical pixels.
-2. Four small table-practical core brightness variations with distinct restrained phases; keep fixed silhouettes and quiet title surfaces.
-3. Optional gentle variation of the existing static stage-light pool, only if actual public comic/title visibility and geometry remain clear. This is not permission for a swinging spotlight or broad wash.
+Fourth adaptation evidence: current six boards have0 visible amber core pixels for practical4 under actual Ox paint. Existing material strip[810,216,4,18] has288 native2x pixels clear in all six sampled actual boards and outside every current label envelope. Tiny inner subset[812,218,2,12] is also clear. Source-painted evidence E:/CodexQA/BTH/runs/BTH-ENVART-PUNCHLINE-20261114-practical-rim-01/evidence/punchline_fourth_table_rim_pixels.json, SHA-256 2fdf8f6d184e27218ca4b2dffc39c33a0fd11d454fd1972bec15f3c552ba3bed. X814 and onward is the later DOOR, not table arc: never extend the table reflection beyond x<814.
 
-Do NOT add room dust/smoke solely to claim a legacy motif. Public air can remain clear and quieter than the basement. Any optional stage-light interpretation must be recorded in the final motion roster; if omitted as unsuitable, no retained source motif is lost.
+Use source-shaped warm/burnished rim pixels within that narrow real table arc, a reflected practical, NOT a solid glowing rectangle, new emitter/prop, floating plaque or full bright ring. This is sampled planning evidence, not all-idle-pose or finished-motion proof. If returned source/final actual rendering cannot support a plausible meaningful rim variation, report that exact finding; fallback is three practical pulses plus one steady fourth practical with an explicitly revised honest roster, not extra geometry/boost.
 
-Use existing primitives only, bounded atlases and exact density. Every approved actual moving entry must visibly move in normal mode and stop under Reduce Motion, with practical resting lights coherent. No metadata-only effect, preview-only boost, fake pan or guessed opaque-model mask. Natural live occlusion requires painted-pixel attribution and meaningful visibility elsewhere.
+The first two cores were partly covered by deliberately omitted procedural silhouettes in legacy; actual live props affect practical2. Do not treat those omitted casts as future live-body occlusion. Remaining current live coverage must be proved from actual painter masks/composites, not model envelopes. Do not move source core entries in front of people or cut holes for visibility.
 
-## Future package and evidence gates
+No optional animated stage pool, dust/smoke or extra motif in this first trial. Planned total12 genuine moving entries =7floor+1wordmark+3cores+1rim reflection. Static microphone, resting lamps, fourth central core and architecture are not counted moving.
 
-Clean-guide work occurs only in genuine idle time behind the active room. Preserve original bytes and hand off a new versioned path/hash for director review. No first source until Jazz exact final native PASS and frozen public target. Begin one coherent source with geometry/facade/pixel-treatment/craft roles; no performer, drinks, props or crowd sheets. A floor-only plate is justified only by an actual returned depth/geometry need.
+Use existing primitives only, compact bounded atlases below Web limits, exact2x construction and actual source-derived masks. Every moving entry must meaningfully change normal actual pixels and become stable under supported Reduce Motion; practicals remain coherently lit at rest. Preview genuine recorded clocks/deltas and actual unboosted pixels with clear art-target crop versus live-composite labels.
 
-Early actual public Base/current scenes must verify Tonight Comic versus fixed microphone, correct variant dispatch, round-table/deck/contact fitting and colored labels. Follow with room-specific public work/outcome families through normal production publication, actual canvas IDs/geometry/nonempty selected titles and declared source-proven non-room/hosted exclusions.
+## One-source execution and acceptance
 
-Audit exact geometry/hits/labels, supported motion/Reduce Motion, floor wraps, liveness and current script/override identity. No foreground replay test should invent an absent public counter. Only exact final native PASS allows target integration; bound TEST/Web actual review is a separate later gate. No owner acceptance, full-campaign completion or save/revisit/UI-outcome E2E is implied by planning/native proofs.
+Artist may now freeze current guide/own facade/style/craft/v3/union and generate ONE coherent empty public room. Preserve original output/prompt; editor owns exact fitting. No hidden/private source, prop/cast sheet or speculative module. Matching floor-only plate only if returned actual depth cannot be fitted at245 without stretch/repetition.
 
-Keep source/provenance/recipe and honest progress checkpointed to GitHub. Preserve main/NEXT/audience and existing facade/doorway scope.
+Editor fits exact supports/door/table/stage/wordmarks, real quiet material faces and twelve-entry plan. Static review precedes early actual Base/allcurrent compositions and honest autonomous motion. Actual trial determines label safety and fourth-rim plausibility; no source-only PASS.
+
+Deep proof must use correct public variant and source-derived authored work/outcome families through unchanged production commit/publication. Require actual canvas IDs, geometry and nonempty selected source titles, real-host actions and explicit source-proven hidden/non-room/hosted exclusions. Authority dictionaries alone are insufficient. Preserve inherited live/live source overlaps rather than repainting/moving anchors; full universal title clearance is not claimed.
+
+Audit exact package/core/current overrides, unchanged effective geometry/hits/labels, meaningful entries/RM, floor wraps, no-pointer liveness and room-specific semantics. No counter test should invent a nonexistent mapped front. Final independent exact native PASS gates target integration; bound TEST/Web actual visual/identity/cleanup is separate. No owner/campaign acceptance, alternative-route UI traversal, save or revisit E2E inferred. Keep source, recipe, provenance, proofs and honest progress checkpointed; main/NEXT/audience remain unchanged.
