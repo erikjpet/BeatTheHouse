@@ -1,0 +1,18 @@
+{
+  "status": "REFERENCE_ONLY_CURRENT_PREART_NO_ART",
+  "archive_sha256": "41ea53bbf69b628543742e55872d353e05a73da406ad5714c9a4fc47178d5b47",
+  "archive_bytes": 22832006,
+  "source_commit": "d4beeb651403135ad4fa5f6fbf989af0d43478b6",
+  "source_tree": "ab15335c54645803e4d840d4c90556019386b0de",
+  "override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+  "contexts": [
+    "Base",
+    "High-Stakes Night",
+    "Greased Week",
+    "New Muscle"
+  ],
+  "checks": 14867,
+  "findings": 0,
+  "actual_objects_selected_titles": 71,
+  "scope": "Strict current :casino geometry/source/material/current-title preflight only. Native Jobs closed. No hidden art,source generation,deep outcomes,route traversal or save/revisit claim. Scenario-only street_lender absent in Base is source membership. Bulb/title/body overlaps preserved and documented."
+}

@@ -187,3 +187,8 @@ Jazz R3 exact2c9e93f5 has final auditor PASS c2f90b9e after the unchanged origin
 ## Jazz isolated TEST artifact checkpoint
 
 Exact Jazz R3 is now published as d4beeb65, cumulative seven native-passed rooms with normal-TLS/all13-file identity and prior-six PCK/texture retention verified. Main/NEXT/audience unchanged. Live Web remains unqualified for Pawn/Jazz due supported-control binding failure; five rooms alone have completed full Web delivery. No later public/hidden/private art is enabled. Product and partial-proof documentation preserve that difference.
+
+
+## Public Punchline static source backup
+
+Exact R2 c617fb48 is a non-active static trial with dedicated native current6/11-motion review underway. Archive 92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6 preserves full original/prompt/frozen inputs/self-contained recipe and all14payloads. Honest roster is7floor+wordmark+3cores; fourth practical stays steady, with R1 zero-natural-pixel diagnostic retained. No counter replay is invented. Seven accepted TEST packs remain unchanged; no public activation. Hidden current4 reference also closes14,867checks/0,71actual objects/titles with unchanged :casino source; it supplies future measured context, not hidden source approval.

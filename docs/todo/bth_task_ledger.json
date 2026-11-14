@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T18:23:28.646300+00:00",
+  "updated_at": "2026-11-14T18:40:31.478851+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -37999,7 +37999,8 @@
         "BTH-ENVART-001-ART-MOTEL-01",
         "BTH-ENVART-001-ART-BAR-01",
         "BTH-ENVART-001-ART-PAWN-01",
-        "BTH-ENVART-001-ART-JAZZ-01"
+        "BTH-ENVART-001-ART-JAZZ-01",
+        "BTH-ENVART-001-ART-PUNCHLINE-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for the missing live checks; preserve native/artifact partial scope and continue the sequential art campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43041,6 +43042,52 @@
       },
       "next_action": "Use a qualified supported isolated browser surface for the missing live checks; preserve native/artifact partial scope and continue the sequential art campaign without bypassing browser restrictions.",
       "updated_at": "2026-11-14T18:23:28.646300+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-PUNCHLINE-01",
+      "name": "Integrate audited public Punchline art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Exact R2 static trial sealed; early six-context and eleven-motion actual review active",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Exact native audit then separate immutable cumulative TEST artifact and live Web gates; no current public art activation."
+      },
+      "scope": [
+        "Correct public punchline_club / small_underground_casino:club only; no hidden/private motion or source assumptions.",
+        "Preserve four round tables, fixed mic, stage/apron/door contacts and actual source-selected titles under c5.",
+        "Explicit11moving roster:7floor+wordmark+3core pulses, fourth practical steady; no invented counter replay.",
+        "Current six actuals before full source-state/real-motion/RM/hit/wrap/original mandatory no-pointer liveness proof and exact final audit."
+      ],
+      "evidence": [
+        {
+          "kind": "static_trial",
+          "reference": "docs/art/briefs/punchline_club.md",
+          "summary": "Exact c617fb48 director staticGO,14payloads/11moving/nofronts. R1 unsealed zero natural fourth-rim pixels preserved; honest approved fallback. No actual/native acceptance or activation."
+        }
+      ],
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-14T18:40:31.478851+00:00",
+        "evidence": [
+          "docs/art/briefs/punchline_club.md"
+        ]
+      },
+      "next_action": "Capture exact R2 early Base/OpenMic/all6 actual scenes and genuine11-entry excerpt, review live contrast, then deep native scope only after actual GO.",
+      "updated_at": "2026-11-14T18:40:31.478851+00:00"
     }
   ]
 }

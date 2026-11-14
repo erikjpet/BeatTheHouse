@@ -1,8 +1,8 @@
-# Public Punchline Club: execution direction v3
+# Public Punchline Club: execution direction v4
 
 Prepared: 2026-11-14
 Art identity: punchline_club
-Status: ONE coherent public source is now released after the exact Jazz R3 native PASS and completed current public pre-art/microphone/practical decisions below. This is source generation only, not a finished package, integration, TEST or owner-acceptance gate. No hidden casino or private back-room source is released.
+Status: the single public source authorization has been used. Exact fitting is built and director static visual scope is clear; immutable R2 is being sealed with ELEVEN moving entries and a steady fourth practical. Actual six-context/motion/deep native gates remain pending. No finished package, integration, TEST, owner acceptance, second public source or hidden/private source is authorized by this checkpoint.
 
 ## Identity, story and four reference roles
 
@@ -50,7 +50,7 @@ Two-Drink Minimum gold title[283.7,138,110.6,15]; Numbers cyan[497,125,126,26] i
 
 No broad pale stage beam, bright cream tabletop/frame face behind colored names, moved label or globally dark room. Vivid plum brick planes, discrete timber wear, restrained warm edges and compact practical cores can carry brightness outside the title-supporting faces. Dry floor uses crisp shallow joints/clustered scuffs without fine brush mottling or wet asphalt.
 
-## Explicit authored motion roster: twelve planned entries
+## Version3 authored twelve-entry proposal (superseded by v4 below)
 
 SOURCE FACT: public dispatch has NO dedicated scene-life branch. Legacy timed life is only common sheen plus older lower reflection/bob helper. No inherited basement pink fields, smoke, string cores, local glints or clocked mic pool.
 
@@ -67,7 +67,7 @@ Use source-shaped warm/burnished rim pixels within that narrow real table arc, a
 
 The first two cores were partly covered by deliberately omitted procedural silhouettes in legacy; actual live props affect practical2. Do not treat those omitted casts as future live-body occlusion. Remaining current live coverage must be proved from actual painter masks/composites, not model envelopes. Do not move source core entries in front of people or cut holes for visibility.
 
-No optional animated stage pool, dust/smoke or extra motif in this first trial. Planned total12 genuine moving entries =7floor+1wordmark+3cores+1rim reflection. Static microphone, resting lamps, fourth central core and architecture are not counted moving.
+No optional animated stage pool, dust/smoke or extra motif in this first trial. Historical v3 proposal was12 entries =7floor+1wordmark+3cores+1rim reflection; v4 below removes the unsubstantiated reflection and now controls the actual roster. Static microphone, resting lamps, fourth central core and architecture are not counted moving.
 
 Use existing primitives only, compact bounded atlases below Web limits, exact2x construction and actual source-derived masks. Every moving entry must meaningfully change normal actual pixels and become stable under supported Reduce Motion; practicals remain coherently lit at rest. Preview genuine recorded clocks/deltas and actual unboosted pixels with clear art-target crop versus live-composite labels.
 
@@ -75,8 +75,26 @@ Use existing primitives only, compact bounded atlases below Web limits, exact2x 
 
 Artist may now freeze current guide/own facade/style/craft/v3/union and generate ONE coherent empty public room. Preserve original output/prompt; editor owns exact fitting. No hidden/private source, prop/cast sheet or speculative module. Matching floor-only plate only if returned actual depth cannot be fitted at245 without stretch/repetition.
 
-Editor fits exact supports/door/table/stage/wordmarks, real quiet material faces and twelve-entry plan. Static review precedes early actual Base/allcurrent compositions and honest autonomous motion. Actual trial determines label safety and fourth-rim plausibility; no source-only PASS.
+Editor fits exact supports/door/table/stage/wordmarks, real quiet material faces and the current ELEVEN-entry v4 roster. Static review precedes early actual Base/allcurrent compositions and honest autonomous motion. Actual trial determines label safety and fourth-rim plausibility; no source-only PASS.
 
 Deep proof must use correct public variant and source-derived authored work/outcome families through unchanged production commit/publication. Require actual canvas IDs, geometry and nonempty selected source titles, real-host actions and explicit source-proven hidden/non-room/hosted exclusions. Authority dictionaries alone are insufficient. Preserve inherited live/live source overlaps rather than repainting/moving anchors; full universal title clearance is not claimed.
 
 Audit exact package/core/current overrides, unchanged effective geometry/hits/labels, meaningful entries/RM, floor wraps, no-pointer liveness and room-specific semantics. No counter test should invent a nonexistent mapped front. Final independent exact native PASS gates target integration; bound TEST/Web actual visual/identity/cleanup is separate. No owner/campaign acceptance, alternative-route UI traversal, save or revisit E2E inferred. Keep source, recipe, provenance, proofs and honest progress checkpointed; main/NEXT/audience remain unchanged.
+
+## Version4 exact source fitting and honest eleven-entry decision
+
+Single raw source is E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/punchline_club-v1/source/background-guide-v1.png,1815x867 RGB, SHA-256 adfe386e52b21f2a911056504eb23c2df4004d3137eca16f27b719f109ed85fc. Original/prompt/frozen inputs are preserved. Director personally inspected actual source: own vivid plum masonry/burgundy timber/amber and selective stepped cyan-pink hold with crisp contours/clustered detail, empty cast/stock and retained microphone. No full redo or additional source module requested. The source authorization above is already consumed, not a second-call instruction.
+
+First fitted board E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/packages/punchline_club-v1-r1/background-board-review.png was personally inspected by director. It has coherent dark real apron/wings, fitted stage/curtain/mic, four compact round bodies/door/wordmark and full-depth consistent-scale floor. Existing narrow wall-foot transition provides original-scale native crop497..867 for exact370pixel floor depth; no stretching/repetition or plate generation was needed. Source apron broad bright face is now quiet detailed wood below a thin contact202, for actual Numbers203 and variable titles. Practical2 lower face is quiet with a compact honey cap, protecting known cyan Open Mic signup band[159,210,126,26]; actual normal/min/peak still decides.
+
+The proposed fourth table strip is indeed visible original TABLE MATERIAL, but fitted-source warm reflective-pixel extraction within approved[812,218,2,12] returns ZERO. The returned source's bright outer rim lies farther right beneath door/Ox. Free geometric pixels are not evidence of a usable emissive/reflection motif. Do not invent color, boost opacity, extend over doorx814 or move a table/lamp/guard merely to maintain a planned count.
+
+Director explicitly APPROVES the v3 fallback. Current roster is ELEVEN genuine moving entries:
+-7 dry-floor movers consolidating the two generic legacy floor families;
+-1 NEW authored gentle wordmark pulse;
+-3 NEW authored independent compact practical-core pulses at the first three tables.
+Fourth physical practical remains steady under Ox, with no separate rim-reflection entry. No stage-pool, air, fog or additional glint is added. Fourth reflection was only a NEW authored proposal, not retained legacy, so this explicit omission loses no original clocked public motif.
+
+Preserve internal R1 and its zero-extraction/failed-roster diagnostic; do not seal a zero-pixel moving asset or mutate the trial. Auditor will seal a NEW immutable R2 with11 entries. Director static scope can carry forward if background pixels match the viewed fit, but exact contract/payload seal is required before actual capture. No further empty-board polish cycle is requested.
+
+Next gate is early actual Base plus all five public current scenarios and a genuine real-clock all11-entry excerpt, including practical2 normal/min/peak and fourth steady lamp/body context. Meaningful full-composite/RM/source-paint proofs, exact geometry/hits/selected labels, public authored work/outcomes and honest source exclusions follow. No full native, served Web or owner acceptance is inferred from this static fitting. Public stays the sole unapproved package; hidden clean/preart are reference-only and cannot authorize a hidden image call before public final exact native PASS.

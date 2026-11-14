@@ -1,0 +1,23 @@
+{
+  "status": "NON_ACTIVE_STATIC_TRIAL_NOT_APPROVED",
+  "package_id": "punchline_club-v1-r2",
+  "package_sha256": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+  "moving_entries": 11,
+  "opaque_fronts": 0,
+  "source_sha256": "adfe386e52b21f2a911056504eb23c2df4004d3137eca16f27b719f109ed85fc",
+  "recipe_sha256": "2a902586aa4ce0e3889c26e4ec10a08f43fdeab408271c23eddc003bb967bc25",
+  "scope": "Full original room/prompt/provenance/frozen inputs, exact14payloads/seal and self-contained recipe. R1 zero natural fourth-rim extraction preserved; R2 approved11-entry fallback. Early actual review pending, no target/index/TEST activation. Source historical12-entry plans are preserved, not current sealed roster.",
+  "archive_sha256": "92d3078e27318d2c623b7c662ebf9bb1fa37a698cdd31c3ec58b6afa75349ea6",
+  "archive_bytes": 10377945,
+  "archive_members": 47,
+  "archive_path": "review_artifacts/environment_art_sources/punchline_club-v1-r2/punchline_club-v1-r2-source.zip",
+  "contract_source_commit": "767872e92e8b06a761404c84ebfaa84c884b5d34",
+  "manual_reconciliation": {
+    "objectives": 220,
+    "batches": 74,
+    "runtime_instances": 1229,
+    "inherited_global_findings": 1524,
+    "assigned_room_TEST_Phase08_findings": 0,
+    "report_sha256": "e7ddcb26dea2d38a00f0424d1facaae12a8020829445493963cc9775e59c19f9"
+  }
+}
