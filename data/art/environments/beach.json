@@ -1,0 +1,550 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "beach",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "background_surf_0",
+      "type": "frames",
+      "texture": "anim/background_surf_0.png",
+      "rect": [
+        0,
+        79,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 1.427996660722633,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_1",
+      "type": "frames",
+      "texture": "anim/background_surf_1.png",
+      "rect": [
+        0,
+        92,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 2.337087569813542,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_2",
+      "type": "frames",
+      "texture": "anim/background_surf_2.png",
+      "rect": [
+        0,
+        105,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 3.246178478904451,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_3",
+      "type": "frames",
+      "texture": "anim/background_surf_3.png",
+      "rect": [
+        0,
+        118,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 4.15526938799536,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_4",
+      "type": "frames",
+      "texture": "anim/background_surf_4.png",
+      "rect": [
+        0,
+        131,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 5.064360297086269,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_5",
+      "type": "frames",
+      "texture": "anim/background_surf_5.png",
+      "rect": [
+        0,
+        144,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 5.973451206177178,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_6",
+      "type": "frames",
+      "texture": "anim/background_surf_6.png",
+      "rect": [
+        0,
+        157,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 6.8825421152680875,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "background_surf_7",
+      "type": "frames",
+      "texture": "anim/background_surf_7.png",
+      "rect": [
+        0,
+        170,
+        900,
+        16
+      ],
+      "frames": 4,
+      "fps": 1.0504226244065094,
+      "loop": "pingpong",
+      "phase": 7.791633024358997,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_0",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_0.png",
+      "rect": [
+        0,
+        79,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 0.9817477042468103,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_1",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_1.png",
+      "rect": [
+        0,
+        92,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 1.6067477042468103,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_2",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_2.png",
+      "rect": [
+        0,
+        105,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 2.23174770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_3",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_3.png",
+      "rect": [
+        0,
+        118,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 2.85674770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_4",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_4.png",
+      "rect": [
+        0,
+        131,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 3.48174770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_5",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_5.png",
+      "rect": [
+        0,
+        144,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 4.10674770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_6",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_6.png",
+      "rect": [
+        0,
+        157,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 4.73174770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "scene_life_surf_7",
+      "type": "frames",
+      "texture": "anim/scene_life_surf_7.png",
+      "rect": [
+        0,
+        170,
+        900,
+        20
+      ],
+      "frames": 4,
+      "fps": 1.5278874536821954,
+      "loop": "pingpong",
+      "phase": 5.35674770424681,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "beach_sign_pulse",
+      "type": "pulse",
+      "texture": "anim/beach_sign_pulse.png",
+      "rect": [
+        616,
+        192,
+        130,
+        42
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.24,
+      "period": 0.7479982508547126,
+      "phase": 1.5476190476190474,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "distant_boat_and_cabin",
+      "type": "mover",
+      "texture": "anim/distant_boat_and_cabin.png",
+      "size": [
+        64,
+        25
+      ],
+      "from": [
+        -80,
+        56
+      ],
+      "to": [
+        900,
+        56
+      ],
+      "duration": 61.25,
+      "opacity": 0.26,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "sea_glint_0",
+      "type": "pulse",
+      "texture": "anim/sea_glint_0.png",
+      "rect": [
+        124,
+        92,
+        8,
+        8
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.24,
+      "period": 0.7479982508547126,
+      "phase": 0.0,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "sea_glint_1",
+      "type": "pulse",
+      "texture": "anim/sea_glint_1.png",
+      "rect": [
+        444,
+        92,
+        8,
+        8
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.24,
+      "period": 0.7479982508547126,
+      "phase": 0.4047619047619047,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "sea_glint_2",
+      "type": "pulse",
+      "texture": "anim/sea_glint_2.png",
+      "rect": [
+        740,
+        92,
+        8,
+        8
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.24,
+      "period": 0.7479982508547126,
+      "phase": 0.8095238095238094,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "beach_towel_stall": {
+      "texture": "counters/beach_towel_stall.png"
+    }
+  }
+}

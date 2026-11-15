@@ -1,0 +1,317 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+  "decision": "Personally reviewed all four actual compositions and actual preview frames 000/030/061; original liveness PASS and both MP4 full-decodes verified. Sixteen surf entries show four poses; other twelve motifs show 62 distinct applicable states over 8.1280677 seconds. Conservative visibility 112/112 including Festival sign 1019 surviving pixels. Exact same-order layout/object/publication equality retained. Approved existing art branch and cumulative TEST only, preserving prior twelve packs.",
+  "limitations": "Four initial constructed contexts, native art acceptance only. Not scenario outcomes/save/revisit/live Web acceptance. Eight-second excerpt is not full 61.25-second boat cycle. Marginal Lost Child/Stranger names readable statically, not newly proven under scenario motion. Four-pose waves and same-sign pulse relocation documented.",
+  "source_sha256": "b4518fa3cf8e46cdddd285d1519be2b7092ec6ec8e714ec47beb6e4ccc2ff7b5",
+  "baseline": "04861a3e1d84e9a1de9aa300311d60477a5be786",
+  "payload_files": {
+    "assets/art/environments/beach/anim/background_surf_0.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_1.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_2.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_3.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_4.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_5.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_6.png": {
+      "sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+      "bytes": 1354,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/background_surf_7.png": {
+      "sha256": "210e3fc858ae5a119088b81df8592000903baf7780dd58bb7abdef3657792a79",
+      "bytes": 1234,
+      "size": [
+        7200,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/beach_sign_pulse.png": {
+      "sha256": "376a266ea6b23d351fdf4b4b64d691b51e0c8bc4bfea5d3294cc7d343fd217e9",
+      "bytes": 502,
+      "size": [
+        260,
+        84
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/distant_boat_and_cabin.png": {
+      "sha256": "06d6aebc7c86fb96234adeeb64872fcae31ca63fe94974f2b05f42dfc34a065d",
+      "bytes": 236,
+      "size": [
+        128,
+        50
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_0.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_1.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_2.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_3.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_4.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_5.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_6.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/scene_life_surf_7.png": {
+      "sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+      "bytes": 1643,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/sea_glint_0.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/sea_glint_1.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/anim/sea_glint_2.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/beach/background.png": {
+      "sha256": "080ab3b56e5f1ac326f4349d559cb793128b1d22fcc14da231996fb31b7e731e",
+      "bytes": 685345,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/beach/counters/beach_towel_stall.png": {
+      "sha256": "38ce7f0d53daf99ca5f0710245ec0ba873aaf644b55626a8382ec9f71d4ebd47",
+      "bytes": 18217,
+      "size": [
+        340,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/beach.json": {
+      "sha256": "e5d86bd1a3abd4d7ec7353366297180a47f457c27580f3679f293b0d89564596",
+      "bytes": 11241
+    },
+    "data/art/environments/index.json": {
+      "sha256": "f1ce04878f660717b48d06ae40219eb939cb29e6b3a157de6869666da586d9f9",
+      "bytes": 298
+    }
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACH-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "8bb989f139ccac29e7bacab1879593aa74f4afee8e46e850d8c2c3e24e8ca545",
+  "evidence": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACH-20261115-preflight-r1-01\\evidence\\beach-r1-preflight.json",
+      "sha256": "39529b9cae1055d2394861e10a6262a4e112e734e747d717f2d8ec226ae67cbc"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACH-20261115-occlusion-r1-01\\evidence\\beach-four-context-occlusion.json",
+      "sha256": "b96096b10b9f1f9ff9b0042220d21a45368f62d0002f4fbf21f6ed76d5169333"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACHTRIAL-20261115-r1-comparison-01\\evidence\\comparison.json",
+      "sha256": "51fa5bf36cf9b9f667b1b801537741fb5a7867c8972d67fed84d9c7b2f129d7c"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACHTRIAL-20261115-r1-motion-01\\evidence\\beach_animation_probe.json",
+      "sha256": "1f861966a2edb78c20a523a92a3653a7a50bd43da5d3ccfaca0d05788b96ee57"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACHTRIAL-20261115-r1-liveness-01\\evidence\\worker.log",
+      "sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACHTRIAL-20261115-r1-encode-01\\evidence\\video-verification.json",
+      "sha256": "6e0e0b2f3f4e89caf3e9b19f35bd318353e7e97a6768c11609064b0b823f2550"
+    }
+  ]
+}

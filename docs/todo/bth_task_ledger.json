@@ -43423,7 +43423,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Four initial source contexts captured; director/auditor clean-guide review underway",
+      "status": "Exact Beach R1 independent native art PASS; cumulative TEST export pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43442,7 +43442,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "No Beach art activation."
+        "scope": "Exact approved Beach R1 integrated on art branch only; TEST pending."
       },
       "scope": [
         "Base plus three initial catalog scenarios, current geometry/titles/typed bodies/source0/1/2 and towel stall replay.",
@@ -43458,9 +43458,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/beach_preart_baseline_20261115.json",
           "summary": "14899checks/no findings,4contexts29distinctIDs38selected/typedpairs;7283sourcefiles+c5 unchanged. Not later lifecycle/save-revisit/art acceptance."
+        },
+        {
+          "kind": "native_art_pass",
+          "reference": "docs/testing/beach_r1_native_trial.json",
+          "summary": "Four contexts exact; 57 motion/RM and 112 conservative visibility checks pass; actual 8-second clips decoded; original no-pointer PASS."
         }
       ],
-      "next_action": "Auditor clean-guide review and director single-source release; no Beach art activation.",
+      "next_action": "Commit exact approved package, build and verify cumulative TEST; live Web acceptance remains open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43469,7 +43474,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T03:15:11.413875+00:00"
+      "updated_at": "2026-11-15T03:36:46.417955+00:00"
     }
   ]
 }
