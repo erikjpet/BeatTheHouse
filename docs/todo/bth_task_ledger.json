@@ -43916,7 +43916,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "House R2 failed two hidden motion accents; correction underway",
+      "status": "House R3 scoped native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43948,9 +43948,14 @@
           "kind": "native_review",
           "reference": "docs/testing/house_r2_native_review.json",
           "summary": "4of48visibilityfail;R2unactivated;diagnosticclipsdelivered."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/house_r3_native_trial.json",
+          "summary": "48 visibility,98 native,51 static, exact Base equality, original liveness and both full decodes pass."
         }
       ],
-      "next_action": "Approve exact same-support correction then rerun native/mask/video before activation.",
+      "next_action": "Publish exact approved R3 on cumulative TEST; verify artifacts and preserve main/NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43959,7 +43964,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T05:17:48.472513+00:00"
+      "updated_at": "2026-11-15T07:11:44.445954+00:00"
     }
   ]
 }

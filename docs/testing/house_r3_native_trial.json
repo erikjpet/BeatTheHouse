@@ -1,0 +1,329 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028",
+  "decision": "Final scoped House R3 PASS. Actual frames030/061 and unboosted edge contact reviewed: corrected bob2/bob4 pink edges visibly rise/fall, partially occluded as intended. 48 mask checks, 51 preflight, 98 native, Base15013 and exact equality carried under unchanged static hashes; original no-pointer and both full decodes PASS. Actual62 frames8.129566s, encoded63 frames8.20s. Fixed pink helper is non-temporal.",
+  "limitations": "Constructed Base only, not mortgage/rest/storage/save/revisit/live Web. Excerpt not full57.78s floor cycle. R2 visibility failure retained; bob1 sample0/8 alias corrected to0/11 in QA only, no asset change.",
+  "payload_files": {
+    "assets/art/environments/house/anim/central_strip.png": {
+      "sha256": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+      "bytes": 139,
+      "size": [
+        376,
+        14
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/right_support_pulse.png": {
+      "sha256": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+      "bytes": 850,
+      "size": [
+        288,
+        236
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/room_ribbon_0.png": {
+      "sha256": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+      "bytes": 1510,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/room_ribbon_1.png": {
+      "sha256": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+      "bytes": 1361,
+      "size": [
+        6560,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/room_ribbon_2.png": {
+      "sha256": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+      "bytes": 1301,
+      "size": [
+        5920,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/room_ribbon_3.png": {
+      "sha256": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+      "bytes": 1200,
+      "size": [
+        5280,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/room_ribbon_4.png": {
+      "sha256": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+      "bytes": 1100,
+      "size": [
+        4640,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/shelf_bob_0.png": {
+      "sha256": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+      "bytes": 266,
+      "size": [
+        1024,
+        22
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/shelf_bob_1.png": {
+      "sha256": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+      "bytes": 269,
+      "size": [
+        1024,
+        22
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/shelf_bob_2.png": {
+      "sha256": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+      "bytes": 269,
+      "size": [
+        1024,
+        22
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/shelf_bob_3.png": {
+      "sha256": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+      "bytes": 271,
+      "size": [
+        1024,
+        22
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/shelf_bob_4.png": {
+      "sha256": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+      "bytes": 269,
+      "size": [
+        1024,
+        22
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/window_glow_0.png": {
+      "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "bytes": 109,
+      "size": [
+        16,
+        88
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/window_glow_1.png": {
+      "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "bytes": 109,
+      "size": [
+        16,
+        88
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/window_glow_2.png": {
+      "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "bytes": 109,
+      "size": [
+        16,
+        88
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/window_glow_3.png": {
+      "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "bytes": 109,
+      "size": [
+        16,
+        88
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/anim/window_glow_4.png": {
+      "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "bytes": 109,
+      "size": [
+        16,
+        88
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/house/background.png": {
+      "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+      "bytes": 425423,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "data/art/environments/house.json": {
+      "sha256": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0",
+      "bytes": 10457
+    },
+    "data/art/environments/index.json": {
+      "sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+      "bytes": 459
+    }
+  },
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_house_r3.py": "88a313c6c003837476f1907a774a623c31fb122850690c6e22547f12d6900f1b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_motelroom_r3.py": "15e794de3c4bb3e835f4e0664afbee86ed353ca02f85d4de69c7b075b397b59b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_house_r2.py": "f711bd7286058d01c45164fd76eb6ac5740c04e23c10487946aad743379c722a",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_house_r1.py": "caf1c31126d748695a9a05a861968215c0931863e25fb303def741ae46b72e85",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_apartment_r1.py": "3470bbf6925d652f60affbc139f8481a27237bb1f5e7d90710b8f15a57c38422",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_house_r3.py": "9d89e0479f8e9511aea99dbd9a899c24cb142242a45982180cd7173a381bc09f",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_house_r2.py": "e687d2a3dd3b32a99f94cc2e9990b78b2ed275e6fbd6ace06df8a8a04ca388ce",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_motelroom_r2.py": "c32a75adbb71837f7e42a4267d693e0ea4bdeeb381219fc3ac0cdb11fb49b19c",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r3.py": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_house_occlusion.py": "63c1359933028a7cf3ce0e5906eef7e571c9da400a0cd568eba234eb4537a807",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_motelroom_occlusion.py": "6aadad0bbfc149b6a142c4ea5dfdd55eb846ce970c4fae345a4f722922b08291",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grand_occlusion.py": "3c2b329fbf43fcd7af86ee9554ebb2e73240c7bf68fcdd56b8295368dd0570a7"
+  },
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\job.json": "5fe7d7717d4c154675af66755e07eb360445a328fc25d9668454590a2593b685",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\launch-claim.json": "c278d3ecfeed909a1a2dd6fd1f76abe8da09cc1d74c5c8617d9ecf72aa53b344",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\storage-manifest.json": "255e7299ba2b20933228b80e95ba3790dce3b1f8ce6ddc7c48cc0084508791af",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\video-verification.json": "f61d3f0f29f56624d032def087ac0764182881e3721f22694985d46794d9aa62",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\worker.log": "5523a5672f8437631481de93329b11ea854931a0378d3bfcf099de23a64365af",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\job.json": "f4d463a9d87bce05efb945eff9d325a36c39fc8b3818435e9b1f5cca8cfe7438",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\launch-claim.json": "64d4abcf092fe8f351eef6cef02c715d100bb69b506391320457e38f3697e472",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\storage-manifest.json": "3cf2f96638540385242a8d387cdc7c2784ac769589be48b118e4d004f2158f35",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\house_animation_probe.json": "76c40b7adeef005ad2f198efe479ceb2fed8fc0e444e48c2cda1adcf8f36cfdd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\job.json": "908c0206372abbc70f3ae20965bfffdfb49026d8887aab567e9b18031cb73d07",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\launch-claim.json": "b5ebb358b5a65b18c79a030078fc1d978b989a0c7c97e44fee483ccfca6c6135",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\storage-manifest.json": "47c88006d0b9d04208e38477d1c61b7d6331baeb6162efcde6863b037fc1cdd2",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\worker.log": "da7e7629a522b865a50c69e71b4182546dc4685fd7be9825d052b0f2e0c50e1c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\delta.json": "b82019213359a456d0e83ba0bfaac686d3a6bc1621575ebbf37a8a29a15c2237",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\previous_identity.json": "5b46417724a35bba75f744e46359826957033a0dc47b4c22151b0a8228b39ce7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\previous_manifest.json": "06a85b3a6e01118c41ad1e3707b2817d75ba30f5148b9defd5d7bd3287698327",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\storage-manifest.json": "bd9828566bd14d5b695b59d7dae5b6d52bde10d272e6529426db9ab27a9e8a28",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\job.json": "a22c7c8d6d67fea4762ed592bce06c8cf93baac2667ee4d554d176a131650054",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\launch-claim.json": "0da8ffe0d965bddcd8f3a2c79f54afbc11e1da38551438beaf59346e5ae8f64e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\storage-manifest.json": "71c01c48aaa25c218756a8270ffd4592e197d6f74a144352354509d3ca3cdc31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\worker.log": "4dafeb1f0c5b71bce1b658768bfdd206fb45b69b2e85511f68affa5166777af3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\capture\\animation_capture.json": "38390444d067bd54a6ca826eb1bdab7046b927df405a5af51169cac5ea658f85",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\house_preart_metadata.json": "3b4f0f6deb7e257cc76db11516dd9af9400c7d708d5767c69d4bf9ba0d32a5fe",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\job.json": "451284ab92ef5c1d04c198b580550eedcecf9c551ffc80e6af962c6290ece632",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\launch-claim.json": "c8135e6a6428cdfed0f181c0392293a8c292e0b505dc45e3f77b509210c1734a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\storage-manifest.json": "7fa8feed3b41ea4106d634ca4b3ad55c68dbb06cce882f7965fee0ec7ea04749",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\worker.log": "15bd33cf4548578158d9b0a03dc4b7978e88beae17eeda100f7829f71c3ccdd5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_metadata.json": "dae1a53363224df03944773177bb9374f38b7101aa8b6baefa4a530b5c8ff6af",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "c72929d4f631c315abebb6f6edb92c9c2f5325b1da2c1acab88539d6cfe1e844",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\house_capture_inputs.json": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\house_trial_contexts.json": "623c9c64aa0a9049256e7a4af98e59911801a6e4957ed58175fe6fbbeafbe5c9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\job.json": "a7133a088c1c1973a4404239ecaec629c579525188a260362e6e48b40549ca22",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\launch-claim.json": "4d55bc2bd89e05face05ef6761a41c3f1395477b3220f6abb628b077eec039a0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\post_source_verification.json": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\source_identity.json": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\storage-manifest.json": "cff097398ec6476ce63392dd73cd9797c81aae30a9dac003397da9d0d14bb28c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\worker.log": "b60c39dfc5567f62f27d3387fe4453437afe3ffa5ecc98a8ebc537709c59bb9d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\house-base-occlusion.json": "a5a7deadeb6bb8ede8913e04f84cb483f066eea6deecd15a1c495f629c5c973e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\job.json": "69e6d78585175be9bda94b994b24179a4a5db360e4a48f8f46887aee9f2cf3dd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\launch-claim.json": "f1c21f9a9f09a9afff64a7f6b7fd7b715bd8635afddf68ed0a3900fc8203a04a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\storage-manifest.json": "453ef7c28bc5a7cf6aef0322937b0aaf6b97acaa6fb5de0d7812d93039162cf0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\worker.log": "e4b365b50872ae2037ae5091ba5bd874a6d2db018afa6de1b34df1d175cb7f48",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\house-r3-preflight.json": "988cc0b10c6cf4ac373ceb6bb9e338079bf1a1e456cee13a7f815c8138fba641",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\job.json": "af9d58f03f16853cf70f107ff442859ce69025c24c80435de9451d23de518c0b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\launch-claim.json": "415729a98a06a740a714ba8e0797e6906902e9bd94e6515766ee8f9b1fac3e80",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\storage-manifest.json": "4afbbf61cb10ff56adf2682c4d65eeed8e4227b85726065877cd22c983bbd006",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\worker.log": "5272457172bb193857c99b4cb01bcda7e7898e0a766b3ca7e547cab4e1cd1b38",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\actual-bob-edge-review.json": "59084fc7bc4aee720b8ff03d9341bf8410da37ba141ba9536ca32bc7f1ce0f0a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\job.json": "9993d5ca0ee5d911932863bd227d00cf30ae4d689b98ebbe033a3c51f1d72f73",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\launch-claim.json": "b301187a7ec4591c58c83bc2765103e044183ab915ec542514b21b0ab615ebe4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\storage-manifest.json": "425f2a408c6b7ed442cb7f66e8f84499a30376bf0152bc0b399d521a1ed060c4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\worker.log": "348859c3c279a2646510a49ee16dc874017e6f75c4fb17255f92f1ded718d19e",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_bob_pair_diagnostic.json": "cf8f51a3f6bf0c05affee01c3c0bf3d9a809e1b9624ec90be17a69e784e81841"
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-final-audit-integration-02\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "288b24d141b4679402b7349d700277c81b5eef72f6f0c7b18184c90fb1ff2352"
+}
