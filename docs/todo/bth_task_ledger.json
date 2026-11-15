@@ -44277,7 +44277,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Pawn R1 static GO; isolated four-method native trial active",
+      "status": "Pawn R1 scoped native audit PASS; TEST delivery pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44309,9 +44309,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/pawn_doorway.md",
           "summary": "Exact special-size source direction; sealed unchanged PNG approved for trial only."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/pawn_doorway_r1_native_trial.json",
+          "summary": "Exact sealed asset; original gates and four-method actual visual audit pass."
         }
       ],
-      "next_action": "Complete original gates, actual four-method preview and independent final audit before TEST.",
+      "next_action": "Publish exact approved Pawn PNG to cumulative TEST and verify served identity/assets.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44320,7 +44325,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:53:12.301714+00:00"
+      "updated_at": "2026-11-15T08:57:55.782028+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-JAZZ-CLUB-01",

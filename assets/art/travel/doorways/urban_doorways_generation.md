@@ -77,3 +77,7 @@ One generated source, accepted unchanged at 1024x1536 RGB under docs/art/briefs/
 ## Bar doorway replacement, 2026-11-15
 
 One generated source accepted unchanged at 1024x1536 RGB under docs/art/briefs/bar_doorway.md, using current approved Bar room and facade references. Earlier Bar prompt above describes the superseded asset. Exact PNG SHA-256: 1edc721fa742ff8bf605f1fac0b64e1b843ab321e3cc6cd1f0129801b4bfbe41. Package seal: e225feea7b1fe30b868e89b903d9031c4076eff43fd053bb28a64150444c73b7. Raw prompt and recipe provenance are preserved in docs/testing/bar_doorway_r1_native_trial.json. Bottom-cover UV(0,1/199,1,198/199), aperture and runtime remain unchanged. Native four-method presentation passed, not legal-route/loading/Web certification.
+
+## Pawn Shop doorway R1, 2026-11-15
+
+Replaced only pawn_shop.png with exact approved raw image b01a813bc488d34c65d2fbfd46c99c1f924d21ca0e0401600449281f0dccc1d2 at existing 1086×1448 size. Source direction: docs/art/briefs/pawn_doorway.md. Native proof: docs/testing/pawn_doorway_r1_native_trial.json. Four synthetic travel methods passed; this is not legal-route/loading/browser certification. No travel data, timing, aperture or runtime changes.
