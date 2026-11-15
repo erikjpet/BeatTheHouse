@@ -43703,7 +43703,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Cage Base and clean guide captured; dynamic EMPTY compatibility tested",
+      "status": "Cage R1 rejected for11hidden glints; narrow correction underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43743,9 +43743,14 @@
           "kind": "compatibility",
           "reference": "docs/testing/grand_cage_empty_label_compatibility.json",
           "summary": "Seven stock states,legacy/packed label order/equality,rendered glyph parity and liveness PASS;final art composition pending."
+        },
+        {
+          "kind": "native_art_review",
+          "reference": "docs/testing/grand_cage_r1_native_review.json",
+          "summary": "22of36visibilitychecks fail;R1unactivated;conditionalEMPTY/geometry/livenesspass."
         }
       ],
-      "next_action": "Director/auditor release source; verify final candidate both stock states before activation.",
+      "next_action": "Director/auditor approve sealed same-window glint correction, then rerun motion/visibility and actual preview before activation.",
       "blocker": {
         "state": "none",
         "kind": null,

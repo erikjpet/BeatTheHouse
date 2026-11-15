@@ -1,0 +1,17 @@
+{
+  "status": "FINAL_VISIBILITY_FAIL_NOT_ACTIVATED",
+  "package_sha256": "6c492421b434568ec21088f764a81274dbc8176bf355fa34ac7073fe8a6965be",
+  "finding": "All11 glass glints fully occluded by actual Linda bars in normal and low-detail modes:22failures/36checks. Other14checks pass. Auditor preparing same-window correction.",
+  "passed": "Base14838checks/exact geometry-publication equality;20native/16simulated low-detail target motion/RM;composed conditional EMPTY fixture;liveness;actual8s/full-decodes.",
+  "stock_scope": "Available stock is a cloned semantic fixture only, no live shelf-item objects added; actual populated shop not reached. JSON numeric typing normalized after no value differences confirmed.",
+  "runtime_delta": "Explicit f035e1d5e compatibility change, separately approved, not art-only baseline.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-occlusion-r1-01\\evidence\\cage-base-occlusion.json": "1208034ff2563773f3f4b86c5a785eb830413fff92ac1f6142f736ac00b25252",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-comparison-01\\evidence\\comparison.json": "4f7b77fedf2ea5fe9b1f60c1fbac4c507fe9778faec67118343bedf8a729201d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-stock-states-03\\evidence\\cage-composed-stock-states.json": "9ac80861edf8876ab612cca07f6fbad469a36be578e8112c94191e17566b3879",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-motion-01\\evidence\\grand_casino_cage_animation_probe.json": "78ddd0725f043d6280ddd143a3175ed5126e8c851019b69977933f27e45d16a8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-video-01\\evidence\\capture\\animation_capture.json": "63b1efde57382c5c67f352df12cb032b639c97dba729b5f5bc04cef4eb535ef7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-encode-01\\evidence\\video-verification.json": "25f6893ab1e707014b227653aad835a98aa5ea45f18411908bf725eb930ad18c"
+  }
+}
