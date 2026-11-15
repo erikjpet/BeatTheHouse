@@ -44061,13 +44061,20 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Corner doorway source released; bounded alpha repair passed native audit",
+      "status": "Combined exact Corner native audit PASS; TEST export next",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c7787ab2933de569f35744c7629f1a4fd63bf8fc",
+          "evidence": [
+            "docs/testing/corner_door_alpha_repair.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -44093,9 +44100,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/corner_doorway.md",
           "summary": "One source released; original alpha defect repaired separately without runtime/test changes."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/corner_doorway_r1_native_trial.json",
+          "summary": "11066/0 original entrance,137doorway,1115overlay,no-pointer,92state equalities and four-method decoded preview."
         }
       ],
-      "next_action": "Fit new doorway, rerun combined original gates, then publish exact combined TEST candidate.",
+      "next_action": "Export and verify combined Corner insert plus alpha repair on cumulative TEST.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44104,7 +44116,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+      "updated_at": "2026-11-15T08:00:17.280405+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-BAR-01",
@@ -44522,13 +44534,20 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Bounded alpha repair native PASS; combined TEST delivery pending",
+      "status": "Combined exact Corner native audit PASS; TEST export next",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "c7787ab2933de569f35744c7629f1a4fd63bf8fc",
+          "evidence": [
+            "docs/testing/corner_door_alpha_repair.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -44544,9 +44563,14 @@
           "kind": "native_pass",
           "reference": "docs/testing/corner_door_alpha_repair.json",
           "summary": "Original11066 entrance assertions now pass;137doorway/2312preview/1115overlay/liveness pass."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/corner_doorway_r1_native_trial.json",
+          "summary": "11066/0 original entrance,137doorway,1115overlay,no-pointer,92state equalities and four-method decoded preview."
         }
       ],
-      "next_action": "Include tested repair with audited Corner doorway TEST export.",
+      "next_action": "Export and verify combined Corner insert plus alpha repair on cumulative TEST.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44555,7 +44579,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+      "updated_at": "2026-11-15T08:00:17.280405+00:00"
     }
   ]
 }
