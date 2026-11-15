@@ -44774,7 +44774,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "House doorway baseline PASS; source review underway",
+      "status": "House R1 native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44806,9 +44806,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/house_doorway.md",
           "summary": "Portrait1024x1536 modest domestic direction, no eligibility change."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/house_doorway_r1_native_trial.json",
+          "summary": "Exact portrait asset; original gates and four-method independent actual visual audit PASS."
         }
       ],
-      "next_action": "Director/auditor review current detached-home aperture before source release.",
+      "next_action": "Publish exact audited final doorway and verify all prior packages; retain acceptance limits.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44817,7 +44822,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T11:24:28.069821+00:00"
+      "updated_at": "2026-11-15T12:32:33.889929+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-CORNER-ALPHA-01",

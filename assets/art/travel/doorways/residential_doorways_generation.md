@@ -67,3 +67,7 @@ Exact unchanged1024x1536 source e95d1f70a0484ccee97ad9092ff6f6d6e44a062464577ca1
 
 ## Apartment doorway R1, 2026-11-15
 Exact corrected1024x1536 source a4d0548e6bb5f6ec6f7180bef2a48263025d0e30a35242189f00988ca2ee74e7. Raw73b56bb2 preserved; rigid160px upward stair/support translation plus189px same-source floor extension without resampling clears the landing. Director/independent auditor passed four synthetic production-overlay methods. Full generation/fitting/native provenance in docs/testing/apartment_doorway_r1_native_trial.json. No eligibility/runtime changes or legal-route/loading/Web certification.
+
+
+## House doorway R1, 2026-11-15
+Exact unchanged1024x1536 source c6bd3a57e77ab6749687a772955bc865e1889bc4ac625c324501c0e23c89fa60. Director/independent auditor passed four synthetic production-overlay methods: clear grounded entry, faithful domestic timber/sofa/dining identity, full closure. Full provenance in docs/testing/house_doorway_r1_native_trial.json. No eligibility/runtime changes or legal-route/loading/Web certification. Phase11 excluded.
