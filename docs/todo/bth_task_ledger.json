@@ -44490,7 +44490,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Kitty landscape four-method baseline PASS; source review underway",
+      "status": "Kitty R1 scoped native audit PASS; TEST delivery pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44522,9 +44522,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/kitty_doorway.md",
           "summary": "Planning-only landscape1536x1024 direction, no candidate release."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/kitty_doorway_r1_native_trial.json",
+          "summary": "Exact sealed landscape asset, original gates/four-method independent actual visual audit pass."
         }
       ],
-      "next_action": "Director and auditor review current landscape aperture/references before source release.",
+      "next_action": "Publish exact approved landscape doorway PNG to cumulative TEST and verify served identity/assets.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44533,7 +44538,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T09:47:49.491490+00:00"
+      "updated_at": "2026-11-15T09:59:44.725813+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-GRAND-CASINO-01",
