@@ -1,0 +1,62 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "8b1f36cee31d376bad239b2593a9a2461969a228",
+  "package_sha256": "70f5709df400a41ef2242dcae9820ae0785018e50ce25c958034a1b47f84280f",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 1,
+  "raw_art_sources": 409,
+  "compiled_art_textures": 388,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic native four-method presentation only, no legal route/destination loading or live Web.11 Corner Store entrance alpha-comparison failures remain unresolved and unchanged. Main/NEXT/save namespace unchanged.11 more doorway replacements pending.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gasdoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "cda17e663085b3ae55d0c4c876d401afaf0b914e2da5beb5f0f82ef09ca6b158",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "removed": [],
+        "changed": [
+          ".godot/imported/gas_station_casino.png-aaf9e76e11dfa21ccce377c4398ea3ce.ctex",
+          "build_manifest.json"
+        ],
+        "unchanged": 2105
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gasdoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "c2073dc4440098ddc0b6737a0db7bd81df462a5ec3c21b0477548cc397a70ff6",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 409,
+        "compiled_textures": 388
+      },
+      "record_count": 388
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gasdoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "f29ae00744f69f5c0781b87758d56fe400e97d850029b05de5dd7b10675a1495",
+      "summary": {
+        "source_commit": "8b1f36cee31d376bad239b2593a9a2461969a228"
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gasdoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "6e5679a2de7afdbdccd9a479cb3f29a263e83e27b8bef0ddce7f2bd1bdd6b472",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "8b1f36cee31d376bad239b2593a9a2461969a228",
+        "raw_art_sources": 409,
+        "compiled_art_textures": 388,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb"
+      },
+      "record_count": 11
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-gasdoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "458243caa0e72940cf040d7ac303a539cef27843463360a27a405e1b12cfa835",
+    "findings": 8242,
+    "gas_doorway_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
+  }
+}

@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "70f5709df400a41ef2242dcae9820ae0785018e50ce25c958034a1b47f84280f",
   "payload_files": {
@@ -79,5 +79,9 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAYTRIAL-20261115-gas-r1-preparation-01\\evidence\\storage-manifest.json": "8a73505f290fe5796d0b758aeda855fe9f8b87b480fe6cb2b773c631c391b39d"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-final-audit-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "264c86fcc79856994bf19a05d2a7bc2c75f23ce22855e9f89a74d4625591ad3e"
+  "final_audit_receipt_sha256": "264c86fcc79856994bf19a05d2a7bc2c75f23ce22855e9f89a74d4625591ad3e",
+  "delivery": {
+    "commit": "8b1f36cee31d376bad239b2593a9a2461969a228",
+    "evidence": "docs/testing/gas_doorway_r1_test_delivery.json"
+  }
 }

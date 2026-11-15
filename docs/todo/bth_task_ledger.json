@@ -43994,19 +43994,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Gas doorway R1 scoped native PASS; TEST delivery underway",
+      "status": "Gas doorway native PASS and TEST verified; live Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "8b1f36cee31d376bad239b2593a9a2461969a228",
+          "evidence": [
+            "docs/testing/gas_doorway_r1_native_trial.json",
+            "docs/testing/gas_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "commit": "8b1f36cee31d376bad239b2593a9a2461969a228",
+        "evidence": [
+          "docs/testing/gas_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST served bytes verified; no live Web acceptance."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44033,7 +44043,7 @@
           "summary": "Four-method pixel/state audit and full movie; known11 Corner failures unchanged."
         }
       ],
-      "next_action": "Publish exact approved doorway with cumulative20 interiors to TEST and verify.",
+      "next_action": "Owner playtest TEST; continue Corner Store doorway baseline.",
       "blocker": {
         "state": "none",
         "kind": null,
