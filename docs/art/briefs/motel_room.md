@@ -1,6 +1,6 @@
-# Motel Room execution direction v1
+# Motel Room execution direction v2
 
-2026-11-15. Queue18. SOURCE PLANNING ONLY while Cage integrates. No generation until current actuals and cleaned guide reviewed. Existing artbranchTEST only; no competing export.
+2026-11-15. Queue18. ONE SOURCE RELEASED after current actual Base and clean guide review. Existing artbranchTEST only; no competing export.
 
 ## Identity and direction
 
@@ -23,3 +23,16 @@ Clean authoring must remove frozen7moving blocks, architecture TVscanpair and fl
 Native owner captures actual motel_room Base and only genuinely applicable catalog contexts. Catalog has public motel scenarios, not direct motel_room key; do not force public frontdesk scenarios into bedroom. Fullapp/board, all selected titles/typed bodies, exact foreground IDs/rects/contact, source0/1/2, fixed clocks, clean originalhelper. No forced rest/storage transactions or movedgameplay to suit art. Actual semantic/grounding/readability review precedes finalv2 andone-source release. Do not duplicate live bed/storage/TV object model in art merely from guessing source supports.
 
 Artist single-source PNG/prompt/hash only after release; auditor owns exact fitting and independent actual/motion/mask/RM/liveness audit. Native owner commits sourcebrief/proof/ledgers and integrates only passed bytes to TEST. Initial Base is not storage/rest/laterlifecycle/save/revisit/browser proof. Raw evidence E:/CodexQA/BTH, no main/NEXT.
+
+
+## Final v2 release
+
+Director personally viewed terminal PASS capture02 actual Base and clean guide. Source2e98323de,7,422files/c5 unchanged,14,905checks/sixobjects and selected/typed coverage. Union E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOM-20261115-union-01/evidence/motel_room_preart_union.json SHA6fdd1e52ed643b5b2fbbec5ac106523a645d5650114f15bc9a696533a756555f. Failed capture01 missing QA catalog key is preserved diagnostic, not successful baseline; corrected02 uses actual empty motel_room catalog, no source changes. Proof939d801fe.
+
+ONLY generation guide E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOM-20261115-capture-02/evidence/__none_source_mode3_clock0.0_lowfalse_cleantrue.png SHA2304e211ca6bc0d62e1c94d476013a49834291f4adf02f31b7773be7f3caceb5. Independent audit removes only seven frozen pinkblocks, architectureTVscanpair andfloorhelper; true material unchanged. NO pinkblocks/scanlines/reflections baked in artist image; auditor recreates all20 motion motifs.
+
+Actual Sleep BED including pillow is LIVE and already overlays central support. Background central rectangle is a quiet bed/headboard backing plane, not another complete bed. Do not draw a second pillow/mattress/frame, new furniture or bedding on top. The wide lower rectangle is a flat rug plane, not a raised counter/stage. Bedspread/rug metadata has zero-height fronts and nightstand lacks foreground_art_id: NO opaque counter replay inferred or manufactured. Preserve exact static source footprints. RightTVscreen quiet blank glass; Scratch Pad is a live item atop existing brownnightstand, do not bake a pad/pen. Storage Spot/Backpack are live, no baggage piles. NO VACANCY is the only static wordmark, exactposition, even exterior hasVACANCY.
+
+Refined source direction: economical worn plum/mauve plaster and practical darktimber, restrained local cyan/pink reflected neon, modest dark textile rug. Crisp deliberate pixelclusters, gently used room not grungy ruin, no Grandgoldluxury. Existing left signframe, central flat backing, TVcabinet, brownnightstand and rug only. Quiet broad surfaces for Sleep cyan abovebacking, RenewStay yellow belowNO VACANCY, gray StorageSpot above rug, Backpack cyan and ScratchPad yellow. Avoid fine stochastic texture or bright motifs behind these labels. No figures or extra environmental stories that add gameplay-looking objects.
+
+Artist ONE source now, preserved PNG/prompt/hash. Auditor exact fitting and20motif native/normal low-detail check (no Grandreduction), actual sixobject masks, stableReduceMotion and originalno-pointerliveness. Sevenpink motifs may be partly hidden by livebed; measure actual visibility before evidence-backed same-source-surface adaptations. Base-only: no forced rest/storage transactions, later lifecycle/save/revisit/browser coverage. Nativeowner integrates passed bytes only toexisting artbranchTEST, main/NEXT untouched.
