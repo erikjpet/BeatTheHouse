@@ -729,6 +729,11 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "supplemental_native_probe",
+          "reference": "docs/testing/NEXT_coin_pusher_native_QA_20261115.md",
+          "summary": "Current native_v3 bounded synthetic-clock input, retained-state and rollback contracts pass; no rendered/Web or original objective closure."
         }
       ],
       "implementation_batches": [],
@@ -989,6 +994,11 @@
           "kind": "frozen_candidate_qualification",
           "reference": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
           "summary": "Actual repeated scopes and required gaps are listed individually in the frozen-candidate matrix. Historical passes remain historical; no blanket closure."
+        },
+        {
+          "kind": "supplemental_native_probe",
+          "reference": "docs/testing/NEXT_coin_pusher_native_QA_20261115.md",
+          "summary": "Current native_v3 bounded synthetic-clock input, retained-state and rollback contracts pass; no rendered/Web or original objective closure."
         }
       ],
       "implementation_batches": [],
