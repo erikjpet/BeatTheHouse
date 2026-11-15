@@ -44348,7 +44348,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Jazz four-method pre-art baseline PASS; source review underway",
+      "status": "Jazz source static GO; isolated native trial preparation",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44375,9 +44375,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_jazz_baseline_20261115.json",
           "summary": "11066 entrance,137 doorway,2312 fixed30fps preview checks pass;92 snapshots,7522 sourcefiles unchanged. Invocation error01 preserved."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/jazz_doorway.md",
+          "summary": "Frozen one-source direction; exact image approved for isolated trial, not activation."
         }
       ],
-      "next_action": "Director and auditor review current aperture/references, then release one source.",
+      "next_action": "Stage exact audited candidate and run four-method original gates before final audit.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44386,7 +44391,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T09:07:03.413247+00:00"
+      "updated_at": "2026-11-15T09:10:55.446647+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-SMALL-UNDERGROUND-CASINO-01",
