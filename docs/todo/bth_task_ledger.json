@@ -44561,19 +44561,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand R1 native PASS; TEST delivery underway",
+      "status": "Grand R1 native PASS; TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "26eb797913c729a0c6ee5bd664c9822aba3d8230",
+          "evidence": [
+            "docs/testing/grand_doorway_r1_native_trial.json",
+            "docs/testing/grand_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "state": "verified",
+        "commit": "26eb797913c729a0c6ee5bd664c9822aba3d8230",
+        "evidence": [
+          "docs/testing/grand_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST artifact, served bytes and protected NEXT/save configuration verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44598,9 +44608,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/grand_doorway_r1_native_trial.json",
           "summary": "Exact landscape asset; original gates and four-method independent actual visual audit PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/grand_doorway_r1_test_delivery.json",
+          "summary": "20 interiors/nine doorways,418raw397compiled; only Grand doorway texture/build identity changed."
         }
       ],
-      "next_action": "Publish exact audited asset to cumulative TEST, verify served bytes and protected NEXT.",
+      "next_action": "Owner live TEST acceptance; continue remaining three doorway packages.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44609,7 +44624,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T10:31:29.178855+00:00"
+      "updated_at": "2026-11-15T10:34:29.769724+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",

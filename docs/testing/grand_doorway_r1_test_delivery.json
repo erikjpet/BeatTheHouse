@@ -1,0 +1,157 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "26eb797913c729a0c6ee5bd664c9822aba3d8230",
+  "package_sha256": "011f52163c74c5e4762cdf9344835d84fea9906d00e824afbb6c63058522de46",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 9,
+  "raw_art_sources": 418,
+  "compiled_art_textures": 397,
+  "prior_20_interiors_unchanged": true,
+  "prior_eight_doorways_and_corner_alpha_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic four-method native presentation only, not legal routes/destination loading/live Web. Exact landscape1536x1024. Three replacements remain. Main/NEXT/save namespace unchanged.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "bdc9055eaeb75b620db6d4ff0eb5da7d3b35fa6c44d5e1bfc846509ff9a36a79"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\class-cache-equivalence.json": {
+      "sha256": "b3d5f618734770530eb91ca07040675a18b798888ad9e1146369f98f95a96228"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\embedded-build-manifest.json": {
+      "sha256": "fd568984f6d914d76c80deba109362b98d622a746f54c3a665bbf72770e6f30e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\embedded-verification.json": {
+      "sha256": "25a216276038305bd7e2e0819d63eb7cf932af692fe943d8244176a1b55f4d10"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\job.json": {
+      "sha256": "35902c82276b5391ab76be4296cc8c13310e436bf28329f6c489f9499c5f48db"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "f04f8c0dbb24621a06e7d34bef27acbd4df87f17e7a03bce6638f6cfd4ee76b6"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "a6885cf2aea13acb1d5b0f99a1116dddc67bc6bc7466f728a689ea00fb08558b"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-finalize-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "8c1ce70acb931fe7f75e8a1847b30886786666e9fdf3ad2370e462c35185272a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-promote-r1-01\\evidence\\job.json": {
+      "sha256": "be36e7ed940283f8e03e3b8399ceb56732f721803a18313474a0dae82414fd04"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-promote-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "83cfbd72f58763a31644d48c973b897d8d5410a74da5c69ab6447ca132488756"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-promote-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "58067cdcc01f6eb1bc74fae272ab7d60404fc0e65fe5225055ec3c7d6dcec239"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-r1-01\\evidence\\job.json": {
+      "sha256": "17da9f1590d7221082d288ed2ed791c8fcc8568c8fdc2c9f8bc1e0f4c6aa8bc5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "2a7f9b553b8a890a69cebfc50b89e7a50bbbadfd3108031370cefab5a8104dc7"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-html-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "fb884aec11c994f819b3e158bd4dfbbca8d0fc60c62d5da42c148af83d43120e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-publish-r1-01\\evidence\\job.json": {
+      "sha256": "a2a353d0a8ecfd7884895216ac70b70b3552dff2fc0f28e9e6bf13d619789d6d"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-publish-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "4e629ddebd08400b46f51196cd944c3dccaf24d5896570d57ee1d5b361f68d4a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "9d62466a844482a824e273ba331bf77781b91ead933adf0fa8efe5cf7b2f013e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-publish-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "892cb6912beb1d9a854a3d5411fc654011b3148d8da222a5e1de53fc5afb4ae8"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-python-r1-01\\evidence\\job.json": {
+      "sha256": "58bfc15504cd37f224cbe55cc614418be9d95c4e1f8b190f4ce5d8e869f35e1a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-python-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "f2c68ee001fb5f34edd03db8a8f6daf7be223e24f4c22e2f08cb894d34faa41b"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-python-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "4f344ae29e9c9d63295b5de6fe543cca943aa46d8edbca7c4b2ecc89595a1800"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-served-r1-01\\evidence\\authorized-site-change.json": {
+      "sha256": "9dc2ae00519f4eb53ef55fae6290c6aa8094a24cef30917a191d5b56010c88b5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-served-r1-01\\evidence\\job.json": {
+      "sha256": "361ba4cc14132de56937e492394ae61ba55addf7d1e91d5e928c17b400bb776e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-served-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "eb4fa1e0cb49e577ff378a2c6d055bcbbb71ce142e6cd755eb06fbcffe7f3c56"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "1186d16a0e2681aad1f451ad181b1fdf71102b083be8610baed9cc3be4da3860"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-served-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "a9bd04aef2402caf9274248141276fb5c3aac730974784590eb4d69e46e32b8c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-archive-r1-01\\evidence\\job.json": {
+      "sha256": "7d39c9d0c3cbffc3392e74ef121d60fb1dff648e364c3e2a52f6eecb99532677"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-archive-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "486bb53b50fdccb841109ed90bfb754a124cb9ad19cccbba7ad6914c38df22a6"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-archive-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "b064f2d4c70624bd11cc736dfbc49362ad3642a3f3eaa14a0de7f85f43ecb8f0"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-export-r1-01\\evidence\\export-policy.json": {
+      "sha256": "afbb1f3c824d6b64811fa57cc80d65003176c68550afdfe6da5c9243d452e7ee"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-export-r1-01\\evidence\\job.json": {
+      "sha256": "b9cc3569f4a24039f63cf0f3e229950a85f3f8349526337512831dc5d4f98672"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-export-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "18e6ecf2c34a811cd0ff1c8bc8ca31ffc79c38bf1c00b2262c9f67df5e7c243c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-export-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "79c3a96a6959c8c1f4cfa8c0ba2f3ba46ca14be590786324801e7b315f48bfba"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-export-r1-01\\evidence\\template.json": {
+      "sha256": "f327ed8aae0474affa9bd73f1232c1860f1fcbc4488af76de758e93955ff2f91"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-extract-body-r1-01\\evidence\\source.json": {
+      "sha256": "6910ea169040fe5657a8d049d9ddb25d88294a515177e5c6aae4e62713f49973"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-extract-body-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "dbeff35d04527cab5417176fd4b7c07b72efb924f1296cc94eab068e06588473"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-extract-r1-01\\evidence\\job.json": {
+      "sha256": "aea7905376ebf22b1cdd1ef222bf57d79ac9ccab8c1132c3330133520529acb8"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-extract-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "43b8c1911aab67756dfc658d63b2c9112592cc280b6530e7f468678965e14618"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-extract-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "187aa529009fa217633fe684745879cdfa7065c0e5bfe8ddbf88fb302f62d17c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-identity-r1-01\\evidence\\job.json": {
+      "sha256": "a0ed40b7c52596fb6a34737f56c17e4b2c14b03c43b1f633e8f11d048f4b7999"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-identity-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "641c312a57e64416bd078860e6778033579d092e9525046eabf046edf426c86b"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-identity-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "9f2c90af7d3837b760995a997f76d79d0b25d040b3b009a37358b05ae492f25f"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-import-r1-01\\evidence\\job.json": {
+      "sha256": "a07ad50c8b56c52714371c35121d551062b88fd2263f932db61790e0513618a7"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-import-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "8206a68ad46e056f0418c244728ce43932588b5263e45eef233daba76ad93a07"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-web-import-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "704e779f007818210c78c2fe98580d777c25801cf9f39dcb45e132fac095a504"
+    }
+  },
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-granddoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "f4b4b54e4f6adf8d576f506d5c6832da7f8a3310e25d522b02b1ec8e0611eb1e",
+    "assigned_findings": 0,
+    "unrelated_historical_findings": 8242
+  }
+}
