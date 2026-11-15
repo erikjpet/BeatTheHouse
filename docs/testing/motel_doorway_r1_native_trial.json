@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "cbf95caf87d84bef565c9494b303ee4ae4b1527ffde6829464f5abd99b0f4913",
   "decision": "Final scoped auditor PASS Motel PUBLIC reception R1. Personally reviewed walk200,bus190,taxi207,nightcab235: coherent mauve/amber/turquoise reception, grounded clear slate floor, no false jamb or bed, closed actor hidden. Director concurred. Entrance11066/0,doorway137/596source samples zero mismatch/outside change,92state/28entrance image equalities,original overlay1115/no-pointer and full36.5s1095frame MP4 decode PASS.",
@@ -73,5 +73,9 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-package-r1-01\\evidence\\motel-doorway-static-preflight.json": "10706d3a2bc36e90dfcde3bfcb6fdc583235283cb4607732d3793cedd9650561"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-final-audit-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "32141d1d2c292b9fd7e0d190f0769b717d419386a9151e0852ac63df8453c13d"
+  "final_audit_receipt_sha256": "32141d1d2c292b9fd7e0d190f0769b717d419386a9151e0852ac63df8453c13d",
+  "delivery": {
+    "commit": "3e75b8ace30d3423020a695703dfc897b2158c2b",
+    "evidence": "docs/testing/motel_doorway_r1_test_delivery.json"
+  }
 }

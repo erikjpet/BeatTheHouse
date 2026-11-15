@@ -44207,19 +44207,28 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel reception exact native audit PASS; TEST export next",
+      "status": "Native PASS and TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "3e75b8ace30d3423020a695703dfc897b2158c2b",
+          "evidence": [
+            "docs/testing/motel_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "commit": "3e75b8ace30d3423020a695703dfc897b2158c2b",
+        "evidence": [
+          "docs/testing/motel_doorway_r1_test_delivery.json"
+        ],
+        "scope": "TEST artifact/served bytes verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44244,9 +44253,14 @@
           "kind": "native_pass",
           "reference": "docs/testing/motel_doorway_r1_native_trial.json",
           "summary": "Original gates,596source samples,92states and four-method decoded preview PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/motel_doorway_r1_test_delivery.json",
+          "summary": "Exact reception texture served; prior20interiors/three doorways/Corner alpha/NEXT preserved."
         }
       ],
-      "next_action": "Export exact Motel reception R1 and verify cumulative TEST.",
+      "next_action": "Owner TEST review; continue eight remaining doorways. No main/NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44255,7 +44269,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:36:57.054001+00:00"
+      "updated_at": "2026-11-15T08:39:07.445930+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-PAWN-SHOP-01",
