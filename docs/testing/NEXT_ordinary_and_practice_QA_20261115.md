@@ -34,3 +34,10 @@ Adjacent Slot practice12/12 passes strict authority, saved-shape round trip and 
 - `E:\CodexQA\BTH\runs\next-bugfinder-ledger-20261115-18\evidence\reconciliation.json` SHA256 `79623292d74c4d5905a5b534ad4703d92021bba5323fccb20794edb2f0ed374e`
 
 Independent reviewer /root/fix_crew_room_return approved literal two-line product diff and regression before integration. Existing NEXT watcher is healthy; no extra watcher/build started.
+
+## NEXT delivery
+
+Fix commit8bfa0b8f148b49ee6333c6c04f6f76362a037613, tree2ca755ba928ca6ef680157efa57525506423d629, promoted2026-11-15T19:09Z. Exact /play/dev/ redirect and served BUILD, manifest,REF,VERSION match. PCK HEAD200 length124980824. next.json archive hash0f4ad477baae1e1ca62af81db75b7ef9b4eed528871cdb0e309af5b08193e3b3. Standard TLS trust retained; initial URI property read used WindowsPowerShell property underPowerShell7 and yielded empty, corrected to RequestMessage.RequestUri before successful checks. Basic Web launch and rendered corrected behavior remain unverified; reserved browser has no verified disposable profile. Stable/itch/audience unchanged.
+- `E:\CodexQA\BTH\runs\next-bugfinder-practicefeedback-green-20261115-02\evidence\next-delivery.json` SHA256 `fa7ac5dab2dcfb18e406b613db2b4ddcdbdfd31411a88d8715a2bb01bea6eea6`
+
+Reconciliation20:109 existing unrelated findings, zero scoped findings. Earlier19 schema input error (deployment state pass) corrected to verified; no release claim depended on failed reconciliation. Web acceptance remains an explicit open requirement.

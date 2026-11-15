@@ -36730,6 +36730,15 @@
             "id": "2",
             "description": "Scoped successful Practice feedback reset with failed generation rollback regression and NEXT delivery",
             "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md"
+            ]
+          },
+          {
+            "id": "3",
+            "description": "Exact NEXT basic Web launch and corrected fresh Practice result in supported disposable profile",
+            "required": true,
             "state": "open",
             "evidence": []
           }
@@ -36741,7 +36750,7 @@
         }
       },
       "state": "open",
-      "status": "ACTIVE_SCOPED_LIFECYCLE_FIX",
+      "status": "NEXT_DELIVERED_WEB_ACCEPTANCE_UNVERIFIED",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
@@ -36753,13 +36762,21 @@
           "evidence": [
             "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
           ]
+        },
+        {
+          "sha": "8bfa0b8f148b49ee6333c6c04f6f76362a037613",
+          "evidence": [
+            "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "8bfa0b8f148b49ee6333c6c04f6f76362a037613",
+        "evidence": [
+          "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md"
+        ]
       },
       "evidence": [
         {
@@ -36774,7 +36791,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish independent review, commit scoped fix and verify existing NEXT watcher delivery; browser acceptance remains unverified.",
+      "next_action": "Verify exact NEXT basic Web launch and fresh Practice result with a disposable supported browser profile; native fix and served identity pass.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -36786,7 +36803,7 @@
       "planned_app_changes": [
         "Fresh practice room retains previous result acknowledgement"
       ],
-      "updated_at": "2026-11-15T19:02:52.226705+00:00"
+      "updated_at": "2026-11-15T19:10:03.366999+00:00"
     },
     {
       "id": "BTH-FEAT-PACK-MERCHANT-001",
