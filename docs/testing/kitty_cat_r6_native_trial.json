@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
   "source_sha256": "39b0e719b745768aaf794c014a99c512c734964f61d52578e83798a233058dcd",
@@ -331,5 +331,6 @@
   ],
   "occlusion_receipt": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTY-20261115-occlusion-r6-01/evidence/kitty-r6-five-context-occlusion.json",
   "occlusion_sha256": "9d3da051c8e85de1757176b193e51c9f64cc326c79b53ef3f802acf9634e489a",
-  "revision_history": "R3 contrast failed; R5 two hidden animations; R6 only two manifest positions changed. All original raw packages, captures, recipes retained in E QA."
+  "revision_history": "R3 contrast failed; R5 two hidden animations; R6 only two manifest positions changed. All original raw packages, captures, recipes retained in E QA.",
+  "test_delivery": "docs/testing/kitty_cat_r6_test_delivery.json"
 }

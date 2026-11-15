@@ -1,0 +1,199 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+  "publication": {
+    "source_commit": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+    "art_package_sha256": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+    "build_manifest_sha256": "618cf102a5010b3bacbc936623c0dcadfe3c2ee1c52578862141ced35965d106",
+    "files_verified": 12,
+    "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\6400dad73a1fdab0c63387683b2937495ac9c57c",
+    "other_lanes_touched": false
+  },
+  "served_verification": {
+    "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+    "source_commit": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+    "art_package_sha256": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+    "build_manifest_sha256": "618cf102a5010b3bacbc936623c0dcadfe3c2ee1c52578862141ced35965d106",
+    "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/6400dad73a1fdab0c63387683b2937495ac9c57c/index.html",
+    "default_tls_validation": true,
+    "files": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+        "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+        "bytes": 340415
+      },
+      "index.apple-touch-icon.png": {
+        "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+        "bytes": 4099
+      },
+      "index.audio.position.worklet.js": {
+        "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+        "bytes": 2973
+      },
+      "index.audio.worklet.js": {
+        "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+        "bytes": 7298
+      },
+      "index.html": {
+        "sha256": "9aebad74eaf7864755673bd2eec80f4259ea1dc4e7528b2668f4e9007352f3fa",
+        "bytes": 5632
+      },
+      "index.icon.png": {
+        "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+        "bytes": 14818
+      },
+      "index.js": {
+        "sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+        "bytes": 2823817
+      },
+      "index.pck": {
+        "sha256": "df74b98b7b98a40c9907c0a11c8b6b371cf73fa71232a24c19cb92a3e96491e6",
+        "bytes": 132139180
+      },
+      "index.png": {
+        "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+        "bytes": 21443
+      },
+      "index.side.wasm": {
+        "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "bytes": 21802358
+      },
+      "index.wasm": {
+        "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "bytes": 1508237
+      }
+    },
+    "protected_before": {
+      "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+      "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+      "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+      "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+      "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+      ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+    },
+    "protected_after": {
+      "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+      "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+      "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+      "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+      "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+      ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+    },
+    "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+    "browser_visual_scenario_gate": "not run; isolated CUA window binding failed, no alternative user profile used",
+    "previous_immutable_build_unchanged": true,
+    "previous_173_immutable_build_unchanged": true,
+    "previous_9ac_immutable_build_unchanged": true,
+    "prior_immutable_all_files": {
+      "d4beeb651403135ad4fa5f6fbf989af0d43478b6": {
+        "manifest_sha256": "d0682da6ffbf3686d9c630a6c2ce043a4f193b4fd7d03013bbd95191dedaa8ba",
+        "files_verified_including_manifest": 13
+      },
+      "9ac963f185afbc5c54c604e5f68e8111f598d997": {
+        "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+        "files_verified_including_manifest": 13
+      }
+    },
+    "enabled_art_ids": [
+      "gas_station_casino",
+      "corner_store",
+      "back_alley",
+      "motel",
+      "bar",
+      "pawn_shop",
+      "jazz_club",
+      "punchline_club",
+      "small_underground_casino",
+      "punchline_back_room",
+      "kitty_cat_lounge"
+    ],
+    "raw_art_sources": 200,
+    "compiled_art_textures": 188,
+    "test_args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "persistent_paths": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+    ],
+    "configuration_not_runtime_DB_observation": true
+  },
+  "python_tests": 272,
+  "pck_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/background.png-d50cc13217b3422ec46e8e4ccf695661.ctex",
+      ".godot/imported/candle_light_0.png-36c0c8e2c1d7f762203fe90c859772a4.ctex",
+      ".godot/imported/candle_light_1.png-36e1de2d913e27f11f6f2633979a2531.ctex",
+      ".godot/imported/candle_light_2.png-dfaccee6c7d749fbd187385350141201.ctex",
+      ".godot/imported/candle_light_3.png-ce19acb661b239d11ef6dc3637e116ae.ctex",
+      ".godot/imported/candle_light_4.png-2db106a84f220416c6db6d124b3d2278.ctex",
+      ".godot/imported/cool_air_0.png-8715ff728af1b8aed5a5aea57f9874e3.ctex",
+      ".godot/imported/cool_air_1.png-4d6649729d7d08d89be1965ba19177aa.ctex",
+      ".godot/imported/cool_air_2.png-3f250c2d0d6ba32df517fc55e6229919.ctex",
+      ".godot/imported/cool_air_3.png-bbc4946ab04e4fba2187d1e6f4c77881.ctex",
+      ".godot/imported/cool_air_4.png-2d868e74565765a1b51cb92b0314ae0b.ctex",
+      ".godot/imported/floor_glint_0.png-3b97231b01c5c13920e15d94f13680d2.ctex",
+      ".godot/imported/floor_glint_1.png-d55b99bbbf44a2f207d2699ef6e5b384.ctex",
+      ".godot/imported/floor_glint_2.png-c13dbb041a9f720b9b74cabdc2e37b65.ctex",
+      ".godot/imported/floor_glint_3.png-e1be2f4a5a5f1fd59e3710e030fadee7.ctex",
+      ".godot/imported/floor_glint_4.png-2aa58233941614c6c28de46919ab56fd.ctex",
+      ".godot/imported/floor_glint_5.png-6ae4616514e229f86ab2f4be48fa2158.ctex",
+      ".godot/imported/floor_glint_6.png-8eb9f659c678d65d0a8b60e1961ae5ed.ctex",
+      ".godot/imported/kitty_champagne_bar.png-5e8335add31c97f3ac740e474e2f784d.ctex",
+      ".godot/imported/kitty_sign_pulse.png-84373b4726c6498556e8a363517a22bb.ctex",
+      ".godot/imported/pink_air_0.png-4d8cfa2f1ac328f14f2e7cc23198bc38.ctex",
+      ".godot/imported/pink_air_1.png-0f6a0378e2c43ed3048bc0f38528c0dd.ctex",
+      ".godot/imported/pink_air_2.png-ee96ec0e360f2f06a4ebce0dcd700e3b.ctex",
+      ".godot/imported/pink_air_3.png-dab4e50fd7196f29878a8bd9292f8546.ctex",
+      ".godot/imported/pink_air_4.png-420e54ffb986ac3de6474d8937aa0ea5.ctex",
+      ".godot/imported/warm_sparkle_0.png-55d525ead867739eeff198c400b3a3e2.ctex",
+      ".godot/imported/warm_sparkle_1.png-8c7663d0f661da1b4e818608a2adca4c.ctex",
+      ".godot/imported/warm_sparkle_2.png-82ab8196b3bfc345a440ea523c424969.ctex",
+      ".godot/imported/warm_sparkle_3.png-928bf0598fd224b2c7ba9e950b31b7fe.ctex",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_0.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_1.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_2.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_3.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_4.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_0.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_1.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_2.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_3.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_4.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_0.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_1.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_2.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_3.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_4.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_5.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_6.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/kitty_sign_pulse.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_0.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_1.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_2.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_3.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_4.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_0.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_1.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_2.png.import",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_3.png.import",
+      "assets/art/environments/kitty_cat_lounge/background.png.import",
+      "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png.import",
+      "data/art/environments/kitty_cat_lounge.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1638
+  },
+  "limitations": [
+    "Initial constructed noon/closing five-context native evidence only.",
+    "Open-hours/later lifecycle/save/revisit/browser interaction not verified.",
+    "Reduce Motion stabilizes art target; whole-app other activity continues."
+  ],
+  "protected": "Main/NEXT and prior ten compiled art packages unchanged; TEST retains isolated save namespace, no owner save opened."
+}

@@ -43268,7 +43268,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R6 scoped native art audit passed; integration and TEST delivery underway",
+      "status": "R6 native art passed and cumulative TEST artifact verified; live Web acceptance open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43292,14 +43292,23 @@
           "evidence": [
             "docs/art/briefs/kitty_cat_lounge.md"
           ]
+        },
+        {
+          "sha": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+          "evidence": [
+            "docs/testing/kitty_cat_r6_native_trial.json",
+            "docs/testing/kitty_cat_r6_test_delivery.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Kitty R3 isolated trial only; no target activation."
+        "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+        "evidence": [
+          "docs/testing/kitty_cat_r6_test_delivery.json"
+        ],
+        "scope": "Eleven native-approved packages delivered on isolated TEST; live Web visual/interaction acceptance pending."
       },
       "scope": [
         "Base and four directly assigned initial scenarios; actual overrides, titles, cast support, counter replay and retained source motion.",
@@ -43320,9 +43329,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/kitty_cat_r6_native_trial.json",
           "summary": "Exact R6 scoped final visual PASS; 55 motion/RM checks,135 five-context occlusion checks, actual8s clips, original no-pointer liveness. No browser/save/revisit claim."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/kitty_cat_r6_test_delivery.json",
+          "summary": "13 served files normal TLS,200 raw sources188 compiled textures; prior ten packs and main/NEXT unchanged. Browser not run."
         }
       ],
-      "next_action": "Commit exact audited R6 package, publish cumulative TEST and verify served identity/assets. Live browser acceptance remains explicit.",
+      "next_action": "Run isolated live Web interaction/save-revisit acceptance when available; preserve exact R6 while next room proceeds.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43331,7 +43345,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T01:54:22.653134+00:00"
+      "updated_at": "2026-11-15T01:58:11.761651+00:00"
     }
   ]
 }
