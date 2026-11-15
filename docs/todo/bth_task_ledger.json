@@ -6214,6 +6214,11 @@
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_ordinary_Pawn_Slot_QA_20261115.md",
           "summary": "Naturally offered Pawn Shop Slot manual spin16/16 and AUTO start/explicit stop17/17 retain exact single settlement and stopped status through new Host Continue. Native presentation saves only; original scope open."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_live_AUTO_and_interrupted_travel_QA_20261115.md",
+          "summary": "Enabled Slot AUTO resumes exactly next spin21/21; mid-result floor exit19/19; interrupted prepared travel preserves destination/fare9/9 with intentional static receipt acknowledgement. Early unprepared-save helper failure classified; no product change."
         }
       ],
       "implementation_batches": [],
