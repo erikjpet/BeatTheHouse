@@ -53,5 +53,12 @@
       },
       "record_count": 11
     }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cornerdoor-ledger-r1-03\\evidence\\reconciliation.json",
+    "sha256": "12cf1fece37772978dc3a895d678687bf82290f514c43486a57f41ecf189ec4b",
+    "findings": 8242,
+    "corner_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
   }
 }
