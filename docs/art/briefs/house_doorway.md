@@ -1,0 +1,14 @@
+# House doorway source planning v1
+
+Final doorway in twelve-item queue. Planning only until current baseline actual review; umbrella plan applies. Native owner controls engine/export slot. Existing travel eligibility unchanged.
+
+## References and contract
+Director personally viewed approved assets/art/environments/house/background.png, own exterior and current doorway in art worktree. Modest detached home, not public lobby/motel or manor. Preserve assets/art/travel/doorways/house.png at exact1024x1536 opaqueRGB. Rounded residential aperture173.00000102 by219.99999335 at1247.00000202,447.00000443 through1420.00000304,666.99999778. Bottom-aligned full-width cover uses height0.847784169761; top233.803515px cropped, no sidecrop. Keep essential identity below234 and preserve exact rounded data/hinge/timeline.
+
+## Direction
+Approved room's plum-stained horizontal timber walls, dark burgundy floorboards, muted plum sofa and warm solid wood coffee/dining tables are primary. Facade supports modest amber domestic lighting and simple curtain/window shapes. Show a setback side sofa with plain cushions, simple wooden side table and amber lamp, restrained opposite/rear dining unit with grounded legs. One quiet slate-blue window or blank dark wall panel; no scenic painting or text. Small flat plum rug can sit beneath furniture but cannot form a raised platform or block central entry. Keep a clear central aisle and lower35percent uninterrupted dry timber floor. Furniture bases stay above clearzone. No bedside/hotel composition or casino props.
+
+Simplify old insert's floral textiles, lace, hanging plants, flowers, basket, crowded books and ornate lamp. Home should feel comfortable and cared for with mild wood wear, not ruined or luxurious. Crisp pixel clusters, stepped edges and controlled rich amber/plum contrast; no blur, finegrain haze, mirrorwater or goldwash. No people/live inventory/bags/papers, UI/lettering, exterior, outerdoor/jamb/threshold or new entrancearch. Side/back identity must survive center actor and topcrop. Decorative glimpse only, no gameplay layout changes.
+
+## Gates
+Current four synthetic production-overlay methods and original entrance/doorway gates after Apartment export drains. Director/auditor actual opening/contact/closure review before one-source release. Save one PNG/prompt/base64/SHA. Independent raw and final actual aperture audit verifies contact, furnituregrounding, sideidentity, no falsejamb, exact crop/no outsidechange, original state/entrance comparisons, automaticcompletion/no-pointerliveness and actualvideo decode. Synthetic does not prove legalroute/load/Web. Preserve20 interiors and11 prior doorways. Existing artbranch/TEST only after finalPASS; main/NEXT unchanged. Final campaign completion must distinguish delivered assets from scoped evidence limits and does not authorize Phase11 retirement. Concise proof/provenance in Git, raw E drive.

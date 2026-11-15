@@ -1,0 +1,118 @@
+{
+  "source_commit": "e9c16a5f4415a63e25c71a9f7483bf10ee01c797",
+  "all_source_files_unchanged": 7546,
+  "contract": {
+    "texture": "res://assets/art/travel/exteriors/house.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "door_kind": "hinged",
+    "door_polygon_uv": [
+      [
+        0.70293123,
+        0.50394589
+      ],
+      [
+        0.80045096,
+        0.50394589
+      ],
+      [
+        0.80045096,
+        0.75197294
+      ],
+      [
+        0.70293123,
+        0.75197294
+      ]
+    ],
+    "hinge_side": "left",
+    "threshold_uv": [
+      0.75169109,
+      0.76662909
+    ],
+    "inside_uv": [
+      0.75169109,
+      0.74182638
+    ],
+    "road_y_uv": 0.9470124,
+    "source_top_y_uv": 0.3,
+    "approach_waypoint_uv": [
+      0.70913191,
+      0.84780158
+    ],
+    "foreground_kind": "integrated_driveway",
+    "setting_kind": "private_garden_driveway",
+    "backdrop_texture": "res://assets/art/travel/backdrops/house.png",
+    "layered_scene": true,
+    "doorway_texture": "res://assets/art/travel/doorways/house.png",
+    "doorway_reference_size": [
+      1024,
+      1536
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSEDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\house.png": "196df95eda95f7656f45104f1c6c8b8ca377d57d5df112bb6ed2f9e06a5d7c89",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSEDOOR-BASELINE-20261115\\assets\\art\\travel\\doorways\\house.png": "593b09309ffa6cdc3cf1c47aac96fc87c5a59a8468e1042e5848d49cbae20218",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSEDOOR-BASELINE-20261115\\assets\\art\\travel\\backdrops\\house.png": "2e00b372ea778ecb2f74ce90d103257434114c912d6ee9ca8c63939453435d54",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSEDOOR-BASELINE-20261115\\assets\\art\\environments\\house\\background.png": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSEDOOR-BASELINE-20261115\\data\\art\\environments\\house.json": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0"
+  },
+  "entrance_checks": 11066,
+  "entrance_failures": [],
+  "doorway_checks": 137,
+  "house_pixels": {
+    "colored_changes": 21000,
+    "destination": "house",
+    "distinct_colors": 18922,
+    "outside_changes": 0,
+    "path": "res://assets/art/travel/doorways/house.png",
+    "source_mismatches": 0,
+    "verified_source_samples": 693
+  },
+  "preview_checks": 2312,
+  "cases": [
+    {
+      "mode": "walk",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "bus",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "taxi",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "night_cab",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    }
+  ],
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\job.json": "3213b0e1c6b01eab598b8c6b31c55c72119621758574f21e4dfe88ff3469113b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\launch-claim.json": "8757989dea0b61661d61e8697d57a8fae16bcdece6fcfbdf3196768444d42887",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\post_source_verification.json": "a82646e696f8de1a39ac304e928b67f2c4ce5334e433c925a66e7f4192b56d83",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\source_identity.json": "2ec6a5fe65ed1dd00541db776a45460f6adb9340cd7e3b7e925a49c4bf003b95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\storage-manifest.json": "b90703cf1ba2d1d6ca44909fb1e16c0682dd80f25883a2e9dae5993cddf6f3a3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "c3ff54542ab8882d77254a107b86b6765aefd1c96a3b12beb40c8708c7a17968",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\job.json": "2ea400ed89d7dd630ec813a97870bc9c07e966771643f9c7004bccf50e78ad4f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\launch-claim.json": "6a152491c83f0007141459426c3e20e7b7e760a960c739eca4a0f4f1fdf4056c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\post_source_verification.json": "a82646e696f8de1a39ac304e928b67f2c4ce5334e433c925a66e7f4192b56d83",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\source_identity.json": "2ec6a5fe65ed1dd00541db776a45460f6adb9340cd7e3b7e925a49c4bf003b95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\storage-manifest.json": "abc18f2708864f2eaed3964f087440602a861a929f5165170a571283c8aa6c3a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "6a62d44f3c3c6f476675eeaddcda195bace6e70279dfdc932281d3b9f7bff679",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\job.json": "e2a6e9dec3b9ba2be60b534d00f48ea2d84f31d7c0c50b97497550bac65fbd0e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\launch-claim.json": "b3a8cc64eae6c4907654fedd70f664fc05478691b2da819cead27432f7441247",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\post_source_verification.json": "a82646e696f8de1a39ac304e928b67f2c4ce5334e433c925a66e7f4192b56d83",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\preview_manifest.json": "b0d51b657453b1aa4a81839e774a0d67fdbc06a3d93f73020870609c3e39e9fb",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\source_identity.json": "2ec6a5fe65ed1dd00541db776a45460f6adb9340cd7e3b7e925a49c4bf003b95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSEDOOR-20261115-cinematic-01\\evidence\\storage-manifest.json": "86c3585e5d31acf6f43648af833547e4e8089a1d4aba537406f9451473fa18a5"
+  },
+  "scope": "Synthetic four-method production-overlay baseline. Original entrance now green after independently approved Corner alpha repair. No legal route/destination load/live Web claim."
+}
