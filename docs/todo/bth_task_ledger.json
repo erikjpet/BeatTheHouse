@@ -43558,7 +43558,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "High-Limit source planning; Base context preparation underway",
+      "status": "High-Limit Base source captured; clean guide and exact two-front review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43581,9 +43581,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/grand_high_limit.md",
           "summary": "Distinct cyan private-room source; Base only unless production naturally supplies another context. No forced public scenarios."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/grand_high_limit_preart_baseline_20261115.json",
+          "summary": "14771 checks/no findings;9objects; actual two table fronts, no host replay. Normal/low-detail and clean-floor-helper-only captures;7344sourcefiles+c5 unchanged."
         }
       ],
-      "next_action": "Capture exact High-Limit Base, fronts and source normal/low-detail/clean guide before generation.",
+      "next_action": "Director/auditor review Base and clean guide, preserving VIP desk without invented host replay, then release one source.",
       "blocker": {
         "state": "none",
         "kind": null,

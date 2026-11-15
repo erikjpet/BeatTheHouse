@@ -1,0 +1,26 @@
+{
+  "source_commit": "d0bb57dcd98ab11d0c5e57f28a36f2c88b1a07f6",
+  "checks": 14771,
+  "contexts": {
+    "__none": {
+      "objects": 9,
+      "selected": 9,
+      "typed_paints": 9
+    }
+  },
+  "distinct_ids": 9,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-union-01\\evidence\\grand_casino_high_limit_preart_union.json",
+  "union_sha256": "382decbb7d3906f0b7cce5324a603ee43de81ac9f0ae93708f3844ded55f4e20",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "5141c4c871e445e2af437d9e8bd2d76cc60082e3af766dd4ed5c24cfb323c8e0",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\grand_casino_high_limit_legacy_geometry_1800x860.png",
+    "sha256": "b16394e2aa44def837efa560b3f50216724d3652d7432d3620dc9edc02d67c6a"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7344,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exactd0bb57dc/c5 initial Base only, no forced public scenarios; no later lifecycle/open-hours/save-revisit/art acceptance."
+}
