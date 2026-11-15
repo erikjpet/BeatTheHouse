@@ -1,0 +1,80 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+  "package_sha256": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "rooms": 19,
+  "raw_art_sources": 382,
+  "compiled_art_textures": 362,
+  "prior_18_art_packages_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Constructed Base/native art only; no rent/rest/storage transactions,save/revisit or liveWeb. PayRentcontrast marginal but decipherable at1280. NEXT/save namespace unchanged.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartment-finalize-r2-01\\evidence\\pck-diff.json": {
+      "sha256": "37ae4174c9c3afc32a35723e631c1418a11c2bb3d01171e97e2d65f066c242d2",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "removed": [],
+        "changed": [
+          ".godot/uid_cache.bin",
+          "build_manifest.json",
+          "data/art/environments/index.json"
+        ],
+        "unchanged": 2022
+      },
+      "record_count": 31
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartment-finalize-r2-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "fa59a084c0c28358f8fee490d787e496faa9750632d0c068138f6e1a4ab22af6",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 382,
+        "compiled_textures": 362
+      },
+      "record_count": 362
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartment-publish-r2-01\\evidence\\publication.json": {
+      "sha256": "2484659c2fcd8818e35375035d82d2b9478d1736c599c5a951232a4befe1b87e",
+      "summary": {
+        "source_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388"
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartment-served-r2-01\\evidence\\served-proof.json": {
+      "sha256": "5ba5b64dc552cd02f225014c74ac320697f89085c19570f73fc2a0fec2d74768",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+        "enabled_art_ids": [
+          "gas_station_casino",
+          "corner_store",
+          "back_alley",
+          "motel",
+          "bar",
+          "pawn_shop",
+          "jazz_club",
+          "punchline_club",
+          "small_underground_casino",
+          "punchline_back_room",
+          "kitty_cat_lounge",
+          "delta_queen",
+          "beach",
+          "grand_casino",
+          "grand_casino_high_limit",
+          "grand_casino_back_room",
+          "grand_casino_cage",
+          "motel_room",
+          "apartment"
+        ],
+        "test_args": [
+          "--",
+          "--bth-art-test"
+        ],
+        "persistent_paths": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+        ]
+      },
+      "record_count": 11
+    }
+  }
+}

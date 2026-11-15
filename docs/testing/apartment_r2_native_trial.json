@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
   "decision": "Final scoped Apartment R2 PASS. Actual Base and frames030/061 personally reviewed.31static,58native/RM,28/28normal+simulatedlowdetail visibility, exact geometry/publication, original no-pointer, full-decodes pass. Sofa/wall/floor sampled patches each byte-stable across62frames8.131512s at1280. Encoded63frames8.28s. No runtime change.",
@@ -218,5 +218,6 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-APARTMENT-20261115-grain-r2-01\\evidence\\static-grain-stability.json": "70893d1f16a136b99bde9fe97ddb8c53045378a8914785786f9e52560b922ba8"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-APARTMENT-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "fdc1e0498b2f2d30d021bc64664c1230b0fdf9e2cbe2acb5c9ca06510ec63dcb"
+  "final_audit_receipt_sha256": "fdc1e0498b2f2d30d021bc64664c1230b0fdf9e2cbe2acb5c9ca06510ec63dcb",
+  "delivery": "docs/testing/apartment_r2_test_delivery.json"
 }

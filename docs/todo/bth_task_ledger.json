@@ -43854,19 +43854,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Apartment R2 scoped native PASS; TEST export pending",
+      "status": "Apartment R2 native PASS and19-room TEST verified; live Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+          "evidence": [
+            "docs/testing/apartment_r2_native_trial.json",
+            "docs/testing/apartment_r2_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No Apartment activation."
+        "commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+        "evidence": [
+          "docs/testing/apartment_r2_test_delivery.json"
+        ],
+        "scope": "19-room TEST served bytes verified; liveWeb gameplay unverified."
       },
       "scope": [
         "Apartment initial Base, no forced rent/rest/storage transactions."
@@ -43888,7 +43898,7 @@
           "summary": "28visibility/58motion/31static and stable sampledpatches,Baseequality,liveness,decode."
         }
       ],
-      "next_action": "Publish exact approved R2 to TEST and verify prior art,NEXT and saves.",
+      "next_action": "Owner playtest TEST; continue House baseline without changing NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
