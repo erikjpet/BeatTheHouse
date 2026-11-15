@@ -44924,6 +44924,12 @@
           "evidence": [
             "docs/testing/environment_art_final_native_travel_acceptance_20261115.json"
           ]
+        },
+        {
+          "sha": "2987c795a5388b4a8a3867ac423febbb17d6a4f0",
+          "evidence": [
+            "docs/testing/environment_art_missing_art_expectation_fix_20261115.json"
+          ]
         }
       ],
       "deployment": {
