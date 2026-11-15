@@ -1,0 +1,118 @@
+{
+  "source_commit": "cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26",
+  "all_source_files_unchanged": 7534,
+  "contract": {
+    "texture": "res://assets/art/travel/exteriors/grand_casino.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "threshold_uv": [
+      0.7570462232,
+      0.7903043968
+    ],
+    "inside_uv": [
+      0.7570462232,
+      0.7632468997
+    ],
+    "road_y_uv": 0.95,
+    "door_kind": "double_hinged",
+    "door_polygon_uv": [
+      [
+        0.694475761,
+        0.5862457723
+      ],
+      [
+        0.8196166855,
+        0.5862457723
+      ],
+      [
+        0.8196166855,
+        0.7869222097
+      ],
+      [
+        0.694475761,
+        0.7869222097
+      ]
+    ],
+    "hinge_side": "left",
+    "foreground_kind": "integrated_ground",
+    "setting_kind": "casino_forecourt",
+    "backdrop_texture": "res://assets/art/travel/backdrops/grand_casino.png",
+    "backdrop_reference_size": [
+      1774,
+      887
+    ],
+    "layered_scene": true,
+    "doorway_texture": "res://assets/art/travel/doorways/grand_casino.png",
+    "doorway_reference_size": [
+      1536,
+      1024
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-GRANDDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\grand_casino.png": "9112d9ca7ffb7e2d41a7d9ded23433daea92afa7f4f836b3635b1ae975d08f89",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-GRANDDOOR-BASELINE-20261115\\assets\\art\\travel\\doorways\\grand_casino.png": "2cafee170152ea200a92bc83204c9add2d791115916056404940658723cba883",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-GRANDDOOR-BASELINE-20261115\\assets\\art\\travel\\backdrops\\grand_casino.png": "ffbc51384af6222f40d9123dda7da4f76bbe486e9bacc5ef9e5607d7f75b69d2",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-GRANDDOOR-BASELINE-20261115\\assets\\art\\environments\\grand_casino\\background.png": "f5b26c4f16b4ff419154c555d48f553013d8c75363284c0090b7eff07d19eb9f",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-GRANDDOOR-BASELINE-20261115\\data\\art\\environments\\grand_casino.json": "5cc2d0c568552a88557f0f0eee89655bc86a5e73c535e822e09b267901044bcd"
+  },
+  "entrance_checks": 11066,
+  "entrance_failures": [],
+  "doorway_checks": 137,
+  "grand_pixels": {
+    "colored_changes": 23793,
+    "destination": "grand_casino",
+    "distinct_colors": 18735,
+    "outside_changes": 0,
+    "path": "res://assets/art/travel/doorways/grand_casino.png",
+    "source_mismatches": 0,
+    "verified_source_samples": 702
+  },
+  "preview_checks": 2312,
+  "cases": [
+    {
+      "mode": "walk",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "bus",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "taxi",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "night_cab",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    }
+  ],
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\job.json": "919f217bf85635c2c143e0ebccd3fe72c58f853c6a4f44126f06449d8fbd080a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\launch-claim.json": "de0f3cbd8e4cd499f708302e80d3008495cf7cec657be2fac3da58c1cbcc471e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\post_source_verification.json": "4e292487b80466e74a8c29d89d18c65b85533c71e12d21347daccaa519e475ec",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\source_identity.json": "a7458c601cca33c6ecdc9aa7300bbbb83e0241084a1285557c138329282aa2c7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\storage-manifest.json": "aa1fc808200bdf711780930e5721e6ac65604bc4fa3681500eca86783139bba8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "60120ea15d75b3d0a92f6d2e9095fde0a0c4666687fc2255563205ef50fb0918",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\job.json": "d504262d971aa8292673a34ecca8b7ac1bed77bce236454d79e0c891483b60ca",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\launch-claim.json": "5a27f07bbe6fd167bc8f906226683c0199461f3000518c7b26afacc15eacd5aa",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\post_source_verification.json": "4e292487b80466e74a8c29d89d18c65b85533c71e12d21347daccaa519e475ec",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\source_identity.json": "a7458c601cca33c6ecdc9aa7300bbbb83e0241084a1285557c138329282aa2c7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\storage-manifest.json": "254afe9aecbe7b7c6928fbf1d9465e761ec779c35e6ce98bfb26dd2178627160",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "0817acdbf77e5e54d58b4dfede06554eee5f4e80e3aff7efdaba6a3c552e7ead",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\job.json": "1f48e9a0a81d09874fe68a31f55f6455d5422833ae38a7e7b0a8d9b167ae38b7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\launch-claim.json": "24e7c85118488010552c9767f6f461598d8c469ca2d84bf1eb2eb50905f934ce",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\post_source_verification.json": "4e292487b80466e74a8c29d89d18c65b85533c71e12d21347daccaa519e475ec",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\preview_manifest.json": "b9f18d0095e486f539a6c861b7eb31ecfea452a72b4930b38d2bf76ab520aace",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\source_identity.json": "a7458c601cca33c6ecdc9aa7300bbbb83e0241084a1285557c138329282aa2c7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDDOOR-20261115-cinematic-01\\evidence\\storage-manifest.json": "0b4a00a1f25b273ea97f4b51a6af44985c219e7697c3192015f8117824909369"
+  },
+  "scope": "Synthetic four-method production-overlay baseline. Original entrance now green after independently approved Corner alpha repair. No legal route/destination load/live Web claim.",
+  "dimensions": "Landscape1536x1024, public grand_casino reference only; rounded contract unchanged."
+}
