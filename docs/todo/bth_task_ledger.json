@@ -6223,7 +6223,7 @@
         {
           "kind": "native_regression",
           "reference": "docs/testing/NEXT_additional_native_boundary_QA_20261115.md",
-          "summary": "Additional isolated native boundaries:11 Games launchers; Dave bus; Scratch paid159 and machine; Pusher pricing228/cold35/terminal23; Roulette social721. Foundation runtime five stages pass, one cold-music timing miss; unchanged focused rerun passes, attribution unresolved. No Web or all-games campaign completion claim."
+          "summary": "Additional isolated native boundaries:11 Games launchers; Dave bus; Scratch paid159 and machine; Pusher pricing228/cold35/terminal23; Roulette social721; Video Poker cash/chip reveal127 each. Foundation runtime five stages pass, one cold-music timing miss; unchanged focused rerun passes, attribution unresolved. No Web or all-games campaign completion claim."
         }
       ],
       "implementation_batches": [],

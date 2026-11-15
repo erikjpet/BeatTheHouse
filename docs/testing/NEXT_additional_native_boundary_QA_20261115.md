@@ -62,3 +62,13 @@ E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\found
 E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\job.json SHA256 d157841f0fae86ad10cba386531d8ecbe82ecd68b4334d28d94e88221546379b
 E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\worker.log SHA256 ff5f4710ce0e41872ddf3cc0f3f67f0f802db9aa08c5e8e32d1fc1b2ac35991b
 E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\storage-manifest.json SHA256 053fc714c24d7fd074950776daf463a5441bc00f0cc0b0f4e0eb1996cb7c0803
+
+## Video Poker reveal presentation
+
+Cash and chips variants each pass127/127 through six normal hold/draw choices, with both a payout and no-pay outcome. This is a synthetic Practice-funded host with deterministic presentation clock and renderer/SFX observations, not ordinary campaign or Web footage. Final-card timing masks results/funds, blocks a repeated pending Deal without money/RNG changes, releases reduced-motion results, and emits the win cue once. Both Jobs exit0 and release zero processes.
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-01\evidence\worker.log SHA256 ad89fd9f951ad232acc3d4a59424946a81a0460aa765ea4bc63102a9a8a7a4fd
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-01\evidence\job.json SHA256 36b87910fad05a6a7a928e733eff85ddd32f6a9727df82283ec4eb70ef8c3a2d
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-01\evidence\storage-manifest.json SHA256 0497756bde111df9681ab012776be4c1046467d086f9df139f786a1fd9c172dd
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-02\evidence\worker.log SHA256 338a8bbd98c9320de27b402eff297d9388f57ce9871cd538b5ad2e0a23304f7d
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-02\evidence\job.json SHA256 b245ca287290d19c4da6578532d8c63e2b99e346edd3708a2ef63955065ec7f2
+E:\CodexQA\BTH\runs\next-bugfinder-vp-reveal-20261115-02\evidence\storage-manifest.json SHA256 deb9339a4447be6b362079de8fd70320baf631d4a34b89cd8584edb7ad16054a
