@@ -44277,7 +44277,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Pawn four-method pre-art baseline PASS; source review underway",
+      "status": "Pawn R1 static GO; isolated four-method native trial active",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44304,9 +44304,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_pawn_baseline_20261115.json",
           "summary": "11,066 entrance,137 doorway and2,312 preview checks pass;92 samples,7,518 source files unchanged."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/pawn_doorway.md",
+          "summary": "Exact special-size source direction; sealed unchanged PNG approved for trial only."
         }
       ],
-      "next_action": "Director and auditor review current aperture/references, then release one source.",
+      "next_action": "Complete original gates, actual four-method preview and independent final audit before TEST.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44315,7 +44320,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:43:42.913493+00:00"
+      "updated_at": "2026-11-15T08:53:12.301714+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-JAZZ-CLUB-01",
