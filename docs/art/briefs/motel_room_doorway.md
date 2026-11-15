@@ -1,0 +1,14 @@
+# Motel private room doorway source planning v1
+
+Planning only until actual baseline review. Umbrella doorway plan applies; native owner controls engine/export slot. This is motel_room, NOT motel public reception. Existing internal-travel no-animation rule stays unchanged; synthetic four-method presentation does not authorize new eligible travel routes.
+
+## References and contract
+Director personally viewed assets/art/environments/motel_room/background.png, own travel exterior and old doorway in the art worktree. Preserve assets/art/travel/doorways/motel_room.png at exact1024x1536 opaqueRGB. Rounded residential contract aperture159.00000104 by256.00000597 at1273.99999818,439.99999557 through1432.99999922,696.00000154. Full-height centered cover crops35.000008px each side, no topcrop. Preserve UVs/geometry/hinge/timing exactly.
+
+## Visual identity
+Modest lived-in motel room, worn but functional, matching approved mauve plaster, dark burgundy timber trim and flooring, plum textiles and tiny subdued turquoise edging. Facade muted mauve/turquoise/amber supports warm simple bedside illumination. Replace old ornate floral wallpaper, landscape painting, elaborate brass lamp and full carpet with simpler approved materials. A single modest bed set back to one side with plain plum bedding and one pillow, small wood nightstand with simple amber lamp, compact blank dark CRT on the opposite rear side may establish room identity. Bed here is a decorative glimpse, not a second live gameplay object or an alteration to room state. No reception counter, casino props, people, lettering, signs, numbers, personal papers, bags or live inventory. No additional doors/outerjamb/threshold/exterior/UI. No new NO VACANCY text baked.
+
+Clear central aisle and lower35percent dry dark wood floor. Bed/nightstand/CRT bases set back above clear zone so feet do not appear blocked. A small flat plum rug may sit under bed but not become raised platform or fill threshold. Retain deliberate crisp pixel clusters and local warm highlights, no blur/photographic finegrain, blanket gold wash or mirrored floor. Mild plaster wear only, not ruin. Side/back identity must survive narrow sidecrop and central actor. No need invent posters/plants/excess furniture.
+
+## Gates
+Baseline current four methods and original entrance/doorway checks after Grand export drains, then director/auditor actual opening/entry/closure review before one-source release. Save one exactPNG/prompt/base64/SHA. Final independent raw/aperture review requires correct floorcontact, retained room identity, no falsejamb, no outsidepixelchange, exact state and entrance comparisons, automaticcompletion/no-pointerliveness and actual video decode. Synthetic presentation is not legal-route/destination-load/Web coverage. Preserve20 interiors and9 preceding doorways. Existing artbranch/TEST only after finalPASS; no main/NEXT. Concise proof/provenance in Git; raw E drive.
