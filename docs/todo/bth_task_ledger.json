@@ -44137,7 +44137,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source planning; baseline and individual art brief pending",
+      "status": "Bar four-method pre-art baseline PASS; source review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44159,9 +44159,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/travel_doorways.md",
           "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/travel_doorway_bar_baseline_20261115.json",
+          "summary": "11066 entrance/137doorway/2312preview PASS;92samples,7510 sourcefiles unchanged."
         }
       ],
-      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "next_action": "Director and auditor review current aperture and references, then release one source.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44170,7 +44175,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+      "updated_at": "2026-11-15T08:09:19.590145+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-MOTEL-01",
