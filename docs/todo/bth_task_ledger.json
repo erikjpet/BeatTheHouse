@@ -37808,8 +37808,10 @@
             "id": "repair",
             "description": "Reviewed scoped repair and complete four-delivery curve plus adjacent checks with commit",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001_20261115.md"
+            ]
           }
         ],
         "coverage": {
@@ -37818,14 +37820,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "TEST_REPAIR_VALIDATED_PENDING_COMMIT",
+      "state": "complete",
+      "status": "TEST_FIX_COMMITTED_VALIDATED",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "bc2a9b32a25e315dfb8f6db54bbe14feca343400",
+          "evidence": [
+            "docs/testing/BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -37840,7 +37849,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Independent final review, commit and push test-only repair with proof; then close this scoped test discrepancy using the commit.",
+      "next_action": "Scoped test discrepancy closed with reviewed commit and focused checks. Continue separate general gameplay and browser acceptance objectives.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -37850,7 +37859,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T20:10:55.270781+00:00"
+      "updated_at": "2026-11-15T20:17:49.810704+00:00"
     }
   ],
   "batches": [

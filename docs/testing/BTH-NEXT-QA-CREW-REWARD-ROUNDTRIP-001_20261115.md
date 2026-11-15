@@ -81,3 +81,5 @@ Final test source SHA256 `b73aaeaecc929a1f5e981e016a2bf96392f8b8c0d2b7cd21704245
 
 Manual reconciliation run 29: 109 pre-existing global findings remain; zero findings for this newly registered scoped repair. Other backlog objectives and original BTH061-006 stay open.
 Independent review approved the scoped test repair after the final matrix. No runtime/NEXT behavior change is claimed.
+
+Scoped repair committed and pushed to main: bc2a9b32a25e315dfb8f6db54bbe14feca343400. This closes only the stale regression-fixture task, not general gameplay acceptance.
