@@ -6254,6 +6254,11 @@
           "kind": "ordinary_generated_campaign_native",
           "reference": "docs/testing/NEXT_ordinary_Crew_poker_QA_20261115.md",
           "summary": "Grand Audit Roster to Punchline14/14; earned Back Room doors7/7; live Crew preflop Save/Continue8/8; natural hand +$20 and settled coldContinue7/7. No injected access/outcome; Web unverified."
+        },
+        {
+          "kind": "ordinary_generated_campaign_native",
+          "reference": "docs/testing/NEXT_ordinary_Crew_hold_QA_20261115.md",
+          "summary": "Actual Bishop job acceptance5/5, offered travel7/7, midpoint/terminal Continue and natural $30 hold resolution15/15. No stale host or repeated economics. Native only; broad acceptance open."
         }
       ],
       "implementation_batches": [],
