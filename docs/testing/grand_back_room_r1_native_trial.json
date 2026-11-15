@@ -1,0 +1,251 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
+  "decision": "Final scoped Grand Back Room R1 audit PASS. Personally inspected actual Base and frames000/030/061:62frames8.1263567s, all16 motifs62 distinct applicable states/visible flags. Native66checks, conservative Base visibility23/23, exact layout/object/publication equality, original liveness and both full-decodes verified. Two exact fronts, OFFICE and legs retained; no corrections after fitting. Existing art branch and cumulative TEST only.",
+  "limitations": "Initial Base3objects only; Rourke/later boss progression, saves/revisits and live Web not reached. Low-detail7 is documented subset approximation. Corrected source-guide capture03 supersedes rejected02; only QA painter arguments were repaired, production unchanged.",
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grandback_v1r1.py": "ff4058a7d0a7a6ac33061cc6735ae605362458631c7db8780bc3c240c0d9d0bf",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grandback_clean_guide.py": "264c534bfc0d41b776c6daf55eae4749061bac181aca44ccea361856cdabab34",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grandback_occlusion.py": "f1617961c9be6d17a9fd23d9cb84189dcd4b853d0eb5082d5bb70843a386f12b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grandback_r1.py": "57ec7cb18a129c15a751c77d45f938fed3d2c710c7e0740b0a183f4679b8fcc1",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_highlimit_v1r1.py": "5139d13bf08399d8574ff2fc04b4b89b9fbdf43a84cd0112b6bedc3c04ac41b8",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grand_v1r1.py": "c41a85ba8b80a9544cbd364795267ee1bd0ce41eb84782c0f1e3d16e2037fcf4"
+  },
+  "payload_files": {
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": {
+      "sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+      "bytes": 591,
+      "size": [
+        468,
+        124
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/background.png": {
+      "sha256": "f9d2ca14641e3ac7dd67c92af9453ce4993f0a7dec22156b4f96d6f046f8fcdf",
+      "bytes": 520034,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": {
+      "sha256": "e8aed6c50f04bd4475f2c1a33a03fccbcd10ee4ebe984345be59f6afa082cd5f",
+      "bytes": 12409,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": {
+      "sha256": "9f9c2c24e735c177d16ebdfacb2d91f7a0fb39aa508d7a5f9791fefc97c38489",
+      "bytes": 12261,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/grand_casino_back_room.json": {
+      "sha256": "bb6d6c293824bf9e6347dfba6db5df0e874469fc11e0d094b8f1bd108f45a067",
+      "bytes": 7083
+    },
+    "data/art/environments/index.json": {
+      "sha256": "7625900c1d43ea9891ef3ea3db52b7cf9448be786612ae912f959c26b7a0644b",
+      "bytes": 382
+    }
+  },
+  "baseline": "94155957c3bdce01d801da013cbcd3eed3289305",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-preflight-r1-01\\evidence\\grandback-r1-preflight.json": "006d7f6e24189328a658ac2c58ab011d51762d02a4816346b9b3d0c8eb3aee44",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-preflight-r1-01\\evidence\\job.json": "4e49eeca367077c08d8ecd7797ca81df22409ca6c4094d100c654d7ce730bbe7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-preflight-r1-01\\evidence\\launch-claim.json": "6a4fbf0c1280fa0e6367bc74f13fdf9e2480f259321aa912feaff7e080a31630",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-preflight-r1-01\\evidence\\storage-manifest.json": "5c75e65452a5702aec155ee7fd656e72243b72cff064f25a5893fe23aa5e50c3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-preflight-r1-01\\evidence\\worker.log": "993f5087d5b4a0dd30f12e6c0f76aa0a2a3b91ac2b66b6e6ae952cab3f5a120d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-occlusion-r1-01\\evidence\\grandback-base-occlusion.json": "3b3cd6194a8ee3bfb33f7d43c5299aca694a5ff8429152f9c23935c2c22c0bd9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-occlusion-r1-01\\evidence\\job.json": "1e09ec622375b97797da9bddf365a74dae245df13a7b5c5992ddef5e9a5a3531",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-occlusion-r1-01\\evidence\\launch-claim.json": "e2543b62fdf4ccfb9cb92f7d725490a1c10c6a138109e8e48974113388b211ac",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-occlusion-r1-01\\evidence\\storage-manifest.json": "fa854b665e5783aa35e6f0d2d922822546f0e038f1d47320cb327e2d011ee01c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-occlusion-r1-01\\evidence\\worker.log": "e78f530448944ff1dc5ec475b87f04d142bba29c8ca58a8a4efdcb68590a089f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\comparison.json": "54aeab66473da5c4d77a032a4b1e448e398906589bfaaee100ec47727f372394",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\grandback_capture_inputs.json": "98d237141cd6bc1cd1de6de29d57b269677a3eb61943aa1b09b4e984b649ca6e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\grandback_trial_contexts.json": "aa916f8d610665ee4d31356d38dec9f68b36364a1b22ffd14097a6bb5d4dc010",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\job.json": "ab22aaa7c38bb24f92e70be7f5ff31dba64a844706cb32ac4607b50e65d18f94",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\launch-claim.json": "0906d6f2758fe8b7521a5d03c35153756852ca9ecd9e2a09683cde3e6a682aab",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\post_source_verification.json": "ba919836d02a8a3e46c33a9cacb26d84761b9fe0d5e0e5456325268bb9ab5dc4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\source_identity.json": "33f53eadd5cdad2b222de01c1a6ef958454b171e75179f23e60281b6a0a5947c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\storage-manifest.json": "62d2503245037d120a5f173c7b9b6ddacc94fac459b6372839f61b5c6a05b4c2",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-comparison-01\\evidence\\worker.log": "8434ce61e2d7660d8b5b7c8f9966b532941112ade02e190c47480b5701529164",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\grandback_capture_inputs.json": "98d237141cd6bc1cd1de6de29d57b269677a3eb61943aa1b09b4e984b649ca6e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\grand_casino_back_room_animation_probe.json": "d11210fba464d96340eb89a89736d174829864ada2ce1fee07874b96cb4b68da",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\job.json": "661d9fee2ceece2965a22582152e508ebfad76a587a0e8d86a31daffaec52f15",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\launch-claim.json": "167faf6dd28ed21b7ec25c9d3e7d6a382fd4ce8fa8bace2c0a4138b0456ee6cd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\post_source_verification.json": "ba919836d02a8a3e46c33a9cacb26d84761b9fe0d5e0e5456325268bb9ab5dc4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\source_identity.json": "33f53eadd5cdad2b222de01c1a6ef958454b171e75179f23e60281b6a0a5947c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\storage-manifest.json": "80ee6335fa4926619fea148c78066aee9f2dd4f0b5720d76a4cd33797ff8fe2c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-motion-01\\evidence\\worker.log": "34990870ab7ded09e8598cb04176ce70dec562e0fe0eca43e465183fd7e67701",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\grandback_capture_inputs.json": "98d237141cd6bc1cd1de6de29d57b269677a3eb61943aa1b09b4e984b649ca6e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\job.json": "6a40c2731fc9c548e824ae8479be0a01814c694adb9105f09aba63f16ccfc99e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\launch-claim.json": "8938122bc6dbf1e2be979188d899c5ceae7e41b02c77d858b222295d7c6b6c7e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\post_source_verification.json": "ba919836d02a8a3e46c33a9cacb26d84761b9fe0d5e0e5456325268bb9ab5dc4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\source_identity.json": "33f53eadd5cdad2b222de01c1a6ef958454b171e75179f23e60281b6a0a5947c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\storage-manifest.json": "d883f2766e25fa4c1fb6fcd9bfa3663e160d597ebda197e55a60235b3892a515",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\capture\\animation_capture.json": "cc11d8012d5ff8a1baabbe8aa3d7d265621af5d50b295daa80d51d7a2c8777e0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\worker.log": "2c49e5add4b1f1b3904d424d67220b29a09a52629e5e39dcac003911ee7da751",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\grandback_capture_inputs.json": "98d237141cd6bc1cd1de6de29d57b269677a3eb61943aa1b09b4e984b649ca6e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\job.json": "c2b42d165b1f7c63576533a49aac6bb85a62114f89fb0f873824d26b50dbb2b6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\launch-claim.json": "d97c684e57e80a74fa9a3224948a78f5a4ce9e6f484b42a33d90cdf51e265046",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\post_source_verification.json": "ba919836d02a8a3e46c33a9cacb26d84761b9fe0d5e0e5456325268bb9ab5dc4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\source_identity.json": "33f53eadd5cdad2b222de01c1a6ef958454b171e75179f23e60281b6a0a5947c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\storage-manifest.json": "311e6d2d56d99b81e52eca717c6f70f6c583282b9f5ce8bd31c549a95cf825ad",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\grandback_capture_inputs.json": "98d237141cd6bc1cd1de6de29d57b269677a3eb61943aa1b09b4e984b649ca6e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\job.json": "205a6688baefdd19d136606877679b26d80652317722fb74b75a476489d0bf69",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\launch-claim.json": "d1a89c6d0c1aa98cd5944115cca4f386c70299d413a2abd3495f1c38874d78ea",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\post_source_verification.json": "ba919836d02a8a3e46c33a9cacb26d84761b9fe0d5e0e5456325268bb9ab5dc4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\source_identity.json": "33f53eadd5cdad2b222de01c1a6ef958454b171e75179f23e60281b6a0a5947c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\storage-manifest.json": "2cb39cbd62f9cab351df37b421a5a7e6b27b909daa6a566e28955a4415f89e24",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\video-verification.json": "770458f25925556671e005b5d205987568397ec94143e7356c8b0cf811a5ee7e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-encode-01\\evidence\\worker.log": "e581c15871a68bce9ed3c1204ae08efad10bf9b0dfdbb9c97bdc1733b4e3cba1"
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "16a764aee1c5b2d1ff3d1a9cfb7b7e01a4f8f10cdfe8f6949f3a05b21c648cf5"
+}
