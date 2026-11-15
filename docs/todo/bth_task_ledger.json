@@ -44419,7 +44419,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Punchline public four-method baseline PASS; source review underway",
+      "status": "Punchline public R1 scoped native audit PASS; TEST delivery pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44451,9 +44451,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/punchline_doorway.md",
           "summary": "Planning-only public Punchline doorway direction; not hidden casino."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/punch_doorway_r1_native_trial.json",
+          "summary": "Exact sealed asset, original gates and four-method independent actual visual audit pass."
         }
       ],
-      "next_action": "Director and auditor review current public aperture and references before source release.",
+      "next_action": "Publish exact approved public doorway PNG to cumulative TEST and verify served identity/assets.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44462,7 +44467,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T09:30:22.163373+00:00"
+      "updated_at": "2026-11-15T09:39:44.040643+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-KITTY-CAT-LOUNGE-01",

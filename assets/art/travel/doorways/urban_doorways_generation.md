@@ -81,3 +81,7 @@ One generated source accepted unchanged at 1024x1536 RGB under docs/art/briefs/b
 ## Pawn Shop doorway R1, 2026-11-15
 
 Replaced only pawn_shop.png with exact approved raw image b01a813bc488d34c65d2fbfd46c99c1f924d21ca0e0401600449281f0dccc1d2 at existing 1086×1448 size. Source direction: docs/art/briefs/pawn_doorway.md. Native proof: docs/testing/pawn_doorway_r1_native_trial.json. Four synthetic travel methods passed; this is not legal-route/loading/browser certification. No travel data, timing, aperture or runtime changes.
+
+## Punchline public doorway R1, 2026-11-15
+
+Replaced only small_underground_casino.png with approved unchanged image4b0bc06dfc8ac20ef36e1d8706b4aa84a1d354f60737461d86a0f9bc4ae4c790 at1024×1536. Public punchline_club reference, not hidden casino. Direction docs/art/briefs/punchline_doorway.md; proof docs/testing/punch_doorway_r1_native_trial.json. Four synthetic methods passed; no legal-route/loading/browser certification. Runtime, timing, aperture and crop untouched.
