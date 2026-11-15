@@ -38130,6 +38130,71 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-15T20:51:53.899569+00:00"
+    },
+    {
+      "id": "BTH-TEST-TRAVEL-PERF-001",
+      "kind": "objective",
+      "name": "Investigate shared NEXT and TEST travel slowdown",
+      "group": "current",
+      "state": "open",
+      "status": "IN_PROGRESS_RENDERED_REPRODUCTION_REQUIRED",
+      "owner": {
+        "name": "dot gameplay QA and independent performance reviewer",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "bounded_native_profile",
+          "reference": "E:/CodexQA/BTH/runs/test-travel-perf-prepare-20261115-01/evidence/diagnostic-summary.md",
+          "summary": "User reports NEXT and TEST slowdown. Native generated travel preserves eight-second animation; cold immutable inactive-room compilation creates a measured save hitch. Browser sustained slowdown unverified."
+        },
+        {
+          "kind": "diagnostic_proof",
+          "reference": "docs/testing/BTH-TEST-TRAVEL-PERF-001_20261115.md",
+          "summary": "Native controls and rejected optimization retained; shared slowdown remains open."
+        }
+      ],
+      "next_action": "Obtain supported rendered/Web reproduction; proposed bulk-copy optimization was rejected after actual-route snapshot123.0ms versus122.8ms baseline. No production patch or deployment claimed.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T22:42:52.236538+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T22:42:52.236538+00:00",
+      "scope": [
+        "Shared travel slowdown diagnosis and scoped correction on main/NEXT and art/TEST if supported.",
+        "Preserve immutable save snapshots, exact numeric/packed values, durability, animation and source authority."
+      ],
+      "parent_ids": [],
+      "objective": {
+        "text": "Diagnose and fix travel cutscene slowdown reported on NEXT and TEST, preserving game state, save durability and all animations.",
+        "source": "Current user report relayed through /root to this assigned QA worker on2026-11-15.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "shared-travel-slowdown",
+            "description": "Confirm causal correction with faithful before/after timing and focused immutable snapshot/animation regression evidence; deploy shared fix to NEXT and TEST if demonstrated.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      }
     }
   ],
   "batches": [
