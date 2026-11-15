@@ -43994,7 +43994,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Gas doorway R1 sealed; isolated native trial underway",
+      "status": "Gas doorway R1 scoped native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44026,9 +44026,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/gas_doorway.md",
           "summary": "Exact source release and static candidate; no final activation."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/gas_doorway_r1_native_trial.json",
+          "summary": "Four-method pixel/state audit and full movie; known11 Corner failures unchanged."
         }
       ],
-      "next_action": "Verify exact aperture and four-method player contact, then independent final audit.",
+      "next_action": "Publish exact approved doorway with cumulative20 interiors to TEST and verify.",
       "blocker": {
         "state": "none",
         "kind": null,

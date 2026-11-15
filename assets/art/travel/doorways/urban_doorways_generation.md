@@ -6,7 +6,7 @@ Generated with the built-in image-generation tool on 2026-11-12. Final PNGs reta
 
 - bar.png: 1024 × 1536 pixels; SHA-256 6df133e3ba1210f93c97372ecbcc6774044860dbe1ddc530d09836a63c6578b0.
 - corner_store.png: 1024 × 1536 pixels; SHA-256 e8bbe2575c7bcd63f89e079f53482455b26d429a18a2f89c9b54190cbebf5794.
-- gas_station_casino.png: 1024 × 1536 pixels; SHA-256 735e45a97abd60253c50f8512cb870324d97657c60ba478dcf1bd34504cc8d9c.
+- gas_station_casino.png: 1024 x 1536 pixels; SHA-256 c964a86f89b8890b6d993d0358ad47ee428935121ca08ffa9106d693d797caec (approved replacement on 2026-11-15).
 - small_underground_casino.png: 1024 × 1536 pixels; SHA-256 7898919f4190ddf5148f4e903fe941f5483e041b8b7492fcc19b9a3e7bdc544f.
 
 ## Visual identity references
@@ -63,3 +63,9 @@ Scene: low modest wooden comedy stage centered at the back against a plum and bu
 Style/medium: beautiful richly textured crisp pixel-art illustration with clustered square pixels and sharp readable silhouettes. Polished urban night-game art, purple brick, burgundy wood, warm amber light and restrained cyan edge accents. Match the charming amber marquee comedy storefront identity. Not minimal line art, not smooth 3D or a photograph.
 Composition/framing: native 2:3 portrait canvas, room fills every edge with no blank margins. Standing eye-level view slightly down, shallow one-point perspective. Stage, microphone and stool prominent enough to identify a comedy club through a doorway. Open center aisle, tables kept clear of that path.
 Constraints: fully opaque RGB, no transparency, no large gray or black empty void, no door or doorframe, no exterior, no windows around the composition, no people or human silhouettes, no UI, no words, no text, no letters, no numbers, no signs, no logos, no watermark. No slot machines, no gambling tables, no roulette, no casino imagery. Do not draw a border.
+
+## Gas doorway replacement, 2026-11-15
+
+Generated once with the image-generation tool under docs/art/briefs/gas_doorway.md. The exact opaque RGB source was accepted without resizing, color edits or fitting. References: current assets/art/travel/exteriors/gas_station_casino.png and approved assets/art/environments/gas_station_casino/background.png, rather than the retired flat room reference. The original 2026-11-12 prompt above describes the superseded image.
+
+Exact PNG SHA-256: c964a86f89b8890b6d993d0358ad47ee428935121ca08ffa9106d693d797caec. Package seal:70f5709df400a41ef2242dcae9820ae0785018e50ce25c958034a1b47f84280f. Raw source, exact new prompt and packaging recipe are preserved by path/hash in docs/testing/gas_doorway_r1_native_trial.json. Bottom-aligned cover crop remains UV(0,1/14,1,13/14), with the central entry clear. Four-method native presentation audit passed; no travel code/data/geometry/timing change. Existing Corner Store alpha-comparison failures remain unresolved. This does not certify legal routes, destination loading or browser play.
