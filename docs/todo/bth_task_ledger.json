@@ -43565,9 +43565,24 @@
         "assignment_state": "assigned"
       },
       "commits": [
-        "ab2016d3f854a8131d832d025ab22bc9d5c80790",
-        "9208cfe9f798a90a00f3c11b25f30f27d9d3cd18",
-        "94155957c3bdce01d801da013cbcd3eed3289305"
+        {
+          "sha": "ab2016d3f854a8131d832d025ab22bc9d5c80790",
+          "evidence": [
+            "docs/testing/grand_high_limit_r1_native_trial.json"
+          ]
+        },
+        {
+          "sha": "9208cfe9f798a90a00f3c11b25f30f27d9d3cd18",
+          "evidence": [
+            "docs/testing/grand_high_limit_r1_native_trial.json"
+          ]
+        },
+        {
+          "sha": "94155957c3bdce01d801da013cbcd3eed3289305",
+          "evidence": [
+            "docs/testing/grand_high_limit_r1_native_trial.json"
+          ]
+        }
       ],
       "deployment": {
         "required": true,
