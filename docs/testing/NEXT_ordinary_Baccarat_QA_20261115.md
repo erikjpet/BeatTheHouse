@@ -33,3 +33,17 @@ Ordinary card review12/12 (next-bugfinder-ordinary-card-20261115-01): after retu
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\worker.log SHA256 76f6fa4edc9eeff43bbbacabd61153a6b47de1b08d48b4bf9da3924564931a85
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\job.json SHA256 14502ca88ed8ba9cba66684b8a9d6c386722c76273be8c3a7735fca9bb478f3f
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\storage-manifest.json SHA256 49c0a52b606fe9e8d68748471c72e49902fafd27340b939796352e331cebdf8a
+
+## Earned comp use and persistence
+
+Normal earned drink comp17/17 (next-bugfinder-ordinary-comp-20261115-03): acknowledge the authored Bronze greeting with Thank Linda, reopen services and use the one available drink comp. It consumes exactly once without wallet charge, becomes disabled, and remains spent/disabled through official Save/new Host Continue. Initial runs01/02 wrongly assumed services were available before the new Bronze greeting; their failed expectations are helper navigation discrepancies, not a missing reward or product defect.
+
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-01\evidence\worker.log SHA256 b564ce7637f32cf8ca6c25958dbb479e2b90fd0b447fa2f6ccacc061da91c718
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-01\evidence\job.json SHA256 158be7649ded698bf35497b76904dd0ba386f8895cdb6c4ef4fcf994166adfce
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-01\evidence\storage-manifest.json SHA256 b9ace3065cf930b1cac0acd50ec995a6342e4d57d632955b6f634ef816931339
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-02\evidence\worker.log SHA256 3e3cb7d189cafdd610a20170dfce201cfba07377303213293f75aaa70b76eab5
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-02\evidence\job.json SHA256 5a587b7b5bd56335c4880b1667243c6e65cb12c9d2538880e248d4fcf3f31300
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-02\evidence\storage-manifest.json SHA256 3445b9cabcc6c740495f33a8be6caeed16cf7657479d451426de09629fc9a5a4
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-03\evidence\worker.log SHA256 9eb317fb420e1075603204b6fc8ac31fb1e147f8dca82ece90353493d2852c61
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-03\evidence\job.json SHA256 f38e1c6bef9a64a7cf92c72a01e4eeaa433ebc5ee9e96e1d483130236e3176ce
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-comp-20261115-03\evidence\storage-manifest.json SHA256 16dc89a454a169afd4bfee784f35d482e1af47137d8c3520716a66156c25a76f

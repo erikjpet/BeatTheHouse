@@ -6243,7 +6243,7 @@
         {
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_ordinary_Baccarat_QA_20261115.md",
-          "summary": "Natural High-Limit access16/16; Baccarat Player90 draft/Continue/paid deal12/12 and separate-process presentation continuation preserve one hand, exact account/RNG. No Web or unresolved-wallet closure. Earned Bronze claim/Continue12/12 retains5-chip reward and drink comp without duplicate payout."
+          "summary": "Natural High-Limit access16/16; Baccarat Player90 draft/Continue/paid deal12/12 and separate-process presentation continuation preserve one hand, exact account/RNG. No Web or unresolved-wallet closure. Earned Bronze claim/Continue12/12 retains5-chip reward and drink comp without duplicate payout. Earned comp use/Continue17/17 after authored Bronze greeting, no repeat comp or wallet charge."
         }
       ],
       "implementation_batches": [],
@@ -6257,7 +6257,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T22:06:05.858732+00:00",
+      "updated_at": "2026-11-15T22:10:17.106230+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
