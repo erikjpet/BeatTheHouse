@@ -3979,6 +3979,11 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-02\\task-2\\review\\BTH32-main-NEXT-verification.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "supplemental_scoped_native_qa",
+          "reference": "docs/testing/NEXT_additional_gameplay_batches_20261115.md",
+          "summary": "Fresh isolated native check passes; original rendered/cold/attribution limits remain. No scope closure or runtime change."
         }
       ],
       "implementation_batches": [],
@@ -24627,6 +24632,11 @@
           "kind": "verification",
           "reference": "evidence/closing-fallback-release-bounded-checkpoint.json",
           "summary": "Final bounded05:43:15 cold-import first guard after transient05:38 producer error; served7ac lacks838, target0artifacts/no newlog. Exact newest-main normal qualification/handoff required; no task pipeline action."
+        },
+        {
+          "kind": "supplemental_scoped_native_qa",
+          "reference": "docs/testing/NEXT_additional_gameplay_batches_20261115.md",
+          "summary": "Fresh isolated native check passes; original rendered/cold/attribution limits remain. No scope closure or runtime change."
         }
       ],
       "implementation_batches": [],
@@ -29793,6 +29803,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
           "summary": "CURRENT_RENDERED_CASE_NOT_REACHED_HISTORICAL_NATIVE_PROOF_RETAINED"
+        },
+        {
+          "kind": "supplemental_scoped_native_qa",
+          "reference": "docs/testing/NEXT_additional_gameplay_batches_20261115.md",
+          "summary": "Fresh isolated native check passes; original rendered/cold/attribution limits remain. No scope closure or runtime change."
         }
       ],
       "implementation_batches": [],
