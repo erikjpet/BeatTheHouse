@@ -1,0 +1,16 @@
+# Bar doorway one-source release v1
+
+One retained source for review only. Exact final assets/art/travel/doorways/bar.png1024x1536opaqueRGB, unchanged travel data/code/timeline/aperture. Read umbrella travel_doorways_execution_direction-v1.md. Auditor owns fitting, native owner tests/integration; no activation until independent pass.
+
+## References and actual baseline
+Personally viewed current approved assets/art/environments/bar/background.png, own assets/art/travel/exteriors/bar.png and old doorway in D:/Projects/Beat-The-House/.tmp/environment-art-layers. Personally viewed E:/CodexQA/BTH/runs/BTH-ENVART-BARDOOR-20261115-cinematic-01/evidence/preview_01_bar_walk_f200.png. The old insert has prominent plants in the right visible sliver; replace with approved venue material/fixture identity, not a generic cozy garden bar.
+Baseline union BTH-ENVART-BARDOOR-20261115-baseline-union-01/evidence/bar-doorway-baseline.json: four synthetic production-overlay methods2312checks/92frames, doorway137 and originalentrance11066zero failures. Source6a5f743e2/7510files unchanged. No legal-route/gameplay-load/browser claim.
+
+## Crop and composition
+Aperture[1279,360]..[1478,657],199x297. Bottomaligned cover uses fullwidth and198/199height, cropping top7.71859296pixels. Essentially fullportrait; do not add margins. Actor occludes center during entry. Place readable amber bottles/teal worn material along side/back visible bands. Grounded unobstructed lower35percent darkwood floor and clear centerpath; set stools/counter back, not across threshold. Preserve shallow believable perspective, not an enormous hall. No baked entranceframe/door/leaves/threshold/exterior/people.
+
+## Art direction
+Worn neighborhood dive bar: deepteal vertical timber panels with restrained burgundy wear, mahogany/burgundy counter and framing, localized amber bottle-bay lighting and thin brass edges, tiny pink/cyan accents. Dark dry worn plank floor, not mirror-water or patterned checkerboard. A compact set-back bottle shelf/backbar and two simple stools off to sides establish identity. Small source-inspired dartboard optional only on rear side wall if it reads without clutter; no new decorative inventory. Match existing approved bar more closely than old doorway. No lushplants/flowers, framedcity pictures, stackedcocktaildecor, ornatehotel fixtures, casino machines, invented signs or words. Bottles plain/unlettered. No text/letters/numbers/UI/logos/livecast. Rich crisp deliberately clustered pixel texture, sharp wornwood edges and readable amber glass; no blur/globalmuddying. Keep brightness localized, not orange flood across every surface.
+
+## Gates
+Save ONE source PNG/prompt/base64/hash immediately. Director review plus auditor exactsize/opacity/crop review before raw/fittedcandidate. Native tests originalentrance/12doorway plus all4currentmethods opening/entry/closure, compare all92state snapshots, original overlaycompletion/liveness and actual video decode. Review sidefixture readability, feet grounded and no falsejamb/blockedlane/stretch/aperturespill. No edits to sourcefacade unless a separately identified defect is explicitly approved. Commit tested PNG/proof and urban_doorways_generation.md provenance to artbranch; TEST only after finalgate, main/NEXT unchanged. Syntheticvisual evidence remains distinct from actual routes and Web.

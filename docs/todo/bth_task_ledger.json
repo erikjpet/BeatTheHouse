@@ -44137,7 +44137,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Bar four-method pre-art baseline PASS; source review underway",
+      "status": "Bar exact R1 static GO; isolated native trial underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44164,9 +44164,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_bar_baseline_20261115.json",
           "summary": "11066 entrance/137doorway/2312preview PASS;92samples,7510 sourcefiles unchanged."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/bar_doorway.md",
+          "summary": "Director single-source release; exact R1 static GO, native acceptance pending."
         }
       ],
-      "next_action": "Director and auditor review current aperture and references, then release one source.",
+      "next_action": "Verify exact four-method candidate and independent final visual audit before TEST.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44175,7 +44180,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:09:19.590145+00:00"
+      "updated_at": "2026-11-15T08:13:22.398055+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-MOTEL-01",
