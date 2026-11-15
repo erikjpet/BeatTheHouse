@@ -1,0 +1,134 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_HASH_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "dd96c9dd2da5abc550f0076877cb0c57e370ae52",
+  "art_package_sha256": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+  "build_manifest_sha256": "1790fb9afebda433398a9635847cf69779e738c202ba29294dbc982d370d044e",
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/dd96c9dd2da5abc550f0076877cb0c57e370ae52/index.html",
+  "default_tls_validation": true,
+  "files": {
+    "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+      "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+      "bytes": 340415
+    },
+    "index.apple-touch-icon.png": {
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+      "bytes": 4099
+    },
+    "index.audio.position.worklet.js": {
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+      "bytes": 2973
+    },
+    "index.audio.worklet.js": {
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+      "bytes": 7298
+    },
+    "index.html": {
+      "sha256": "f49d6832048f89ca464d66ce149a962ceeef09aeee16f41eca4bb802346b3f1c",
+      "bytes": 5632
+    },
+    "index.icon.png": {
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+      "bytes": 14818
+    },
+    "index.js": {
+      "sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+      "bytes": 2823817
+    },
+    "index.pck": {
+      "sha256": "910926bd50e7d5dd9c02cb4ac1de1dcfe602dccdb0700903315a9958cc87cb89",
+      "bytes": 133494720
+    },
+    "index.png": {
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+      "bytes": 21443
+    },
+    "index.side.wasm": {
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "bytes": 21802358
+    },
+    "index.wasm": {
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "bytes": 1508237
+    }
+  },
+  "protected_before": {
+    "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+    "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+    "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+    "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+    "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+    ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+  },
+  "protected_after": {
+    "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+    "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+    "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+    "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+    "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+    ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+  },
+  "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "browser_visual_scenario_gate": "Not run in this delivery. Prior CUA binding limitation was not re-tested; no live Web claim.",
+  "previous_immutable_build_unchanged": true,
+  "previous_173_immutable_build_unchanged": true,
+  "previous_9ac_immutable_build_unchanged": true,
+  "prior_immutable_all_files": {
+    "d4beeb651403135ad4fa5f6fbf989af0d43478b6": {
+      "manifest_sha256": "d0682da6ffbf3686d9c630a6c2ce043a4f193b4fd7d03013bbd95191dedaa8ba",
+      "files_verified_including_manifest": 13
+    },
+    "9ac963f185afbc5c54c604e5f68e8111f598d997": {
+      "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+      "files_verified_including_manifest": 13
+    }
+  },
+  "enabled_art_ids": [
+    "gas_station_casino",
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "pawn_shop",
+    "jazz_club",
+    "punchline_club",
+    "small_underground_casino",
+    "punchline_back_room",
+    "kitty_cat_lounge",
+    "delta_queen",
+    "beach"
+  ],
+  "raw_art_sources": 260,
+  "compiled_art_textures": 246,
+  "test_args": [
+    "--",
+    "--bth-art-test"
+  ],
+  "persistent_paths": [
+    "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  ],
+  "configuration_not_runtime_DB_observation": true,
+  "evidence": {
+    "finalize:pck-diff.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-beach-finalize-r1-06\\evidence\\pck-diff.json",
+      "sha256": "beefff6c07e57fa52842dde4c1ca62f9a09f82238bfbf2ab25b832cdd856999f"
+    },
+    "finalize:art-source-import-pck-linkage.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-beach-finalize-r1-06\\evidence\\art-source-import-pck-linkage.json",
+      "sha256": "75af43cf4aad2b211c19ba88957dd4a1fe073d781d6e0d6ab9943f2416c2831e"
+    },
+    "publish:publication.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-beach-publish-r1-06\\evidence\\publication.json",
+      "sha256": "37c350a6316a05c30be7568731a4a0da91aa73aa1a12e60e075512c5bb57d001"
+    },
+    "served:served-proof.json": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-beach-served-r1-06\\evidence\\served-proof.json",
+      "sha256": "9839a94a4dd049fcc121e78e33a5b2d65843800ccf208fb274bfa781a4c90da5"
+    },
+    "python:worker.log": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-beach-python-r1-01\\evidence\\worker.log",
+      "sha256": "37c1510958f353601e6071af0768e1d5a827dc9e95ec17d37b0cfdfad83ca8c7"
+    }
+  },
+  "packaging_corrections": "Unpublished intermediate exports retained: corrected generated short-version label, removed two QA command JSON files from snapshot export root. Final PCK adds only 61 Beach assets/imports; only existing manifest/index/uid cache changed. Class record cache byte-identical to prior build."
+}

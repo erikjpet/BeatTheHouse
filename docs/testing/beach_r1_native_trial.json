@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
   "decision": "Personally reviewed all four actual compositions and actual preview frames 000/030/061; original liveness PASS and both MP4 full-decodes verified. Sixteen surf entries show four poses; other twelve motifs show 62 distinct applicable states over 8.1280677 seconds. Conservative visibility 112/112 including Festival sign 1019 surviving pixels. Exact same-order layout/object/publication equality retained. Approved existing art branch and cumulative TEST only, preserving prior twelve packs.",
