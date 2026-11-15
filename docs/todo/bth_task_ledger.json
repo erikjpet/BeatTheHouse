@@ -43491,7 +43491,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Public room source planning; four-context baseline preparation underway",
+      "status": "Four public initial contexts captured; clean guide and low-detail source review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43514,9 +43514,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/grand_casino.md",
           "summary": "V1 public-room only. Three foreground fronts and native five versus low-detail three lamps require actual source comparison."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/grand_casino_preart_baseline_20261115.json",
+          "summary": "15389 checks, zero findings; four contexts,98 selected/typed pairs. Native/low-detail source, three fronts, original and floor-helper-only clean guide captured. No art acceptance claim."
         }
       ],
-      "next_action": "Capture public Base plus gala, convention and audit contexts; review source modes and clean guide before generation.",
+      "next_action": "Director and auditor inspect actuals/clean guide and freeze single-source art brief; no generation before release.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43525,7 +43530,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T03:42:22.397742+00:00"
+      "updated_at": "2026-11-15T03:48:54.241288+00:00"
     }
   ]
 }

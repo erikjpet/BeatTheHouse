@@ -1,0 +1,42 @@
+{
+  "source_commit": "dd96c9dd2da5abc550f0076877cb0c57e370ae52",
+  "checks": 15389,
+  "contexts": {
+    "__none": {
+      "objects": 19,
+      "selected": 19,
+      "typed_paints": 19
+    },
+    "grand_casino_audit_night": {
+      "objects": 26,
+      "selected": 26,
+      "typed_paints": 26
+    },
+    "grand_casino_convention_crowd": {
+      "objects": 27,
+      "selected": 27,
+      "typed_paints": 27
+    },
+    "grand_casino_gala_night": {
+      "objects": 26,
+      "selected": 26,
+      "typed_paints": 26
+    }
+  },
+  "distinct_ids": 40,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-union-01\\evidence\\grand_casino_preart_union.json",
+  "union_sha256": "5e09b5241ddccb047401265cc2f6d429c0e5fc0f31da208ab2d18344ff64b039",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "8aa1b2ff0c619926b5cb7590e64a576cf652bb1c296337b22350a1d153270c43",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\grand_casino_legacy_geometry_1800x860.png",
+    "sha256": "8cbb24ab2fe27d59071fb0151e30fb4a9bc7a5fa1a03e2c01621e8b29afe257c"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7318,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exactdd96c9dd/c5 initial Base plus3catalog scenarios; no later lifecycle/open-hours/save-revisit/art acceptance.",
+  "inherited_header_correction": "Raw capture helper header retained prior 04861/Delta wording. Adapter source_identity and 7318 source hashes establish actual dd96c9dd2da5 Grand public baseline. Raw report preserved."
+}
