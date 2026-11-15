@@ -1,0 +1,120 @@
+{
+  "source_commit": "8e35e8bf85963551acc5ff5bb2e1040507480204",
+  "all_source_files_unchanged": 7514,
+  "contract": {
+    "texture": "res://assets/art/travel/exteriors/motel.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "door_kind": "hinged",
+    "door_polygon_uv": [
+      [
+        0.71589628,
+        0.50732807
+      ],
+      [
+        0.79932356,
+        0.50732807
+      ],
+      [
+        0.79932356,
+        0.76099211
+      ],
+      [
+        0.71589628,
+        0.76099211
+      ]
+    ],
+    "hinge_side": "left",
+    "threshold_uv": [
+      0.75760992,
+      0.77001127
+    ],
+    "inside_uv": [
+      0.75760992,
+      0.74971815
+    ],
+    "road_y_uv": 0.9470124,
+    "source_top_y_uv": 0.323,
+    "sign_rect_uv": [
+      0.27903044,
+      0.45997745,
+      0.156708,
+      0.06651635
+    ],
+    "foreground_kind": "integrated_courtyard",
+    "setting_kind": "motel_reception_parking_courtyard",
+    "backdrop_texture": "res://assets/art/travel/backdrops/motel.png",
+    "layered_scene": true,
+    "doorway_texture": "res://assets/art/travel/doorways/motel.png",
+    "doorway_reference_size": [
+      1024,
+      1536
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-MOTELDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\motel.png": "f594d19f7fd33623a5b1564866f9bde2aeed1ece4bbdb76628a3ad4598236326",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-MOTELDOOR-BASELINE-20261115\\assets\\art\\travel\\doorways\\motel.png": "d7e5ec27aa1d7407cf434aa995131399b4820e6b85e7b64ed9e52d64f0a4b63b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-MOTELDOOR-BASELINE-20261115\\assets\\art\\travel\\backdrops\\motel.png": "6c809d997c1b29329ba3928b786386c943358d4934016147f3a3f27c4f620ee7",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-MOTELDOOR-BASELINE-20261115\\assets\\art\\environments\\motel\\background.png": "b23d84e7a320189a5343cd2be2b1655d58f2c54e4c8e27d8943af8a7ed164fb0",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-MOTELDOOR-BASELINE-20261115\\data\\art\\environments\\motel.json": "efaf7ffff76a064d711b31ee4821a3e09fbbd5cd88247fb3d0ddd8cb731c2bc5"
+  },
+  "entrance_checks": 11066,
+  "entrance_failures": [],
+  "doorway_checks": 137,
+  "motel_pixels": {
+    "colored_changes": 19519,
+    "destination": "motel",
+    "distinct_colors": 16830,
+    "outside_changes": 0,
+    "path": "res://assets/art/travel/doorways/motel.png",
+    "source_mismatches": 0,
+    "verified_source_samples": 596
+  },
+  "preview_checks": 2312,
+  "cases": [
+    {
+      "mode": "walk",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "bus",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "taxi",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "night_cab",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    }
+  ],
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\job.json": "630c2edba86ca65a03b8900988c12ca4be0896fd81bf5d3f594232c33b122437",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\launch-claim.json": "70a7c38cd8ab71893f1d9bcc4d5ca3efb012f47a534966ece7861bf4f8a418f4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\post_source_verification.json": "5117b1372e456fdf5c2021ea645a87e07fdd746b1f8f34e2fa2a41781795b043",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\source_identity.json": "a9bc89aa8c6f339f22cc784a92fe723a50d07ebf9a2a685299bb18b9911e96a9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\storage-manifest.json": "cfcb4e599cc2a145272f26ff251669de2332e3796198e4c025eb653df4c81e08",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "73e8c1d7ed6424d4ac28ad3d23db836c17e759d7e31f4ab445d5f63af84e963e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\job.json": "9333964c8c5cb6f70d2e15ccb08de06f0e47fc56d46ea8995005252320b6f89b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\launch-claim.json": "d52fc02a785ceddb873f139c732dd503ca2319ac21c7217af21662b77fc1cb82",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\post_source_verification.json": "5117b1372e456fdf5c2021ea645a87e07fdd746b1f8f34e2fa2a41781795b043",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\source_identity.json": "a9bc89aa8c6f339f22cc784a92fe723a50d07ebf9a2a685299bb18b9911e96a9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\storage-manifest.json": "0668a5f3081cbbe88e3e57156b2b696bd01b2f71f8c0a231429ecdd2e2db0302",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "4783788563111d5f415a389b6223700ffceea78aae0a5a0c88c89058f9f44f36",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\job.json": "fcda2531fa074745fdfec89a20abc110de24af419d5c0052f6b4cf90cf6c7c4a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\launch-claim.json": "05a6baf78bb9e6596e6fd18aa3c1468a4bbe0c97714ab6e2c3e94b0464f7c6dd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\post_source_verification.json": "5117b1372e456fdf5c2021ea645a87e07fdd746b1f8f34e2fa2a41781795b043",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\preview_manifest.json": "79b9cd8b3e77bc39c9c3d96d90d96ab2858b24a03b8baeae458b74e8e3e246e0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\source_identity.json": "a9bc89aa8c6f339f22cc784a92fe723a50d07ebf9a2a685299bb18b9911e96a9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELDOOR-20261115-cinematic-01\\evidence\\storage-manifest.json": "6872016f3b7bc4fb4942af4036b5562510ed7db7872340b79b8178aebb8020ce"
+  },
+  "scope": "Synthetic four-method production-overlay baseline. Original entrance now green after independently approved Corner alpha repair. No legal route/destination load/live Web claim."
+}
