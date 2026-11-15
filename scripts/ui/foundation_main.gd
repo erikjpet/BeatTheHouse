@@ -12420,6 +12420,8 @@ func start_environment_test_session() -> Dictionary:
 	last_environment_runtime_result = {}
 	last_item_result = {}
 	last_hook_result = {}
+	# A fresh Practice room must not present the previous room's receipt.
+	immediate_environment_acknowledgement = ""
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_hide_event_choice_popup()
 	_hide_run_inventory_popup()

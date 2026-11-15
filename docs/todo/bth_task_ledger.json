@@ -36722,12 +36722,13 @@
             "required": true,
             "state": "pass",
             "evidence": [
-              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md"
+              "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
+              "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md"
             ]
           },
           {
             "id": "2",
-            "description": "Owner triage; no fix authorized by unfinished-features queue",
+            "description": "Scoped successful Practice feedback reset with failed generation rollback regression and NEXT delivery",
             "required": true,
             "state": "open",
             "evidence": []
@@ -36740,10 +36741,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_REPRODUCED_PUBLIC_FEEDBACK_CARRYOVER_NO_FIX_AUTHORIZED",
+      "status": "ACTIVE_SCOPED_LIFECYCLE_FIX",
       "owner": {
-        "name": "Work unfinished features",
-        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "name": "Find NEXT game bugs",
+        "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -36765,10 +36766,15 @@
           "kind": "public_rendered_reproduction",
           "reference": "docs/testing/FEAT-STALE_plan_closures_2026-11-12.md",
           "summary": "Current070 fresh practice spawn preserves previous action Result text although new room geometry resets; no account-loss claim."
+        },
+        {
+          "kind": "native_regression",
+          "reference": "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md",
+          "summary": "Red9 stale-ack failure; corrected10/10 includes successful fresh room and failed generation rollback. Native source only."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Owner triage separately; no corrective code work authorized here. See practice ServiceWingOpen -> fresh Conventioneers and LobbyJammed -> fresh Stakeout screenshots.",
+      "next_action": "Finish independent review, commit scoped fix and verify existing NEXT watcher delivery; browser acceptance remains unverified.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -36780,7 +36786,7 @@
       "planned_app_changes": [
         "Fresh practice room retains previous result acknowledgement"
       ],
-      "updated_at": "2026-11-12T09:06:32.024850+00:00"
+      "updated_at": "2026-11-15T19:02:52.226705+00:00"
     },
     {
       "id": "BTH-FEAT-PACK-MERCHANT-001",
