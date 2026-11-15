@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "034595993c26abb362e510dfa8534ba50a3e24a5922be908e4349b3be6c0876a",
   "decision": "Final scoped High-Limit R1 audit PASS. Personally reviewed actual Base and frames000/075/151;152frames20.1226236s, all16 motifs152 distinct applicable states. Native16+simulated lowdetail7 visibility23/23 passed; exact Base layout/object/publication unchanged; two fronts/VIP correct. Three static wall/floor patches byte-stable across all152frames. Original liveness and both full-decodes independently verified. Existing art branch and cumulative TEST only.",

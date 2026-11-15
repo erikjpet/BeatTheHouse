@@ -43558,19 +43558,25 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "High-Limit R1 native audit passed; cumulative TEST export pending",
+      "status": "High-Limit R1 on cumulative 15-room TEST; live Web acceptance remains open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        "ab2016d3f854a8131d832d025ab22bc9d5c80790",
+        "9208cfe9f798a90a00f3c11b25f30f27d9d3cd18",
+        "94155957c3bdce01d801da013cbcd3eed3289305"
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No High-Limit package activation."
+        "commit": "94155957c3bdce01d801da013cbcd3eed3289305",
+        "evidence": [
+          "docs/testing/grand_high_limit_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST pointer/assets verified; live Web gameplay not run."
       },
       "scope": [
         "High-Limit Base only; exact two fronts and visible VIP, no forced public scenarios.",
@@ -43591,9 +43597,14 @@
           "kind": "native_art_acceptance",
           "reference": "docs/testing/grand_high_limit_r1_native_trial.json",
           "summary": "14771 Base checks, exact equality,66 motion/RM,23 occlusion checks,152 real frames,stable grain,liveness/full-decode PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/grand_high_limit_r1_test_delivery.json",
+          "summary": "301raw sources/285compiled textures;39PCK additions;prior14unchanged;normalTLSservedhashesverified;NEXT/save namespace preserved."
         }
       ],
-      "next_action": "Publish exact approved package on cumulative TEST and verify artifacts; live Web remains unverified.",
+      "next_action": "Owner playtest TEST; continue remaining room queue, retaining explicit live Web/save/revisit coverage gap.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43602,7 +43613,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T04:40:11.491696+00:00"
+      "updated_at": "2026-11-15T04:44:35.851509+00:00"
     }
   ]
 }

@@ -212,3 +212,7 @@ Exact41b7ed31 static trial is isolated in QA under a dedicated native owner. Raw
 ## Hidden focused R2 trial
 
 R1 remains held: source-painted tests show its505136glint fully hidden in3current scenes and only8of40native source pixels exposed inGreased. Director approved only a same-wall decorative translation to535136. ExactR2f5bf6336changes one manifest;29otherpayloads/BG/front/texture/timing unchanged. Full source archive6ed40caf preserves raw/floor/recipe/delta and R1heldreceipt. Current4 actual visibility/RM and final native proof remain gates; no hidden activation.
+
+## High-Limit R1 delivery, 2026-11-15
+
+Cumulative TEST now contains 15 approved room packages at 94155957c3bdce01d801da013cbcd3eed3289305. High-Limit R1 exact seal03459599 passed Base composition/equality,16normal/7simulated-low-detail motion and visibility,152actual frames,static-grain stability and original liveness.301raw sources/285compiled textures verified; prior14packs unchanged. Main/NEXT and save namespace preserved. Native Base-only scope, not live Web/save/revisit. Five interiors and12travel doorway packs remain; Grand Back Room is next. See docs/testing/grand_high_limit_r1_test_delivery.json.
