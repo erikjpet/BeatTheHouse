@@ -56,3 +56,31 @@ Separate-process settled Continue/floor exit: 7 checks; failures []. Exact cash3
 ## Reconciliation
 
 Guarded current-group reconciliation next-bugfinder-ledger-20261115-49 reports 109 existing ownership/acceptance gaps; broad all-group run48 reports688. No wider ledger completion is claimed; historical owner references were not reassigned. Initial run47 failed only console charmap encoding; UTF-8 reruns completed normally. Completed QA Jobs release zero owned processes.
+
+## Modal-order follow-through and Bishop appointment
+
+Correction to the earlier floor-exit wording: the seven-check follow-through proved the restored environment context/catalog and settled account, not that back_to_environment bypassed a blocking decision. A normally triggered **Eye in the Sky** security popup still owned input. It correctly rejected the underlying Craps table response and subsequent Bishop request with “Finish the current prompt first.” Initial Bishop runs01–03 and diagnostic talk runs preserved below are out-of-order helper attempts, not product failures or a softlock.
+
+The actual popup offered Change Tables and Press Anyway. Run04 follows normal Change Tables (exactly5 cash), then Pass the Dice, then the offered Bishop appointment. **20/20**: Wait by the Window sets the first-beat flag; official Save/new Host Continue retains it; Keep the Appointment resolves with public meeting_state accepted, actor_state contact, associate rank/trust30. Money/chips/RNG are unchanged by recruitment; room authority and controls persist. The resolved recruitment host becomes inert, not a generic unclickable replacement room. No product change or gate weakening is needed. Native public-control evidence only.
+
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-01\evidence\worker.log SHA256 55f7e3d35033e4937bc6e63bef62e08beea690321fa451f8b215aab8edbe4f2b
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-01\evidence\job.json SHA256 cd437794014370d7fcbdac3d05d6bb584e004f16f06214ecc29966e9928e25e2
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-01\evidence\storage-manifest.json SHA256 cc99afbc4048257b27ccc1e28fcdcd0a84e174c6a0ad56ba61c6819332a6f532
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-02\evidence\worker.log SHA256 8dba960c45e3b57d0f6c841d973e9bfa472e0c387739290ee2c8671547a6c631
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-02\evidence\job.json SHA256 8551bbc5ac448e6ef9e608eec0772229139407821973dedac1d4f670c391ccfd
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-02\evidence\storage-manifest.json SHA256 7ca42334b1ca6a4fbeb3777aad73b5950bcd50e5167bf2b7c586826557bbe66b
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-03\evidence\worker.log SHA256 53e4e281fd7be3b16ce4967ed172525b4df66b9b0a7c55d3854114d25fadc1a4
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-03\evidence\job.json SHA256 f308cbd0b36aa7faa9b567066ab069133089d74f597c7d71294ddb2e8b720f32
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-03\evidence\storage-manifest.json SHA256 8a0d7002a43ca02df918fe5fdc74cccdf61447bca848a72d0ccdea2e617d0f54
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-04\evidence\worker.log SHA256 6a8c3d829ec03344841181599b3232e51d20553bf2c07e7a32bffd66bbbf84e3
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-04\evidence\job.json SHA256 c6be93753a0c5c60272ad48b574ef7ea5779c1b86cfbd312e61a2c96bf8d5cc0
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-bishop-20261115-04\evidence\storage-manifest.json SHA256 4cf5ab2739a2b867b0c83013b7bcbe38699ec5b23ef28cc6456643bde1ac51a7
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-01\evidence\worker.log SHA256 1dea1467e19fa3a6107930fe007737291b1155b7892de20cf2ccf466c05068e1
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-01\evidence\job.json SHA256 f0dc281d530552a523d8632d9c7c5b25fc6994828cd4a35d8d0e2e13e8606a69
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-01\evidence\storage-manifest.json SHA256 eca5987bc83cd66c24ac83855044edb6f7b1cf0bc8b63d71e158c2ee43a13cba
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-02\evidence\worker.log SHA256 a993c211c53a27d4b2f5232ed34b0d3e076cd08f3445283626c501ffd446e06d
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-02\evidence\job.json SHA256 011d3328efbcceef6e16b2f67ac9000fbef5ccedc35e702d40f330f70c3c8896
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-02\evidence\storage-manifest.json SHA256 73318ebd927c7017046045aefee755c238c57ecec5d171cf94ecfadc461336bd
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\worker.log SHA256 d9a73901a1c0267d7b36f8a84222a562c2cc169b971e413dd30f3a85cd6fed66
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\job.json SHA256 a309bd40c135a05fe47957ee6a851794f65a6fd8e881941f71b06df4a7266d2a
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\storage-manifest.json SHA256 d4ea1b0fdbb4b19145558a3306cda500752750354eb6c65b0912231faca9c421
