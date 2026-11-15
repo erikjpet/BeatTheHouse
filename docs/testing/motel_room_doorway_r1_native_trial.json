@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "999a37de51765ec363e76cd237311c328d1086eea480e4df68c07508b536257f",
   "decision": "FINAL SCOPED AUDIT PASS Motel private-room doorway. Director final visual GO received. Auditor personally viewed four actual key frames, coherent mauve/plum/wood and bedside/CRT identity, window not overpowering, clear grounded path and full closure. Receipts verified entrance11066/0,doorway137 with684 source samples/zero mismatch/outside changes,preview2312/92state and28entrance image equalities,overlay1115,no-pointer PASS,full MP4decode1095frames36.5s7613626bytes SHA85808e628f4c1fd1d6c91f5abad1ca2636756a7469033638d269c9ef7862166d.",

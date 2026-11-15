@@ -1,0 +1,157 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "3e8f418c16f5e716137c3f5b4ad6f5bc1cf62225",
+  "package_sha256": "999a37de51765ec363e76cd237311c328d1086eea480e4df68c07508b536257f",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 10,
+  "raw_art_sources": 419,
+  "compiled_art_textures": 398,
+  "prior_20_interiors_unchanged": true,
+  "prior_nine_doorways_and_corner_alpha_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic four-method native presentation only, not legal routes/destination loading/live Web. Internal travel remains unanimated with unchanged eligibility. Two replacements remain. Main/NEXT/save namespace unchanged.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "aa20407612d4dc3bf66c66174442b03a696411ff0a82e865d087e06097387328"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\class-cache-equivalence.json": {
+      "sha256": "b3d5f618734770530eb91ca07040675a18b798888ad9e1146369f98f95a96228"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\embedded-build-manifest.json": {
+      "sha256": "58520763ddefae2f8f0904cc27cf047f105821e46643d919783b2f44d8dde9de"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\embedded-verification.json": {
+      "sha256": "b889e5e21081726425cf1c6e43dac6d678227d663799b3a742bb0f1de4487b2a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\job.json": {
+      "sha256": "9c4d6f43dd0506ffe0d8f6f2b51c53a1cb728c754fe85a99fd0e77791a496fb1"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "4b9b4d46b2c562bee4838833e6a8a51e82da1b02e33227ec35abe3ef70e63f85"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "55d80ccaed2c543b59a54952d56021444302320ddcdabfdebfd3dd4a1dce54cc"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-finalize-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "d56bb6089a717cd1fedfca67c5d926647726fc6373b7c1a13a41ee5cce2ee188"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-promote-r1-01\\evidence\\job.json": {
+      "sha256": "f94235cc8688625a7bfa80d969fd408b43b10f3ef8c71265bb6c300597382761"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-promote-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "eb705dc229ddb8ad422671f055d65c8ab9c9ebf054d72c5aa83782375ee8675e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-promote-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "8c2152f7841d2e2970a07f71e4b3f40ce762840bd476af5782ec377a8b079d31"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-r1-01\\evidence\\job.json": {
+      "sha256": "8c0bccd3f1e175687901754d3a1d4623181c64c779ac9d0e23d32d7c5ce75bef"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "2990cd415369c1194cffaa7c5eec5c16f3899eb21814f5b80afbae46302f5ddc"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-html-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "73e371aee50e8635c25e7c188e0206d2054454325d2a433d802e6e567f14b897"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-publish-r1-01\\evidence\\job.json": {
+      "sha256": "5a5dec753a64a59ee94563adbdb97914114803b578b2bc0c50f4e6866211e794"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-publish-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "a58ed37558ca91060651261dce287b6e7d50c51d676f3a32bf36c63c8b4b48d5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "aca34d561fdb01948311a49b6ad8101280832ee5098322403fe95427fd4568dd"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-publish-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "db6338cad318cb7b6e1117551b5937eb7efc8273f241903f9ad94a50e37c935e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-python-r1-01\\evidence\\job.json": {
+      "sha256": "f5c839a537e4d1ea506be6327f7e4932d3ee6c336218abff1f6ad843e7364436"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-python-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "6754d8856c39ee5a2d17f6c2e585ce7042102a1e6e256b4a3cfc596da7170a52"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-python-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "d6ff9f03e10d6c930c4927a4f53e8e12c9fff53807ba2a11bfbb010aa6941450"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-served-r1-01\\evidence\\authorized-site-change.json": {
+      "sha256": "9dc2ae00519f4eb53ef55fae6290c6aa8094a24cef30917a191d5b56010c88b5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-served-r1-01\\evidence\\job.json": {
+      "sha256": "1b6c0a890d2ed1e95185062df489a19653cb740e1cec2235f1752aa3fb3bc521"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-served-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "3a53146cf52585b1ee43cd64e00729c8a31c54922bc4073f47d2b0a80c661f33"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "7f9e92a1aa652207a059e164b492df8a723b285b4afb5dd4a8682464f8306c8e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-served-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "51743046ee78ae81a12b007a0924d6ca4b9ba14be10928566a24b80b0836a07a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-archive-r1-01\\evidence\\job.json": {
+      "sha256": "37061fd6d5cffa8264c5a406cefdad36c149898894b9178eb84f5ccb6a88f4fb"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-archive-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "9fc6fddb53a6551ad1c4e30a5a7991e43233ffd515abb41588a703bc6e84919f"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-archive-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "4c9e7eaf86fe58406f1224f42411800d217d8d9a35192dfbcd1749a2e3e82677"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-export-r1-01\\evidence\\export-policy.json": {
+      "sha256": "afbb1f3c824d6b64811fa57cc80d65003176c68550afdfe6da5c9243d452e7ee"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-export-r1-01\\evidence\\job.json": {
+      "sha256": "9409daf3da7a5c911adf9fdeae17e7a25c832dcadf5b104284094eb073c4814b"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-export-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "eae9671d29ec756db6252413a1bfbad17bfed29f3c2f682c534f6169d2b2ab61"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-export-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "7b50dc1830fc983c16e4e69c7d8998cb9c4d71b8609b36839ee6001856239113"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-export-r1-01\\evidence\\template.json": {
+      "sha256": "e88a0729592aed7c266ce607da41edaaa243b7d189016ddc2f8229495b71761a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-extract-body-r1-01\\evidence\\source.json": {
+      "sha256": "c71bc88de8b88a66c245a6446eda53746e97af47750be92181a1bfd184a11ef0"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-extract-body-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "203070b645c7912346add9a51679717af230649b1a9a39bd7863303b6e1d1e96"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-extract-r1-01\\evidence\\job.json": {
+      "sha256": "0fcd285567a2a20b16c01da768faa3a209f6755c6df4684dcf17c3eb96c41b28"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-extract-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "6d6b95a7465d632e7364189c50ed742dc23ce4c0e4b11fa27899ce5df87ca0fe"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-extract-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "5fd4049a5c9447bfacd49f21eab480a17d98711f29d227accca3dffffcce78c5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-identity-r1-01\\evidence\\job.json": {
+      "sha256": "477a9830adc42685823b9aee9501cc26eff4f1c9815a279650c8509dab814c94"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-identity-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "6a3ab7d823d4202a7b0061c9f0eaacf885d5113fd293f7915e265505f426e7de"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-identity-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "65ec3013e469a5a538933faa042bac7a4110c9671aad593c5851f209686eff00"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-import-r1-01\\evidence\\job.json": {
+      "sha256": "2b43eb0437f10ab716f68280d8f901b3da4d3cf7d2c11b04cbd597d1a84a45fc"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-import-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "e47f536921d95ee5756bfbf97976a1b94a4e8c80bb4e441787a8e5aca56db0e0"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-web-import-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "7761c0a94578d3af856c70d3469e3349f594ae27a3d0943bd3c8b11b5d753fce"
+    }
+  },
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-motelroomdoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "88ddb4aa773ebf75e0cccedc6c6a85d223680c87bd2d99feb33cdff1c19bbcff",
+    "assigned_findings": 0,
+    "unrelated_historical_findings": 8242
+  }
+}

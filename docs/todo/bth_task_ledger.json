@@ -44632,19 +44632,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel private-room R1 native PASS; TEST delivery underway",
+      "status": "Motel private-room R1 native PASS; TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "3e8f418c16f5e716137c3f5b4ad6f5bc1cf62225",
+          "evidence": [
+            "docs/testing/motel_room_doorway_r1_native_trial.json",
+            "docs/testing/motel_room_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "state": "verified",
+        "commit": "3e8f418c16f5e716137c3f5b4ad6f5bc1cf62225",
+        "evidence": [
+          "docs/testing/motel_room_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST artifact, served bytes and protected NEXT/save configuration verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44669,9 +44679,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/motel_room_doorway_r1_native_trial.json",
           "summary": "Exact portrait asset; original gates and four-method independent actual visual audit PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/motel_room_doorway_r1_test_delivery.json",
+          "summary": "20 interiors/ten doorways,419raw398compiled; only Motel private-room doorway texture/build identity changed."
         }
       ],
-      "next_action": "Publish exact audited asset to cumulative TEST; preserve internal travel eligibility.",
+      "next_action": "Owner live TEST acceptance; continue remaining two doorway packages without changing internal travel.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44680,7 +44695,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T10:53:26.545699+00:00"
+      "updated_at": "2026-11-15T10:56:29.366948+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-APARTMENT-01",
