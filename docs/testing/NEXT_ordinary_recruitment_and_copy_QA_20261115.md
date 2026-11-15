@@ -59,3 +59,7 @@ E:\CodexQA\BTH\runs\next-bugfinder-ordinary-rook-leads-20261115-01\evidence\stor
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-rook-leads-20261115-02\evidence\worker.log SHA256 b160fe6920428a2e31cdcb81300404e78ab9bf585a61ef2e1b20084b95246e54
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-rook-leads-20261115-02\evidence\job.json SHA256 803914f8919cabbb87eb53e892965fa362c61fdd70650979c513d5ccdfc1810e
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-rook-leads-20261115-02\evidence\storage-manifest.json SHA256 15c70db091d99176bea91ba3fd9ba83165b5868b5466df6a8a354b46d3fea4ab
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

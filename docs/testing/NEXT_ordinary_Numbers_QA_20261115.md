@@ -15,3 +15,7 @@ Two subsequent isolated continuations play 12 then 5 normal Video Poker Deal/Dra
 - next-bugfinder-ordinary-numbers-draw-20261115-01 worker.log SHA-256 `313bb65c426def0d2e15ae717c385cfc6524179d5f921030a23cfe0225a03c71`.
 
 - next-bugfinder-ordinary-numbers-draw-20261115-02 worker.log SHA-256 `74423535ee6779cc86366034d4a7e3df5f413ee3d47465fd688be08823722aeb`.
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

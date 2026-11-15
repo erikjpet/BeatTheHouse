@@ -39,3 +39,7 @@ All bounded jobs have timeout false, active_at_release 0. Owner saves unchanged.
 - `E:\CodexQA\BTH\runs\next-bugfinder-ordinarybardice-20261115-02\evidence\storage-manifest.json` SHA256 `08164c8e52479f61a302359de595e7f1d79c4b11eee5e4297d58920a4a094815`
 
 Reconciliation 24 retains 109 existing findings. Original eleven-game objective still has an unobserved historical owner; no reassignment or closure inferred. Roulette has no reconciliation finding in this checkpoint.
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

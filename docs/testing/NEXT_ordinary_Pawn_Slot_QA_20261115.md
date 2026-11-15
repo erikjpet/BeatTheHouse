@@ -25,3 +25,7 @@ No new defect found. Broad BTH061-006 remains open; these financially settled pr
 - `E:\CodexQA\BTH\runs\next-bugfinder-ordinaryslot-20261115-01\evidence\ordinary_street_craps.gd` SHA256 `f5baaaccc7c312c192aced2fe86796c5764fddd8be3c683d519def526e7f30d4`
 
 Reconciliation run26:109 existing global findings remain, including BTH061-006 historical owner absent from snapshot. No fabricated reassignment or closure.
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

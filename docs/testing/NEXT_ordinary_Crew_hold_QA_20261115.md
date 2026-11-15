@@ -17,3 +17,7 @@ Root E:/CodexQA/BTH/runs/. Helpers are in next-bugfinder-ordinaryslot-20261115-0
 - next-bugfinder-ordinary-crew-job-travel-20261115-01: worker.log SHA-256 `3eece367f3877d3fec5edf3ff8ecac564ced22aac3dc7932a8ed764f0c27594b`.
 
 - next-bugfinder-ordinary-crew-hold-20261115-02: worker.log SHA-256 `fe7150d03d9e8d8a03097f94631e2120c04084634154cd3b74b22434aeb18cf1`.
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

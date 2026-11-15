@@ -92,3 +92,7 @@ Distinct ordinary continuation20/20 (next-bugfinder-ordinary-craps-cage-stake-20
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\worker.log SHA256 fdcbb977e24097f194fb22f8e7094dedea09a32f6b2301b731f39b34788446df
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\job.json SHA256 7008b6992cb8e140742a53650bf759853a6ef9d0f60f6cb2b201a14bb85d958b
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\storage-manifest.json SHA256 00c6df5a1a40a17e758634bc966321eb82f22ce1bc011d1e371cb8c1e23994ae
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).

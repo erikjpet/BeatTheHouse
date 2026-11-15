@@ -6264,6 +6264,11 @@
           "kind": "ordinary_generated_campaign_native",
           "reference": "docs/testing/NEXT_ordinary_Numbers_QA_20261115.md",
           "summary": "Open Gas Numbers form purchase and fresh Host Continue10/10; exact ticket/money/RNG and carried marker. Draw not reached, native only, broad acceptance open. Natural17-round VP advancement reaches ticket loss000 vs909, action21, $0 payout; intermediate and terminal Continue5/5 each preserve exact values. Winning redemption untested."
+        },
+        {
+          "kind": "qa_custody_correction",
+          "reference": "docs/testing/BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md",
+          "summary": "O campaign copies omitted appdata; intact private Crew authority was NOT qualified. Count Continue abort is correct rejection of preexisting private-authority error. Retain public comparison scope only; reconstruct from original profile with companions."
         }
       ],
       "implementation_batches": [],

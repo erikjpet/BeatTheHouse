@@ -48,3 +48,7 @@ All runs timeout false and active_at_release 0. Owner saves untouched. These sup
 - `E:\CodexQA\BTH\runs\next-bugfinder-scratchpartial-20261115-01\evidence\storage-manifest.json` SHA256 `443266ca2428205aca2fe67c6ee2c0b437aa31980c8cee258d78fc0da3b3e113`
 
 Reconciliation 23 retains 109 existing findings, including unknown historical owners for the original Scratch-exit and eleven-game objectives. These supplemental samples do not reassign/close them. The first proof write failed on local text encoding before ledger mutation; UTF-8 rewrite verified before staging.
+
+## QA custody limitation discovered later
+
+Where this report uses the retained O campaign, a subsequently identified missing-companion custody limitation applies. Those public comparisons are retained, but intact private Crew authority and full campaign equivalence are not qualified; other named fixtures keep their own scope. See [BTH-NEXT-QA-PROFILE-CUSTODY-001](BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md).
