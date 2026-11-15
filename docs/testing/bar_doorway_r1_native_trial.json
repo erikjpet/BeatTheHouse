@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "e225feea7b1fe30b868e89b903d9031c4076eff43fd053bb28a64150444c73b7",
   "decision": "Final scoped auditor PASS exact Bar R1. Personally inspected walk200,bus190,taxi207,nightcab235: worn teal/amber/mahogany match, no false jamb, clear grounded center floor and set-back stools; closed door conceals actor. Director concurred. Entrance11066/0,doorway137/1081source samples zero mismatch/outside change,92state and28entrance image equalities,original overlay1115/no-pointer and full36.5s1095frame MP4 decode PASS.",
@@ -73,5 +73,9 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARDOOR-20261115-package-r1-01\\evidence\\bar-doorway-static-preflight.json": "f8cf1c2efabc2ddbd35fa76122cba5144ce6f777b2437b75266d743b97d51f0d"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARDOOR-20261115-final-audit-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "dbcf87f7b86768cbf65b4cfdf64c4bc27ea2ec45872d7c739243ad188e2ea364"
+  "final_audit_receipt_sha256": "dbcf87f7b86768cbf65b4cfdf64c4bc27ea2ec45872d7c739243ad188e2ea364",
+  "delivery": {
+    "commit": "8e35e8bf85963551acc5ff5bb2e1040507480204",
+    "evidence": "docs/testing/bar_doorway_r1_test_delivery.json"
+  }
 }

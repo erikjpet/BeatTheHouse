@@ -1,0 +1,64 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "8e35e8bf85963551acc5ff5bb2e1040507480204",
+  "package_sha256": "e225feea7b1fe30b868e89b903d9031c4076eff43fd053bb28a64150444c73b7",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 3,
+  "raw_art_sources": 412,
+  "compiled_art_textures": 391,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic native four-method presentation only, not legal routes/destination loading/live Web. Original entrance remains green after prior Corner alpha repair.20 interiors and prior two doorways preserved; nine doorway replacements remain. Main/NEXT/save namespace unchanged.",
+  "prior_gas_doorway_unchanged": true,
+  "prior_corner_doorway_and_alpha_unchanged": true,
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bardoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "fb2405092a77739bd09cb16c726ccaf608583588400be6682fefbe7d70da1f4b",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "changed": [
+          ".godot/imported/bar.png-8787b88d3634cd804a6632f8e462a5bf.ctex",
+          "build_manifest.json"
+        ],
+        "removed": [],
+        "unchanged": 2105
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bardoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "7ebb758a383c83c6519c12a62449c699b112d86fdb2d24afb3514aa4aba13881",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 412,
+        "compiled_textures": 391
+      },
+      "record_count": 391
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bardoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "a7323112db2486d9d1804818d66c13f5085dd83292f349ae4a749258c9be8a8d",
+      "summary": {
+        "source_commit": "8e35e8bf85963551acc5ff5bb2e1040507480204"
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bardoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "8761d3b3b1135e0562f22c2e73f81362aa749accc85067cdf7ff16c48a9c21dc",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "8e35e8bf85963551acc5ff5bb2e1040507480204",
+        "raw_art_sources": 412,
+        "compiled_art_textures": 391,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb"
+      },
+      "record_count": 11
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-bardoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "4413ed97240a3375d854cc5736a9fd70f07edc837db8430c14e253028acb7c44",
+    "findings": 8242,
+    "bar_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
+  }
+}
