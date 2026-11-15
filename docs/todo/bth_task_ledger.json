@@ -183,6 +183,80 @@
   },
   "objectives": [
     {
+      "id": "BTH-NEXT-QA-CREW-ROOM-HOST-001",
+      "name": "Preserve cabinet room after accepting Crew package",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_REPRODUCED_FIX_IN_PROGRESS",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "dot, Crew room return fix",
+        "task_ref": "/root/fix_crew_room_return"
+      },
+      "commits": [],
+      "deployment": {
+        "state": "pending",
+        "evidence": [],
+        "commit": null,
+        "required": true
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md",
+          "kind": "native_generated_fixture_reproduction",
+          "summary": "Three generated Gas cabinet campaigns lose their room catalog after accepting a Crew package. Exit goes to recovery map. Scratch-only assertion extension fails2/45; refusal controls pass. Not browser or owner-save proof."
+        }
+      ],
+      "next_action": "Trace and repair the acceptance room-publication failure; retain red probe, verify refusal/paid/Continue compatibility, deliver through NEXT and verify changed behavior.",
+      "blocker": {
+        "requires_user_input": false,
+        "kind": "none",
+        "evidence": [
+          "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"
+        ],
+        "description": null,
+        "observed_at": "2026-11-15T17:59:18.1293279+00:00",
+        "state": "none"
+      },
+      "updated_at": "2026-11-15T17:59:18.1293279+00:00",
+      "objective": {
+        "coverage": {
+          "complete": false,
+          "areas": [],
+          "required": false
+        },
+        "text": "Keep the origin room and interactables usable after accepting a Crew package during a cabinet game; no fallback to empty room or recovery map. Preserve game, money, save and authority contracts.",
+        "scope_confirmed": true,
+        "source": "Sentinel_032f768a139481918644173068ea4f70 general NEXT playtesting request",
+        "acceptance": [
+          {
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"
+            ],
+            "id": "1",
+            "description": "Generated Scratch, Slot and Video Poker accept/refuse cases return to valid origin room with interactables.",
+            "required": true
+          },
+          {
+            "state": "open",
+            "evidence": [],
+            "id": "2",
+            "description": "Focused paid action and Save/Continue regressions preserve money, RNG and full game module; exact NEXT delivery verified.",
+            "required": true
+          }
+        ]
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        "Narrow root-cause repair by assigned fix worker; no runtime edit in this diagnostic commit."
+      ]
+    },
+
+    {
       "id": "BTH-PERF-20261104",
       "name": "Whole-game substantial performance/leak audit and fixes",
       "aliases": [],
