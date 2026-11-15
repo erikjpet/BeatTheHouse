@@ -37860,6 +37860,77 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-15T20:17:49.810704+00:00"
+    },
+    {
+      "id": "BTH-NEXT-QA-TUTORIAL-FIXTURES-001",
+      "name": "Classify tutorial fixture failures",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Classify tutorial native fixture failures without changing production behavior or weakening historical fixture authority.",
+        "source": "docs/testing/BTH-NEXT-QA-TUTORIAL-FIXTURES-001_20261115.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "classify",
+            "description": "Capture first failing boundary and compare actual Host lifecycle",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TUTORIAL-FIXTURES-001_20261115.md"
+            ]
+          },
+          {
+            "id": "repair",
+            "description": "Review any evidenced test-only repair and run complete affected checks; preserve unresolved discrepancies explicitly.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "TEST_FIX_VALIDATED_REVIEW_PENDING",
+      "owner": {
+        "name": "Find NEXT game bugs",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "native_diagnostic",
+          "reference": "docs/testing/BTH-NEXT-QA-TUTORIAL-FIXTURES-001_20261115.md",
+          "summary": "Confirmed stale test inputs: additive empty travel receipt, location Heat, sealed-hand lifecycle, competing modals. Final cadence/target PASS, hostile76/76 and resume19/19."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Independent review then commit tested test-only repair. No runtime deployment acceptance implied.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T20:10:55.270781+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-15T20:25:24.322379+00:00"
     }
   ],
   "batches": [

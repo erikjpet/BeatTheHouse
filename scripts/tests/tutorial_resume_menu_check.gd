@@ -44,6 +44,10 @@ func _run() -> void:
 		_check(not cold.return_to_main_menu(),"failed Save dismissed tutorial")
 		_check(cold.run_state!=null and _facts(cold)==before,"failed Save lost active state")
 		cold.save_service=writer
+		# Dismiss the failed-save confirmation before opening another modal.
+		_check(cold.leave_without_saving_confirmation.visible,"failed Save omitted leave confirmation")
+		cold.cancel_leave_without_saving()
+		_check(not cold.leave_without_saving_confirmation.visible and cold.run_state!=null and _facts(cold)==before,"cancel failed-save confirmation changed state")
 		# Explicit Skip Lessons is the intentional discard boundary.
 		cold.request_skip_tutorial()
 		_check(cold.tutorial_skip_dialog.visible,"Skip Lessons omitted confirmation")

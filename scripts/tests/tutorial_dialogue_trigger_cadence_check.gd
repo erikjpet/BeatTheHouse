@@ -38,6 +38,8 @@ const NORMALIZED_CREW_AUTHORITY_ID := "00000000000000000000000000000000000000000
 # Every projected value must first match its complete intended current shape.
 # These are exact guards, not new whole-fixture fingerprints or general masks.
 const BLACKJACK_FIXTURE_ACCEPTED_SAVE_EXTENSIONS := {
+	# f35ba137 added an empty travel receipt to this non-travel fixture.
+	"travel_journey_receipt": {},
 	"story_money_archive": {
 		"archived_entry_count": 0,
 		"known_entry_count": 0,

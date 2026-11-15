@@ -78,8 +78,16 @@ func _run_nonoverlap_check() -> void:
 	app.set("game_surface_ui_state", {})
 	app.call("_refresh")
 	await _settle(8)
+	# Clearing transient UI does not settle the canonical active hand.
+	if not await _wait_for_blackjack_boundary(false):
+		_fail("Fixture hand never reached an eligible Stand control.")
+		return
+	app.call("_on_game_surface_action", "blackjack_stand", 0, false)
+	if not await _wait_for_blackjack_boundary(true):
+		_fail("Public Stand did not finish the fixture hand before the next wager.")
+		return
 	var stake_before_raise := int(app.call("_current_selected_stake"))
-	app.call("_on_game_surface_action", "surface_stake_up", -1, false)
+	app.call("_on_game_surface_action", "blackjack_chip", 0, false)
 	await _settle(8)
 	var stake_after_raise := int(app.call("_current_selected_stake"))
 	if stake_after_raise <= stake_before_raise:
@@ -119,7 +127,10 @@ func _game_surface_freeze_keeps_presentation_alive() -> bool:
 func _tutorial_runtime_dialogue_interventions_work() -> bool:
 	_clear_guide_state()
 	var run_state: RunState = app.get("run_state")
-	run_state.suspicion["level"] = 98
+	run_state.add_suspicion("tutorial_heat_ui_setup", 98 - run_state.suspicion_level())
+	if run_state.suspicion_level() != 98:
+		_fail("Heat fixture did not establish location-authoritative 98 Heat.")
+		return false
 	run_state.add_suspicion("tutorial_heat_ui_fixture", 8)
 	app.call("_evaluate_run_terminal_state")
 	app.call("_refresh_talk_dock")
@@ -173,3 +184,16 @@ func _snapshot_rect(value: Variant) -> Rect2:
 func _fail(message: String) -> void:
 	push_error(message)
 	quit(1)
+
+
+func _wait_for_blackjack_boundary(settled: bool) -> bool:
+	var deadline := Time.get_ticks_msec() + 10000
+	var canvas: Control = app.get("game_surface_canvas")
+	while Time.get_ticks_msec() < deadline:
+		var view: Dictionary = canvas.call("realtime_surface_state")
+		var ready := bool(view.get("can_deal", false)) if settled else bool(view.get("can_stand", false))
+		var no_hand: bool = (app.get("game_surface_ui_state") as Dictionary).get("player_hands", []).is_empty()
+		if ready and (not settled or no_hand) and not bool(canvas.call("surface_transition_animation_active")):
+			return true
+		await process_frame
+	return false

@@ -1,6 +1,6 @@
 extends "res://scripts/tests/tutorial_dialogue_trigger_cadence_check.gd"
 
-# Standalone historical tutorial-fixture authority check: 73 hostile controls.
+# Standalone historical tutorial-fixture authority check: 76 hostile controls.
 # Preserves the validated diagnostic behavior and explicit --fixture-out CLI.
 # Example: godot --headless --path . --script res://scripts/tests/tutorial_fixture_historical_authority_check.gd -- --fixture-out=<absolute-report.json>
 # One fixture construction/restore; detached mutations only; no UI flow.
@@ -63,7 +63,7 @@ func _run_tutorial_fixture_guard_hostile_probe() -> void:
 	var baseline_checks_passed: bool = _guard_probe_failures.is_empty()
 	if baseline_checks_passed:
 		var descriptors: Array = _guard_hostile_descriptors()
-		_guard_require(descriptors.size() == 17, "seventeen_reviewed_differences_declared")
+		_guard_require(descriptors.size() == 18, "eighteen_reviewed_differences_declared")
 		for descriptor_value: Variant in descriptors:
 			var descriptor: Dictionary = descriptor_value
 			var case_id: String = str(descriptor.get("id", ""))
@@ -115,7 +115,7 @@ func _run_tutorial_fixture_guard_hostile_probe() -> void:
 		extra_casino_transitions.append({"__guard_probe_unknown__": true})
 		_guard_run_case(data, "transition_count:current_environment", "unexpected_transition_count", ["current_environment", "layer_transitions"], extra_current_transitions, false)
 		_guard_run_case(data, "transition_count:casino", "unexpected_transition_count", ["current_environment", "layer_states", "casino", "layer_transitions"], extra_casino_transitions, false)
-		_guard_require(_guard_probe_cases.size() == 73, "all_seventy_three_hostile_cases_executed")
+		_guard_require(_guard_probe_cases.size() == 76, "all_seventy_six_hostile_cases_executed")
 
 	var baseline_data_unchanged: bool = JSON.stringify(data) == original_data_text
 	_guard_require(baseline_data_unchanged, "all_hostile_cases_preserve_baseline_data")
@@ -140,7 +140,7 @@ func _run_tutorial_fixture_guard_hostile_probe() -> void:
 		"positive_caller_unchanged": positive_caller_unchanged,
 		"baseline_data_unchanged_after_hostile_cases": baseline_data_unchanged,
 		"baseline_checks_passed": baseline_checks_passed,
-		"reviewed_difference_count": 17,
+		"reviewed_difference_count": 18,
 		"case_count": _guard_probe_cases.size(),
 		"cases": _guard_probe_cases,
 		"failures": _guard_probe_failures,
@@ -227,6 +227,7 @@ func _guard_mutate_path(data: Dictionary, path: Array, wrong_value: Variant, era
 
 func _guard_hostile_descriptors() -> Array:
 	return [
+		{"id": "save:travel_journey_receipt", "path": ["travel_journey_receipt"], "wrong_value": {"unexpected": true}, "wrong_type": []},
 		{"id": "save:story_money_archive", "path": ["story_money_archive"], "wrong_value": {"archived_entry_count": 0, "known_entry_count": 1, "schema": "bth.story_money_archive/v1", "sources": {}}, "wrong_type": "wrong-type"},
 		{"id": "save:surface_clock_checkpoint_msec", "path": ["surface_clock_checkpoint_msec"], "wrong_value": -2, "wrong_type": "wrong-type"},
 		{"id": "crew:borrow_count", "path": ["narrative_flags", "crew_delivery_borrow_count"], "wrong_value": 1, "wrong_type": "wrong-type"},
