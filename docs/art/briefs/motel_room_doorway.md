@@ -1,6 +1,6 @@
-# Motel private room doorway source planning v1
+# Motel private room doorway one-source release v2
 
-Planning only until actual baseline review. Umbrella doorway plan applies; native owner controls engine/export slot. This is motel_room, NOT motel public reception. Existing internal-travel no-animation rule stays unchanged; synthetic four-method presentation does not authorize new eligible travel routes.
+Released for ONE source after baseline review. Umbrella doorway plan applies; native owner controls engine/export slot. This is motel_room, NOT motel public reception. Existing internal-travel no-animation rule stays unchanged; synthetic four-method presentation does not authorize new eligible travel routes.
 
 ## References and contract
 Director personally viewed assets/art/environments/motel_room/background.png, own travel exterior and old doorway in the art worktree. Preserve assets/art/travel/doorways/motel_room.png at exact1024x1536 opaqueRGB. Rounded residential contract aperture159.00000104 by256.00000597 at1273.99999818,439.99999557 through1432.99999922,696.00000154. Full-height centered cover crops35.000008px each side, no topcrop. Preserve UVs/geometry/hinge/timing exactly.
@@ -12,3 +12,6 @@ Clear central aisle and lower35percent dry dark wood floor. Bed/nightstand/CRT b
 
 ## Gates
 Baseline current four methods and original entrance/doorway checks after Grand export drains, then director/auditor actual opening/entry/closure review before one-source release. Save one exactPNG/prompt/base64/SHA. Final independent raw/aperture review requires correct floorcontact, retained room identity, no falsejamb, no outsidepixelchange, exact state and entrance comparisons, automaticcompletion/no-pointerliveness and actual video decode. Synthetic presentation is not legal-route/destination-load/Web coverage. Preserve20 interiors and9 preceding doorways. Existing artbranch/TEST only after finalPASS; no main/NEXT. Concise proof/provenance in Git; raw E drive.
+
+## Frozen release
+Native baseline26eb797913c7 with7538 tracked files unchanged; all jobs drained. Entrance11066/0,doorway137, fixed30fps fourmethods2312 checks/92samples pass; checkpoint78ff581f0. Union E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMDOOR-20261115-baseline-union-01/evidence/motel-room-doorway-baseline.json. Director personally viewed walkf200 and nightcabf235 in cinematic-01/evidence: threshold contact coherent, closure hides actor, side room identity remains visible. ONE exact1024x1536 source released from approved private room and facade references. Final raw/aperture gate remains required. Internal travel eligibility and no-animation rule unchanged; synthetic preview does not imply legal route.
