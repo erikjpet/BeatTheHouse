@@ -6239,6 +6239,11 @@
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_ordinary_Grand_Craps_QA_20261115.md",
           "summary": "Real Kitty invitation and Grand/Cage progression; natural 5-chip Craps point6 survives paid Save/fresh Host Continue then normal7 settles loss exactly once13/13. No injected funds/outcomes, no Web acceptance or broad closure. Correct-order security popup/table talk/Bishop two-beat recruitment with intermediate Continue20/20; exploratory out-of-order attempts are not softlocks. Paid point through internal Cage cashout/Continue/zero-chip continuation20/20 preserves exact working stake and settlement."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_Baccarat_QA_20261115.md",
+          "summary": "Natural High-Limit access16/16; Baccarat Player90 draft/Continue/paid deal12/12 and separate-process presentation continuation preserve one hand, exact account/RNG. No Web or unresolved-wallet closure."
         }
       ],
       "implementation_batches": [],
@@ -6252,7 +6257,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T21:57:16.306241+00:00",
+      "updated_at": "2026-11-15T22:03:01.270726+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
