@@ -136,3 +136,8 @@ playthrough or a reproduction from the owner's save. NEXT delivery remains open.
 - next-bugfinder-fixedall-20261115-01/evidence/job.json: `24f9e1a085751b2a378d4f2d34509757e8822a63a46062eef7aa40db5be15ca8`
 - next-bugfinder-fixedall-20261115-02/evidence/worker.log: `8dda5996acd47f714e5eee1885ad6bea2b97260ceb119f4506b7b7a17916b6ce`
 - next-bugfinder-fixedall-20261115-02/evidence/job.json: `7b1efcdff875c5ff41da6ca89cf6bc723924a25e7e27f00762488a2a42f79cf6`
+
+Fix commit: ed37dd276c57a6febeb00bc1b9984704c585db9b, pushed to main.
+Manual checkpoint next-bugfinder-ledger-20261115-06 reports 115 unrelated
+findings and zero for this objective. NEXT watcher was stopped; the authorized
+normal capped watcher restart now fetches this commit. Delivery is not yet proved.

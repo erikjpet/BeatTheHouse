@@ -196,7 +196,7 @@
         "name": "dot, Crew room return fix",
         "task_ref": "/root/find_next_game_bugs"
       },
-      "commits": [],
+      "commits": ["ed37dd276c57a6febeb00bc1b9984704c585db9b"],
       "deployment": {
         "state": "pending",
         "evidence": [],
