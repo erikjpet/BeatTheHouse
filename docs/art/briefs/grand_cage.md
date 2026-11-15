@@ -1,6 +1,6 @@
-# Grand Casino Cage execution direction v1
+# Grand Casino Cage execution direction v2
 
-2026-11-15. Queue17. SOURCE PLANNING ONLY while Back Room integrates. No generation until actual authority and cleaned guide reviewed. Artbranch TEST only, no main/NEXT, no competing export.
+2026-11-15. Queue17. ONE SOURCE RELEASED after actual Base and corrected clean guide review. Artbranch TEST only, no main/NEXT, no competing export.
 
 ## Theme and references
 
@@ -25,3 +25,18 @@ Linda silhouette is game-owned featureless live body/idle, bars redrawn after he
 Native owner captures current Base/actual live stock, all selected titles/typed cast and existing lifecycle context without purchasing/deleting stock or forcing financial/boss progression. No direct Cage scenario key; do not force public scenarios. Capture exact foreground cache and mode0/1/2, normal/low-detail fixed clocks, originalhelper cleanup suppressing only _floor_reflections. Preserve return door and queuepost geometry. Inspect conditional EMPTY preservation and live Linda redraw authority explicitly; natural current baseline is not full empty/populated lifecycle proof. Report unresolved static-pack contract behavior before generation rather than concealing it.
 
 Director/auditor review actual and exact clean guide then freeze v2/one-source release. Quiet whole physical materials beneath real labels, no plaques or movedobjects. Artist saves PNG/prompt/hash. Auditor owns exact fit and scoped final PASS; native owner commits proof/ledgers and integrates only passed package to TEST. Raw evidence E:/CodexQA/BTH; initial Base does not cover all financial/Linda/stock lifecycle or browser/save/revisit.
+
+
+## Final v2 release and compatibility boundary
+
+Director personally viewed actual Base and corrected capture02 clean guide. Base5objects,14,838checks; original source d43772d5 plus protected c5,7,392 files unchanged in baseline. Runtime extraction committedf035e1d5e is a separately authorized compatibility delta, not art-only: shared conditional EMPTY label preserves original stock semantics/font/color/stage in both legacy and packed Cage.52checks and original liveness pass, but final rendered empty AND available-stock states still gate activation. No real stock purchased/deleted and no fake claim of naturally played lifecycle.
+
+Exact generation guide E:/CodexQA/BTH/runs/BTH-ENVART-CAGE-20261115-capture-02/evidence/__none_source_mode3_clock0.0_lowfalse_cleantrue.png SHA2a570028b6246d8a9d30ad9ee5188761fcdae1e74c4d091787b096b9741437ce. QA authoring suppression removes only frozen floor helper and conditional EMPTY text; actual stock untouched. Use this guide, not capture01 with EMPTY. Do not generate the word EMPTY anywhere: it is live UI. Static words only THE CAGE, CHIPS ONLY, FLOOR. Gift shelves remain empty architecture for actual stock objects.
+
+Single-source material direction: crisp navy/plum structural paneling, cyan glass/ATM accents, rich bronze/brass case and teller framing, controlled pink queue rope/sign, grounded quiet dark floor. Use Grand facade family plus approved Delta/Gas craft; do not copy public machinebank or private table-room. Preserve exact18 structural window bars (six per window), three pass-through slots, three trays, existing ledger lines,12ATMkeys, two gift shelves, three queueposts, existing return door/handle. No extra shelf items, coinpiles, cash, teller figures, face, screens with invented information, extra barreddoors or security cameras. Bright material highlights localized, not blurry glow. Exact authoritative replay has cyan counter top and three dark tray marks: fit from actual source mode2 rather than generic countertop assumptions.
+
+Actual Linda is featureless live cast behind dense additional source bar redraw. Do not bake Linda or those live actor-overdraw bars into static source. Preserve architectural six bars per window; renderer retains independent dense redraw over Linda. Her yellow name needs quiet dark window plane. Cashout Counter cyan name needs quiet counter lowerface; Casino ATM cyan name above terminal needs dark wall; floor-return orange title needs quiet door face. No plaques, shifted labels or widened slots. Existing source empty-stock Base is not populated-stock visual proof.
+
+Animation inventory20native/16lowdetail as v1. Important correction:11authored glints x294+30i are NOT all aligned to architecture bars, so treat them as source-authored glass/bar reflections at original positions initially, not exact bar polish. Do not silently align all to nearestbars. Measured occlusion may justify a documented same-window translation only, texture/cadence/opacity unchanged. ATMscan stays within terminal; source Linda idle remains game-owned. All20 native entries and16lowdetail entries need visibility/RM evidence, not private16/7 assumptions.
+
+Artist may create ONE source now and preserve PNG/prompt/hash. Auditor exactfit and independent final PASS required with actual Base/typed masks, available-stock and empty-stock rendered proof, no-pointer liveness and honest compatibility-delta provenance. Native owner alone integrates artbranchTEST after gates. Main/NEXT untouched; broad financial/Linda progression/save/revisit not implied.
