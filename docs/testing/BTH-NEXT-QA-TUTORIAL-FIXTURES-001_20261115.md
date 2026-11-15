@@ -65,3 +65,5 @@ Reconciliation34:109 pre-existing global findings, zero scoped tutorial findings
 - E:\CodexQA\BTH\runs\next-bugfinder-tutorial-targets-20261115-09\evidence\job.json SHA256 94dc9f84017924539e544a2f12f7ff331dd151d973d17347a68ac4732f6499ec
 - E:\CodexQA\BTH\runs\next-bugfinder-tutorial-resume-20261115-03\evidence\worker.log SHA256 6d8868c1569494a98f9ab6a88ecb7fe996b5177c3d14914601e7d95e78a313d9
 - E:\CodexQA\BTH\runs\next-bugfinder-tutorial-resume-20261115-03\evidence\job.json SHA256 24d5dd5ce2d9346f58fac563e977f6cd692b20b1aded8bfdc287a3846fcb207d
+
+Independent review approved final state-based waits, real Cancel and exact additive-field projection. Repair commit 0111a7f770b0d980280c88c7be740839408d7871 pushed to main. Broader general gameplay and browser acceptance remain open.

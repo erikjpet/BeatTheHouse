@@ -37888,8 +37888,10 @@
             "id": "repair",
             "description": "Review any evidenced test-only repair and run complete affected checks; preserve unresolved discrepancies explicitly.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TUTORIAL-FIXTURES-001_20261115.md"
+            ]
           }
         ],
         "coverage": {
@@ -37898,14 +37900,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "TEST_FIX_VALIDATED_REVIEW_PENDING",
+      "state": "complete",
+      "status": "TEST_FIX_COMMITTED_VALIDATED",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "0111a7f770b0d980280c88c7be740839408d7871",
+          "evidence": [
+            "docs/testing/BTH-NEXT-QA-TUTORIAL-FIXTURES-001_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -37920,7 +37929,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Independent review then commit tested test-only repair. No runtime deployment acceptance implied.",
+      "next_action": "Scoped reviewed test repair committed to main. Continue separate general gameplay and browser acceptance objectives.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -37930,7 +37939,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T20:25:24.322379+00:00"
+      "updated_at": "2026-11-15T20:34:27.587925+00:00"
     }
   ],
   "batches": [
