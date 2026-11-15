@@ -1,0 +1,256 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "034595993c26abb362e510dfa8534ba50a3e24a5922be908e4349b3be6c0876a",
+  "decision": "Final scoped High-Limit R1 audit PASS. Personally reviewed actual Base and frames000/075/151;152frames20.1226236s, all16 motifs152 distinct applicable states. Native16+simulated lowdetail7 visibility23/23 passed; exact Base layout/object/publication unchanged; two fronts/VIP correct. Three static wall/floor patches byte-stable across all152frames. Original liveness and both full-decodes independently verified. Existing art branch and cumulative TEST only.",
+  "limitations": "Base-only9objects, no forced scenarios or lifecycle/save/revisit/live Web claims; lowdetail7 is documented subset approximation. Failed QA baseline preconditions01/02 preserved separately from clean03. Actual20s preview, not8s; no universal texture-readability claim.",
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_highlimit_v1r1.py": "5139d13bf08399d8574ff2fc04b4b89b9fbdf43a84cd0112b6bedc3c04ac41b8",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_highlimit_clean_guide.py": "af2bbf5a28d92f4b26556bc56f72c0ec8b27e629ce3a25ddc15032a2360259dd",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_highlimit_occlusion.py": "586c6bc15bbf178879805371e6b0ba6488792ad2eee654b326a3be64595fa058",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_highlimit_static_grain.py": "0c399f399ecaaff4eef3b7e0f0c3c1f52e075c0a7e78ce7cc86db2ecea22be48",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_highlimit_r1.py": "18df9371438910d5380d35bc8e62a79fbbd616d17d851af48a06ae3114a82c46",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grand_v1r1.py": "c41a85ba8b80a9544cbd364795267ee1bd0ce41eb84782c0f1e3d16e2037fcf4"
+  },
+  "payload_files": {
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png": {
+      "sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+      "bytes": 591,
+      "size": [
+        468,
+        124
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_0.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_1.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_2.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/background.png": {
+      "sha256": "dc9509ca6ab5b4e23ea7ed9fb6adbb28e6674984cc7571161b94304dc8b3bd28",
+      "bytes": 874262,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png": {
+      "sha256": "77fce81e976bb3015cdca6cf3254a5181808dd93210bf41e9a228e13973e8184",
+      "bytes": 19293,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png": {
+      "sha256": "baf26cb447ada33edbe5be3b2b831f66cb95b91957ed6cd9a633dfe1168eb014",
+      "bytes": 19258,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/grand_casino_high_limit.json": {
+      "sha256": "3c2accd38cf268b33853bd3894e53b4def84e2bbf10f240a20de38ccb868fdd2",
+      "bytes": 7084
+    },
+    "data/art/environments/index.json": {
+      "sha256": "9517db6dccb33c3fa5302c86f090549b22263c851bc6b78369e9e528e0c9ec93",
+      "bytes": 351
+    }
+  },
+  "baseline": "d0bb57dcd98ab11d0c5e57f28a36f2c88b1a07f6",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-preflight-r1-01\\evidence\\highlimit-r1-preflight.json": "7166ea8db70f7a079a5eab420738d789af7c14c0ff12c2f4eba090f9b9309a5b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-preflight-r1-01\\evidence\\job.json": "c86a20f05a40870bb327120f15e7cbc7f6d9b73dc83f98ebb3c81dbd32a2b641",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-preflight-r1-01\\evidence\\launch-claim.json": "81c57c76499e99f3df44f441874b799cdadb1356f7dea556b68f034ce6c0a211",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-preflight-r1-01\\evidence\\storage-manifest.json": "4df80f063045778de88d0aa3f9c12df5916caf8509032fdef9407744176138b4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-preflight-r1-01\\evidence\\worker.log": "ecc258f2739b5ed72a4d4c159c3b7f0f54f833d25dfef63db6d66ece9bec64e5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-occlusion-r1-01\\evidence\\highlimit-base-occlusion.json": "4573e8d1bd5e1ca3c3975eade6bdf11f42808eac63183636ead3dfe6a609ee27",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-occlusion-r1-01\\evidence\\job.json": "a8ac74ff20140fe96497096d76534f0a63618e535fe3b9beaf1a9c01f7e9073a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-occlusion-r1-01\\evidence\\launch-claim.json": "91acaf8f9447401fd9889454812a9d89a87f2e95d6bff7e17c6f9fecce68d7bb",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-occlusion-r1-01\\evidence\\storage-manifest.json": "f8f6ef73c61f6784774eea700aa021ee13d857ae91a898e9e6c63bb120656206",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-occlusion-r1-01\\evidence\\worker.log": "e78f530448944ff1dc5ec475b87f04d142bba29c8ca58a8a4efdcb68590a089f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-static-grain-r1-01\\evidence\\job.json": "f34cd61ea5337eae349dd8e0bccfc42ff0716d085131a05f8f95d5e77b4e7d3e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-static-grain-r1-01\\evidence\\launch-claim.json": "b298188645f2cdc5bfdc7024bd6911d69f61a394bfefe516aee5e7fe16647c56",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-static-grain-r1-01\\evidence\\static-grain-stability.json": "0e98a94c7bea79f87f234f82af8c402e7fc23f32af25c76a842788d099505e62",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-static-grain-r1-01\\evidence\\storage-manifest.json": "9ca52a3b2093388c91f0208508853b7f38d97d2cb3197a7f255e5c837b802659",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-static-grain-r1-01\\evidence\\worker.log": "461d86087d165abfed49da5cc55dad906123068b86f9e3633fa49f166a0ac822",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\comparison.json": "f6e2fa9e001981084530424f5fda07eadca610fedb6753bebf7d0475dfda7988",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\highlimit_capture_inputs.json": "0c8a9d6da6e625406951f44569c81072ced65b2796401fe606ec18f46ac07d41",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\highlimit_trial_contexts.json": "97f6332d4eefff19fbee9854bf8aa7e2d3b10886d18735acec3a4386474c2766",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\job.json": "4056628eede9b8b09a04b0be5917f1f96a93bf7901fb0ab6c02546bfde7098f6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\launch-claim.json": "b91b4417bbf5808c4534fff9dc3fb99bf53b63d0d59683ce3f4bbe52e99d5205",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\post_source_verification.json": "58afe09701eaae25d21c99273db2e3152af091de3dea4981e02021e6803c4b7f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\source_identity.json": "9318206129e866c945d8cb997a86e0e2b7e0ffa0f3d511ea8dab84a11322c8fd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\storage-manifest.json": "64881248d4caa0e415bdb4876658b6369df9721cf69024892e4e4a8b9935a181",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-comparison-01\\evidence\\worker.log": "4365981ed7548d8915dd8b3bf307dcd5d52c72c3286182cb4ea2757e45b4e8e8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\grand_casino_high_limit_animation_probe.json": "d11210fba464d96340eb89a89736d174829864ada2ce1fee07874b96cb4b68da",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\highlimit_capture_inputs.json": "0c8a9d6da6e625406951f44569c81072ced65b2796401fe606ec18f46ac07d41",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\job.json": "e9774d70f88a2d9252836ddf10b1546becdd2304300d906dfdb3f879b822a038",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\launch-claim.json": "1e026fa3d29b1f95993477e80e0a458b587d0b6d3722978ffdcb3922c7e39a25",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\post_source_verification.json": "58afe09701eaae25d21c99273db2e3152af091de3dea4981e02021e6803c4b7f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\source_identity.json": "9318206129e866c945d8cb997a86e0e2b7e0ffa0f3d511ea8dab84a11322c8fd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\storage-manifest.json": "f1451315275eddeb5c17660959b03777d97af3458ecc12e7eccaa5fca28d6720",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-motion-01\\evidence\\worker.log": "34990870ab7ded09e8598cb04176ce70dec562e0fe0eca43e465183fd7e67701",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\highlimit_capture_inputs.json": "0c8a9d6da6e625406951f44569c81072ced65b2796401fe606ec18f46ac07d41",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\job.json": "11f13e5b02051bdea0dedf14a680b5afe8fb5ad83bad859f2f3bbe6646f721ad",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\launch-claim.json": "ff5fab9ac65e4529c7c5a93dc72133a4006c0f8b9233905912d0d68512589484",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\post_source_verification.json": "58afe09701eaae25d21c99273db2e3152af091de3dea4981e02021e6803c4b7f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\source_identity.json": "9318206129e866c945d8cb997a86e0e2b7e0ffa0f3d511ea8dab84a11322c8fd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\storage-manifest.json": "7f7347195f2054a53caba70824082203645ae92df17f84d134d1973e56561c77",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\capture\\animation_capture.json": "8c6a60abe7de0acd703a7bec26e7d2ee9da871052258803cbd752f9fca2cdf08",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\worker.log": "dcca4970313696818267497ed97511ad8ae499192c2639739079bc324c498f63",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\highlimit_capture_inputs.json": "0c8a9d6da6e625406951f44569c81072ced65b2796401fe606ec18f46ac07d41",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\job.json": "4eca1cb2ce149f509258cbacdb40be1eea11ce24b7e90db278ecc22300be6145",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\launch-claim.json": "52c0bc86673951e7c7f7e402a403c5e608a3f932e7d63f91abdb05a9ab6f34c0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\post_source_verification.json": "58afe09701eaae25d21c99273db2e3152af091de3dea4981e02021e6803c4b7f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\source_identity.json": "9318206129e866c945d8cb997a86e0e2b7e0ffa0f3d511ea8dab84a11322c8fd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\storage-manifest.json": "ed3d992e080858243b7fe4b3cff3a24c8ad2025ce34073ce32c356f69ec065cf",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\highlimit_capture_inputs.json": "0c8a9d6da6e625406951f44569c81072ced65b2796401fe606ec18f46ac07d41",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\job.json": "7b04454d9de0489284e9fec9f33c21a7d8a3cb9fa30f3fa635d41fa163f533a9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\launch-claim.json": "a7bc51f314ae503329de45f152d5191af18c42d2bf20a5c3efc4c0893b517fd5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\post_source_verification.json": "58afe09701eaae25d21c99273db2e3152af091de3dea4981e02021e6803c4b7f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\source_identity.json": "9318206129e866c945d8cb997a86e0e2b7e0ffa0f3d511ea8dab84a11322c8fd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\storage-manifest.json": "dbf3cb3e872cab52de3436cb55e3f0b1b31ed1c0cf59fe7954e48973c34192a4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\video-verification.json": "6c34b891fcebb6564b8df4e13cb5d8a77c0677afa5ccabd50ba3510accb4d4ed",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-encode-01\\evidence\\worker.log": "47c2ce24856d378766f785ed8779102290ae3dac2d4882c4a0527b37960e9fe4"
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMIT-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "a24e2e4512a8dbc9b19386967ea083e39b51568a23ccabd543926474be0c5e9a"
+}
