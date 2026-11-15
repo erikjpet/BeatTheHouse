@@ -1,6 +1,6 @@
-# Kitty Cat Lounge doorway source planning v1
+# Kitty Cat Lounge doorway one-source release v2
 
-Planning only, no generation until current actual baseline is reviewed. Umbrella travel doorway plan applies. Native owner owns engine/export slot; no competing engine work.
+Released for ONE source after current baseline review. Umbrella travel doorway plan applies. Native owner owns engine/export slot; no competing engine work.
 
 ## References and contract
 Director personally reviewed approved assets/art/environments/kitty_cat_lounge/background.png, own travel exterior and current doorway in the art worktree. Actual asset is LANDSCAPE 1536 by 1024, opaque RGB. Preserve this despite the original generic portrait wording in Phase10. Replace only assets/art/travel/doorways/kitty_cat_lounge.png, no runtime/data/hinge changes. Rounded landmark contract opening is about203 by183, at1209.9999999694,528.9999999919 through1413.0000000342,711.9999999839. Full-height centered cover keeps width about0.739526411926 of source: crops200.043716 pixels each side, no top crop. Keep identity within x201..1335 and do not rewrite rounded UVs. Double-door opening requires clear center and no baked frame, jamb, leaf or threshold.
@@ -12,3 +12,6 @@ Central entry aisle and lower35percent should be uninterrupted dark dry timber. 
 
 ## Required evidence
 After Punchline deployment drains, capture current four synthetic production-overlay methods and original entrance/doorway gates. Review actual opening, entry and closure before one-source release. Then save one exact PNG with prompt/base64/SHA, inspect raw and actual candidate independently. Require unchanged state snapshots, no outside-aperture pixels, nearest bottom-cover samples, double-door and closed actor occlusion, original automatic overlay completion/no-pointer liveness and actual video full decode. Keep synthetic presentation distinct from legal route, destination loading or Web verification. Cumulative20 interiors and seven preceding doorways must remain intact. Art branch/TEST only after independent final PASS, no main/NEXT. Concise proof/hash provenance committed; raw evidence retained on E drive.
+
+## Frozen source release
+Native baseline source a1b4ed62c, 7530 unchanged files; all jobs drained. Four methods2312 checks/92 frames, original entrance11066/0 and doorway137 pass. Checkpoint89fcd8e5a. Union E:/CodexQA/BTH/runs/BTH-ENVART-KITTYDOOR-20261115-baseline-union-01/evidence/kitty-doorway-baseline.json. Director personally viewed cinematic-01 walk f200 and night cab f235: double-door opening gives a wide useful side/back view, central actor contact is coherent and closure fully hides actor. Old ornate bar/chair detail crowds visible side slivers. Keep new approved stage/bar materials readable without extravagant clutter. ONE exact1536x1024 source may now be generated from the personally reviewed approved room and facade. No new runtime, data or target activation. Final source and actual aperture audit remains required.
