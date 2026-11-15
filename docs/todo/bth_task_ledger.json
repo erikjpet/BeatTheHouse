@@ -38008,7 +38008,8 @@
         "BTH-ENVART-001-ART-JAZZ-01",
         "BTH-ENVART-001-ART-PUNCHLINE-01",
         "BTH-ENVART-001-ART-HIDDEN-01",
-        "BTH-ENVART-001-ART-PRIVATE-01"
+        "BTH-ENVART-001-ART-PRIVATE-01",
+        "BTH-ENVART-001-ART-KITTY-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43260,6 +43261,42 @@
         "evidence": []
       },
       "updated_at": "2026-11-15T01:09:42.330488+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-KITTY-01",
+      "name": "Create audited Kitty Cat art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Bounded current baseline and source-motion preparation",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Kitty art source or activation yet."
+      },
+      "scope": [
+        "Base and four directly assigned initial scenarios; actual overrides, titles, cast support, counter replay and retained source motion.",
+        "No broad lifecycle hunt or speculative art before director review."
+      ],
+      "evidence": [],
+      "next_action": "Capture exact current initial union and fixed-clock source architecture; director reviews clean-guide decisions.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T01:11:58.748900+00:00"
     }
   ]
 }
