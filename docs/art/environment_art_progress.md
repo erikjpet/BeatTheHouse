@@ -2,11 +2,11 @@
 
 Updated: 2026-11-15
 Branch: codex/environment-art-layers
-Release status: Thirteen interiors have exact native/art PASS and cumulative TEST artifact delivery at `dd96c9dd2da5`. Five retain full live Web verification; Pawn, Jazz, Public Punchline, Hidden Casino, Private Punchline, Kitty Cat, Delta Queen and Beach still need live Web acceptance. Full 20-room/12-doorway campaign remains Open.
+Release status: Fourteen interiors have exact native/art PASS and cumulative TEST artifact delivery at `d0bb57dcd98a`. Five retain full live Web verification; Pawn, Jazz, Public Punchline, Hidden Casino, Private Punchline, Kitty Cat, Delta Queen, Beach and Grand Casino still need live Web acceptance. Full 20-room/12-doorway campaign remains Open.
 
 ## Current queue
 
-Beach R1 passed independent four-context native visual and 28-motion audit. Same-order layout, object and publication records match baseline; 112 conservative visibility checks pass. Thirteen-room TEST artifact and normal TLS served hashes verified. Seven interiors and twelve doorways remain. Grand Casino public room source planning is next. Main/NEXT and normal save configuration unchanged. See `../testing/beach_r1_test_delivery.json`.
+Grand Casino public R4 passed native four-context composition,66 native/simulated-low-detail motion/Reduce Motion checks and92 conservative visibility checks. A center sparkle hidden in R3 was moved to the same bay ledge; failure evidence is retained. Fourteen-room TEST source/import/PCK and normal TLS hashes verified. Six interiors and twelve doorways remain. Main/NEXT and normal save configuration unchanged. The separately requested site TEST link/build dates are published under site commit14a1151. See `../testing/grand_casino_r4_test_delivery.json`.
 
 ### Earlier queue checkpoint
 

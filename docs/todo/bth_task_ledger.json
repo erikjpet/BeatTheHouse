@@ -43491,19 +43491,28 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Exact Grand R4 independent native art PASS; cumulative TEST export pending",
+      "status": "Exact Grand R4 native PASS and fourteen-room TEST artifact verified; live Web acceptance open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "d0bb57dcd98ab11d0c5e57f28a36f2c88b1a07f6",
+          "evidence": [
+            "docs/testing/grand_casino_r4_native_trial.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No Grand Casino art activation."
+        "commit": "d0bb57dcd98ab11d0c5e57f28a36f2c88b1a07f6",
+        "evidence": [
+          "docs/testing/grand_casino_r4_test_delivery.json"
+        ],
+        "scope": "TEST source/import/PCK and normal TLS files verified; no live Web gameplay certification."
       },
       "scope": [
         "Public Grand Casino only, Base plus three initial scenarios.",
@@ -43531,7 +43540,7 @@
           "summary": "Four contexts exact;66 native/lowdetail motion/RM and92visibility pass. R3 hidden sparkle corrected within same fixture."
         }
       ],
-      "next_action": "Commit exact approved package, build and verify cumulative TEST; live Web acceptance remains open.",
+      "next_action": "Perform live Web visual/save/revisit acceptance when available; continue next queued room source baseline.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43540,7 +43549,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T03:48:54.241288+00:00"
+      "updated_at": "2026-11-15T04:20:09.632777+00:00"
     }
   ]
 }

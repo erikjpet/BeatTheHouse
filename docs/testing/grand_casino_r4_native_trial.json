@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "a2b2189810f14b33e8a9491741068776dd27458769d42c16016171b866182558",
   "decision": "Fresh native and simulated low-detail visibility92/92 across retained byte-identical four-context masks passed. Personally viewed R4 frames000/030/060;61frames8.0057113s, all16 motifs61 distinct applicable states. Original liveness and both full-decodes independently verified.66 motion/RM checks, static preflight, exact baseline comparison and four compositions carry under unchanged background/front/index hashes. Existing art branch and TEST only.",
@@ -207,5 +207,17 @@
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
   "final_audit_receipt_sha256": "726c5499140e16bf762cb3774cd31000c9f9629bd3c26c89e49e8d728678a2ef",
-  "baseline": "dd96c9dd2da5abc550f0076877cb0c57e370ae52"
+  "baseline": "dd96c9dd2da5abc550f0076877cb0c57e370ae52",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-preflight-r4-01\\evidence\\grand-r4-preflight.json": "212fd28c87c7a06b4adcf909576757a46d01e848c0a6a192e101ccd21cb42de5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-preflight-r4-01\\evidence\\job.json": "db5d5fb293fec4258adb404fdec2b4ccbf79bd0f32704ff367f15f16fd87601b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-preflight-r4-01\\evidence\\launch-claim.json": "83743e1fee313f0b4c053ecab44c4662ca79fab529b2dfd33b40e860f770da7a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-preflight-r4-01\\evidence\\storage-manifest.json": "e2ed3cef545be330df803c1860f34f606b69984fe8abea553d909a5f9d6db35b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-occlusion-r4-01\\evidence\\grand-four-context-occlusion.json": "666f68cd3dbb8d497f53da65a259b57bfedd8e158360c6112218cc472113676b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-r4-motion-01\\evidence\\grand_casino_animation_probe.json": "05a91eba47896974b00cf1642d874a0b770341862be5f984b4d2203905acea5a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-r4-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-r4-encode-01\\evidence\\video-verification.json": "189feca44d9d2397a8785b783bf1d212d2bceec67b5dacea7f7c78a60e56e1e6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-r3-comparison-01\\evidence\\comparison.json": "3afee883fd37d40f0adb34c0beae7041b47766d37a1efb8c9b3385de871ea2e4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-stage-r4-01\\evidence\\static-carry.json": "26393ae288826d371345c29516d29e019bd934805dc062cae7d9d09de3e0d135"
+  }
 }
