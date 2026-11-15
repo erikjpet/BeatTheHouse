@@ -1,0 +1,12 @@
+{
+  "status": "R2_FAILED_FINAL_VISIBILITY_NOT_ACTIVATED",
+  "package_sha256": "0b25108c0509bc24f4e04a91675f3657a8fa0e3a9ec864de47b62555eb1935ce",
+  "finding": "Six bedding blocks0..5 hidden by actual live bed in both normal/low-detail:12of40maskchecks fail. Native target motion,geometry,composition,liveness and decodes pass but do not establish final visibility.",
+  "next": "Auditor/director measuring same-support translation; no runtime/livebed edits.",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-occlusion-r2-01\\evidence\\motelroom-base-occlusion.json": "f27b581fde23411d5b8e6a6be2b4481f3b06b5a63f9fb4e119cce6856a4094fa",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "fc224ad28b0a5cbe066b23c8ca52497f6c047df95b410faea141050ac7ba2ac3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r2-motion-01\\evidence\\motel_room_animation_probe.json": "4b1e9e2c9b414b67a7447bedb2afb14165bea7e6082275dac66898cf146f2450",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r2-encode-01\\evidence\\video-verification.json": "810a939bf3a1ef12312dd0b932e471472fb040aeac949111f1148052d45b0305"
+  }
+}

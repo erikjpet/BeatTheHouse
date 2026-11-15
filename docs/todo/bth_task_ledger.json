@@ -43787,7 +43787,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel Room Base14905 checks passed; director/auditor source release review",
+      "status": "Motel R2 failed six hidden motion entries; correction underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43814,9 +43814,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/motel_room_preart_baseline_20261115.json",
           "summary": "Six actual objects/titles/typed masks,7422sourcefiles and c5 exact; no forced scenarios."
+        },
+        {
+          "kind": "native_review",
+          "reference": "docs/testing/motel_room_r2_native_review.json",
+          "summary": "12of40visibilitychecksfail;R2unactivated; diagnosticMP4sdelivered."
         }
       ],
-      "next_action": "Finalize clean guide and direction, generate one source, then independent fitting/native audit.",
+      "next_action": "Approve exact same-support motion correction, rerun native/mask/video gate before activation.",
       "blocker": {
         "state": "none",
         "kind": null,
