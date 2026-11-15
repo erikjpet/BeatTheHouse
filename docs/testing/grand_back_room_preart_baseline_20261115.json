@@ -1,0 +1,32 @@
+{
+  "source_commit": "94155957c3bdce01d801da013cbcd3eed3289305",
+  "checks": 14777,
+  "contexts": {
+    "__none": {
+      "objects": 3,
+      "selected": 3,
+      "typed_paints": 3
+    }
+  },
+  "distinct_ids": 3,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-union-02\\evidence\\grand_casino_back_room_preart_union.json",
+  "union_sha256": "8ccc314410f22495458dff3ba0d84d7b1cfde388b2f619dfd06e4d8f9ba9398d",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACK-20261115-union-02\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "137b5389f33e986c49f2c11db9a293e7d1b15027296e94bf22b47ec3947a09aa",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\grand_casino_back_room_legacy_geometry_1800x860.png",
+    "sha256": "625bba3c9f323993ad4c288d1b3dce49dcd69c43b9cf8b2e72327a533f4448e3"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7368,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exact94155957/c5 initial Base only, no forced public scenarios; no later lifecycle/open-hours/save-revisit/art acceptance.",
+  "rejected_source_capture": "capture-02 source-only guides used inherited High-Limit painter arguments; actual Base was correct. Replaced only QA painter arguments with BACK ROOM/ROURKE'S TABLES/C_PINK; all evidence retained.",
+  "repeat_actual_equal": {
+    "object_layout": true,
+    "objects": true
+  },
+  "helper_diff": "--- \n+++ \n@@ -324,7 +324,7 @@\n             _draw_authored_counter_foregrounds()\n         else:\n             _bg()\n-            _draw_grand_casino_private_room(\"HIGH LIMIT\", \"PRIVATE TABLES\", C_CYAN)\n+            _draw_grand_casino_private_room(\"BACK ROOM\", \"ROURKE'S TABLES\", C_PINK)\n             if source_mode==1:_draw_scene_life()\n             if source_mode==3:_draw_authored_counter_foregrounds()\n         draw_set_transform(Vector2.ZERO,0.0,Vector2.ONE)\n"
+}

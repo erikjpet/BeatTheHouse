@@ -43637,7 +43637,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand Back Room source-only baseline underway",
+      "status": "Grand Back Room Base source captured; corrected pink OFFICE guide under review",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43659,9 +43659,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/grand_back_room.md",
           "summary": "Base only, exact private pink OFFICE source; no forced public/showdown/heist scenarios."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/grand_back_room_preart_baseline_20261115.json",
+          "summary": "14777checks/0findings,3objects,twofronts;source-only wrong-color QA guide rejected and corrected;actual geometry repeats exactly."
         }
       ],
-      "next_action": "Capture actual Base, exact source fronts and typed/title bounds; director/auditor approve clean guide before one-source generation.",
+      "next_action": "Director/auditor review corrected capture03 and union02 before single-source generation.",
       "blocker": {
         "state": "none",
         "kind": null,
