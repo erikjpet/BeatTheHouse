@@ -43423,13 +43423,20 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source plan registered; four-context baseline preparation active",
+      "status": "Four initial source contexts captured; director/auditor clean-guide review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "122aef5f85ed33a213735eb49d8a77e0caa0f562",
+          "evidence": [
+            "docs/art/briefs/beach.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -43446,9 +43453,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/beach.md",
           "summary": "V1 source-only plan; actual geometry and clean-guide review pending."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/beach_preart_baseline_20261115.json",
+          "summary": "14899checks/no findings,4contexts29distinctIDs38selected/typedpairs;7283sourcefiles+c5 unchanged. Not later lifecycle/save-revisit/art acceptance."
         }
       ],
-      "next_action": "Capture exact current Base and three scenario layouts; auditor/director review before source generation.",
+      "next_action": "Auditor clean-guide review and director single-source release; no Beach art activation.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43457,7 +43469,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T03:09:54.600583+00:00"
+      "updated_at": "2026-11-15T03:15:11.413875+00:00"
     }
   ]
 }
