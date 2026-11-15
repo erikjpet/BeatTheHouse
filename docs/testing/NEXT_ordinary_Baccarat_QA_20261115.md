@@ -25,3 +25,11 @@ E:\CodexQA\BTH\runs\next-bugfinder-ordinary-baccarat-cold-20261115-01\evidence\j
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-baccarat-cold-20261115-01\evidence\storage-manifest.json SHA256 2f032939d66bb883bd73c4e5e5009f292e7a926ca472562feb61290442726619
 
 Current-group ledger reconciliation run52 retains109 historical gaps, no broad completion. All listed capped Jobs finished with zero owned processes.
+
+## Naturally earned Bronze Players Card
+
+Ordinary card review12/12 (next-bugfinder-ordinary-card-20261115-01): after returning normally from High-Limit, Linda shows Bronze eligibility2/1 games,20/5 segment net and8/30 Heat. Normal claim advances Unranked to Bronze, grants exactly5 chips (190 to195) and one drink comp, preserves10 cash. Official Save/fresh Host Continue retains Bronze and exact wallet/RNG without repeating the reward. No progress flags or rank injected; no tutorial or Gold completion claim.
+
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\worker.log SHA256 76f6fa4edc9eeff43bbbacabd61153a6b47de1b08d48b4bf9da3924564931a85
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\job.json SHA256 14502ca88ed8ba9cba66684b8a9d6c386722c76273be8c3a7735fca9bb478f3f
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-card-20261115-01\evidence\storage-manifest.json SHA256 49c0a52b606fe9e8d68748471c72e49902fafd27340b939796352e331cebdf8a
