@@ -1,6 +1,6 @@
-# Grand Casino Back Room execution direction v1
+# Grand Casino Back Room execution direction v2
 
-2026-11-15. Queue16. SOURCE PLANNING ONLY while High-Limit integrates. No generation until current actual/clean guide review, no competing export. Existing art branch and TEST only.
+2026-11-15. Queue16. ONE SOURCE RELEASED after actual Base and corrected clean guide review. No competing export. Existing art branch and TEST only.
 
 ## Narrative and distinct direction
 
@@ -27,3 +27,14 @@ Do not blindly copy public sparkle relocation or High-Limit mask acceptance; act
 No direct grand_casino_back_room scenario catalog. Native owner captures actual Base through production room authority and records any genuinely applicable initial context; do not force public scenarios or manufacture showdown/heist progression. Actual fullapp/board, selectedtitles, typed body/adornment masks, exact foreground cache/source modes0/1/2, fixed-clock normal/low-detail diagnostics. Clean original helper only suppresses _floor_reflections; preserve legs and all static pixels, verify diff bounds. No paint-over cleanup hiding supports.
 
 Director/auditor review before final v2 and ONE source release. Actual names dictate quiet whole material faces, no nameplates or moved characters. Artist saves bytes/prompt/hash; auditor fits and independently gates exact geometry, foregrounds, motion visibility, Reduce Motion and liveness. Native owner commits brief/proof/ledgers and only deploys passed exact package to TEST. Raw evidence E:/CodexQA/BTH. Initial Base is not all later boss/lifecycle/save/revisit coverage.
+
+
+## Final v2 release and corrected evidence
+
+Director personally inspected actual Back Room Base and corrected clean guide. Native actual production Base has only3objects (Blackjack,Craps,Travel),14,777 checks/zero findings; source94155957 and all7,368 files plus c5 unchanged. Exact two replay fronts grand_table_left/right, no host replay. OFFICE remains visible in architecture. No Rourke cast is in this initial fixture: do not add him to source or claim later boss encounter coverage. No forced public scenarios.
+
+Authoritative guide is ONLY E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACK-20261115-capture-03/evidence/__none_source_mode3_clock0.0_lowfalse_cleantrue.png SHA2645a1bc3bde73b57e129418deafbda9fb23481b846dc743dacdc2cfb6c3e889. Prior capture02 source-only guide mistakenly inherited High-Limit painter parameters and is rejected; retain as diagnostic, never artist input. Actual Base02 was correct; bounded03 helper repair changed only painter arguments to BACK ROOM, ROURKE'S TABLES, C_PINK. Corrected union02 SHA8ccc314410f22495458dff3ba0d84d7b1cfde388b2f619dfd06e4d8f9ba9398d; production layout/objects unchanged. Concise proof commitf88dd2b43. Clean guide removes only frozen floor helper, keeps exact office legs and all fixtures.
+
+ONE source release now. Geometry first reference is corrected03guide. Grand facade and approved current Grand package give family gold/plum craft, Delta/Gas give crisp pixel sharpness. Distinguish from cyan High-Limit using saturated controlled hotpink edges, burgundy/plum lacquer or dark polished timber panels, compact warm brass and quiet emerald felt. Texture should have intentional crisp pixel clusters, not fine stochastic noise or blurry glow. Upper wall remains spacious. Existing two empty notices, two tables, office desk/legs only. Preserve exact BACK ROOM, ROURKE'S TABLES, OFFICE. No public machines/kiosk/bar, no new props, people, portraits, weapons, surveillance, motion baked into source.
+
+Actual cyan Blackjack/Craps labels sit just above tables; keep dark entire wall faces there. Travel label is lowerleft and requires quiet dark ground. No added support under live games, no floating or raised floorbands. Two opaque fronts exactly544x72; no third desk replay. Actual v2 review is Base-only, not broad showdown/heist/save/revisit. Native16/web7 motif translation remains exactly documented in v1, with original Back Room sparkle positions unless measured visibility requires a same-surface change. Auditor owns fit/visibility, Reduce Motion/liveness and independent final scoped PASS. Native owner checkpoints/integrates only passed exact package to artbranchTEST; main/NEXT untouched.
