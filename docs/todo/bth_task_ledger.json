@@ -43637,19 +43637,28 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand Back Room R1 native audit passed; cumulative TEST export pending",
+      "status": "Grand Back Room R1 on cumulative16-room TEST; live Web acceptance remains open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "d43772d5151c9079cd2d4c1982290272f9839bff",
+          "evidence": [
+            "docs/testing/grand_back_room_r1_native_trial.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No Grand Back Room package activation."
+        "commit": "d43772d5151c9079cd2d4c1982290272f9839bff",
+        "evidence": [
+          "docs/testing/grand_back_room_r1_test_delivery.json"
+        ],
+        "scope": "TEST pointer/assets verified; live Web gameplay not run."
       },
       "scope": [
         "Grand Back Room only; no generation or activation before actual and clean-guide review."
@@ -43669,9 +43678,14 @@
           "kind": "native_art_acceptance",
           "reference": "docs/testing/grand_back_room_r1_native_trial.json",
           "summary": "14777 Base checks, exact equality,66motion/RM,23occlusion,62actualframes,liveness/full-decode PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/grand_back_room_r1_test_delivery.json",
+          "summary": "321raw/304compiled,39PCK additions;prior15unchanged;normalTLSservedhashes verified."
         }
       ],
-      "next_action": "Publish exact approved package on cumulative TEST and verify artifacts; live Web remains unverified.",
+      "next_action": "Owner playtest TEST; continue Cage source baseline with explicit dynamic EMPTY contract review.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43680,7 +43694,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T05:06:34.587065+00:00"
+      "updated_at": "2026-11-15T05:10:08.866379+00:00"
     }
   ]
 }

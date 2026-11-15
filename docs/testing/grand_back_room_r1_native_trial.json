@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
   "decision": "Final scoped Grand Back Room R1 audit PASS. Personally inspected actual Base and frames000/030/061:62frames8.1263567s, all16 motifs62 distinct applicable states/visible flags. Native66checks, conservative Base visibility23/23, exact layout/object/publication equality, original liveness and both full-decodes verified. Two exact fronts, OFFICE and legs retained; no corrections after fitting. Existing art branch and cumulative TEST only.",
