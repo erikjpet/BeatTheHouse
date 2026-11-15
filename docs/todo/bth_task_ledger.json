@@ -43916,7 +43916,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "House Base baseline passed; source release review",
+      "status": "House R2 failed two hidden motion accents; correction underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43943,9 +43943,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/house_preart_baseline_20261115.json",
           "summary": "15013checks;7469sourcefiles+c5 unchanged; no forced transactions."
+        },
+        {
+          "kind": "native_review",
+          "reference": "docs/testing/house_r2_native_review.json",
+          "summary": "4of48visibilityfail;R2unactivated;diagnosticclipsdelivered."
         }
       ],
-      "next_action": "Director/auditor finalize clean guide and direction, then generate one source.",
+      "next_action": "Approve exact same-support correction then rerun native/mask/video before activation.",
       "blocker": {
         "state": "none",
         "kind": null,

@@ -1,0 +1,14 @@
+{
+  "status": "R2_FAILED_FINAL_VISIBILITY_NOT_ACTIVATED",
+  "package_sha256": "aad9a3f508f2f4cc0a0a1e3c52477de8092ad04e4e60a74e4f87f0dca5f56631",
+  "finding": "Two shelf accents2/4 hidden by actual live items in normal/low modes:4of48maskchecks fail. Native target motion,geometry,composition,liveness and decodes pass but are not fullvisibility.",
+  "qa_sampling": "Original shelf_bob_1 sampledframes0/8 identical; verified32atlas has3distinctpixelposes, changed QA sample to0/11 only. Native98checks pass without asset/runtime change. Originalfailure retained.",
+  "next": "Auditor/director measuring same-support correction, no runtime/liveprop edits.",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r2-01\\evidence\\house-base-occlusion.json": "30bcfcc4d3d303fc5e1230b07a6859718a92ec504a0cc36fa71b554b8ca641b6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "c72929d4f631c315abebb6f6edb92c9c2f5325b1da2c1acab88539d6cfe1e844",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-motion-02\\evidence\\house_animation_probe.json": "f93658ab6dd1f243d7321d392d62f11ba62e140dd69fbebc69c13c4c95e7152a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-encode-01\\evidence\\video-verification.json": "19c7c4af5880898b945035c303d3236ae5a29bb0b257e1d17c346d7e1dbd844d",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_bob_pair_diagnostic.json": "cf8f51a3f6bf0c05affee01c3c0bf3d9a809e1b9624ec90be17a69e784e81841"
+  }
+}
