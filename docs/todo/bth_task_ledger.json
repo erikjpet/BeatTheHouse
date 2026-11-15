@@ -44912,7 +44912,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Representative native routes and reload checks done; unchanged bus suite 189/190; browser acceptance unavailable",
+      "status": "Native full travel suite751/751 after test-only expectation repair; live browser acceptance unavailable",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44938,9 +44938,10 @@
         "Retry supported browser tool discovery, never substitute forbidden browser-control routes."
       ],
       "evidence": [
-        "docs/testing/environment_art_final_native_travel_acceptance_20261115.json"
+        "docs/testing/environment_art_final_native_travel_acceptance_20261115.json",
+        "docs/testing/environment_art_missing_art_expectation_fix_20261115.json"
       ],
-      "next_action": "Perform live browser acceptance when supported browser control is available; separately reconcile missing-art test expectation without weakening production policy.",
+      "next_action": "Perform live browser acceptance when supported browser control is available; preserve native-only coverage and original failed-test evidence.",
       "blocker": {
         "state": "none",
         "kind": null,

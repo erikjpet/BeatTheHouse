@@ -1,0 +1,103 @@
+{
+  "test_only": true,
+  "production_source_commit": "cc270944cdab68d61cf9ad6c0d3382f01299f9c2",
+  "changed_file": "scripts/tests/standard_travel_integration_check.gd",
+  "before": "Fresh missing-art fallback was incorrectly grouped with reduced-motion acknowledgment-only summaries. Original bus-only suite189/190 retained in previous proof.",
+  "after": "Fresh missing-art must automatically release presentation exactly once after deferred completion. Reduced-motion still requires acknowledgment. Recovery, immediate static fallback, duplicate acknowledgment, settlement, RNG and reload checks preserved.",
+  "suite": {
+    "checks": 751,
+    "failures": [],
+    "found": [
+      "walk",
+      "bus",
+      "taxi",
+      "night_cab"
+    ],
+    "passed": true,
+    "selected_modes": [
+      "walk",
+      "bus",
+      "taxi",
+      "night_cab"
+    ],
+    "shared_ui_contract": {
+      "_caption": {
+        "font_size": 23,
+        "position": "(64.0, 536.0)",
+        "size": "(1152.0, 42.0)"
+      },
+      "_continue": {
+        "font_size": 18,
+        "position": "(980.0, 646.0)",
+        "size": "(236.0, 58.0)"
+      },
+      "_details": {
+        "font_size": 17,
+        "position": "(64.0, 76.0)",
+        "size": "(960.0, 34.0)"
+      },
+      "_skip": {
+        "font_size": 18,
+        "position": "(1040.0, 40.0)",
+        "size": "(176.0, 48.0)"
+      },
+      "_summary_scroll": {
+        "font_size": 16,
+        "position": "(64.0, 636.0)",
+        "size": "(890.0, 70.0)"
+      },
+      "_title": {
+        "font_size": 28,
+        "position": "(64.0, 26.0)",
+        "size": "(890.0, 50.0)"
+      },
+      "duration_seconds": 8.0,
+      "script": "res://scripts/ui/travel_cinematic_overlay.gd",
+      "z_index": 200
+    },
+    "suite": "standard_travel_integration"
+  },
+  "evidence": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\adapter.py",
+      "sha256": "201f3dbf0c88cb6ebfab7ef5db4334274cb5f6956eaf77464c5bdc1a4f396ea4"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\expectation_fix_identity.json",
+      "sha256": "d03317eb8824689d0903e60ca0b5a2bb58b5aace07501463567b67d1f3d4484e"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\job.json",
+      "sha256": "3f6b0288e20784ecbe25309490f482827e6bf83487b6514fb6d1ef4377589aeb"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\launch-claim.json",
+      "sha256": "432c8b1d94aa32f1c7f732d8f739249227ab245d3ca40d5c51b0f415d53027a9"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\post_source_verification.json",
+      "sha256": "3acc23d94a130f1865ed367f2a5a3669a523b64fca801f92b6ec449b8c1c05a8"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\source_identity.json",
+      "sha256": "3e682c5e0d485e1008a6f03278397c36a52082731e4120143d05d9520fc5ce89"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\standard_travel_integration_check.gd",
+      "sha256": "f3000c38095393adca08f0cfa98c46cbb4d385d1f7722dda7f5e11ea1f8dcb80"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\storage-manifest.json",
+      "sha256": "88adf59c54f7052642479103f0954d530d38530231bb6d844a11a82bda973bf3"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-expectation-fix-full-01\\evidence\\worker.log",
+      "sha256": "3d7eea82f918b1d40f2c63b1cf66773df9c42e0e0656927f90b645cf98028f3d"
+    }
+  ],
+  "limits": [
+    "Native production-host API tests, not manual browser control or live Web acceptance.",
+    "No production behavior, assets, save formats, main/NEXT or current TEST product changed."
+  ],
+  "independent_review": "Requested independent patch review from existing auditor."
+}
