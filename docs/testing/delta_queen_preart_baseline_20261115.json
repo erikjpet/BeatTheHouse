@@ -1,0 +1,51 @@
+{
+  "source_commit": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+  "checks": 15411,
+  "contexts": {
+    "__none": {
+      "objects": 15,
+      "selected": 15,
+      "typed_paints": 15
+    },
+    "delta_queen_captains_invitational": {
+      "objects": 20,
+      "selected": 20,
+      "typed_paints": 20
+    },
+    "delta_queen_engine_trouble": {
+      "objects": 21,
+      "selected": 21,
+      "typed_paints": 21
+    },
+    "delta_queen_fog_delay": {
+      "objects": 20,
+      "selected": 20,
+      "typed_paints": 20
+    },
+    "delta_queen_wedding_charter": {
+      "objects": 19,
+      "selected": 19,
+      "typed_paints": 19
+    },
+    "delta_queen_whale_aboard": {
+      "objects": 21,
+      "selected": 21,
+      "typed_paints": 21
+    }
+  },
+  "distinct_ids": 55,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-union-01\\evidence\\delta_preart_union.json",
+  "union_sha256": "c7c5a6ae179d9595a55348c9181d99c795fda812de14708b4736ec52cd52c62a",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "8be47ef611b4400dbb00be2be1ad06c8a6f4a86ffb77e3e98f66636461236c96",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\delta_queen_legacy_geometry_1800x860.png",
+    "sha256": "5d71e282c55e5c808e7823f26bf481db11c01c5ba13f1e44cab5f8f3a5fa054f"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7250,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exact6400/c5 initial Base plus5catalog scenarios; no later lifecycle/open-hours/save-revisit/art acceptance."
+}

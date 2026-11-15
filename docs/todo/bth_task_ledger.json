@@ -43354,13 +43354,20 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Director source plan ready; six-context native baseline underway",
+      "status": "Six initial contexts captured; director/auditor clean-guide review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "82349ce57d850a46b0f7fff208baabe0837fb018",
+          "evidence": [
+            "docs/art/briefs/delta_queen.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -43372,8 +43379,14 @@
         "Base and five initial catalog scenarios; actual source geometry, titles, typed bodies, counter and motion.",
         "No broad lifecycle hunt or generation before clean guide review."
       ],
-      "evidence": [],
-      "next_action": "Capture exact6400/c5 baseline and six contexts, then director/auditor review clean authoring guide.",
+      "evidence": [
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/delta_queen_preart_baseline_20261115.json",
+          "summary": "15,411checks/no findings,6contexts55distinct IDs116selectedtitles/typedpaint pairs;7250sourcefiles+c5 unchanged. Not later lifecycle/open-hours/save-revisit/art acceptance."
+        }
+      ],
+      "next_action": "Auditor cleans only documented frozen helper marks; director reviews actual union/guide then releases one source. No Delta activation.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43382,7 +43395,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T01:59:32.089803+00:00"
+      "updated_at": "2026-11-15T02:05:35.524279+00:00"
     }
   ]
 }
