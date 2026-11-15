@@ -44703,7 +44703,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Apartment doorway baseline PASS; source review underway",
+      "status": "Apartment R1 native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44735,9 +44735,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/apartment_doorway.md",
           "summary": "Portrait1024x1536 walkup stairhall direction, no eligibility change."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/apartment_doorway_r1_native_trial.json",
+          "summary": "Exact corrected portrait asset; original gates and four-method independent actual visual audit PASS."
         }
       ],
-      "next_action": "Director/auditor review current walkup aperture before source release; no eligibility changes.",
+      "next_action": "Publish exact audited asset to cumulative TEST; preserve prior assets and eligibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44746,7 +44751,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T11:02:16.334879+00:00"
+      "updated_at": "2026-11-15T11:16:13.180564+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-HOUSE-01",
