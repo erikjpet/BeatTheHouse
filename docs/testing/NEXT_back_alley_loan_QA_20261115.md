@@ -38,3 +38,10 @@ E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-debt-20261115-01\evidence\storag
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-debt-20261115-02\evidence\worker.log SHA256 b0caba65d9a259f6cbc5f1779eafbadc72184d99bf9d1cffd020997d4cdfbc52
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-debt-20261115-02\evidence\job.json SHA256 1a661a0f00c284ffc67e7431a1515173f0f8d79207691bf1522f3ab8a2af7de3
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-debt-20261115-02\evidence\storage-manifest.json SHA256 122842ab73b7ddf8f71d38565fa3469ab8543293c69f24b935375e00300d21e6
+
+### Ordinary paid actions reach the loan deadline
+
+Continued the same generated campaign at the naturally offered Delta Queen Roulette table. Three affordable minimum22 RED bets and normal Spin/Confirm callbacks, without choosing outcomes: natural wins then loss yield cash90 to112 to134 to84. Debt turns progress3 to2 to1 and then the note disappears; final50 debit is the22 wager loss plus28 forced repayment.11/11 checks cover one spin increment each, valid room authority and exact money/debt/RNG through official Save. This reaches the action-based deadline that ordinary travel did not consume. No debt runtime change is warranted. Native callback testing, not browser or original player save.
+E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\worker.log SHA256 2c1a54568f6695973f42a90302766dbdc6227f13b2f01e9e6f33c38319518cd5
+E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\job.json SHA256 559c38993c1b30dfc2b08ddce1d8c5726d298f05ae7f9fd3ae506bdf46b00ef5
+E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\storage-manifest.json SHA256 22af98714df960899f6a78c23a32013afcac944503970c4a9a9a0b2d862d0a9c
