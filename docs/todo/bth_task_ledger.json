@@ -43709,7 +43709,14 @@
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f035e1d5ed460aaeac6e9245c4988320203bd839",
+          "evidence": [
+            "docs/testing/grand_cage_empty_label_compatibility.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
