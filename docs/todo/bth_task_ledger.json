@@ -44207,7 +44207,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel reception four-method pre-art baseline PASS; source review underway",
+      "status": "Motel reception source static GO; sealed native trial next",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44234,9 +44234,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_motel_baseline_20261115.json",
           "summary": "11066 entrance/137doorway/2312preview PASS;92samples,7514 sourcefiles unchanged. Public reception, not guestroom."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/motel_doorway.md",
+          "summary": "Single source released; exact raw static GO, native acceptance pending."
         }
       ],
-      "next_action": "Director and auditor review public reception aperture/references, then release one source.",
+      "next_action": "Verify sealed reception insert in four methods and independent final audit.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44245,7 +44250,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:26:32.554544+00:00"
+      "updated_at": "2026-11-15T08:30:16.179449+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-PAWN-SHOP-01",

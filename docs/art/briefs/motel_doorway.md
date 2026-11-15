@@ -1,0 +1,15 @@
+# Motel PUBLIC reception doorway one-source release v1
+
+One retained source only, not activation. Replace assets/art/travel/doorways/motel.png exact1024x1536opaqueRGB. This is public reception, NOT motel_room. Read umbrella travel_doorways_execution_direction-v1.md. No traveldata/code/geometry/timing changes.
+
+## References and evidence
+Personally viewed approved assets/art/environments/motel/background.png and own assets/art/travel/exteriors/motel.png in D:/Projects/Beat-The-House/.tmp/environment-art-layers. Also reviewed E:/CodexQA/BTH/runs/BTH-ENVART-MOTELDOOR-20261115-cinematic-01/evidence/preview_01_motel_walk_f200.png. Fourmethodbaseline union MOTELDOOR-20261115-baseline-union-01/evidence/motel-doorway-baseline.json, source8e35e8bf/7514files,2312checks/92frames, doorway137/entrance11066green, checkpoint29a079fb3. Native synthetic presentation, not legalroute/gameplayload/browser proof.
+
+## Exact crop
+Loaded roundedUV contract gives aperture147.99999472x225.00000348 (approximately x1270..1418,y450..675). Bottomaligned cover retains fullheight, horizontalUVwidth~.986666616, centered sidecrop~6.826693px each. Do not rewrite rounded source data. Essentially fullportrait composition, no margins. Player covers center; identifiable side/back reception fixture/material bands remain useful. Clear central entry and lower35percent grounded subdued slate/mauve floor. No furniture across threshold or false doorframe. Shallow practical lobby, not long hotelhall.
+
+## Direction
+Modest worn roadside motel office. Match approved mauve/plum textured plaster, burgundy dark timber receptioncounter with narrow hotpink/turquoise trim, warm amber curtains behind/aside it, modest plum upholstered waiting bench off to side and slate/mauve utilitarian floor. Keep counter and seating back, with bases above clearfloorzone. Optional small old CRT-like dark appliance on backside only if composition stays simple and sourcefaithful; no new glamour fixtures. Bright amber curtain and turquoise edge accents contrast quiet mauve surfaces. Rich crisp stepped pixel texture, worn but not ruined/dirty. No guestbed/pillow, plants/floraldecor, checkerboard floor, fancy chandelier, invented lobby shelving/portraits, casino/bar fixtures, readable text/numbers/keytags/signs/UI, people or live inventory. No outerdoor/jamb/threshold/exterior/sky. Fullbleedopaque, no grayvoid. Decorative thresholdglimpse, not new gameplaylayout.
+
+## Gates
+Artist saves one PNG/prompt/base64/hash; director and auditor inspect exactsource/dimensions/opacity/crop. Auditor owns exactsizefit ifneeded, no silentstretch. Candidate tested in isolated runtime with current originalentrance/12doorway checks and fourmethods opening/entry/closure,92states unchanged, originaloverlaycompletion/liveness and actualMP4decode. Actual aperture must show plausible floorcontact and sidefixture identity, no seam/spill/falsejamb. Commit tested PNG/proof and residential_doorways_generation.md provenance/hash to existing artbranch, verify cumulativeTEST only after finalgate. No main/NEXT, no claims of actualroute/Webcoverage from syntheticfixtures.
