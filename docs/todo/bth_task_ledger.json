@@ -43854,7 +43854,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Apartment Base baseline passed; source release review",
+      "status": "Apartment R2 scoped native PASS; TEST export pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43881,9 +43881,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/apartment_preart_baseline_20261115.json",
           "summary": "14966checks;7449sourcefiles+c5 unchanged; no forced transactions."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/apartment_r2_native_trial.json",
+          "summary": "28visibility/58motion/31static and stable sampledpatches,Baseequality,liveness,decode."
         }
       ],
-      "next_action": "Director/auditor finalize clean guide and direction, then generate one source.",
+      "next_action": "Publish exact approved R2 to TEST and verify prior art,NEXT and saves.",
       "blocker": {
         "state": "none",
         "kind": null,
