@@ -1,6 +1,6 @@
 {
   "auditor": "/root/audit_private_room_art",
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "decision": "Final scoped auditor PASS exact Corner insert1a9fa64f plus separately authorized facade alpha9145839f. Auditor personally inspected walk200,bus190,taxi207,nightcab235 and alpha closed/closed-inside; director concurred. Coherent materials, clear grounded aisle, shelf not obstruction, actor concealed on closure. Entrance11066/0,doorway137 and541source samples/zero mismatch/outside changes,92state equalities/28entrance image equalities versus repaired baseline. Original overlay1115/no-pointer and full MP4 decode PASS.",
   "limitations": "Four synthetic production-overlay methods only, not legal route/destination loading/browser acceptance. Original11 failures retained with controlled alpha A/B and geometry-derived31,155-pixel alpha-only repair; no test changes. Comparison gas_pixels is stale inherited key; its nested destination/path correctly identify Corner Store.",
   "package_sha256": "93e36f561320640f40da909192002271a1d2f30690833625dd258b64becdf356",
@@ -82,5 +82,9 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-r1-preparation-01\\evidence\\storage-manifest.json": "ed74e4811543f3aa2c87a4ab9e02a68bf055450a351b615a97e58dd3d8d1ff76"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-final-audit-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "18ec90ac15221ab196185aa6ba4031e87fecee4ec7a5bec74900f3535cf0c113"
+  "final_audit_receipt_sha256": "18ec90ac15221ab196185aa6ba4031e87fecee4ec7a5bec74900f3535cf0c113",
+  "delivery": {
+    "commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+    "evidence": "docs/testing/corner_doorway_r1_test_delivery.json"
+  }
 }

@@ -1,0 +1,57 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+  "package_sha256": "93e36f561320640f40da909192002271a1d2f30690833625dd258b64becdf356",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 2,
+  "raw_art_sources": 411,
+  "compiled_art_textures": 390,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Four synthetic native presentation methods, not legal route/destination loading/live Web. Original11 Corner alpha failures fixed by separately scoped31,155-pixel alpha-only facade repair under unchanged tests. Main/NEXT/save namespace unchanged.10 doorway replacements remain.",
+  "prior_gas_doorway_unchanged": true,
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cornerdoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "4139c6031e20a2d4dc64991ca2c8e50e986aa088e74319da955d4976837a708b",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "changed": [
+          ".godot/imported/corner_store.png-139a384e785cee04d9c5b439b361a4ac.ctex",
+          ".godot/imported/corner_store.png-546ed7f48378780c446f77a208db23a6.ctex",
+          "build_manifest.json"
+        ],
+        "removed": [],
+        "unchanged": 2104
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cornerdoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "bad7be1db6bd4878538f0bafb41dc7594505a43d2e6c8b39b821dee3aa46028c",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 411,
+        "compiled_textures": 390
+      },
+      "record_count": 390
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cornerdoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "961eeec1680895b61c5ebc155655195b3a419a4c1feb6141d193253cc70669dd",
+      "summary": {
+        "source_commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3"
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cornerdoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "04a8ec9d241b0895f4901d5500405906af158df312eb4e2b2e75f33629469aa8",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+        "raw_art_sources": 411,
+        "compiled_art_textures": 390,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb"
+      },
+      "record_count": 11
+    }
+  }
+}

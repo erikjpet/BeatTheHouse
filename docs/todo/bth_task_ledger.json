@@ -44061,7 +44061,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Combined exact Corner native audit PASS; TEST export next",
+      "status": "Native PASS and TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44073,14 +44073,22 @@
           "evidence": [
             "docs/testing/corner_door_alpha_repair.json"
           ]
+        },
+        {
+          "sha": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+          "evidence": [
+            "docs/testing/corner_doorway_r1_test_delivery.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+        "evidence": [
+          "docs/testing/corner_doorway_r1_test_delivery.json"
+        ],
+        "scope": "TEST artifact/served bytes verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44105,9 +44113,14 @@
           "kind": "native_pass",
           "reference": "docs/testing/corner_doorway_r1_native_trial.json",
           "summary": "11066/0 original entrance,137doorway,1115overlay,no-pointer,92state equalities and four-method decoded preview."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/corner_doorway_r1_test_delivery.json",
+          "summary": "Exact combined candidate served; two Corner textures only; prior20interiors/Gas/NEXT preserved."
         }
       ],
-      "next_action": "Export and verify combined Corner insert plus alpha repair on cumulative TEST.",
+      "next_action": "Owner TEST review; continue remaining ten doorways. No main/NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44116,7 +44129,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:00:17.280405+00:00"
+      "updated_at": "2026-11-15T08:03:13.413823+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-BAR-01",
@@ -44534,7 +44547,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Combined exact Corner native audit PASS; TEST export next",
+      "status": "Native PASS and TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44546,14 +44559,22 @@
           "evidence": [
             "docs/testing/corner_door_alpha_repair.json"
           ]
+        },
+        {
+          "sha": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+          "evidence": [
+            "docs/testing/corner_doorway_r1_test_delivery.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "commit": "6a5f743e2b21461de2d3651c3c80d10b473d36d3",
+        "evidence": [
+          "docs/testing/corner_doorway_r1_test_delivery.json"
+        ],
+        "scope": "TEST artifact/served bytes verified; live Web gameplay not run."
       },
       "scope": [
         "Alpha255 only in original door polygon plus two-source-pixel rim; preserve all RGB, outside alpha, sky, runtime and tests."
@@ -44568,9 +44589,14 @@
           "kind": "native_pass",
           "reference": "docs/testing/corner_doorway_r1_native_trial.json",
           "summary": "11066/0 original entrance,137doorway,1115overlay,no-pointer,92state equalities and four-method decoded preview."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/corner_doorway_r1_test_delivery.json",
+          "summary": "Exact combined candidate served; two Corner textures only; prior20interiors/Gas/NEXT preserved."
         }
       ],
-      "next_action": "Export and verify combined Corner insert plus alpha repair on cumulative TEST.",
+      "next_action": "Owner TEST review; continue remaining ten doorways. No main/NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44579,7 +44605,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T08:00:17.280405+00:00"
+      "updated_at": "2026-11-15T08:03:13.413823+00:00"
     }
   ]
 }
