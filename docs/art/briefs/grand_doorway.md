@@ -1,6 +1,6 @@
-# Grand Casino public doorway source planning v1
+# Grand Casino public doorway one-source release v2
 
-Planning only until current actual baseline is reviewed. Umbrella doorway plan applies. One source/package at a time; native owner controls engine/export slot.
+Released for ONE source after current baseline actual review. Umbrella doorway plan applies. One source/package at a time; native owner controls engine/export slot.
 
 ## References and exact contract
 Director personally reviewed approved assets/art/environments/grand_casino/background.png, own travel exterior and current doorway. PUBLIC Grand Casino identity, not private High-Limit, Back Room or Cage. Actual doorway asset is LANDSCAPE1536x1024 opaqueRGB and must remain so despite original generic portrait wording. Replace assets/art/travel/doorways/grand_casino.png only. Rounded landmark contract double-door opening about222.000000063 by177.999999974 at1232.000000014,520.000000030 through1454.000000077,698.000000004. Full-height centered cover keeps width0.831460674516; crops129.438202 pixels each side, no topcrop. Preserve rounded UV/data/timing. Keep identity within x130..1406, center aisle clear, no baked outerdoor/jamb/threshold.
@@ -12,3 +12,6 @@ Lower35percent remains uninterrupted floor and central entry path open. All tabl
 
 ## Gates
 Native owner captures current four synthetic production-overlay methods and original entrance/doorway checks after Kitty export drains. Director/auditor actual opening/entry/closure review before one-source release. Save exactPNG/prompt/base64/SHA immediately. Final independent audit checks raw and actual crop, double-door occlusion, grounded contact, side identity, no outsideaperture changes, original exact samples/state snapshots/entrance images, completion/liveness and actual video full decode. Synthetic presentation does not prove legal route, destination loading or browser. Preserve20 interiors and8 preceding doorways. Existing art branch/TEST only after scoped finalPASS; no main/NEXT. Concise proof/provenance in Git, raw evidence E drive.
+
+## Frozen baseline release
+Native baseline cd7c68417, 7534 unchanged files, jobs drained. Four methods2312 checks/92frames; original entrance11066/0 and doorway137 pass. Checkpoint9121d1172. Union E:/CodexQA/BTH/runs/BTH-ENVART-GRANDDOOR-20261115-baseline-union-01/evidence/grand-doorway-baseline.json. Director personally viewed walk f200 and night cab f235 in sibling cinematic-01/evidence. Opening/actor contact and closure are coherent. Current massive chandelier dominates the tiny aperture; replace with calmer approved public-room plum/brass/emerald identity without losing facade richness. ONE exact1536x1024 retained source is released; no target/code/data changes. Actual candidate gate remains required and synthetic scope unchanged.
