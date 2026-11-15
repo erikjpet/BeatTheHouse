@@ -55,3 +55,7 @@ Use case: stylized-concept. Asset type: opaque portrait doorway interior backgro
 ## Motel public reception replacement, 2026-11-15
 
 One generated source accepted unchanged at 1024x1536 RGB under docs/art/briefs/motel_doorway.md, using current approved public reception and facade. Earlier Motel prompt describes the superseded asset. Exact PNG SHA-256: 25323697bdfbea31291fdb1ae997070c74d42f3dfe065ffd068a75a7b8295ae0. Package seal: cbf95caf87d84bef565c9494b303ee4ae4b1527ffde6829464f5abd99b0f4913. Raw prompt and recipe provenance in docs/testing/motel_doorway_r1_native_trial.json. Existing rounded aperture UVs untouched: full-height cover with approximately6.8267source pixels cropped at each side, no top crop. No guest bed, runtime, timing or geometry change. Four-method native presentation passed; not legal route/load/Web certification.
+
+## Jazz Club doorway R1, 2026-11-15
+
+Replaced only jazz_club.png with approved unchanged image a5b24edfb002de23b2c5b0b664f7a23a10356d27d50c7aa5c9ad28cbcef5a900 at1024×1536. Direction docs/art/briefs/jazz_doorway.md; proof docs/testing/jazz_doorway_r1_native_trial.json. Four synthetic travel methods passed, not legal-route/loading/browser certification. Exact rounded aperture, crop, runtime and timing untouched.
