@@ -6234,6 +6234,11 @@
           "reference": "docs/testing/NEXT_ordinary_recruitment_and_copy_QA_20261115.md",
           "kind": "supplemental_native_ordinary",
           "summary": "Ordinary seedO Knuckles response and Continue10/10; Side Door actual visible narrative labels7/7 without mechanical summary. Natural Gas three-play VP cold8/8 and Scratch exit9/9 preserve all18 scene objects. Street Craps not reached in nine starts; no browser or broader closure."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_Grand_Craps_QA_20261115.md",
+          "summary": "Real Kitty invitation and Grand/Cage progression; natural 5-chip Craps point6 survives paid Save/fresh Host Continue then normal7 settles loss exactly once13/13. No injected funds/outcomes, no Web acceptance or broad closure."
         }
       ],
       "implementation_batches": [],
@@ -6247,7 +6252,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T20:53:38.775372+00:00",
+      "updated_at": "2026-11-15T21:45:10.393548+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
