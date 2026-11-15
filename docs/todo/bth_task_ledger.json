@@ -37780,6 +37780,77 @@
       "planned_app_changes": [
         "Presentation fallback completion and measured passage-depth scaling only."
       ]
+    },
+    {
+      "id": "BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001",
+      "name": "Repair Crew reward round-trip fixture",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Classify Crew reward curve failure and repair only proven stale test lifecycle omissions without weakening production guards or reward assertions.",
+        "source": "docs/testing/BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001_20261115.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "classify",
+            "description": "Capture first failing boundary and compare actual Host lifecycle",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001_20261115.md"
+            ]
+          },
+          {
+            "id": "repair",
+            "description": "Reviewed scoped repair and complete four-delivery curve plus adjacent checks with commit",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "TEST_REPAIR_VALIDATED_PENDING_COMMIT",
+      "owner": {
+        "name": "Find NEXT game bugs",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "native_diagnostic",
+          "reference": "docs/testing/BTH-NEXT-QA-CREW-REWARD-ROUNDTRIP-001_20261115.md",
+          "summary": "Two stale fixture omissions confirmed: trusted derived proof rebuild and normal outcome consumption. Final curve69/69 with unchanged production rules and stronger assertions."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Independent final review, commit and push test-only repair with proof; then close this scoped test discrepancy using the commit.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T20:10:55.270781+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-15T20:10:55.270781+00:00"
     }
   ],
   "batches": [

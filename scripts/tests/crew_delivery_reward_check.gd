@@ -7,7 +7,12 @@ const PACKAGE_JOBS := ["crew_favor_delivery", "rook_quiet_package", "switch_two_
 func _run() -> void:
 	if OS.get_environment("BTH_DISTRIBUTION_DATA_ROOT").is_empty():quit(64);return
 	library=ContentLibrary.new();library.load(false)
-	if OS.get_environment("BTH_CREW_REWARD_CASE")=="curve":_check_curve()
+	if OS.get_environment("BTH_CREW_REWARD_CASE")=="curve":
+		var output:=OS.get_environment("BTH_TARGET_OUTPUT")
+		if output.is_empty() or not output.is_absolute_path() or not DirAccess.dir_exists_absolute(output.get_base_dir()):
+			push_error("Crew reward curve requires an explicit admitted absolute BTH_TARGET_OUTPUT with an existing directory.")
+			quit(64);return
+		_check_curve()
 	elif OS.get_environment("BTH_CREW_REWARD_CASE")=="adjacent":_check_reputation()
 	else:_check_caps();_check_job_kinds()
 	print("CREW_DELIVERY_REWARD checks=%d failures=%s" % [checks,JSON.stringify(failures)])
@@ -94,7 +99,16 @@ func _check_curve() -> void:
 		check(bool(dispatched.get("command",{}).get("ok",false)) and bool(settled.get("ok",false)),"curve handoff rejected "+str(index))
 		check(run.crew_reputation()==25*(index+1) and run.bankroll==cash+22 and run.crew_delivery_obligation_count()==3-index,"curve/obligation/payment wrong "+str(index))
 		check(run.rng_state==rng,"handoff consumed game RNG")
-		run.world_sequence_materialize_delivery_checkpoint(token)
+		# Match the Host's complete consequence/acknowledgement/cleanup boundary.
+		# Materialization alone leaves the old handoff's exclusive owner pending.
+		var materialized:=run.world_sequence_materialize_delivery_checkpoint(token)
+		check(bool(materialized.get("ok",false)),"handoff materialization succeeds")
+		var pending:=run.world_sequence_pending_outcomes(token)
+		check(pending.size()==1,"one handoff receipt awaits Host consumption")
+		for receipt in pending:
+			var consumed:=run.world_sequence_consume_delivery_outcome(token,str(receipt.get("receipt_id","")),target)
+			check(bool(consumed.get("ok",false)),"Host consumes and cleans handoff: "+JSON.stringify(consumed.get("errors",[])))
+		check(run.world_sequence_pending_outcomes(token).is_empty(),"handoff has no stranded pending outcome")
 		var reputation:=run.crew_reputation();var after_cash:=run.bankroll
 		run.world_sequence_checkpoint_delivery_outcome(token,target)
 		check(run.crew_reputation()==reputation and run.bankroll==after_cash,"checkpoint retry duplicated reward")
@@ -104,7 +118,27 @@ func _check_curve() -> void:
 		curve.append(run.crew_reputation())
 		if index<3:
 			run.current_environment["crew_presence"]=[{"member_id":"crew_rook"}];run.reconcile_current_environment_object_manifest(true)
-			run.advance_game_clock_minutes(360)
+			check(bool(run.advance_game_clock_minutes(360).get("ok",false)),"fixture cooldown advance succeeds")
 	check(curve==[0,25,50,75,100],"four-success earning curve wrong")
 	var result={"curve":curve,"checks":checks,"failures":failures,"final_reputation":run.crew_reputation(),"final_obligations":run.crew_delivery_obligation_count(),"fidelity":"Synthetic generated campaign; four normal event accepts, production travel/appointment and authorized physical handoff checkpoints, real SaveService/Continue; prepared pre-fourth checkpoint exported for separate Web normal-control verification."}
-	var file:=FileAccess.open(OS.get_environment("BTH_TARGET_OUTPUT"),FileAccess.WRITE);file.store_string(JSON.stringify(result,"  ")+"\n");file.close()
+	var file:=FileAccess.open(OS.get_environment("BTH_TARGET_OUTPUT"),FileAccess.WRITE)
+	check(file!=null,"reward curve output opens")
+	if file==null:return
+	result["checks"]=checks
+	result["failures"]=failures.duplicate()
+	file.store_string(JSON.stringify(result,"  ")+"\n");file.close()
+
+
+func restore(run: RunState, slot: String) -> RunState:
+	var loaded:=super.restore(run,slot)
+	# Reputation-cap migration fixtures have no installed room to publish.
+	if loaded.current_environment.is_empty():return loaded
+	var protected:={"cash":loaded.bankroll,"chips":loaded.grand_casino_chips,"rng":loaded.rng_state,"reputation":loaded.crew_reputation(),"obligations":loaded.crew_delivery_obligation_count()}
+	# SaveService intentionally omits derived scenario proofs. Ordinary Continue
+	# rebuilds them before any room action; reproduce only its trusted restore gate.
+	if loaded.scenario_sequence_present() and bool(loaded.current_environment.get("scenario_restore_pending_trusted_rebuild",false)):
+		var rebuilt:=loaded.scenario_finalize_installed_environment(library,{"viewport_size":{"x":1280,"y":720}})
+		check(bool(rebuilt.get("ok",false)),"Continue finalization succeeds: "+JSON.stringify(rebuilt.get("errors",[])))
+	check(bool(loaded.validate_room_action_authority().get("ok",false)),"restored room authority valid before next action")
+	check(protected=={"cash":loaded.bankroll,"chips":loaded.grand_casino_chips,"rng":loaded.rng_state,"reputation":loaded.crew_reputation(),"obligations":loaded.crew_delivery_obligation_count()},"derived rebuild does not transact or advance RNG")
+	return loaded
