@@ -1,0 +1,169 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "punchline_back_room",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {}
+}

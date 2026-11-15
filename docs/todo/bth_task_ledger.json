@@ -43209,6 +43209,47 @@
       },
       "next_action": "Complete isolated live Web visual/interaction acceptance without claiming artifact integrity as browser proof.",
       "updated_at": "2026-11-14T22:05:48.224738+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-PRIVATE-01",
+      "name": "Integrate audited private Punchline art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "R4 exact final native/art PASS; branch integration complete; TEST pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Private package trial only; no branch target activation or TEST delivery yet."
+      },
+      "scope": [
+        "Private Punchline room only; baseline74/c5; seven restrained movers and no counter fronts."
+      ],
+      "evidence": [
+        {
+          "kind": "native_trial",
+          "reference": "docs/testing/punchline_private_r4_native_trial.json",
+          "summary": "Base+5bounded lifecycle compositions, exact geometry/object/publication equality,7motion/RM and original liveness pass; Mags job not reached."
+        }
+      ],
+      "next_action": "Independent final visual/package audit, then exact approved integration and cumulative TEST; keep Web gate separate.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:03:44.300145+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T01:03:44.300145+00:00"
     }
   ]
 }

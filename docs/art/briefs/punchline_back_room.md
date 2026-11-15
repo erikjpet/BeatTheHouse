@@ -1,63 +1,60 @@
-# Punchline private back room: future direction v1
+# Punchline Crew Back Room: execution direction v4
 
-Prepared: 2026-11-14
-Art identity: punchline_back_room
-Status: read-only future planning. Jazz R3 is in native proof; public Punchline and then hidden casino remain ahead. No private clean target, source call, package, new fixture or activation is approved. This brief records identity and explicit holds, not an instruction to begin cleanup.
+Date: 2026-11-14. Identity: punchline_back_room; archetype small_underground_casino; layer back_room; effective context small_underground_casino:back_room; map alias crew_back_room.
 
-## Identity and reference roles
+Status: FIRST SINGLE SOURCE RELEASED after direct review of corrected Base, all five bounded lifecycle actual scenes, original/clean guides, the Punchline facade, approved Delta Queen facade and current Gas treatment. This is a direction release, not an art PASS or TEST acceptance. Hidden R2 exact native PASS f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f is separately delivered. No other room starts in parallel.
 
-Correct archetype is small_underground_casino, private view/override key small_underground_casino:back_room, placement art_key crew_back_room. Runtime explicitly selects art ID punchline_back_room. Public :club and hidden :casino are not fallback identities, placement authorities or motion donors.
+This concise execution brief supersedes unresolved planning holds in v1-v3; those originals remain intact. Fixed geometry/foreground rules and bounded evidence limits remain unchanged.
 
-This is Rook's private lived-in Crew refuge: a shut door, friendly card table, nobody else listening. The door shuts and the ceiling stops counting. Preserve this contrast with public performance and the tight hidden gambling floor. No House surveillance, audience, casino strobe, smoky danger spectacle or new security equipment.
+## Inputs to inspect and preserve
 
-Own actual shared facade supplies restrained plum structure, burgundy timber and warm hardware, not exterior marquee/posters, wet pavement or theatrical cyan/pink everywhere. Charcoal wall panels, worn gray work metal, useful wood and green felt can make a quieter private room while retaining the owner's sharper/brighter local pixel craft. Keep clear hard material planes, clustered wear, selective warm edges and real practical light. Do not copy Gas brick or Bar teal. Quiet does not mean a muddy global dark grade.
+- Exact frozen geometry: E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261114/guides/punchline_back_room_clean_geometry_v1_1800x860.png; SHA256 2943716ac967553be585cae7b2c7b9f945093af200bf34696ea174b11359875e. Adjacent edit-record.json proves only frozen lower helper bars changed. Original guide SHA95b3194c038ed8dd8cfe7a20e21372b786ef7067c15a8d95c96bcd3a0d266c6b remains untouched. I personally inspected both. This is the approved construction target, not the downsampled900 review sibling.
+- Corrected Base: E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATE-20261114-capture-02/evidence. Base10;14404 checks/no findings. Base union: ../BTH-ENVART-PRIVATE-20261114-union-02/evidence/private_preart_union.json; SHA421b2ffed4d2e717a03056956c0582ba9bf260ed4a9c1a9671b189179666d778. Capture01 alpha diagnostics remain rejected, never used for paint conclusions.
+- Bounded lifecycle: E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATE-20261114-lifecycle-detail-recovery-01/evidence/private_lifecycle_result.json; SHAd3e105a8bc07d0d7cad45888803e82b4f3ceb4482225afed3410a4f4e468709b.246 checks/no findings; typed normal character masks, actual scenes, selected cards and source authority present. Five contexts C1_marker, C2_associate_0/2/5, C4_silas. I personally inspected all five full-app scenes.
+- Own facade in art worktree: assets/art/travel/exteriors/small_underground_casino.png; SHA49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69. Use material continuity, never exterior layout.
+- Shared craft reference: assets/art/travel/exteriors/delta_queen.png; SHA4414fe5c94f850fb233c3f0e14cabed29291aac08b881823c12db4cdf4241767. Current Gas background/reference direction demonstrates crisp material clustering and bright separated accent planes, not this room's palette or geometry.
+- Full prior measurements and source ownership: punchline_back_room_execution_direction-v3.md, SHAbe76b5f69b5a0d1ce3d92a441d3a9d9276a8428a6c7fa677dc208a37d176a6c0. Protected override c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f remains unchanged.
 
-## Frozen read-only evidence
+## Visual design
 
-Artist inventory E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261114/punchline-back-room-readonly-prep-v1.txt,10,369bytes, SHA-256 c7be339632c5d20921aef1070e19be72f5bd39e8222c73b9471332d76c365861. It records exact source/guide/facade/placement hashes and both motion inventories. Treat it as a frozen source record, not source execution permission.
+A private working refuge behind a seedy comedy venue, not another casino floor. The Crew can breathe here: useful worn materials, friendly card surface, closed burgundy timber door, modest tool and planning zones. Bring substantial deliberate color separation and sharp clustered pixel texture. Do not make a muddy gray room or use global saturation/quantization as a substitute for material design.
 
-Original guide E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/punchline_back_room_legacy_geometry_1800x860.png, SHA-256 95b3194c038ed8dd8cfe7a20e21372b786ef7067c15a8d95c96bcd3a0d266c6b. Artist and director personally viewed it. No cleaned private target exists yet. Original uses charcoal alternating panels, gray central inset, WORK/MAGS/RIG labels and static planning annotations; it has no hanging lamp or painted cast.
+Use restrained aubergine/plum panel faces with charcoal recesses; warm red-brown wood and selective amber/brass edge highlights; worn cool-gray work metal with crisp teal ramp accents; pale pinned notes with clean local shadows; dark rich green cloth INSIDE the existing planning inset only. Preserve a quiet dark inner inset rather than bright blank paper. The green felt interpretation is now approved because the real Holdem title is on wall and the moving resident title can cross the table's lower face: keep that full lower face dark and quiet. Do not move the table or live game to align them.
 
-Protected current override c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f still applies despite base_saved:false. Actual current private title/model bounds are not yet measured. No fallback label anchor or original support name can substitute for that preflight.
+The door should read as burgundy wood with an existing warm handle, within its exact silhouette; preserve the original right-side overlap masking the shelf/rig. Floor is dry, dark warm charcoal/plum with fine perspective material detail and sparse low-energy warm/cool reflected-light clusters. Floor starts at board245 with coherent inherited245..250 transition; no platform or raised ledge. No wet road, puddles, large neon bands or added room contents.
 
-Shared-building facade SHA-256 49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69; backdrop d6a8149da1eae25f472b2379e3bedbad7a948981761e2d3f4094f753cae1eefa. Shared canvas b24ac475bab6cb51f72b549254de0b47fae7dce2a4ad8e2de6888a31beb02e27, placement surfaces9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1.
+Keep the shared building's recognizable plum/red/amber anchors. Do not import its public marquee, posters, wall neon, street, windows or skyline. No extra hanging lamp: narrative warmth comes from off-frame ambient material illumination. No surveillance/camera, smoke, dust, extra practical, casino strobe or audience.
 
-## Fixed construction and deliberate pending decisions
+## Exact construction and live ownership
 
-Board900x430, eventual production1800x860 exact nearest2x. Existing mapped floor begins245, with source room wall through245 and shared base floor at250. Director interpretation for future fitting is floor starting245 behind the furniture; the inherited five-row transition can be a stepped floor material transition, not a new raised ledge or moved horizon. Exact source contacts and future current baseline still control placement.
+Board900x430; final opaque background1800x860, pixel_scale2. Existing guides and source authority control the actual geometry. Preserve:
+- Job board[42,54,170,104], inset and all five pinned notes/pins; WORK wordmark.
+- Planning support[264,151,372,74], inset[282,162,336,44], inner[382,170,136,28]. No new legs/chairs. Four omitted card backs remain absent.
+- Numbers desk[42,184,170,52], ruled paper[58,173,64,30], adding-machine block[142,168,46,36]. These are fixed furniture, not duplicates of the generic live host.
+- Mags shelf[680,62,154,46], four existing tool blocks with original later door occlusion.
+- Right rig[674,142,172,82], existing two diagonal teal ramps and target circle. Real relocated event hosts do not paint literal machinery and do not justify deleting the fixed rig.
+- Door[790,70,80,174], handle[808,158]; all original overlaps/access. THE BACK ROOM/MAGS/RIG wordmarks remain.
+No new figures, games, cards, rewards or live items. No speculative support changes. No foreground_art_id exists: author zero counter fronts and no replay modification.
 
-- Job board[42,54,170,104], inset[49,61,156,90]. Five pale paper notes/pink pins are planning annotations that may duplicate the live Job Board host. HOLD cleanup until actual private baseline, do not treat paper as immutable frame or remove the whole support from assumption.
-- Planning table[264,151,372,74], inset[282,162,336,44], inner[382,170,136,28]. Preserve complete support/contact and thin material edges; no new legs/chairs. The four code card backs are ALREADY omitted by the original guide and must remain empty.
-- Numbers desk[42,184,170,52]. Static paper[58,173,64,30] and adding-machine block[142,168,46,36] may duplicate live host vocabulary. HOLD deletion/identity until actual current view.
-- Mags shelf[680,62,154,46]. Four20x18 amber blocks at694/732/770/808,y48 are potential tool/stock annotations. Door later covers part at790 onward; never reconstruct that hidden part as newly visible geometry. HOLD cleanup until current real host/equipment interpretation.
-- Right construction[674,142,172,82], two diagonal teal ramps and yellow target circle is potentially a baked Practice Rig, unused cabinetry or genuine support. Live rig is relocated by current overrides, but that alone does not authorize removal, a new shelf or a painted floor platform. Its identity must be decided from current baseline and source.
-- Door[790,70,80,174], handle[808,158],r3, drawn last. Keep exact actual overlap/access and no baked guard/Rook. Architectural wordmarks THE BACK ROOM/WORK/MAGS/RIG remain provisional pending host/title/fixture decisions, not a mandate to keep duplicate labels.
-- Mapped job_board/planning_table/numbers_desk/mags_bench have NO foreground_art_id. Do not import the hidden right-table replay, invent opaque counter PNGs, cut holes or change renderer behavior. Logical planning seats and actor floor reserves do not authorize chairs/platforms.
+## Real material/title constraints
 
-The story mentions green felt under one low lamp. Director allows a future green-felt material interpretation INSIDE the existing planning inset, conditional on measured live-game/title readability. This is not approved source paint yet. No hanging lamp exists in the guide: do not invent one, dust/smoke, ceiling camera or new title-supporting structure to satisfy that sentence before explicit future guide/actual decisions. Warm ambient material light may express hospitality without moving or creating geometry.
+Use unchanged actual selected-title rectangles, never contact-point guesses or floating label plaques. Base bands in v3 are retained. Relevant extra bounded union:
+- Residents use yellow contact or gray ambient titles at x304..352,y241..256; x381..429,y329..344; x452..500,y291..306; x536..584,y203..218. Knuckles expands first band to x298.8..357.2. Velvet may cross the table's lower face. Keep full face dark with selective thin edge away from lettering.
+- C1 includes a separate live Lucky recruitment host with pink title x619..667,y196..211; do not bake/remove it or assume it is duplicate art. Natural ambient versus contact body representations differ and must remain unchanged.
+- Silas Crow yellow label x216..286,y329..344. Keep this and all lower event labels readable on coherent real floor material.
+- Pink Job Board crosses existing pinned-note faces; preserve notes, use coherent readable paper/board treatment, no UI-like patch. Pink Planning Table and cyan Holdem names are on wall above supports, not their contact planes. Dark-pink Mags/Practice titles sit on floor. Rook/Rook's Ride cross existing right rig/door. All are unchanged production choices.
+Keep enough hue and value separation for gray/yellow/cyan/pink names; no broad bright bars or seams through these bands. Auditors check actual populated renders before polish.
 
-## Current live preflight requirements
+## Animation and source request
 
-Planning contact examples, NOT current measured title rectangles: poker344,231(scale2), planning563,196(scale1.8), Numbers89,203, JobBoard101,141, Mags52,270, PracticeRig148,356, RookRide795,249, Rook721,289, Numbersstaff172,240. Six crew standing contacts328,340/405,327/476,289/560,302/643,295/251,327; casinoexit868,311 andLeave868,394. Runtime reserves include600,358,350,188 and448,248.
+Generate exactly ONE coherent room source using the frozen guide as geometry authority and actual facade/craft references as style roles. Preserve the full 900x430 composition without cropping or compressing floor depth. Raster art must be crisp at final board scale, clean stepped contours and deliberate small pixel clusters, not soft painted blur, gradient haze or noisy one-pixel speckling. Preserve raw generated source unchanged. No speculative second module; a floor plate is justified only by a measured returned depth failure.
 
-Current actor/game/host placement may differ strongly from original architectural supports. Preserve exact effective labels/hits/models/routes/layers; do not move furniture to chase them. Future actual private preflight must confirm correct view and all six Crew event hosts/draw poker, live PracticeRig versus static right rig, all selected-production title bands and real host actions. Authority membership alone is insufficient. Body envelopes are not opaque source paint.
+Approve exactly SEVEN subtle dry-floor material movers consolidating the two existing generic sheen/reflection families. They must visibly move in actual game rendering, with stable supported Reduce Motion poses, but remain quieter than live Crew. Do not reproduce frozen magenta road dashes. No new clocked lamp/sign/smoke/rig effect. All other fixed furnishings remain static. Existing five manifest types only; no per-room code, placement, camera, rules, pipeline or renderer changes.
 
-Plan quiet gold/cyan/pink material through real whole faces, boards, inset cloth and trim; no floating label panels, broad pale note field behind colored titles or global desaturation. Support/material choices wait for actual union, not guessed Phone/front or old contact assumptions.
+## Audit and coverage limits
 
-## Motion: restrained private floor, no inherited local spectacle
+First show static exact candidate and actual Base plus five lifecycle compositions and all seven real motions. Prioritize populated labels and member placement, not empty-room polish. Then complete exact dimensions/alpha/schema, source/geometry/hit/titles, real motion/RM/wrap, original no-pointer liveness and source integrity gates. No counter gate is invented where no mapped front exists. Preview every genuine animation in a faithful10-12sec excerpt; no fake camera move or amplification. Send failures and revised trials to the parent for owner feedback.
 
-Source fact: this private art ID has NO local clocked room draw effect and NO private scene-life branch. It receives common seven floor sheen plus older lower reflection/bob helper. Architectural wordmarks, tools, papers, rig and table are static. Do not import hidden string cores, six pink drifts, five smoke ribbons or glints from the shared archetype.
+C1/C2 are isolated constructed production-owner states, not player-earned trust or UI progression. Bounded segments0..6 exposed six members: Bishop,Lucky,Switch,Velvet,Rook,Knuckles. Mags was NOT REACHED; C3 job therefore NOT REACHED, not passed or forced. C4 Silas was naturally present at owner action22 with actual traveler/room node small_underground_casino; no teleport. No all-seven/all-jobs/all-lifecycle, UI/save/revisit or served-Web claim. That explicit bounded limit does not require unbounded hunting before art production.
 
-Director explicitly approves SEVEN restrained dry-floor material movers as the consolidation of common sheen and older lower bob/stripe family for this private room. Favor warm quiet amber/charcoal/low teal reflected-light clusters, not literal road dashes, raised neon bars, wet street puddles or theatrical smoke. No retained independent water/rain/screen/air motif is being waived here.
-
-A lamp pulse, sign breath, dust or glint would be a NEW authored interpretation, not retained legacy. None is authorized for a source call by this planning brief. Choose future additions only deliberately after actual private guide/identity/title review; seven coherent floor entries alone can provide restrained genuine room life.
-
-Normal moving entries must change meaningful actual pixels and stop under supported Reduce Motion, preserving coherent resting illumination. Natural cast coverage is valid only with actual painted alpha/RGB/source-order proof and honest visibility scope. No boost, fake pan, extra fixture, transparency hole or animation drawn above people for a stronger preview.
-
-## Future gate and preservation
-
-Keep this room behind public Punchline and hidden casino. First resolve current private baseline and the above concrete annotation identities, then create a NEW versioned cleaned target preserving original and inspect its pixels. Only after hidden casino's explicit exact final native PASS and an exact private execution brief may one coherent private source start. No speculative modules; a floor plate only follows real returned depth failure.
-
-Early actual compositions/current states and genuine all-entry motion precede deep proof. Final source-specific work/outcome evidence must assert actual canvas objects, unchanged geometry/hits/titles, nonempty selected source labels and actions on real hosts, with source-hidden/non-room/hosted exclusions explicit. Prove motion/RM/wrap/liveness and any existing replay requirements without inventing absent foregrounds.
-
-Exact independent final native PASS gates integration; bound TEST/Web visual/identity/cleanup is separate. No owner/campaign acceptance, alternative route UI traversal, save or revisit E2E is implied. Preserve raw sources/prompts/frozen references/recipes, failed diagnostics and versioned planning/source proof in GitHub checkpoints. Main/NEXT/audience stay unchanged.
+Only the auditor's exact final native package hash PASS authorizes integration onto the existing art branch and cumulative isolated TEST. Preserve prior rooms, main/NEXT and saves. Source/recipe/proof summaries and hashes go to GitHub with WIP meaning explicit; raw large QA stays E:/CodexQA/BTH. No final art PASS is asserted by this brief.

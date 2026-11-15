@@ -1,0 +1,181 @@
+{
+  "status": "EXACT_FINAL_NATIVE_ART_PASS_BRANCH_INTEGRATED_TEST_PENDING",
+  "package_sha256": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+  "baseline": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc",
+  "director_v4_sha256": "7610b29be9332a8212073022a227f15ac43bd96b1a811544212acf38b1b3658f",
+  "checks": {
+    "Base": 14404,
+    "lifecycle": 246,
+    "motion": 15
+  },
+  "contexts": "Base plus marker, associate0/2/5 and actual Silas22",
+  "Mags_job": "NOT REACHED within approved bound",
+  "geometry_objects_publication": "Exact baseline equality all6contexts",
+  "liveness": "Original mandatory no-pointer check PASS",
+  "video": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-encode-full-02\\evidence\\private-r4-actual-game.mp4",
+      "sha256": "7e139d5e40d690dec24627d551f98bfe5baf973afbaa611a61bb75163125c4d7",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "62"
+          }
+        ],
+        "format": {
+          "duration": "8.120000",
+          "size": "766132"
+        }
+      },
+      "full_decode": "PASS"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-encode-board-01\\evidence\\private-r4-native-art.mp4",
+      "sha256": "125d26162245fc98b083cd28fcb4212b2c912344d19ec773543e869424cde8ae",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1800,
+            "height": 860,
+            "nb_read_frames": "62"
+          }
+        ],
+        "format": {
+          "duration": "8.120000",
+          "size": "570745"
+        }
+      },
+      "full_decode": "PASS"
+    }
+  ],
+  "raw_evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01\\evidence\\private_preart_metadata.json": "97339a1c53e9180a18f7126b11a49669834c6ff112620811bdf44fea85657e31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01\\evidence\\private_lifecycle_result.json": "af1ef1dcee2b505d8af0d3392f24c77477968ff23256290552760133c58c6b44",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-compare-01\\evidence\\comparison.json": "e991b634887ff4e62817fdc6a83168e3ad1edbe8fbc53f2e112a2ff95a8f4ac7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-motion-01\\evidence\\motion\\private_animation_probe.json": "c34a0993041fd262bfa665cf59efb0b0344e00125efe4e7d8fd8cd3a631e3bc5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-video-01\\evidence\\capture\\animation_capture.json": "5e60f48989628402c2fdc7a7560c268f73143db74a7d9f8f298ad4fb2e7e70b6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-liveness-01\\evidence\\worker.log": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-video-verify-01\\evidence\\video-verification.json": "bd1edb1d94f064f6c2de211789bb3615e9232ba17613c28803aa8a6f39787bbf"
+  },
+  "limitations": [
+    "Mags/C3 NOT REACHED",
+    "No live Web, UI-earned progression, save/revisit or all-members/jobs claim",
+    "TEST export pending at this checkpoint"
+  ],
+  "final_audit_receipt": {
+    "status": "PASS",
+    "reviewer": "Independent visuals director and auditor",
+    "package_sha256": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+    "source_sha256": "c877cf57857cc33f75f61c1accc1959c5e71ef566b3d1d209133371400082686",
+    "decision": "Personally inspected Base + all five actual lifecycle PNGs and first/last full-app animation frames; read comparison, 15-check motion report, original liveness log and full decode receipt. Approved crisp source materials, fixed fittings/single knob, whole names and actor scale within observed states. Motion is deliberately restrained; do not represent it as dramatic or boosted.",
+    "exclusions": [
+      "Mags/C3 not reached",
+      "Browser",
+      "Save/revisit",
+      "Deployment"
+    ],
+    "received_from": "/root/audit_private_room_art",
+    "receipt_time_utc": "2026-11-15T01:05:28.909720+00:00"
+  },
+  "final_audit_receipt_sha256": "618ab1a4c0cde128a46454b0a4b2e561e46799a0a034dcbb437baf4dd0a135b0",
+  "recipes_and_seal": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_private_r1.py": "7a0bce0c8de3989acce3b5748579b5c09cf00ef8c6be3c79b0b69dd35a62796e",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_private_r2.py": "372de0f53a2c8648e74209d63c05ffc35274f6c209fbd7e2f9fb30ff85f57c39",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_private_r3.py": "40fbee4e91570ddcc6a63b991439b228325f1481aabb871c6194000df66c1e7f",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_private_r4.py": "5da164be8dbd27cab12537464b69428dc96924ad56f4c87208dbd0218a5df561",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_private_r2.py": "e7e582c3ee4aec11cbe5f4f0f72061988f2769b773c36081934ed15160d5dcd1",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_private_r4.py": "26f05189d2c93099ebc78a63c195c2e1e7b6699e028b39637f207baffb1ba93b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\packages\\punchline_back_room-v1-r4\\package-seal.json": "4202ee8e7d919ea7d5e718aae0e9d3fede8a5f6f495e22d24da1e849e7d549fa",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATE-20261115-preflight-r4-01\\evidence\\private-r4-preflight.json": "d256d256c02bab373ab087dfa2c7eabb5098d11ecccd243c51c06b3cf0819d81"
+  },
+  "payload_files": {
+    "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": {
+      "sha256": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+      "bytes": 189,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": {
+      "sha256": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+      "bytes": 194,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": {
+      "sha256": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+      "bytes": 204,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": {
+      "sha256": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+      "bytes": 196,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": {
+      "sha256": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+      "bytes": 195,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": {
+      "sha256": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+      "bytes": 208,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": {
+      "sha256": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+      "bytes": 203,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/punchline_back_room/background.png": {
+      "sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+      "bytes": 716679,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "data/art/environments/index.json": {
+      "sha256": "d322b7b3cec10721e9dcd849829cc7173efa2ddc72691bec5bcb04a17991d01d",
+      "bytes": 239
+    },
+    "data/art/environments/punchline_back_room.json": {
+      "sha256": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+      "bytes": 3135
+    }
+  }
+}
