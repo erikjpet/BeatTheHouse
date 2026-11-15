@@ -1,0 +1,578 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "kitty_cat_lounge",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "kitty_sign_pulse",
+      "type": "pulse",
+      "texture": "anim/kitty_sign_pulse.png",
+      "rect": [
+        116,
+        46,
+        404,
+        48
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.36,
+      "period": 0.8267349088394192,
+      "phase": 0.30526315789473685,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "pink_air_0",
+      "type": "mover",
+      "texture": "anim/pink_air_0.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        180,
+        20
+      ],
+      "from": [
+        -40,
+        87
+      ],
+      "to": [
+        930,
+        87
+      ],
+      "duration": 97.0,
+      "phase": 0.0,
+      "opacity": 0.044,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "pink_air_1",
+      "type": "mover",
+      "texture": "anim/pink_air_1.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        164,
+        20
+      ],
+      "from": [
+        -40,
+        105
+      ],
+      "to": [
+        930,
+        105
+      ],
+      "duration": 80.83333333333333,
+      "phase": 12.5,
+      "opacity": 0.044,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "pink_air_2",
+      "type": "mover",
+      "texture": "anim/pink_air_2.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        148,
+        20
+      ],
+      "from": [
+        -40,
+        123
+      ],
+      "to": [
+        930,
+        123
+      ],
+      "duration": 69.28571428571429,
+      "phase": 21.428571428571427,
+      "opacity": 0.044,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "pink_air_3",
+      "type": "mover",
+      "texture": "anim/pink_air_3.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        132,
+        20
+      ],
+      "from": [
+        -40,
+        141
+      ],
+      "to": [
+        930,
+        141
+      ],
+      "duration": 60.625,
+      "phase": 28.125,
+      "opacity": 0.044,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "pink_air_4",
+      "type": "mover",
+      "texture": "anim/pink_air_4.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        116,
+        20
+      ],
+      "from": [
+        -40,
+        159
+      ],
+      "to": [
+        930,
+        159
+      ],
+      "duration": 53.888888888888886,
+      "phase": 33.333333333333336,
+      "opacity": 0.044,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "cool_air_0",
+      "type": "mover",
+      "texture": "anim/cool_air_0.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        180,
+        20
+      ],
+      "from": [
+        10,
+        133
+      ],
+      "to": [
+        870,
+        133
+      ],
+      "duration": 86.0,
+      "phase": 0.0,
+      "opacity": 0.026,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "cool_air_1",
+      "type": "mover",
+      "texture": "anim/cool_air_1.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        164,
+        20
+      ],
+      "from": [
+        10,
+        151
+      ],
+      "to": [
+        870,
+        151
+      ],
+      "duration": 71.66666666666667,
+      "phase": 12.5,
+      "opacity": 0.026,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "cool_air_2",
+      "type": "mover",
+      "texture": "anim/cool_air_2.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        148,
+        20
+      ],
+      "from": [
+        10,
+        169
+      ],
+      "to": [
+        870,
+        169
+      ],
+      "duration": 61.42857142857143,
+      "phase": 21.428571428571427,
+      "opacity": 0.026,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "cool_air_3",
+      "type": "mover",
+      "texture": "anim/cool_air_3.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        132,
+        20
+      ],
+      "from": [
+        10,
+        187
+      ],
+      "to": [
+        870,
+        187
+      ],
+      "duration": 53.75,
+      "phase": 28.125,
+      "opacity": 0.026,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "cool_air_4",
+      "type": "mover",
+      "texture": "anim/cool_air_4.png",
+      "frames": 24,
+      "fps": 5.347606087887684,
+      "size": [
+        116,
+        20
+      ],
+      "from": [
+        10,
+        205
+      ],
+      "to": [
+        870,
+        205
+      ],
+      "duration": 47.77777777777778,
+      "phase": 33.333333333333336,
+      "opacity": 0.026,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "candle_light_0",
+      "type": "frames",
+      "texture": "anim/candle_light_0.png",
+      "rect": [
+        122,
+        300,
+        16,
+        8
+      ],
+      "frames": 24,
+      "fps": 7.639437268410976,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "candle_light_1",
+      "type": "frames",
+      "texture": "anim/candle_light_1.png",
+      "rect": [
+        292,
+        300,
+        16,
+        8
+      ],
+      "frames": 24,
+      "fps": 7.639437268410976,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "candle_light_2",
+      "type": "frames",
+      "texture": "anim/candle_light_2.png",
+      "rect": [
+        490,
+        300,
+        16,
+        8
+      ],
+      "frames": 24,
+      "fps": 7.639437268410976,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "candle_light_3",
+      "type": "frames",
+      "texture": "anim/candle_light_3.png",
+      "rect": [
+        622,
+        300,
+        16,
+        8
+      ],
+      "frames": 24,
+      "fps": 7.639437268410976,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "candle_light_4",
+      "type": "frames",
+      "texture": "anim/candle_light_4.png",
+      "rect": [
+        762,
+        300,
+        16,
+        8
+      ],
+      "frames": 24,
+      "fps": 7.639437268410976,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "warm_sparkle_0",
+      "type": "pulse",
+      "texture": "anim/warm_sparkle_0.png",
+      "rect": [
+        164,
+        162,
+        8,
+        8
+      ],
+      "min_opacity": 0.2,
+      "max_opacity": 0.4,
+      "period": 0.7479982508547126,
+      "phase": 0.0,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "warm_sparkle_1",
+      "type": "pulse",
+      "texture": "anim/warm_sparkle_1.png",
+      "rect": [
+        314,
+        160,
+        8,
+        8
+      ],
+      "min_opacity": 0.2,
+      "max_opacity": 0.4,
+      "period": 0.7479982508547126,
+      "phase": 0.4047619047619047,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "warm_sparkle_2",
+      "type": "pulse",
+      "texture": "anim/warm_sparkle_2.png",
+      "rect": [
+        452,
+        162,
+        8,
+        8
+      ],
+      "min_opacity": 0.2,
+      "max_opacity": 0.4,
+      "period": 0.7479982508547126,
+      "phase": 0.8095238095238094,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "warm_sparkle_3",
+      "type": "pulse",
+      "texture": "anim/warm_sparkle_3.png",
+      "rect": [
+        680,
+        182,
+        8,
+        8
+      ],
+      "min_opacity": 0.2,
+      "max_opacity": 0.4,
+      "period": 0.7479982508547126,
+      "phase": 1.2142857142857142,
+      "blend": "add",
+      "still": "first"
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide"
+    }
+  ],
+  "counters": {
+    "kitty_champagne_bar": {
+      "texture": "counters/kitty_champagne_bar.png"
+    }
+  }
+}

@@ -43268,7 +43268,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R3 five-context native checks passed; visual contrast revision underway",
+      "status": "R6 scoped native art audit passed; integration and TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43315,9 +43315,14 @@
           "kind": "native_visual_review",
           "reference": "docs/testing/kitty_cat_r3_native_visual_review_20261115.json",
           "summary": "15,164 automated checks and exact geometry/publication equality across five initial contexts; visual audit requires gold title contrast correction. Not accepted or activated."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/kitty_cat_r6_native_trial.json",
+          "summary": "Exact R6 scoped final visual PASS; 55 motion/RM checks,135 five-context occlusion checks, actual8s clips, original no-pointer liveness. No browser/save/revisit claim."
         }
       ],
-      "next_action": "Auditor refines counter/backbar material, then sealed candidate receives native composition and motion audit before TEST activation.",
+      "next_action": "Commit exact audited R6 package, publish cumulative TEST and verify served identity/assets. Live browser acceptance remains explicit.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43326,7 +43331,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T01:38:33.544789+00:00"
+      "updated_at": "2026-11-15T01:54:22.653134+00:00"
     }
   ]
 }

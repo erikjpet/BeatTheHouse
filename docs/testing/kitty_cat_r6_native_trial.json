@@ -1,0 +1,335 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+  "source_sha256": "39b0e719b745768aaf794c014a99c512c734964f61d52578e83798a233058dcd",
+  "scope": "Five constructed initial noon/closing contexts, unchanged R5 static/counter and exact R6 animation. Later lifecycle/open-hours/save/revisit/browser/deployment unverified. Real-time art target stable under Reduce Motion, not whole app.",
+  "checks": {
+    "static": 59,
+    "context": 15164,
+    "native_motion": 55,
+    "conservative_five_context_occlusion": 135
+  },
+  "decision": "Auditor personally inspected all five R5 gameplay contexts with byte-identical R6 static/counter and exact R6 first/last full-app frames; checked original R6 no-pointer PASS and both MP4 full decodes. Exact R6 approved for art branch/TEST only.",
+  "baseline": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+  "payload_files": {
+    "assets/art/environments/kitty_cat_lounge/anim/candle_light_0.png": {
+      "sha256": "d79eddbe02603a5412ab7be088d6790b329d2e04dd817842f8eaf6064fe1a12a",
+      "bytes": 199,
+      "size": [
+        768,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/candle_light_1.png": {
+      "sha256": "545375c389080aefa2f4e0461474452313a6ce5754d6946910e7a38b52698d95",
+      "bytes": 206,
+      "size": [
+        768,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/candle_light_2.png": {
+      "sha256": "d73a331a1e0b2e7aca2b472aa8bd02035453ec120d8303e2e9126b0135fd168f",
+      "bytes": 206,
+      "size": [
+        768,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/candle_light_3.png": {
+      "sha256": "0a563e8293c2d67067ca6cb9988ff4287007abc690c33d09aa6cd48252efec64",
+      "bytes": 208,
+      "size": [
+        768,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/candle_light_4.png": {
+      "sha256": "766debe06cb201c06999bcbacc7ede2dcd7a2d76dbbff435315660268029bda9",
+      "bytes": 205,
+      "size": [
+        768,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/cool_air_0.png": {
+      "sha256": "ebe7ceb580eb4286ed3d03d2c18d2c8423b818e65704049dafec601134cdb5b9",
+      "bytes": 2122,
+      "size": [
+        8640,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/cool_air_1.png": {
+      "sha256": "048dd38269941db7e74d803ac5c0878ca190c7da6b8a7d714d00fea7c79f006e",
+      "bytes": 1931,
+      "size": [
+        7872,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/cool_air_2.png": {
+      "sha256": "b5f8e207a2c83a23623feb29034e115fb767cc5b45332ca23444044f61342c03",
+      "bytes": 1806,
+      "size": [
+        7104,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/cool_air_3.png": {
+      "sha256": "2e4e4699cb2436b7ef3fc6e4b4fd611d760e19d6f2d3edff02346071af4b9302",
+      "bytes": 1686,
+      "size": [
+        6336,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/cool_air_4.png": {
+      "sha256": "2410d0bd01c2927c264b0d73fca0328341ca04c4cce3d8596cbcdd987dcd55ad",
+      "bytes": 1507,
+      "size": [
+        5568,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/kitty_sign_pulse.png": {
+      "sha256": "30af2beae75ddd29b474b645ff86fb26b6f4e2797761cfbf077e05d988f7901f",
+      "bytes": 1894,
+      "size": [
+        808,
+        96
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/pink_air_0.png": {
+      "sha256": "7884f7f55c0dfcf00fce4442cf4eb742b373a057ef928ae3e2cf996ff0bc09a6",
+      "bytes": 2123,
+      "size": [
+        8640,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/pink_air_1.png": {
+      "sha256": "54e57decb1b1a83ad10cda5400cb53e85f0cb697d63b80b2e550060df55de1f1",
+      "bytes": 1932,
+      "size": [
+        7872,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/pink_air_2.png": {
+      "sha256": "741b09243d56c16c0380ac01426b6a9ae5c50f3b226b54c4da56858a52f64d73",
+      "bytes": 1806,
+      "size": [
+        7104,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/pink_air_3.png": {
+      "sha256": "2ce1065d3eb05218ad8c557879b4f4e47c39ac113d6833863e43a8d3a4deb516",
+      "bytes": 1686,
+      "size": [
+        6336,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/pink_air_4.png": {
+      "sha256": "b9ae8238f27bf31326147aca81dfc11e16f03f384c007063a5eaf64f00cc9fb4",
+      "bytes": 1508,
+      "size": [
+        5568,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_0.png": {
+      "sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_1.png": {
+      "sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_2.png": {
+      "sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_3.png": {
+      "sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/kitty_cat_lounge/background.png": {
+      "sha256": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+      "bytes": 729676,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png": {
+      "sha256": "3ad4156cec44de64000f94848f159575b7d8f2f96ed8fb42fffa7b6d84a52497",
+      "bytes": 28030,
+      "size": [
+        536,
+        96
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/index.json": {
+      "sha256": "fdc7fd22d4f433369983eeb04cd76526be684c9ed9750a212e2c70af08e81906",
+      "bytes": 264
+    },
+    "data/art/environments/kitty_cat_lounge.json": {
+      "sha256": "03da076bad28b512c463bf6d620f9a037e36678545f1c06fb685102da923fd6a",
+      "bytes": 11163
+    }
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTY-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "21f5303b86443487189f17133477548d45002b5579190c6f73f0e76143b5a81f",
+  "video": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-encode-01\\evidence\\kitty-r6-actual-game.mp4",
+      "sha256": "a437bbb02e085a4f29d338bf959bf9c08a0a0467d6f0fc8898d05eb7e42842c3",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "63"
+          }
+        ],
+        "format": {
+          "duration": "8.240000",
+          "size": "884144"
+        }
+      },
+      "full_decode": "PASS"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-encode-01\\evidence\\kitty-r6-native-art.mp4",
+      "sha256": "7ac38fc306b71d7a8e758fd1c5603b8a2104acda79ee56645f6187f540bc3fa9",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1800,
+            "height": 860,
+            "nb_read_frames": "63"
+          }
+        ],
+        "format": {
+          "duration": "8.240000",
+          "size": "859360"
+        }
+      },
+      "full_decode": "PASS"
+    }
+  ],
+  "occlusion_receipt": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTY-20261115-occlusion-r6-01/evidence/kitty-r6-five-context-occlusion.json",
+  "occlusion_sha256": "9d3da051c8e85de1757176b193e51c9f64cc326c79b53ef3f802acf9634e489a",
+  "revision_history": "R3 contrast failed; R5 two hidden animations; R6 only two manifest positions changed. All original raw packages, captures, recipes retained in E QA."
+}
