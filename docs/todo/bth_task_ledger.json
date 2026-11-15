@@ -37959,15 +37959,19 @@
             "id": "classify",
             "description": "Classify missing-art ownership assertion against explicit production policy and history",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md"
+            ]
           },
           {
             "id": "repair",
             "description": "Run all16 entry cases with strict once-only missing-art completion, no modal and unchanged settlement checks.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md"
+            ]
           }
         ],
         "coverage": {
@@ -37976,14 +37980,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "CLASSIFIED_TEST_DISCREPANCY",
+      "state": "complete",
+      "status": "TEST_FIX_COMMITTED_VALIDATED",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "46f652a9e409d2a2f07921217e1c5342b680d551",
+          "evidence": [
+            "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -37994,11 +38005,11 @@
         {
           "kind": "native_diagnostic",
           "reference": "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md",
-          "summary": "335 assertions,3 stale missing-art active-modal expectations; all other menu/internal flows match."
+          "summary": "Confirmed stale modal expectation. Final16cases344/344 and overlay1115/1115; no production change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Review explicit fallback assertions then run full16-case native scope suite.",
+      "next_action": "Scoped reviewed test repair committed to main; continue separate gameplay and browser objectives.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38008,7 +38019,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T20:35:55.010040+00:00"
+      "updated_at": "2026-11-15T20:42:53.839524+00:00"
     }
   ],
   "batches": [
