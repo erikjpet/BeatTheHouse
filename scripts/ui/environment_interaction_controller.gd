@@ -2046,12 +2046,20 @@ static func crew_presence_interactable_objects(host: Variant, event_options: Arr
 		var label := str(speaker.get("speaking_character_name", member_id.trim_prefix("crew_").capitalize()))
 		var choices: Array = contact_event.get("choices", []) if typeof(contact_event.get("choices", [])) == TYPE_ARRAY else []
 		var interactive := not contact_event_id.is_empty() and not choices.is_empty()
-		var object_id := "event:%s" % contact_event_id if interactive else "crew_presence:%s" % member_id
+		# Choice availability changes after taking a package, but an authenticated
+		# contact still owns the same physical slot. Do not invent an unbound
+		# ambient identity during a read-only room publication refresh.
+		var contact_object_id := "event:%s" % contact_event_id
+		var contact_identity := interactive or (
+			not contact_event_id.is_empty()
+			and _crew_contact_has_physical_manifest_row(host.run_state.current_environment, contact_object_id)
+		)
+		var object_id := contact_object_id if contact_identity else "crew_presence:%s" % member_id
 		result.append(host._make_interactable_object({
 			"object_id": object_id,
-			"object_type": "event" if interactive else "dialogue",
+			"object_type": "event" if contact_identity else "dialogue",
 			"visual_type": "character",
-			"source_id": contact_event_id if interactive else member_id,
+			"source_id": contact_event_id if contact_identity else member_id,
 			"label": label,
 			"short_description": line,
 			"presence": "ambient",
@@ -2067,11 +2075,24 @@ static func crew_presence_interactable_objects(host: Variant, event_options: Arr
 			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if interactive else [],
 			"inline_actions": host._event_inline_response_actions(contact_event_id, choices) if interactive else [],
 			"confirm_action_id": "inspect_event_choices" if interactive else "",
-			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if interactive else "dialogue", index),
+			"focus_rect": host._interaction_rect_for_object(object_id, host.CONTEXT_MODE_EVENT if contact_identity else "dialogue", index),
 		}))
 		index += 1
 	return result
 
+
+static func _crew_contact_has_physical_manifest_row(environment: Dictionary, object_id: String) -> bool:
+	if _array(environment.get("resolved_event_ids", [])).has(object_id.trim_prefix("event:")):
+		return false
+	for value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(value)
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var manifest_id := str(row.get("instance_object_id", row.get("object_id", row.get("stable_object_id", "")))).strip_edges()
+		var presentation_id := str(row.get("presentation_id", row.get("presentation_object_id", manifest_id))).strip_edges()
+		if presentation_id == object_id or (presentation_id.is_empty() and manifest_id == object_id):
+			return true
+	return false
 
 static func delivery_interactable_objects(host: Variant, _occupied_objects: Array = []) -> Array:
 	if host.run_state == null:

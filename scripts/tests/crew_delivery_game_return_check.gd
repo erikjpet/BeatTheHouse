@@ -91,6 +91,7 @@ func _case(app: CrewHost, game_id: String, choice_id: String, paid: bool = false
 	var game := app.current_game
 	var state_key := app.current_game_state_key
 	var environment_id := str(run.current_environment.get("id", ""))
+	var initial_crew_presence: Array = run.current_environment.get("crew_presence", []).duplicate(true)
 	_check(app.current_screen == app.SCREEN_GAME and app.game_surface_canvas.surface_game_module == game, label + " initial native canvas is bound")
 	if paid:
 		print("CREW_RETURN_PROGRESS paid_action_begin ", label)
@@ -165,6 +166,35 @@ func _case(app: CrewHost, game_id: String, choice_id: String, paid: bool = false
 			_check(app.current_screen == app.SCREEN_GAME and app.game_surface_canvas.surface_game_module == app.current_game, label + " Continue reentry binds full native game")
 			print("CREW_RETURN_PROGRESS save_continue_end ", label)
 	rows.append({"game": game_id, "choice": choice_id, "paid": paid, "result_ok": result.get("ok", false), "response_screen": response_screen, "response_native_bound": response_native_bound, "final_screen": app.current_screen, "state_key": state_key})
+	if CABINET_GAMES.has(game_id):
+		app.back_to_environment()
+		for _frame in range(4): await process_frame
+		_check(app.current_screen == app.SCREEN_ENVIRONMENT, label + " normal machine exit retains the room instead of recovery")
+		_check(not app.room_catalog_snapshot().is_empty(), label + " room interactables remain after machine exit")
+		if choice_id == "run_package":
+			var expected_member := "crew_switch" if game_id == "pull_tabs" else "crew_rook"
+			var expected_event := "crew_contact_switch" if game_id == "pull_tabs" else "crew_contact_rook"
+			var fixture_member_found := false
+			for presence in initial_crew_presence:
+				if str(presence.get("member_id", "")) == expected_member and str(presence.get("contact_event_id", "")) == expected_event: fixture_member_found = true
+			_check(fixture_member_found, label + " generated fixture contains its expected physical Crew member")
+			var contact: Dictionary = {}
+			var duplicate_presence := false
+			for record in app.room_catalog_snapshot():
+				if str(record.get("object_id", "")) == "event:" + expected_event: contact = record
+				if str(record.get("object_id", "")) == "crew_presence:" + expected_member: duplicate_presence = true
+			_check(not app.run_state.current_environment.get("resolved_event_ids", []).has(expected_event), label + " package acceptance has not retired the physical Crew contact")
+			_check(not contact.is_empty() and not str(contact.get("slot_id", "")).is_empty() and not duplicate_presence, label + " Crew member retains one authenticated bound identity")
+			if expected_member == "crew_rook":
+				_check(not bool(contact.get("interactive", true)) and contact.get("available_actions", []).is_empty(), label + " unavailable Rook offer stays inert")
+			else:
+				_check(bool(contact.get("interactive", false)) and not contact.get("available_actions", []).is_empty(), label + " Switch retains her still-available responses")
+			var accepted_delivery: Dictionary = app.run_state.active_delivery_run.duplicate(true)
+			_check(app.save_service.save_run(app.run_state, app.autosave_slot_id) == OK, label + " accepted cabinet floor Save succeeds")
+			_check(app.load_foundation_run(), label + " accepted cabinet floor Continue succeeds")
+			for _frame in range(4): await process_frame
+			_check(app.current_screen == app.SCREEN_ENVIRONMENT and not app.room_catalog_snapshot().is_empty(), label + " cabinet floor Continue retains room and controls")
+			_check(app.run_state.active_delivery_run == accepted_delivery, label + " cabinet floor Continue preserves exact delivery")
 
 func _start_case(app: CrewHost, game_id: String) -> Dictionary:
 	if not CABINET_GAMES.has(game_id):
