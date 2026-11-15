@@ -1,5 +1,5 @@
 {
-  "status": "EXACT_FINAL_NATIVE_ART_PASS_BRANCH_INTEGRATED_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "package_sha256": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
   "baseline": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc",
   "director_v4_sha256": "7610b29be9332a8212073022a227f15ac43bd96b1a811544212acf38b1b3658f",
@@ -67,8 +67,7 @@
   },
   "limitations": [
     "Mags/C3 NOT REACHED",
-    "No live Web, UI-earned progression, save/revisit or all-members/jobs claim",
-    "TEST export pending at this checkpoint"
+    "No live Web, UI-earned progression, save/revisit or all-members/jobs claim"
   ],
   "final_audit_receipt": {
     "status": "PASS",
@@ -177,5 +176,6 @@
       "sha256": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
       "bytes": 3135
     }
-  }
+  },
+  "test_delivery_report": "docs/testing/punchline_private_r4_test_delivery.json"
 }

@@ -1,0 +1,135 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+  "publication": {
+    "source_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+    "art_package_sha256": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+    "build_manifest_sha256": "e70c3339299f57a6ec2f05f96a77ced3d295aec99eb6a6b013df869aa9fbffef",
+    "files_verified": 13,
+    "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\317f252b71fdd8cbe3c2f917d24fc651245190e2",
+    "other_lanes_touched": false
+  },
+  "served_verification": {
+    "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+    "source_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+    "art_package_sha256": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+    "build_manifest_sha256": "e70c3339299f57a6ec2f05f96a77ced3d295aec99eb6a6b013df869aa9fbffef",
+    "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/317f252b71fdd8cbe3c2f917d24fc651245190e2/index.html",
+    "default_tls_validation": true,
+    "files": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+        "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+        "bytes": 340415
+      },
+      "index.apple-touch-icon.png": {
+        "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+        "bytes": 4099
+      },
+      "index.audio.position.worklet.js": {
+        "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+        "bytes": 2973
+      },
+      "index.audio.worklet.js": {
+        "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+        "bytes": 7298
+      },
+      "index.html": {
+        "sha256": "6bfe73bcde1717b271e139dd13aeebdd8ff5579578a5986bbc195dfd0ddbd3ae",
+        "bytes": 5632
+      },
+      "index.icon.png": {
+        "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+        "bytes": 14818
+      },
+      "index.js": {
+        "sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+        "bytes": 2828608
+      },
+      "index.pck": {
+        "sha256": "3041cf6f6230122959c5e7ff1d28079ef675624e0eb5c09c0082fd59351fc78b",
+        "bytes": 131447996
+      },
+      "index.png": {
+        "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+        "bytes": 21443
+      },
+      "index.side.wasm": {
+        "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "bytes": 21802358
+      },
+      "index.wasm": {
+        "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "bytes": 1508237
+      },
+      "web-gl-handles.json": {
+        "sha256": "03b4477ef3a4c813df2a73eb8d52583fe341ae4d0fe3c3789a5afec670a94dcd",
+        "bytes": 1295
+      }
+    },
+    "protected_before": {
+      "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+      "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+      "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+      "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+      "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+      ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+    },
+    "protected_after": {
+      "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+      "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+      "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+      "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+      "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+      ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+    },
+    "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+    "browser_visual_scenario_gate": "not run; isolated CUA window binding failed, no alternative user profile used",
+    "previous_immutable_build_unchanged": true,
+    "previous_173_immutable_build_unchanged": true,
+    "previous_9ac_immutable_build_unchanged": true,
+    "prior_immutable_all_files": {
+      "d4beeb651403135ad4fa5f6fbf989af0d43478b6": {
+        "manifest_sha256": "d0682da6ffbf3686d9c630a6c2ce043a4f193b4fd7d03013bbd95191dedaa8ba",
+        "files_verified_including_manifest": 13
+      },
+      "9ac963f185afbc5c54c604e5f68e8111f598d997": {
+        "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+        "files_verified_including_manifest": 13
+      }
+    },
+    "enabled_art_ids": [
+      "gas_station_casino",
+      "corner_store",
+      "back_alley",
+      "motel",
+      "bar",
+      "pawn_shop",
+      "jazz_club",
+      "punchline_club",
+      "small_underground_casino",
+      "punchline_back_room"
+    ],
+    "raw_art_sources": 170,
+    "compiled_art_textures": 159,
+    "test_args": [
+      "--",
+      "--bth-art-test"
+    ],
+    "persistent_paths": [
+      "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+    ],
+    "configuration_not_runtime_DB_observation": true
+  },
+  "python_tests": {
+    "passed": 272,
+    "failed": 0
+  },
+  "native_proof": "docs/testing/punchline_private_r4_native_trial.json",
+  "open_gates": [
+    "Live Web visual and interaction acceptance",
+    "Save/revisit not covered",
+    "Mags/C3 not reached within approved bound"
+  ],
+  "scope": "Existing art branch and isolated TEST only; main/NEXT and normal user saves unchanged."
+}

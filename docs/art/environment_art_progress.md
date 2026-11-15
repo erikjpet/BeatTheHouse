@@ -2,11 +2,11 @@
 
 Updated: 2026-11-14
 Branch: codex/environment-art-layers
-Release status: Nine interiors have native PASS and artifact delivery on cumulative TEST `787257af528e`. Five have full live Web verification. Pawn, Jazz, Public Punchline and Hidden casino still require live Web visual acceptance. The full 20-room/12-doorway campaign remains Open.
+Release status: Ten interiors have exact native/art PASS and cumulative TEST artifact delivery at `317f252b71fd`. Five retain full live Web verification; Pawn, Jazz, Public Punchline, Hidden Casino and Private Punchline still need live Web acceptance. The full 20-room/12-doorway campaign remains Open.
 
 ## Current queue
 
-Hidden casino R2 exact sealed package is delivered. Private Punchline back room is the next source/lifecycle preparation; no private art is approved or activated. Eleven interiors and twelve doorway packages remain. Main/NEXT and normal saves remain unchanged. See `../testing/small_underground_casino_r2_test_delivery.json` for verified build identity and explicit browser gaps.
+Private Punchline R4 has final independent art PASS, six observed native compositions, seven moving entries/Reduce Motion, original liveness and exact geometry parity. Ten-room TEST artifact delivery and all served hashes pass; this does not imply browser interaction or save/revisit acceptance. Mags/C3 was not reached inside the approved fixture bound. Ten interiors and twelve doorways remain. Main/NEXT and normal saves are unchanged. See `../testing/punchline_private_r4_test_delivery.json`.
 
 ### Earlier queue checkpoint
 

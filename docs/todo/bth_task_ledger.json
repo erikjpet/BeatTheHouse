@@ -38007,7 +38007,8 @@
         "BTH-ENVART-001-ART-PAWN-01",
         "BTH-ENVART-001-ART-JAZZ-01",
         "BTH-ENVART-001-ART-PUNCHLINE-01",
-        "BTH-ENVART-001-ART-HIDDEN-01"
+        "BTH-ENVART-001-ART-HIDDEN-01",
+        "BTH-ENVART-001-ART-PRIVATE-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43216,19 +43217,28 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R4 exact final native/art PASS; branch integration complete; TEST pending",
+      "status": "R4 exact native/art PASS; cumulative TEST artifact delivered; live Web NOT RUN",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+          "evidence": [
+            "docs/testing/punchline_private_r4_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Private package trial only; no branch target activation or TEST delivery yet."
+        "commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+        "evidence": [
+          "docs/testing/punchline_private_r4_test_delivery.json"
+        ],
+        "scope": "Ten native-approved packages delivered on isolated TEST; live Web visual/interaction acceptance pending."
       },
       "scope": [
         "Private Punchline room only; baseline74/c5; seven restrained movers and no counter fronts."
@@ -43240,7 +43250,7 @@
           "summary": "Base+5bounded lifecycle compositions, exact geometry/object/publication equality,7motion/RM and original liveness pass; Mags job not reached."
         }
       ],
-      "next_action": "Independent final visual/package audit, then exact approved integration and cumulative TEST; keep Web gate separate.",
+      "next_action": "Verify isolated live Web visuals/interactions; keep Mags/C3 not reached and save/revisit scope explicit.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43249,7 +43259,7 @@
         "observed_at": "2026-11-15T01:03:44.300145+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T01:03:44.300145+00:00"
+      "updated_at": "2026-11-15T01:09:42.330488+00:00"
     }
   ]
 }
