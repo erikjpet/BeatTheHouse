@@ -38013,7 +38013,8 @@
         "BTH-ENVART-001-ART-DELTA-01",
         "BTH-ENVART-001-ART-BEACH-01",
         "BTH-ENVART-001-ART-GRAND-01",
-        "BTH-ENVART-001-ART-HIGHLIMIT-01"
+        "BTH-ENVART-001-ART-HIGHLIMIT-01",
+        "BTH-ENVART-001-ART-GRANDBACK-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43629,6 +43630,47 @@
         "evidence": []
       },
       "updated_at": "2026-11-15T04:44:35.851509+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-GRANDBACK-01",
+      "name": "Create audited Grand Back Room art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Grand Back Room source-only baseline underway",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Grand Back Room package activation."
+      },
+      "scope": [
+        "Grand Back Room only; no generation or activation before actual and clean-guide review."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/grand_back_room.md",
+          "summary": "Base only, exact private pink OFFICE source; no forced public/showdown/heist scenarios."
+        }
+      ],
+      "next_action": "Capture actual Base, exact source fronts and typed/title bounds; director/auditor approve clean guide before one-source generation.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T04:47:40.694561+00:00"
     }
   ]
 }
