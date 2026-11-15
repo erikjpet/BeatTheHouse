@@ -1,0 +1,100 @@
+{
+  "source_commit": "8b1f36cee31d376bad239b2593a9a2461969a228",
+  "all_source_files_unchanged": 7505,
+  "contract": {
+    "texture": "res://assets/art/travel/exteriors/corner_store.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "door_kind": "hinged",
+    "door_polygon_uv": [
+      [
+        0.7350620067643743,
+        0.46786922209695603
+      ],
+      [
+        0.8201803833145435,
+        0.46786922209695603
+      ],
+      [
+        0.8201803833145435,
+        0.6899661781285231
+      ],
+      [
+        0.7350620067643743,
+        0.6899661781285231
+      ]
+    ],
+    "hinge_side": "left",
+    "threshold_uv": [
+      0.7776211950394588,
+      0.6989853438556933
+    ],
+    "inside_uv": [
+      0.7776211950394588,
+      0.6809470124013529
+    ],
+    "road_y_uv": 0.9503945885005637,
+    "sign_rect_uv": [
+      0.4599774520856821,
+      0.3878241262683202,
+      0.20574971815107101,
+      0.07440811724915446
+    ],
+    "source_top_y_uv": 0.29,
+    "backdrop_texture": "res://assets/art/travel/backdrops/corner_store.png",
+    "layered_scene": true,
+    "doorway_texture": "res://assets/art/travel/doorways/corner_store.png",
+    "doorway_reference_size": [
+      1024,
+      1536
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\corner_store.png": "66707ca8d4da8dc7977731c42c3ad8ac643cc878752c9b7c69dd691b143ebefa",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\assets\\art\\travel\\doorways\\corner_store.png": "e8bbe2575c7bcd63f89e079f53482455b26d429a18a2f89c9b54190cbebf5794",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\assets\\art\\travel\\backdrops\\corner_store.png": "fe025b9ad9f6b88aa3d3cc0358aa2e805ad9ad0694f153d3e30edce6de960bc5",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\assets\\art\\environments\\corner_store\\background.png": "54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80e74f3fd1fc5aec59e3",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\data\\art\\environments\\corner_store.json": "d0a1e7153d421465390355e028ccc72a1f5049d095ecab7a111aa42e85dd5d28"
+  },
+  "doorway_checks": 137,
+  "preview_checks": 2312,
+  "scope": "Synthetic production-overlay four-method fixed30fps presentation, no legal route/destination load/Web claim.",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\job.json": "28feddf4a0aab380468d9be4cec9fd6e172bf6a1cd8ea49d8228d51bff8ff3b8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\launch-claim.json": "2d91c728d19c18b1f5ead55b089f2a8ac7ed7f0ef55fb26b88a8422011c924d7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\post_source_verification.json": "a980ed21e19df6c02f15df1b36543fcbf5a9ac854dc750f2ec8c2d912b0a04f0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\storage-manifest.json": "026ebce227a5bfa1524dabdf46401d695f7722ad5c9134ad9d383a14107f7a85",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "4c6f71f3ed3f2501f95e582dbac265a239699692c833be7c9b7a4c8e00a5a71a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\job.json": "8767305777e0eeaad649a82f6c7db4faefed4f8838e6f3004f637ce326e46a34",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\launch-claim.json": "787050ab894da0d5a90111113e22109e7ce8f2b318130347e5b6259c69d42c1b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\post_source_verification.json": "a980ed21e19df6c02f15df1b36543fcbf5a9ac854dc750f2ec8c2d912b0a04f0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\storage-manifest.json": "31f5f90438a627f45e0a362a482948c9b7fcef5e1e152663a6e70d775a37927f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "f24c83367af4b8e5b1b3e907e4967f092483ffc4eaa72e66161abaa883028113",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\job.json": "3d7464d9e5c84ca92b5fe33be2cacf543b9d4a253fafd708a7f666e88968f9e7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\launch-claim.json": "71d44bd5d0d460d3e921bd2321ace9cef85b642e9320f6ffeadb2537b19c9059",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\post_source_verification.json": "a980ed21e19df6c02f15df1b36543fcbf5a9ac854dc750f2ec8c2d912b0a04f0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\preview_manifest.json": "a4ff36b45ce20b94c4c380f99f53ce2a948f256f397073981bd70ea880e9663a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-cinematic-01\\evidence\\storage-manifest.json": "79fc477596d2c0ab9ab4c425a26ed0ebf3e5464c39c4adc83292bb7360816a9d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-ab-prep-01\\evidence\\alpha-fixture-provenance.json": "2b25ee43419c1f9972fc73278faef4160f426b6447bacec0e8c763830d711b02",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-ab-prep-01\\evidence\\storage-manifest.json": "f55ee18cdd56f5b47ad1bdfafae44b888882604b5ef7bd454a1ec6fe9b15b05c"
+  },
+  "status": "BASELINE_CAPTURED_ALPHA_CAUSE_ISOLATED_NO_PRODUCTION_FIX",
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-baseline-union-01\\evidence\\corner-doorway-baseline.json",
+  "union_sha256": "6177439923aa3e259a352d89f87f1f2bde379d6c9f93453751575c108a1ff711",
+  "rendered_frames": 92,
+  "original_entrance_checks": 11066,
+  "original_failures": 11,
+  "opaque_alpha_diagnostic_checks": 11066,
+  "opaque_alpha_diagnostic_failures": 0,
+  "diagnosis": "Same original inherited assertions/geometry and identical RGB pass when alpha alone is255. Full-image opaque fixture is diagnostic only because facade sky intentionally transparent. No production facade/runtime/test changed.",
+  "alpha_evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-ab-prep-01\\evidence\\alpha-fixture-provenance.json": "2b25ee43419c1f9972fc73278faef4160f426b6447bacec0e8c763830d711b02",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-ab-01\\evidence\\travel_entrance_view_report.json": "e8ef8808cb72c41c91982135f6ad88be9e4ec2315131799c4f4d12869428306a"
+  }
+}

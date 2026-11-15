@@ -44060,7 +44060,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source planning; baseline and individual art brief pending",
+      "status": "Corner four-method baseline captured; alpha cause isolated, remedy under review",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44082,9 +44082,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/travel_doorways.md",
           "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/travel_doorway_corner_baseline_20261115.json",
+          "summary": "Four methods92frames;137doorway/2312preview.11 entrance failures disappear in RGB-identical alpha-only diagnostic, no production fix yet."
         }
       ],
-      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "next_action": "Director/auditor review exact aperture and narrow alpha remedy before candidate acceptance.",
       "blocker": {
         "state": "none",
         "kind": null,
