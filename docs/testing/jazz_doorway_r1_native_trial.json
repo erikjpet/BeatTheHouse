@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "d3b339cb5834837ec47b6dc782c933d638cb21f89ecf455522612a2b5c78813d",
   "decision": "FINAL SCOPED AUDIT PASS Jazz R1. Director final visual GO received. Auditor personally reviewed walk200,bus190,taxi207,night-cab200/235: coherent velvet/amber/mahogany,rear stage set back,grounded unobstructed path,no false jamb,full closed occlusion. Verified source hash,648 exact crop samples/zero mismatch/outside changes,92 states and28 entrance captures identical against corrected baseline02,entrance11066/0,doorway137,overlay1115,original no-pointer PASS,full MP4 decode1095frames/36.5s/8749955bytes SHA2a5ce70806e3f3fd65b2dca3a96849a813cd3628d317904355347d970cd39dae.",

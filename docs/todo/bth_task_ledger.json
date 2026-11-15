@@ -44348,19 +44348,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Jazz R1 scoped native audit PASS; TEST delivery pending",
+      "status": "Jazz R1 native PASS; TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "677cf3a79697a277b582011e9b702039cce38d3a",
+          "evidence": [
+            "docs/testing/jazz_doorway_r1_native_trial.json",
+            "docs/testing/jazz_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "state": "verified",
+        "commit": "677cf3a79697a277b582011e9b702039cce38d3a",
+        "evidence": [
+          "docs/testing/jazz_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST artifact, served bytes and protected NEXT/save configuration verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44385,9 +44395,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/jazz_doorway_r1_native_trial.json",
           "summary": "Exact sealed image, original gates and four-method independent actual visual audit pass."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/jazz_doorway_r1_test_delivery.json",
+          "summary": "20 interiors/six doorways,415raw394compiled; only Jazz texture/build identity changed."
         }
       ],
-      "next_action": "Publish exact approved Jazz PNG to cumulative TEST and verify served identity/assets.",
+      "next_action": "Owner live TEST acceptance; continue remaining six doorway packages.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44396,7 +44411,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T09:22:18.958437+00:00"
+      "updated_at": "2026-11-15T09:25:10.554809+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-SMALL-UNDERGROUND-CASINO-01",
