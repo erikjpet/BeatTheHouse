@@ -44703,19 +44703,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Apartment R1 native PASS; TEST delivery underway",
+      "status": "Apartment R1 native PASS; TEST artifact verified; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e9c16a5f4415a63e25c71a9f7483bf10ee01c797",
+          "evidence": [
+            "docs/testing/apartment_doorway_r1_native_trial.json",
+            "docs/testing/apartment_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "state": "verified",
+        "commit": "e9c16a5f4415a63e25c71a9f7483bf10ee01c797",
+        "evidence": [
+          "docs/testing/apartment_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST artifact, served bytes and protected NEXT/save configuration verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44740,9 +44750,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/apartment_doorway_r1_native_trial.json",
           "summary": "Exact corrected portrait asset; original gates and four-method independent actual visual audit PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/apartment_doorway_r1_test_delivery.json",
+          "summary": "20 interiors/eleven doorways,420raw399compiled; only Apartment doorway texture/build identity changed."
         }
       ],
-      "next_action": "Publish exact audited asset to cumulative TEST; preserve prior assets and eligibility.",
+      "next_action": "Owner live TEST acceptance; continue final House doorway package.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44751,7 +44766,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T11:16:13.180564+00:00"
+      "updated_at": "2026-11-15T11:19:11.258560+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-HOUSE-01",

@@ -1,0 +1,157 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "e9c16a5f4415a63e25c71a9f7483bf10ee01c797",
+  "package_sha256": "0ccf94f35e6767db46ad6f6712ad1f97b10d53f16c904fbc49f3e03945e90ce2",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 11,
+  "raw_art_sources": 420,
+  "compiled_art_textures": 399,
+  "prior_20_interiors_unchanged": true,
+  "prior_ten_doorways_and_corner_alpha_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic four-method native presentation only, not legal routes/destination loading/live Web. Common-entry landing fitting is source-only, no resampling; eligibility unchanged. House replacement remains. Main/NEXT/save namespace unchanged.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "898889a9867b62ca59759ef704b5fc64c659cfbfb17bbd305ab1cf4ae74a4bda"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\class-cache-equivalence.json": {
+      "sha256": "b3d5f618734770530eb91ca07040675a18b798888ad9e1146369f98f95a96228"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\embedded-build-manifest.json": {
+      "sha256": "c0c542ff8a8027fb4bf97d69caeadc3a43ea6115002434a325973c3c71469463"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\embedded-verification.json": {
+      "sha256": "ad769c0f6470137e5c7de89932e56e94744e30e7d2004145d14d940bff491f1c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\job.json": {
+      "sha256": "d75b694637047dcc4b9c1727f82bb2adc04054e559bbbbf7a7ecdda84cc92e27"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "fa0dceda21878311d1b9b16db05b238d3aed40a08cf1091d5126f2dc64e86f85"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "563203f46cc40406cafa714fb8b047017fac6d1cd9703597eaca803606d9793c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-finalize-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "f4d20b059088c346b656500c36d45eaefdf2a32d3a5b602619b7e4562d52e06b"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-promote-r1-01\\evidence\\job.json": {
+      "sha256": "5216a5686a9b5a7a6be49758b30760d28454599dc6626c980785a3e7eb22c27e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-promote-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "456a1998a9609d620ae6f53f2ab6c192c2352f13c586c0d7f7cab84fa6eb1cb6"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-promote-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "3cbcff38bbb09cfcf518a615af1026a522d8185afc2282a0570d31d7d7457251"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-r1-01\\evidence\\job.json": {
+      "sha256": "e9e718c11d8e8f2d57c2ecfe6d0b078618a549304e0fea86ae33e825d0ba2bc0"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "6f70165c3bc2b930eb2b649797f6dde7efb35122bfc3ab8967a665ac36ef0f71"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-html-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "f7050880a20a97afb03be56b70d3b860ea07aa58ed23dde17ea66f9ad4232c2e"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-publish-r1-01\\evidence\\job.json": {
+      "sha256": "aec200d08029a1b0bbf01d260eeeeec410c04f4fc3cd31232375cc2c5b4f25bb"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-publish-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "3e3889da45b91ddf5ea7aa4dec131f8045450c5c21171081de3a7d8346d590cc"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "d495caf42bb682ba597c4b2ba9b9f5105408a08a15309c37d13c74bf492e1af5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-publish-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "adf75c4ee05979d4fb4926029a4638c618c73f685473b97e581ac579a8b6dee5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-python-r1-01\\evidence\\job.json": {
+      "sha256": "71c1ca4c7f3e563679cb206881887575edbc5a00db4741905e4253bf357ace12"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-python-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "b263bc5ea638270e8948f7e4004f44a4e2978e1ec91ec7e21dece2c0052dc2d0"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-python-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "7dd5c8d0d55ecbc046db15d956b669d1d77d09ca2b32a836739fe77cf5d571d9"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-served-r1-01\\evidence\\authorized-site-change.json": {
+      "sha256": "9dc2ae00519f4eb53ef55fae6290c6aa8094a24cef30917a191d5b56010c88b5"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-served-r1-01\\evidence\\job.json": {
+      "sha256": "4da30ebae0ca3d43fd7c2863079e449af0de0827daad622a34e925bad7bc9411"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-served-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "2e27ca9322580ce5e6c4fcdec49ae243f8a34319e041abb3a9fde63fee46041f"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "b1b8b865afce5cc59e3ee4eaa7257c54876d15462b26032a95e8f848100e9000"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-served-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "58f39ebd4befa33a7323801c164272f4808caebe104b04ce0d77af98fa0e5355"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-archive-r1-01\\evidence\\job.json": {
+      "sha256": "8a0fc62abb489903cac050d43451df2701f1ae42e96531b612afac943d464533"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-archive-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "7780d3459c80ecfca6f54d648a88f57cfac46a192e04b7ad75de42c4a00030e1"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-archive-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "02c882422b986366998ae6011c3958a305f7ee694fdc45637fb1cfbaf4ad1a1a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-export-r1-01\\evidence\\export-policy.json": {
+      "sha256": "afbb1f3c824d6b64811fa57cc80d65003176c68550afdfe6da5c9243d452e7ee"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-export-r1-01\\evidence\\job.json": {
+      "sha256": "45ef822522df066bda1de8720567aed52b06601da79bb1190f75dd0b8cded9c1"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-export-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "9a07de0e6d12c04730de682cee18467725d2fb41d1a24817b5776170c0601e7c"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-export-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "cabab32bdb8207c04b06dc88487c841e6728086ca61ab111c81cf1c66d43d1bb"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-export-r1-01\\evidence\\template.json": {
+      "sha256": "356ca8db85ca567e7013fc43942d19650814c5e74a685cbcc70f3e725365c8a7"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-extract-body-r1-01\\evidence\\source.json": {
+      "sha256": "9647f39e68ee337ba16f468e318c21f14fac95f6fd6eea88509f85d064223797"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-extract-body-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "d52bc2d5f208fbad6eac5719fba163446ba8be72dc05786e7cb5c43e55842053"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-extract-r1-01\\evidence\\job.json": {
+      "sha256": "eecb95f54e2577afeab8de230994d74f2d4c6ddcf90f75d253ad3edd26562091"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-extract-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "dbcb75ad593a55739be07bc3ddd6f148a9929ab8621e23c93d9da4b35380685a"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-extract-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "f400297bbccf4455deff216b7f984eccf04a708bfcea1c8c8ecc3faf3d9d7006"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-identity-r1-01\\evidence\\job.json": {
+      "sha256": "1aa9fc982f71456760efb04eda3e59e3d685b5d105e3aef4dcdb9b10495a225d"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-identity-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "7cda0a9bbff7b92f24c6bb7b00e2d39ed65c0f72e829e805623c0df609e37bf8"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-identity-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "b0254116b0c99b7e36b1894d657389d349255d252062513ded5c8b8d710304ad"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-import-r1-01\\evidence\\job.json": {
+      "sha256": "a04523df010e118a88d38cc862b2205ad8771735ade333a73e110c8555b365ca"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-import-r1-01\\evidence\\launch-claim.json": {
+      "sha256": "5d17af09d4c28dd827427b6a90c94fcfa7fde792d07f2d8a8d8e9de314aa9c95"
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-web-import-r1-01\\evidence\\storage-manifest.json": {
+      "sha256": "49386b10c70f00aba1d09b38efd20933f904538292e882166f3b350b8418de77"
+    }
+  },
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-apartmentdoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "9fbd25a934ef2acca9bd05febb26668732eaf7b9969faf687d9234dacb13c408",
+    "assigned_findings": 0,
+    "unrelated_historical_findings": 8242
+  }
+}
