@@ -84,3 +84,11 @@ E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-talk-20261115-02\evidence\stor
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\worker.log SHA256 d9a73901a1c0267d7b36f8a84222a562c2cc169b971e413dd30f3a85cd6fed66
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\job.json SHA256 a309bd40c135a05fe47957ee6a851794f65a6fd8e881941f71b06df4a7266d2a
 E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-popup-20261115-01\evidence\storage-manifest.json SHA256 d4ea1b0fdbb4b19145558a3306cda500752750354eb6c65b0912231faca9c421
+
+## Paid stake across Cage cashout and Continue
+
+Distinct ordinary continuation20/20 (next-bugfinder-ordinary-craps-cage-stake-20261115-01): with point6/pass5 already funded, answer the normal table talk and exit; visit Cage through the free internal control without a cutscene; redeem only the145 liquid chips for145 cash. The working five-chip stake is not cashed out. Save in Cage and fresh Host Continue preserve175 cash/zero liquid chips. Return to the real table: point6/pass5 is intact and the normal no-new-wager throw remains enabled. Natural7 clears the lost stake without another debit or refund. Final175 cash/zero chips/point0/pass0; room authority valid. No outcome edits or manufactured stakes.
+
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\worker.log SHA256 fdcbb977e24097f194fb22f8e7094dedea09a32f6b2301b731f39b34788446df
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\job.json SHA256 7008b6992cb8e140742a53650bf759853a6ef9d0f60f6cb2b201a14bb85d958b
+E:\CodexQA\BTH\runs\next-bugfinder-ordinary-craps-cage-stake-20261115-01\evidence\storage-manifest.json SHA256 00c6df5a1a40a17e758634bc966321eb82f22ce1bc011d1e371cb8c1e23994ae
