@@ -1,0 +1,101 @@
+{
+  "status": "SCOPED_ALPHA_REPAIR_PASS_COMBINED_DOORWAY_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "decision": "Exact9145839f visual GO after independent closed/closed_inside/four-method frames. Door polygon plus two-source-pixel rim only;31,155alpha pixels become255, allRGB/outsidealpha/transparent sky unchanged. Original entrance11066 passes with zero failures; original11failures retained. Doorway137, four-method2312/92 exact snapshot equality, overlay1115, original no-pointer pass.",
+  "limitations": "No production runtime/test change. Native synthetic presentation only, not legal routes/destination loading/browser. Combined new doorway candidate must rerun gates.",
+  "payload_files": {
+    "assets/art/travel/exteriors/corner_store.png": {
+      "sha256": "9145839fff32869c8562974fedfee3ef046f812a4a281f39cf5e9434dd5335fd",
+      "bytes": 1421673
+    }
+  },
+  "provenance": {
+    "source": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\corner_store.png",
+    "source_sha256": "66707ca8d4da8dc7977731c42c3ad8ac643cc878752c9b7c69dd691b143ebefa",
+    "candidate": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-repair-prep-01\\evidence\\corner_store_door_alpha_repair.png",
+    "candidate_sha256": "9145839fff32869c8562974fedfee3ef046f812a4a281f39cf5e9434dd5335fd",
+    "door_polygon_source_pixels": [
+      [
+        1304,
+        415
+      ],
+      [
+        1455,
+        415
+      ],
+      [
+        1455,
+        612
+      ],
+      [
+        1304,
+        612
+      ]
+    ],
+    "frame_rim_source_pixels": 2,
+    "half_open_region": [
+      1302,
+      413,
+      1457,
+      614
+    ],
+    "changed_alpha_pixels": 31155,
+    "rgb_unchanged": true,
+    "outside_all_bytes_unchanged": true,
+    "transparent_sky_unchanged": true,
+    "geometry_source": "travel_entrance_view.gd::_frame_strips",
+    "runtime_code_sha256": "99442491b4591ab39d8fd2042afcfb735937a4703e1336d849880681b40d7b20",
+    "contract_sha256": "d78c5607458cd186e5970817d00ce9d8ac3a8668826c8246b28d7af7a6aa8286"
+  },
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CORNERDOOR-TRIAL-20261115\\repair_corner_door_alpha.py": "7a1b0c3e971b1166237ebe151c01eab9b2c42476308f0525e61b9b98552dd28b"
+  },
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-repair-prep-01\\evidence\\alpha-repair-provenance.json": "9d9e30301753a04298b17073e0d4530b134dd542e7de09d4fe3a6497ec2a2589",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\job.json": "a17cb31f15bf48b38eb94ccff41355d9adfa11041dcc58a2ed32ccd5882185dc",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\launch-claim.json": "79ce6160db8bb844f18f459f79003a33a431fd1b0ab87ea65f415aa5d63cfefe",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\preview_manifest.json": "2a06676cca466d1227f9f07cb410497d0a28d089ab0c6c29d45da89564934d26",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-cinematic-01\\evidence\\storage-manifest.json": "fffd1a78084e66c67de3beef20f1f4599476972607bbfee7a56e97462a023344",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-comparison-01\\evidence\\comparison.json": "98c932a362838b7e64c0c684bf87ca3a0121aba9e5ab02b1147496e5cd71174f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-comparison-01\\evidence\\storage-manifest.json": "928313af253598e3f9338f5fe1771e2c1a612a807cf94d5a7819909732b45f57",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\job.json": "63dbf414f9c69b283e9838a127e9b01666e211e55883b916b0f83579bf3e9d50",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\launch-claim.json": "4828137b36ee021b6e711c46ff9a92f8a305aa521e89aaa05f253adc059c2df4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\storage-manifest.json": "5e159297585732253e8d637019e093d876d8cf92a656953118be23064204c19a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-entrance-01\\evidence\\travel_entrance_view_report.json": "7a74081cdbc0730c180e999db6e15a55d20085a86601f0808624947bb5f96880",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-import-01\\evidence\\job.json": "c5062af8561de994ff135f8d9b148e7915613121bdc91652eabc93582a992229",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-import-01\\evidence\\launch-claim.json": "cb7b2c7a98059f2a867dbfa2aa38eac5058a5cefa174efdb43e5b1fbb945e276",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-import-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-import-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-import-01\\evidence\\storage-manifest.json": "e8fae4f876e1b4283626a36749bfd8563439c9e70cbe01867dd36bda9f4fdd5b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\job.json": "de2c845dd98cbd0916d99bcb5a6c30b3bc8fc6d6cafb66cdcbb377f9313768cf",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\launch-claim.json": "5a8f08a4b40540894ec00349bd9e911d194c8173e264896ec0a0027184c6f614",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\storage-manifest.json": "68bff8389cb7f9658ddaeb505e6515252186d23ba3b27e22a7131af7b550f2e4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-interiors-01\\evidence\\travel_doorway_interior_report.json": "bdb4a4525061af9be37b16a176ab1022e9de3ccef008065d432f0f4016a80cb4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-liveness-01\\evidence\\job.json": "aaab86d24cba7ab35e72d8a30b6a2a6bf4b6a3c67c2b7825f5a17d59fe5bbeca",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-liveness-01\\evidence\\launch-claim.json": "1406fdd23c3dfaa7260f3006c1fe057eab08cbd18b226dd47e76280f834b2e60",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-liveness-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-liveness-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-liveness-01\\evidence\\storage-manifest.json": "f4ecf3ae4ad5da9a50463ad658d4f22118d9c84921a4643940d1e352d14571ca",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-overlay-01\\evidence\\job.json": "8fb5657542af8219b34db7f14e04d6bd8e7e9b939f15ead1fc0c4c23537085d4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-overlay-01\\evidence\\launch-claim.json": "6c0d2a83da225a50634e8967c9752e47d75b34d31e8a648086d9abe06b43351c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-overlay-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-overlay-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-overlay-01\\evidence\\storage-manifest.json": "9dda0ab842e654b3cfd816c1b13746a3c3d7e8ea87f4c8ef9573068e5bb727f8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-preparation-01\\evidence\\preparation.json": "1c47f139e85e33ad6553510d102e8ca1d799579488db0649c1a88a71d6bc9249",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-preparation-01\\evidence\\storage-manifest.json": "508035588fc1aa5b1d3f9d0ed429300b150dddc1bebc688dadef091f863c6e51",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-01\\evidence\\storage-manifest.json": "e9b8f1c474e6cfe7cbf623b2efaa7359dabedfa47548c268403ca313d64e6fbc",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-verify-01\\evidence\\job.json": "83d5961ed3240c56097f5c5397a75fd0288ef2b2b5c8a43a3160e67c4e577722",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-verify-01\\evidence\\launch-claim.json": "7e28ff6c0fc7c65166a712e01aa797b3baedc9660f48409a7ebd5298882d6c7e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-verify-01\\evidence\\post_source_verification.json": "4bb030f32fc6cf357bf4cb34efd3949a3caa6ae1749da332a098b9fc20a3c53e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-verify-01\\evidence\\source_identity.json": "d9ed8c034f601ab33cc7f8afa6ed0662e08bf9347095d389723795c9ff068fc3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOORTRIAL-20261115-alpha-recipe-verify-01\\evidence\\storage-manifest.json": "cbe9be7595d5debc9d382154b9054dc13c9f59f7f9070b5aef356166b062c3fa"
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERDOOR-20261115-alpha-final-audit-01\\evidence\\alpha-final-audit-PASS.json",
+  "final_audit_receipt_sha256": "3e21376da46c6eb9f917b63e7299b91d310abe24d4e8e720e0dab69889e72e5f"
+}

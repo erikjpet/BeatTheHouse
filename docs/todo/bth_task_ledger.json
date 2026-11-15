@@ -38030,7 +38030,8 @@
         "BTH-ENVART-001-DOOR-GRAND-CASINO-01",
         "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",
         "BTH-ENVART-001-DOOR-APARTMENT-01",
-        "BTH-ENVART-001-DOOR-HOUSE-01"
+        "BTH-ENVART-001-DOOR-HOUSE-01",
+        "BTH-ENVART-001-DOOR-CORNER-ALPHA-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -44060,7 +44061,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Corner four-method baseline captured; alpha cause isolated, remedy under review",
+      "status": "Corner doorway source released; bounded alpha repair passed native audit",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44087,9 +44088,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_corner_baseline_20261115.json",
           "summary": "Four methods92frames;137doorway/2312preview.11 entrance failures disappear in RGB-identical alpha-only diagnostic, no production fix yet."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/corner_doorway.md",
+          "summary": "One source released; original alpha defect repaired separately without runtime/test changes."
         }
       ],
-      "next_action": "Director/auditor review exact aperture and narrow alpha remedy before candidate acceptance.",
+      "next_action": "Fit new doorway, rerun combined original gates, then publish exact combined TEST candidate.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44500,6 +44506,47 @@
         }
       ],
       "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-CORNER-ALPHA-01",
+      "name": "Repair Corner door alpha",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Bounded alpha repair native PASS; combined TEST delivery pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Alpha255 only in original door polygon plus two-source-pixel rim; preserve all RGB, outside alpha, sky, runtime and tests."
+      ],
+      "evidence": [
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/corner_door_alpha_repair.json",
+          "summary": "Original11066 entrance assertions now pass;137doorway/2312preview/1115overlay/liveness pass."
+        }
+      ],
+      "next_action": "Include tested repair with audited Corner doorway TEST export.",
       "blocker": {
         "state": "none",
         "kind": null,
