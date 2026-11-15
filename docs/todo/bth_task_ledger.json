@@ -44419,7 +44419,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source planning; baseline and individual art brief pending",
+      "status": "Punchline public four-method baseline PASS; source review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44441,9 +44441,19 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/travel_doorways.md",
           "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/travel_doorway_punch_baseline_20261115.json",
+          "summary": "11066 entrance,137 doorway,2312 preview checks PASS;92samples,7526files unchanged. Public punchline_club reference."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/punchline_doorway.md",
+          "summary": "Planning-only public Punchline doorway direction; not hidden casino."
         }
       ],
-      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "next_action": "Director and auditor review current public aperture and references before source release.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44452,7 +44462,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+      "updated_at": "2026-11-15T09:30:22.163373+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-KITTY-CAT-LOUNGE-01",
