@@ -38012,7 +38012,8 @@
         "BTH-ENVART-001-ART-KITTY-01",
         "BTH-ENVART-001-ART-DELTA-01",
         "BTH-ENVART-001-ART-BEACH-01",
-        "BTH-ENVART-001-ART-GRAND-01"
+        "BTH-ENVART-001-ART-GRAND-01",
+        "BTH-ENVART-001-ART-HIGHLIMIT-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43541,6 +43542,48 @@
         }
       ],
       "next_action": "Perform live Web visual/save/revisit acceptance when available; continue next queued room source baseline.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T04:20:09.632777+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-HIGHLIMIT-01",
+      "name": "Create audited High-Limit art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "High-Limit source planning; Base context preparation underway",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No High-Limit package activation."
+      },
+      "scope": [
+        "High-Limit room only; no forced public scenarios, Back Room or Cage.",
+        "No generation or activation before reviewed actuals and clean guide."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/grand_high_limit.md",
+          "summary": "Distinct cyan private-room source; Base only unless production naturally supplies another context. No forced public scenarios."
+        }
+      ],
+      "next_action": "Capture exact High-Limit Base, fronts and source normal/low-detail/clean guide before generation.",
       "blocker": {
         "state": "none",
         "kind": null,
