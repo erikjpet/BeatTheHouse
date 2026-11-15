@@ -35418,10 +35418,10 @@
         }
       },
       "state": "open",
-      "status": "OPEN_REPRODUCED_SCENARIO_VISUAL_LOSS_NO_INLINE_FIX",
+      "status": "ACTIVE_CONTINUE_PASSES_AUTHORED_EXPIRY_CLASSIFIED",
       "owner": {
-        "name": "Close out0.6.1 audit",
-        "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
+        "name": "dot, general NEXT bug finder",
+        "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
       "commits": [
@@ -35461,10 +35461,15 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
           "summary": "OPEN_REPRODUCED_SCENARIO_VISUAL_LOSS_NO_INLINE_FIX"
+        },
+        {
+          "kind": "native_lifecycle_classification",
+          "reference": "docs/testing/BTH061-CLOSE06-SCENARIO-CONTINUE-001_20261115.md",
+          "summary": "Fresh normal seed active Save/Continue preserves8 objects; FollowTip triggers explicit after1 town_action cleanup. Not save corruption."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Separate product investigation: exact normal Gas storm-shelter visuals disappear after event response or Continue; preserve paid ticket/account evidence. Repro and hashes in CLOSE-06.",
+      "next_action": "Retain original rendered report; fresh active Continue passes. Action-induced removal matches authored one-turn expiry; do not change content lifespan without direction. Browser acceptance remains unavailable.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -35476,7 +35481,7 @@
       "planned_app_changes": [
         "Gas Casino scenario visuals disappear after normal Continue"
       ],
-      "updated_at": "2026-11-12T00:36:18.504184+00:00"
+      "updated_at": "2026-11-15T18:32:35.265722+00:00"
     },
     {
       "id": "FEAT-QUEUE",
