@@ -43268,13 +43268,20 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Bounded current baseline and source-motion preparation",
+      "status": "Five current initial contexts captured; clean-guide/director review underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ead6b6bb0eb4b6c351bd6a9e26e62f2348da4255",
+          "evidence": [
+            "docs/art/briefs/kitty_cat_lounge.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -43286,8 +43293,14 @@
         "Base and four directly assigned initial scenarios; actual overrides, titles, cast support, counter replay and retained source motion.",
         "No broad lifecycle hunt or speculative art before director review."
       ],
-      "evidence": [],
-      "next_action": "Capture exact current initial union and fixed-clock source architecture; director reviews clean-guide decisions.",
+      "evidence": [
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/kitty_cat_preart_baseline_20261115.json",
+          "summary": "15164checks/no findings,5contexts,46distinct IDs/93selectedtitles+typed source paints;7215files+c5 unchanged. No future lifecycle or art acceptance."
+        }
+      ],
+      "next_action": "Director/auditor inspect initial union and frozen cleaned guide, then release one coherent source. No Kitty activation yet.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43296,7 +43309,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T01:11:58.748900+00:00"
+      "updated_at": "2026-11-15T01:20:15.184044+00:00"
     }
   ]
 }

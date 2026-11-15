@@ -1,0 +1,60 @@
+{
+  "source_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+  "checks": 15164,
+  "contexts": {
+    "__none": {
+      "objects": 13,
+      "selected": 13,
+      "typed_paints": 13
+    },
+    "kitty_cat_lounge_amateur_night": {
+      "objects": 22,
+      "selected": 22,
+      "typed_paints": 22
+    },
+    "kitty_cat_lounge_bachelorette_storm": {
+      "objects": 19,
+      "selected": 19,
+      "typed_paints": 19
+    },
+    "kitty_cat_lounge_buyout": {
+      "objects": 20,
+      "selected": 20,
+      "typed_paints": 20
+    },
+    "kitty_cat_lounge_slow_night": {
+      "objects": 19,
+      "selected": 19,
+      "typed_paints": 19
+    }
+  },
+  "distinct_ids": 46,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTY-20261115-union-01\\evidence\\kitty_preart_union.json",
+  "union_sha256": "d9ea79860739496737b68f56b97d1eb6608b89150ddc2c4c395aafa4d0ac2d3f",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTY-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "3338359ab2cf97bf91edd6fa195af3c9e938dc8c138c6e32e845edcc5e6cbc74",
+  "guide": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-remaining-guides-01/evidence/guides/kitty_cat_lounge_legacy_geometry_1800x860.png",
+    "sha256": "e45cae3a15a2778191162b8cf04400337ea9d64ac37b214eb028915cdf68d23c"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7215,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exact source317/c5, Base plus4initial scenarios only; actual normal generation/publication and selected titles. No later lifecycle or art acceptance.",
+  "source_motion_inventory": {
+    "sign_pulse": 1,
+    "smoke_ribbons": {
+      "families": 2,
+      "per_family": 5,
+      "total": 10
+    },
+    "candles": 5,
+    "sparkles": 4,
+    "common_floor_movers": 7,
+    "legacy_lower_reflections": "Separate old bob/stripe helpers; director/auditor decide clean-guide consolidation.",
+    "light_cones": "Static, not animated.",
+    "scope": "Source-derived inventory, not art package or animation acceptance."
+  }
+}
