@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "d8aa31ba0ef7cd8c0a38afd5023fa39ae76c035c6b8072c551812d4712c3290b",
   "decision": "FINAL SCOPED AUDITOR PASS Pawn R1. Personally inspected walk200,bus190,taxi207,nightcab235: coherent silver/plum/cyan, clear grounded tile entry, side cases not crowding actor, rear grille reads as service fixture not barrier, closure fully hides actor. Director final GO. Entrance11066/0,doorway137/748source samples/no mismatch/outside0,92state/28entrance-image equalities,overlay1115/no-pointer PASS, full-decode36.5s1095frames9465879bytes fa198f7895c7d8baec6bf3025d7f402982a7c864eb103aa2f06020ba8c773ae7.",

@@ -1,0 +1,83 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "94cc38d24138ee580c30a90b92671cf3c698c912",
+  "package_sha256": "d8aa31ba0ef7cd8c0a38afd5023fa39ae76c035c6b8072c551812d4712c3290b",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 5,
+  "raw_art_sources": 414,
+  "compiled_art_textures": 393,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic native four-method presentation, not legal routes, destination loading or live Web. Prior20 interiors/four doorways/Corner alpha repair preserved. Seven doorway replacements remain. Main/NEXT/save namespace unchanged.",
+  "prior_gas_doorway_unchanged": true,
+  "prior_corner_doorway_and_alpha_unchanged": true,
+  "prior_bar_doorway_unchanged": true,
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-pawndoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "02e615d744d5fe1ca41d902358f9297b2bc8fe6f094186498373605a5c627f41",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "unchanged": 2105
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-pawndoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "b2ef1e2468375da029f37900efb5d9adc2e8d45dca0b8f70ac8799538d57a535",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 414,
+        "compiled_textures": 393,
+        "prior_eight_room_compiled_unchanged": 392
+      },
+      "record_count": 393
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-pawndoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "3e23b860645bd1e564673a762347bd39f447c6dd1b1b33fe3ec3ba54deef15e7",
+      "summary": {
+        "source_commit": "94cc38d24138ee580c30a90b92671cf3c698c912",
+        "art_package_sha256": "d8aa31ba0ef7cd8c0a38afd5023fa39ae76c035c6b8072c551812d4712c3290b",
+        "build_manifest_sha256": "be18b7ce1feb79ab72ba99e7dc759a3872117f82375b9ff9af6f58c930a3359c",
+        "files_verified": 12,
+        "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\94cc38d24138ee580c30a90b92671cf3c698c912",
+        "other_lanes_touched": false
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-pawndoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "5c52a6be4ee603701112d56adadacafa7d1020a3ac52260263fefa38a2f14843",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "94cc38d24138ee580c30a90b92671cf3c698c912",
+        "art_package_sha256": "d8aa31ba0ef7cd8c0a38afd5023fa39ae76c035c6b8072c551812d4712c3290b",
+        "build_manifest_sha256": "be18b7ce1feb79ab72ba99e7dc759a3872117f82375b9ff9af6f58c930a3359c",
+        "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/94cc38d24138ee580c30a90b92671cf3c698c912/index.html",
+        "default_tls_validation": true,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+        "browser_visual_scenario_gate": "not run in this delivery; no live Web gameplay or save/revisit claim",
+        "previous_immutable_build_unchanged": true,
+        "previous_173_immutable_build_unchanged": true,
+        "previous_9ac_immutable_build_unchanged": true,
+        "raw_art_sources": 414,
+        "compiled_art_textures": 393,
+        "configuration_not_runtime_DB_observation": true
+      },
+      "record_count": 0
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-moteldoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "43d4467454b2f21c7003131c0d682fdfb6713a464f7e7090c532ef23f297b0f5",
+    "findings": 8242,
+    "motel_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
+  },
+  "prior_motel_reception_doorway_unchanged": true,
+  "manual_reconciliation": {
+    "sha256": "772cf097183c6c6e7847b9444e506fb3cdf8087bdd39771a6953a039d8bff874",
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-pawndoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "unrelated_historical_findings": 8242,
+    "pawn_scoped_findings": 0
+  }
+}
