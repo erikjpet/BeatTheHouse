@@ -40,3 +40,13 @@ E:\CodexQA\BTH\runs\next-bugfinder-pusher-paid-boundary-20261115-01\evidence\sto
 E:\CodexQA\BTH\runs\next-bugfinder-pusher-paid-boundary-20261115-02\evidence\worker.log SHA256 e62041335e5e981d5f85b4ce3c6f943d089219664f28429cf8be437765a2378d
 E:\CodexQA\BTH\runs\next-bugfinder-pusher-paid-boundary-20261115-02\evidence\job.json SHA256 12657d7bc22064d8a024d651fc32724d6ac3043bac3aeaba5ea9a27e83881bb6
 E:\CodexQA\BTH\runs\next-bugfinder-pusher-paid-boundary-20261115-02\evidence\storage-manifest.json SHA256 1b6d4eb797ebf5161c582cbb11473381b6846dd31abbd364ad8fcf09be1a676e
+
+## Roulette social quotes and Scratch machine boundaries
+
+Roulette social quote721/721 PASS: synthetic cash/chip quote sizes, minimum and bankroll clipping, pending presentation boundaries and an unedited generated patron staging/Clear path. No funded spin or browser acceptance. Scratch machine regression PASS: synthetic stock/funds and module/renderer harness; paid tray survives restore, dispensing has correct1.5sec per-ticket timing, hidden outcomes absent from animation payload, tray gates until delivered, repeated collection preserves money/RNG/outcome, new purchase after Continue animates once. No live pixel capture or full campaign claim. Both Jobs exit0, owned processes0.
+E:\CodexQA\BTH\runs\next-bugfinder-roulette-social-20261115-01\evidence\worker.log SHA256 b1d548b06a34840881d4b2f89e0041fbf16292f9ed2ca39da966afc793248fea
+E:\CodexQA\BTH\runs\next-bugfinder-roulette-social-20261115-01\evidence\job.json SHA256 892990affe1dc88b338e4b332358d27e4cd7150632ac18cdc8a860a9e4932842
+E:\CodexQA\BTH\runs\next-bugfinder-roulette-social-20261115-01\evidence\storage-manifest.json SHA256 39dd5cc0b6af245f0088234d0bb47e796367e3b73d9b9b968569bc3d3187ffdd
+E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\worker.log SHA256 62aa96775d15a398d10cf2a11491f9816e312d87eea91568a91f70b51841ed5b
+E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\job.json SHA256 e4b1e5b28eafa72e0499b4871c7bd559b645209bcae16c0e971fd39d371e6fbd
+E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\storage-manifest.json SHA256 e56db982b6a4cecdea819bcb96d4fdec2106aed4fabf87dcf835c13a7c01fad3

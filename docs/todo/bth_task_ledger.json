@@ -6219,6 +6219,11 @@
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_live_AUTO_and_interrupted_travel_QA_20261115.md",
           "summary": "Enabled Slot AUTO resumes exactly next spin21/21; mid-result floor exit19/19; interrupted prepared travel preserves destination/fare9/9 with intentional static receipt acknowledgement. Early unprepared-save helper failure classified; no product change. Follow-through7/7 confirms declined early arrival Save preserves exact prior room/wallet/RNG and completed travel later saves normally."
+        },
+        {
+          "kind": "native_regression",
+          "reference": "docs/testing/NEXT_additional_native_boundary_QA_20261115.md",
+          "summary": "Additional isolated native boundaries:11 Games launchers; Dave bus; Scratch paid159 and machine; Pusher pricing228/cold35/terminal23; Roulette social721. No Web or all-games campaign completion claim."
         }
       ],
       "implementation_batches": [],
@@ -6232,7 +6237,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-12T00:36:18.179769+00:00",
+      "updated_at": "2026-11-15T20:53:38.775372+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
