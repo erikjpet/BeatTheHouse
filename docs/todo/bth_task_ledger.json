@@ -43994,7 +43994,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Source planning; baseline and individual art brief pending",
+      "status": "Gas four-method synthetic baseline captured; director and auditor source review",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44016,9 +44016,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/travel_doorways.md",
           "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/travel_doorway_gas_baseline_20261115.json",
+          "summary": "137 doorway,1115 overlay,2312 preview checks;92frames. Corner alpha failure retained, no live route claim."
         }
       ],
-      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "next_action": "Freeze exact Gas doorway brief after independent aperture/entry review; generate one source.",
       "blocker": {
         "state": "none",
         "kind": null,

@@ -1,0 +1,111 @@
+{
+  "status": "BASELINE_CAPTURED_WITH_KNOWN_CORNER_ALPHA_FAILURE",
+  "source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+  "all_source_files_unchanged": 7500,
+  "gas_contract": {
+    "texture": "res://assets/art/travel/exteriors/gas_station_casino.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "door_kind": "hinged",
+    "door_polygon_uv": [
+      [
+        0.7266065388951521,
+        0.5276211950394588
+      ],
+      [
+        0.8213077790304397,
+        0.5276211950394588
+      ],
+      [
+        0.8213077790304397,
+        0.7914317925591883
+      ],
+      [
+        0.7266065388951521,
+        0.7914317925591883
+      ]
+    ],
+    "hinge_side": "left",
+    "threshold_uv": [
+      0.7739571589627959,
+      0.8004509582863585
+    ],
+    "inside_uv": [
+      0.7739571589627959,
+      0.7824126268320181
+    ],
+    "road_y_uv": 0.9503945885005637,
+    "sign_rect_uv": [
+      0.5698985343855694,
+      0.5062006764374295,
+      0.12683201803833147,
+      0.06313416009019165
+    ],
+    "setting_kind": "fuel_forecourt",
+    "source_top_y_uv": 0.323,
+    "backdrop_texture": "res://assets/art/travel/backdrops/gas_station_casino.png",
+    "layered_scene": true,
+    "doorway_texture": "res://assets/art/travel/doorways/gas_station_casino.png",
+    "doorway_reference_size": [
+      1024,
+      1536
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DOORWAY-BASELINE-20261115\\assets\\art\\travel\\exteriors\\gas_station_casino.png": "fa013a104cbd1445cb418cf568d7f7131a0205a359f6b0cffc18704a40d2a837",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DOORWAY-BASELINE-20261115\\assets\\art\\travel\\doorways\\gas_station_casino.png": "735e45a97abd60253c50f8512cb870324d97657c60ba478dcf1bd34504cc8d9c",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DOORWAY-BASELINE-20261115\\assets\\art\\travel\\backdrops\\gas_station_casino.png": "972de0f1f2b7cbb311987b9afa63fdc7b252740907311ead87a0fb3a5c0b3793",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DOORWAY-BASELINE-20261115\\assets\\art\\environments\\gas_station_casino\\background.png": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DOORWAY-BASELINE-20261115\\data\\art\\environments\\gas_station_casino.json": "1a09e5939d43c6bd17fba70590693664925aad133986815cd05057af26f4da83"
+  },
+  "doorway_checks": 137,
+  "overlay_checks": 1115,
+  "gas_preview_checks": 2312,
+  "baseline_failures": "Original entrance11 failures/11066, all Corner Store alpha pixel comparisons; independent alpha hypothesis not complete cause. Original synthetic preview expected automatic completion without base_minutes, QA-only receipt expectation corrected, original retained.",
+  "scope": "Production renderer and natural fixed30fps synthetic presentation; no legal route, fare, committed journey, destination readiness/gameplay loading or live Web claim.",
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\job.json": "1d8baeb282863cbaaaddddbcc47a1353af8a480d1c8aadc6a95090462cfd5329",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\launch-claim.json": "8bb911ee92697ae878bf53fd4a297eef4388cd302ed0b5f81042c5255e95d740",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\post_source_verification.json": "f35a9f642ba852283076afde78967b4b5c19aaecbfa08a30a08f3fd150990542",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\source_identity.json": "3a5528af66f2d1810691103accf9a9760b7476f7e0b86bb3217d3b54b23189b3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\storage-manifest.json": "694bdf89363727d1cc87da63622e142463a5ab2ffefe29b8691dcce3eff1338c",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "d787cf6aa6df639db11ef8fdb365f68d521f982077bf2182184eee9afaed1577",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\job.json": "a541fa1cfde046c995a7d4ed7c8cc6e1eedde8de6c83625f645bafa7bb9db100",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\launch-claim.json": "3b323de31fd94094ef6597b3e4a62272ceab1ae963b091cdf602f1189ad689f3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\post_source_verification.json": "f35a9f642ba852283076afde78967b4b5c19aaecbfa08a30a08f3fd150990542",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\source_identity.json": "3a5528af66f2d1810691103accf9a9760b7476f7e0b86bb3217d3b54b23189b3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\storage-manifest.json": "44b1bc963108df274f419812e3d0e3a08804210084d56992f282b2e8f4ddeb2f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "f1adbc5439b8cd7299a5df73fe5bb6bad9aa35cac51f924f7f07545e6cda25d8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\job.json": "578451172ca6c84dbd62525eb1b3ec485cdaad1f6e2a56e8b5292b78df42092d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\launch-claim.json": "980040a3055a6d8cc46b2979450d893f5414e42cf75c2e25e0332481aaf5a1af",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\post_source_verification.json": "f35a9f642ba852283076afde78967b4b5c19aaecbfa08a30a08f3fd150990542",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\preview_manifest.json": "e6f142cd1aa83f14962121819efbfad44615a24a5bd62b13d54660ced20f8df3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\source_identity.json": "3a5528af66f2d1810691103accf9a9760b7476f7e0b86bb3217d3b54b23189b3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-01\\evidence\\storage-manifest.json": "d8b5d1a194a013045a9e473b8c6c836e6a04454c755c243ccb330e789e54c225",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\job.json": "3cc2b036a3c15900cbf74a7fa299b95ec0c92b59a3706eeb302d5bfb69aa4bd5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\launch-claim.json": "55a142da4dbdae4ff050421c236cad80a4e0d88ee452981379de8a41f7b19342",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\post_source_verification.json": "f35a9f642ba852283076afde78967b4b5c19aaecbfa08a30a08f3fd150990542",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\preview_manifest.json": "0d4307905df0afc04391cc7f456335f1ccb5096321248faf27eef2072a1efd95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\source_identity.json": "3a5528af66f2d1810691103accf9a9760b7476f7e0b86bb3217d3b54b23189b3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-cinematic-02\\evidence\\storage-manifest.json": "5cc5103703aac700d2577e1c8e7d08bfae9f67057f93a600d6f2c9a34d7b7f9e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-overlay-01\\evidence\\job.json": "2fce155a1f45d2a466e43a2badd5ec8a28f26f2d52ca56c849590dedf472a2f4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-overlay-01\\evidence\\launch-claim.json": "2a1826e44d782ef0f5b8089531454154aa1e3bd3491d07e220fbac50d5e0d088",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-overlay-01\\evidence\\post_source_verification.json": "f35a9f642ba852283076afde78967b4b5c19aaecbfa08a30a08f3fd150990542",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-overlay-01\\evidence\\source_identity.json": "3a5528af66f2d1810691103accf9a9760b7476f7e0b86bb3217d3b54b23189b3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-overlay-01\\evidence\\storage-manifest.json": "16b66c5f1b698c637876352ed7eae4595fa8dabca61bb20c167685698aabf5fe",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-preview-helper-01\\evidence\\helper-delta.json": "4c930095038e5ecdcc21fe0eb28aff434c869036923382ac040fb33097910dcb",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-preview-helper-01\\evidence\\storage-manifest.json": "5aeb7a8fa902dc6dc73573a69fba03bbef40f11c9b131e3ac3c3cbc650bff835"
+  },
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DOORWAY-20261115-gas-baseline-union-01\\evidence\\gas-doorway-baseline.json",
+  "union_sha256": "3957a901be4d7a08b856d410991b80e211d97abc72f1f67f4db245799acf249b",
+  "modes": [
+    "walk",
+    "bus",
+    "taxi",
+    "night_cab"
+  ],
+  "rendered_frames": 92
+}
