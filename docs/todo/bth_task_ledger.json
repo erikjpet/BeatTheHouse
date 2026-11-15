@@ -38009,7 +38009,8 @@
         "BTH-ENVART-001-ART-PUNCHLINE-01",
         "BTH-ENVART-001-ART-HIDDEN-01",
         "BTH-ENVART-001-ART-PRIVATE-01",
-        "BTH-ENVART-001-ART-KITTY-01"
+        "BTH-ENVART-001-ART-KITTY-01",
+        "BTH-ENVART-001-ART-DELTA-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43346,6 +43347,42 @@
         "evidence": []
       },
       "updated_at": "2026-11-15T01:58:11.761651+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-DELTA-01",
+      "name": "Create audited Delta Queen art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Director source plan ready; six-context native baseline underway",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Delta art activation."
+      },
+      "scope": [
+        "Base and five initial catalog scenarios; actual source geometry, titles, typed bodies, counter and motion.",
+        "No broad lifecycle hunt or generation before clean guide review."
+      ],
+      "evidence": [],
+      "next_action": "Capture exact6400/c5 baseline and six contexts, then director/auditor review clean authoring guide.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T01:59:32.089803+00:00"
     }
   ]
 }
