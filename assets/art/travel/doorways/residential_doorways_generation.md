@@ -59,3 +59,7 @@ One generated source accepted unchanged at 1024x1536 RGB under docs/art/briefs/m
 ## Jazz Club doorway R1, 2026-11-15
 
 Replaced only jazz_club.png with approved unchanged image a5b24edfb002de23b2c5b0b664f7a23a10356d27d50c7aa5c9ad28cbcef5a900 at1024×1536. Direction docs/art/briefs/jazz_doorway.md; proof docs/testing/jazz_doorway_r1_native_trial.json. Four synthetic travel methods passed, not legal-route/loading/browser certification. Exact rounded aperture, crop, runtime and timing untouched.
+
+
+## Motel private-room doorway R1, 2026-11-15
+Exact unchanged1024x1536 source e95d1f70a0484ccee97ad9092ff6f6d6e44a062464577ca17efea2b9c2f93dc3. Director/independent auditor passed four synthetic production-overlay methods. Generation and native proof bound in docs/testing/motel_room_doorway_r1_native_trial.json. Existing internal travel remains unanimated; no eligibility/runtime changes or legal-route/loading/Web certification.

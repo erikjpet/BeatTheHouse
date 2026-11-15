@@ -44632,7 +44632,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel private-room baseline PASS; source review underway",
+      "status": "Motel private-room R1 native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44664,9 +44664,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/motel_room_doorway.md",
           "summary": "Private-room portrait1024x1536 direction, no route eligibility change."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/motel_room_doorway_r1_native_trial.json",
+          "summary": "Exact portrait asset; original gates and four-method independent actual visual audit PASS."
         }
       ],
-      "next_action": "Director/auditor review current private-room aperture before source release; no internal travel eligibility change.",
+      "next_action": "Publish exact audited asset to cumulative TEST; preserve internal travel eligibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44675,7 +44680,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T10:41:03.179186+00:00"
+      "updated_at": "2026-11-15T10:53:26.545699+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-APARTMENT-01",
