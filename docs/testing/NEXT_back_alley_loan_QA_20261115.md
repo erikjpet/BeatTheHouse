@@ -45,3 +45,18 @@ Continued the same generated campaign at the naturally offered Delta Queen Roule
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\worker.log SHA256 2c1a54568f6695973f42a90302766dbdc6227f13b2f01e9e6f33c38319518cd5
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\job.json SHA256 559c38993c1b30dfc2b08ddce1d8c5726d298f05ae7f9fd3ae506bdf46b00ef5
 E:\CodexQA\BTH\runs\next-bugfinder-ordinaryloan-spins-20261115-01\evidence\storage-manifest.json SHA256 22af98714df960899f6a78c23a32013afcac944503970c4a9a9a0b2d862d0a9c
+
+## Natural Crew loan and bounded opportunity discovery
+
+Three predeclared new seeds M/N/O produced Fence Night, Cruiser Parked and no primary scenario respectively. None offered Street Craps, so that ordinary game opportunity remains not reached; no scenario or game was inserted. Seed O naturally offered The Crew. Copied only owned admitted saves/companions into a new E profile, used normal Continue and visible loan confirmation controls.15/15:100 to170, exactly2 delivery duties, no cash debt, room/Continue/normal Bar departure work.
+
+Separate-process Bar continuation uses the normal static recovery acknowledgment, enters its naturally offered Slot cabinet and makes one normal spin. No Crew package offer naturally appears and no Crew contact is in the room catalog; the recruitment Knuckles event is present. Therefore package-in-game acceptance is NOT reached in this bounded ordinary step (two setup checks pass), rather than forcing solicitation RNG or enqueueing a package. Existing synthetic acceptance evidence is not relabeled ordinary coverage. All Jobs exit0 and release0 processes.
+E:\CodexQA\BTH\runs\next-bugfinder-alley-discovery-20261115-01\evidence\worker.log SHA256 c896d00794d75a80fdb4b600dbb9ac031387cd50c7f714c136e0c1159f29a109
+E:\CodexQA\BTH\runs\next-bugfinder-alley-discovery-20261115-01\evidence\job.json SHA256 1ab679d9fbb9ab468337055ba08d5995061a1da750fc7cac69881010008701d0
+E:\CodexQA\BTH\runs\next-bugfinder-alley-discovery-20261115-01\evidence\storage-manifest.json SHA256 85e8e7fad63280c270ef189e154d1729c77f0f3d1e56ed20fdc602c27ddfed77
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrewloan-20261115-01\evidence\worker.log SHA256 5308a1d0c32c6ff41b938d6838e65405095379ff9da55d147db75178f3259cfd
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrewloan-20261115-01\evidence\job.json SHA256 57622ede3b34c9a737c88cb63c0878e1af5fe245296c18bb7063a8c27d3bb3a8
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrewloan-20261115-01\evidence\storage-manifest.json SHA256 fb51cb02237e72e0299d9e76004a4d7d1cee3b7dd1b0acfb3896021cc8fdda0c
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrew-offer-20261115-01\evidence\worker.log SHA256 dc0f8ca9a499a4433befbed47bc5946ba5081faa434bad52e61cac870915ad27
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrew-offer-20261115-01\evidence\job.json SHA256 ccf5a7e725d514baa6e83848e74c41fc18ad451bb604c587005455740c02fd3d
+E:\CodexQA\BTH\runs\next-bugfinder-ordinarycrew-offer-20261115-01\evidence\storage-manifest.json SHA256 388ef6607b367cf952b528ea97ff0ca090561dfcebda71909790ffc0e2172b10
