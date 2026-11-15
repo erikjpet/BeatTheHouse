@@ -38010,7 +38010,8 @@
         "BTH-ENVART-001-ART-HIDDEN-01",
         "BTH-ENVART-001-ART-PRIVATE-01",
         "BTH-ENVART-001-ART-KITTY-01",
-        "BTH-ENVART-001-ART-DELTA-01"
+        "BTH-ENVART-001-ART-DELTA-01",
+        "BTH-ENVART-001-ART-BEACH-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43415,6 +43416,48 @@
         "evidence": []
       },
       "updated_at": "2026-11-15T03:08:36.932463+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-BEACH-01",
+      "name": "Create audited Beach art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source plan registered; four-context baseline preparation active",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Beach art activation."
+      },
+      "scope": [
+        "Base plus three initial catalog scenarios, current geometry/titles/typed bodies/source0/1/2 and towel stall replay.",
+        "No broad lifecycle hunt or generation before actual and clean-guide review."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/beach.md",
+          "summary": "V1 source-only plan; actual geometry and clean-guide review pending."
+        }
+      ],
+      "next_action": "Capture exact current Base and three scenario layouts; auditor/director review before source generation.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T03:09:54.600583+00:00"
     }
   ]
 }
