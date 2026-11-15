@@ -1,0 +1,27 @@
+{
+  "source_commit": "d43772d5151c9079cd2d4c1982290272f9839bff",
+  "checks": 14838,
+  "contexts": {
+    "__none": {
+      "objects": 5,
+      "selected": 5,
+      "typed_paints": 5
+    }
+  },
+  "distinct_ids": 5,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-union-02\\evidence\\grand_casino_cage_preart_union.json",
+  "union_sha256": "b5f5464470aced867aeb6510d186ed29bab515abd0c2bc9bf229d1d5b833ca19",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-union-02\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "d8a5fd328af93a39b550c4f7c0afd0b436544af186e2e95b49f9aef9a801ea23",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\grand_casino_cage_legacy_geometry_1800x860.png",
+    "sha256": "0e7b37af10d808881c835006a5b13804ff905cd25dde3920a99f8110a27ee800"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7392,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exactd43772d5/c5 initial Base only, no forced public scenarios; no later lifecycle/open-hours/save-revisit/art acceptance.",
+  "authoring_cleanup": "Source-only QA _floor_reflections no-op and _neon_text suppression only for EMPTY when clean_helpers. No stock changes; actual initial Base empty, populated stock not reached through gameplay."
+}

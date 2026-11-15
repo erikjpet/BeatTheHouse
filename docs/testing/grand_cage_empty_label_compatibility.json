@@ -1,0 +1,14 @@
+{
+  "status": "BOUNDED_COMPATIBILITY_PASS_FINAL_ART_COMPOSITION_PENDING",
+  "checks": 52,
+  "failures": [],
+  "scope": "Seven fixture stock states through original _draw legacy/packed branches with intercepted text; rendered label-only exact original glyph equality and transparent populated result. No owner save/inventory changed. Final candidate empty/populated composition still required.",
+  "source_change": "Exact original stock condition and text extracted to shared helper; legacy same location, Cage-only packed call immediately after art surface, before foreground. Existing allocation retained, not a zero-allocation optimization.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-empty-contract-02\\evidence\\cage-empty-label-contract.json": "4dbf1aa7fcb9fd687d26c2da78cba0509ecf5364e6a7e864c5611a5f2a36cf50",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-empty-contract-02\\evidence\\label_reference.png": "cc2c2c2d9c9d374e6f0b9a282114dce6183f5a1729d6383cd4743e5a8d01c68b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-empty-contract-02\\evidence\\label_empty.png": "cc2c2c2d9c9d374e6f0b9a282114dce6183f5a1729d6383cd4743e5a8d01c68b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-empty-contract-02\\evidence\\label_populated.png": "53ae85d0dbabc13422cb64ec26110a763cac0f394897ccbd4d724d33851b563f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-empty-liveness-01\\evidence\\worker.log": "83d68dd9ce028238c7b221ba01f78d1916486661e7a9ccb9516d8c48e4deab50"
+  }
+}

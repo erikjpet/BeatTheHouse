@@ -3928,6 +3928,8 @@ func _draw() -> void:
 		draw_texture_rect(background_texture, Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), false)
 	elif environment_art_pack != null:
 		_draw_environment_art_animations(environment_art_pack)
+		if environment_id == "grand_casino_cage":
+			_draw_cage_gift_stock_empty_label()
 	else:
 		match environment_id:
 			"corner_store":
@@ -4948,15 +4950,7 @@ func _draw_grand_casino_cage() -> void:
 	draw_rect(Rect2(62, 132, 174, 112), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13))
 	for shelf_y in [178, 238]:
 		draw_line(Vector2(66, shelf_y), Vector2(232, shelf_y), C_SOFT.darkened(0.35), 3)
-	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
-	var available_stock: Array = []
-	for stock_value in shop_state.get("stock", []):
-		if typeof(stock_value) == TYPE_DICTIONARY and not bool((stock_value as Dictionary).get("sold", false)):
-			available_stock.append(stock_value)
-	# Live shelf stock is drawn by the normal item-object renderer so each offer
-	# uses its authored icon and owns an independent click target.
-	if available_stock.is_empty():
-		_neon_text("EMPTY", Vector2(116, 198), 13, C_SOFT.darkened(0.25))
+	_draw_cage_gift_stock_empty_label()
 	draw_rect(Rect2(60, 246, 178, 20), Color("#241331"))
 	_neon_text("CHIPS ONLY", Vector2(92, 260), 12, C_PINK)
 	# Counter, trays, ledger, and barred teller windows.
@@ -4996,6 +4990,18 @@ func _draw_grand_casino_cage() -> void:
 	draw_rect(Rect2(862, 220, 7, 7), C_YELLOW)
 	_neon_text("FLOOR", Vector2(824, 152), 11, C_CYAN)
 	_floor_reflections()
+
+
+func _draw_cage_gift_stock_empty_label() -> void:
+	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
+	var available_stock: Array = []
+	for stock_value in shop_state.get("stock", []):
+		if typeof(stock_value) == TYPE_DICTIONARY and not bool((stock_value as Dictionary).get("sold", false)):
+			available_stock.append(stock_value)
+	# Live shelf stock is drawn by the normal item-object renderer so each offer
+	# uses its authored icon and owns an independent click target.
+	if available_stock.is_empty():
+		_neon_text("EMPTY", Vector2(116, 198), 13, C_SOFT.darkened(0.25))
 
 
 func _draw_scene_life() -> void:

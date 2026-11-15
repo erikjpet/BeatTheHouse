@@ -43703,7 +43703,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand Cage source baseline underway; conditional EMPTY contract under review",
+      "status": "Cage Base and clean guide captured; dynamic EMPTY compatibility tested",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43718,16 +43718,27 @@
         "scope": "No Cage activation."
       },
       "scope": [
-        "Grand Back Room only; no generation or activation before actual and clean-guide review."
+        "Grand Cage Base only, no forced stock purchase or progression.",
+        "Preserve dynamic EMPTY under packed art; final candidate rendered empty/populated check required."
       ],
       "evidence": [
         {
           "kind": "source_plan",
           "reference": "docs/art/briefs/grand_cage.md",
           "summary": "Cage native20/lowdetail16 expected; dynamic stock EMPTY must not be baked or lost."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/grand_cage_preart_baseline_20261115.json",
+          "summary": "14838checks/5objects,7392sourcefiles/c5 unchanged;clean guide excludes dynamic EMPTY without stock edits."
+        },
+        {
+          "kind": "compatibility",
+          "reference": "docs/testing/grand_cage_empty_label_compatibility.json",
+          "summary": "Seven stock states,legacy/packed label order/equality,rendered glyph parity and liveness PASS;final art composition pending."
         }
       ],
-      "next_action": "Capture Base and exact source/foreground/Linda authority; resolve conditional EMPTY preservation before activation.",
+      "next_action": "Director/auditor release source; verify final candidate both stock states before activation.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43736,7 +43747,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T05:10:08.866379+00:00"
+      "updated_at": "2026-11-15T05:17:48.472513+00:00"
     }
   ]
 }
