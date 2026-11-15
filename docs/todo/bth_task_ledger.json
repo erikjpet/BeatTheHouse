@@ -38011,7 +38011,8 @@
         "BTH-ENVART-001-ART-PRIVATE-01",
         "BTH-ENVART-001-ART-KITTY-01",
         "BTH-ENVART-001-ART-DELTA-01",
-        "BTH-ENVART-001-ART-BEACH-01"
+        "BTH-ENVART-001-ART-BEACH-01",
+        "BTH-ENVART-001-ART-GRAND-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43474,6 +43475,48 @@
         }
       ],
       "next_action": "Perform live Web visual/save/revisit acceptance when available; continue Grand Casino public source baseline.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T03:42:22.397742+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-GRAND-01",
+      "name": "Create audited Grand Casino art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Public room source planning; four-context baseline preparation underway",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Grand Casino art activation."
+      },
+      "scope": [
+        "Public Grand Casino only, Base plus three initial scenarios.",
+        "No private/cage scope, runtime changes or generation before approved actual and clean guide."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/grand_casino.md",
+          "summary": "V1 public-room only. Three foreground fronts and native five versus low-detail three lamps require actual source comparison."
+        }
+      ],
+      "next_action": "Capture public Base plus gala, convention and audit contexts; review source modes and clean guide before generation.",
       "blocker": {
         "state": "none",
         "kind": null,
