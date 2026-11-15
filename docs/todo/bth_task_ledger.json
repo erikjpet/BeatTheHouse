@@ -43787,19 +43787,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel R3 scoped native PASS; cumulative TEST export pending",
+      "status": "Motel R3 native PASS and18-room TEST verified; live Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "bde105bc0548242c71086dbe2aa5faaaa4504ec6",
+          "evidence": [
+            "docs/testing/motel_room_r3_native_trial.json",
+            "docs/testing/motel_room_r3_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No Motel Room activation."
+        "commit": "bde105bc0548242c71086dbe2aa5faaaa4504ec6",
+        "evidence": [
+          "docs/testing/motel_room_r3_test_delivery.json"
+        ],
+        "scope": "18-room TEST served bytes verified; live Web gameplay unverified."
       },
       "scope": [
         "Motel Room initial Base, no forced public motel scenarios or rest/storage transactions."
@@ -43826,7 +43836,7 @@
           "summary": "40visibility/82motion/43static plus Base equality,liveness,decode; initialnativeonly."
         }
       ],
-      "next_action": "Publish exact approved R3 to TEST and verify identity, prior art, NEXT and save namespace.",
+      "next_action": "Owner playtest TEST; continue Apartment baseline without changing NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,

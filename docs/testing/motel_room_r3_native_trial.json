@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
   "decision": "Final scoped Motel R3 PASS. R2 Base and fresh R3 frames000/030/061 personally reviewed.40/40normal+simulatedlowdetail visibility,43static,82native/RM, exact Base geometry/publication, original no-pointer and bothfull-decodes pass. Actual62frames8.116667s; encoded8.20s. Seven motions shifted+8y, only manifest differsR2. No runtime change.",
@@ -250,5 +250,6 @@
     "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "fc224ad28b0a5cbe066b23c8ca52497f6c047df95b410faea141050ac7ba2ac3"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "6c6fcf286239c051db12fdd28010ec46cd3887c5bc6a1401675360d3bb154a54"
+  "final_audit_receipt_sha256": "6c6fcf286239c051db12fdd28010ec46cd3887c5bc6a1401675360d3bb154a54",
+  "delivery": "docs/testing/motel_room_r3_test_delivery.json"
 }
