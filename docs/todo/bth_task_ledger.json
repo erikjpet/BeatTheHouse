@@ -38016,7 +38016,8 @@
         "BTH-ENVART-001-ART-HIGHLIMIT-01",
         "BTH-ENVART-001-ART-GRANDBACK-01",
         "BTH-ENVART-001-ART-CAGE-01",
-        "BTH-ENVART-001-ART-MOTELROOM-01"
+        "BTH-ENVART-001-ART-MOTELROOM-01",
+        "BTH-ENVART-001-ART-APARTMENT-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43837,6 +43838,47 @@
         }
       ],
       "next_action": "Owner playtest TEST; continue Apartment baseline without changing NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T05:17:48.472513+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-APARTMENT-01",
+      "name": "Create audited Apartment art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Current source baseline underway; no generation release",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Apartment activation."
+      },
+      "scope": [
+        "Apartment initial Base, no forced rent/rest/storage transactions."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/apartment.md",
+          "summary": "14motion roster; static architecture retained; actual supports and clean guide pending."
+        }
+      ],
+      "next_action": "Capture actual Base/source layers, validate clean guide, then one source generation.",
       "blocker": {
         "state": "none",
         "kind": null,
