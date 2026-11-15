@@ -56,6 +56,7 @@ func _check_case(case_id: String) -> void:
 		app.travel_transition_force_web_runtime_for_test = false
 		var before := _state(app.run_state)
 		var origin: Dictionary = app.run_state.current_environment.duplicate(true)
+		var completions_before_entry := completion_count
 		var accepted := _perform_scope_action(case_id)
 		_expect(accepted, case_id + "/" + flow + ": production entry action succeeds")
 		for frame in range(3): await process_frame
@@ -63,7 +64,16 @@ func _check_case(case_id: String) -> void:
 		var prefix: String = case_id + "/" + flow + ": "
 		var receipt: Dictionary = app.run_state.travel_journey_receipt.duplicate(true)
 		if menu:
-			_expect(app.travel_presentation_active and not app.travel_transition_active, prefix + "confirmed Travel menu owns presentation")
+			if flow == "missing":
+				# 791af903: fresh missing-art fallback reveals the committed room.
+				_expect(not app.travel_presentation_active and not app.travel_transition_active, prefix + "missing art automatically reveals arrival")
+				_expect(completion_count == completions_before_entry + 1 and not bool(receipt.get("receipt_pending", true)), prefix + "missing-art arrival acknowledges exactly once")
+				_expect(app.current_screen in [app.SCREEN_ENVIRONMENT, app.SCREEN_RESULT] and app.current_game == null and app.environment_canvas.visible and not app._room_recovery_active_for_current_room() and not app.current_spatial_interaction_snapshot().get("objects", []).is_empty(), prefix + "missing-art destination has live room controls")
+				app.travel_cinematic_overlay.acknowledge()
+				app.travel_cinematic_overlay.acknowledge()
+				_expect(completion_count == completions_before_entry + 1 and _state(app.run_state) == settled, prefix + "duplicate fallback acknowledgement cannot replay settlement")
+			else:
+				_expect(app.travel_presentation_active and not app.travel_transition_active, prefix + "confirmed Travel menu owns presentation")
 			_expect(not receipt.is_empty() and int(receipt.get("schema_version", 0)) in [1, 2], prefix + "only supported world receipt schema")
 			_expect(str(receipt.get("origin_environment_id", "")) == str(origin.get("id", "")) and receipt.get("effective_destination_environment_id") == app.run_state.current_environment.get("id"), prefix + "receipt names installed origin and destination")
 			for cached in app._travel_choice_view_list():

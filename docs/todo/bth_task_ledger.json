@@ -37940,6 +37940,75 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-15T20:34:27.587925+00:00"
+    },
+    {
+      "id": "BTH-NEXT-QA-TRAVEL-MISSING-ART-001",
+      "name": "Repair missing-art travel expectation",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Verify fresh missing-art travel reveals its committed destination exactly once, preserving explicit recovered/reduced receipts and menu-only animation scope.",
+        "source": "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "classify",
+            "description": "Classify missing-art ownership assertion against explicit production policy and history",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "repair",
+            "description": "Run all16 entry cases with strict once-only missing-art completion, no modal and unchanged settlement checks.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CLASSIFIED_TEST_DISCREPANCY",
+      "owner": {
+        "name": "Find NEXT game bugs",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "native_diagnostic",
+          "reference": "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-001_20261115.md",
+          "summary": "335 assertions,3 stale missing-art active-modal expectations; all other menu/internal flows match."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Review explicit fallback assertions then run full16-case native scope suite.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T20:10:55.270781+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-15T20:35:55.010040+00:00"
     }
   ],
   "batches": [
