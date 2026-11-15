@@ -6199,6 +6199,11 @@
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_ordinary_save_batches_20261115.md",
           "summary": "Normal campaign ticket, partial mask, held cards and Coin Pusher Continue samples; exact numeric serialization distinguished. No Web/eleven-game/original-cause closure."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_route_table_QA_20261115.md",
+          "summary": "Ordinary four-stop journey and Roulette draft/Blackjack hand/Bar Dice cup Continue; accepted natural settlement, no forced account/outcome. Native only, original scope open."
         }
       ],
       "implementation_batches": [],
@@ -22481,7 +22486,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate R08 cash Roulette BET9 on Red: one Spin arms Confirm, one Confirm click returns but no settlement/debit occurs, and Save/refresh/cold entry exposes SEALED ACTION. Preserve the original pending request and all evidence without Retry, Cancel, repeat Confirm, original profile/save/authority/key/RNG access or action replay. Reconstruct independently, classify the exact failure, and fix/test only a confirmed defect while preserving rules, economy, RNG, semantic seals, exactly-once delivery and persistence. A bounded fixture is not the original campaign. Respect item/scenario pause and existing resource/disk gates.",
-        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjack\u00e2\u2020\u2019Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
+        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjackâ†’Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -22653,7 +22658,7 @@
         {
           "kind": "prior_blackjack_continuation",
           "reference": "docs/testing/roulette_sealed_pending_r08.json",
-          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80\u00e2\u2020\u201971\u00e2\u2020\u201980, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71\u00e2\u2020\u201962/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
+          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80â†’71â†’80, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71â†’62/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
         },
         {
           "kind": "seed_b_cold_financial_control",
@@ -22684,6 +22689,11 @@
           "kind": "independent_native_new_host_continue",
           "reference": "docs/testing/NEXT_general_terminal_roulette_QA_20261115.md",
           "summary": "Fresh48/48 after-Blackjack Roulette plus new-host Continue; no pending or replay. Original R08/Web not reproduced."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_route_table_QA_20261115.md",
+          "summary": "Ordinary four-stop journey and Roulette draft/Blackjack hand/Bar Dice cup Continue; accepted natural settlement, no forced account/outcome. Native only, original scope open."
         }
       ],
       "implementation_batches": [],
