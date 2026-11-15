@@ -44561,7 +44561,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand public landscape baseline PASS; source review underway",
+      "status": "Grand R1 native PASS; TEST delivery underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44593,9 +44593,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/grand_doorway.md",
           "summary": "Planning-only public landscape1536x1024 direction."
+        },
+        {
+          "kind": "native_audit",
+          "reference": "docs/testing/grand_doorway_r1_native_trial.json",
+          "summary": "Exact landscape asset; original gates and four-method independent actual visual audit PASS."
         }
       ],
-      "next_action": "Director/auditor review current public landscape aperture before source release.",
+      "next_action": "Publish exact audited asset to cumulative TEST, verify served bytes and protected NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44604,7 +44609,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T10:07:56.273076+00:00"
+      "updated_at": "2026-11-15T10:31:29.178855+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",

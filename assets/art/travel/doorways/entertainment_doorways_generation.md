@@ -45,3 +45,7 @@ Use case: stylized-concept. Create a NEW opaque pixel-art room glimpse for an op
 ## Kitty doorway R1, 2026-11-15
 
 Replaced only kitty_cat_lounge.png with approved unchanged1536×1024 source18318df1d72f6e2921a590cbbfa47121520f372cf199a540aeef1c13f3310559. Direction docs/art/briefs/kitty_doorway.md; proof docs/testing/kitty_doorway_r1_native_trial.json. Synthetic four-method original gates pass; not legal-route/loading/browser certification. Rounded aperture/crop/timing/runtime untouched.
+
+
+## Grand public doorway R1, 2026-11-15
+Exact unchanged 1536x1024 source d4d5e2fabfa115bfd368755726dee0b7a96451b92f3d2c96808420b46ede0e11. Director and independent auditor passed four synthetic production-overlay methods. Public room references and immutable generation provenance are bound in docs/testing/grand_doorway_r1_native_trial.json. No route, loading or Web certification.
