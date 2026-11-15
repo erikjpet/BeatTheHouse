@@ -23,3 +23,5 @@ data/art/environments/kitty_cat_lounge.json -text
 /data/art/environments/delta_queen.json -text whitespace=cr-at-eol
 
 data/art/environments/beach.json -text
+
+data/art/environments/grand_casino.json -text

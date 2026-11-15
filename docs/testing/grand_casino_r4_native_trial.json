@@ -1,0 +1,211 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "a2b2189810f14b33e8a9491741068776dd27458769d42c16016171b866182558",
+  "decision": "Fresh native and simulated low-detail visibility92/92 across retained byte-identical four-context masks passed. Personally viewed R4 frames000/030/060;61frames8.0057113s, all16 motifs61 distinct applicable states. Original liveness and both full-decodes independently verified.66 motion/RM checks, static preflight, exact baseline comparison and four compositions carry under unchanged background/front/index hashes. Existing art branch and TEST only.",
+  "limitations": "Four native initial contexts. Simulated seven-entry low-detail subset is not live Web or historical position/amplitude parity. Marginal High-limit/Audit Cage names decipherable1280, not universal readability. Eight-second excerpt not full floor cycles. No save/revisit/outcome claims. R3 hidden sparkle failure retained; only same-bay center moved444,154 to444,186.",
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grand_v1r1.py": "c41a85ba8b80a9544cbd364795267ee1bd0ce41eb84782c0f1e3d16e2037fcf4",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grand_v1r2.py": "4b1318b011217f1d48a223c0f02512bfa5741473065a8ecbf086d0e7576e730f",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_grand_v1r3.py": "583273e2a87d3cf2794a37ec64defaa21d2c2e962948c6d0615bb79de835e914",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grand_clean_guide.py": "6d39aa32eb74f80fdd3333780a0c52b163b5d4e6b55751e6f2a503eee1686f73",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grand_occlusion.py": "3c2b329fbf43fcd7af86ee9554ebb2e73240c7bf68fcdd56b8295368dd0570a7",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r3.py": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r4.py": "5e0240b1853693ed81a081dbd6b82e56b9988b7497536682ca55f65021c07d48",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\repair_grand_r4.py": "2d35e92a655ed78507e37dcb057a8385b0f0569c66feb88de28b45b725ed8467",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\scan_grand_sparkle.py": "3bd62be4e2167b3f4ff01b8cd583228e98c2bff16dab996491cd1749e4174873"
+  },
+  "payload_files": {
+    "assets/art/environments/grand_casino/anim/casino_light_0.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_light_1.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_light_2.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_light_3.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_light_4.png": {
+      "sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+      "bytes": 126,
+      "size": [
+        104,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_sign_pulse.png": {
+      "sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+      "bytes": 591,
+      "size": [
+        468,
+        124
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_sparkle_0.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_sparkle_1.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/casino_sparkle_2.png": {
+      "sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/background.png": {
+      "sha256": "f5b26c4f16b4ff419154c555d48f553013d8c75363284c0090b7eff07d19eb9f",
+      "bytes": 746440,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/grand_casino/counters/grand_host_station.png": {
+      "sha256": "9c91ded4ea1c15e2d43b3fd7073c24c1868ff96aeb80f7299e47525d11e24ba6",
+      "bytes": 21851,
+      "size": [
+        424,
+        96
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/counters/grand_table_left.png": {
+      "sha256": "71bd9a1ca6c823d4ca0e1670f338300bf92d3bc21e6ccee34a58388f71a67bdb",
+      "bytes": 20984,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino/counters/grand_table_right.png": {
+      "sha256": "97777ebd2123646cd07be6e2ba6fa029e7f257503ecf1054f71407b4ac97669e",
+      "bytes": 21160,
+      "size": [
+        544,
+        72
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/grand_casino.json": {
+      "sha256": "5cc2d0c568552a88557f0f0eee89655bc86a5e73c535e822e09b267901044bcd",
+      "bytes": 7162
+    },
+    "data/art/environments/index.json": {
+      "sha256": "222bb6be353ff05a27de8dbf8ec57ce1947d1d1aa76df5d4a11e3216336d7f2f",
+      "bytes": 319
+    }
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRAND-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "726c5499140e16bf762cb3774cd31000c9f9629bd3c26c89e49e8d728678a2ef",
+  "baseline": "dd96c9dd2da5abc550f0076877cb0c57e370ae52"
+}

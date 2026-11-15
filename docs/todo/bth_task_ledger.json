@@ -43491,7 +43491,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Grand R3 native review requires one hidden-sparkle correction; TEST unchanged",
+      "status": "Exact Grand R4 independent native art PASS; cumulative TEST export pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43524,9 +43524,14 @@
           "kind": "native_review",
           "reference": "docs/testing/grand_casino_r3_native_review.json",
           "summary": "Composition and66motion/RM checks pass; one of16native motifs fully occluded in all4contexts, so R3 not accepted."
+        },
+        {
+          "kind": "native_art_pass",
+          "reference": "docs/testing/grand_casino_r4_native_trial.json",
+          "summary": "Four contexts exact;66 native/lowdetail motion/RM and92visibility pass. R3 hidden sparkle corrected within same fixture."
         }
       ],
-      "next_action": "Auditor/director seal same-fixture sparkle correction, then repeat native and four-context visibility gates.",
+      "next_action": "Commit exact approved package, build and verify cumulative TEST; live Web acceptance remains open.",
       "blocker": {
         "state": "none",
         "kind": null,
