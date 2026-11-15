@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "d4b7da9e5feb506d1008d0fbf8a0c41c4982ca9d39b609a2c557dd37d9833d35",
   "decision": "FINAL SCOPED AUDIT PASS Punchline public doorway. Director final visual GO received. Auditor personally inspected all four actual key frames; no obstruction/false jamb/actor leak, stage set back and materials match public room. Verified entrance11066/0,doorway137/782 exact source samples/zero outside changes,preview2312/92states,28entrance image equalities,overlay1115,no-pointer PASS,full mobile decode1095frames36.5s10330380bytes SHA7eb56f54d6a55d867d7ed874a829ee2d47cfb697d8c8240fcf0aeba2ca79118c.",

@@ -1,0 +1,85 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "a1b4ed62c0e89823ec86a034f32221fed09185a7",
+  "package_sha256": "d4b7da9e5feb506d1008d0fbf8a0c41c4982ca9d39b609a2c557dd37d9833d35",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 7,
+  "raw_art_sources": 416,
+  "compiled_art_textures": 395,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic four-method native presentation, not legal routes/destination loading/live Web. Public Punchline entry, not hidden casino. Previous20 interiors/six doorways/Corner alpha preserved; five replacements remain. Main/NEXT/save namespace unchanged.",
+  "prior_gas_doorway_unchanged": true,
+  "prior_corner_doorway_and_alpha_unchanged": true,
+  "prior_bar_doorway_unchanged": true,
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-punchdoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "4c72910dbfaf253ab15b43be0a3061e30ccdfe9489192cff4bda181c8fd8b8ed",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "unchanged": 2105
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-punchdoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "a27c16cf2e19cec85be54483df9a81b71d32574fa6504f0a567bc2e8944908f9",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 416,
+        "compiled_textures": 395,
+        "prior_eight_room_compiled_unchanged": 394
+      },
+      "record_count": 395
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-punchdoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "6c03d2b223c8e39a59edb76df7045f4ce1170fa78b3db6441287c848707e4cec",
+      "summary": {
+        "source_commit": "a1b4ed62c0e89823ec86a034f32221fed09185a7",
+        "art_package_sha256": "d4b7da9e5feb506d1008d0fbf8a0c41c4982ca9d39b609a2c557dd37d9833d35",
+        "build_manifest_sha256": "d00c678ba7c7c31bbbbea9f3113e934f98b0a467271fa90a15c2bf51831787dc",
+        "files_verified": 12,
+        "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\a1b4ed62c0e89823ec86a034f32221fed09185a7",
+        "other_lanes_touched": false
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-punchdoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "5e22710b9a3102e4a2f13729875eb81e72c04755f8bdb7c0a3a12431de65ad7b",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "a1b4ed62c0e89823ec86a034f32221fed09185a7",
+        "art_package_sha256": "d4b7da9e5feb506d1008d0fbf8a0c41c4982ca9d39b609a2c557dd37d9833d35",
+        "build_manifest_sha256": "d00c678ba7c7c31bbbbea9f3113e934f98b0a467271fa90a15c2bf51831787dc",
+        "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/a1b4ed62c0e89823ec86a034f32221fed09185a7/index.html",
+        "default_tls_validation": true,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+        "browser_visual_scenario_gate": "not run in this delivery; no live Web gameplay or save/revisit claim",
+        "previous_immutable_build_unchanged": true,
+        "previous_173_immutable_build_unchanged": true,
+        "previous_9ac_immutable_build_unchanged": true,
+        "raw_art_sources": 416,
+        "compiled_art_textures": 395,
+        "configuration_not_runtime_DB_observation": true
+      },
+      "record_count": 0
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-moteldoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "43d4467454b2f21c7003131c0d682fdfb6713a464f7e7090c532ef23f297b0f5",
+    "findings": 8242,
+    "motel_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
+  },
+  "prior_motel_reception_doorway_unchanged": true,
+  "prior_pawn_doorway_unchanged": true,
+  "prior_jazz_doorway_unchanged": true,
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-punchdoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "d3277e62b625b3b6997f871625f6851f9598ffe5b4aa540bc5ef49494953b136",
+    "unrelated_historical_findings": 8242,
+    "punchline_scoped_findings": 0
+  }
+}
