@@ -43787,7 +43787,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Current source baseline underway; no generation release",
+      "status": "Motel Room Base14905 checks passed; director/auditor source release review",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43809,9 +43809,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/motel_room.md",
           "summary": "Source20 motifs including seven pink blocks and four scan bands; actual supports and clean guide pending."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/motel_room_preart_baseline_20261115.json",
+          "summary": "Six actual objects/titles/typed masks,7422sourcefiles and c5 exact; no forced scenarios."
         }
       ],
-      "next_action": "Capture actual Base/source layers, validate exact clean guide with directors, then one source generation.",
+      "next_action": "Finalize clean guide and direction, generate one source, then independent fitting/native audit.",
       "blocker": {
         "state": "none",
         "kind": null,

@@ -1,0 +1,29 @@
+{
+  "source_commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+  "checks": 14905,
+  "contexts": {
+    "__none": {
+      "objects": 6,
+      "selected": 6,
+      "typed_paints": 6
+    }
+  },
+  "distinct_ids": 6,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-union-01\\evidence\\motel_room_preart_union.json",
+  "union_sha256": "6fdd1e52ed643b5b2fbbec5ac106523a645d5650114f15bc9a696533a756555f",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "1036ce88accb58ce411d819adc0faccff6498c08434ced048c2c70da6916e4bd",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\motel_room_legacy_geometry_1800x860.png",
+    "sha256": "6da4fc331ea228a4441453ac85248a658a10b17416da5cb02c44cb7df1ec3d65"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7422,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exact2e98323d/c5 initial Base only, no forced public scenarios; no later lifecycle/open-hours/save-revisit/art acceptance.",
+  "status": "PREART_BASELINE_PASS_NOT_NEW_ART_ACCEPTANCE",
+  "diagnostic": "Capture01 completed images but QA report read absent catalog key. Owned process stopped/drained; actual catalog metadata supplied, sourcecommit corrected, capture02 passed. Production unchanged.",
+  "clean_guide": "Capture02 __none_source_mode3_clock0.0_lowfalse_cleantrue.png; QA-only painter omits seven animated pink blocks and architecture scan bands, floor helper disabled; static geometry untouched."
+}
