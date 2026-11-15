@@ -1,0 +1,60 @@
+{
+  "package": "bbb9e527d39fd501dc6ef61e11dd767316dd7c3c26089f5fca5c47735fdf439e",
+  "decision": "VISUAL_REVISION_REQUIRED_NOT_ACTIVATED",
+  "automated_checks": 15164,
+  "automated_findings": [],
+  "comparison": {
+    "status": "PASS",
+    "rows": [
+      {
+        "context": "__none",
+        "layout_equal": true,
+        "objects_equal": true,
+        "published_equal": true
+      },
+      {
+        "context": "kitty_cat_lounge_amateur_night",
+        "layout_equal": true,
+        "objects_equal": true,
+        "published_equal": true
+      },
+      {
+        "context": "kitty_cat_lounge_bachelorette_storm",
+        "layout_equal": true,
+        "objects_equal": true,
+        "published_equal": true
+      },
+      {
+        "context": "kitty_cat_lounge_buyout",
+        "layout_equal": true,
+        "objects_equal": true,
+        "published_equal": true
+      },
+      {
+        "context": "kitty_cat_lounge_slow_night",
+        "layout_equal": true,
+        "objects_equal": true,
+        "published_equal": true
+      }
+    ],
+    "scope": "Baseline317/c5 versus isolated KittyR3 in five constructed initial contexts. Noon/closing practice fixtures, not open-hours or later lifecycle."
+  },
+  "source_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+  "audit_findings": [
+    "Gold item/drink names cross bright backbar frame.",
+    "Merchant name crosses bright counter-front gold dots."
+  ],
+  "scope": "Five constructed initial noon/closing practice contexts; not open-hours play or later lifecycle. No deep motion/video run because initial actual visual audit requires material correction. Main/NEXT/TEST unchanged.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\kitty_preart_metadata.json": "d2054fd9f663b6b36634e6d0535f0d74a150e2817f50d2f725323c766ad1162a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-compare-01\\evidence\\comparison.json": "876e3c90ae37a0992843f23e01625a4d49591cbe3f871720abf785b76c3bc965",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\packages\\kitty_cat_lounge-v1-r3\\package-seal.json": "488a858fc36bb765265f6bedce6f1498107ee0ee69d66473e3ebead7877a085b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\post_source_verification.json": "f3def99ffc806b21b0066df7c2cc3012f8511b25234284a3d3a755786889cfc9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\kitty_cat_lounge_amateur_night_actual_play.png": "81be65c35ad0e8f5398b363406568292d2d35f98ea8708edf308eb064f6c456b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\kitty_cat_lounge_bachelorette_storm_actual_play.png": "7d23851f4801b0846dbfe18383369326cd2c0eaa3c62cdbd51b26cb4facfd0b8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\kitty_cat_lounge_buyout_actual_play.png": "f3f32891dd067afdded26cf142725ee731e6d24b90a7e4284761b31da98d3360",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\kitty_cat_lounge_slow_night_actual_play.png": "6783716787b111e3c20131c8941a4f9d263d92fe4b9c4142fb2487a34a5fce1a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r3-capture-01\\evidence\\__none_actual_play.png": "41359f43c25d3f3287527bf1f13e9c2411197b053aae81d16099405439346110"
+  },
+  "preview_library_file_id": "libfile_fde3_f-355a15dc67a08191b619b84d136f4ec1_b2e6deecb030819197ad6510125a1c29"
+}
