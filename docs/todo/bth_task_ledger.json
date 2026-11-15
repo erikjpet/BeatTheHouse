@@ -44774,19 +44774,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "House R1 native PASS; TEST delivery underway",
+      "status": "House R1 native PASS; all twelve doorways on TEST; live Web acceptance pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "cc270944cdab68d61cf9ad6c0d3382f01299f9c2",
+          "evidence": [
+            "docs/testing/house_doorway_r1_native_trial.json",
+            "docs/testing/house_doorway_r1_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Existing art branch and TEST only."
+        "state": "verified",
+        "commit": "cc270944cdab68d61cf9ad6c0d3382f01299f9c2",
+        "evidence": [
+          "docs/testing/house_doorway_r1_test_delivery.json"
+        ],
+        "scope": "Exact TEST artifact, served bytes and protected NEXT/save configuration verified; live Web gameplay not run."
       },
       "scope": [
         "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
@@ -44811,9 +44821,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/house_doorway_r1_native_trial.json",
           "summary": "Exact portrait asset; original gates and four-method independent actual visual audit PASS."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/house_doorway_r1_test_delivery.json",
+          "summary": "20 interiors/twelve doorways,421raw400compiled; only House doorway texture/build identity changed."
         }
       ],
-      "next_action": "Publish exact audited final doorway and verify all prior packages; retain acceptance limits.",
+      "next_action": "Owner live TEST acceptance of cumulative20 interiors/12 doorways; preserve documented coverage limits, no Phase11.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -44822,7 +44837,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T12:32:33.889929+00:00"
+      "updated_at": "2026-11-15T12:35:46.869818+00:00"
     },
     {
       "id": "BTH-ENVART-001-DOOR-CORNER-ALPHA-01",

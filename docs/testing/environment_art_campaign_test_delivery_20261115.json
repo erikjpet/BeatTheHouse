@@ -1,0 +1,61 @@
+{
+  "status": "ALL_20_INTERIOR_AND_12_DOORWAY_PACKAGES_DELIVERED_TO_TEST_WITH_SCOPED_NATIVE_ACCEPTANCE",
+  "source_commit": "cc270944cdab68d61cf9ad6c0d3382f01299f9c2",
+  "manifest_sha256": "e4804888dd9191f7c33879f2f5e00b8fb8fd5a07e0cbe0fde160f474c323a599",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "active_art_packages": {
+    "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+    "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+    "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+    "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+    "bar": "398469b22c7c0eed36220757e79ce0829498aa79f4ecd1ce019df493abb02d39",
+    "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+    "jazz_club": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+    "punchline_club": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+    "small_underground_casino": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+    "punchline_back_room": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+    "kitty_cat_lounge": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+    "delta_queen": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
+    "beach": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+    "grand_casino": "a2b2189810f14b33e8a9491741068776dd27458769d42c16016171b866182558",
+    "grand_casino_high_limit": "034595993c26abb362e510dfa8534ba50a3e24a5922be908e4349b3be6c0876a",
+    "grand_casino_back_room": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
+    "grand_casino_cage": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+    "motel_room": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
+    "apartment": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
+    "house": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028"
+  },
+  "active_doorway_packages": {
+    "gas_station_casino": "70f5709df400a41ef2242dcae9820ae0785018e50ce25c958034a1b47f84280f",
+    "corner_store": "93e36f561320640f40da909192002271a1d2f30690833625dd258b64becdf356",
+    "bar": "e225feea7b1fe30b868e89b903d9031c4076eff43fd053bb28a64150444c73b7",
+    "motel": "cbf95caf87d84bef565c9494b303ee4ae4b1527ffde6829464f5abd99b0f4913",
+    "pawn_shop": "d8aa31ba0ef7cd8c0a38afd5023fa39ae76c035c6b8072c551812d4712c3290b",
+    "jazz_club": "d3b339cb5834837ec47b6dc782c933d638cb21f89ecf455522612a2b5c78813d",
+    "small_underground_casino": "d4b7da9e5feb506d1008d0fbf8a0c41c4982ca9d39b609a2c557dd37d9833d35",
+    "kitty_cat_lounge": "88d0b84ca46e596e4eab52e18384e22b5c55e8fdba68bf8650cb15dabb4fd7dd",
+    "grand_casino": "011f52163c74c5e4762cdf9344835d84fea9906d00e824afbb6c63058522de46",
+    "motel_room": "999a37de51765ec363e76cd237311c328d1086eea480e4df68c07508b536257f",
+    "apartment": "0ccf94f35e6767db46ad6f6712ad1f97b10d53f16c904fbc49f3e03945e90ce2",
+    "house": "eaebfdcd6fb04d6a3ca484ef46ab8328030f54735f22e8310fd59b126f3d377b"
+  },
+  "raw_art_sources": 421,
+  "compiled_art_textures": 400,
+  "proof": "docs/testing/house_doorway_r1_test_delivery.json",
+  "limits": [
+    "No merge to main or NEXT promotion.",
+    "Native interior acceptance is bounded to recorded constructed initial contexts, not all later scenarios, transactions or save/revisit.",
+    "Doorway acceptance is four synthetic production-overlay methods per asset, not legal routes or destination loading.",
+    "Live Web gameplay not independently certified.",
+    "Low-detail subsets and motion discretization remain documented per package; no historical parity claim.",
+    "Delta intermittent full-diagnostic stall was not reproduced in later comparisons; root cause unconfirmed, original evidence retained.",
+    "Phase11 code/art retirement is excluded.",
+    "User visual acceptance and parent objective remain open."
+  ],
+  "preserved": [
+    "Prior exact20 interior packages and eleven doorways",
+    "Corner alpha-only facade repair",
+    "Main and NEXT",
+    "Save namespace and eligibility/internal travel policy"
+  ]
+}
