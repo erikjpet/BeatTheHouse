@@ -44918,7 +44918,14 @@
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "ffe66f85a99465943667daefcc4685dda657a3cb",
+          "evidence": [
+            "docs/testing/environment_art_final_native_travel_acceptance_20261115.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
