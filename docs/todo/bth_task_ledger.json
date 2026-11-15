@@ -43491,7 +43491,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Four public initial contexts captured; clean guide and low-detail source review underway",
+      "status": "Grand R3 native review requires one hidden-sparkle correction; TEST unchanged",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43519,9 +43519,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/grand_casino_preart_baseline_20261115.json",
           "summary": "15389 checks, zero findings; four contexts,98 selected/typed pairs. Native/low-detail source, three fronts, original and floor-helper-only clean guide captured. No art acceptance claim."
+        },
+        {
+          "kind": "native_review",
+          "reference": "docs/testing/grand_casino_r3_native_review.json",
+          "summary": "Composition and66motion/RM checks pass; one of16native motifs fully occluded in all4contexts, so R3 not accepted."
         }
       ],
-      "next_action": "Director and auditor inspect actuals/clean guide and freeze single-source art brief; no generation before release.",
+      "next_action": "Auditor/director seal same-fixture sparkle correction, then repeat native and four-context visibility gates.",
       "blocker": {
         "state": "none",
         "kind": null,

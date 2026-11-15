@@ -1,0 +1,17 @@
+{
+  "status": "REVISION_REQUIRED_NOT_ACTIVATED",
+  "package_sha256": "18dc791bce957cc8283a91c118d809f3372aa58ec073deef9d530c87ef0e7280",
+  "findings": [
+    "Independent auditor found casino_sparkle_2 at444,154 entirely hidden by actual center machine in all four initial contexts. Visibility88/92; all seven simulated-low-detail entries pass."
+  ],
+  "completed": [
+    "All four actual compositions reviewed by director and auditor.",
+    "15389 context checks and exact layout/object/publication comparison.",
+    "66 native and simulated-low-detail motion/Reduce Motion checks.",
+    "Original no-pointer liveness PASS.",
+    "Actual62frames8.124838s and both MP4 full-decodes."
+  ],
+  "next": "Auditor/director narrow same-fixture sparkle correction; repeat changed native and all-context visibility proof before final acceptance.",
+  "evidence_root": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDTRIAL-20261115-",
+  "scope": "Native initial public-room contexts only. Simulated renderer low-detail is not browser gameplay. R3 diagnostic preserved; TEST/main/NEXT unchanged."
+}
