@@ -1,0 +1,365 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
+  "source_sha256": "9f54bb4d2b79ea469087de9f62abbae5ba11384f897fd499d93a9515c634d1a3",
+  "decision": "Personally reviewed all six successful same-order actuals and actual video frames000/030/061. Source geometry/material/title/counter retained. Static57,native motion/RM53,conservative actual-mask156/156 pass; actual62frames8.123538s records all14ripples visiting4poses and remaining12motifs62distinct relevant states. Original no-pointer PASS and both MP4 full decode verified. Art texture RM stable, not whole app. Exact art branch/TEST only.",
+  "limitations": "Six initial constructed scenarios/native only; no later lifecycle/save/revisit/Web gameplay certification. Original intermittent full-diagnostic stall NOT REPRODUCED/root cause unconfirmed; minimal baseline+candidate,full2context,full6sequence reruns passed. Fresh route-fare differences were context-order effects; same-order comparison02 exact. No runtime fix claimed.",
+  "baseline": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+  "payload_files": {
+    "assets/art/environments/delta_queen/anim/background_river_reflection_0.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_1.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_2.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_3.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_4.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_5.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/background_river_reflection_6.png": {
+      "sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "bytes": 1710,
+      "size": [
+        7200,
+        40
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/delta_sign_pulse.png": {
+      "sha256": "e94fe83afcb03bacef55dcf66c2311e9c96caa02f1663877882a78a8e1cf488d",
+      "bytes": 1431,
+      "size": [
+        744,
+        104
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/dock_light_and_stem.png": {
+      "sha256": "23441fca9d290a408754b8a18c6e686bd856d28c8985c840dfc76765040f8c63",
+      "bytes": 337,
+      "size": [
+        104,
+        100
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_0.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_1.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_2.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_3.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_4.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_5.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/scene_life_river_reflection_6.png": {
+      "sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "bytes": 1752,
+      "size": [
+        7200,
+        42
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/window_sparkle_0.png": {
+      "sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/window_sparkle_1.png": {
+      "sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/anim/window_sparkle_2.png": {
+      "sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "bytes": 108,
+      "size": [
+        16,
+        16
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/delta_queen/background.png": {
+      "sha256": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+      "bytes": 734370,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/delta_queen/counters/delta_right_table.png": {
+      "sha256": "b44cf1297406c399ab8fd599cad625de0990d5ceceef9139c3583d7130146b2e",
+      "bytes": 51756,
+      "size": [
+        540,
+        184
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/delta_queen.json": {
+      "sha256": "f8e80a75bbbf552bd339421d19d3b1e2df0359a21ef6aa7d3e232257edd89b70",
+      "bytes": 10844
+    },
+    "data/art/environments/index.json": {
+      "sha256": "70a28e9851c17a7cfe617a30a8b2235b075997d006ee7b3575031c9a81277b0c",
+      "bytes": 284
+    }
+  },
+  "checks": {
+    "static": 57,
+    "context": 15411,
+    "native_motion": 53,
+    "conservative_six_context_occlusion": 156
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "785d5ea4fc1eacfcf158e40c10a9bd669ebdfbb02c028b6c515500042b0a176a",
+  "evidence": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-preflight-r3-01\\evidence\\delta-r3-preflight.json",
+      "sha256": "38ce6f6e13a798d483c2b7aded0f271f5d1ff9b0ca33fcfe9a1b4ca21a59142d"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-occlusion-r3-01\\evidence\\delta-six-context-occlusion.json",
+      "sha256": "3577ac5368078bd5833c8c20adee4a2107ec71d535a3433a389cbc3305e13722"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-stall-classification-01\\evidence\\stall-classification.json",
+      "sha256": "7983dc41fe4a1f1e736cad27860a973311630ea062d0b9968cdd2017e82366bd"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-comparison-02\\evidence\\comparison.json",
+      "sha256": "18a97dc94b32e4cb0af72186ebf115ec8ee1b5ad4416c68dc7db23bfa56d96b5"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-motion-01\\evidence\\delta_animation_probe.json",
+      "sha256": "d2bc1cc6267fa8eee6e1dcd46f64b0d0e7d0f2f2f78536a8937b434b2eef1bbe"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-liveness-01\\evidence\\worker.log",
+      "sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-encode-01\\evidence\\video-verification.json",
+      "sha256": "20c17372fdfb72dc3380387697afce614067195984d3c33577fc681cbeba19b7"
+    }
+  ],
+  "video": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-encode-01\\evidence\\delta-r3-actual-game.mp4",
+      "sha256": "242b4668a7f8cc504083fe6ebb1020765c3bb74d10f62877ab10a683f7efd596",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1280,
+            "height": 720,
+            "nb_read_frames": "63"
+          }
+        ],
+        "format": {
+          "duration": "8.280000",
+          "size": "1389769"
+        }
+      },
+      "full_decode": "PASS"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-encode-01\\evidence\\delta-r3-native-art.mp4",
+      "sha256": "a1fcbe4393b1f48e63580c400826fd728a0d1a9e2e142e6d32a0d98b46e2910d",
+      "probe": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "width": 1800,
+            "height": 860,
+            "nb_read_frames": "63"
+          }
+        ],
+        "format": {
+          "duration": "8.280000",
+          "size": "1328372"
+        }
+      },
+      "full_decode": "PASS"
+    }
+  ],
+  "recipe": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_delta_v1r3.py",
+  "recipe_sha256": "29f8d1506549efc0d6d0187fdae0825c392aa8c989fcdde8e1c228fe26fe10d7",
+  "sources": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-ARTIST-20261115\\sources\\delta-queen-source-r1.png": "9f54bb4d2b79ea469087de9f62abbae5ba11384f897fd499d93a9515c634d1a3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-source-title-01\\evidence\\delta_queen_source_title_1800x860.png": "229105f65570187f7c15a66dfbef3120ed73db66a0a77697e9fec8e99027756b"
+  },
+  "revision_history": "R1/R2 clipped source wordmark; R3 restores exact original game glyph alpha at unchanged position. Failed revisions and original stalled run preserved on E.",
+  "python_tests": {
+    "status": "PASS",
+    "tests": 272,
+    "receipt": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-delta-python-r3-01/evidence/worker.log"
+  }
+}

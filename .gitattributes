@@ -19,3 +19,5 @@ review_artifacts/environment_art_sources/pawn_shop-preart-v1/pawn_preart_closure
 /data/art/environments/small_underground_casino.json -text whitespace=cr-at-eol
 /data/art/environments/punchline_back_room.json -text whitespace=cr-at-eol
 data/art/environments/kitty_cat_lounge.json -text
+
+/data/art/environments/delta_queen.json -text whitespace=cr-at-eol
