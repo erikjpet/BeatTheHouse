@@ -1,0 +1,254 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
+  "decision": "Final scoped Motel R3 PASS. R2 Base and fresh R3 frames000/030/061 personally reviewed.40/40normal+simulatedlowdetail visibility,43static,82native/RM, exact Base geometry/publication, original no-pointer and bothfull-decodes pass. Actual62frames8.116667s; encoded8.20s. Seven motions shifted+8y, only manifest differsR2. No runtime change.",
+  "limitations": "One constructed Base only, no rest/storage transactions,save/revisit or liveWeb. StorageSpot sign-rim crossing remains marginal but decipherable1280. Previewnotfull57.78sfloorcycle. PreserveR2failedvisibility.",
+  "payload_files": {
+    "assets/art/environments/motel_room/anim/bed_strip_pulse.png": {
+      "sha256": "70e2abc231de2950f7bc2e88ed9d455437c0fb74e3b61b68b7b48da5544c71c2",
+      "bytes": 135,
+      "size": [
+        484,
+        12
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_0.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_1.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_2.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_3.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_4.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_5.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/bedding_block_6.png": {
+      "sha256": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+      "bytes": 406,
+      "size": [
+        1280,
+        32
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/tv_architecture_band_0.png": {
+      "sha256": "4504fed02d5c1a31eb3389c04c8de29dbd8db048505782a4086074d82b490985",
+      "bytes": 3987,
+      "size": [
+        7400,
+        104
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/tv_architecture_band_1.png": {
+      "sha256": "a11034fd83ddd1504299034d0000c5f78f9f6e447b5125d144d7ed45022fd275",
+      "bytes": 3977,
+      "size": [
+        7400,
+        104
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/tv_scene_band_0.png": {
+      "sha256": "4504fed02d5c1a31eb3389c04c8de29dbd8db048505782a4086074d82b490985",
+      "bytes": 3987,
+      "size": [
+        7400,
+        104
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/tv_scene_band_1.png": {
+      "sha256": "a11034fd83ddd1504299034d0000c5f78f9f6e447b5125d144d7ed45022fd275",
+      "bytes": 3977,
+      "size": [
+        7400,
+        104
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/anim/vacancy_sign_pulse.png": {
+      "sha256": "230026fd66e2611741cb82fcf184755308368f86d5d954b3e7f42514d278a1c2",
+      "bytes": 1044,
+      "size": [
+        456,
+        256
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/motel_room/background.png": {
+      "sha256": "5ebe73862694b418eb9dfd596ae706c344b6fe2bf7f12d1ec7ac6b3cdd10f6f2",
+      "bytes": 692712,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "data/art/environments/index.json": {
+      "sha256": "670f10b4344472a224cfea3a401abce9f6788681ef33b6ab9b10bf738f215b61",
+      "bytes": 427
+    },
+    "data/art/environments/motel_room.json": {
+      "sha256": "8b9d99df6654264dfc22b05ec7d3b8e5ce9f46b3a62623d2ae83e2a8e74d71c3",
+      "bytes": 8527
+    }
+  },
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_motelroom_r1.py": "06955a234ddd637ca61fb05a5fd62b2ba3bd82ac27cd3e0ccff2bd287106ce1d",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_motelroom_r2.py": "6b34579053cba3e7bca703ef5e45fea27dd1adb5d01a81bef878d27ad5e2b5bd",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_motelroom_clean_guide.py": "8d8d431e30830304c7effb978c848447b8af337f3409011cca07f0f1fde1df42",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_motelroom_occlusion.py": "6aadad0bbfc149b6a142c4ea5dfdd55eb846ce970c4fae345a4f722922b08291",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_motelroom_r3.py": "15e794de3c4bb3e835f4e0664afbee86ed353ca02f85d4de69c7b075b397b59b",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\measure_motelroom_block_shift.py": "edd1b3149e91853bfcfcb6fab0c564a994df8ef06b3723dafc39f60185926a49",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_motelroom_r2.py": "c32a75adbb71837f7e42a4267d693e0ea4bdeeb381219fc3ac0cdb11fb49b19c",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_motelroom_r3.py": "ec3218875d26fb9477ffbcec0c8305e74f3fc64903e38dcd4f77d993a03d534a",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r3.py": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb"
+  },
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\job.json": "9d9a8c377b20f493be188440ac8c23ab3625cd6fad19ec0a54e305e31cd12b53",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\launch-claim.json": "9b3b1069046160a931906350cb5af8bc6bc4d0b1ffbaa9143a053030f61f9d08",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\motelroom_capture_inputs.json": "cca455ea64e03a7e79b1eb1c875ec8f8a53524fc462ca12c4ad8079a6ca0cb31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\post_source_verification.json": "6c5b96644efa5fe2f53582433a1fa6be88b7fee710a561fb737ea348858c99c5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\source_identity.json": "f175f23a9b7246fee4fd72f9f0fdab45ae85042b7ae860af1c46e70e47c83f0a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\storage-manifest.json": "c9e65c1cafb2b356cdc8af32b5b4c70b305dd7d8e1823a51673604e9602db434",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-encode-01\\evidence\\video-verification.json": "22c07c1af90399c079391b86cf53e621efe2769ddc07749b7945c1b2e18c5321",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\job.json": "f0bdcc1097c1aed259fb69e29ef3f76aff8e8bda708055a1cf1114f267264674",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\launch-claim.json": "bdc723f6fdcc5a4c22d33fa10c84f03df588ed114361ce90ec9b5f026bc531f0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\motelroom_capture_inputs.json": "cca455ea64e03a7e79b1eb1c875ec8f8a53524fc462ca12c4ad8079a6ca0cb31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\post_source_verification.json": "6c5b96644efa5fe2f53582433a1fa6be88b7fee710a561fb737ea348858c99c5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\source_identity.json": "f175f23a9b7246fee4fd72f9f0fdab45ae85042b7ae860af1c46e70e47c83f0a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-liveness-01\\evidence\\storage-manifest.json": "65c36ba71dffe8b68fb7cc1387b7490fb2c02f96000ca0614fc7217a6be0a265",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\job.json": "b8960042b57ce1b2656a1d896fbdffa08a2e39ad4e886c6dd5a72a3dc7231d95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\launch-claim.json": "1c2c77c3b76f97f4f5811fe2eda52cb226a00ccb78e31aaf23881f09b04cc6d6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\motelroom_capture_inputs.json": "cca455ea64e03a7e79b1eb1c875ec8f8a53524fc462ca12c4ad8079a6ca0cb31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\motel_room_animation_probe.json": "bcb2b8810ae6ce3994a0ab2448c807c0c68ddb60d1e1ab8c7e783eff3c573cb1",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\post_source_verification.json": "6c5b96644efa5fe2f53582433a1fa6be88b7fee710a561fb737ea348858c99c5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\source_identity.json": "f175f23a9b7246fee4fd72f9f0fdab45ae85042b7ae860af1c46e70e47c83f0a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-motion-01\\evidence\\storage-manifest.json": "082cccb74ef5349ac4ab1697ea63f752ec1abff21d17e73fe75d3c946bf33c0e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-preparation-01\\evidence\\carry.json": "436129553251fc864abaf5afe040ef381f79e193a7df343993436828729c81bd",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-preparation-01\\evidence\\package-seal.json": "b4ef0deef6eadc0f2bf8d3e82cca067f49f27ddfa8fb52a5a2a5664a65d7fec9",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-preparation-01\\evidence\\r2-package-identity.json": "a42ff1b67f0a2ddab98430c613fbf0f9cbe66b847b09364729dfe09558384d9e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-preparation-01\\evidence\\storage-manifest.json": "ccf1a8dc1905c2c47e6197472fd143b1a3cbcd838afb52f8dac15bcb2e41b5ad",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\job.json": "e7187a8550981fb78eb464832d2ce03afcf3db74545b47508d98398fde106df4",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\launch-claim.json": "5c7bef145644126869a5d9dcb255fb75884d5e7e5d125a1260b354e6775e245a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\motelroom_capture_inputs.json": "cca455ea64e03a7e79b1eb1c875ec8f8a53524fc462ca12c4ad8079a6ca0cb31",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\post_source_verification.json": "6c5b96644efa5fe2f53582433a1fa6be88b7fee710a561fb737ea348858c99c5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\source_identity.json": "f175f23a9b7246fee4fd72f9f0fdab45ae85042b7ae860af1c46e70e47c83f0a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\storage-manifest.json": "64f613914af847c0929ce8881d3b7dc13db18c8a1bc7c5ed1656fbd5bdf83920",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-occlusion-r3-01\\evidence\\motelroom-base-occlusion.json": "ddde743b842f73e2da9b624da80f613b044ddb27e78b6f24af0cc14f834a39df",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-preflight-r3-01\\evidence\\motelroom-r3-preflight.json": "b44eebf193e47a225b79f37c5cb261c529acfad005c4fc39b82f60a6c4e32adb",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "fc224ad28b0a5cbe066b23c8ca52497f6c047df95b410faea141050ac7ba2ac3"
+  },
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOM-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "6c6fcf286239c051db12fdd28010ec46cd3887c5bc6a1401675360d3bb154a54"
+}

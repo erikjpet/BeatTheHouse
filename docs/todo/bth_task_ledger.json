@@ -43787,7 +43787,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Motel R2 failed six hidden motion entries; correction underway",
+      "status": "Motel R3 scoped native PASS; cumulative TEST export pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43819,9 +43819,14 @@
           "kind": "native_review",
           "reference": "docs/testing/motel_room_r2_native_review.json",
           "summary": "12of40visibilitychecksfail;R2unactivated; diagnosticMP4sdelivered."
+        },
+        {
+          "kind": "native_pass",
+          "reference": "docs/testing/motel_room_r3_native_trial.json",
+          "summary": "40visibility/82motion/43static plus Base equality,liveness,decode; initialnativeonly."
         }
       ],
-      "next_action": "Approve exact same-support motion correction, rerun native/mask/video gate before activation.",
+      "next_action": "Publish exact approved R3 to TEST and verify identity, prior art, NEXT and save namespace.",
       "blocker": {
         "state": "none",
         "kind": null,

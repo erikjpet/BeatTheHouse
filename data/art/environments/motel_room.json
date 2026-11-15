@@ -1,0 +1,421 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "motel_room",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "bedding_block_0",
+      "type": "frames",
+      "texture": "anim/bedding_block_0.png",
+      "rect": [
+        390,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 325.0,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_1",
+      "type": "frames",
+      "texture": "anim/bedding_block_1.png",
+      "rect": [
+        424,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 353.33333333333337,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_2",
+      "type": "frames",
+      "texture": "anim/bedding_block_2.png",
+      "rect": [
+        458,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 381.6666666666667,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_3",
+      "type": "frames",
+      "texture": "anim/bedding_block_3.png",
+      "rect": [
+        492,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 410.0,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_4",
+      "type": "frames",
+      "texture": "anim/bedding_block_4.png",
+      "rect": [
+        526,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 438.33333333333337,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_5",
+      "type": "frames",
+      "texture": "anim/bedding_block_5.png",
+      "rect": [
+        560,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 466.6666666666667,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bedding_block_6",
+      "type": "frames",
+      "texture": "anim/bedding_block_6.png",
+      "rect": [
+        594,
+        160,
+        20,
+        16
+      ],
+      "frames": 32,
+      "fps": 6.111549814728781,
+      "loop": "loop",
+      "phase": 495.0,
+      "opacity": 1,
+      "blend": "mix",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "tv_architecture_band_0",
+      "type": "frames",
+      "texture": "anim/tv_architecture_band_0.png",
+      "rect": [
+        670,
+        108,
+        74,
+        52
+      ],
+      "frames": 50,
+      "fps": 100,
+      "loop": "loop",
+      "phase": 0,
+      "opacity": 0.12,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "tv_architecture_band_1",
+      "type": "frames",
+      "texture": "anim/tv_architecture_band_1.png",
+      "rect": [
+        670,
+        108,
+        74,
+        52
+      ],
+      "frames": 50,
+      "fps": 100,
+      "loop": "loop",
+      "phase": 0,
+      "opacity": 0.066,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "tv_scene_band_0",
+      "type": "frames",
+      "texture": "anim/tv_scene_band_0.png",
+      "rect": [
+        670,
+        108,
+        74,
+        52
+      ],
+      "frames": 50,
+      "fps": 120,
+      "loop": "loop",
+      "phase": 0,
+      "opacity": 0.14,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "tv_scene_band_1",
+      "type": "frames",
+      "texture": "anim/tv_scene_band_1.png",
+      "rect": [
+        670,
+        108,
+        74,
+        52
+      ],
+      "frames": 50,
+      "fps": 120,
+      "loop": "loop",
+      "phase": 0,
+      "opacity": 0.07700000000000001,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "vacancy_sign_pulse",
+      "type": "pulse",
+      "texture": "anim/vacancy_sign_pulse.png",
+      "rect": [
+        68,
+        70,
+        228,
+        128
+      ],
+      "min_opacity": 0.14,
+      "max_opacity": 0.28,
+      "period": 0.6544984694978736,
+      "phase": 0.15,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "bed_strip_pulse",
+      "type": "pulse",
+      "texture": "anim/bed_strip_pulse.png",
+      "rect": [
+        372,
+        130,
+        242,
+        6
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.33,
+      "period": 1.0471975511965976,
+      "phase": 0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    }
+  ],
+  "counters": {}
+}
