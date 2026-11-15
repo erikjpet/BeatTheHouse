@@ -1,6 +1,6 @@
 # BTH-NEXT-QA-CREW-ROOM-HOST-001: Crew package acceptance loses cabinet room
 
-Date: 2026-11-15 UTC. Status: **open; fix qualified, NEXT delivery pending**.
+Date: 2026-11-15 UTC. Status: **open; NEXT delivered, basic Web launch unverified**.
 Source: exact NEXT e5152c34bfe146600214fb206ec80a5e3e8a27cb.
 Owner: /root/fix_crew_room_return. This commit records diagnosis only.
 
@@ -141,3 +141,22 @@ Fix commit: ed37dd276c57a6febeb00bc1b9984704c585db9b, pushed to main.
 Manual checkpoint next-bugfinder-ledger-20261115-06 reports 115 unrelated
 findings and zero for this objective. NEXT watcher was stopped; the authorized
 normal capped watcher restart now fetches this commit. Delivery is not yet proved.
+
+## NEXT delivery receipt
+
+Observed 2026-11-15 18:26:54 UTC: current watcher promoted
+0b6f18a80f624cccbf8fcc0f3986d20ccd7358bf at 18:26:06 UTC.
+This receipt-only descendant of ed37dd27 has identical runtime/test code.
+Tree: bb0491219e760b64db2e2f36cf1219038877a767.
+Archive SHA256: 4109415cdcbf48801d7b3294b10b21d34e1c7019a7dc828d41f60f37982d27dd.
+The trusted HTTPS /p/beat-the-house/play/dev/ redirects to its immutable
+0b6f18a80f624cccbf8fcc0f3986d20ccd7358bf/ path. BUILD.json,
+build_manifest.json, REF and VERSION agree; source_dirty=false.
+PCK HTTP200 length124980472 matches export. Native library hash in served
+manifest: bf907c36bb6f400cdc6e56681529411b470ff3947459a7a80ba1c5b7c24ddbc4.
+Export and PCK audit passed; watcher reports ephemeral source removed, no error.
+No stable/itch release or audience change. Library mirror handoff stays pending
+and is separate from the verified local NEXT site.
+Basic browser launch and changed-behavior Web playthrough remain unverified:
+owner's normal Chrome profile contains Continue and was not changed.
+This documentation receipt does not change runtime assets.

@@ -190,17 +190,21 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "FIX_QUALIFIED_NEXT_PENDING",
+      "status": "NEXT_DELIVERED_WEB_STARTUP_UNVERIFIED",
       "owner": {
         "assignment_state": "assigned",
         "name": "dot, Crew room return fix",
         "task_ref": "/root/find_next_game_bugs"
       },
-      "commits": ["ed37dd276c57a6febeb00bc1b9984704c585db9b"],
+      "commits": [
+        "ed37dd276c57a6febeb00bc1b9984704c585db9b"
+      ],
       "deployment": {
-        "state": "pending",
-        "evidence": [],
-        "commit": null,
+        "state": "verified",
+        "evidence": [
+          "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"
+        ],
+        "commit": "0b6f18a80f624cccbf8fcc0f3986d20ccd7358bf",
         "required": true
       },
       "evidence": [
@@ -210,7 +214,7 @@
           "summary": "Three generated Gas cabinet campaigns lose their room catalog after accepting a Crew package. Exit goes to recovery map. Scratch-only assertion extension fails2/45; refusal controls pass. Not browser or owner-save proof."
         }
       ],
-      "next_action": "Commit scoped qualified fix, recover existing NEXT watcher and verify exact deployed source; browser gameplay remains unverified.",
+      "next_action": "Confirm basic Web launch on exact delivered NEXT without touching owner saves; native behavior and HTTP delivery verified. Do not infer browser gameplay from those receipts.",
       "blocker": {
         "requires_user_input": false,
         "kind": "none",
@@ -242,8 +246,10 @@
             "required": true
           },
           {
-            "state": "open",
-            "evidence": [],
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"
+            ],
             "id": "2",
             "description": "Focused paid action and Save/Continue regressions preserve money, RNG and full game module; exact NEXT delivery verified.",
             "required": true
