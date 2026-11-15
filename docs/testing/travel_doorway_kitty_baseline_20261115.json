@@ -1,0 +1,118 @@
+{
+  "source_commit": "a1b4ed62c0e89823ec86a034f32221fed09185a7",
+  "all_source_files_unchanged": 7530,
+  "contract": {
+    "texture": "res://assets/art/travel/exteriors/kitty_cat_lounge.png",
+    "reference_size": [
+      1774,
+      887
+    ],
+    "arrival_kind": "door",
+    "threshold_uv": [
+      0.7384441939,
+      0.8105975197
+    ],
+    "inside_uv": [
+      0.7384441939,
+      0.7824126268
+    ],
+    "road_y_uv": 0.95,
+    "door_kind": "double_hinged",
+    "door_polygon_uv": [
+      [
+        0.6820744081,
+        0.5963923337
+      ],
+      [
+        0.7965050733,
+        0.5963923337
+      ],
+      [
+        0.7965050733,
+        0.8027057497
+      ],
+      [
+        0.6820744081,
+        0.8027057497
+      ]
+    ],
+    "hinge_side": "left",
+    "backdrop_texture": "res://assets/art/travel/backdrops/kitty_cat_lounge.png",
+    "backdrop_reference_size": [
+      1774,
+      887
+    ],
+    "layered_scene": true,
+    "foreground_kind": "integrated_ground",
+    "setting_kind": "nightclub_street",
+    "doorway_texture": "res://assets/art/travel/doorways/kitty_cat_lounge.png",
+    "doorway_reference_size": [
+      1536,
+      1024
+    ]
+  },
+  "references": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTYDOOR-BASELINE-20261115\\assets\\art\\travel\\exteriors\\kitty_cat_lounge.png": "66baa7f8387e274839208887b478342919319eb7867acbbfe99590e91018bdca",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTYDOOR-BASELINE-20261115\\assets\\art\\travel\\doorways\\kitty_cat_lounge.png": "d196363d2d1aca6ea88ec4aee9c73c967b7240347744aaadf076e3d4c395e3ab",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTYDOOR-BASELINE-20261115\\assets\\art\\travel\\backdrops\\kitty_cat_lounge.png": "b8a9c8ba5bea78cdeafe518c5ab499bd8f3d70f2ddc0c824ee72b512dfc49279",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTYDOOR-BASELINE-20261115\\assets\\art\\environments\\kitty_cat_lounge\\background.png": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTYDOOR-BASELINE-20261115\\data\\art\\environments\\kitty_cat_lounge.json": "03da076bad28b512c463bf6d620f9a037e36678545f1c06fb685102da923fd6a"
+  },
+  "entrance_checks": 11066,
+  "entrance_failures": [],
+  "doorway_checks": 137,
+  "kitty_pixels": {
+    "colored_changes": 23062,
+    "destination": "kitty_cat_lounge",
+    "distinct_colors": 17194,
+    "outside_changes": 0,
+    "path": "res://assets/art/travel/doorways/kitty_cat_lounge.png",
+    "source_mismatches": 0,
+    "verified_source_samples": 675
+  },
+  "preview_checks": 2312,
+  "cases": [
+    {
+      "mode": "walk",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "bus",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "taxi",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    },
+    {
+      "mode": "night_cab",
+      "sample_count": 23,
+      "production_duration_seconds": 8.0
+    }
+  ],
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\job.json": "b9903f9801af52f2356728d62c77686adb05f24398bad3cf170066be58777446",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\launch-claim.json": "fc3c60477bb9d615be2a2ae547363b813aade845c3340db7d81190269f8c0ba7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\post_source_verification.json": "a4e9ba625af814895c4e8a419fb1e6430ab04caacc27d0d72232b07413e52ff5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\source_identity.json": "0fd06040f19effc3626a9b0e4b64a0c299fe851333f76fc7df4cd5a328e444b5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\storage-manifest.json": "df8f273d26665264d78afcd5d9faefc52b4f3d3e5445ba8cd70fec77e54ff015",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-entrance-01\\evidence\\travel_entrance_view_report.json": "518631ced90566b27082900aa57aa4fdf601cafbe98c5bb70a99b1bd938b778b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\job.json": "07088a7dc5a09990e4dfafea0dd10963664a2de69e0d94100b73fb0ff97d5fc7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\launch-claim.json": "cdc8531c961a996020fcb6258868153ce222a7fc0dde27ae42517979b57517e8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\post_source_verification.json": "a4e9ba625af814895c4e8a419fb1e6430ab04caacc27d0d72232b07413e52ff5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\source_identity.json": "0fd06040f19effc3626a9b0e4b64a0c299fe851333f76fc7df4cd5a328e444b5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\storage-manifest.json": "d83ab8e82ce78cd84bcc9bbf7f5c4ee41cee13ccf063ca793c80f7398ef0f64e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-interiors-01\\evidence\\travel_doorway_interior_report.json": "bc6b4f9ae51c329e72dd2dc7e17a8f4030c354648058a15970f819017acf1072",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\job.json": "a4fc5ca4c8c5039acb1ffd26bbf243bf253b6d6353323715fabd9f260fad4d9e",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\launch-claim.json": "fe4508024df2e18293a8c5a1d65263d1244b1c862079a75cfa662b9cc161e78f",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\post_source_verification.json": "a4e9ba625af814895c4e8a419fb1e6430ab04caacc27d0d72232b07413e52ff5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\preview_manifest.json": "576d501af20a720a405c51a5e879a350561e99022b3a9ba73c927fbc85ae54f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\source_identity.json": "0fd06040f19effc3626a9b0e4b64a0c299fe851333f76fc7df4cd5a328e444b5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYDOOR-20261115-cinematic-01\\evidence\\storage-manifest.json": "5312a89233360b3911e45f7a0febb596cd77686f248669df7d92e9ea6dc73b48"
+  },
+  "scope": "Synthetic four-method production-overlay baseline. Original entrance now green after independently approved Corner alpha repair. No legal route/destination load/live Web claim.",
+  "dimensions": "Existing landscape1536x1024 retained; double-hinged source contract unchanged."
+}
