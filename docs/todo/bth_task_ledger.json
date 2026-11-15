@@ -6218,7 +6218,7 @@
         {
           "kind": "supplemental_ordinary_native",
           "reference": "docs/testing/NEXT_live_AUTO_and_interrupted_travel_QA_20261115.md",
-          "summary": "Enabled Slot AUTO resumes exactly next spin21/21; mid-result floor exit19/19; interrupted prepared travel preserves destination/fare9/9 with intentional static receipt acknowledgement. Early unprepared-save helper failure classified; no product change."
+          "summary": "Enabled Slot AUTO resumes exactly next spin21/21; mid-result floor exit19/19; interrupted prepared travel preserves destination/fare9/9 with intentional static receipt acknowledgement. Early unprepared-save helper failure classified; no product change. Follow-through7/7 confirms declined early arrival Save preserves exact prior room/wallet/RNG and completed travel later saves normally."
         }
       ],
       "implementation_batches": [],

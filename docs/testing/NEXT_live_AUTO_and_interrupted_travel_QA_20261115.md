@@ -33,3 +33,16 @@ Broad acceptance remains open. No runtime changes. Raw evidence hashes follow.
 - `E:\CodexQA\BTH\runs\next-bugfinder-ordinaryslot-20261115-01\evidence\ordinary_interrupted_travel_ready.gd` SHA256 `7be1171af13e84b79f20ad286eed222716de7b985edfbfa147e2f62e2d396780`
 
 All five native jobs released with zero owned processes. The two erroneous early-save helpers timed out; three final scoped tests exited zero. Reconciliation run27 retains109 pre-existing global findings, including the historical BTH061-006 owner absent from the supplied snapshot. No reassignment or closure is implied.
+
+## Early-save preservation follow-through
+A fresh normal campaign was allowed to publish and save its starting room before taking the bus. Save at 0.2 seconds into travel was refused while publication was pending. The prior Back Alley save remained loadable with exact room identity, wallet100 and RNG. The uninterrupted trip then automatically finished and a normal Save stored Bar with cash97 and one fare. Final7/7; no product defect found. First preservation helper passed6/6 but checked the internal support wording rather than the player-facing wording, so its conditional exact-state assertion did not run. The final helper recognizes the actual user-facing message and executes that seventh assertion. Both raw runs are retained.
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-01\evidence\worker.log` SHA256 `80021b8ced04150b34572722e70044c2b5af13d07edfec0b86f3e3e5f8433f42`
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-01\evidence\job.json` SHA256 `7acbd04f1e177528cb0c31c364ce99ea12fa8a16e61a60f137fcb1060f7c7dc5`
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-01\evidence\storage-manifest.json` SHA256 `d6e5c1215063884a7d44db48a59196cd7cb8ace2bf76c4ccea1d02986318e831`
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-02\evidence\worker.log` SHA256 `8acabd0e6537593aaa4cc4043cbdef79bfe60c434f2e998fa5a104d918876838`
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-02\evidence\job.json` SHA256 `1b888d7a438c554dd15cc8eea3781b44d05ce68c67852604e5fe6ad0b953be84`
+- `E:\CodexQA\BTH\runs\next-bugfinder-earlytravel-preservation-20261115-02\evidence\storage-manifest.json` SHA256 `033ff2e20684b49fa838a9c250d316d537aa142e2588004305616896bcc60eaa`
+- `E:\CodexQA\BTH\runs\next-bugfinder-ordinaryslot-20261115-01\evidence\ordinary_early_travel_preservation.gd` SHA256 `278400fedf51a0f8f3e2a0ea1566fc190ceef97358028b718afacc60d353a918`
+- `E:\CodexQA\BTH\runs\next-bugfinder-ordinaryslot-20261115-01\evidence\ordinary_early_travel_preservation_wording.gd` SHA256 `a3f993afd90e57f5cb603622ecfd705bb70fc8ea78dbcd0cf94764dfd535e59d`
+
+Reconciliation run 28: 109 pre-existing errors remain, same historical owner snapshot gap. Both preservation jobs exited zero with no owned processes left.
