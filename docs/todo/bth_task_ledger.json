@@ -4621,6 +4621,11 @@
           "kind": "integration",
           "reference": "docs/testing/gas_seal_integration_20261111.json",
           "summary": "Gas fixture/evidence integrated while preserving newer Crew closure and original Gas incidents as Open, cause unknown. Separate compatibility fix has its own named objective."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_save_batches_20261115.md",
+          "summary": "Normal campaign ticket, partial mask, held cards and Coin Pusher Continue samples; exact numeric serialization distinguished. No Web/eleven-game/original-cause closure."
         }
       ],
       "implementation_batches": [],
@@ -5597,13 +5602,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5649,6 +5654,11 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/plans/0.6.1_stability_release_plan.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_save_batches_20261115.md",
+          "summary": "Normal campaign ticket, partial mask, held cards and Coin Pusher Continue samples; exact numeric serialization distinguished. No Web/eleven-game/original-cause closure."
         }
       ],
       "implementation_batches": [],
@@ -6184,6 +6194,11 @@
           "kind": "closeout_proof",
           "reference": "docs/testing/CLOSE-06_rendered_acceptance_2026-11-11.md",
           "summary": "OPEN_RENDERED_6_GAME_PASSES_4_NARROWER_CREW_NOT_REACHED"
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_save_batches_20261115.md",
+          "summary": "Normal campaign ticket, partial mask, held cards and Coin Pusher Continue samples; exact numeric serialization distinguished. No Web/eleven-game/original-cause closure."
         }
       ],
       "implementation_batches": [],
