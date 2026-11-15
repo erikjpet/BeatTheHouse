@@ -6209,6 +6209,11 @@
           "kind": "supplemental_native",
           "reference": "docs/testing/NEXT_slot_reachability_and_table_QA_20261115.md",
           "summary": "Baccarat presentation/currency and Craps zero-new-wager continuation passed focused native fixtures. Ordinary J/K Gas routes do not offer Slot; Slot case not reached. Broad coverage remains open."
+        },
+        {
+          "kind": "supplemental_ordinary_native",
+          "reference": "docs/testing/NEXT_ordinary_Pawn_Slot_QA_20261115.md",
+          "summary": "Naturally offered Pawn Shop Slot manual spin16/16 and AUTO start/explicit stop17/17 retain exact single settlement and stopped status through new Host Continue. Native presentation saves only; original scope open."
         }
       ],
       "implementation_batches": [],
