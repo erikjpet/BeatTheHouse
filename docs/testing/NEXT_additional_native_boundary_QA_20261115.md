@@ -50,3 +50,15 @@ E:\CodexQA\BTH\runs\next-bugfinder-roulette-social-20261115-01\evidence\storage-
 E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\worker.log SHA256 62aa96775d15a398d10cf2a11491f9816e312d87eea91568a91f70b51841ed5b
 E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\job.json SHA256 e4b1e5b28eafa72e0499b4871c7bd559b645209bcae16c0e971fd39d371e6fbd
 E:\CodexQA\BTH\runs\next-bugfinder-scratch-machine-20261115-01\evidence\storage-manifest.json SHA256 e56db982b6a4cecdea819bcb96d4fdec2106aed4fabf87dcf835c13a7c01fad3
+
+## Foundation runtime partition and timing observation
+
+Source 705c57fd, native headless, guarded 12% aggregate CPU and 2 GiB memory. Generated runner uses the maintained split_test_runner_helpers.ps1 composition and six runtime check IDs; this is not full Smoke. Coach, onboarding tutorial arc, profile/inventory boundary, fixture RNG and fixture contracts pass. Foundation contract stage has one real wall-clock budget miss: Buffalo feature music cold delivery 144562 microseconds against 100000. Delivery source and no-runtime-synthesis checks pass. One unchanged contract-only rerun passes. Preserve both results: timing variability is observed; attribution to scheduling, I/O or loader work is not established. No threshold, cap, product or test was changed. This does not prove a visible player hitch or qualify the entire Smoke suite. Independent source review confirms raw wall-clock timing has no CPU-budget normalization. Both Jobs finish with zero owned processes. Browser acceptance remains unavailable.
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-01\evidence\foundation.json SHA256 0e1134242e240937d49884a1139884ebbc7c632400bc45e97f6e92fbbbf19926
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-01\evidence\job.json SHA256 3e8cc6d5731a20093069e8730151b798d8991cad0df3333796f18ce4bfcac8eb
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-01\evidence\worker.log SHA256 04b1fe1614bce1a6cc9507a0570a19229af32c76c26d4df6041af5b8fc99c4e4
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-01\evidence\storage-manifest.json SHA256 34076888d33dd026b5319a8d70c5f79a3d2e67b59584e8de60a91addf895d0e9
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\foundation.json SHA256 0651f358bbba9ed4c8591c7a88745718292de2d8350e6de8f44597efbc736500
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\job.json SHA256 d157841f0fae86ad10cba386531d8ecbe82ecd68b4334d28d94e88221546379b
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\worker.log SHA256 ff5f4710ce0e41872ddf3cc0f3f67f0f802db9aa08c5e8e32d1fc1b2ac35991b
+E:\CodexQA\BTH\runs\next-bugfinder-foundation-runtime-20261115-02\evidence\storage-manifest.json SHA256 053fc714c24d7fd074950776daf463a5441bc00f0cc0b0f4e0eb1996cb7c0803
