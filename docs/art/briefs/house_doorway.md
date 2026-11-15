@@ -1,6 +1,6 @@
-# House doorway source planning v1
+# House doorway frozen source brief v2
 
-Final doorway in twelve-item queue. Planning only until current baseline actual review; umbrella plan applies. Native owner controls engine/export slot. Existing travel eligibility unchanged.
+Final doorway in twelve-item queue. ONE source released after current baseline actual review; umbrella plan applies. Native owner controls engine/export slot. Existing travel eligibility unchanged.
 
 ## References and contract
 Director personally viewed approved assets/art/environments/house/background.png, own exterior and current doorway in art worktree. Modest detached home, not public lobby/motel or manor. Preserve assets/art/travel/doorways/house.png at exact1024x1536 opaqueRGB. Rounded residential aperture173.00000102 by219.99999335 at1247.00000202,447.00000443 through1420.00000304,666.99999778. Bottom-aligned full-width cover uses height0.847784169761; top233.803515px cropped, no sidecrop. Keep essential identity below234 and preserve exact rounded data/hinge/timeline.
@@ -12,3 +12,6 @@ Simplify old insert's floral textiles, lace, hanging plants, flowers, basket, cr
 
 ## Gates
 Current four synthetic production-overlay methods and original entrance/doorway gates after Apartment export drains. Director/auditor actual opening/contact/closure review before one-source release. Save one PNG/prompt/base64/SHA. Independent raw and final actual aperture audit verifies contact, furnituregrounding, sideidentity, no falsejamb, exact crop/no outsidechange, original state/entrance comparisons, automaticcompletion/no-pointerliveness and actualvideo decode. Synthetic does not prove legalroute/load/Web. Preserve20 interiors and11 prior doorways. Existing artbranch/TEST only after finalPASS; main/NEXT unchanged. Final campaign completion must distinguish delivered assets from scoped evidence limits and does not authorize Phase11 retirement. Concise proof/provenance in Git, raw E drive.
+
+## Frozen baseline and release
+Director personally reviewed current walk frame200 and night-cab frame235: grounded entry and complete closure, old floral/plant clutter visible around actor confirms simplification direction. Source e9c16a5f4415a63e25c71a9f7483bf10ee01c797; 7,546 tracked files unchanged. Original entrance11,066/0, doorway137 and fixed30fps four-method preview2,312 checks/92 samples pass. Baseline union: E:/CodexQA/BTH/runs/BTH-ENVART-HOUSEDOOR-20261115-baseline-union-01/evidence/house-doorway-baseline.json. Actuals in sibling cinematic-01/evidence. Auditor independently approved references and exact crop. Generate one exact1024x1536 opaqueRGB source using approved House interior and own facade as references. Furniture bases above y998.4; important identity below y234. Retain prompt/base64/raw/hash immediately. This releases source only, not integration; independent exact-aperture visual and terminal evidence gates remain.
