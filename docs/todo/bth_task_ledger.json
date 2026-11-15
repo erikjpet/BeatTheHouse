@@ -38020,6 +38020,77 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-15T20:42:53.839524+00:00"
+    },
+    {
+      "id": "BTH-NEXT-QA-TRAVEL-MISSING-ART-002",
+      "name": "Align four-mode fallback tests",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Follow up the same explicit missing-art policy in the separate four-mode travel integration suite; preserve reload/reduced acknowledgement and settlement assertions.",
+        "source": "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-002_20261115.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "classify",
+            "description": "Classify missing-art ownership assertion against explicit production policy and history",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-002_20261115.md"
+            ]
+          },
+          {
+            "id": "repair",
+            "description": "Run walk,bus,taxi,night_cab integration with original exact settlement, rejection and reload checks.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "TEST_FIX_REVIEWED_READY",
+      "owner": {
+        "name": "Find NEXT game bugs",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "native_diagnostic",
+          "reference": "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-002_20261115.md",
+          "summary": "Original night-cab190 assertion check had1 stale missing-art expectation; final all4modes751/751. No runtime change."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Independent final review, commit and close scoped test repair; broader QA remains open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T20:10:55.270781+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-15T20:48:52.865488+00:00"
     }
   ],
   "batches": [

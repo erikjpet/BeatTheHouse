@@ -262,8 +262,9 @@ func _test_mode(mode: String) -> void:
 		_expect(overlay.phase == "receipt" and app.travel_presentation_active and completion_count == completed_before, prefix + "completion is deferred outside the animation/input callback")
 		_expect(_state(app.run_state) == settled, prefix + "watch or skip has no effects")
 		await process_frame
-		if flow in ["reduced", "missing"]:
-			_expect(app.travel_presentation_active and completion_count == completed_before, prefix + "static summary still requires acknowledgment")
+		# Fresh missing-art fallback auto-enters (791af903); reduced motion stays readable.
+		if flow == "reduced":
+			_expect(app.travel_presentation_active and completion_count == completed_before, prefix + "reduced-motion summary still requires acknowledgment")
 		else:
 			_expect(not app.travel_presentation_active and completion_count == completed_before + 1, prefix + "finished or skipped cinematic enters destination automatically")
 		overlay.acknowledge()
