@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028",
   "decision": "Final scoped House R3 PASS. Actual frames030/061 and unboosted edge contact reviewed: corrected bob2/bob4 pink edges visibly rise/fall, partially occluded as intended. 48 mask checks, 51 preflight, 98 native, Base15013 and exact equality carried under unchanged static hashes; original no-pointer and both full decodes PASS. Actual62 frames8.129566s, encoded63 frames8.20s. Fixed pink helper is non-temporal.",
@@ -325,5 +325,9 @@
     "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_bob_pair_diagnostic.json": "cf8f51a3f6bf0c05affee01c3c0bf3d9a809e1b9624ec90be17a69e784e81841"
   },
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-final-audit-integration-02\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "288b24d141b4679402b7349d700277c81b5eef72f6f0c7b18184c90fb1ff2352"
+  "final_audit_receipt_sha256": "288b24d141b4679402b7349d700277c81b5eef72f6f0c7b18184c90fb1ff2352",
+  "delivery": {
+    "source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+    "evidence": "docs/testing/house_r3_test_delivery.json"
+  }
 }

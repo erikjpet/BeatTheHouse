@@ -38018,7 +38018,19 @@
         "BTH-ENVART-001-ART-CAGE-01",
         "BTH-ENVART-001-ART-MOTELROOM-01",
         "BTH-ENVART-001-ART-APARTMENT-01",
-        "BTH-ENVART-001-ART-HOUSE-01"
+        "BTH-ENVART-001-ART-HOUSE-01",
+        "BTH-ENVART-001-DOOR-GAS-STATION-CASINO-01",
+        "BTH-ENVART-001-DOOR-CORNER-STORE-01",
+        "BTH-ENVART-001-DOOR-BAR-01",
+        "BTH-ENVART-001-DOOR-MOTEL-01",
+        "BTH-ENVART-001-DOOR-PAWN-SHOP-01",
+        "BTH-ENVART-001-DOOR-JAZZ-CLUB-01",
+        "BTH-ENVART-001-DOOR-SMALL-UNDERGROUND-CASINO-01",
+        "BTH-ENVART-001-DOOR-KITTY-CAT-LOUNGE-01",
+        "BTH-ENVART-001-DOOR-GRAND-CASINO-01",
+        "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",
+        "BTH-ENVART-001-DOOR-APARTMENT-01",
+        "BTH-ENVART-001-DOOR-HOUSE-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43916,19 +43928,29 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "House R3 scoped native PASS; TEST delivery underway",
+      "status": "House R3 native PASS and20-room TEST verified; live Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+          "evidence": [
+            "docs/testing/house_r3_native_trial.json",
+            "docs/testing/house_r3_test_delivery.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No House activation."
+        "commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+        "evidence": [
+          "docs/testing/house_r3_test_delivery.json"
+        ],
+        "scope": "20-room TEST served bytes verified; live Web gameplay unverified."
       },
       "scope": [
         "House initial Base, no forced mortgage/storage/rest transactions."
@@ -43955,7 +43977,7 @@
           "summary": "48 visibility,98 native,51 static, exact Base equality, original liveness and both full decodes pass."
         }
       ],
-      "next_action": "Publish exact approved R3 on cumulative TEST; verify artifacts and preserve main/NEXT.",
+      "next_action": "Owner playtest TEST; continue twelve doorway replacements separately.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43964,7 +43986,499 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T07:11:44.445954+00:00"
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-GAS-STATION-CASINO-01",
+      "name": "Update gas station casino doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-CORNER-STORE-01",
+      "name": "Update corner store doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-BAR-01",
+      "name": "Update bar doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-MOTEL-01",
+      "name": "Update motel doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-PAWN-SHOP-01",
+      "name": "Update pawn shop doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-JAZZ-CLUB-01",
+      "name": "Update jazz club doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-SMALL-UNDERGROUND-CASINO-01",
+      "name": "Update small underground casino doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-KITTY-CAT-LOUNGE-01",
+      "name": "Update kitty cat lounge doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-GRAND-CASINO-01",
+      "name": "Update grand casino doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",
+      "name": "Update motel room doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-APARTMENT-01",
+      "name": "Update apartment doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-DOOR-HOUSE-01",
+      "name": "Update house doorway",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Source planning; baseline and individual art brief pending",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Existing art branch and TEST only."
+      },
+      "scope": [
+        "Replace existing doorway PNG only; preserve dimensions, aperture, crop, travel timing and gameplay."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/travel_doorways.md",
+          "summary": "Twelve-doorway Phase10 inventory; no generation release."
+        }
+      ],
+      "next_action": "Capture source-controlled aperture and cinematic baseline, then director brief and audited source.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T07:15:34.976062+00:00"
     }
   ]
 }

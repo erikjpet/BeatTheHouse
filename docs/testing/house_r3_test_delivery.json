@@ -1,0 +1,62 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+  "package_sha256": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "rooms": 20,
+  "raw_art_sources": 408,
+  "compiled_art_textures": 387,
+  "prior_19_art_packages_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Constructed Base/native art only; no mortgage/rest/storage/save/revisit/live Web. Corrected pink motion edges remain partially occluded, visibly moving. NEXT and save namespace unchanged. Twelve doorway replacements remain separate unfinished work.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-house-finalize-r3-01\\evidence\\pck-diff.json": {
+      "sha256": "714ff851bb84e7dc4ee69eb7f97b8d4953a4a2432cc8ea7006001316530833a1",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "removed": [],
+        "changed": [
+          ".godot/uid_cache.bin",
+          "build_manifest.json",
+          "data/art/environments/index.json"
+        ],
+        "unchanged": 2053
+      },
+      "record_count": 51
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-house-finalize-r3-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "31eb69f9e23857a19f5d48115b9a06687cb0e9376ef1e6cc13bc27a963389d5d",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 408,
+        "compiled_textures": 387
+      },
+      "record_count": 387
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-house-publish-r3-01\\evidence\\publication.json": {
+      "sha256": "35be3fe6098b007932ddb1472fcc952745159f9db85cfe40f9c061afa7ebc240",
+      "summary": {
+        "source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b"
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-house-served-r3-01\\evidence\\served-proof.json": {
+      "sha256": "970b707f8c58700998e414591676385a919642717217e9bef61a11e5ef88a46a",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+        "raw_art_sources": 408,
+        "compiled_art_textures": 387,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb"
+      },
+      "record_count": 11
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-house-ledger-r3-02\\evidence\\reconciliation.json",
+    "sha256": "de7bc1322e9f93cbc6f959635870d31c39f768226586ff27c10b8691cfc8dc5f",
+    "findings": 8242,
+    "house_and_doorway_findings": 0,
+    "scope": "Manual documented all-group check against supplied historical snapshots/date. Existing unrelated backlog/runtime findings remain; not a clean global ledger."
+  }
+}
