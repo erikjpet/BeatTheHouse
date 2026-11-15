@@ -38048,8 +38048,10 @@
             "id": "repair",
             "description": "Run walk,bus,taxi,night_cab integration with original exact settlement, rejection and reload checks.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-002_20261115.md"
+            ]
           }
         ],
         "coverage": {
@@ -38058,14 +38060,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "TEST_FIX_REVIEWED_READY",
+      "state": "complete",
+      "status": "TEST_FIX_COMMITTED_VALIDATED",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "86256ddc0b2562616c5a2a27c820817e3813b5e8",
+          "evidence": [
+            "docs/testing/BTH-NEXT-QA-TRAVEL-MISSING-ART-002_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -38080,7 +38089,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Independent final review, commit and close scoped test repair; broader QA remains open.",
+      "next_action": "Scoped reviewed four-mode test repair committed. Continue separate general gameplay and Web acceptance work.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38090,7 +38099,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T20:48:52.865488+00:00"
+      "updated_at": "2026-11-15T20:51:53.899569+00:00"
     }
   ],
   "batches": [
