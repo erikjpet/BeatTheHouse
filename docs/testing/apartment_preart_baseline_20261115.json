@@ -1,0 +1,28 @@
+{
+  "source_commit": "bde105bc0548242c71086dbe2aa5faaaa4504ec6",
+  "checks": 14966,
+  "contexts": {
+    "__none": {
+      "objects": 7,
+      "selected": 7,
+      "typed_paints": 7
+    }
+  },
+  "distinct_ids": 7,
+  "union_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-APARTMENT-20261115-union-01\\evidence\\apartment_preart_union.json",
+  "union_sha256": "61029dc4800521b1d371624950fdb6921c3fe3408b4b53d1c86da010a08a3543",
+  "capture_hash_list": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-APARTMENT-20261115-union-01\\evidence\\capture_hashes.json",
+  "capture_hash_list_sha256": "524a0571a09afa33f8a75fac38ab2632b80106110fdf7b5bb0e5251862b0cee9",
+  "guide": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-remaining-guides-01\\evidence\\guides\\apartment_legacy_geometry_1800x860.png",
+    "sha256": "e2ceeb578387ec0919a78ee433fbfc9fe487a154ab47db7735b3ffe9bc894937"
+  },
+  "source_verification": {
+    "status": "UNCHANGED_ALL_TRACKED_AND_REFERENCES",
+    "files": 7449,
+    "placement_override_sha256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "scope": "Exactbde105bc/c5 initial Base only, no forced public scenarios; no later lifecycle/open-hours/save-revisit/art acceptance.",
+  "status": "PREART_BASELINE_PASS_NOT_NEW_ART_ACCEPTANCE",
+  "clean_guide": "Capture01 __none_source_mode3_clock0.0_lowfalse_cleantrue.png; only QA floor-reflection helper disabled, original apartment painter unchanged."
+}

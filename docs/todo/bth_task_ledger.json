@@ -43854,7 +43854,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Current source baseline underway; no generation release",
+      "status": "Apartment Base baseline passed; source release review",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43876,9 +43876,14 @@
           "kind": "source_plan",
           "reference": "docs/art/briefs/apartment.md",
           "summary": "14motion roster; static architecture retained; actual supports and clean guide pending."
+        },
+        {
+          "kind": "native_preart",
+          "reference": "docs/testing/apartment_preart_baseline_20261115.json",
+          "summary": "14966checks;7449sourcefiles+c5 unchanged; no forced transactions."
         }
       ],
-      "next_action": "Capture actual Base/source layers, validate clean guide, then one source generation.",
+      "next_action": "Director/auditor finalize clean guide and direction, then generate one source.",
       "blocker": {
         "state": "none",
         "kind": null,
