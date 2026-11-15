@@ -1,0 +1,141 @@
+{
+  "source_commit": "cc270944cdab68d61cf9ad6c0d3382f01299f9c2",
+  "source_tree": "884ceeede09ee8d4eee889ef77d9269e458dd76e",
+  "scope": "Representative native production-host route, destination preparation and save/reload acceptance. No product changes.",
+  "actual_routes": [
+    {
+      "run": "bus-actual-01",
+      "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-bus-actual-01\\evidence\\standard_bus_capture.json",
+      "sha256": "e53b6037bfcddf4f2062681f91f1ce3b27a9f7554cea1f2b7f8b16cbb1c52039",
+      "passed": true,
+      "fixture": {},
+      "final_state": {
+        "node": "corner_store",
+        "count": 1,
+        "bankroll": 97,
+        "clock": 744,
+        "travel_log_entries": 1
+      }
+    },
+    {
+      "run": "walk-actual-01",
+      "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-walk-actual-01\\evidence\\standard_walk_capture.json",
+      "sha256": "b878e4b789074c3ff1886443772706d8555228cccf6c07c160fbb3d3b7aea7df",
+      "passed": true,
+      "fixture": {},
+      "final_state": {
+        "node": "back_alley",
+        "count": 2,
+        "bankroll": 159,
+        "clock": 798,
+        "travel_log_entries": 2
+      }
+    },
+    {
+      "run": "nightcab-actual-01",
+      "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-nightcab-actual-01\\evidence\\standard_night_cab_capture.json",
+      "sha256": "5262292ae86d5797b5084a3b8c0498dfcaca2cd6c421ea8b1dfb2d3729f67805",
+      "passed": true,
+      "fixture": {},
+      "final_state": {
+        "node": "bar",
+        "count": 3,
+        "bankroll": 79,
+        "clock": 876,
+        "travel_log_entries": 3
+      }
+    },
+    {
+      "run": "apartment-return-01",
+      "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-apartment-return-01\\evidence\\destination_apartment_taxi_capture.json",
+      "sha256": "06162381bf597785130e584f408841d30db47bc7d9a2b94d12e5517acc33ab31",
+      "passed": true,
+      "fixture": {
+        "fixture_kind": "ordinary_generated_replay",
+        "seed": "STANDARD-TRAVEL-apartment-0",
+        "source": "bar",
+        "home": "apartment",
+        "steps": [
+          "bar"
+        ],
+        "mode": "taxi",
+        "progressed_conditions": {}
+      },
+      "final_state": {
+        "node": "apartment",
+        "count": 2,
+        "bankroll": 155,
+        "clock": 816,
+        "travel_log_entries": 2
+      }
+    }
+  ],
+  "preparation": {
+    "checks": 156,
+    "failures": [],
+    "drawn_frames": 7283,
+    "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-preparation-natural-01\\evidence\\destination-preparation.json",
+    "interruptions": [
+      "immediate_continue",
+      "immediate_duplicate_skip_auto_entry",
+      "cancel_newer_and_partial_replacement",
+      "pending_reload"
+    ],
+    "runs": [
+      {
+        "ready_frame": 6,
+        "automatic_entry_ms": 9048.091,
+        "completion_to_next_frame_ms": 37.964
+      },
+      {
+        "ready_frame": 5,
+        "automatic_entry_ms": 10477.596,
+        "completion_to_next_frame_ms": 6.407
+      },
+      {
+        "ready_frame": 5,
+        "automatic_entry_ms": 8522.117,
+        "completion_to_next_frame_ms": 5.954
+      },
+      {
+        "ready_frame": 5,
+        "automatic_entry_ms": 8547.606,
+        "completion_to_next_frame_ms": 6.622
+      }
+    ]
+  },
+  "unchanged_bus_suite": {
+    "checks": 190,
+    "passed_checks": 189,
+    "failures": [
+      "bus/missing: static summary still requires acknowledgment"
+    ],
+    "classification": "Existing assertion contradicts current overlay fresh missing-art automatic completion policy. Independent auditor agrees; test unchanged and failure retained, not a green suite."
+  },
+  "limits": [
+    "Native generated ordinary route fixtures through production host APIs, not physical menu-click acceptance.",
+    "Native simulated web_source branch is not browser/WASM acceptance. Supported browser control tools unavailable; no forbidden substitute attempted.",
+    "Representative pending/completed autosave-load and Apartment route return, not exhaustive room lifecycle or all original player saves.",
+    "Existing campaign acceptance bounds and unresolved historical non-reproduced diagnostic stall retained.",
+    "All test saves/profiles isolated on E; main/NEXT/TEST product and user saves unchanged."
+  ],
+  "actual_bus_preview": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-actual-bus-mobile-02\\evidence\\actual-bus-travel.mp4",
+    "sha256": "51d78502926fe9d4748a8a713a69691c9b73737127d7d63f2e82ee0ac52d02fe",
+    "bytes": 2983052,
+    "library_file_id": "libfile_fde3_f-39e4ab6352388191b232eb2a43331e4b_b2e6deecb030819197ad6510125a1c29",
+    "decode_run": "BTH-ENVART-FINAL-TRAVEL-20261115-actual-bus-decode-01",
+    "note": "Full native actual bus route recording; mobile01 invocation failed because PowerShell split codec option, corrected mobile02 passed. No source changes."
+  },
+  "raw_evidence_hash_list": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-FINAL-TRAVEL-20261115-closeout-preparation-01\\evidence\\all-evidence-hashes.json",
+    "sha256": "7a55af4a5e7b18fa6b9a06f44c42b4d4da9a3f65343e483ccc99e71dfe5ecfcf",
+    "entries": 74
+  },
+  "reconciliation": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-FINAL-TRAVEL-20261115-reconciliation-03/evidence/reconciliation.json",
+    "total_historical_findings": 8242,
+    "current_batch_findings": 0,
+    "scope": "Historical all-task snapshot, not global green."
+  }
+}

@@ -38031,7 +38031,8 @@
         "BTH-ENVART-001-DOOR-MOTEL-ROOM-01",
         "BTH-ENVART-001-DOOR-APARTMENT-01",
         "BTH-ENVART-001-DOOR-HOUSE-01",
-        "BTH-ENVART-001-DOOR-CORNER-ALPHA-01"
+        "BTH-ENVART-001-DOOR-CORNER-ALPHA-01",
+        "BTH-ENVART-001-FINAL-TRAVEL-ACCEPTANCE-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -44904,6 +44905,44 @@
         "evidence": []
       },
       "updated_at": "2026-11-15T08:03:13.413823+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-FINAL-TRAVEL-ACCEPTANCE-01",
+      "name": "Verify final art travel acceptance",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Representative native routes and reload checks done; unchanged bus suite 189/190; browser acceptance unavailable",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "QA only; no production deployment."
+      },
+      "scope": [
+        "Exact final TEST source; disposable native profiles; normal production menu/save bridge; no route or game state mutation beyond existing labeled QA fixtures.",
+        "Retry supported browser tool discovery, never substitute forbidden browser-control routes."
+      ],
+      "evidence": [
+        "docs/testing/environment_art_final_native_travel_acceptance_20261115.json"
+      ],
+      "next_action": "Perform live browser acceptance when supported browser control is available; separately reconcile missing-art test expectation without weakening production policy.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T12:48:56.452544+00:00"
     }
   ]
 }
