@@ -38015,7 +38015,8 @@
         "BTH-ENVART-001-ART-GRAND-01",
         "BTH-ENVART-001-ART-HIGHLIMIT-01",
         "BTH-ENVART-001-ART-GRANDBACK-01",
-        "BTH-ENVART-001-ART-CAGE-01"
+        "BTH-ENVART-001-ART-CAGE-01",
+        "BTH-ENVART-001-ART-MOTELROOM-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43770,6 +43771,47 @@
         }
       ],
       "next_action": "Owner playtest on TEST; continue Motel Room baseline without changing NEXT.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T05:17:48.472513+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-MOTELROOM-01",
+      "name": "Create audited Motel Room art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Current source baseline underway; no generation release",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Motel Room activation."
+      },
+      "scope": [
+        "Motel Room initial Base, no forced public motel scenarios or rest/storage transactions."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/motel_room.md",
+          "summary": "Source20 motifs including seven pink blocks and four scan bands; actual supports and clean guide pending."
+        }
+      ],
+      "next_action": "Capture actual Base/source layers, validate exact clean guide with directors, then one source generation.",
       "blocker": {
         "state": "none",
         "kind": null,
