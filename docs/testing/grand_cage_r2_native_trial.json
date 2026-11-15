@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
   "decision": "Final scoped Cage R2 PASS. Fresh Base, both composed stock fixtures and actual frames000/030/061 personally reviewed. Native82, Base14840 with exact layout/object/publication equality, stock fixture12, separate compatibility52, visibility36/36, original no-pointer and both full-decodes pass. Actual62frames8.135911s; encoded8.24s. Steel shafts harmonize live bars,11glints shift+5 on same window. Existing art branch and TEST only with authorized EMPTY compatibility f035e1d5e.",
@@ -285,5 +285,6 @@
   },
   "compatibility_commit": "f035e1d5ed460aaeac6e9245c4988320203bd839",
   "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
-  "final_audit_receipt_sha256": "433f083dfdde78719b390190925f4e6159860c23ace3b646456c1b7e6bb12698"
+  "final_audit_receipt_sha256": "433f083dfdde78719b390190925f4e6159860c23ace3b646456c1b7e6bb12698",
+  "delivery": "docs/testing/grand_cage_r2_test_delivery.json"
 }

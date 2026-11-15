@@ -1,0 +1,2498 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+  "package_sha256": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "rooms": 17,
+  "raw_art_sources": 344,
+  "compiled_art_textures": 326,
+  "prior_16_art_packages_unchanged": true,
+  "runtime_change": "Authorized f035 Cage conditional EMPTY helper only; exact pixel_scene_canvas source hash bound and gdc PCK delta verified.",
+  "limitations": "Native Base and cloned stock semantics fixtures; no reached stocked shop, transactions, Linda lifecycle, save/revisit or live browser gameplay certification. NEXT and save namespace preserved.",
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-finalize-r2-01\\evidence\\pck-diff.json": {
+      "sha256": "d8dc1e6d09f5ad543a1ee5495110aec2e0e6ab577e8d84abc055f7f39e58472e",
+      "result": {
+        "status": "PASS_EXPECTED_ART_AND_AUTHORIZED_CAGE_EMPTY_COMPATIBILITY_DELTA",
+        "added": [
+          ".godot/imported/atm_scan.png-7496b9ea3f3670ed3135870f522a3cd3.ctex",
+          ".godot/imported/background.png-7a77d72f5c08bc7ae6d0b74fa047f93c.ctex",
+          ".godot/imported/cage_glint_0.png-ff81dbbb8195756afce5cf5759b350dd.ctex",
+          ".godot/imported/cage_glint_1.png-53dcda7850a4ebe6e753f42d2ba7a0c7.ctex",
+          ".godot/imported/cage_glint_10.png-0ec55b0ea9fb5f1ffb4139c669438740.ctex",
+          ".godot/imported/cage_glint_2.png-29aad3d5a2d3c3e3767d9fca893c9d4e.ctex",
+          ".godot/imported/cage_glint_3.png-d98db348d630510882e7694c83ac5cba.ctex",
+          ".godot/imported/cage_glint_4.png-03bf113e3b61ac289cfb41c058d79f3e.ctex",
+          ".godot/imported/cage_glint_5.png-c78909c46d3e45c394356b3807ee2819.ctex",
+          ".godot/imported/cage_glint_6.png-50c7a8b5e31afb0094ae8e061dcc6585.ctex",
+          ".godot/imported/cage_glint_7.png-ada52047eb252a6159b72004735828b4.ctex",
+          ".godot/imported/cage_glint_8.png-6a35210de2b21642f7afee57566b41f1.ctex",
+          ".godot/imported/cage_glint_9.png-662a421d3d6efdf3c8252e4f041beac0.ctex",
+          ".godot/imported/cage_sign_pulse.png-7969e6e2a49f4106a3cb7efee23e7a17.ctex",
+          ".godot/imported/floor_glint_0.png-2968fa03a12e43a08adae14eb00d9658.ctex",
+          ".godot/imported/floor_glint_1.png-9cbed3e5a657f84707643a37da4786f3.ctex",
+          ".godot/imported/floor_glint_2.png-5ef828848fa787798342439c4e8426e5.ctex",
+          ".godot/imported/floor_glint_3.png-0871f468ddffc1a00f120f0fe185d17b.ctex",
+          ".godot/imported/floor_glint_4.png-c6c6cccf78b33280fddabb0b9c2de24b.ctex",
+          ".godot/imported/floor_glint_5.png-87aa555a7b8929cff8023bc4d7989749.ctex",
+          ".godot/imported/floor_glint_6.png-e1f10f424911373bf4989d0283e30e2e.ctex",
+          ".godot/imported/grand_cage_teller_counter.png-dbbe8bae220b5807a1680d0b4f39b988.ctex",
+          "assets/art/environments/grand_casino_cage/anim/atm_scan.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_0.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_1.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_10.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_2.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_3.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_4.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_5.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_6.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_7.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_8.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_glint_9.png.import",
+          "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_0.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_1.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_2.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_3.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_4.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_5.png.import",
+          "assets/art/environments/grand_casino_cage/anim/floor_glint_6.png.import",
+          "assets/art/environments/grand_casino_cage/background.png.import",
+          "assets/art/environments/grand_casino_cage/counters/grand_cage_teller_counter.png.import",
+          "data/art/environments/grand_casino_cage.json"
+        ],
+        "removed": [],
+        "changed": [
+          ".godot/uid_cache.bin",
+          "build_manifest.json",
+          "data/art/environments/index.json",
+          "scripts/ui/pixel_scene_canvas.gdc"
+        ],
+        "unchanged": 1933
+      }
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-finalize-r2-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "1efd0968f3530e2d35544ef44679e7686193a2d4b3b33a60c49d9d2cb1135b4e",
+      "result": {
+        "status": "PASS",
+        "raw_files": 344,
+        "compiled_textures": 326,
+        "prior_eight_room_compiled_unchanged": 304,
+        "links": [
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_0.png",
+            "source_sha256": "2b9db98e9dc077c4186c2ba63788651fa889e10417dc45c64c33544a1e3c198a",
+            "source_md5": "05c646131efb94525b0ae5b55eb8e420",
+            "compiled": ".godot/imported/floor_glint_0.png-43e559f64bd418333a79bf0255903e27.ctex",
+            "compiled_md5": "8092746bb4ced40046c8ed54f425935f"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_1.png",
+            "source_sha256": "b68e27c269ce6be2b4b4198ebb9b04719dc820cd72c13ef050cbf6fb36ca4f0c",
+            "source_md5": "e763d4500c16a35c8625350f72c79024",
+            "compiled": ".godot/imported/floor_glint_1.png-52a33db8b473b5ac574d2978c7a1a447.ctex",
+            "compiled_md5": "c84651b5354fe68a89f0777bacda8e9d"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_2.png",
+            "source_sha256": "4509090a642bf7fbd823efa530e32553611300a1e007d3712f93a4d234fa65db",
+            "source_md5": "b7d89ff1b75eeff11b7086ff5cca0179",
+            "compiled": ".godot/imported/floor_glint_2.png-89b478b2ddd75e431d66fa6a1c3e0fd4.ctex",
+            "compiled_md5": "82a98f90fcaad0bb6fa1fbd5ce5d230e"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_3.png",
+            "source_sha256": "fe8f5fad54977a20145f89245c55885f08115a8d5a39959d00f1268fcc4bb12c",
+            "source_md5": "f59cfd95dd1e9bfec4eb78129c107e00",
+            "compiled": ".godot/imported/floor_glint_3.png-bba1ca72bc8b2cd0118eaca0175c45de.ctex",
+            "compiled_md5": "8311f5074ba3ad3d1cb27845c42d9834"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_4.png",
+            "source_sha256": "495688570e106e78d503051fb297e46bdcbc816530bb385f0708dfac2c7dec89",
+            "source_md5": "35cebebf0dabc3eed060767b9f93c865",
+            "compiled": ".godot/imported/floor_glint_4.png-b62faabf914d70c5ce27759ab0ab3901.ctex",
+            "compiled_md5": "3f691c9880771abf9abeb1e4f68d79a8"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_5.png",
+            "source_sha256": "d3ac9a0c4ee9e3b7cb8001f6c8440197fad7fbee4a1d483d32e53d5570bd3b80",
+            "source_md5": "a5a1d8c7a53df3e69ee176eed6283b40",
+            "compiled": ".godot/imported/floor_glint_5.png-c5aa512db5cb90e99ee8ce2af19da610.ctex",
+            "compiled_md5": "b0ea9796e7efef2282f38b62adec49e1"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/floor_glint_6.png",
+            "source_sha256": "cbc79e092e8bdefdc71fbbcbca3c9beb8a071ad095ad1ea47f17534429b6ca4d",
+            "source_md5": "f115e0bf1b01ced31197c74cbf2cf55f",
+            "compiled": ".godot/imported/floor_glint_6.png-c3a9bc02eba1a592a6188937a540c5f3.ctex",
+            "compiled_md5": "46757fe089dd869d0d549870ce193002"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/fluorescent_scan.png",
+            "source_sha256": "1fca4f22a2465510b4e9f9b03237a0868b761e7a49482ad4ef604d2a99fdc8bd",
+            "source_md5": "e73e498a6e0bb86e54b9c75e3d23ce46",
+            "compiled": ".godot/imported/fluorescent_scan.png-dbe9daabde2af0fa5ef8fb9fd99ace94.ctex",
+            "compiled_md5": "8fd2936bd99c5e7cd59a61f34651ec64"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/fluorescent_tube.png",
+            "source_sha256": "c3da303b8132bf2bc4034e42b3fc27e114585f340719cc635712914a276ff46f",
+            "source_md5": "4524bf602c19026010b90daa49db7078",
+            "compiled": ".godot/imported/fluorescent_tube.png-922c40424d87fb18e2c3189372983af2.ctex",
+            "compiled_md5": "123b4471652a57f05f10664a177587cb"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/headlights.png",
+            "source_sha256": "be228da04eac2d1870faa5b2838d7345d9b2065fecdcb6958634f9661a08bfd6",
+            "source_md5": "bea30a540fecbf28ec1ad60062f78072",
+            "compiled": ".godot/imported/headlights.png-18bd1647408728be2aa858c282ac39db.ctex",
+            "compiled_md5": "632b0816aabe7d6afa287876b65530a7"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/neon_fascia.png",
+            "source_sha256": "6d63511e19aa17c4aa615fca5aee990291152b9d4f6baac3fe9c252eca6fce7a",
+            "source_md5": "aa9d0a0f2aa78b9089dc9d114c47901e",
+            "compiled": ".godot/imported/neon_fascia.png-dbb3b58b9a1852bec7b6d61191410add.ctex",
+            "compiled_md5": "ea7f3544761242e914ba0289ef6de01a"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/anim/security_sweep.png",
+            "source_sha256": "ad8d7d0ef1d026c43aff1b1ed16dc6b4fe0c64eb0e498342a03dab221d6df752",
+            "source_md5": "f44a58aead39015fec5b64dc511b22b5",
+            "compiled": ".godot/imported/security_sweep.png-8a68822b8c7c37050702ff73767facdf.ctex",
+            "compiled_md5": "c8f80bb5ccfec94f4ecad1990d045242"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/background.png",
+            "source_sha256": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+            "source_md5": "a95abd52d634175e0bd234e62ecb677b",
+            "compiled": ".godot/imported/background.png-71da227666000db01467d678ca56dd63.ctex",
+            "compiled_md5": "dece39cf38f1c2ef68d5f5ba645da982"
+          },
+          {
+            "source": "assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png",
+            "source_sha256": "5115a771fd021170b2ddac2dd4177b90a167fe5be1f100b18625d8ac66ef5cf9",
+            "source_md5": "0876ac38169ed344bb25a066dea96043",
+            "compiled": ".godot/imported/gas_station_staff_window.png-a897fb35d5a6ceb695bc60b27c84bc71.ctex",
+            "compiled_md5": "1d4acc259d8bf477eae79378976bda5a"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/beer_pulse.png",
+            "source_sha256": "15ba98f6e5e64acd7296e6de7e472fa6f25a95aeb4c5803d6cc2aec5f590c581",
+            "source_md5": "116243bda9fdd7af63d054f05dac71fb",
+            "compiled": ".godot/imported/beer_pulse.png-2f51e2033e219ac9e1d8cddfd3ed66a7.ctex",
+            "compiled_md5": "f7e26ce6c51ee98b35db28c541342608"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_0.png",
+            "source_sha256": "0cf136bdc2923bec3e7d38bc2500269b97aaa3a557be328fc76440282e5b6277",
+            "source_md5": "c11c3e5eedbde69f78ea29dea38c0da3",
+            "compiled": ".godot/imported/floor_glint_0.png-89d2038eef2585f3709ca7f2679e404f.ctex",
+            "compiled_md5": "c06d5ac633f8d92c94d8e741a6602523"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_1.png",
+            "source_sha256": "35c8a9805f67e6646c4b24fc0af1597aa8eb0e7eb954e7352cd6c182844d99d7",
+            "source_md5": "626433474ade91242a552021dd6ff2e2",
+            "compiled": ".godot/imported/floor_glint_1.png-fb4b8b11002009bbaeeb6daa6ea9c364.ctex",
+            "compiled_md5": "eda00b23c52212333ddcaea589759153"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_2.png",
+            "source_sha256": "f776276db09f87c870d3a4fe44ddcf7d7c26fc0fd7fdc513696784250938c516",
+            "source_md5": "06265798241ac66cee28c9afbe17ad26",
+            "compiled": ".godot/imported/floor_glint_2.png-f9fa925d5288bbe2a2185ed6e555a77b.ctex",
+            "compiled_md5": "fd8fb10a11f85030ca00e8f2542d20d0"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_3.png",
+            "source_sha256": "5e2a3f693d146c517dcfa9a6b60459671bcea76aea503cbdea5684413b0c0610",
+            "source_md5": "1b113e2b1fd849ff7f31f7a7bafdfc7c",
+            "compiled": ".godot/imported/floor_glint_3.png-aa3e98746b520e05489c7fed5285a98b.ctex",
+            "compiled_md5": "cff1e8cbb05835b528dd6b8521d86871"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_4.png",
+            "source_sha256": "c25f331d18027290b210c2c2f8d830d4457919b4cf8dda5620aaf13a77c51650",
+            "source_md5": "2b44a734185bc5526def23752dcd1e46",
+            "compiled": ".godot/imported/floor_glint_4.png-8c3470efb870ea462a1a16f20dbb0030.ctex",
+            "compiled_md5": "00e347fc1ef2263c6fe25835d0e189a2"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_5.png",
+            "source_sha256": "0e6031c4ad2443996e11b57b4fed49bab567df338d1133b71aa777083c2db141",
+            "source_md5": "a0cd161aa6f545f10b91daa5703041ad",
+            "compiled": ".godot/imported/floor_glint_5.png-7d014af0c1bacb2f349fe01d63019d84.ctex",
+            "compiled_md5": "0288fc736ba5082ef7965cac3a4b1a88"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/floor_glint_6.png",
+            "source_sha256": "87d38eb4b81aad131f9562ba6bf9152511e3731d0a458ee134127c2157916385",
+            "source_md5": "0a1c7859a4162c4fb868e6f2d4c36784",
+            "compiled": ".godot/imported/floor_glint_6.png-39506752b71544431c5fa6453f413002.ctex",
+            "compiled_md5": "7c26c18f0b4fcc68af5e275f07b11176"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/glass_glint.png",
+            "source_sha256": "fd11eb98ce606ca0f6e8dab7d2f0874515b5883932019ce68e8e949430c144c2",
+            "source_md5": "9a401a52136ea1f8c3b2d3ce5d3529e6",
+            "compiled": ".godot/imported/glass_glint.png-41f7f3832c6630a490141c1f235df962.ctex",
+            "compiled_md5": "02a26a6b8ce9ba0cfe4c41df8ff2f6a1"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/lotto_pulse.png",
+            "source_sha256": "ebfcaa1686fb053fae66df8ac2e7227acd0760a7924997ea6fa102559b62ff43",
+            "source_md5": "07484a72f2271aebf151d16f0f79ceb3",
+            "compiled": ".godot/imported/lotto_pulse.png-02709121514336f2712a56b3d4212506.ctex",
+            "compiled_md5": "483223056f5b40f77e54d5d74b443639"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/overhead_scan.png",
+            "source_sha256": "8491efe7e0ee1efa941fbc07669a5473ba3359224e4eeec5323b825f2b9e6292",
+            "source_md5": "c802c39842f91f358538fa6811cce6c2",
+            "compiled": ".godot/imported/overhead_scan.png-12f5e12c70fc81b616776935b51a0966.ctex",
+            "compiled_md5": "8e3701368564a85b736484772d9a3fff"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/register_scanner.png",
+            "source_sha256": "f649f4555bbb2c0e730bcd97dca967c7e8a5111c9395847b0cb2b5c801c1eb60",
+            "source_md5": "8f0ce24a8cebbf094435e0866b565963",
+            "compiled": ".godot/imported/register_scanner.png-a594b7643731443f10746da6fb482e41.ctex",
+            "compiled_md5": "a5d3a0194e12a08a33b75fcd5f5529ac"
+          },
+          {
+            "source": "assets/art/environments/corner_store/anim/tube_core.png",
+            "source_sha256": "9b9f36530a0102f116154167ae669e31652f05631cca5df97725b4eeb6d661f7",
+            "source_md5": "29ccdd35ec1ea1677c6718f1786a74ac",
+            "compiled": ".godot/imported/tube_core.png-87ed0f48ff661c129056dccb6398975b.ctex",
+            "compiled_md5": "abda8bd29a20995b75197de3ab2342d5"
+          },
+          {
+            "source": "assets/art/environments/corner_store/background.png",
+            "source_sha256": "54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80e74f3fd1fc5aec59e3",
+            "source_md5": "f6cf665d4520974c3ee8f60e370aaa31",
+            "compiled": ".godot/imported/background.png-4740a00ac42e4627bd130f6d2f656dd3.ctex",
+            "compiled_md5": "85e00eba8e009b65711d8e15ebaa42cb"
+          },
+          {
+            "source": "assets/art/environments/corner_store/counters/corner_store_register.png",
+            "source_sha256": "8639097e5c3dcd2c5929a44962fa9291a674da996875e3e59329796902f94010",
+            "source_md5": "0066370511178e8870a6c5c5a379ae41",
+            "compiled": ".godot/imported/corner_store_register.png-e348d46bc9e83862794c2f670ba61b87.ctex",
+            "compiled_md5": "a4ed38ed46c871fdf256e749742c84c1"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/bulb_core.png",
+            "source_sha256": "a9ba0d230f95b60078fb80780dbeb6f6bfe220123b60fbf834723f8a9ac943aa",
+            "source_md5": "1e3f55d2de40e766f0a28058e7b32ff0",
+            "compiled": ".godot/imported/bulb_core.png-e355e8f0653c24b4de9c37dc38f487fc.ctex",
+            "compiled_md5": "51bb65aa63a4b0874cc5efa18136d149"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_0.png",
+            "source_sha256": "15654c88a985b33daa2c2f19f429d05095d12cfa13118f5cf9777be2e33c8696",
+            "source_md5": "fd404516641a8c8a3637f09302ebfdcc",
+            "compiled": ".godot/imported/floor_glint_0.png-2fbd6229264504912058abdf8c74daa1.ctex",
+            "compiled_md5": "e53a97ad5f6731e51c5cc5d5ce99b5a7"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_1.png",
+            "source_sha256": "272b7de92e0ffbf9f9bdf653230b3432eb8f98d94ec20214200192612724bff7",
+            "source_md5": "de6d8d7a2eff6bf1607b5ef1a490be9d",
+            "compiled": ".godot/imported/floor_glint_1.png-575de26bb8527252d43ebf7ff9443712.ctex",
+            "compiled_md5": "f287bf2e1ce8ea6ce2b97b6e4a9436e0"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_2.png",
+            "source_sha256": "c77aadf50c5bd5e631c18314eab2da34677e612a40d41e10439febf93a885899",
+            "source_md5": "846fdd5fa9caef4cbbcbdf7d2ff9e0b8",
+            "compiled": ".godot/imported/floor_glint_2.png-c9560b95072e9c107759b6b3c2c7e787.ctex",
+            "compiled_md5": "b7d90fdbb809a1ab6ac1bcc70903b0c2"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_3.png",
+            "source_sha256": "3b3e960ab5bb823f7131922bee2ea65942673098fe8936f643ce35710498d2f3",
+            "source_md5": "dddac3a15b129a983b65ee041c603c4e",
+            "compiled": ".godot/imported/floor_glint_3.png-214440c9dedf118e01b8c693a69f5987.ctex",
+            "compiled_md5": "5f5c191bd6833d4ffd73eba97c702938"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_4.png",
+            "source_sha256": "a26bd9e07d1ddbf03916f5ee64ed12ad96e827e497df44842b3dbf89d67996d7",
+            "source_md5": "176db4df7dd68a9d9b049cb2e4b9d739",
+            "compiled": ".godot/imported/floor_glint_4.png-69a591a5cdd6502b338a53a8c78c9bf8.ctex",
+            "compiled_md5": "61441e63a4695674d4e6116a19945c5d"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_5.png",
+            "source_sha256": "766e7a81dd2a8e48d7c158f93b35efa6097a4c2ec9b56592f964a90e9ebdcb27",
+            "source_md5": "3ca98ec02afdf0b22e4ac41a8e9944f9",
+            "compiled": ".godot/imported/floor_glint_5.png-2aa4fd647f8f3fd1b149918d0533cc85.ctex",
+            "compiled_md5": "561cdf413f70eded8561c37692fb4ebe"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/floor_glint_6.png",
+            "source_sha256": "b24b9cf993444a3bed644f4cb3ac5ee579748064a876a1607e5369f90bcdcc36",
+            "source_md5": "1451e2086b437651ec5827d4bef699cc",
+            "compiled": ".godot/imported/floor_glint_6.png-b368006a4edc903699b08553a30d4c6b.ctex",
+            "compiled_md5": "8af147d6bcda535376f81ca1f54263aa"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/ground_rain_streak.png",
+            "source_sha256": "1836f3766f277b1def65ed762b0f266fc3d3cefb61dedf6199f97b93789ff27d",
+            "source_md5": "a843e5714d152913598ec7bdf9e7399c",
+            "compiled": ".godot/imported/ground_rain_streak.png-f7204d50583abec631e2ea29373c5aa4.ctex",
+            "compiled_md5": "b2a931a2ddcad79a9394c2a53878de1b"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/lamp_pool_cone.png",
+            "source_sha256": "91fcd48f1e476892df55127c55cbd1118c763da5a7f4733207d7887a252e94ac",
+            "source_md5": "c8a85a0a11260ac4538a1377fcf1c10b",
+            "compiled": ".godot/imported/lamp_pool_cone.png-589a900c79fa9ac9aa20c37983b5f8d1.ctex",
+            "compiled_md5": "1d6c9fb0063cbf6c5d5b6ce5fd4c62a1"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/puddle_rings.png",
+            "source_sha256": "42322fa42bcd5442e3f3e3baaf03d262cdaa1bcf2d79bf475b5b0998cc728989",
+            "source_md5": "a8eb47f45b5add567c9f10edeba8ade0",
+            "compiled": ".godot/imported/puddle_rings.png-bac6bb619f24bc33c5ecc3d4d2771702.ctex",
+            "compiled_md5": "ceee39477fb21c1c431122dec8b523d3"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/rain_field.png",
+            "source_sha256": "ab91c82737da6e9f6eb9d9f0b25027e8a2903dc461fd074845d98fd91a7c8d21",
+            "source_md5": "99efa5662634660bca8b49f0a3a02dda",
+            "compiled": ".godot/imported/rain_field.png-307a70759ff43363beaaa1718ae5fd0d.ctex",
+            "compiled_md5": "3bf4361cc268f944d3fea5c16df4dce2"
+          },
+          {
+            "source": "assets/art/environments/back_alley/anim/warm_glint.png",
+            "source_sha256": "e5a0c355ba969923d829c1f211995e8bc2783d5254759de80cdabda19b03ec3f",
+            "source_md5": "6a3ced493b48d947a14afbbe6c945974",
+            "compiled": ".godot/imported/warm_glint.png-3688e35923c78e283479c4a4cedd8712.ctex",
+            "compiled_md5": "5a8674b5b55f9ca43d85a23ec06229cb"
+          },
+          {
+            "source": "assets/art/environments/back_alley/background.png",
+            "source_sha256": "a8533e7dbd30cd75153e961cbf999acb0ffb1577e49111c3ed1eabba5704ffb6",
+            "source_md5": "ba6ae3b314cd93edca13ad11c526ac8e",
+            "compiled": ".godot/imported/background.png-e0c097f9cd72fe44b5c44163b1533893.ctex",
+            "compiled_md5": "b5d1edec84985d1de8d02a80e3921827"
+          },
+          {
+            "source": "assets/art/environments/back_alley/counters/back_alley_crate_display.png",
+            "source_sha256": "7c14f4a116e5b585908bb03a49177f7e527dfe9357b6a940d0ac31e0c5913f94",
+            "source_md5": "fb3fbd3be89e6fcc4794ec8da4e4cf80",
+            "compiled": ".godot/imported/back_alley_crate_display.png-6cfda7f8e42413af20495556a836c79f.ctex",
+            "compiled_md5": "9eb95dc47fd90607d67c758f2491ef23"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/crt_fast_scan.png",
+            "source_sha256": "d5098cde064221993b1f1959112f8ec17ddba727407cd571563ff33fb8fa538d",
+            "source_md5": "f23bd3b9b20f1dac4d381b89db458f5a",
+            "compiled": ".godot/imported/crt_fast_scan.png-7d0c8cb732adcd7b4136c912e022c2ab.ctex",
+            "compiled_md5": "e1cb75a59d626931f34882e5c53ca796"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/crt_luminance_rows.png",
+            "source_sha256": "11266fb078daf72c546bb5dc2fb30425b35b797058da48543529dc7f300c757f",
+            "source_md5": "48a1b5a3f4507803ab37838964afd3b0",
+            "compiled": ".godot/imported/crt_luminance_rows.png-e6b22c93d356787ba55b2a41b8616ae5.ctex",
+            "compiled_md5": "814ec0b3128f94c3a3dcaaa4c5601091"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/curtain_fold_reflection.png",
+            "source_sha256": "60a02424854d222c702230d67e576efc4d574d6b064e62b440353144c56f243d",
+            "source_md5": "aae44bf7946bfcfb383063c0c73f1308",
+            "compiled": ".godot/imported/curtain_fold_reflection.png-4c3e2ad748b91120f3e0c60b1fb64baf.ctex",
+            "compiled_md5": "918048f1e7c0b7d871d8ca4fec2435f2"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/cyan_glint.png",
+            "source_sha256": "1da1fbbc762a7878df2c01570d3dfb3003221669813605fb3fc2beb0e8fc1eff",
+            "source_md5": "08270f42254557dbac0766fc6db27fb0",
+            "compiled": ".godot/imported/cyan_glint.png-aad7a37167055458e9be3d4480349cc3.ctex",
+            "compiled_md5": "96fdc89524909092730c293ee5da4264"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_0.png",
+            "source_sha256": "84d9528e7009576ad69281bb9d5f991424ad124e80ffb9ce0d0e4ffa88da93ad",
+            "source_md5": "c79a798a8fce2c1576a24415489a802c",
+            "compiled": ".godot/imported/floor_glint_0.png-49e790c129763dbb7c1622eb2982dc8e.ctex",
+            "compiled_md5": "ef63f4761b734fae8bc2b92503df1076"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_1.png",
+            "source_sha256": "5c43a64a12ad15cbc9d16034c487e771e85cbae1deb0c28a50e4d34d3952055b",
+            "source_md5": "a666d4fed3c78cba109858cb4b87efc2",
+            "compiled": ".godot/imported/floor_glint_1.png-e1a655bbcecb977fce007dfdd3875f32.ctex",
+            "compiled_md5": "706ead346d6a89a24007a873b85361e6"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_2.png",
+            "source_sha256": "73a7ee3572ab0a11f49d50f91d3245f26deed80470db55d656f60b508f84e0c0",
+            "source_md5": "0940b53547d80c8eeaee5f9e779bcf93",
+            "compiled": ".godot/imported/floor_glint_2.png-21faf3fd49eec0330f8d451e0a0722ac.ctex",
+            "compiled_md5": "d2da9408d2c4bec7f08777e97cd0b477"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_3.png",
+            "source_sha256": "2c786e0ec24e1f2b46155c6138a6310a076327ae4479b162a9e185280cc7f436",
+            "source_md5": "99b0eecf6c1b3f1d979156fb9bffd252",
+            "compiled": ".godot/imported/floor_glint_3.png-cd5457905d4bee43b4c3120ca8ca50e6.ctex",
+            "compiled_md5": "269651c4604fcf6d60e515fcc434c6f0"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_4.png",
+            "source_sha256": "41a5a39106a659622581c86446dc77a25eaa2e17d8adc6f3182e75752ee4b7df",
+            "source_md5": "55e940c6aeff4f7263229dcc670ade28",
+            "compiled": ".godot/imported/floor_glint_4.png-28b5d76eacf119c1bf1a4d4010a46ca1.ctex",
+            "compiled_md5": "3e11e33437b2a6615c81f6bd45c2c2b8"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_5.png",
+            "source_sha256": "111425540c68c2bfbd497a27b797c2a9691f392681cf1ca31622e72335ffe9e4",
+            "source_md5": "76543b7a42b377714333b6c0667ae159",
+            "compiled": ".godot/imported/floor_glint_5.png-133652fe7b8a404a8de9973eadd7ef49.ctex",
+            "compiled_md5": "422a6ddc36f73753662e68fa6bd9a106"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/floor_glint_6.png",
+            "source_sha256": "beb3474d19683dcbd14786f50d575060f681f8c78792d1394c6a8d559d0b70af",
+            "source_md5": "528b9213d6bdea518d7935477b8e695d",
+            "compiled": ".godot/imported/floor_glint_6.png-1dd3c87a8a86019b594ceac3f72efc12.ctex",
+            "compiled_md5": "33cc0c5e5694796b42ea24c82d7a092f"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/motel_sign_pulse.png",
+            "source_sha256": "663b64bcceaa06403288fa327be955dc12d5a2f8e7106655e7c6342e80c185cd",
+            "source_md5": "38f07bae7f2b79b498a16a1025e3081b",
+            "compiled": ".godot/imported/motel_sign_pulse.png-c42b77d8bb7dbb9b55b739e0533ac807.ctex",
+            "compiled_md5": "767cf7f54074223a4246e76618e9b9ad"
+          },
+          {
+            "source": "assets/art/environments/motel/anim/sign_lower_light.png",
+            "source_sha256": "d207812914248108644a39c432715a44a29fc314ad5f045fb225677c38fed193",
+            "source_md5": "66fc3c9a27b54a6b77a1b57b558db601",
+            "compiled": ".godot/imported/sign_lower_light.png-a93a31478eb9fcded873d944dd79d0d1.ctex",
+            "compiled_md5": "ac165a4369dcd5fcd9dc85babd9e2ce5"
+          },
+          {
+            "source": "assets/art/environments/motel/background.png",
+            "source_sha256": "b23d84e7a320189a5343cd2be2b1655d58f2c54e4c8e27d8943af8a7ed164fb0",
+            "source_md5": "6f93dd851e92bbffa4d1117853b712d8",
+            "compiled": ".godot/imported/background.png-4341ff7ba86f47950ac23c3bef3fdeba.ctex",
+            "compiled_md5": "5d92aa3c52f6324f30eb8320ed53eec4"
+          },
+          {
+            "source": "assets/art/environments/motel/counters/motel_lobby_table.png",
+            "source_sha256": "7a9c84b9456a9d2112d4d049042ce631f9a73842a79291c1ced0789362b220b2",
+            "source_md5": "43afde6b577959c08ea55fc572369c12",
+            "compiled": ".godot/imported/motel_lobby_table.png-ab69afd694569775227c95d259abaec2.ctex",
+            "compiled_md5": "06c13829d0a9d0e8b8db705ec581ea60"
+          },
+          {
+            "source": "assets/art/environments/motel/counters/motel_merchandise_counter.png",
+            "source_sha256": "a3303da4abce92190a3c2cbcdb8609e143b2ed93b07823ca551bebb2dee54357",
+            "source_md5": "c6075b375fb12a8a4542d69625f36218",
+            "compiled": ".godot/imported/motel_merchandise_counter.png-a550aa863b4447f3169642a8be770347.ctex",
+            "compiled_md5": "6a712ca7d8bc24eb9c7479b9c20bd1e6"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/cold_beer_sign.png",
+            "source_sha256": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+            "source_md5": "d5070ab690316823e6b80c6814ee834f",
+            "compiled": ".godot/imported/cold_beer_sign.png-69e68abe07f899370a6eaad6f580e079.ctex",
+            "compiled_md5": "7b2dda0a91ff00509f69ea03b12bd1c4"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/dive_sign.png",
+            "source_sha256": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+            "source_md5": "21139d1589e42b7fa8246f3b43ec76d3",
+            "compiled": ".godot/imported/dive_sign.png-af4de32c8b7086bb57ec4a2d3a2b5b2c.ctex",
+            "compiled_md5": "5632d1bf583c341b9fe9d1f4f3ef7990"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_0.png",
+            "source_sha256": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b",
+            "source_md5": "e7bb699c6f99ff9bb30084b93d593c0b",
+            "compiled": ".godot/imported/floor_glint_0.png-c00b42291cbb8e07461e489135cfa01b.ctex",
+            "compiled_md5": "946015be43bcbbaee04f531b35a5384b"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_1.png",
+            "source_sha256": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+            "source_md5": "c7f943a2d1a7e94d40e30f4c4944beab",
+            "compiled": ".godot/imported/floor_glint_1.png-7eacbc40c037509f03f43b2e4478ad8c.ctex",
+            "compiled_md5": "d1e9f7e50659b9344f365f94f07ed9fd"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_2.png",
+            "source_sha256": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+            "source_md5": "a87244799ec7f19d7a2b4dab7b5a63e8",
+            "compiled": ".godot/imported/floor_glint_2.png-d4f27568bfe33b5147ac5562f466ad51.ctex",
+            "compiled_md5": "265fffecefb7a7765003921ce1319610"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_3.png",
+            "source_sha256": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+            "source_md5": "b4e66751244c3568d96d89c11cae8f3f",
+            "compiled": ".godot/imported/floor_glint_3.png-bc6c7d63b2f1010747ef4643842dd10d.ctex",
+            "compiled_md5": "e0b7ff3fcef6e829a2d6161636c55c89"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_4.png",
+            "source_sha256": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+            "source_md5": "4cd0cbb8ecd371e929be0e92187877dc",
+            "compiled": ".godot/imported/floor_glint_4.png-bb5c8a9fc97a12fc989f853e7082135b.ctex",
+            "compiled_md5": "f6fab92d047bdb35581ec42d163a12e6"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_5.png",
+            "source_sha256": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+            "source_md5": "f17265550ef3e7691c28e00fdf56c78e",
+            "compiled": ".godot/imported/floor_glint_5.png-62bc62a5cf06b61f99ac49f11c2e459e.ctex",
+            "compiled_md5": "bb476f741b0b9436cbb9af0cfc3a75d5"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/floor_glint_6.png",
+            "source_sha256": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+            "source_md5": "74643038c47ed952baf2f04043af9d06",
+            "compiled": ".godot/imported/floor_glint_6.png-952fe8a105ba1c9792745f3bf63e5af9.ctex",
+            "compiled_md5": "6760b3f81d4ee6485b30ac8a75f8667c"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/high_smoke_0.png",
+            "source_sha256": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+            "source_md5": "73046dad18728ddee626bfbddac0323c",
+            "compiled": ".godot/imported/high_smoke_0.png-b90a6728f6b93eca98b5ee8e60ee2f0c.ctex",
+            "compiled_md5": "7213c87161fa2c7cc13516061cae29e2"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/high_smoke_1.png",
+            "source_sha256": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+            "source_md5": "6cb0861204631737748ef9bae6a0e67b",
+            "compiled": ".godot/imported/high_smoke_1.png-e0c6f263fe2a6cb7970db5c6c7adcd15.ctex",
+            "compiled_md5": "8bb1cb4b57f89da7a45ef8e129336150"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/pool_ball_0.png",
+            "source_sha256": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+            "source_md5": "c344472774c62b483f5958971b197a13",
+            "compiled": ".godot/imported/pool_ball_0.png-4755945c357431d1effc5451af7283ad.ctex",
+            "compiled_md5": "68a733560ea352c0f49ebf2663302d7a"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/pool_ball_1.png",
+            "source_sha256": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+            "source_md5": "75ba79a2345add6de2b13ec7dc8b9cbf",
+            "compiled": ".godot/imported/pool_ball_1.png-9346ce9f31aaf4d3778cb77368305afc.ctex",
+            "compiled_md5": "cd25615adac6401030e91e2dfb34b837"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/timber_reflection.png",
+            "source_sha256": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+            "source_md5": "4747bac738cece45788b1a1553a0adc4",
+            "compiled": ".godot/imported/timber_reflection.png-abb058b9c6a2577f9dfcb5c25c27d4ae.ctex",
+            "compiled_md5": "e4db6612333ee5855d255f702b50e2a9"
+          },
+          {
+            "source": "assets/art/environments/bar/anim/warm_glint.png",
+            "source_sha256": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+            "source_md5": "4ef83d0e6b5296ae2c8c1b62e8468e1d",
+            "compiled": ".godot/imported/warm_glint.png-561d03bab29f938f72799d576a31d0a7.ctex",
+            "compiled_md5": "781e921afb7425c68ac9ff4d350bc5bc"
+          },
+          {
+            "source": "assets/art/environments/bar/background.png",
+            "source_sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f",
+            "source_md5": "73d8fdc99dda6b15099b2e042b41f5da",
+            "compiled": ".godot/imported/background.png-073ced750c057b8110ceb89e250ef71b.ctex",
+            "compiled_md5": "c78b28d7ed596c0b04d3c8993aa0dad1"
+          },
+          {
+            "source": "assets/art/environments/bar/counters/bar_main_counter.png",
+            "source_sha256": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+            "source_md5": "0c0a4705657c1a1c7771a2e3d4709767",
+            "compiled": ".godot/imported/bar_main_counter.png-ab6d24f96e3d50dc51bf4886933c6b8c.ctex",
+            "compiled_md5": "ad4cc39d32665bf6ec163b3b13c92d02"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/fixed_material_occlusion.png",
+            "source_sha256": "dd33ee23ce2154cecbbdedbfd1e5a7b28fb9d9d45c4efbe82d8d266793656763",
+            "source_md5": "cef40886d523ca774ea1da671635fde3",
+            "compiled": ".godot/imported/fixed_material_occlusion.png-2dd3059715325f3272a63877aff76726.ctex",
+            "compiled_md5": "ed04a7d0ce8b8b4bb7f8c64531b93eae"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_0.png",
+            "source_sha256": "a8f9ee0437a66388c2d14203be0b404c0e19171da8f6ea9bc8cbd40e57848dce",
+            "source_md5": "ede845d05f44f58f20cc9a58b5c52f4e",
+            "compiled": ".godot/imported/floor_glint_0.png-7d3cae3dea8491c9831d45312ae2c46f.ctex",
+            "compiled_md5": "c1e1d995ca0d8393c1ea636b42ec078b"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_1.png",
+            "source_sha256": "0a5e5583c186618e8d3c0d41b685784ad9576bf83de11ee9c50c744e89c2a2f0",
+            "source_md5": "5425d37a77d56a32d8292ee099c5e977",
+            "compiled": ".godot/imported/floor_glint_1.png-d06ed22a2192fa3445920f7f59b25fbb.ctex",
+            "compiled_md5": "bc7c34860caeac207a4e8f2a611525d1"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_2.png",
+            "source_sha256": "a24e39320d76dc298058cfbb154c12f4f1173c681825b18384b6a4f76bdb3f12",
+            "source_md5": "34f3a8dcb765be8e8e2c2d3689d37a1a",
+            "compiled": ".godot/imported/floor_glint_2.png-e19b9f5171a4414c3dd143be7c409855.ctex",
+            "compiled_md5": "4ae50c7785efdc80074f3a6aba92e231"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_3.png",
+            "source_sha256": "c88cc4409ac8d33358e3c85daa9068dae1dc14df66c4d87feed92bfe75a3994f",
+            "source_md5": "eab36b27e45681dc30e718defe3e98fd",
+            "compiled": ".godot/imported/floor_glint_3.png-c51f6948372b298981a1936a9804eeea.ctex",
+            "compiled_md5": "6924b226e4f9a2e9ac8232f4b2ceaf1b"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_4.png",
+            "source_sha256": "5585b0bb0623a4b85b25fd30c15d9e8fcd39c6966cafa30596155af75e50b266",
+            "source_md5": "8d6748047207b1307555f333d280a333",
+            "compiled": ".godot/imported/floor_glint_4.png-5e0f14e61c153bb4354f75d64cf4bab7.ctex",
+            "compiled_md5": "28988a562caf785fcf648c11e848c963"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_5.png",
+            "source_sha256": "46ff4e40128b49b941c03b8f0a2687896e262bc89d6e5f6880c2bd86818b4366",
+            "source_md5": "6ca2a6c412db28c25707d72ec1e5674b",
+            "compiled": ".godot/imported/floor_glint_5.png-d048209ec78a8095d67990300a87006e.ctex",
+            "compiled_md5": "64991c8cd73970530cf37b6f40250813"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/floor_glint_6.png",
+            "source_sha256": "d1f2e6e5be1d87cb4c360e8fa8db6561e65a403e11a60adbce4556fa0592fdac",
+            "source_md5": "1746a2c9f64bfa7c194a2364a7c3e324",
+            "compiled": ".godot/imported/floor_glint_6.png-0a75e30c2c8b9b596ac3383c44ac4727.ctex",
+            "compiled_md5": "c62a60b393ff4494eabf7232b9a8e87b"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/hardware_glint.png",
+            "source_sha256": "58e320a00023e6d4c8536b10d7cc4eb708ef2f14fa844b59d6db9a385de09085",
+            "source_md5": "48febe643cf4e0622a5e8dc5bd4aa9b1",
+            "compiled": ".godot/imported/hardware_glint.png-02a88ca2f612a313b5c33e18795f563c.ctex",
+            "compiled_md5": "ae96e954c85aa18080f887e192f4c2df"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/high_air_0.png",
+            "source_sha256": "69972e946bc86fb1a26a99f13062613dbebecdda808330f6f5d8eb097c376946",
+            "source_md5": "0419134d3666312ff84649cd268d70b8",
+            "compiled": ".godot/imported/high_air_0.png-afaf13c578b8fff865c37202aa9c8fcb.ctex",
+            "compiled_md5": "cbcf0846e47749a87b45d981cd841e17"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/high_air_1.png",
+            "source_sha256": "5018fff5b6b2903530376cb23645dab16cab77b7b255bbb004cbd055aaff9e2d",
+            "source_md5": "74536d039f05fa2a73c1b5843b098af1",
+            "compiled": ".godot/imported/high_air_1.png-783e6dca8fddd47c7ccde7f48eb0cca7.ctex",
+            "compiled_md5": "c63d2cff4dd4518d201498743edc9909"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/inspection_tray_breath.png",
+            "source_sha256": "d4a1c132740c051d6573e889029d1d718bd7734d1c8765ee8e088c5bc0680c64",
+            "source_md5": "b29c133079fb87d874fce0233eb37b03",
+            "compiled": ".godot/imported/inspection_tray_breath.png-0167f6bb2ae42eee38accc2fa0c5e496.ctex",
+            "compiled_md5": "ce4425aa1fd2fde69476a62d931ad29e"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/sals_sign.png",
+            "source_sha256": "7b3ca554843f8850f168c2a154bb09366fff8e99dd2af5fd569374aadb8c6411",
+            "source_md5": "080a1ce00af115945410ed74dcbf63dd",
+            "compiled": ".godot/imported/sals_sign.png-2bb2ffae29020fe1b36c060833b26c88.ctex",
+            "compiled_md5": "31b53783fad169c6676c49dea2f401f2"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/anim/security_scan.png",
+            "source_sha256": "8a340cdb0824daf4cb6e4cef8ad8a8e107f53fef17016618757ef50c9dab1649",
+            "source_md5": "7bdbcdfe776a029cf3d90e682a34e27c",
+            "compiled": ".godot/imported/security_scan.png-d07eb7d475f695925b60e28dca9fcc09.ctex",
+            "compiled_md5": "2e813985f5c58957279ab057663cfbea"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/background.png",
+            "source_sha256": "922b8522eed72005e3b26c9312021e9489f6b6337cdb47dd37419087e44947b5",
+            "source_md5": "286d19325579c67557d9b32805087e96",
+            "compiled": ".godot/imported/background.png-33aae85391490e269ca48ac109a84f47.ctex",
+            "compiled_md5": "e33e49b6b585e8b4d7a360fa7d9a858a"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/counters/pawn_counter.png",
+            "source_sha256": "6b65f51ceaed27cc421d3b864cd292325ee05ecc7f61b32f837a7571fe6076f8",
+            "source_md5": "f5cec0ae2ee3d53fa6db222f44c64c1f",
+            "compiled": ".godot/imported/pawn_counter.png-9a317dbb39565683a3f15dd5cf5982e5.ctex",
+            "compiled_md5": "af9ce3177bd2afa53a82571be9402e0b"
+          },
+          {
+            "source": "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png",
+            "source_sha256": "c6fdbde2baf185b6b29434a5c7b1296ffcdf239f78dc34ddb3df7f1b646cd98f",
+            "source_md5": "0ad90d57b781fd888d28e70d48f234f1",
+            "compiled": ".godot/imported/pawn_estate_shelf.png-ac6a918a1ad6cd2e6f97b94cdd7203d7.ctex",
+            "compiled_md5": "c61e6f9bf3adf383635fb62ddf78126e"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/amber_air_0.png",
+            "source_sha256": "e1b8afbb0f22f311a55f1f9ad99717354ee6d981b71341facfd953030ca46fae",
+            "source_md5": "99bc7cff635c391f670abcd4370ba3bf",
+            "compiled": ".godot/imported/amber_air_0.png-49849da600b016aae4078aa4f5814b5e.ctex",
+            "compiled_md5": "ed13ce629112eabe705f3e34dff7c9c3"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/amber_air_1.png",
+            "source_sha256": "916e1c9f572de16d2b7c623b5422b146a752ac32566dce2c259eaf037c61a18b",
+            "source_md5": "ed23718aae8f6e6402415ca222ee066b",
+            "compiled": ".godot/imported/amber_air_1.png-f48d8e0dfc754140f51dd2489a925f7e.ctex",
+            "compiled_md5": "fa066c6282b61483229a6a7444f6ac5d"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/backbar_magenta_light.png",
+            "source_sha256": "58b7adecf3dbc7b55292edaefe05fd8b2f7a8e4623af4f1cb0d96d8e538da720",
+            "source_md5": "0de5cd5c4157da493d7c9825292b7966",
+            "compiled": ".godot/imported/backbar_magenta_light.png-f3cd221152b0f473c802675e90dddb27.ctex",
+            "compiled_md5": "e5e9d868dd19d35dc6a9a6ad5a0e4f61"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/bar_trim_reflection.png",
+            "source_sha256": "f8508fc9d7e4e520468f7da585ed99864c6a5ad9c805b52e2512182041e65f03",
+            "source_md5": "fef1d12645299b2b0d26fe3fee3ff50f",
+            "compiled": ".godot/imported/bar_trim_reflection.png-40df9f02b12dd247836bad9d02551405.ctex",
+            "compiled_md5": "7b203a52df43b9e36e6a89f3af429072"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/cyan_air_0.png",
+            "source_sha256": "a16683d361ed6011fd7d21755253272e69a42c3c4f97b5a75d08a6d1a8cdc11c",
+            "source_md5": "84fd2533eb62c4bbde93aecc52f8d752",
+            "compiled": ".godot/imported/cyan_air_0.png-639ea02b5c2c7094ae3999c3d571f1ae.ctex",
+            "compiled_md5": "d784074a8a194968d6056d882b9cc70a"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/cyan_air_1.png",
+            "source_sha256": "f410f7608a0db40cbd1c42fef56c5a28112a6bd90668cf0db2f1b0c94d9088a7",
+            "source_md5": "b1188af5e4ae610ef5f019fea122b694",
+            "compiled": ".godot/imported/cyan_air_1.png-282689af4b3f47e8a000b70d4e1bcdaa.ctex",
+            "compiled_md5": "b011bc731972fec6e91e937daf8461ac"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_0.png",
+            "source_sha256": "0558b4271f2f940a0cc0d5fd94b247995be4c4f5a472f6e05d374a7f706676bc",
+            "source_md5": "e4d4a29a0a75f0c3ee2c44212c836b08",
+            "compiled": ".godot/imported/floor_glint_0.png-b40afeef3f6ff0109ba200530b93256f.ctex",
+            "compiled_md5": "ebaa7e952f54a6f659773b55726fe44b"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_1.png",
+            "source_sha256": "401dc266cefbb1fbd795a9bc071bdb93ac731c6d59bcdb4351abdfe21e4f6f6d",
+            "source_md5": "e8452d244b1a0be464b03cfcf1ff551b",
+            "compiled": ".godot/imported/floor_glint_1.png-66558e8660e0494b9a967c1c63ae6d63.ctex",
+            "compiled_md5": "93e9b92ca7ed5c392c10556da0323e59"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_2.png",
+            "source_sha256": "5456a23c539d52df7fb447255f10c190d0851aa8888fdaef22a1d6d804ed8d1d",
+            "source_md5": "c33bb118fdc92eb775fc3831220c6f1e",
+            "compiled": ".godot/imported/floor_glint_2.png-c790ec9f046bf7242614749214b47963.ctex",
+            "compiled_md5": "b81cd2d88b82d95cbd53702a906e68ef"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_3.png",
+            "source_sha256": "7254fb137f6d62c1a72692902c74de60ce101d39ea2105aea5e8faa0f4d232fa",
+            "source_md5": "b7e2435e9388802c64849e66d1628305",
+            "compiled": ".godot/imported/floor_glint_3.png-86ada9294fac69348c997da8c9f744b1.ctex",
+            "compiled_md5": "55e244316ad8d97caaca59102eea0774"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_4.png",
+            "source_sha256": "5ca2fea9be7fe93ad4aa2ef3c7387f0b5f1b2bf6f644b93faf5608bcab3c9241",
+            "source_md5": "f9aba085b392944cfa4e7507c51a24ca",
+            "compiled": ".godot/imported/floor_glint_4.png-e13d15a178397182e7597f7741a79d68.ctex",
+            "compiled_md5": "bc356211a729a6eb27cc46b66ebb8739"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_5.png",
+            "source_sha256": "50cfcbbc94905c1653a0bfee82e26a6404fb476ce30b408ef5fe57051db7e76f",
+            "source_md5": "f92ca27e3e1a71e69d07ade1cef7b3b2",
+            "compiled": ".godot/imported/floor_glint_5.png-df7ca5ca42de443fb2a8ff036ead1d3d.ctex",
+            "compiled_md5": "bb3880cb681226aa1cce751dddd71a77"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/floor_glint_6.png",
+            "source_sha256": "0da4ca5952b816e1647248949cb217afdcf06e46d76e935dec502651471e0d92",
+            "source_md5": "f8d751f80ac98bf6f2c5142daec655f9",
+            "compiled": ".godot/imported/floor_glint_6.png-861c91f8f59a336570fa6f6fa0866136.ctex",
+            "compiled_md5": "df2ea47973e10a66931a61e4b3ee7909"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/fold_reflection.png",
+            "source_sha256": "f785d2a6b4527db45235f416fd31028f91a6a5799224f684dda183bfc352cbe3",
+            "source_md5": "a09bdb84a2bf1bb62422dd66535ea6c1",
+            "compiled": ".godot/imported/fold_reflection.png-037fb566e4065f06f0efd640e39111f7.ctex",
+            "compiled_md5": "c88f97d86af0b26593e0cb37183e423b"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/anim/jazz_glyph_pulse.png",
+            "source_sha256": "10f9b14d0d97ac1985d43b6948eac2d759e04a691881e6bba5565a781962c99a",
+            "source_md5": "297a119c9b0c9d51f2ee26a26ab87269",
+            "compiled": ".godot/imported/jazz_glyph_pulse.png-b478858e7c07a9838cf1bb85606cbefc.ctex",
+            "compiled_md5": "a5b49e96ed8548d8543061138b79f2df"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/background.png",
+            "source_sha256": "3db8f4ee4c90e7de1ecb3de452ecbb5bc6bc08abcc127db42e11d7dcd261f63b",
+            "source_md5": "c4e01a298c8404573871882919a6c99a",
+            "compiled": ".godot/imported/background.png-21171fa93b7a32a65cefd2dee1aa6bef.ctex",
+            "compiled_md5": "697ea6336974050e4574b72bf55a6c92"
+          },
+          {
+            "source": "assets/art/environments/jazz_club/counters/jazz_bar.png",
+            "source_sha256": "dd300a4e52d018ab9119d48a7e21e211ab2414e0e46dd0653cfc01fec66a9a8d",
+            "source_md5": "c238d1e59aae31e23d6fb15299943143",
+            "compiled": ".godot/imported/jazz_bar.png-52186e827e20c32641d71cbe5ca3bcd9.ctex",
+            "compiled_md5": "96f1e7f1f4881ff73f6f750b1a0fda7e"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_0.png",
+            "source_sha256": "64b41706e29c7f18e0d34dd0e174bc06b3c27555a6f1bcf35970fbd7ab442b0e",
+            "source_md5": "631c6052ebb4866e1370924d2a5bae5c",
+            "compiled": ".godot/imported/floor_glint_0.png-c9128a7c53bcea543d207028d6fc983b.ctex",
+            "compiled_md5": "1f4e2e75a29a441d90593b165fbc3838"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_1.png",
+            "source_sha256": "da06017db0fe78d443361efb38d27b8864fe3eb84c579b593c87d800c5500055",
+            "source_md5": "4320d55a25a376a179582ddf329e16a4",
+            "compiled": ".godot/imported/floor_glint_1.png-45266ec70f80dde4d3900909e22ec98e.ctex",
+            "compiled_md5": "290265a76b29b4c08772758c4e64320a"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_2.png",
+            "source_sha256": "898048e45f09faa067cab3390a4fb9efb4ef6e02f2b134410be28b92f3e35130",
+            "source_md5": "a85f7bda9a34190991f37a3c924759ef",
+            "compiled": ".godot/imported/floor_glint_2.png-0854737ca7419e48e37b5393ae729d9a.ctex",
+            "compiled_md5": "101d8417ec4c670173e0a56f61f04120"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_3.png",
+            "source_sha256": "7d4c039210fbec5c51d3c31f7241b828f651aca1cf1098f0c6c28b90d36dd1ad",
+            "source_md5": "a1246689d255fe95b37eaf590e4c8d05",
+            "compiled": ".godot/imported/floor_glint_3.png-974f4ab711e1ff190a56696947119842.ctex",
+            "compiled_md5": "191634712b24ece9f1f4a01d029ee80d"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_4.png",
+            "source_sha256": "75a687eb4ddef8475aee82209a73d1f73703375a09faa70fd50dff1ccd6f0eac",
+            "source_md5": "aa22ca13e87460af4bf0856476b9d549",
+            "compiled": ".godot/imported/floor_glint_4.png-e485630f24264302b887fc6c3e60b383.ctex",
+            "compiled_md5": "5be2c4f208ace0c276f10b5728e491c0"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_5.png",
+            "source_sha256": "d2ef56cdeb6abb9873bc6106e697bcaf8d8bbd62d088f6ade01fe05201a2f3db",
+            "source_md5": "468b7c83911931aac8bb044410ac5866",
+            "compiled": ".godot/imported/floor_glint_5.png-102da33e87f1302ab375d81698720278.ctex",
+            "compiled_md5": "4b682e0d80b4c67f29186d0b8eb1f844"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/floor_glint_6.png",
+            "source_sha256": "0a1f390d28a22b869fddbede162e3f2e9b2e27a07e362a29f49b38650ad00e63",
+            "source_md5": "30aa30ec0cce2300788b675e732f4ec8",
+            "compiled": ".godot/imported/floor_glint_6.png-f5c6a476da2f97db209eb0ed696ca315.ctex",
+            "compiled_md5": "68f959960722de9e55c22cf32f7d9e1a"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/practical_core_0.png",
+            "source_sha256": "6698367414624208f8fe762ca92514b466f4dee26adab454bd511ce4ec8df648",
+            "source_md5": "bfbdab301da51fa21d5abe786515db7c",
+            "compiled": ".godot/imported/practical_core_0.png-268c0e94a04f7a775373ca06c14a2048.ctex",
+            "compiled_md5": "96e1a05da45d01fe324faaa921aa94e5"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/practical_core_1.png",
+            "source_sha256": "1d4289fdd6c7a800706088f11e0ec76f770f78d62f740bade39cc7547d289d9d",
+            "source_md5": "4574257f9ebefbe773c25f58e2f26595",
+            "compiled": ".godot/imported/practical_core_1.png-f23c929e435789b122a5384c01534438.ctex",
+            "compiled_md5": "4c2b643f8ad7f0ff7377c6e3eb6c2b18"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/practical_core_2.png",
+            "source_sha256": "6698367414624208f8fe762ca92514b466f4dee26adab454bd511ce4ec8df648",
+            "source_md5": "bfbdab301da51fa21d5abe786515db7c",
+            "compiled": ".godot/imported/practical_core_2.png-fa1bb547f033b8abf3b672976d9032f6.ctex",
+            "compiled_md5": "96e1a05da45d01fe324faaa921aa94e5"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/anim/wordmark_pulse.png",
+            "source_sha256": "cf2d0ad8d9eccb8b006345bd91ef245820d0cf1af0c2894a7015db632ba3f652",
+            "source_md5": "aae1160b26d8572fddbcc15044e3b17b",
+            "compiled": ".godot/imported/wordmark_pulse.png-9c586b700ce4a03cecba6f1d97d7a5cd.ctex",
+            "compiled_md5": "f4262ae51449cc60a0530d7291f544e6"
+          },
+          {
+            "source": "assets/art/environments/punchline_club/background.png",
+            "source_sha256": "fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448",
+            "source_md5": "293ac8c322aeb6bc4bc262a0f9869f92",
+            "compiled": ".godot/imported/background.png-67a2b28893bd7c8b5ce1deb04564e3fd.ctex",
+            "compiled_md5": "e4a40980ea6569a753b616b5dd71f367"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_0.png",
+            "source_sha256": "9266f5ce94ed759c0cce9f9397aa3ce63880b93a88ab8cd77ccab63622d055e1",
+            "source_md5": "907b661e499323051f8c1816a21e5c1e",
+            "compiled": ".godot/imported/floor_glint_0.png-a766c6da8aab58d33bab8b643dd09001.ctex",
+            "compiled_md5": "fad44da20d2667092783abcea1eb0e5a"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_1.png",
+            "source_sha256": "a3d5673a9f40be9fe9e1fbfb213075639f04682520237eaefbd9fa3051357f8c",
+            "source_md5": "1a81062588cf0dd664db1e84d3579b68",
+            "compiled": ".godot/imported/floor_glint_1.png-ce2eaf7a601c07374c52685eb3895e70.ctex",
+            "compiled_md5": "99e1000765f7545266a609bcc2342764"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_2.png",
+            "source_sha256": "38ef4f7481eca551177725ff199ccd7d8ac46947e56eb15e44444827410932b9",
+            "source_md5": "eb0bb9bd8f9f8ebf6bb761ee725602c5",
+            "compiled": ".godot/imported/floor_glint_2.png-3f1a47030047be0a5f85b62da3d6c7e8.ctex",
+            "compiled_md5": "720d1c9f821f93e4ed22d3e34e9932dc"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_3.png",
+            "source_sha256": "ef2dd8b5c0ffaa02415d78399280f7c1f3cdedd23b39300e67aff676da799d60",
+            "source_md5": "c9af0755e8fce9aa4828b14522b84962",
+            "compiled": ".godot/imported/floor_glint_3.png-228930dffd70def0891bf99522c45148.ctex",
+            "compiled_md5": "b3c5b97f89f1ecf3887c08bceafcf417"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_4.png",
+            "source_sha256": "7ef681c56021b7c155f2bb4717bc42fae452f4daa5df1c21ce20e8bf3ca7fe83",
+            "source_md5": "800eb63d8d5e81f0b7cb0a07480591dd",
+            "compiled": ".godot/imported/floor_glint_4.png-2bbf107de4ae2149cbb65d765ac2b20d.ctex",
+            "compiled_md5": "80b7ef24f709e4b283a4d39e42143b27"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_5.png",
+            "source_sha256": "8fcd15e7d952b767d69353224f8001a28c93cd048705f6e06e6de97abcdb241b",
+            "source_md5": "2f90ddfe4918145574cc39979629116d",
+            "compiled": ".godot/imported/floor_glint_5.png-4771aaf57f8dae5590ae05c9f8710519.ctex",
+            "compiled_md5": "a12584531299b0b537534ddc94635cb9"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/floor_glint_6.png",
+            "source_sha256": "fce561760a9dda0253c40d3d273a7dd56b6af6257388f46e678adca35f552933",
+            "source_md5": "8cda791b09f6c38f8f1d5ff9bb22ae46",
+            "compiled": ".godot/imported/floor_glint_6.png-2949f6fb201c164869b8170e47d5215d.ctex",
+            "compiled_md5": "dba421987b937f864b7ae1b36ae516ad"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/long_pink_band.png",
+            "source_sha256": "1627c88d2010b377b2a5f878858f532a090727bf386e219f8e0e129c97af6253",
+            "source_md5": "8a2cc0fc27544243cad21330a7545493",
+            "compiled": ".godot/imported/long_pink_band.png-0937260fc6e8e6c13327fa8ce7417b85.ctex",
+            "compiled_md5": "761f9f24c4d68babfceab63446eedf8d"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_0.png",
+            "source_sha256": "a7ad1cd3c375193a6f40d0d60d2865d01cb64cc5bde097b712e869c5a28f4f01",
+            "source_md5": "5a88512c18bf219b16296e3259ec129c",
+            "compiled": ".godot/imported/string_core_0.png-427ece9096ef00c6682b2454f2f0aaf6.ctex",
+            "compiled_md5": "2ef8c17138cd89b5d5f92cfceb849603"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_1.png",
+            "source_sha256": "72fb15def6646238715e750ca8ec3d3686be62f947f387ddd16330ee3f75458a",
+            "source_md5": "b935baa7926bee9586b0b9cbded7f450",
+            "compiled": ".godot/imported/string_core_1.png-443c00984230b76c9c0caa3f44c840a2.ctex",
+            "compiled_md5": "7ceac0640992ba21e0c6a7ddf133ea82"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_2.png",
+            "source_sha256": "bb84e081be9d72c162cc5b2c68a3e18916d18eabc32672e721f81405e093e74a",
+            "source_md5": "6cab55230708c2a09e301fa2fe026aed",
+            "compiled": ".godot/imported/string_core_2.png-50dbad9eba171342e86dd9047a643aeb.ctex",
+            "compiled_md5": "8a5df13e804bf8bb77a211faeb115e91"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_3.png",
+            "source_sha256": "4a4c9a9c3eff8d907c21747b3bce4eec360351bd1af1ee5e29fe42b97b2115b4",
+            "source_md5": "4ada77a8523eff7705c2fd2265c303fb",
+            "compiled": ".godot/imported/string_core_3.png-514727243d0f1bcd90a36587abf885f7.ctex",
+            "compiled_md5": "9feeadedd34d7d91a98775d2363eeede"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_4.png",
+            "source_sha256": "984b4da5f12e85600a7a5614ba7506c234affe1ea4005bcd77c4e324f5f18d35",
+            "source_md5": "bb6ed0650c1cf01caab56f4d76f3c4fe",
+            "compiled": ".godot/imported/string_core_4.png-acbad8544522dcbdbdefe9586f5c64b9.ctex",
+            "compiled_md5": "73b9d764d6da02394b696f7768dbc710"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_5.png",
+            "source_sha256": "bb84e081be9d72c162cc5b2c68a3e18916d18eabc32672e721f81405e093e74a",
+            "source_md5": "6cab55230708c2a09e301fa2fe026aed",
+            "compiled": ".godot/imported/string_core_5.png-044e1abbac93ec439ccd4a9bd6a6803e.ctex",
+            "compiled_md5": "8a5df13e804bf8bb77a211faeb115e91"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_6.png",
+            "source_sha256": "499a4790f6306130829849f3854b3598fdab916ff0fcd753be8558e6efbda478",
+            "source_md5": "4ddabdbc211e98a0c8e8affce3c0f147",
+            "compiled": ".godot/imported/string_core_6.png-e3659da820494c88dec41e5bca27c1b1.ctex",
+            "compiled_md5": "d7f6f1e96a1dc919bff03f0a7643ffaa"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_7.png",
+            "source_sha256": "0189e1e788d5940ebe4e00f032c38cd0a9b5cd9c4998d2700c0e455028df6bcb",
+            "source_md5": "558d49251c49d63b2ba0820bb3790f1f",
+            "compiled": ".godot/imported/string_core_7.png-509ce76f474e156a3f0c3f9b28118c49.ctex",
+            "compiled_md5": "b7ad4ca518b01beaab7e38f9922f3337"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_8.png",
+            "source_sha256": "471e33199cbadc1027390fd4a02ac7f795abb7a3cf24c167ab818dce3252ac82",
+            "source_md5": "170f06cef1c89ba93b84200e5c09a117",
+            "compiled": ".godot/imported/string_core_8.png-1ceefae1a4cf7d1867bbc381bc6834de.ctex",
+            "compiled_md5": "4251c486a7017d8c42dde46909d974f9"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/string_core_9.png",
+            "source_sha256": "c4916f66e492e8dddcfcbde25175204fc97ff705192a4e9d0c5fc919b0295552",
+            "source_md5": "c0e7ff4502b400eb547f388d4d20b8a9",
+            "compiled": ".godot/imported/string_core_9.png-4d534ddd8cf7e4ba643dfe3afb172b57.ctex",
+            "compiled_md5": "5e86d0a74e676fe745157f5d6ab4f4f9"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/teal_material_glint_0.png",
+            "source_sha256": "f70fe9594866ea3b85508f039642ace22b35e607408f0aa597ae068ac9ad31a4",
+            "source_md5": "2d70504b776d09ffdc46296c4148728b",
+            "compiled": ".godot/imported/teal_material_glint_0.png-d3767c150ef1bf0da0aaec64b6a7a026.ctex",
+            "compiled_md5": "f2731cdd67f082401d61d472691f911e"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/teal_material_glint_1.png",
+            "source_sha256": "233b243f9135f9aa7401db1c36ad9eeded01b2b2c01433d9f15118959204cc16",
+            "source_md5": "0905872b82e7826760174899f37eb0cf",
+            "compiled": ".godot/imported/teal_material_glint_1.png-728a25aa90cebc6134363b944de1182b.ctex",
+            "compiled_md5": "ea399e4a63b1f67ed24743999410b208"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/teal_material_glint_2.png",
+            "source_sha256": "fee0c4ad687e93d5041d6a6a1c253101ea4d784e8effd36dc15a3eb523c7dad3",
+            "source_md5": "ec193062d29ce1c60c9f66283a6f4a87",
+            "compiled": ".godot/imported/teal_material_glint_2.png-302b1de17d0b469be33991799f9b2e3a.ctex",
+            "compiled_md5": "6df52d895e4a11ac7d88a660e06b4a5b"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/thin_pink_ribbon_0.png",
+            "source_sha256": "da9c1096213f4ff6b3dc506f57d3e5e97ad42053ff863399e53e14cfd4d58ecf",
+            "source_md5": "1870cb16255b7a3938cadb46bc1e89d4",
+            "compiled": ".godot/imported/thin_pink_ribbon_0.png-1d8797d0d0af4e7177d4d8691ad94de0.ctex",
+            "compiled_md5": "f4dbed148042067e88ad5bc692c34249"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/thin_pink_ribbon_1.png",
+            "source_sha256": "c8355c6378cd77f1009dec4bf61f9cb5ec655793670c360ada058e43784d5095",
+            "source_md5": "8e496b3deaf8fd3744d7c1e0025d72fd",
+            "compiled": ".godot/imported/thin_pink_ribbon_1.png-58e1e5f89a22e30416d11f65444d5cd5.ctex",
+            "compiled_md5": "bc924c2b731e01ec7e3bdf3f84e40351"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/thin_pink_ribbon_2.png",
+            "source_sha256": "ef1a6ef6c6755a8daf1ddfe44169891f6e91dd478fd0e36d4cc23868d8d08daa",
+            "source_md5": "6f8e7d007af624743c4288e8548aa607",
+            "compiled": ".godot/imported/thin_pink_ribbon_2.png-d5c1a3e595ca3339a936906801370cb0.ctex",
+            "compiled_md5": "e2a2f1984369f858ba5b4035ce1fa73e"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/thin_pink_ribbon_3.png",
+            "source_sha256": "bbecc6bf937e2a3e7161b3143d5336e556fb76976adafaed61f3e99f8c544f0a",
+            "source_md5": "15d5399cbf095dda3424d32da79c26b3",
+            "compiled": ".godot/imported/thin_pink_ribbon_3.png-2c98c2a0eb35b30e1ba781fdb7cd69ea.ctex",
+            "compiled_md5": "ccae5c562b9014cb3e3eff9cba92d348"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/anim/thin_pink_ribbon_4.png",
+            "source_sha256": "19c2eac4dd12516565342fcbd7114718564c0a18436bc6392363c01368988cad",
+            "source_md5": "a6eeaedbb5fc5356bd91ba6cd00c04f2",
+            "compiled": ".godot/imported/thin_pink_ribbon_4.png-ed44ddd1cf0e182274f3c5f6fe6ee38a.ctex",
+            "compiled_md5": "3280a2626c92c3bb882af3611e69d002"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/background.png",
+            "source_sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+            "source_md5": "8f7a97c1eb2dcdd3a2ae5d8508c5e0d9",
+            "compiled": ".godot/imported/background.png-e845a5dbafff0085898494897fab115e.ctex",
+            "compiled_md5": "4417f5d20b9ccc4de069a538cab76850"
+          },
+          {
+            "source": "assets/art/environments/small_underground_casino/counters/punchline_right_table.png",
+            "source_sha256": "6cdb4a34f3aeb5262cbac4ee81d2728f7c3d3454953dbcbd668c575d7cecc701",
+            "source_md5": "e4c57bfed9b5331f2b0778b1d84bd9af",
+            "compiled": ".godot/imported/punchline_right_table.png-824550770ef5c9cf0ccb8b64e02544a9.ctex",
+            "compiled_md5": "4c6c102bc86caa8aa63882d69f51c110"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_0.png",
+            "source_sha256": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+            "source_md5": "f4491ce3c841d23eba34e1abeab253f4",
+            "compiled": ".godot/imported/floor_glint_0.png-0c76d491f27ec84ad777bb61803adb25.ctex",
+            "compiled_md5": "138d94823a180a00c43e19be5e3bc11a"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_1.png",
+            "source_sha256": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+            "source_md5": "e089c68f6b4ef0fac60275bcd9e95996",
+            "compiled": ".godot/imported/floor_glint_1.png-0ba6e186acdb7b5f82074dfe174e77b0.ctex",
+            "compiled_md5": "659c9a36c100f9076da9f0080cb82153"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_2.png",
+            "source_sha256": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+            "source_md5": "025cfa38a7314775dcd7f1107e7cd81c",
+            "compiled": ".godot/imported/floor_glint_2.png-1e7617a45617a4c5bd2e6c3067bcb0e1.ctex",
+            "compiled_md5": "d08fd8b85bd8a17f90a34c76437c8dda"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_3.png",
+            "source_sha256": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+            "source_md5": "23a39b298bbe7612456ea9b614a18979",
+            "compiled": ".godot/imported/floor_glint_3.png-755be28c0b2b915ae7f8d130c3938711.ctex",
+            "compiled_md5": "ff3f472c5fbdd1d6b7643300be8e8e5a"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_4.png",
+            "source_sha256": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+            "source_md5": "e1a8472f1b8b613ae7e3473c582247c1",
+            "compiled": ".godot/imported/floor_glint_4.png-3c7321766732c2a19da23632e5fc3467.ctex",
+            "compiled_md5": "08ff3af187abe4db3a7c0d132d1781fb"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_5.png",
+            "source_sha256": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+            "source_md5": "70bc452fa5625b17891b78bce09a41ea",
+            "compiled": ".godot/imported/floor_glint_5.png-0d000efb7baed1ea07c08a37a5c80b08.ctex",
+            "compiled_md5": "30c11c70485c07c9ca4220b7f0202048"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/anim/floor_glint_6.png",
+            "source_sha256": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+            "source_md5": "016a958fc88000f7100130be16c99ee5",
+            "compiled": ".godot/imported/floor_glint_6.png-88d9b6612c55ee40cb997b8dd3e2c360.ctex",
+            "compiled_md5": "016a2605ee82b3d0e872127685609492"
+          },
+          {
+            "source": "assets/art/environments/punchline_back_room/background.png",
+            "source_sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+            "source_md5": "5ed951620df2244e96133cc7afaa9b6f",
+            "compiled": ".godot/imported/background.png-879f9a37c3f168f4600a9350566556e9.ctex",
+            "compiled_md5": "c80c27fbf65a733b780096163349b24b"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/candle_light_0.png",
+            "source_sha256": "d79eddbe02603a5412ab7be088d6790b329d2e04dd817842f8eaf6064fe1a12a",
+            "source_md5": "28f6df9f6b5d234ddd25714ffa1f4e1d",
+            "compiled": ".godot/imported/candle_light_0.png-36c0c8e2c1d7f762203fe90c859772a4.ctex",
+            "compiled_md5": "c292203b261481643fdf87c32d7554aa"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/candle_light_1.png",
+            "source_sha256": "545375c389080aefa2f4e0461474452313a6ce5754d6946910e7a38b52698d95",
+            "source_md5": "f74c79e232b2a12017cb4c3828a33463",
+            "compiled": ".godot/imported/candle_light_1.png-36e1de2d913e27f11f6f2633979a2531.ctex",
+            "compiled_md5": "0333cf76eeb3d551efec5ce55950a091"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/candle_light_2.png",
+            "source_sha256": "d73a331a1e0b2e7aca2b472aa8bd02035453ec120d8303e2e9126b0135fd168f",
+            "source_md5": "2e434fc25f4218fc4954f19b70aa754b",
+            "compiled": ".godot/imported/candle_light_2.png-dfaccee6c7d749fbd187385350141201.ctex",
+            "compiled_md5": "fae34bfa54c6a2fafc9fc9ebf37c728e"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/candle_light_3.png",
+            "source_sha256": "0a563e8293c2d67067ca6cb9988ff4287007abc690c33d09aa6cd48252efec64",
+            "source_md5": "b867f3a0d40807c28f30967e7b328b70",
+            "compiled": ".godot/imported/candle_light_3.png-ce19acb661b239d11ef6dc3637e116ae.ctex",
+            "compiled_md5": "dd67d95f0c884e82e8ce37003642e295"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/candle_light_4.png",
+            "source_sha256": "766debe06cb201c06999bcbacc7ede2dcd7a2d76dbbff435315660268029bda9",
+            "source_md5": "e2cc66fe85eb97b27f9649787ef4bc13",
+            "compiled": ".godot/imported/candle_light_4.png-2db106a84f220416c6db6d124b3d2278.ctex",
+            "compiled_md5": "39d3035c4e2846e26765de6710f7ef0d"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/cool_air_0.png",
+            "source_sha256": "ebe7ceb580eb4286ed3d03d2c18d2c8423b818e65704049dafec601134cdb5b9",
+            "source_md5": "cd7d3622fec465673fd463bd22893752",
+            "compiled": ".godot/imported/cool_air_0.png-8715ff728af1b8aed5a5aea57f9874e3.ctex",
+            "compiled_md5": "7488bd6ad9a6d4652d7d785fbff66448"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/cool_air_1.png",
+            "source_sha256": "048dd38269941db7e74d803ac5c0878ca190c7da6b8a7d714d00fea7c79f006e",
+            "source_md5": "193f6ab3155e61c2b23ba5ab10f3f22e",
+            "compiled": ".godot/imported/cool_air_1.png-4d6649729d7d08d89be1965ba19177aa.ctex",
+            "compiled_md5": "343bbb24012801714c136bbe69176904"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/cool_air_2.png",
+            "source_sha256": "b5f8e207a2c83a23623feb29034e115fb767cc5b45332ca23444044f61342c03",
+            "source_md5": "6b0e624f1cb6935ec4baaf6c73188774",
+            "compiled": ".godot/imported/cool_air_2.png-3f250c2d0d6ba32df517fc55e6229919.ctex",
+            "compiled_md5": "c7617aa07e2187e7ac976cdfc974bd14"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/cool_air_3.png",
+            "source_sha256": "2e4e4699cb2436b7ef3fc6e4b4fd611d760e19d6f2d3edff02346071af4b9302",
+            "source_md5": "93508e37258044e3870df27d3ab7d354",
+            "compiled": ".godot/imported/cool_air_3.png-bbc4946ab04e4fba2187d1e6f4c77881.ctex",
+            "compiled_md5": "d64152ddf4a38991452f61b77e94456f"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/cool_air_4.png",
+            "source_sha256": "2410d0bd01c2927c264b0d73fca0328341ca04c4cce3d8596cbcdd987dcd55ad",
+            "source_md5": "05059d5ef72bd61cdfbe08cafaa929ab",
+            "compiled": ".godot/imported/cool_air_4.png-2d868e74565765a1b51cb92b0314ae0b.ctex",
+            "compiled_md5": "6ccdf622bc1c667ae10f093091a6b265"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-3b97231b01c5c13920e15d94f13680d2.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-d55b99bbbf44a2f207d2699ef6e5b384.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-c13dbb041a9f720b9b74cabdc2e37b65.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-e1be2f4a5a5f1fd59e3710e030fadee7.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-2aa58233941614c6c28de46919ab56fd.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-6ae4616514e229f86ab2f4be48fa2158.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-8eb9f659c678d65d0a8b60e1961ae5ed.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/kitty_sign_pulse.png",
+            "source_sha256": "30af2beae75ddd29b474b645ff86fb26b6f4e2797761cfbf077e05d988f7901f",
+            "source_md5": "34aea8c82c9d0fbd7a993756c4e716a1",
+            "compiled": ".godot/imported/kitty_sign_pulse.png-84373b4726c6498556e8a363517a22bb.ctex",
+            "compiled_md5": "5a2b9cb2ba1589444344019940c802b1"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/pink_air_0.png",
+            "source_sha256": "7884f7f55c0dfcf00fce4442cf4eb742b373a057ef928ae3e2cf996ff0bc09a6",
+            "source_md5": "d74f30b12763ecd6e2547c33f1064c45",
+            "compiled": ".godot/imported/pink_air_0.png-4d8cfa2f1ac328f14f2e7cc23198bc38.ctex",
+            "compiled_md5": "33fe9be20c6f8abb91e5ba21d579cbb8"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/pink_air_1.png",
+            "source_sha256": "54e57decb1b1a83ad10cda5400cb53e85f0cb697d63b80b2e550060df55de1f1",
+            "source_md5": "69c1807147a134b056d733f14b58f7af",
+            "compiled": ".godot/imported/pink_air_1.png-0f6a0378e2c43ed3048bc0f38528c0dd.ctex",
+            "compiled_md5": "05924d8a3efe2acc19afb40c6b2aafcf"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/pink_air_2.png",
+            "source_sha256": "741b09243d56c16c0380ac01426b6a9ae5c50f3b226b54c4da56858a52f64d73",
+            "source_md5": "0f74703e37f4acdfd5bd7d4cabf00250",
+            "compiled": ".godot/imported/pink_air_2.png-ee96ec0e360f2f06a4ebce0dcd700e3b.ctex",
+            "compiled_md5": "c32abf3b989b056fbb702096381c7770"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/pink_air_3.png",
+            "source_sha256": "2ce1065d3eb05218ad8c557879b4f4e47c39ac113d6833863e43a8d3a4deb516",
+            "source_md5": "6d681a02da6b211ff102e070be9ee8ef",
+            "compiled": ".godot/imported/pink_air_3.png-dab4e50fd7196f29878a8bd9292f8546.ctex",
+            "compiled_md5": "1e92d38aa45d992fa1fea8015b4b55ea"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/pink_air_4.png",
+            "source_sha256": "b9ae8238f27bf31326147aca81dfc11e16f03f384c007063a5eaf64f00cc9fb4",
+            "source_md5": "3c0d82bae6808f4622fe8d344b2945ab",
+            "compiled": ".godot/imported/pink_air_4.png-420e54ffb986ac3de6474d8937aa0ea5.ctex",
+            "compiled_md5": "caf961fac6873e1778b8b2e9348f689e"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_0.png",
+            "source_sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+            "source_md5": "00b08bda8a03540b93f2092285dd4e78",
+            "compiled": ".godot/imported/warm_sparkle_0.png-55d525ead867739eeff198c400b3a3e2.ctex",
+            "compiled_md5": "504019c1a46b532f0ecf1c50bd1c6da1"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_1.png",
+            "source_sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+            "source_md5": "00b08bda8a03540b93f2092285dd4e78",
+            "compiled": ".godot/imported/warm_sparkle_1.png-8c7663d0f661da1b4e818608a2adca4c.ctex",
+            "compiled_md5": "504019c1a46b532f0ecf1c50bd1c6da1"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_2.png",
+            "source_sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+            "source_md5": "00b08bda8a03540b93f2092285dd4e78",
+            "compiled": ".godot/imported/warm_sparkle_2.png-82ab8196b3bfc345a440ea523c424969.ctex",
+            "compiled_md5": "504019c1a46b532f0ecf1c50bd1c6da1"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_3.png",
+            "source_sha256": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+            "source_md5": "00b08bda8a03540b93f2092285dd4e78",
+            "compiled": ".godot/imported/warm_sparkle_3.png-928bf0598fd224b2c7ba9e950b31b7fe.ctex",
+            "compiled_md5": "504019c1a46b532f0ecf1c50bd1c6da1"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/background.png",
+            "source_sha256": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+            "source_md5": "1e66def19cfad34984ce5310758eea00",
+            "compiled": ".godot/imported/background.png-d50cc13217b3422ec46e8e4ccf695661.ctex",
+            "compiled_md5": "0fbba5c519b5e8d63588f36faf55341d"
+          },
+          {
+            "source": "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png",
+            "source_sha256": "3ad4156cec44de64000f94848f159575b7d8f2f96ed8fb42fffa7b6d84a52497",
+            "source_md5": "685cf49d85b8a7a4b225ca032887ea4e",
+            "compiled": ".godot/imported/kitty_champagne_bar.png-5e8335add31c97f3ac740e474e2f784d.ctex",
+            "compiled_md5": "89d45c36e590789d7d33e89eed00b7cd"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_0.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_0.png-20d8446d9f7e1eedc0f54c80d33a0023.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_1.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_1.png-c81b7911df8d5d188c45c2ec7df1c98e.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_2.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_2.png-301eca0829862120ae232a497b9f1e8a.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_3.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_3.png-ed1bc7a109d11bfa4ba908cfb1b264c9.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_4.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_4.png-8163bd5b6d8c4111525904998b6080bf.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_5.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_5.png-0c33d02ffa18ea272dccae807e875345.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/background_river_reflection_6.png",
+            "source_sha256": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+            "source_md5": "382f811089f74d1d4b3705032267014a",
+            "compiled": ".godot/imported/background_river_reflection_6.png-821439a9f7a1b0eff62deca0dcdcd600.ctex",
+            "compiled_md5": "904ac6339a9b8f0a26d2ab123ff06417"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/delta_sign_pulse.png",
+            "source_sha256": "e94fe83afcb03bacef55dcf66c2311e9c96caa02f1663877882a78a8e1cf488d",
+            "source_md5": "50eff03d5492c82ec12c6b4e43b64d83",
+            "compiled": ".godot/imported/delta_sign_pulse.png-f0a335ca8547361bb0fef7acb05d4179.ctex",
+            "compiled_md5": "dd6a9ec3fb89bd984785c5c3f38e4342"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/dock_light_and_stem.png",
+            "source_sha256": "23441fca9d290a408754b8a18c6e686bd856d28c8985c840dfc76765040f8c63",
+            "source_md5": "4a617171995d50eedd407593aeab67ee",
+            "compiled": ".godot/imported/dock_light_and_stem.png-7cabc58a8d68aaa5646b1dbcf697eb34.ctex",
+            "compiled_md5": "278be052bfe520cef8b1eb33b9dbf779"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-3f3eb8dc19314c4350e3e2a7a7f474cf.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-73ef8e737b4dc6d17c4807398ec02335.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-e7f6696200e9b084186fdcb022e04f32.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-fe0c225a90f0d622d02074f4552c70e6.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-1ad8819c7253624928839f795bc431df.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-9b49dbd0c51e1a5cf2001c1d23ac92de.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-0d97d940fde4f0b87b94fa934aa8a504.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_0.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_0.png-e916c276faa406c5c7d02ed2b6f31a9a.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_1.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_1.png-c284d89f94050bc8441179307385c4fb.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_2.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_2.png-f103df7a817838a4b3d9939bccc1bdcd.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_3.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_3.png-bed6953eb17b42b9ec40e49c8c7d9f74.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_4.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_4.png-b8caeab0cde342d33086f9d77418eaba.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_5.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_5.png-cde6eb16f3c5f21f44b4139940a5c2c6.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/scene_life_river_reflection_6.png",
+            "source_sha256": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+            "source_md5": "8965aaf21068ec40e645abec0bb69531",
+            "compiled": ".godot/imported/scene_life_river_reflection_6.png-6539e19c8c2ef8a865feb28c7f303731.ctex",
+            "compiled_md5": "5ae66ce7a04318cff470760c90a68be8"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/window_sparkle_0.png",
+            "source_sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+            "source_md5": "0e2d3ff0ac825381650211e0507ce9cb",
+            "compiled": ".godot/imported/window_sparkle_0.png-14a5f21a8a250dbbb68538c673fafafa.ctex",
+            "compiled_md5": "7fc229264f797f08b111570905bdd3ef"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/window_sparkle_1.png",
+            "source_sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+            "source_md5": "0e2d3ff0ac825381650211e0507ce9cb",
+            "compiled": ".godot/imported/window_sparkle_1.png-59a3feb2a384701ea4b1cf1c61905452.ctex",
+            "compiled_md5": "7fc229264f797f08b111570905bdd3ef"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/anim/window_sparkle_2.png",
+            "source_sha256": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+            "source_md5": "0e2d3ff0ac825381650211e0507ce9cb",
+            "compiled": ".godot/imported/window_sparkle_2.png-dc34dc4052da080bac580d1d5c25f70c.ctex",
+            "compiled_md5": "7fc229264f797f08b111570905bdd3ef"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/background.png",
+            "source_sha256": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+            "source_md5": "757c2c0e8db9f02752c3239736c63c66",
+            "compiled": ".godot/imported/background.png-b24780852f3ceda9bfb21918bf56b632.ctex",
+            "compiled_md5": "3a2348b27478f65877fdd266777da119"
+          },
+          {
+            "source": "assets/art/environments/delta_queen/counters/delta_right_table.png",
+            "source_sha256": "b44cf1297406c399ab8fd599cad625de0990d5ceceef9139c3583d7130146b2e",
+            "source_md5": "c3ee60bb0cdd4b0647ab4a1b27ec382c",
+            "compiled": ".godot/imported/delta_right_table.png-9f94cff5ef7e611af94e09e27f16cd56.ctex",
+            "compiled_md5": "2dd1295bc73c84e117f8f86ec3fac548"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_0.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_0.png-a612afb436e6291ed57ebeb25272f533.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_1.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_1.png-10e58d7ff14a3f4dd95db4e2e461a546.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_2.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_2.png-3340a75fdc16ba187abe5671294203d3.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_3.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_3.png-a20074eea6eaa0e70f63a0f8d571773e.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_4.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_4.png-d454e78d3872fff5050a32041e6ea72b.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_5.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_5.png-67bb7aefed5c96b963e54619e02ad45a.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_6.png",
+            "source_sha256": "9bf644a616eeebe5f45553a2b99d6b6587cf6a4a4cd46becaccb47a869f66a2c",
+            "source_md5": "c7b1469b5aebdfaead45b9a1af0e661d",
+            "compiled": ".godot/imported/background_surf_6.png-57ae99fedde579930ecc25ce914add1c.ctex",
+            "compiled_md5": "6101ec54cbfb58628672cd2c57241844"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/background_surf_7.png",
+            "source_sha256": "210e3fc858ae5a119088b81df8592000903baf7780dd58bb7abdef3657792a79",
+            "source_md5": "a5cb747732fb4430c3c6be45d1eb91ca",
+            "compiled": ".godot/imported/background_surf_7.png-04c244696278923c8955e81e7064df47.ctex",
+            "compiled_md5": "a437ca66f055076675a39c76dcfda973"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/beach_sign_pulse.png",
+            "source_sha256": "376a266ea6b23d351fdf4b4b64d691b51e0c8bc4bfea5d3294cc7d343fd217e9",
+            "source_md5": "c85a880ccde14343da8ed889c60d7810",
+            "compiled": ".godot/imported/beach_sign_pulse.png-9616966cfc934d283d62a1368ef912ba.ctex",
+            "compiled_md5": "9c4fdac9786e875633daa30d77a131c1"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/distant_boat_and_cabin.png",
+            "source_sha256": "06d6aebc7c86fb96234adeeb64872fcae31ca63fe94974f2b05f42dfc34a065d",
+            "source_md5": "6887dd16f35101fb386611fdc34f2596",
+            "compiled": ".godot/imported/distant_boat_and_cabin.png-8070a933d26eba811fd7eb744a1942dc.ctex",
+            "compiled_md5": "a565b4221583913bad78dd5eaa79eba5"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-576fc5e7d0306ab519dff3305b310991.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-bfb9b90c8666ebda080d5f10aa2be671.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-721466d535777ea46516c33b00ba20d3.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-23b8afb8597c56fe7a06621f12f48fed.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-644a6ce544222de3be6ba6061f7cc84b.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-914eac7f799cfce245f91429b9e46594.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-6d3e5aa6cdffaf05faf806055929dec3.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_0.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_0.png-2e84c676287c1c046428a85d42f803b4.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_1.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_1.png-0448d27aee5bd08a888fcc1a6a1c4025.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_2.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_2.png-6f55dc12e911c83a1b048e2483e5119b.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_3.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_3.png-b783002751b6289dd4c66c045661f8d1.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_4.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_4.png-be1774aec9b5b6f9ffb1bb36eba89f04.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_5.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_5.png-5072049f246ad16e7f42af0d0ba65650.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_6.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_6.png-cfac96619ea2ceaf1087f348c818f2d5.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/scene_life_surf_7.png",
+            "source_sha256": "9aaa5fb76be91c6096074aad68f5769c066a22d7e5d9fd13805a0f1ac3ac0951",
+            "source_md5": "66a7e7c4e2be334fbfd7aff4c1781929",
+            "compiled": ".godot/imported/scene_life_surf_7.png-151034b3349e8d6c0870e23a49b2c641.ctex",
+            "compiled_md5": "82fdc7fe6819648db6cfc94ebb5d825e"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/sea_glint_0.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/sea_glint_0.png-15de596393b585836aa5c34a6aecc00d.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/sea_glint_1.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/sea_glint_1.png-3e65af84017e0758034f07877891cb74.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/beach/anim/sea_glint_2.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/sea_glint_2.png-8c222f9f87d80a8b70ec35c2cc866afe.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/beach/background.png",
+            "source_sha256": "080ab3b56e5f1ac326f4349d559cb793128b1d22fcc14da231996fb31b7e731e",
+            "source_md5": "bd23b65e7de94d1dec33fcdf09d1f6bc",
+            "compiled": ".godot/imported/background.png-685dc8a85ca464bc81cfc9f9bf50b2af.ctex",
+            "compiled_md5": "fe2b3632adcf4a38d30611ab4417ae8b"
+          },
+          {
+            "source": "assets/art/environments/beach/counters/beach_towel_stall.png",
+            "source_sha256": "38ce7f0d53daf99ca5f0710245ec0ba873aaf644b55626a8382ec9f71d4ebd47",
+            "source_md5": "36fef641fa3e88937834b8ffa3ebac45",
+            "compiled": ".godot/imported/beach_towel_stall.png-66f5070b5a19f66255f19401c4f3ef2a.ctex",
+            "compiled_md5": "e5354490e0edc995dec9960b5fdf951c"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_light_0.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_0.png-5c76524d64b6955cafbedd3341882d9e.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_light_1.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_1.png-ae4230c2dc5f340effdcb3466f5a6cd5.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_light_2.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_2.png-cd091a38eb892bc52f43f41605220913.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_light_3.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_3.png-0813e5b79aa72b095d8908f57e20018f.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_light_4.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_4.png-247bfb2c5863ae4c59fded7fbd015629.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_sign_pulse.png",
+            "source_sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+            "source_md5": "8c71eded32ecd9f44e34673a4339108c",
+            "compiled": ".godot/imported/casino_sign_pulse.png-19a876b349a290c1527ddbe1db2afeb9.ctex",
+            "compiled_md5": "9b937efb773d44d975ab81c779e05d0b"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_sparkle_0.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_0.png-de0aa1c51ab4f36c396b4d8379a57fac.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_sparkle_1.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_1.png-ef07c8e9a154523345ad08650e2d8ba4.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/casino_sparkle_2.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_2.png-287ee5318e26257118fa3a0ca82584aa.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-be20ed5ddaf078eb007b5995306ea23c.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-0d10820833c91875f6ad6fbca94fcfbf.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-88c2f3b58f40a6d17008f2d557aff2cc.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-d6f23083b392491cb2fe825d566ef9c9.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-5bbf4847f0e779774863e4b619ee979d.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-064df2ae1de221bfca34eaedc6ea56b9.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-77efce5e82f2aad04e487e5369414e9f.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/background.png",
+            "source_sha256": "f5b26c4f16b4ff419154c555d48f553013d8c75363284c0090b7eff07d19eb9f",
+            "source_md5": "62ac1f2dfebe99a3f6fe1a685be57fe3",
+            "compiled": ".godot/imported/background.png-0c39f6fa31db56e9627c13d5089aa6b0.ctex",
+            "compiled_md5": "489528d2f62f78c74cc9e5ff1ee61bfa"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/counters/grand_host_station.png",
+            "source_sha256": "9c91ded4ea1c15e2d43b3fd7073c24c1868ff96aeb80f7299e47525d11e24ba6",
+            "source_md5": "0820f05f1b58eca3f06151e9250bb579",
+            "compiled": ".godot/imported/grand_host_station.png-6bc5e648b826dcb57b937968a42b4abe.ctex",
+            "compiled_md5": "44091532628f85f0793c8a879f172c69"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/counters/grand_table_left.png",
+            "source_sha256": "71bd9a1ca6c823d4ca0e1670f338300bf92d3bc21e6ccee34a58388f71a67bdb",
+            "source_md5": "0319e48b2a543256e8a169c6afbcf81f",
+            "compiled": ".godot/imported/grand_table_left.png-8b0de68f9c5b482db160c5120fcb553f.ctex",
+            "compiled_md5": "9e8948b1a789bdfde10627cc0a5ce6fe"
+          },
+          {
+            "source": "assets/art/environments/grand_casino/counters/grand_table_right.png",
+            "source_sha256": "97777ebd2123646cd07be6e2ba6fa029e7f257503ecf1054f71407b4ac97669e",
+            "source_md5": "7b966045ff1b297b46eb34d13a4ee9eb",
+            "compiled": ".godot/imported/grand_table_right.png-11359bd7bfa1d138b014334e6b8b6dad.ctex",
+            "compiled_md5": "30e6ca44811f518579442624875dcc4c"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_0.png-7e2f6b41d0ddcc8d8a7a18d0aec8056d.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_1.png-b126ba5068c703980427572ee27eec6e.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_2.png-b0d3a3ac7e8c594ce6f28dde73a33ac1.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_3.png-f2e8052c6bfe73bccb7da7089109dc2b.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_4.png-8ec6d5bd1194286c217a3c3487778047.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png",
+            "source_sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+            "source_md5": "8c71eded32ecd9f44e34673a4339108c",
+            "compiled": ".godot/imported/casino_sign_pulse.png-cf4096388f37b25ad4a2aff2898601ff.ctex",
+            "compiled_md5": "9b937efb773d44d975ab81c779e05d0b"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_0.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_0.png-b3de3cbd672537741c95b4332f3ef67a.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_1.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_1.png-86bda474e91cf23a59d18633e28457e8.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_2.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_2.png-a98a105a2e697b185c729ff368500093.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-f0c7c4009bcbb43f75130e508d75388c.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-4740ed685a8f6ab3080bcd42be0579bb.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-ac5ab9167a9086f9e1f34edf187090b9.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-f932cebc3a0948d1996ffe7f866c5626.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-4647ccfd981e7c65844fae2f10eed4bf.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-5eab6cec2ae1364270e0a7d5f536f9a4.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-b5060227f5c17129d51551a017d6ad10.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/background.png",
+            "source_sha256": "dc9509ca6ab5b4e23ea7ed9fb6adbb28e6674984cc7571161b94304dc8b3bd28",
+            "source_md5": "e12aed86a14e6b08f59d5f0e54bbb73b",
+            "compiled": ".godot/imported/background.png-d62ae43080f97f8b19454682ec365520.ctex",
+            "compiled_md5": "58c40f972cd64acfefb6b5ec5f4a12ce"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png",
+            "source_sha256": "77fce81e976bb3015cdca6cf3254a5181808dd93210bf41e9a228e13973e8184",
+            "source_md5": "f44c18501f28e997eb520fe64d064993",
+            "compiled": ".godot/imported/grand_table_left.png-e452be8df575a9cbb579189325b4da4f.ctex",
+            "compiled_md5": "5c1ad375fcf61076a4c17e4e3e4df7a0"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png",
+            "source_sha256": "baf26cb447ada33edbe5be3b2b831f66cb95b91957ed6cd9a633dfe1168eb014",
+            "source_md5": "1cd8fd56596afd0b57bf742f6985ad44",
+            "compiled": ".godot/imported/grand_table_right.png-21a017f158b9954b01cba02a2f4c0975.ctex",
+            "compiled_md5": "18402665c4b839664e67ba1a4dd2ffc9"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_0.png-7ab6396de1bc23ad35bc33bf2f248be1.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_1.png-a18574706641a31fd2dd7d4a1f4fd174.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_2.png-5e2e1795b620579184280a8e0db224f7.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_3.png-620a9dd674d4319e5b08dabc40d79fce.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png",
+            "source_sha256": "79e4cdf8e410e9c77ba6e9ce60ad83430581618663cc8ced905bf468131d1402",
+            "source_md5": "c637137eeb466421dd2e242ea04e3aa1",
+            "compiled": ".godot/imported/casino_light_4.png-65e67d2b69ce6db1e21bf70c9d189eb2.ctex",
+            "compiled_md5": "60771feac74c43a1645cc03817a725c8"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png",
+            "source_sha256": "f19e6db5291b7c49e0131892968232f46aa8a712402e86c81eafee44ca7abd36",
+            "source_md5": "8c71eded32ecd9f44e34673a4339108c",
+            "compiled": ".godot/imported/casino_sign_pulse.png-846c616eab127d71cc0d2710808a850e.ctex",
+            "compiled_md5": "9b937efb773d44d975ab81c779e05d0b"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_0.png-6640f27dd3d592ef1c75d84a2522d0fb.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_1.png-f9149ae33d842db7d0d1e22f2f7d01e0.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png",
+            "source_sha256": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "source_md5": "8180e1efce2f7c4855aac023f3bc46c1",
+            "compiled": ".godot/imported/casino_sparkle_2.png-50f078cc074e217c9d211a68200008e4.ctex",
+            "compiled_md5": "dd1732a3f1d2acaf40450bb6a8d237a2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-bedc6974179f80605608b785cb9c8ecb.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-966a84d3e80ee3709ffbfaedfbf8448f.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-c2c705c20389569b93c6389b318a3e0f.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-874f029f9ec3dc032c1c6fa054b4c167.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-6f78f28aabf029172f74db3b3d453c3c.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-1bd77fce077a3758e53e148a824b733b.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-33a56195a1a709b5c771d05ff9c9adaf.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/background.png",
+            "source_sha256": "f9d2ca14641e3ac7dd67c92af9453ce4993f0a7dec22156b4f96d6f046f8fcdf",
+            "source_md5": "642900e656f704abc660653aca0a8759",
+            "compiled": ".godot/imported/background.png-56d2a70110771ce5725317a0cb58e891.ctex",
+            "compiled_md5": "a191ad75df27fc7458c9b017ef09c931"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png",
+            "source_sha256": "e8aed6c50f04bd4475f2c1a33a03fccbcd10ee4ebe984345be59f6afa082cd5f",
+            "source_md5": "6d00c6412d4d16cc7920f77395233b13",
+            "compiled": ".godot/imported/grand_table_left.png-7d6a013080834d6578c52888303c6614.ctex",
+            "compiled_md5": "b55f9c3d3929320ee5968dfdc53b4358"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png",
+            "source_sha256": "9f9c2c24e735c177d16ebdfacb2d91f7a0fb39aa508d7a5f9791fefc97c38489",
+            "source_md5": "7540f57cd9c9a3a4fa8bd3004dff1581",
+            "compiled": ".godot/imported/grand_table_right.png-599583cad6acf8e328e6322be39593b3.ctex",
+            "compiled_md5": "a5f18c293cb2c523e7b5307c7b4144a7"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/atm_scan.png",
+            "source_sha256": "1d0e8981dbb9f1fb5c08ba570af1d39be37af691205f5ae4d15067dee2f7df44",
+            "source_md5": "99fc275980ab064f08daec4ae778b825",
+            "compiled": ".godot/imported/atm_scan.png-7496b9ea3f3670ed3135870f522a3cd3.ctex",
+            "compiled_md5": "fd0685f44875b6a421c370e1946643d6"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_0.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_0.png-ff81dbbb8195756afce5cf5759b350dd.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_1.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_1.png-53dcda7850a4ebe6e753f42d2ba7a0c7.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_10.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_10.png-0ec55b0ea9fb5f1ffb4139c669438740.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_2.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_2.png-29aad3d5a2d3c3e3767d9fca893c9d4e.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_3.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_3.png-d98db348d630510882e7694c83ac5cba.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_4.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_4.png-03bf113e3b61ac289cfb41c058d79f3e.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_5.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_5.png-c78909c46d3e45c394356b3807ee2819.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_6.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_6.png-50c7a8b5e31afb0094ae8e061dcc6585.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_7.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_7.png-ada52047eb252a6159b72004735828b4.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_8.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_8.png-6a35210de2b21642f7afee57566b41f1.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_glint_9.png",
+            "source_sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+            "source_md5": "d082352aff828b5d26aaf1189619ae41",
+            "compiled": ".godot/imported/cage_glint_9.png-662a421d3d6efdf3c8252e4f041beac0.ctex",
+            "compiled_md5": "85ff291a10aaf7eb3be66678eafdbbe2"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png",
+            "source_sha256": "02069bd24cb4abc4fc9ed4cfd0a774bda4ac536499ef2a4e28513b1f06f4faee",
+            "source_md5": "3180c2deab916550c02748519f1d7dfa",
+            "compiled": ".godot/imported/cage_sign_pulse.png-7969e6e2a49f4106a3cb7efee23e7a17.ctex",
+            "compiled_md5": "11fa37df036c32871c4bc4c647cfca5a"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_0.png",
+            "source_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "source_md5": "9ab9fc485fbeed4185c11b24f25c3639",
+            "compiled": ".godot/imported/floor_glint_0.png-2968fa03a12e43a08adae14eb00d9658.ctex",
+            "compiled_md5": "fb8ceacc98d6fb7022d452f1992c1dc9"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_1.png",
+            "source_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "source_md5": "a7f52039049a7e3b00ec61f3bb24f979",
+            "compiled": ".godot/imported/floor_glint_1.png-9cbed3e5a657f84707643a37da4786f3.ctex",
+            "compiled_md5": "802199cc8d63ae27721337769cef3ea6"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_2.png",
+            "source_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "source_md5": "c5c248341c66716cd4e1f9d3eeeec58b",
+            "compiled": ".godot/imported/floor_glint_2.png-5ef828848fa787798342439c4e8426e5.ctex",
+            "compiled_md5": "98e3d0a4e1ccd46e61cba1c4d327f8d5"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_3.png",
+            "source_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "source_md5": "871633104949f540a66cc0e6687b2762",
+            "compiled": ".godot/imported/floor_glint_3.png-0871f468ddffc1a00f120f0fe185d17b.ctex",
+            "compiled_md5": "6be44de8084904bb7f2efdc595091c2a"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_4.png",
+            "source_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "source_md5": "38e59ab6e39ba36015d04a3573fe6df4",
+            "compiled": ".godot/imported/floor_glint_4.png-c6c6cccf78b33280fddabb0b9c2de24b.ctex",
+            "compiled_md5": "e536d9e885fbd02d724905c872268cf4"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_5.png",
+            "source_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "source_md5": "561adf209e467fb7872acb40c7baf446",
+            "compiled": ".godot/imported/floor_glint_5.png-87aa555a7b8929cff8023bc4d7989749.ctex",
+            "compiled_md5": "c801a5d91babaf507bd4c3b00b29edeb"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/anim/floor_glint_6.png",
+            "source_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "source_md5": "34c4d7a57aa623b564b49a970840a366",
+            "compiled": ".godot/imported/floor_glint_6.png-e1f10f424911373bf4989d0283e30e2e.ctex",
+            "compiled_md5": "5753983d5048c2e281ae7f2f69aff42d"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/background.png",
+            "source_sha256": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+            "source_md5": "c16dc2e68552ecf1d90384b2c2d8335b",
+            "compiled": ".godot/imported/background.png-7a77d72f5c08bc7ae6d0b74fa047f93c.ctex",
+            "compiled_md5": "9be308eea0ff6db962d849bb5e938da5"
+          },
+          {
+            "source": "assets/art/environments/grand_casino_cage/counters/grand_cage_teller_counter.png",
+            "source_sha256": "3af64a745fa97b8261d8ac44146086b5afffee339b6f332fa20841a5a3034e4d",
+            "source_md5": "271298a21f3911b436da8fdbe367cc01",
+            "compiled": ".godot/imported/grand_cage_teller_counter.png-dbbe8bae220b5807a1680d0b4f39b988.ctex",
+            "compiled_md5": "2bc9a01e78d432d4a2a88409159236fe"
+          }
+        ]
+      }
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-publish-r2-01\\evidence\\publication.json": {
+      "sha256": "4c4d0bb45df0169761bede49f7cce74026793873802c48afd57a6aefa7dfca58",
+      "result": {
+        "source_commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+        "art_package_sha256": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+        "build_manifest_sha256": "ccac311a8b12cb6d21eeb9c38e7ff5ae3cec6124906d0569a2122d7ef2007693",
+        "files_verified": 12,
+        "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+        "other_lanes_touched": false
+      }
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-cage-served-r2-02\\evidence\\served-proof.json": {
+      "sha256": "12aced5f8a12f9be2ba973e551f2c4c5e4843400092cf9d71950b4326fb03fd3",
+      "result": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+        "art_package_sha256": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+        "build_manifest_sha256": "ccac311a8b12cb6d21eeb9c38e7ff5ae3cec6124906d0569a2122d7ef2007693",
+        "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/2e98323deb3273fb5e7c9d99b7d9c26d14b97541/index.html",
+        "default_tls_validation": true,
+        "files": {
+          "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+            "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+            "bytes": 340415
+          },
+          "index.apple-touch-icon.png": {
+            "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+            "bytes": 4099
+          },
+          "index.audio.position.worklet.js": {
+            "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+            "bytes": 2973
+          },
+          "index.audio.worklet.js": {
+            "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+            "bytes": 7298
+          },
+          "index.html": {
+            "sha256": "53aa9b77d227fdef97f8e1a74608e71ba5f72ac36d2d6096fb7d07e3e828e433",
+            "bytes": 5632
+          },
+          "index.icon.png": {
+            "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+            "bytes": 14818
+          },
+          "index.js": {
+            "sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+            "bytes": 2823817
+          },
+          "index.pck": {
+            "sha256": "2a827b8a8c6159872e981dd80850ea97f3b26809c0b3d242f8e62894a9d126e1",
+            "bytes": 135876932
+          },
+          "index.png": {
+            "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+            "bytes": 21443
+          },
+          "index.side.wasm": {
+            "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+            "bytes": 21802358
+          },
+          "index.wasm": {
+            "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+            "bytes": 1508237
+          }
+        },
+        "protected_before": {
+          "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+          "projects/beat-the-house/public/index.html": "2685d59ccb8325b575135201e17acbb4b77288a2993a0c7060ee35ea88f911ed",
+          "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+          "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+          "public/index.html": "e93cecdec589ef224492bd7e95102b7e44b331bea54bb440e32bb8192be41eeb",
+          ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+        },
+        "protected_after": {
+          "projects/beat-the-house/project.json": "590329c5135203386fc48dee08a9d2d73ca923d518c7a0a1ac9ae5578fddb8d0",
+          "projects/beat-the-house/public/index.html": "f30021be497d0b5944897c3a8135f2cd23754a9070b7108b22d290fff754492b",
+          "projects/beat-the-house/public/play/dev/current": "611814adaeeef0d98638f8b082a4a5836e3c72a62e77caa246820cc2ca7734d9",
+          "projects/beat-the-house/public/play/dev/e5152c34bfe146600214fb206ec80a5e3e8a27cb/build_manifest.json": "a1f918155299350ab872447d7321b6c2198b5d85d71ef07fe9f9ee637b4cc49e",
+          "public/index.html": "15aa628028a5dbafe837d0728a0baea0a38824116d6de696c72f7d43a389e80f",
+          ".gitignore": "ebf41fccb81b43caf83197f1cc2ce0513add984cadcc251d67b3716cd9360de7"
+        },
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+        "browser_visual_scenario_gate": "not run in this delivery; no live Web gameplay or save/revisit claim",
+        "previous_immutable_build_unchanged": true,
+        "previous_173_immutable_build_unchanged": true,
+        "previous_9ac_immutable_build_unchanged": true,
+        "prior_immutable_all_files": {
+          "d4beeb651403135ad4fa5f6fbf989af0d43478b6": {
+            "manifest_sha256": "d0682da6ffbf3686d9c630a6c2ce043a4f193b4fd7d03013bbd95191dedaa8ba",
+            "files_verified_including_manifest": 13
+          },
+          "9ac963f185afbc5c54c604e5f68e8111f598d997": {
+            "manifest_sha256": "9e48c8f1b1064c369e5450f7959569f742d9dead67f3bce6502d28f4d35b07c5",
+            "files_verified_including_manifest": 13
+          }
+        },
+        "enabled_art_ids": [
+          "gas_station_casino",
+          "corner_store",
+          "back_alley",
+          "motel",
+          "bar",
+          "pawn_shop",
+          "jazz_club",
+          "punchline_club",
+          "small_underground_casino",
+          "punchline_back_room",
+          "kitty_cat_lounge",
+          "delta_queen",
+          "beach",
+          "grand_casino",
+          "grand_casino_high_limit",
+          "grand_casino_back_room",
+          "grand_casino_cage"
+        ],
+        "raw_art_sources": 344,
+        "compiled_art_textures": 326,
+        "test_args": [
+          "--",
+          "--bth-art-test"
+        ],
+        "persistent_paths": [
+          "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+        ],
+        "configuration_not_runtime_DB_observation": true
+      }
+    }
+  },
+  "diagnostic": "First served verifier retained prior16-room expected list/count and failed after served bytes verified; only QA expectation corrected to exact17-room/344-source/326-texture identity, rerun PASS. No re-export or republish."
+}

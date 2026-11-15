@@ -43703,7 +43703,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Cage R2 scoped native PASS; cumulative TEST export pending",
+      "status": "Cage R2 native PASS and17-room TEST artifact verified; live Web pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43715,14 +43715,23 @@
           "evidence": [
             "docs/testing/grand_cage_empty_label_compatibility.json"
           ]
+        },
+        {
+          "sha": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+          "evidence": [
+            "docs/testing/grand_cage_r2_native_trial.json",
+            "docs/testing/grand_cage_r2_test_delivery.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "Exact R2 and authorized f035 compatibility on TEST only."
+        "commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+        "evidence": [
+          "docs/testing/grand_cage_r2_test_delivery.json"
+        ],
+        "scope": "17-room TEST served-byte verification passed; live Web gameplay unverified."
       },
       "scope": [
         "Grand Cage Base only, no forced stock purchase or progression.",
@@ -43753,9 +43762,14 @@
           "kind": "native_art_pass",
           "reference": "docs/testing/grand_cage_r2_native_trial.json",
           "summary": "82 motion,36 visibility,12 composed stock,52 compatibility; no live Web certification."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/grand_cage_r2_test_delivery.json",
+          "summary": "17rooms/344raw/326compiled, exact priorart and NEXT/save scope preserved."
         }
       ],
-      "next_action": "Publish exact approved R2 with authorized EMPTY compatibility; verify TEST identity and preserve NEXT/saves.",
+      "next_action": "Owner playtest on TEST; continue Motel Room baseline without changing NEXT.",
       "blocker": {
         "state": "none",
         "kind": null,
