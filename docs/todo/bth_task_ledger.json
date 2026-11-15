@@ -38014,7 +38014,8 @@
         "BTH-ENVART-001-ART-BEACH-01",
         "BTH-ENVART-001-ART-GRAND-01",
         "BTH-ENVART-001-ART-HIGHLIMIT-01",
-        "BTH-ENVART-001-ART-GRANDBACK-01"
+        "BTH-ENVART-001-ART-GRANDBACK-01",
+        "BTH-ENVART-001-ART-CAGE-01"
       ],
       "next_action": "Use a qualified supported isolated browser surface for missing live checks; preserve native/artifact partial scope and continue the sequential campaign without bypassing browser restrictions.",
       "planned_app_changes": [
@@ -43686,6 +43687,47 @@
         }
       ],
       "next_action": "Owner playtest TEST; continue Cage source baseline with explicit dynamic EMPTY contract review.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T01:11:58.748900+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-15T05:10:08.866379+00:00"
+    },
+    {
+      "id": "BTH-ENVART-001-ART-CAGE-01",
+      "name": "Create audited Grand Cage art",
+      "parent_id": "BTH-ENVART-001",
+      "group": "current",
+      "state": "open",
+      "status": "Grand Cage source baseline underway; conditional EMPTY contract under review",
+      "owner": {
+        "name": "Current owner-requested environment art rollout",
+        "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No Cage activation."
+      },
+      "scope": [
+        "Grand Back Room only; no generation or activation before actual and clean-guide review."
+      ],
+      "evidence": [
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/grand_cage.md",
+          "summary": "Cage native20/lowdetail16 expected; dynamic stock EMPTY must not be baked or lost."
+        }
+      ],
+      "next_action": "Capture Base and exact source/foreground/Linda authority; resolve conditional EMPTY preservation before activation.",
       "blocker": {
         "state": "none",
         "kind": null,
