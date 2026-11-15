@@ -1,0 +1,86 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_BYTES_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26",
+  "package_sha256": "88d0b84ca46e596e4eab52e18384e22b5c55e8fdba68bf8650cb15dabb4fd7dd",
+  "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "interiors": 20,
+  "updated_doorways": 8,
+  "raw_art_sources": 417,
+  "compiled_art_textures": 396,
+  "prior_20_interiors_unchanged": true,
+  "runtime_change": false,
+  "limitations": "Synthetic four-method native presentation, not legal routes/destination loading/live Web. Exact landscape1536x1024. Previous20 interiors/seven doorways/Corner alpha preserved; four replacements remain. Main/NEXT/save namespace unchanged.",
+  "prior_gas_doorway_unchanged": true,
+  "prior_corner_doorway_and_alpha_unchanged": true,
+  "prior_bar_doorway_unchanged": true,
+  "evidence": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-kittydoor-finalize-r1-01\\evidence\\pck-diff.json": {
+      "sha256": "7e2afda9baa34ae77eed73d134cd4d0ee130f5eb0aca60d33bf5bb25bc8e924c",
+      "summary": {
+        "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+        "unchanged": 2105
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-kittydoor-finalize-r1-01\\evidence\\art-source-import-pck-linkage.json": {
+      "sha256": "81d1d8438920f806c1193cd7475c325f75b1c294c9d05b145cf8ecd64fd69fc4",
+      "summary": {
+        "status": "PASS",
+        "raw_files": 417,
+        "compiled_textures": 396,
+        "prior_eight_room_compiled_unchanged": 395
+      },
+      "record_count": 396
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-kittydoor-publish-r1-01\\evidence\\publication.json": {
+      "sha256": "4feadf90371a3424297dba1d9049fe992674412aaeed771967b1d06256fad17e",
+      "summary": {
+        "source_commit": "cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26",
+        "art_package_sha256": "88d0b84ca46e596e4eab52e18384e22b5c55e8fdba68bf8650cb15dabb4fd7dd",
+        "build_manifest_sha256": "fb07b6b99e118d6e73b109e9914ddfdb03531c5ac782ad670f9ed299056e7482",
+        "files_verified": 12,
+        "destination": "D:\\Projects\\site\\projects\\beat-the-house\\public\\play\\test\\cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26",
+        "other_lanes_touched": false
+      },
+      "record_count": 0
+    },
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-kittydoor-served-r1-01\\evidence\\served-proof.json": {
+      "sha256": "f514e6e192cb9d4a9fbc714ca5cd52096c06908cdf0f77fb9606f7ca01115572",
+      "summary": {
+        "status": "PASS_SERVED_IDENTITY_AND_PROTECTED_LANES",
+        "source_commit": "cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26",
+        "art_package_sha256": "88d0b84ca46e596e4eab52e18384e22b5c55e8fdba68bf8650cb15dabb4fd7dd",
+        "build_manifest_sha256": "fb07b6b99e118d6e73b109e9914ddfdb03531c5ac782ad670f9ed299056e7482",
+        "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/cd7c68417b575ea2bf3bdf2ad8aec8a13e55ca26/index.html",
+        "default_tls_validation": true,
+        "next_pointer": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+        "browser_visual_scenario_gate": "not run in this delivery; no live Web gameplay or save/revisit claim",
+        "previous_immutable_build_unchanged": true,
+        "previous_173_immutable_build_unchanged": true,
+        "previous_9ac_immutable_build_unchanged": true,
+        "raw_art_sources": 417,
+        "compiled_art_textures": 396,
+        "configuration_not_runtime_DB_observation": true
+      },
+      "record_count": 0
+    }
+  },
+  "ledger_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-moteldoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "43d4467454b2f21c7003131c0d682fdfb6713a464f7e7090c532ef23f297b0f5",
+    "findings": 8242,
+    "motel_findings": 0,
+    "scope": "Documented all-group manual check with supplied historical snapshots; unrelated findings remain."
+  },
+  "prior_motel_reception_doorway_unchanged": true,
+  "prior_pawn_doorway_unchanged": true,
+  "prior_jazz_doorway_unchanged": true,
+  "prior_punchline_public_doorway_unchanged": true,
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-kittydoor-ledger-r1-01\\evidence\\reconciliation.json",
+    "sha256": "a4ca8eeb7a4db8d8c834deafc10210190ffc728d36a206fa0fa24224992d9a7e",
+    "unrelated_historical_findings": 8242,
+    "kitty_scoped_findings": 0
+  }
+}

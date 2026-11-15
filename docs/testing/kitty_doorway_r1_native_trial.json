@@ -1,5 +1,5 @@
 {
-  "status": "SCOPED_NATIVE_PASS_TEST_PENDING",
+  "status": "SCOPED_NATIVE_PASS_TEST_ARTIFACT_VERIFIED",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "88d0b84ca46e596e4eab52e18384e22b5c55e8fdba68bf8650cb15dabb4fd7dd",
   "decision": "FINAL SCOPED AUDIT PASS Kitty doorway. Director final visual GO received. Auditor personally reviewed four actual key frames: clear grounded entry/closure,stage curtain/light/mahogany/booth identity retained despite peripheral bottle crop,no false jamb. Verified entrance11066/0,doorway137/675source samples/zero mismatch/outside changes,92state/28entrance-image equalities,overlay1115,no-pointer PASS,full decode1095frames36.5s9402120bytes SHA378a0d63163b757d083952457d6082ccbddd8a1f36c149e321be8a1acd519f05.",
