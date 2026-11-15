@@ -1,0 +1,149 @@
+{
+  "status": "TEST_ARTIFACT_AND_SERVED_HASH_VERIFIED_LIVE_WEB_NOT_RUN",
+  "source_commit": "04861a3e1d84e9a1de9aa300311d60477a5be786",
+  "package_sha256": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
+  "test_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+  "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/04861a3e1d84e9a1de9aa300311d60477a5be786/index.html",
+  "build_manifest_sha256": "049477fbd65e5327fd6b3e84c85ec9ad09865290d89e835ce8e509953cdbd7c2",
+  "files": {
+    "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": {
+      "sha256": "9c34c4ea306efe66a13a9707a64f53573a31779e3b300bd359ed61c2f2ec33fc",
+      "bytes": 340415
+    },
+    "index.apple-touch-icon.png": {
+      "sha256": "c88982c8d49a27ae20ba5f3775cce2e8fbf843026a8411ca586daedcd876755b",
+      "bytes": 4099
+    },
+    "index.audio.position.worklet.js": {
+      "sha256": "be33985bc7160d6bf9646f259cd86b259cd67b02ccb297ee5c44f8ac84327bc8",
+      "bytes": 2973
+    },
+    "index.audio.worklet.js": {
+      "sha256": "5b476a9c9ce642c0ee4256436d1bc31d9c38f868aca0f9a8e2a57c18d2dec2a3",
+      "bytes": 7298
+    },
+    "index.html": {
+      "sha256": "ab0e73643f4e3ad174ed917d126955c7819e85ea495802e0ad28aa5716341c47",
+      "bytes": 5632
+    },
+    "index.icon.png": {
+      "sha256": "bc1bdb3acaa0c7de8a4ac147b841c604c9bc5f794616130e440e9076a84be37a",
+      "bytes": 14818
+    },
+    "index.js": {
+      "sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+      "bytes": 2823817
+    },
+    "index.pck": {
+      "sha256": "bf2070cd8b5ee601a187f74786fb679c720ac77c9853d852bada61c20eb4fd46",
+      "bytes": 132847192
+    },
+    "index.png": {
+      "sha256": "3cb4495c0b98dfbe4b663cbf2b6836473572339beb66d902367893162a70be0e",
+      "bytes": 21443
+    },
+    "index.side.wasm": {
+      "sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "bytes": 21802358
+    },
+    "index.wasm": {
+      "sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "bytes": 1508237
+    }
+  },
+  "raw_art_sources": 229,
+  "compiled_art_textures": 216,
+  "active_art_packages": [
+    "gas_station_casino",
+    "corner_store",
+    "back_alley",
+    "motel",
+    "bar",
+    "pawn_shop",
+    "jazz_club",
+    "punchline_club",
+    "small_underground_casino",
+    "punchline_back_room",
+    "kitty_cat_lounge",
+    "delta_queen"
+  ],
+  "prior_eleven_compiled_unchanged": true,
+  "pck_delta": {
+    "status": "PASS_EXPECTED_ART_ONLY_DELTA",
+    "added": [
+      ".godot/imported/background.png-b24780852f3ceda9bfb21918bf56b632.ctex",
+      ".godot/imported/background_river_reflection_0.png-20d8446d9f7e1eedc0f54c80d33a0023.ctex",
+      ".godot/imported/background_river_reflection_1.png-c81b7911df8d5d188c45c2ec7df1c98e.ctex",
+      ".godot/imported/background_river_reflection_2.png-301eca0829862120ae232a497b9f1e8a.ctex",
+      ".godot/imported/background_river_reflection_3.png-ed1bc7a109d11bfa4ba908cfb1b264c9.ctex",
+      ".godot/imported/background_river_reflection_4.png-8163bd5b6d8c4111525904998b6080bf.ctex",
+      ".godot/imported/background_river_reflection_5.png-0c33d02ffa18ea272dccae807e875345.ctex",
+      ".godot/imported/background_river_reflection_6.png-821439a9f7a1b0eff62deca0dcdcd600.ctex",
+      ".godot/imported/delta_right_table.png-9f94cff5ef7e611af94e09e27f16cd56.ctex",
+      ".godot/imported/delta_sign_pulse.png-f0a335ca8547361bb0fef7acb05d4179.ctex",
+      ".godot/imported/dock_light_and_stem.png-7cabc58a8d68aaa5646b1dbcf697eb34.ctex",
+      ".godot/imported/floor_glint_0.png-3f3eb8dc19314c4350e3e2a7a7f474cf.ctex",
+      ".godot/imported/floor_glint_1.png-73ef8e737b4dc6d17c4807398ec02335.ctex",
+      ".godot/imported/floor_glint_2.png-e7f6696200e9b084186fdcb022e04f32.ctex",
+      ".godot/imported/floor_glint_3.png-fe0c225a90f0d622d02074f4552c70e6.ctex",
+      ".godot/imported/floor_glint_4.png-1ad8819c7253624928839f795bc431df.ctex",
+      ".godot/imported/floor_glint_5.png-9b49dbd0c51e1a5cf2001c1d23ac92de.ctex",
+      ".godot/imported/floor_glint_6.png-0d97d940fde4f0b87b94fa934aa8a504.ctex",
+      ".godot/imported/scene_life_river_reflection_0.png-e916c276faa406c5c7d02ed2b6f31a9a.ctex",
+      ".godot/imported/scene_life_river_reflection_1.png-c284d89f94050bc8441179307385c4fb.ctex",
+      ".godot/imported/scene_life_river_reflection_2.png-f103df7a817838a4b3d9939bccc1bdcd.ctex",
+      ".godot/imported/scene_life_river_reflection_3.png-bed6953eb17b42b9ec40e49c8c7d9f74.ctex",
+      ".godot/imported/scene_life_river_reflection_4.png-b8caeab0cde342d33086f9d77418eaba.ctex",
+      ".godot/imported/scene_life_river_reflection_5.png-cde6eb16f3c5f21f44b4139940a5c2c6.ctex",
+      ".godot/imported/scene_life_river_reflection_6.png-6539e19c8c2ef8a865feb28c7f303731.ctex",
+      ".godot/imported/window_sparkle_0.png-14a5f21a8a250dbbb68538c673fafafa.ctex",
+      ".godot/imported/window_sparkle_1.png-59a3feb2a384701ea4b1cf1c61905452.ctex",
+      ".godot/imported/window_sparkle_2.png-dc34dc4052da080bac580d1d5c25f70c.ctex",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_0.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_1.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_2.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_3.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_4.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_5.png.import",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_6.png.import",
+      "assets/art/environments/delta_queen/anim/delta_sign_pulse.png.import",
+      "assets/art/environments/delta_queen/anim/dock_light_and_stem.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_0.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_1.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_2.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_3.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_4.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_5.png.import",
+      "assets/art/environments/delta_queen/anim/floor_glint_6.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_0.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_1.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_2.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_3.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_4.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_5.png.import",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_6.png.import",
+      "assets/art/environments/delta_queen/anim/window_sparkle_0.png.import",
+      "assets/art/environments/delta_queen/anim/window_sparkle_1.png.import",
+      "assets/art/environments/delta_queen/anim/window_sparkle_2.png.import",
+      "assets/art/environments/delta_queen/background.png.import",
+      "assets/art/environments/delta_queen/counters/delta_right_table.png.import",
+      "data/art/environments/delta_queen.json"
+    ],
+    "removed": [],
+    "changed": [
+      ".godot/uid_cache.bin",
+      "build_manifest.json",
+      "data/art/environments/index.json"
+    ],
+    "unchanged": 1697
+  },
+  "next_pointer_unchanged": "e5152c34bfe146600214fb206ec80a5e3e8a27cb",
+  "protected_site_source_unchanged": true,
+  "default_tls_validation": true,
+  "served_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-INTEGRATION-20261114-delta-served-r3-02\\evidence\\served-proof.json",
+  "served_receipt_sha256": "54cfe06b742029c229160d0f740d4527d8d699c547b9b7e388dfab4012ed5859",
+  "persistence": "Same TEST-only --bth-art-test argument and isolated distribution/web_0_6_1_art_test path, configuration verified; no browser database observation. Normal saves untouched.",
+  "scope": "No live browser visual/interaction/save/revisit acceptance. Original intermittent diagnostic stall not reproduced; cause unconfirmed. Six same-order native contexts exact; not later lifecycle certification.",
+  "service_recovery": "Initial served check failed because existing HTTPS listener8443 was absent after desktop reconnect. Restored only existing tests/preview_server.py with existing LAN/TLS config; no firewall, certificate, site audience or source changes. Normal TLS served verification then passed.",
+  "raw_evidence_prefix": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-delta-"
+}

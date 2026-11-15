@@ -2,11 +2,11 @@
 
 Updated: 2026-11-15
 Branch: codex/environment-art-layers
-Release status: Eleven interiors have exact native/art PASS and cumulative TEST artifact delivery at `6400dad73a1f`. Five retain full live Web verification; Pawn, Jazz, Public Punchline, Hidden Casino, Private Punchline and Kitty Cat still need live Web acceptance. The full 20-room/12-doorway campaign remains Open.
+Release status: Twelve interiors have exact native/art PASS and cumulative TEST artifact delivery at `04861a3e1d84`. Five retain full live Web verification; Pawn, Jazz, Public Punchline, Hidden Casino, Private Punchline, Kitty Cat and Delta Queen still need live Web acceptance. Full20-room/12-doorway campaign remains Open.
 
 ## Current queue
 
-Kitty Cat R6 passed independent native art audit after correcting title contrast and two obscured effects. All 27 entries pass motion/Reduce Motion and conservative visibility across five initial contexts. Eleven-room TEST artifact and served hashes verified; not browser interaction or save/revisit acceptance. Nine interiors and twelve doorways remain. Delta Queen source planning is next. Main/NEXT and normal saves remain unchanged. See `../testing/kitty_cat_r6_test_delivery.json`.
+Delta Queen R3 passed independent six-context native visual and26-motion audit. Same-order layout, object and publication records match baseline;156conservative visibility checks pass. Twelve-room TEST artifact/served hashes verified. Original intermittent full-diagnostic stall was not reproduced in minimal, two-context or six-context reruns; root cause is unconfirmed, not claimed fixed. Eight interiors and twelve doorways remain. Beach source planning is next. Main/NEXT and normal saves unchanged. See `../testing/delta_queen_r3_test_delivery.json`.
 
 ### Earlier queue checkpoint
 
@@ -58,7 +58,7 @@ All 20 briefs exist. A brief or fixture guide does not mean the room has a compl
 | 09 | small_underground_casino | Brief, shared exterior assessment and fixture guide ready | Author hidden practical basement, distinct from public stage |
 | 10 | punchline_back_room | Brief, shared exterior assessment and fixture guide ready | Author quiet lived-in Crew workroom with no surveillance theatre |
 | 11 | kitty_cat_lounge | Exact R6 native PASS and cumulative 6400 TEST artifact verified | Live Web interaction/save-revisit acceptance remains open |
-| 12 | delta_queen | Brief, approved facade assessment and fixture guide ready | Author cream/brass/red-wood/teal river interior after prior package passes |
+| 12 | delta_queen | Exact R3 native PASS and cumulative TEST artifact delivered | Live Web/save-revisit acceptance open; proceed Beach source planning |
 | 13 | beach | Brief, facade assessment and fixture guide ready | Author tawny sand/timber/cyan surf after prior package passes |
 | 14 | grand_casino | Brief, facade assessment and fixture guide ready | Author maintained gold/plum public hospitality room |
 | 15 | grand_casino_high_limit | Brief, shared exterior assessment and fixture guide ready | Author quieter concentrated luxury distinct from main floor |

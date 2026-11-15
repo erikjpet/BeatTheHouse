@@ -1,5 +1,5 @@
 {
-  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "status": "NATIVE_ART_PASS_TEST_ARTIFACT_VERIFIED_LIVE_WEB_NOT_RUN",
   "auditor": "/root/audit_private_room_art",
   "package_sha256": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
   "source_sha256": "9f54bb4d2b79ea469087de9f62abbae5ba11384f897fd499d93a9515c634d1a3",
@@ -361,5 +361,6 @@
     "status": "PASS",
     "tests": 272,
     "receipt": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-delta-python-r3-01/evidence/worker.log"
-  }
+  },
+  "test_delivery": "docs/testing/delta_queen_r3_test_delivery.json"
 }

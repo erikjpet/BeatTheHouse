@@ -43354,7 +43354,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "R3 scoped native art PASS; exact integration and TEST delivery active",
+      "status": "R3 native art passed and cumulative TEST artifact verified; live Web acceptance open",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43366,14 +43366,23 @@
           "evidence": [
             "docs/art/briefs/delta_queen.md"
           ]
+        },
+        {
+          "sha": "04861a3e1d84e9a1de9aa300311d60477a5be786",
+          "evidence": [
+            "docs/testing/delta_queen_r3_native_trial.json",
+            "docs/testing/delta_queen_r3_test_delivery.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
-        "evidence": [],
-        "scope": "No Delta art activation."
+        "commit": "04861a3e1d84e9a1de9aa300311d60477a5be786",
+        "evidence": [
+          "docs/testing/delta_queen_r3_test_delivery.json"
+        ],
+        "scope": "Twelve approved native packages delivered on isolated TEST; live Web interaction acceptance pending."
       },
       "scope": [
         "Base and five initial catalog scenarios; actual source geometry, titles, typed bodies, counter and motion.",
@@ -43389,9 +43398,14 @@
           "kind": "native_audit",
           "reference": "docs/testing/delta_queen_r3_native_trial.json",
           "summary": "57static,15411context,53motion/RM,156six-context visibility checks; exact same-order equality,actual8s clips,no-pointer PASS. Intermittent diagnostic stall not reproduced; no browser/later lifecycle claim."
+        },
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/delta_queen_r3_test_delivery.json",
+          "summary": "13servedfiles normal TLS,229rawsources216compiledtextures;prior11compiledpacks/main/NEXT unchanged. Existing site listener restored after reconnect. No browser runtime claim."
         }
       ],
-      "next_action": "Commit exact R3, export and verify cumulative TEST; preserve main/NEXT and saves. Live Web acceptance remains open.",
+      "next_action": "Run isolated live Web interaction/save-revisit acceptance when available; preserve exact R3 while Beach source planning proceeds.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43400,7 +43414,7 @@
         "observed_at": "2026-11-15T01:11:58.748900+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T03:01:01.522467+00:00"
+      "updated_at": "2026-11-15T03:08:36.932463+00:00"
     }
   ]
 }
