@@ -1,6 +1,6 @@
-# Punchline public doorway source planning v1
+# Punchline public doorway one-source release v2
 
-Planning only. Do not generate until current four-method baseline has been reviewed and a source release issued. Umbrella travel_doorways_execution_direction-v1.md applies. One package at a time, no parallel native/export work.
+Released for ONE source after reviewed baseline. Umbrella travel_doorways_execution_direction-v1.md applies. One package at a time, no parallel native/export work.
 
 ## Identity and references
 Travel identifier small_underground_casino enters the PUBLIC Punchline comedy club. Use approved assets/art/environments/punchline_club/background.png, NOT the hidden casino or punchline_back_room. Director personally reviewed this background, assets/art/travel/exteriors/small_underground_casino.png and current assets/art/travel/doorways/small_underground_casino.png in the art worktree. Current doorway is more ornate, crowded and amber-heavy than approved room. Preserve crisp deliberate pixel clusters and rich local contrast without copying unrelated venue furniture.
@@ -13,3 +13,6 @@ Intimate working comedy venue, not a grand theater or casino. Plum/magenta brick
 
 ## Baseline and gates
 Native owner captures current four synthetic production-overlay methods after Jazz export releases slot, plus original doorway and entrance checks. Director and auditor review opening, entry and closure before source release. This proves synthetic presentation only, not legal travel route, destination loading or Web runtime. Then one generated source is saved with exact prompt, base64 and SHA. Independent source and actual aperture review precede final gate. Require original tests, exact state/entrance comparisons, automatic overlay completion, no-pointer liveness and actual video decode. Preserve cumulative20 interiors and preceding six doorway replacements. Integrate on existing art branch and TEST only after independent final PASS; main/NEXT unchanged. Update urban doorway provenance and concise proof/hash list, keep raw evidence on E drive.
+
+## Frozen baseline release
+Current source677cf3a79, 7526 files unchanged. Native owner reports all four methods 2312 checks/92 frames, original entrance11066/0 and doorway137 PASS, jobs drained. Union E:/CodexQA/BTH/runs/BTH-ENVART-PUNCHDOOR-20261115-baseline-union-01/evidence/punch-doorway-baseline.json. Director personally viewed walk f200 and night cab f235 at cinematic-01/evidence; auditor independently viewed these too. Opening exposes useful side bands and stage identity above actor; closure hides actor correctly. Baseline has no blocking geometry defect. Scope remains synthetic presentation, not legal route/gameplay loading/Web. Artist may now generate one exact1024x1536 retained source using approved public room and facade references. Do not preserve old insert's crowded near-threshold seating. Director/auditor still must approve raw and actual candidate before integration.
