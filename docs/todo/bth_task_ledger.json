@@ -7862,6 +7862,11 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\loan-street-none-final-warm-result.json",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "reference": "docs/testing/NEXT_back_alley_loan_QA_20261115.md",
+          "kind": "supplemental_native_regression",
+          "summary": "46/46 each Crew and street lender, authored Fence Night, new-host same-process Continue; no new Web claim."
         }
       ],
       "implementation_batches": [],
