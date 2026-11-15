@@ -43703,7 +43703,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Cage R1 rejected for11hidden glints; narrow correction underway",
+      "status": "Cage R2 scoped native PASS; cumulative TEST export pending",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -43722,7 +43722,7 @@
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "No Cage activation."
+        "scope": "Exact R2 and authorized f035 compatibility on TEST only."
       },
       "scope": [
         "Grand Cage Base only, no forced stock purchase or progression.",
@@ -43748,9 +43748,14 @@
           "kind": "native_art_review",
           "reference": "docs/testing/grand_cage_r1_native_review.json",
           "summary": "22of36visibilitychecks fail;R1unactivated;conditionalEMPTY/geometry/livenesspass."
+        },
+        {
+          "kind": "native_art_pass",
+          "reference": "docs/testing/grand_cage_r2_native_trial.json",
+          "summary": "82 motion,36 visibility,12 composed stock,52 compatibility; no live Web certification."
         }
       ],
-      "next_action": "Director/auditor approve sealed same-window glint correction, then rerun motion/visibility and actual preview before activation.",
+      "next_action": "Publish exact approved R2 with authorized EMPTY compatibility; verify TEST identity and preserve NEXT/saves.",
       "blocker": {
         "state": "none",
         "kind": null,

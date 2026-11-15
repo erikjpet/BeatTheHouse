@@ -1,0 +1,289 @@
+{
+  "status": "NATIVE_ART_PASS_TEST_PENDING",
+  "auditor": "/root/audit_private_room_art",
+  "package_sha256": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+  "decision": "Final scoped Cage R2 PASS. Fresh Base, both composed stock fixtures and actual frames000/030/061 personally reviewed. Native82, Base14840 with exact layout/object/publication equality, stock fixture12, separate compatibility52, visibility36/36, original no-pointer and both full-decodes pass. Actual62frames8.135911s; encoded8.24s. Steel shafts harmonize live bars,11glints shift+5 on same window. Existing art branch and TEST only with authorized EMPTY compatibility f035e1d5e.",
+  "limitations": "One constructed Base and stock semantics fixtures only. Not a reached stocked shop/items, transactions, Linda lifecycle, save/revisit or live Web. Low-detail is native simulation. Preview is not full57.78s floor cycle. R1 failure retained.",
+  "payload_files": {
+    "assets/art/environments/grand_casino_cage/anim/atm_scan.png": {
+      "sha256": "1d0e8981dbb9f1fb5c08ba570af1d39be37af691205f5ae4d15067dee2f7df44",
+      "bytes": 2165,
+      "size": [
+        4864,
+        82
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_0.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_1.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_10.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_2.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_3.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_4.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_5.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_6.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_7.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_8.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_9.png": {
+      "sha256": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+      "bytes": 107,
+      "size": [
+        6,
+        224
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png": {
+      "sha256": "02069bd24cb4abc4fc9ed4cfd0a774bda4ac536499ef2a4e28513b1f06f4faee",
+      "bytes": 536,
+      "size": [
+        464,
+        112
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_0.png": {
+      "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "bytes": 153,
+      "size": [
+        144,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_1.png": {
+      "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "bytes": 164,
+      "size": [
+        136,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_2.png": {
+      "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "bytes": 170,
+      "size": [
+        128,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_3.png": {
+      "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "bytes": 165,
+      "size": [
+        120,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_4.png": {
+      "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "bytes": 162,
+      "size": [
+        112,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_5.png": {
+      "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "bytes": 172,
+      "size": [
+        104,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_6.png": {
+      "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "bytes": 162,
+      "size": [
+        96,
+        4
+      ],
+      "mode": "RGBA"
+    },
+    "assets/art/environments/grand_casino_cage/background.png": {
+      "sha256": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+      "bytes": 436255,
+      "size": [
+        1800,
+        860
+      ],
+      "mode": "RGB"
+    },
+    "assets/art/environments/grand_casino_cage/counters/grand_cage_teller_counter.png": {
+      "sha256": "3af64a745fa97b8261d8ac44146086b5afffee339b6f332fa20841a5a3034e4d",
+      "bytes": 31545,
+      "size": [
+        776,
+        112
+      ],
+      "mode": "RGBA"
+    },
+    "data/art/environments/grand_casino_cage.json": {
+      "sha256": "ab70b2d0fc3e7d02a0b8c645cb1b71a0e056e1e63d7d1c029669cbb3f66c1b9e",
+      "bytes": 8560
+    },
+    "data/art/environments/index.json": {
+      "sha256": "cc37982c9bc9b7216134465caf5e4eb6171b71428990351ef5576ef063721b02",
+      "bytes": 408
+    }
+  },
+  "recipe_hashes": {
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_cage_v1r1.py": "fbd991ceb439b23fd1fb5a80b0697ee13967d0751963ec688a709ab1c0528998",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_cage_r2.py": "412206472e7de550c3053f6800a778d0802b6d8ccb2b0a519f52ab0259c8ff32",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_cage_r2.py": "3c9dc28a17b33edf52c1476d14cc25d2bda90cd3a8d8a48a437720a609e0f82f",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r3.py": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_cage_occlusion.py": "36443e4cfc825153ee4e450d30c194e0a23d1d870ee1bae1dc064fc73cc33c78",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_cage_clean_guide.py": "9b8ef9002ccfc745ce936ebbc30cd04751a2942d4a0e8d2e1b5c7e2d8690a711",
+    "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\measure_cage_glint_shift.py": "e964e5af6fb32fb47c1b6fcb6f7498d20d7c5decaa91a3cb84043590f187049d"
+  },
+  "evidence_hashes": {
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\cage_trial_contexts.json": "c3b13178c86ee992c4e8848de19d56dca9a680dd03806cf79d2f81291063679b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\comparison.json": "30165c11b13ed6cd91f92ddbbb58f2422c30664a8c9fdbb6ef44e71de6fddbcb",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\job.json": "5371ff1be73038f2804b0dd6889a0496b254f364906f0682c4f372a414cb53a3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\launch-claim.json": "f16a165a2a08fd1a097461769045949ec13f51b30e3b39c65d9252d30259c462",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-comparison-01\\evidence\\storage-manifest.json": "be5a905bd21c20b258cb7792758b5ae40879bb670f5926f2226bc9b1bbf0d461",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\grand_casino_cage_preart_metadata.json": "3ac74bc68b340451de566e0036ab49895d07b22be5b57243f87b548eeccf3917",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\job.json": "0d2c54d30350c4d335cc2fd6d0e701d3db6cffc2f4fc8ed7a87fd4689fa92cc0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\launch-claim.json": "5a4f5c1d2be9eb0a0de52eeb77f7d7c838ac080ae4822e1b2066d7a48b34e128",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\storage-manifest.json": "7304b2a46b05b4b51f960a453c99a458eb22358a01600b8436393d99d4daefa8",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_metadata.json": "3cdf393984aa8dbcf6e8e92e6178611fefffec8541e67c6e144a5c0ecda78480",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\job.json": "43021ecf8a041180bb1b68cf0bf17c726f6445c93e73ba581d77d8b6b5a588c0",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\launch-claim.json": "d44adbf260b14c13627edf8373c53c761adf9ab20ed5cbb8ed2f4ba09b495534",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\storage-manifest.json": "8bb31ac28672b401a2c3df3cc5582bb202bbcda459095195dd3e76bd25b5c489",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-encode-01\\evidence\\video-verification.json": "492d0cc826a764c5551e003d423472ae88e8d8141bb5baea7f8c3cb4266a952b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\job.json": "e9eadba276e24e99f73767c15a63e6d3c6e2ef80a6168fb49f55077710b23b24",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\launch-claim.json": "884526c7749c2aa82525029be61124609c47e5fac0cfaee21e3afb9722010d95",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-import-01\\evidence\\storage-manifest.json": "fc75a6ec15e6dc19bf136a34dc1231484a2072471970249fdf77819b425ac5f5",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\job.json": "88ad25a5d0e2a09447a4d640eb138ea5faab62087a5645875dad844180b41a32",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\launch-claim.json": "befbb2feea8f1cebbcab07003dc168a19a32c3302af4bec8f94fcc4db2d3b61d",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-liveness-01\\evidence\\storage-manifest.json": "345ba69460ac054fa67243448739910b20b2db7c424b99e7cf135666fee216bf",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\grand_casino_cage_animation_probe.json": "9529d04a00798f4dc88c42cc7a4c32115d046166aeb25b5298599476efe11ea7",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\job.json": "48536d34c85190dd765a476eb83eb285076e79f90ff7b993845c364777cc7d4b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\launch-claim.json": "5bde1ac241a0cc3be1b7443725112f3be5ef5d817b219f4886a0ae750eb67f3a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\storage-manifest.json": "03c6155b4e00ab71fac64445acebd4e95924f6aab91cf04de9c13ab41dc9137a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-preparation-01\\evidence\\package-seal.json": "4dd1bdefd5be663674be098918ca6864eed97b1720d08c0a94d9584b4e0d5eb6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-preparation-01\\evidence\\r1-package-identity.json": "f628f32655f18b2955dfc58facb9b38c2d41f83e9e0ac8b05750cbff4e46ee53",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-preparation-01\\evidence\\storage-manifest.json": "47e2702883a50907aa902647cf3b201586e7b85db39bb11236d4233996626dc6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\cage-composed-stock-states.json": "dd98f4067b67baca481574e971d3bbabc758b8ef3039edb3343309596e2035e6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\job.json": "e310c84b0485cc9d1e4c7c88067a44f6f46ef51416c5a3befa186dbfa3539076",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\launch-claim.json": "81c4200ad631c561003fb2ca563d39234eb2a85d698c0706e9e79281282d188a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-stock-states-01\\evidence\\storage-manifest.json": "1abe35626068f05ce1a318831555e392569550e9122dc86af4043c0c7ac97093",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\cage_capture_inputs.json": "f68090a3c223298a2fd497d01fdbee6fd02a0cf3b4d977b6205cf50c34b5b8db",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\job.json": "6cb7084a6feac833ee85a02a8dc6ac04eb1c224008d02b642584717af1b0969b",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\launch-claim.json": "f72c91e037c8aaf64923cda4595c887dca398a4980cf04d607cb9b78250e72f3",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\post_source_verification.json": "a0cc88a002db5414cefdb266b0cffc4ebe0d4e7f0c59496cfb5c21ceb090f09a",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\source_identity.json": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\storage-manifest.json": "b3ff2efb3ac6b4a0fd361834ef8c9cb36a25f2531b942fd22c8c8da7f1993bab",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-occlusion-r2-01\\evidence\\cage-base-occlusion.json": "3b709d8bad84c15b5ae10e865c01cd4a93234f2e379eea3463061e827b62ead6",
+    "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-preflight-r2-01\\evidence\\cage-r2-preflight.json": "f00c57e7494b0ef94d6a355ea8357d6e7262e13d35686c6b14d7af2886085a61"
+  },
+  "compatibility_commit": "f035e1d5ed460aaeac6e9245c4988320203bd839",
+  "final_audit_receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-final-audit-integration-01\\evidence\\final-audit-PASS.json",
+  "final_audit_receipt_sha256": "433f083dfdde78719b390190925f4e6159860c23ace3b646456c1b7e6bb12698"
+}

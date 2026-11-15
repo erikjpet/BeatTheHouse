@@ -1,0 +1,415 @@
+{
+  "schema": "bth.environment_art/v1",
+  "environment_id": "grand_casino_cage",
+  "board_size": [
+    900,
+    430
+  ],
+  "pixel_scale": 2,
+  "background": {
+    "texture": "background.png"
+  },
+  "animations": [
+    {
+      "id": "cage_sign_pulse",
+      "type": "pulse",
+      "texture": "anim/cage_sign_pulse.png",
+      "rect": [
+        334,
+        36,
+        232,
+        56
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.24,
+      "period": 0.9239978392911157,
+      "phase": 0.9941176470588236,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "atm_scan",
+      "type": "frames",
+      "texture": "anim/atm_scan.png",
+      "rect": [
+        682,
+        138,
+        76,
+        41
+      ],
+      "frames": 32,
+      "fps": 16.297466172610083,
+      "loop": "loop",
+      "phase": 0,
+      "opacity": 0.3,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_0",
+      "type": "pulse",
+      "texture": "anim/cage_glint_0.png",
+      "rect": [
+        299,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 163.33333333333334,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_1",
+      "type": "pulse",
+      "texture": "anim/cage_glint_1.png",
+      "rect": [
+        329,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 180.0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_2",
+      "type": "pulse",
+      "texture": "anim/cage_glint_2.png",
+      "rect": [
+        359,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 196.66666666666666,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_3",
+      "type": "pulse",
+      "texture": "anim/cage_glint_3.png",
+      "rect": [
+        389,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 213.33333333333331,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_4",
+      "type": "pulse",
+      "texture": "anim/cage_glint_4.png",
+      "rect": [
+        419,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 230.0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_5",
+      "type": "pulse",
+      "texture": "anim/cage_glint_5.png",
+      "rect": [
+        449,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 246.66666666666666,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_6",
+      "type": "pulse",
+      "texture": "anim/cage_glint_6.png",
+      "rect": [
+        479,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 263.3333333333333,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_7",
+      "type": "pulse",
+      "texture": "anim/cage_glint_7.png",
+      "rect": [
+        509,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 280.0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_8",
+      "type": "pulse",
+      "texture": "anim/cage_glint_8.png",
+      "rect": [
+        539,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 296.6666666666667,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_9",
+      "type": "pulse",
+      "texture": "anim/cage_glint_9.png",
+      "rect": [
+        569,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 313.3333333333333,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "cage_glint_10",
+      "type": "pulse",
+      "texture": "anim/cage_glint_10.png",
+      "rect": [
+        599,
+        124,
+        3,
+        112
+      ],
+      "min_opacity": 0.12,
+      "max_opacity": 0.2,
+      "period": 1.7453292519943295,
+      "phase": 330.0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_0",
+      "type": "mover",
+      "texture": "anim/floor_glint_0.png",
+      "size": [
+        72,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 57.77777777777778,
+      "phase": 0.0,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_1",
+      "type": "mover",
+      "texture": "anim/floor_glint_1.png",
+      "size": [
+        68,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 50.73170731707317,
+      "phase": 6.682926829268292,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_2",
+      "type": "mover",
+      "texture": "anim/floor_glint_2.png",
+      "size": [
+        64,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 45.21739130434783,
+      "phase": 11.91304347826087,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": true
+    },
+    {
+      "id": "floor_glint_3",
+      "type": "mover",
+      "texture": "anim/floor_glint_3.png",
+      "size": [
+        60,
+        2
+      ],
+      "from": [
+        -90,
+        316
+      ],
+      "to": [
+        950,
+        316
+      ],
+      "duration": 40.78431372549019,
+      "phase": 16.11764705882353,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": false
+    },
+    {
+      "id": "floor_glint_4",
+      "type": "mover",
+      "texture": "anim/floor_glint_4.png",
+      "size": [
+        56,
+        2
+      ],
+      "from": [
+        -90,
+        274
+      ],
+      "to": [
+        950,
+        274
+      ],
+      "duration": 37.142857142857146,
+      "phase": 19.571428571428573,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": false
+    },
+    {
+      "id": "floor_glint_5",
+      "type": "mover",
+      "texture": "anim/floor_glint_5.png",
+      "size": [
+        52,
+        2
+      ],
+      "from": [
+        -90,
+        288
+      ],
+      "to": [
+        950,
+        288
+      ],
+      "duration": 34.09836065573771,
+      "phase": 22.459016393442624,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": false
+    },
+    {
+      "id": "floor_glint_6",
+      "type": "mover",
+      "texture": "anim/floor_glint_6.png",
+      "size": [
+        48,
+        2
+      ],
+      "from": [
+        -90,
+        302
+      ],
+      "to": [
+        950,
+        302
+      ],
+      "duration": 31.515151515151516,
+      "phase": 24.90909090909091,
+      "opacity": 0.08,
+      "blend": "add",
+      "still": "hide",
+      "web_low_detail": false
+    }
+  ],
+  "counters": {
+    "grand_cage_teller_counter": {
+      "texture": "counters/grand_cage_teller_counter.png"
+    }
+  }
+}
