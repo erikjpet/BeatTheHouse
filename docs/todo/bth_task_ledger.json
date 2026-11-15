@@ -43994,7 +43994,7 @@
       "parent_id": "BTH-ENVART-001",
       "group": "current",
       "state": "open",
-      "status": "Gas four-method synthetic baseline captured; director and auditor source review",
+      "status": "Gas doorway R1 sealed; isolated native trial underway",
       "owner": {
         "name": "Current owner-requested environment art rollout",
         "task_ref": "Sentinel_8bd238cbedc481918703fdbb45d50762",
@@ -44021,9 +44021,14 @@
           "kind": "native_preart",
           "reference": "docs/testing/travel_doorway_gas_baseline_20261115.json",
           "summary": "137 doorway,1115 overlay,2312 preview checks;92frames. Corner alpha failure retained, no live route claim."
+        },
+        {
+          "kind": "source_plan",
+          "reference": "docs/art/briefs/gas_doorway.md",
+          "summary": "Exact source release and static candidate; no final activation."
         }
       ],
-      "next_action": "Freeze exact Gas doorway brief after independent aperture/entry review; generate one source.",
+      "next_action": "Verify exact aperture and four-method player contact, then independent final audit.",
       "blocker": {
         "state": "none",
         "kind": null,
