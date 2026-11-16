@@ -1,0 +1,283 @@
+{
+  "schema": "bth.high_limit_spatial_source_trial/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "parent_id": "BTH-ENV-SPATIAL-001",
+  "status": "RAW_SOURCE_PRESERVED_NOT_APPROVED",
+  "source_commit_observed": "0746a65b62164ec77a55ca313140a3d95d29f5a7",
+  "generation": {
+    "tool": "Built-in image_gen.imagegen",
+    "intent": "precise-object-edit",
+    "calls": 1,
+    "target": "assets/art/environments/grand_casino_high_limit/background.png",
+    "target_sha256": "dc9509ca6ab5b4e23ea7ed9fb6adbb28e6674984cc7571161b94304dc8b3bd28",
+    "target_size": [
+      1800,
+      860
+    ],
+    "prompt_file": "prompt.txt",
+    "prompt_sha256": "68671b1cbf18462438dc86407c1f8bdf5e8abaafd4043c09fbd16f26f73b4768",
+    "reference_inputs": [
+      "Exact original High Limit master only; latest single visible image"
+    ],
+    "output_png": "high-limit-spatial-r1.png",
+    "output_png_sha256": "ad4bfe68a0444cecd1914ba75ae2986cb1b797509eb6347f5df42f3231492911",
+    "output_png_bytes": 2224843,
+    "output_size": [
+      1815,
+      867
+    ],
+    "output_opaque": true,
+    "output_base64": "high-limit-spatial-r1.png.b64",
+    "output_base64_sha256": "46b3c3baf4617f329dfe8eb3a8e8bd173c6b0908fbbd97317b9dbe7e220b1642",
+    "output_preserved_immediately": true,
+    "whole_output_replacement_permitted": false
+  },
+  "original_package": {
+    "files": 21,
+    "current_recomputed_sha256": "69c7023d0dae2468f73dc4c836d055d29592443c42cb72060901ef1390c97c93",
+    "seal_algorithm": "SHA256(sorted(relative path + space + file SHA256) joined by LF; no trailing LF)",
+    "manifest_sha256": "3c2accd38cf268b33853bd3894e53b4def84e2bbf10f240a20de38ccb868fdd2",
+    "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "counts": "Background +16 animation PNGs +2 counter PNGs +room JSON +current global index",
+    "historical_seal_not_interchangeable": "034595993c26abb362e510dfa8534ba50a3e24a5922be908e4349b3be6c0876a",
+    "normal_entries": 16,
+    "low_detail_entries": 7,
+    "low_detail_ids": [
+      "casino_light_1",
+      "casino_light_2",
+      "casino_light_3",
+      "casino_sign_pulse",
+      "floor_glint_0",
+      "floor_glint_1",
+      "floor_glint_2"
+    ]
+  },
+  "retained_evidence": {
+    "scope": "Historical Base only; nine objects, no forced public scenarios or later lifecycle/save/revisit proof",
+    "actual_context_png": "E:/CodexQA/BTH/runs/BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-contexts-03/evidence/__none_actual_play.png",
+    "actual_context_png_sha256": "ec33cdd3a7396c3bfee25dd52c0589243538083aad9e7ca8c49a5b5ce792ebe8",
+    "metadata": "E:/CodexQA/BTH/runs/BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-contexts-03/evidence/__none_metadata.json",
+    "metadata_sha256": "67999a314912d1da344e80c6e957b2b86523b1918866bd85e9040e4a4ef9af3f",
+    "video_frame_000": "E:/CodexQA/BTH/runs/BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01/evidence/capture/frame_000.png",
+    "video_frame_000_sha256": "540cd6ef8c6573bc4a632a94d4f3d86b3c1c83529d8b51828479c26f3676546d",
+    "scoped_context_job": {
+      "pid": 1500,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "scoped_video_job": {
+      "pid": 16640,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "no_global_process_or_host_zero_claim": true,
+    "no_competing_spatial_trial_found": "Scoped repository room artifacts/ledger and retained High Limit art checkpoints; no fresh High Limit spatial candidate was present"
+  },
+  "assembly_proposal": {
+    "native_body_regions": [
+      [
+        164,
+        412,
+        544,
+        176
+      ],
+      [
+        1092,
+        412,
+        544,
+        176
+      ]
+    ],
+    "fixed_near_contact_rail_y": 516,
+    "raw_bright_near_rail_rows": [
+      499,
+      507
+    ],
+    "raw_table_leg_rows_approx": [
+      527,
+      596
+    ],
+    "required_fit": "Piecewise nearest-neighbor local furniture fitting; remap raw near rail around503 to exact516, do not resize the room",
+    "support_finish": "Dark timber with no bright foot caps; retain complete contact shadows before native604 floor inlay",
+    "counter_crops_native": [
+      [
+        164,
+        516,
+        544,
+        72
+      ],
+      [
+        1092,
+        516,
+        544,
+        72
+      ]
+    ],
+    "current_counter_crops_verified_opaque_and_exact": true,
+    "counter_policy": "Recrop both fronts from identical final master; no third host/VIP replay",
+    "fixed_details": "HIGH LIMIT, PRIVATE TABLES, VIP desk/text/legs, two notices, cyan stripe, wall/floor materials and floor inlays",
+    "old_shadow_policy": "Trace original table/post/cast-shadow pixels beyond body rectangles before assembly; do not leave a rectangular outline or erase unrelated floor",
+    "original_floor_recipe": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_highlimit_v1r1.py",
+    "original_floor_recipe_sha256": "5139d13bf08399d8574ff2fc04b4b89b9fbdf43a84cd0112b6bedc3c04ac41b8",
+    "original_floor_clear_board": [
+      [
+        81,
+        252,
+        275,
+        45
+      ],
+      [
+        545,
+        252,
+        276,
+        45
+      ]
+    ],
+    "clean_floor_donor_candidate": "Original same-y native x%128 (original assembly used board x%64); never sample old posts/bottom return",
+    "original_floor_phase_checks": [
+      {
+        "native_region": [
+          162,
+          588,
+          550,
+          6
+        ],
+        "equal_rgba_pixels": 3300,
+        "total_pixels": 3300
+      },
+      {
+        "native_region": [
+          1090,
+          588,
+          552,
+          6
+        ],
+        "equal_rgba_pixels": 3312,
+        "total_pixels": 3312
+      }
+    ],
+    "exact_outside_repair_union_required": true,
+    "no_center_craps_background_table": true
+  },
+  "typed_paint_constraints": {
+    "method": "Retained actual typed source-paint PNGs decoded read-only; alpha>=64 bbox in board coordinates, conservative strong paint only",
+    "blackjack_body": [
+      86,
+      194.5,
+      208,
+      270
+    ],
+    "blackjack_adornment": [
+      105,
+      174,
+      189,
+      263
+    ],
+    "baccarat_body": [
+      215.5,
+      195,
+      350.5,
+      278.5
+    ],
+    "baccarat_adornment": [
+      234,
+      168,
+      332,
+      269.5
+    ],
+    "roulette_body": [
+      614.5,
+      184,
+      743.5,
+      267
+    ],
+    "roulette_adornment": [
+      630,
+      157,
+      728,
+      258.5
+    ],
+    "craps_body": [
+      390.5,
+      212,
+      515.5,
+      296
+    ],
+    "kite_body": [
+      701,
+      294.5,
+      751,
+      352
+    ],
+    "kite_name": [
+      717,
+      354,
+      735,
+      363
+    ],
+    "vega_body": [
+      276,
+      311.5,
+      326,
+      366
+    ],
+    "vega_name": [
+      289,
+      368,
+      313,
+      380
+    ],
+    "all_nine_actual_objects_body_draw_layer": 0,
+    "limitation": "Bounds are not permission to move actors, game models, labels or geometry; low-opacity glows may extend farther"
+  },
+  "motion_proposals_not_approved": {
+    "current_five_lamp_rects": "x250/350/450/550/650,y124,w52,h8",
+    "current_lamps_actual_warm_trim_pixels": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "proposed_art_only_reanchor": "All five lamp rect.y integer124 to8; same x/size/IDs/period/phase/amplitude/flags, mask existing gold soffit inlay only",
+    "proposed_reanchor_actual_warm_trim_pixels": [
+      176,
+      176,
+      208,
+      200,
+      164
+    ],
+    "warm_trim_predicate": "Original opaque master R>=90,G>=60,R>=B+20,G>=B",
+    "sign_rect_unchanged": [
+      332,
+      54,
+      234,
+      62
+    ],
+    "sign_target": "Existing PRIVATE TABLES cyan subtitle glyphs; HIGH LIMIT title is outside the envelope",
+    "subtitle_bright_cyan_pixel_count": 1804,
+    "subtitle_local_texture_bbox": [
+      96,
+      28,
+      284,
+      46
+    ],
+    "subtitle_predicate": "Original master G>=100,B>=100,G>=R+40,B>=R+40",
+    "no_masks_or_manifest_edits_performed": true,
+    "approval_needed": "Independent numeric and populated native/visible-motion review before any decorative reanchor or mask integration"
+  },
+  "required_remaining": [
+    "Exact guarded E assembly with immutable predecessor and source-pixel custody",
+    "Independent integrated static review and correct same-master two-front crops",
+    "Fresh current-source Base/native actual contacts, all16/seven motifs, Reduce Motion and no-pointer liveness",
+    "Authentic animated preview, scoped commit and TEST artifact/served proof",
+    "Browser acceptance remains separately unavailable unless qualified E-profile capability is provided"
+  ],
+  "production_assets_or_manifests_written": false,
+  "gameplay_coordinates_changed": false,
+  "qa_runtime_or_worker_launched": false,
+  "e_volume_written": false,
+  "ledger_or_commit_changed": false,
+  "art_approval": false,
+  "test_updated": false
+}
