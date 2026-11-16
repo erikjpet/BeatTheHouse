@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T04:25:02Z",
+  "updated_at": "2026-11-16T05:39:57.205705+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,17 +38045,35 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_CANONICAL_TEST_BUILD",
+      "status": "ACTIVE_GRAND_REPAIR",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [{"sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c", "evidence": ["docs/testing/bar_spatial_v4_art_approval_20261116.json", "docs/testing/bar_spatial_delivery_attempt1_20261116.json"]}],
+      "commits": [
+        {
+          "sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c",
+          "evidence": [
+            "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+            "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+            "docs/testing/bar_spatial_test_delivery_20261116.json"
+          ]
+        },
+        {
+          "sha": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+          "evidence": [
+            "docs/testing/bar_spatial_test_delivery_20261116.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "evidence": []
+        "evidence": [
+          "docs/testing/bar_spatial_test_delivery_20261116.json"
+        ],
+        "scope": "Bar-only TEST artifact delivery verified; remaining19 room repairs and whole-parent delivery remain open."
       },
       "evidence": [
         {
@@ -38102,18 +38120,23 @@
           "kind": "native_complete_delivery_rebuild",
           "reference": "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
           "summary": "All58sequence and remaining native gates pass. Lossless152frame APNG verified and saved. First Web-stage strict delta rejected regenerated IDs; reviewed canonical metadata restores25sidecars/3root IDs, preserves1605bindings and leaves the PCK allowlist unchanged. Fresh build pending; TEST unchanged."
+        },
+        {
+          "kind": "test_artifact_delivery",
+          "reference": "docs/testing/bar_spatial_test_delivery_20261116.json",
+          "summary": "Bar exact7b284648 TEST current,13 artifact files and default-TLS HTTPS bytes verified; NEXT1240ce unchanged. All native gates/art review and lossless APNG pass. Browser NOT RUN; all-room parent remains open with19 room repairs remaining."
         }
       ],
-      "next_action": "All Bar native gates and the lossless animated preview pass. Rebuild the approved art with preserved canonical resource and scene IDs; require the complete1605UID map and unchanged strict PCK gate before TEST publication and served-byte verification.",
+      "next_action": "Bar native/visual and exact TEST artifact delivery is complete; browser acceptance is NOT RUN. Grand raw trial is preserved and integrated candidate assembly is pending; then continue the other18 rooms.19 room repairs remain open in total; no main/NEXT merge.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:33:32.332629+00:00",
+        "observed_at": "2026-11-16T05:34:41.708297+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T04:25:02Z",
+      "updated_at": "2026-11-16T05:39:57.205705+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38132,9 +38155,174 @@
           }
         ],
         "coverage": {
-          "required": false,
+          "required": true,
           "complete": false,
-          "areas": []
+          "completed_room_count": 1,
+          "remaining_room_count": 19,
+          "basis": "Spatial repair and native/visual plus TEST-artifact disposition; preliminary snapshot review alone does not close a room.",
+          "areas": [
+            {
+              "id": "bar",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/bar_spatial_test_delivery_20261116.json"
+              ],
+              "summary": "Bounded native/visual and TEST artifact delivered; browser NOT RUN."
+            },
+            {
+              "id": "grand_casino",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md",
+                "docs/art/briefs/grand_spatial_repair_20261116.md"
+              ],
+              "summary": "Grand public raw trial preserved; integrated candidate assembly and new native/visual acceptance pending."
+            },
+            {
+              "id": "grand_casino_high_limit",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "grand_casino_back_room",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "delta_queen",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "kitty_cat_lounge",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "apartment",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "house",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "pawn_shop",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "jazz_club",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "punchline_back_room",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "beach",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "grand_casino_cage",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "motel",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "motel_room",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "gas_station_casino",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "corner_store",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "back_alley",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "small_underground_casino",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            },
+            {
+              "id": "punchline_club",
+              "state": "remaining",
+              "evidence": [
+                "docs/art/environment_spatial_rework_direction.md"
+              ],
+              "summary": "Room spatial repair and its acceptance/delivery remain open."
+            }
+          ]
         }
       },
       "implementation_batches": []
@@ -38144,18 +38332,40 @@
       "kind": "objective",
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
-      "state": "open",
-      "status": "ACTIVE_CANONICAL_TEST_BUILD",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [{"sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c", "evidence": ["docs/testing/bar_spatial_v4_art_approval_20261116.json", "docs/testing/bar_spatial_delivery_attempt1_20261116.json"]}],
+      "commits": [
+        {
+          "sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c",
+          "evidence": [
+            "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+            "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+            "docs/testing/bar_spatial_test_delivery_20261116.json"
+          ]
+        },
+        {
+          "sha": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+          "evidence": [
+            "docs/testing/bar_spatial_test_delivery_20261116.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+        "evidence": [
+          "docs/testing/bar_spatial_test_delivery_20261116.json",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-served/evidence/served.json"
+        ],
+        "scope": "Exact Bar spatial native/visual approval and TEST artifact/current/HTTPS delivery only;13 files verified.",
+        "verified_scope": "Manifest5855381f/PCKa84ed267 bind exported7b284648 and audited backgrounda870d365; NEXT1240ce unchanged.",
+        "pending_scope": "Browser startup, served Web visuals and gameplay NOT RUN under admitted E-profile constraint; no all58 independent visual or full346.154-second motion-cycle claim."
       },
       "evidence": [
         {
@@ -38202,18 +38412,23 @@
           "kind": "native_complete_delivery_rebuild",
           "reference": "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
           "summary": "All58sequence and remaining native gates pass. Lossless152frame APNG verified and saved. First Web-stage strict delta rejected regenerated IDs; reviewed canonical metadata restores25sidecars/3root IDs, preserves1605bindings and leaves the PCK allowlist unchanged. Fresh build pending; TEST unchanged."
+        },
+        {
+          "kind": "test_artifact_delivery",
+          "reference": "docs/testing/bar_spatial_test_delivery_20261116.json",
+          "summary": "Bar exact7b284648 TEST current,13 artifact files and default-TLS HTTPS bytes verified; NEXT1240ce unchanged. All native gates/art review and lossless APNG pass. Browser NOT RUN; all-room parent remains open with19 room repairs remaining."
         }
       ],
-      "next_action": "All Bar native gates and the lossless animated preview pass. Rebuild the approved art with preserved canonical resource and scene IDs; require the complete1605UID map and unchanged strict PCK gate before TEST publication and served-byte verification.",
+      "next_action": "Bounded Bar native/visual plus TEST-artifact objective complete at7b284648; retain explicit browser NOT RUN limitation. Browser startup, visuals and gameplay need a qualified admitted E-profile run. Continue the separate Grand public room objective.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:33:32.332629+00:00",
+        "observed_at": "2026-11-16T05:34:41.708297+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T04:25:02Z",
+      "updated_at": "2026-11-16T05:34:41.708297+00:00",
       "scope": [
         "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
       ],
@@ -38229,8 +38444,21 @@
             "id": "visual-and-implementation-audit",
             "description": "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+              "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+              "docs/testing/bar_spatial_test_delivery_20261116.json"
+            ]
+          },
+          {
+            "id": "live-browser-acceptance",
+            "description": "Browser startup, served Web visuals and gameplay remain an explicit limit beyond this bounded native/visual plus TEST-artifact closure.",
+            "required": false,
+            "state": "unavailable",
+            "evidence": [
+              "docs/testing/bar_spatial_test_delivery_20261116.json"
+            ]
           }
         ],
         "coverage": {
@@ -38239,7 +38467,14 @@
           "areas": []
         }
       },
-      "implementation_batches": []
+      "implementation_batches": [],
+      "browser_acceptance": {
+        "state": "NOT_RUN",
+        "reason": "Admitted E: profile/storage constraint; no browser or computer-control denial bypassed.",
+        "evidence": [
+          "docs/testing/bar_spatial_test_delivery_20261116.json"
+        ]
+      }
     },
     {
       "id": "BTH-TEST-TRAVEL-PERF-001",
@@ -38318,7 +38553,7 @@
       "name": "Grand public spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "ACTIVE_SOURCE_REPAIR",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38340,18 +38575,28 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "next_room_direction_correction",
+          "reference": "docs/testing/bar_spatial_test_delivery_20261116.json",
+          "summary": "Reject full-width plinth/body to294 because Rourke feet277/271 occupy that floor. Shallow fascia below258, negative floor and central pedestal must avoid standing contacts; fixed replay rectangles recrop from final master. Source preparation only; no candidate or Grand acceptance."
+        },
+        {
+          "kind": "raw_source_checkpoint",
+          "reference": "docs/art/briefs/grand_spatial_repair_20261116.md",
+          "summary": "Raw1815x867 trial31e7a40b preserved; guarded materialize01 PID31624 exited0/zero. Integrated bounded assembly, exact source/replay/light masks and new native/visual acceptance pending. No candidate activation or art approval."
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Assemble one bounded Grand public candidate from preserved rawR1: shallow fascia below258, negative floor and pedestal clear of Rourke feet277/271; recrop matching replay fronts. Rebind decorative lamp0 atx245 and mask physical lights while retaining16/7 motion. Integrated candidate, native review and art approval pending.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T05:34:41.708297+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T05:39:57.205705+00:00",
       "scope": [
         "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38377,7 +38622,24 @@
           "areas": []
         }
       },
-      "implementation_batches": []
+      "implementation_batches": [],
+      "candidate_state": "RAW_SOURCE_PRESERVED_ASSEMBLY_PENDING",
+      "raw_source": {
+        "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDTRIAL-20261116/candidate_sources/grand-spatial-r1.png",
+        "sha256": "31e7a40bfedcbc68a00a615e400b3df88bab03d180558fd3c88749a410147c63",
+        "size": [
+          1815,
+          867
+        ],
+        "state": "preserved_non_active_raw_source",
+        "materialize_job": {
+          "run": "BTH-ENV-SPATIAL-GRANDTRIAL-20261116-materialize01",
+          "pid": 31624,
+          "exit_code": 0,
+          "active_at_release": 0,
+          "source": "Parent direct completed-job observation; raw PNG SHA independently re-read."
+        }
+      }
     },
     {
       "id": "BTH-ENV-SPATIAL-HL-001",

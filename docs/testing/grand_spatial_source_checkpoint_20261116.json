@@ -1,0 +1,50 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "parent_id": "BTH-ENV-SPATIAL-001",
+  "status": "RAW_SOURCE_PRESERVED_ASSEMBLY_PENDING",
+  "original_source_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+  "original_master_sha256": "f5b26c4f16b4ff419154c555d48f553013d8c75363284c0090b7eff07d19eb9f",
+  "original_22_file_package_sha256": "5b4e87763e85358b85fc0ce73232afc8878f132a4294904970c7fdfbd8f30060",
+  "imagegen_source": {
+    "repository_file": "review_artifacts/environment_art_sources/grand-spatial-r1/grand-spatial-r1.png.b64",
+    "base64_file_sha256": "47c06f947a878142f8416c07f3713bc4a5fa423de5a6de238af1a64f5dd4b419",
+    "decoded_png_sha256": "31e7a40bfedcbc68a00a615e400b3df88bab03d180558fd3c88749a410147c63",
+    "decoded_png_bytes": 1921696,
+    "decoded_size": [1815, 867],
+    "materialized_file": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDTRIAL-20261116/candidate_sources/grand-spatial-r1.png",
+    "whole_image_replacement_permitted": false,
+    "scope": "Generated table source only; surrounding regenerated pixels are excluded from exact assembly."
+  },
+  "materialization": {
+    "run_id": "BTH-ENV-SPATIAL-GRANDTRIAL-20261116-materialize01",
+    "storage_manifest_sha256": "2f8a833aeb4772aa8f156b41249b4c1e0b43bb92c85bcc4d516bacdedafd6e6d",
+    "proof_sha256": "718ef696334a8480615aaee5b64994b5a1ce9e35e58441baffa2fbb3242d2382",
+    "job_receipt_sha256": "442eb6e5952112bafb20920e4e82f3565caecd43eb364db9d86231c93daef870",
+    "pid": 31624,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cpu_rate": 1200,
+    "memory_bytes": 2147483648,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "original_package_copied_exactly": true,
+    "profiles_or_saves_accessed": false
+  },
+  "assembly_contract": {
+    "native_regions": [[164, 412, 544, 176], [1092, 412, 544, 176]],
+    "near_contact_rail_y": 516,
+    "outside_master_pixels": "Must remain exactly original",
+    "replay_fronts": "Recrop two table fronts from final master; host unchanged",
+    "motion": "16 native / 7 simulated low-detail entries, timing and phases preserved",
+    "sole_proposed_art_rect_change": "casino_light_0.rect[0] integer250 to245, to bind existing gold bay edge; gameplay coordinates unchanged",
+    "required_review": "Exact integrated source custody, numeric contacts and independent populated/motion/seam audit before art activation or TEST delivery"
+  },
+  "integrated_candidate_exists": false,
+  "candidate_approved": false,
+  "grand_native_runtime_launched": false,
+  "production_art_changed": false,
+  "grand_test_updated": false,
+  "current_test": "Bar correction source7b284648642a896e534c8bfd53c8e7abbc55108d",
+  "no_main_next_stable_changes": true
+}

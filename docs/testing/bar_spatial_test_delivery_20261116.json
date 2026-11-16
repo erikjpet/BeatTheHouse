@@ -1,0 +1,192 @@
+{
+  "schema": "bth.bar_spatial_test_delivery/v1",
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "parent_id": "BTH-ENV-SPATIAL-001",
+  "sidebar_task_id": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "observed_at": "2026-11-16T05:34:41.708297+00:00",
+  "status": "COMPLETE_BOUNDED_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN",
+  "scope": "Bar spatial repair, independent native visual review and exact TEST artifact delivery. This does not close browser acceptance or the all20-room parent.",
+  "source": {
+    "branch": "codex/environment-art-layers",
+    "art_commit": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c",
+    "exported_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+    "exported_tree": "f7d316a268984bfdd7fafef71d0971c9fff0956e",
+    "source_dirty": false,
+    "background_sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+    "bar_package_sha256": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+    "bar_seal_files": 19,
+    "changed_bar_paths": [
+      "assets/art/environments/bar/background.png"
+    ],
+    "unchanged": [
+      "All17 motion entries and payloads",
+      "Bar manifest/index",
+      "Counter replay crop",
+      "Gameplay, labels, hit testing and placement geometry",
+      "Other room art"
+    ]
+  },
+  "native_and_art_acceptance": {
+    "initial_contexts": {
+      "count": 8,
+      "checks": 1017,
+      "findings": []
+    },
+    "sequence": {
+      "cases": 58,
+      "checks": 5780,
+      "findings": []
+    },
+    "motion": {
+      "entries": 17,
+      "checks": 35,
+      "failures": []
+    },
+    "composite": {
+      "contexts": 8,
+      "checks": 600,
+      "findings": []
+    },
+    "reduce_motion_composite": {
+      "checks": 75,
+      "findings": []
+    },
+    "floor_wrap": {
+      "movers": 7,
+      "checks": 71,
+      "findings": []
+    },
+    "smoke_wrap": {
+      "checks": 11,
+      "findings": []
+    },
+    "counter_replay": "PASS",
+    "placement_closing": {
+      "checks": 9,
+      "findings": []
+    },
+    "corrected_source_paint_observer": {
+      "checks_including_custody": 7005,
+      "contexts": 2,
+      "findings": [],
+      "qa_only_typed_palette_fields_restored": 8
+    },
+    "no_pointer_liveness": "PASS on native suite and fresh canonical build",
+    "independent_reviewer": "/root/audit_spatial_handoff",
+    "visual_result": "Exact V4 source, all8 populated initial contexts and sampled autonomous Fight motion pass. Wall joins, Numbers support and brawler-label contrast were corrected after explicit earlier rejections.",
+    "visual_limits": [
+      "Not independent visual coverage of all58 sequence cases",
+      "Fight motion excerpt is20.119249 seconds; longest346.154-second cycle and all-scenario cycles are not covered"
+    ],
+    "evidence": [
+      "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+      "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
+      "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+      "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-suite-sequence-bar_dead_tuesday/evidence/sequence-coverage.json",
+      "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-liveness/evidence/worker.log"
+    ]
+  },
+  "animated_preview": {
+    "type": "lossless APNG",
+    "frames": 152,
+    "size": [
+      900,
+      430
+    ],
+    "actual_scene_clock_span_seconds": 20.1192493333333,
+    "sha256": "b09721ade5eab8bf2a56cc52bfc116459b8db472feac74888ad6fee14332af9d",
+    "verification": "Every decoded frame recomposes pixel-exactly to its captured RGBA; authentic scene timestamps retained.",
+    "page": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e"
+  },
+  "fresh_export": {
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116",
+    "stage": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116/.tmp/web-release-7b284648/stage",
+    "manifest_sha256": "5855381ff2137ece43c2b097b169c70c50b658f1caa6d86e1461b42b22bbe447",
+    "pck_sha256": "a84ed267a7d664ada937d441be1d053419fe78df5e6725e217c99d60b0bc4ba1",
+    "files_verified": 13,
+    "file_count_definition": "12 manifest-listed payload files plus build_manifest.json",
+    "strict_pck_delta": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        ".godot/imported/background.png-073ced750c057b8110ceb89e250ef71b.ctex",
+        "build_manifest.json"
+      ],
+      "allowlist_widened": false,
+      "other_gdc_scn_payloads": "Byte-identical to prior TEST PCK",
+      "uid_cache": "Byte-identical; complete1605 path-to-UID bindings equal",
+      "compiled_art_links_verified": 400,
+      "raw_art_files": 421
+    },
+    "web_js_packaging": "Maintained WebGL handle correction applied and verified against its pinned policy; receipt included in the13-file stage.",
+    "evidence_directory": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-finalize/evidence",
+    "verify_receipt": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-verify/evidence/phase-result.json"
+  },
+  "test_delivery": {
+    "state": "verified",
+    "previous_source_commit": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55",
+    "deployed_source_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+    "destination": "D:/Projects/site/projects/beat-the-house/public/play/test/7b284648642a896e534c8bfd53c8e7abbc55108d",
+    "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+    "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/7b284648642a896e534c8bfd53c8e7abbc55108d/index.html",
+    "files_verified": 13,
+    "local_current_equals_https": true,
+    "managed_launcher": true,
+    "tls": "Default Windows trust, certificate and hostname validation required; no custom roots, redirect or fallback",
+    "served_receipt": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-served/evidence/served.json",
+    "served_receipt_sha256": "b036b1418b2c63c725f97c3bfb962b4f2575d7ea21009db89aab831231b70e4d",
+    "verified_at": "2026-11-16T04:48:44.416826+00:00",
+    "publish_job": {
+      "receipt": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-publish/evidence/job.json",
+      "pid": 33764,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true
+    },
+    "publish_result": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-publish/evidence/worker.log",
+    "served_job": {
+      "receipt": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-served/evidence/job.json",
+      "pid": 29676,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true
+    },
+    "test_save_flag": "--bth-art-test",
+    "test_persistent_mount": "/userfs/godot/app_userdata/Beat the House/distribution/web_0_6_1_art_test"
+  },
+  "browser_acceptance": {
+    "state": "NOT_RUN",
+    "reason": "No qualified browser run within the admitted E: profile/storage constraint. No browser or computer-control denial was bypassed.",
+    "unverified": [
+      "Browser startup",
+      "Served Web visuals",
+      "Browser gameplay"
+    ],
+    "https_bytes_are_browser_acceptance": false
+  },
+  "preservation": {
+    "next_status": "UNCHANGED",
+    "next_source_commit": "1240cebdd15ee294e8997b46d20819762d691923",
+    "next_source_tree": "07fa7f46fc250247b26134b19350b155e2641904",
+    "next_pointer_sha256": "326f17d93f76edb846460644a076bcb367ec8c855ce159a9299a356b55def17d",
+    "main_merged": false,
+    "original_profiles_or_saves_accessed": false
+  },
+  "retained_failure_history": [
+    "Earlier candidate source/framing, wall-splice, Numbers-support and bright-foot label rejections remain in their immutable source/review checkpoints; final V4 supersedes their rejected candidates only.",
+    "Old source-paint observer failed on serialized JSON Color strings; the passing QA observer restores only eight typed palette fields. Production painter and serialized snapshot/geometry remain unchanged.",
+    "First Web build failed the unchanged strict PCK delta gate on regenerated UID and root IDs. Its PCK was not patched. Reviewed25 sidecars and3 root attributes preserve all1605 canonical bindings; fresh source7b284648 was rebuilt and strict comparison passed.",
+    "The raw native scene metadata probe failed bundle-roundtrip equality and remains a failed discovery, not a passing gate.",
+    "The ffmpeg alias returned Access denied during read-only planning; no child launched and no alias retry or permission change occurred. The lossless APNG uses the admitted captured frames.",
+    "Auto-review rejected the first concrete TEST publication before execution because it did not recognize explicit human site-deployment authorization. This is a paraphrase; exact denial text is unavailable after context compaction. The coordinator checked current still0ef, no7b destination and no publication Job. Direct read of human Nov14 standing TEST authorization Sentinel_8bd238cbedc481918703fdbb45d50762 supplied relevant evidence. One identical publication retry succeeded without argument or safety-setting changes. This historical denial is resolved, not a current blocker."
+  ],
+  "parent_continuation": {
+    "state": "open",
+    "status": "ACTIVE_GRAND_REPAIR",
+    "bounded_room_repairs_delivered": 1,
+    "remaining_rooms": 19,
+    "next_room": "grand_casino",
+    "grand_candidate_exists": false,
+    "corrected_visual_direction": "The earlier full-width plinth/body-to294 suggestion is invalid: actual populated geometry places Rourke feet at277/271. Use a shallow fascia immediately below the fixed258 rail, negative floor below it and a central pedestal clear of standing contacts. Preserve fixed replay rectangle/IDs and recrop it from the identical final master, including negative-floor areas; do not replay the old green panel. Exact placement remains subject to the independent numeric clearance union and new populated trial."
+  }
+}
