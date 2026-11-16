@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T06:51:34.594134+00:00",
+  "updated_at": "2026-11-16T06:58:50.661402+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4973,7 +4973,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
+      "status": "NATIVE_FIRST_DELIVERY_AND_SIX_HOUR_COOLDOWN_PASS_SECOND_OFFER_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5083,7 +5083,7 @@
         {
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
-          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
+          "summary": "First actual package deferred22 reward yields177cash, reputation70to95(+25), duties2to1/no debt; cold/stale-handoff/persistence pass. Unmodified Crew-present watches show no request through7:28AM, then the second request arrives exactly1950/8:30AM, six game hours after1590 success. Punchline11:00–11:30AM/22cash/+4Heat terms retained. Fourteen positive native Jobs159 checks; three diagnostics retained/excluded. Remaining duty continues."
         }
       ],
       "implementation_batches": [
@@ -5094,7 +5094,7 @@
         "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
         "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116"
       ],
-      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
+      "next_action": "Continue actual second offer at od17 (177cash,95standing,one duty,clock1950/Day2 8:30AM,Knuckles present). Read retained Punchline floor-contact11:00–11:30AM terms and confirm normally, then pursue remaining owed delivery. One real6h post-success interval qualified; preserve diagnostics and all ending/recovery profiles. Browser, missed/denial and other route/pacing scope remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5108,7 +5108,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T06:51:34.594134+00:00"
+      "updated_at": "2026-11-16T06:58:50.661402+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -38797,7 +38797,7 @@
         "Test offered ordinary delivery terms, single-active behavior, fulfillment/reputation and cold persistence where reachable; retain unobserved and blocked boundaries explicitly."
       ],
       "acceptance_scope": "Continue the broader Crew track after qualified success and adverse endings. Related direct human rules: user:Sentinel_5687a9fdd6e88191a896ed6da2cd72a2 (two obligations, no cash debt, one active delivery, cooldown and pushy retry); user:Sentinel_7c91e909fbbc8191bfa4e51bbb24ddd9 (25% hourly chance after6h, Crew presence only). Read directly this turn. Native operational evidence does not establish browser or human pacing coverage.",
-      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
+      "status": "NATIVE_FIRST_DELIVERY_AND_SIX_HOUR_COOLDOWN_PASS_SECOND_OFFER_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -38807,10 +38807,10 @@
         {
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
-          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
+          "summary": "First actual package deferred22 reward yields177cash, reputation70to95(+25), duties2to1/no debt; cold/stale-handoff/persistence pass. Unmodified Crew-present watches show no request through7:28AM, then the second request arrives exactly1950/8:30AM, six game hours after1590 success. Punchline11:00–11:30AM/22cash/+4Heat terms retained. Fourteen positive native Jobs159 checks; three diagnostics retained/excluded. Remaining duty continues."
         }
       ],
-      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
+      "next_action": "Continue actual second offer at od17 (177cash,95standing,one duty,clock1950/Day2 8:30AM,Knuckles present). Read retained Punchline floor-contact11:00–11:30AM terms and confirm normally, then pursue remaining owed delivery. One real6h post-success interval qualified; preserve diagnostics and all ending/recovery profiles. Browser, missed/denial and other route/pacing scope remain Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -38819,7 +38819,7 @@
         "observed_at": "2026-11-16T05:19:33.396811+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T06:51:34.594134+00:00"
+      "updated_at": "2026-11-16T06:58:50.661402+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
@@ -42635,7 +42635,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
+      "status": "NATIVE_FIRST_DELIVERY_AND_SIX_HOUR_COOLDOWN_PASS_SECOND_OFFER_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42685,10 +42685,10 @@
         {
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
-          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
+          "summary": "First actual package deferred22 reward yields177cash, reputation70to95(+25), duties2to1/no debt; cold/stale-handoff/persistence pass. Unmodified Crew-present watches show no request through7:28AM, then the second request arrives exactly1950/8:30AM, six game hours after1590 success. Punchline11:00–11:30AM/22cash/+4Heat terms retained. Fourteen positive native Jobs159 checks; three diagnostics retained/excluded. Remaining duty continues."
         }
       ],
-      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
+      "next_action": "Continue actual second offer at od17 (177cash,95standing,one duty,clock1950/Day2 8:30AM,Knuckles present). Read retained Punchline floor-contact11:00–11:30AM terms and confirm normally, then pursue remaining owed delivery. One real6h post-success interval qualified; preserve diagnostics and all ending/recovery profiles. Browser, missed/denial and other route/pacing scope remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42701,7 +42701,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T06:51:34.594134+00:00"
+      "updated_at": "2026-11-16T06:58:50.661402+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
