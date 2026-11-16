@@ -196,7 +196,14 @@
         "name": "dot, Crew room return fix",
         "task_ref": "/root/find_next_game_bugs"
       },
-      "commits": [{"sha":"ed37dd276c57a6febeb00bc1b9984704c585db9b","evidence":["docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"]}],
+      "commits": [
+        {
+          "sha": "ed37dd276c57a6febeb00bc1b9984704c585db9b",
+          "evidence": [
+            "docs/testing/BTH-NEXT-QA-CREW-ROOM-HOST-001_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "state": "verified",
         "evidence": [
@@ -259,7 +266,6 @@
         "Retain active physical manifest-backed Crew contact identity when choices disappear; preserve resolved retirement and all authority guards."
       ]
     },
-
     {
       "id": "BTH-PERF-20261104",
       "name": "Whole-game substantial performance/leak audit and fixes",
@@ -5832,13 +5838,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -38644,7 +38650,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_953_GENERAL_OPEN_TWO_FIXES_MAIN_NEXT_SERVED",
+      "status": "NATIVE_1109_GENERAL_OPEN_THREE_FIXES_MAIN_NEXT_SERVED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38702,7 +38708,10 @@
                 "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Roulette_security_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_marker_cashout_interest_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_marker_cashout_interest_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Roulette_rebet_cashout_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Video_Poker_QA_20261116.md"
               ]
             },
             {
@@ -38776,6 +38785,13 @@
           "evidence": [
             "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "8aa9df0afbc534831d36c905bfaf2d71c3667057",
+          "evidence": [
+            "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+            "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38848,15 +38864,50 @@
           "reference": "docs/testing/NEXT_sidebar_marker_cashout_interest_QA_20261116.md",
           "kind": "ordinary_native_marker_cashout_daily_interest_cold",
           "summary": "111 additional qualified checks: real ATM borrow/partial/full repayment; chip redemption withholding to marker; cold full payoff; actual map journeys across3AM50-to53 and exact cold/next-day/idempotent views with normal live calendar.22 retained bounded route observations and3 wrong-oracle runs excluded. No new product defect."
+        },
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "actual_native_marker_repayment_remembered_roulette_timer_failure",
+          "summary": "Actual112 cash/100 marker funds RED100 draft; actual marker payoff leaves12, normal return retains draft. Manual Spin creates no pending; natural timer creates failed sealed delivery without money/RNG change.18 checks/one decisive failure retained."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md",
+          "kind": "ordinary_native_shop_pending_autosave_menu_continue",
+          "summary": "15 new qualified checks: actual Coffee4 purchase18to14/one item and pending autosave; actual Main Menu/Continue retains purchase/debt/removed offer without prior probe Save. Two wrong UI assumptions retained/excluded. General968; Roulette67/21 remain separate."
+        },
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "third_confirmed_native_gameplay_fix",
+          "summary": "Ordinary marker payoff leaves unfunded remembered Roulette draft; natural timer published failed pending. Narrow validator reuse passes67 native/recovery,21 synthetic and liveness. Main/NEXT next; broad objective remains Open."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Roulette_rebet_cashout_QA_20261116.md",
+          "kind": "ordinary_native_earned_chip_editing_surplus_cashout_cold",
+          "summary": "45 new qualified checks: actual Rebet2XUndoClearRebet, earned-chip100 timed win200to300, normal300-chip cashout100marker/200cash and exact cold212 debt-free departure. General exploration only; no new defect."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md",
+          "kind": "ordinary_native_merchant_sale_pending_menu_cold",
+          "summary": "30 additional qualified checks: actual Sell3 consumes Coffee once and17cash persists through menu and separate-process empty merchant. Prior Coffee15 remains separate within total."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Video_Poker_QA_20261116.md",
+          "kind": "ordinary_native_video_poker_held_save_draw_double_gamble_cold",
+          "summary": "66 qualified checks: natural three-hand6 wager, held0/2 cold Save, actual Draw206cash/2chips, normal gross2 DoubleUp reopen/same dealer/predeclared0 pick win, exact cold206cash/4chips/RNG1795693504. Two diagnostic failures retained/excluded. General1109 total."
+        },
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "third_native_root_fix_main_next_verified",
+          "summary": "Roulette root correction67 native/21 synthetic/liveness delivered exact NEXT8aa9df0a with full changed PCK verification. Three confirmed fixes delivered; full exploration/endings/Web objective remains Open."
         }
       ],
-      "next_action": "Continue untested ordinary shop purchase/Save/Main Menu/Continue paths from the validated18-cash53-marker Motel profile, while retaining broader native/Web/ending scope and faithful-only defect triage.",
+      "next_action": "Continue distinct ordinary native gameplay from sidebar-G-video-poker-gamble-cold-20261116-01, actual206cash4chips/zero marker and intact companions; preserve independent ending owners and exact Web acceptance gap. Do not duplicate already qualified paths.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T07:28:19.147112+00:00",
+        "observed_at": "2026-11-16T09:09:32.307221+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38866,7 +38917,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T07:28:19.147112+00:00",
+      "updated_at": "2026-11-16T09:09:32.307221+00:00",
       "planned_app_changes": []
     },
     {
@@ -39035,6 +39086,167 @@
         ]
       },
       "updated_at": "2026-11-16T07:28:19.147112+00:00",
+      "planned_app_changes": []
+    },
+    {
+      "id": "BTH-ROULETTE-REPAID-DRAFT-001",
+      "name": "Keep Roulette editable when marker repayment leaves a remembered draft unfunded",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH-NEXT-QA-GENERAL-SIDEBAR-001"
+      ],
+      "group": "current",
+      "state": "open",
+      "status": "MAIN_NEXT_SERVED_67_NATIVE_21_SYNTH_LIVENESS_WEB_STARTUP_UNVERIFIED",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Reject a naturally timed remembered Roulette wager that is no longer affordable before publishing a pending delivery. Preserve minimum/funding/room/seal/replay guards, actual money/RNG, existing pending-save recovery and valid paid/sit-out automatic spins. Broader general/ending objectives stay Open.",
+        "source": "User requested continuing ordinary native NEXT bug-finding and authorized tested root-cause fixes/main/NEXT through parent01a1a147-7f07-7583-baf0-771a839f1013. Discovered in the preserved owned G campaign using actual marker controls, a funded wager and normal room return.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "faithful-reproduction",
+            "description": "Retain original genuine marker/draft/payoff/return/natural-timer failure and closed isolated profile custody.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "root-cause-fix",
+            "description": "Correct the narrow pre-delivery auto-command boundary without weakening validation or clearing arbitrary pending records.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "fixed-native-cold",
+            "description": "Same actual path and cold persistence retain usable controls with no charge/RNG change on invalid timer.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "focused-compatibility",
+            "description": "Relevant valid funded/zero automatic spins, limits and existing old pending-save recovery retain exactly-once/rejection safeguards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Scoped authorized main commit/push and exact existing NEXT provenance/assets, with native/source/Web limits distinct.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "exact-web-startup",
+            "description": "Exact-build browser startup/rendered acceptance remains separately unverified under retained control restriction.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Actual owned G100 marker payoff leaves remembered100 Roulette draft at12; natural timer pending failure",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Narrow fix, same native/cold/old-state and valid/rejection compatibility",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Authorized main/NEXT provenance and full changed PCK identity",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+                "E:\\CodexQA\\BTH\\runs\\sidebar-roulette-next-served-20261116-01\\evidence\\next-receipt.json"
+              ]
+            },
+            {
+              "name": "Exact-build browser startup/rendered Web under retained restriction",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [
+        {
+          "sha": "8aa9df0afbc534831d36c905bfaf2d71c3667057",
+          "evidence": [
+            "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "8aa9df0afbc534831d36c905bfaf2d71c3667057",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\sidebar-roulette-next-served-20261116-01\\evidence\\next-receipt.json",
+          "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+        ]
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "ordinary_owned_native_repayment_timer_pending_failure",
+          "summary": "Unchanged main192284cd source; actual funded100 wager,100 real marker repayment to12, normal return and natural40-second timer.18 checks/one failure; no economic/RNG change, pending record appears, clean engine and owned0."
+        },
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "native_root_fix_cold_paid_old_state_synthetic_liveness",
+          "summary": "Same natural timer fixed;67 focused native/recovery checks,21 synthetic commands and no-pointer liveness PASS. Valid paid100 settles once; exact captured old Cancel works and stale replay rejects. One wrong-oracle cold diagnostic retained/excluded."
+        },
+        {
+          "reference": "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
+          "kind": "exact_main_next_full_changed_pck_delivery",
+          "summary": "Main8aa9df0a/treeffdf9a27 promoted08:52:46Z, HTTPS08:53:12 verifies exact metadata and full changed PCK124982776/SHA45f6d998. Qualified67 native/21 synthetic/liveness source matches committed bytes. Web startup remains unverified under retained browser restriction."
+        }
+      ],
+      "next_action": "Retain exact Web startup/rendered acceptance as Open under the existing control restriction; main/NEXT and native/compatibility gates passed. Continue broader ordinary native QA separately.",
+      "blocker": {
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser or fallback was attempted. Native/source/HTTP verification is complete within its stated limits.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T09:09:32.307221+00:00",
+        "evidence": [
+          "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T09:09:32.307221+00:00",
       "planned_app_changes": []
     }
   ],

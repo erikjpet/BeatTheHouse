@@ -716,9 +716,16 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 		return {"handled": false}
 	if not bool(timer.get("due", false)):
 		return {"handled": false}
-	session["roulette_sit_out"] = _bet_array(session.get("roulette_bets", [])).is_empty()
+	var bets := _bet_array(session.get("roulette_bets", []))
+	session["roulette_sit_out"] = bets.is_empty()
 	GameModule.reset_table_round_timer(table)
 	_update_environment_table(environment, table)
+	# A marker payment can leave a remembered layout unfunded. Validate before
+	# the host publishes a delivery, as the manual Spin command already does.
+	if not bets.is_empty():
+		var validation := _validate_roulette_bets(bets, table, run_state, environment)
+		if not bool(validation.get("ok", false)):
+			return _message_command(session, str(validation.get("message", "Those roulette bets cannot be placed.")))
 	return GameModule.surface_command({
 		"handled": true,
 		"ui_state": session,
