@@ -1,0 +1,72 @@
+{
+  "schema": "bth.gbr_composition_raw_preservation/v1",
+  "task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "ONE_RAW_MATERIALIZED_PRESERVED__NOT_ASSEMBLED_OR_VISUALLY_ACCEPTED",
+  "source_checkpoint": "030bb1b6a15e0d7bf4d77f1fbef2c9ff0faee78f",
+  "descriptor_sha256": "4644a1a159b98d11d869d0854e96a12bb6899b2b204eac08accf255e82e4279a",
+  "materializer_sha256": "2df7caf2324693ba0e2e1bb9bfa01f44d2e8832349a3d9554cbf0a11e6f46a35",
+  "tests_sha256": "83981be66e18ecefbf53445c02a1643201e1efe88bc5352c4498a52210bbb46e",
+  "static_peer": "/root/bar_clearance_audit verified the exact two source deltas and reverse identity; all original path/storage/exclusive-write/custody functions remain unchanged.",
+  "tests": {
+    "run": "BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01",
+    "job_sha256": "8d218dbef5e941bea7ad83dc94b55d2a351f23df147d83df50792e34fa307932",
+    "log_sha256": "76ebc84737fcb0f3510f4738741714ea0663422ce189ff7d1f73a1f98285dc75",
+    "pid": 36664,
+    "passed": 20,
+    "seconds": 0.069,
+    "exit_code": 0,
+    "active_at_release": 0
+  },
+  "one_materialization": {
+    "run": "BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01",
+    "job_sha256": "efa6aefcef6349edb3026d8139de629bd0b59b2e1c300e01d6135ba1a694bd46",
+    "log_sha256": "4aac9d9b3d5b5e2c35364327766a781eeec5088f1e2a043e9c79c349439cbf78",
+    "materialization_receipt_sha256": "2c5633d34588d26dd05f75f13c014a166076821281a1dca0a51673744812e8ca",
+    "storage_manifest_sha256": "4e13d4703d9c29fe1774bfb688bef14bc84da83e9e202e717c3c7d38f275814c",
+    "pid": 43644,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cpu_rate": 1200,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "errors_cleanup_timeout_truncation": false
+  },
+  "raw": {
+    "sha256": "b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a",
+    "bytes": 1610131,
+    "size": [1815, 867],
+    "mode": "RGB8",
+    "E_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116/raw_source/grand-back-room-composition-r3.png",
+    "D_path": "review_artifacts/environment_art_sources/grand-back-room-composition-r3/grand-back-room-composition-r3.png",
+    "D_preservation": "Exclusive CreateNew after ordinary-ancestor, absent-target, exact size/hash checks; rehashed after Library upload.",
+    "all_four_chunks_and_CRCs_preserved": true,
+    "caBX_preserved": true,
+    "B64_prompt_provenance_and_21_original_controls_unchanged": true,
+    "pixel_transform_performed": false
+  },
+  "library": {
+    "file_id": "file_00000000788881fd91b508549b489aed",
+    "library_file_id": "libfile_fde3_f-b7991e0cfb888191b6a62997b735117e_b2e6deecb030819197ad6510125a1c29",
+    "file_name": "grand-back-room-composition-r3.png",
+    "version": 0,
+    "bytes": 1610131,
+    "status": "succeeded",
+    "returned_xattr": {"name": "user.library-file-version", "value": "0"},
+    "local_xattr": "Windows Python has no os.setxattr. No ADS substitute, retry or duplicate upload."
+  },
+  "root_actual_pixel_review": {
+    "viewed": true,
+    "finding": "Substantial improvement in table body height and planted supports, with continuous visible floor around the furniture. Far rail remains near the new wall/floor junction and the two local trapezoids retain perspective ambiguity. Exact game-paint coverage, OFFICE foreground, floor-band occlusion and populated composition still need review and assembly.",
+    "visual_acceptance": false,
+    "populated_candidate_render_exists": false
+  },
+  "next": "Assemble a bounded registered composition with physical furniture alpha masks and unchanged game anchors/motions; obtain an authentic populated preview before renewed visual acceptance or TEST publication.",
+  "production_art_changed": false,
+  "TEST_main_NEXT_changed": false,
+  "visually_accepted_rooms": 0,
+  "open_rooms": 20
+}

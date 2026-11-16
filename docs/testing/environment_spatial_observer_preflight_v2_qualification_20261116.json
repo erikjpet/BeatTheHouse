@@ -1,0 +1,39 @@
+{
+  "schema": "bth.environment_spatial_observer_preflight_qualification/v2",
+  "sidebar_task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "24_FILE_ONLY_TESTS_PASS__NO_ENGINE_OR_ART_ACCEPTANCE",
+  "purpose": "Authenticate actual archived filenames, schemas, counts, native-value provenance and original validators before spending another shared Godot slot.",
+  "source_sha256": {
+    "tools/environment_spatial_observer_preflight_v2.py": "94235349b8191cef6b3f00ca9de9146abd6ee99bf399f7a7d1abb49d6ed07ab5",
+    "tools/test_environment_spatial_observer_preflight_v2.py": "38d67c2504391b3b1c4733a621d42cade454a9094eb7a0e67c3b512d151ef204",
+    "tools/environment_spatial_observer_preflight_v2.README.md": "867f5f971dfa0d57c83aa24f1710d9fb76e90b0553e389fde2ee0de1d0fa6804",
+    "review_artifacts/environment_art_sources/environment-spatial-observer-preflight/catalog.json": "47bc3bd41c5713a46925034fbea3875acff62e18a882175fb04c96ed20433345"
+  },
+  "actual_execution": {
+    "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01/evidence",
+    "job_sha256": "f3bc8685704a4750a2e828d74ad487d138b6a920ae614588728cf06884c0847d",
+    "log_sha256": "b5127383a0f64de45acb76318836a2460733550c2a2174215df746e60d36d6bb",
+    "pid": 28540,
+    "tests": 24,
+    "seconds": 8.841,
+    "authentic_positive_reports_before_negative_controls": 17,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cpu_rate": 1200,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "timed_out": false,
+    "error": null,
+    "cleanup_errors": [],
+    "log_error": null
+  },
+  "history": "V1 and its two failing negative controls remain preserved in commit30ad92faa06f753c4f18fa9d023c656c3e3dc493. V2 requires strict true kill-on-close and strict false breakaway flags; the original22 tests remain and two regressions were added.",
+  "limits": [
+    "No engine or new populated candidate render was produced by these tests.",
+    "No standalone room CLI qualification is inferred; pending fresh cases remain explicit.",
+    "No JSON string is promoted into a native Vector2 and no raw float comparison is replaced by a tolerance.",
+    "All20 rooms remain visually open after owner rejection; this reusable gate is technical throughput work only."
+  ]
+}
