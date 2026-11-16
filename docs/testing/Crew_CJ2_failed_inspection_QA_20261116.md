@@ -39,4 +39,4 @@ Technical boundary: the former missing read-only capability is now qualified. Pr
 
 Browser/WASM startup, visible Web gameplay, human pacing and broader Crew-ending acceptance remain open.
 
-Manual checkpoint reconciliation `E:\CodexQA\BTH\runs\crew-failed-checkpoint-reconcile1-261116\evidence\reconciliation.json`: zero findings across19 owned Crew rows and all28 listed exact closed native/synthetic/qualification Jobs. The all-project report retains716 unrelated/stale/incomplete-snapshot findings (checker exit1, not a crash). No foreign process or task was changed.
+Associated inspector commit `94b90392a97f54b6e69adea4279ced4addf7cc8f`.
