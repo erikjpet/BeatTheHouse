@@ -83,3 +83,5 @@ Final migration handoff: Grand route6/6, Cage entry6/6, first schedule hold6/6. 
 - `E:/CodexQA/BTH/runs/crew-intact-count-grand-20261116-01/evidence/worker.log` SHA256 `07945712c9d4d80a91e8f7e80286328ea38f19cdd3da816fd3d6cc0e0cdc5bf8`
 - `E:/CodexQA/BTH/runs/crew-intact-count-cage-20261116-01/evidence/worker.log` SHA256 `746ccd2ff86f9b5fadffce02be71e57c06e691396b4f8b2257a55811e6f232d4`
 - `E:/CodexQA/BTH/runs/crew-intact-count-hold-20261116-01/evidence/worker.log` SHA256 `c760b7b9c99dc6fcc88a3e4022e5ce042792a1615a8b3131928fe6807c28afea`
+
+Independent diagnostic classification and continued bag/New Run proof: [NEXT_Crew_terminal_classification_20261116.md](NEXT_Crew_terminal_classification_20261116.md). Original failed evidence is retained.

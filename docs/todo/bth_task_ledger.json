@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T01:06:10.865093+00:00",
+  "updated_at": "2026-11-16T01:24:34.001747+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,13 +4879,20 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_CLEAN_SWEEP_COLD_PASS_WEB_BLOCKED",
+      "status": "NATIVE_DIAGNOSTICS_POSTENDING_PASS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a77b2811d2e9be6bc71567d7194cb8142e53a90b",
+          "evidence": [
+            "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -4907,12 +4914,17 @@
           "kind": "native_ordinary_gameplay",
           "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
           "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
+        },
+        {
+          "kind": "independent_native_classification",
+          "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
         }
       ],
       "implementation_batches": [
         "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116"
       ],
-      "next_action": "Preserve the closed terminal checkpoint crew-sidebar-count-terminal-cold-20261116-01 and pending Blue Bag. Resume exact deployed NEXT browser acceptance only through a verified isolated controllable profile; retain historical R02/R03/R06 failures and original-scope gaps.",
+      "next_action": "Continue ordinary Crew progression from copied postending new-run checkpoint at Back Alley ($100, zero chips, one unopened earned bag). Keep the original terminal checkpoint, all historical failures and browser/WASM acceptance open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4926,7 +4938,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T01:02:11.568102+00:00"
+      "updated_at": "2026-11-16T01:24:34.001747+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -6285,6 +6297,11 @@
           "kind": "native_ordinary_gameplay",
           "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
           "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
+        },
+        {
+          "kind": "independent_native_classification",
+          "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
         }
       ],
       "implementation_batches": [],
@@ -6298,7 +6315,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T01:02:11.568102+00:00",
+      "updated_at": "2026-11-16T01:24:34.001747+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -41912,7 +41929,14 @@
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
       "state": "open",
-      "commits": [],
+      "commits": [
+        {
+          "sha": "a77b2811d2e9be6bc71567d7194cb8142e53a90b",
+          "evidence": [
+            "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -41925,7 +41949,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_CLEAN_SWEEP_COLD_PASS_WEB_BLOCKED",
+      "status": "NATIVE_DIAGNOSTICS_POSTENDING_PASS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -41936,9 +41960,14 @@
           "kind": "native_ordinary_gameplay",
           "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
           "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
+        },
+        {
+          "kind": "independent_native_classification",
+          "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
         }
       ],
-      "next_action": "Preserve the closed terminal checkpoint crew-sidebar-count-terminal-cold-20261116-01 and pending Blue Bag. Resume exact deployed NEXT browser acceptance only through a verified isolated controllable profile; retain historical R02/R03/R06 failures and original-scope gaps.",
+      "next_action": "Continue ordinary Crew progression from copied postending new-run checkpoint at Back Alley ($100, zero chips, one unopened earned bag). Keep the original terminal checkpoint, all historical failures and browser/WASM acceptance open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -41951,7 +41980,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T01:02:11.568102+00:00"
+      "updated_at": "2026-11-16T01:24:34.001747+00:00"
     }
   ]
 }
