@@ -1,0 +1,63 @@
+{
+  "schema": "bth.bar_composition_raw_preservation/v1",
+  "task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "ONE_RAW_PRESERVED__NOT_ASSEMBLED_OR_ACCEPTED",
+  "descriptor": {
+    "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\bar-composition-r5\\raw-materialization-descriptor.json",
+    "sha256": "69bfef0cb1b54db52fdebab0e0c52a8d1e0975ab3d25643c9a63ec5740a54911"
+  },
+  "materializer_sha256": "2df7caf2324693ba0e2e1bb9bfa01f44d2e8832349a3d9554cbf0a11e6f46a35",
+  "qualification_reuse": "Same exact byte materializer previously passed20 tests; all new descriptor/PNG/chunk/control checks ran again on this actual input. No unrelated test or engine campaign repeated.",
+  "actual_materialization": {
+    "run": "BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01",
+    "job_sha256": "9c13ddbce20f942d3b96198e9a40f20482306c6b672917541c629465f0d0c02f",
+    "receipt_sha256": "86d4f8866fffb0818ea64b15b19f395786b06e3e5c794c5d10bd91db1bd2f403",
+    "pid": 37704,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480
+  },
+  "raw": {
+    "E_path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116\\raw_source\\bar-composition-r5.png",
+    "D_path": "review_artifacts\\environment_art_sources\\bar-composition-r5\\bar-composition-r5.png",
+    "sha256": "303d4b5214b778be194a312305413dd45f68c32c62eacce507499dff3b104ae8",
+    "bytes": 2053588,
+    "size": [
+      1815,
+      867
+    ],
+    "all_original_chunks_CRCs_caBX_and_returned_URL_preserved": true,
+    "original_controls": 19,
+    "source_controls_unchanged": true,
+    "exclusive_D_preservation": true,
+    "pixel_transformation": false
+  },
+  "library": {
+    "file_id": "file_00000000078c81fd9a24a31ba5fa102d",
+    "library_file_id": "libfile_fde3_f-c8baff77bba081918d16361b9ed0a0d2_b2e6deecb030819197ad6510125a1c29",
+    "file_name": "bar-composition-r5.png",
+    "version": 0,
+    "bytes": 2053588,
+    "status": "succeeded",
+    "xattr": "user.library-file-version=0 returned; Windows Python lacks os.setxattr. No ADS fallback or duplicate upload."
+  },
+  "root_actual_pixels": "Raw and original Bar BG both viewed. New cabinet mass and pool supports improve depth. Farrail remains very near new floorback370; poolfeet650 need better room scale. Exact native source assembly must preserve both pool paint paths, all17 motions, mirror/signs and original foreground bench.",
+  "independent_source_peer": "/root/high_limit_source_trial independently verified actual descriptor, B64/PNG/header/chunks/CRC/caBX/returnedURL and all19 controls read-only.",
+  "next": "Bounded non-active exact Bar R5 assembly source/recipe progressing independently; no new generation. Require actual populated Base/Fight and motion/anchor review before acceptance.",
+  "visual_acceptance": false,
+  "production_art_changed": false,
+  "TEST_main_NEXT_changed": false,
+  "visually_accepted_rooms": 0,
+  "open_rooms": 20
+}

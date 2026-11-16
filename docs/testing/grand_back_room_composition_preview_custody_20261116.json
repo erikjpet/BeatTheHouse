@@ -1,0 +1,117 @@
+{
+  "schema": "bth.gbr_composition_preview_custody/v1",
+  "room": "grand_casino_back_room",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "authority": "/root",
+  "verdict": "ADMIT_DIAGNOSTIC_RENDER_ONLY",
+  "limits": {
+    "visual_acceptance": false,
+    "formal_native_acceptance": false,
+    "release_approval": false,
+    "TEST_updated": false,
+    "browser_acceptance": "NOT_RUN",
+    "scope": "GBR_BASE_COMPOSITION_ONLY"
+  },
+  "source_base": {
+    "commit": "ea66f879a6a340fba2716d27e27b777a58bb200e",
+    "tree": "f0a6f3c8a5bd890784b4aca77e6886c91aae0c64"
+  },
+  "assembly_proof": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\grand-back-room-composition-r3-assembly.json",
+    "sha256": "81fb476b60cafe770eabe596de77f761f15aafbd99f40f43c35a644e60a496b3"
+  },
+  "assembly_job": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+    "sha256": "81a9cf58b47b67ac2c99d63d103f0c246ba280da3587015afdb7064cf1bb7524"
+  },
+  "assembler": {
+    "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\assemble_grand_back_room_spatial_candidate_v3.py",
+    "sha256": "3cecf389dbdd889330566a2f02f37866ebd2682bafed4ab618142148c691c7ca"
+  },
+  "recipe": {
+    "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\grand_back_room_spatial_r3_recipe.json",
+    "sha256": "f21cbaa60932f1793824ab7e61076757de6cfbd020f106045d1f44b092b2f27f"
+  },
+  "material_review": {
+    "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\grand_back_room_composition_r3_mask_review_20261116.json",
+    "sha256": "c2fbac6ab7e90f6c6a838a4d1cb2e4a0cb97c229383fb789143d04047b3249bd"
+  },
+  "raw_preservation": {
+    "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\grand_back_room_composition_r3_raw_preservation_20261116.json",
+    "sha256": "2cbb06d143203c8e492ada9ec476cff71ebe88fb3b10fb7a0e557db3bd990ecb"
+  },
+  "assembly_command": [
+    "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+    "-B",
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_grand_back_room_spatial_candidate_v3.py",
+    "--source-root",
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+    "--recipe",
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_r3_recipe.json",
+    "--recipe-sha256",
+    "f21cbaa60932f1793824ab7e61076757de6cfbd020f106045d1f44b092b2f27f"
+  ],
+  "candidate": {
+    "root": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116\\candidate_sources\\grand-back-room-composition-r3-assembled-v1",
+    "files": {
+      "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+      "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+      "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+      "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+      "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+      "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+      "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/grand_casino_back_room/background.png": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27",
+      "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "d0f562b04a5e91fa4e58b62f6161e604a1982d5969b0896837d6185a8e09c167",
+      "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "04e394c3d78361bdb94c02fec1f23eb848b537503e0cbaacbe8c126480f30804",
+      "data/art/environments/grand_casino_back_room.json": "df94315ab3b9afc97208514bda0a15280c938327098c1737cd323c626e701cdd",
+      "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+    },
+    "seal": "baa37f34c3a6f30e8099001f5573665011db3196c690bc581daa0b522b0d3e4d"
+  },
+  "driver_helpers": {
+    "gbr_composition_preview.py": "4e8351815b6ef93090a828cdd3b6887723df0881f6a2baded8af5fd055bf153b",
+    "gbr_composition_preview_profile.py": "0b0f53d0687d779a9a0d304662da420fe14120ad80e09829da500558cec40834",
+    "grand_spatial_native_trial.py": "650e14dfd71197bd55021553e3ec9adfe1f67533ea3e7c930a456e05bcd3ac6a",
+    "grand_back_room_spatial_native_profile.py": "c34375889ac8e35f8852c724cbe0e801d5c181920c9fae7583883583a21cb594",
+    "bth_qa_selected_source_v2.py": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+    "bth_qa_selected_source.py": "311ab097dd7d57ab0eacdd342b2b4e0b8f6d49af914e827c8f5adbd934c7e353",
+    "bth_qa_storage.py": "cdc08bcb1ad0bff82bb5fd12f467c576cfc40a998f40870068cf6c684216f837",
+    "bth_qa_guarded_run.py": "7ea6be8366f606995a1f69ddb26d99b4e3c47a0fcce9d968abe17b3dc074ad7e",
+    "bth_qa_command_paths.py": "bbc405ac19ae803c2c15d93fee1ca059f25d06176cfee7926b2329b93ca4352b",
+    "bar_spatial_native_suite.py": "2bbb359859449141118f1ce21ba08d698bd1abf4d6c5e16fa1da8defde55eea4",
+    "bar_spatial_candidate_check.py": "bb0c9fd70fe4c4941d8d1019c682b691db48e5224606340a7e84e6c48dd3837f",
+    "audit_pck_manifest.py": "23bb8e453dd84e3bfb840f5c060c238ff408617b1893eaa02fad267ff3bfa1e4"
+  },
+  "qualification": {
+    "tests": 82,
+    "seconds": 34.306,
+    "test_source": {
+      "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\tests\\test_grand_back_room_spatial_preview_custody.py",
+      "sha256": "d06361d5f7da19af01005bc5e7fb2d6de49a701b975a333ee8f8db7d85e3b711"
+    },
+    "job": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+      "sha256": "f1a60fee92aae73f4e0bd85693df6198fa9127d22c6d1038a3348fbdac180d59"
+    },
+    "log": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\worker.log",
+      "sha256": "80a0b826fac5578db31031e82cea5ca68c84c34c9cd613b7ac9188db2cdc314e"
+    },
+    "exit_code": 0,
+    "active_at_release": 0
+  },
+  "root_actual_pixel_disposition": "Actual9177 opaque master viewed. Full-height bodies, planted supports and visible floor improve the rejected composition. Admit one diagnostic populated rendering path only. Floor330 flecks/repeat/join616, physical-contour edge/shadows, shared perspective and all actor/state visual acceptance remain OPEN.",
+  "source_author_review_limit": "High authored the assembler and separately replayed actual artifacts; Auda independently reviewed its source. This document grants no visual acceptance. Independent actual populated review remains required.",
+  "engine_scope": "Use only the existing serial art engine slot, one capped owned child at a time. No global host-idle claim, additional slot, browser fallback or publication.",
+  "baseline_stage_scope": "CLI --baseline-stage remains frozen selected0517b Bar source-closure donor; actual deliveredGBR00e manifest,421 art sources and1986runtime controls are pinned separately by the new profile."
+}

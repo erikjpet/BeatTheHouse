@@ -1,0 +1,357 @@
+{
+  "animations": [
+    {
+      "blend": "add",
+      "id": "casino_light_0",
+      "max_opacity": 0.32,
+      "min_opacity": 0.12,
+      "period": 0.9817477042468103,
+      "phase": 0.0,
+      "rect": [
+        250,
+        124,
+        52,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_light_0.png",
+      "type": "pulse",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "id": "casino_light_1",
+      "max_opacity": 0.32,
+      "min_opacity": 0.12,
+      "period": 0.9817477042468103,
+      "phase": 0.3125,
+      "rect": [
+        350,
+        124,
+        52,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_light_1.png",
+      "type": "pulse",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "id": "casino_light_2",
+      "max_opacity": 0.32,
+      "min_opacity": 0.12,
+      "period": 0.9817477042468103,
+      "phase": 0.625,
+      "rect": [
+        448,
+        124,
+        52,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_light_2.png",
+      "type": "pulse",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "id": "casino_light_3",
+      "max_opacity": 0.32,
+      "min_opacity": 0.12,
+      "period": 0.9817477042468103,
+      "phase": 0.9375,
+      "rect": [
+        550,
+        124,
+        52,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_light_3.png",
+      "type": "pulse",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "id": "casino_light_4",
+      "max_opacity": 0.32,
+      "min_opacity": 0.12,
+      "period": 0.9817477042468103,
+      "phase": 1.25,
+      "rect": [
+        650,
+        124,
+        52,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_light_4.png",
+      "type": "pulse",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "id": "casino_sign_pulse",
+      "max_opacity": 0.28,
+      "min_opacity": 0.14,
+      "period": 0.8267349088394192,
+      "phase": 0.8842105263157894,
+      "rect": [
+        332,
+        54,
+        234,
+        62
+      ],
+      "still": "first",
+      "texture": "anim/casino_sign_pulse.png",
+      "type": "pulse",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "id": "casino_sparkle_0",
+      "max_opacity": 0.36,
+      "min_opacity": 0.18,
+      "period": 0.7479982508547126,
+      "phase": 0.0,
+      "rect": [
+        128,
+        114,
+        8,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_sparkle_0.png",
+      "type": "pulse",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "id": "casino_sparkle_1",
+      "max_opacity": 0.36,
+      "min_opacity": 0.18,
+      "period": 0.7479982508547126,
+      "phase": 0.4047619047619047,
+      "rect": [
+        724,
+        114,
+        8,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_sparkle_1.png",
+      "type": "pulse",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "id": "casino_sparkle_2",
+      "max_opacity": 0.36,
+      "min_opacity": 0.18,
+      "period": 0.7479982508547126,
+      "phase": 0.8095238095238094,
+      "rect": [
+        440,
+        150,
+        8,
+        8
+      ],
+      "still": "first",
+      "texture": "anim/casino_sparkle_2.png",
+      "type": "pulse",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "duration": 57.77777777777778,
+      "from": [
+        -90,
+        274
+      ],
+      "id": "floor_glint_0",
+      "opacity": 0.08,
+      "phase": 0.0,
+      "size": [
+        72,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_0.png",
+      "to": [
+        950,
+        274
+      ],
+      "type": "mover",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "duration": 50.73170731707317,
+      "from": [
+        -90,
+        288
+      ],
+      "id": "floor_glint_1",
+      "opacity": 0.08,
+      "phase": 6.682926829268292,
+      "size": [
+        68,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_1.png",
+      "to": [
+        950,
+        288
+      ],
+      "type": "mover",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "duration": 45.21739130434783,
+      "from": [
+        -90,
+        302
+      ],
+      "id": "floor_glint_2",
+      "opacity": 0.08,
+      "phase": 11.91304347826087,
+      "size": [
+        64,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_2.png",
+      "to": [
+        950,
+        302
+      ],
+      "type": "mover",
+      "web_low_detail": true
+    },
+    {
+      "blend": "add",
+      "duration": 40.78431372549019,
+      "from": [
+        -90,
+        316
+      ],
+      "id": "floor_glint_3",
+      "opacity": 0.08,
+      "phase": 16.11764705882353,
+      "size": [
+        60,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_3.png",
+      "to": [
+        950,
+        316
+      ],
+      "type": "mover",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "duration": 37.142857142857146,
+      "from": [
+        -90,
+        274
+      ],
+      "id": "floor_glint_4",
+      "opacity": 0.08,
+      "phase": 19.571428571428573,
+      "size": [
+        56,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_4.png",
+      "to": [
+        950,
+        274
+      ],
+      "type": "mover",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "duration": 34.09836065573771,
+      "from": [
+        -90,
+        288
+      ],
+      "id": "floor_glint_5",
+      "opacity": 0.08,
+      "phase": 22.459016393442624,
+      "size": [
+        52,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_5.png",
+      "to": [
+        950,
+        288
+      ],
+      "type": "mover",
+      "web_low_detail": false
+    },
+    {
+      "blend": "add",
+      "duration": 31.515151515151516,
+      "from": [
+        -90,
+        302
+      ],
+      "id": "floor_glint_6",
+      "opacity": 0.08,
+      "phase": 24.90909090909091,
+      "size": [
+        48,
+        2
+      ],
+      "still": "hide",
+      "texture": "anim/floor_glint_6.png",
+      "to": [
+        950,
+        302
+      ],
+      "type": "mover",
+      "web_low_detail": false
+    }
+  ],
+  "background": {
+    "texture": "background.png"
+  },
+  "board_size": [
+    900,
+    430
+  ],
+  "counters": {
+    "grand_table_left": {
+      "bleed": [
+        27,
+        63,
+        18,
+        57
+      ],
+      "texture": "counters/grand_table_left.png"
+    },
+    "grand_table_right": {
+      "bleed": [
+        22,
+        63,
+        19,
+        57
+      ],
+      "texture": "counters/grand_table_right.png"
+    }
+  },
+  "environment_id": "grand_casino_back_room",
+  "pixel_scale": 2,
+  "schema": "bth.environment_art/v1"
+}

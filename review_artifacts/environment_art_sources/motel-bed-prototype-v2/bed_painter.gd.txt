@@ -1,0 +1,126 @@
+# Inert source replacement only. Apply solely to an admitted fresh QA copy.
+# Front-to-back Motel V2 geometry; no model, label, clock or scheduling writes.
+func _draw_bed_prop(rect: Rect2, selected: bool, prototype_object_data: Dictionary = {}) -> void:
+	if _motel_bed_visual_prototype_admitted(prototype_object_data, rect):
+		_draw_motel_bed_visual_prototype(rect, selected)
+		return
+	var accent := C_YELLOW if selected else C_CYAN
+	_draw_interactable_light(rect, accent, selected)
+	var frame := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.34), Vector2(rect.size.x * 0.84, rect.size.y * 0.44))
+	draw_rect(frame, C_SHADOW)
+	draw_rect(Rect2(frame.position + Vector2(5, 5), frame.size - Vector2(10, 10)), Color("#50315c"))
+	draw_rect(Rect2(frame.position + Vector2(10, 9), Vector2(frame.size.x * 0.25, frame.size.y - 18)), Color("#d8c9b5"))
+	draw_rect(Rect2(frame.position + Vector2(frame.size.x * 0.34, 9), Vector2(frame.size.x * 0.56, frame.size.y - 18)), Color("#6b3b73"))
+	for stripe in range(3):
+		var stripe_x := frame.position.x + frame.size.x * (0.48 + float(stripe) * 0.15)
+		draw_rect(Rect2(stripe_x, frame.position.y + 11, 7, frame.size.y - 22), C_PINK_2.darkened(0.22))
+	draw_line(frame.position + Vector2(0, frame.size.y), frame.position + Vector2(0, frame.size.y + 9), C_SHADOW, 4)
+	draw_line(frame.position + Vector2(frame.size.x, frame.size.y), frame.position + Vector2(frame.size.x, frame.size.y + 9), C_SHADOW, 4)
+	if selected:
+		draw_rect(frame.grow(4), Color(accent.r, accent.g, accent.b, 0.82), false, 2)
+
+
+func _motel_bed_visual_prototype_admitted(object_data: Dictionary, rect: Rect2) -> bool:
+	return (
+		environment_id == "motel_room"
+		and str(object_data.get("id", "")) == "home_sleep:bed"
+		and str(object_data.get("prop", "")) == "bed"
+		and bool(object_data.get("fixed_slot_geometry", false))
+		and str(object_data.get("manifest_exact_slot_id", "")) == "fixed.home_sleep"
+		and rect == Rect2(Vector2(350.0, 88.0), Vector2(286.0, 104.0))
+	)
+
+
+func _motel_bed_visual_prototype_point(origin: Vector2, u: float, v: float) -> Vector2:
+	var far_point: Vector2 = (origin + Vector2(399.0, 199.0)).lerp(origin + Vector2(587.0, 199.0), u)
+	var near_point: Vector2 = (origin + Vector2(381.0, 263.0)).lerp(origin + Vector2(605.0, 263.0), u)
+	var point: Vector2 = far_point.lerp(near_point, v)
+	return Vector2(roundf(point.x), roundf(point.y))
+
+
+func _motel_bed_visual_prototype_quad(origin: Vector2, u0: float, u1: float, v0: float, v1: float) -> PackedVector2Array:
+	return PackedVector2Array([
+		_motel_bed_visual_prototype_point(origin, u0, v0),
+		_motel_bed_visual_prototype_point(origin, u1, v0),
+		_motel_bed_visual_prototype_point(origin, u1, v1),
+		_motel_bed_visual_prototype_point(origin, u0, v1),
+	])
+
+
+func _draw_motel_bed_visual_prototype(rect: Rect2, selected: bool) -> void:
+	# Admission is exact native geometry, never a debug-JSON position string.
+	var origin: Vector2 = rect.position - Vector2(350.0, 88.0)
+	var accent: Color = C_YELLOW if selected else C_CYAN
+	var timber: Color = Color("#30241e")
+	var timber_edge: Color = Color("#4d3424")
+	var timber_side: Color = Color("#241b24")
+	var leg_color: Color = Color("#231a26")
+	var mattress_color: Color = Color("#50315c")
+	var blanket_color: Color = Color("#6b3b73")
+	var contact_color: Color = Color(0.0, 0.0, 0.0, 0.42)
+	var cast_color: Color = Color(0.0, 0.0, 0.0, 0.14)
+
+	# Attached rear contacts on the proposed rear floor/rug join.
+	draw_rect(Rect2(origin + Vector2(351.0, 233.0), Vector2(10.0, 4.0)), contact_color)
+	draw_rect(Rect2(origin + Vector2(629.0, 233.0), Vector2(10.0, 4.0)), contact_color)
+	# Near contacts now lie on original wood beyond the rug's native y588 end.
+	draw_colored_polygon(PackedVector2Array([
+		origin + Vector2(387.0, 303.0), origin + Vector2(599.0, 303.0),
+		origin + Vector2(604.0, 309.0), origin + Vector2(382.0, 309.0),
+	]), cast_color)
+	draw_rect(Rect2(origin + Vector2(392.0, 304.0), Vector2(14.0, 4.0)), contact_color)
+	draw_rect(Rect2(origin + Vector2(580.0, 304.0), Vector2(14.0, 4.0)), contact_color)
+
+	# Preserve the original rect-based interaction-light clock and selection cue.
+	# This glow is not used as a physical support/contact shadow.
+	_draw_interactable_light(rect, accent, selected)
+
+	# The open headboard panel preserves all seven pink motifs and the source strip.
+	# Posts carry its frame to y234; the lower rail joins the mattress at y199.
+	draw_rect(Rect2(origin + Vector2(352.0, 122.0), Vector2(8.0, 112.0)), timber)
+	draw_rect(Rect2(origin + Vector2(630.0, 122.0), Vector2(8.0, 112.0)), timber)
+	draw_rect(Rect2(origin + Vector2(352.0, 114.0), Vector2(286.0, 8.0)), timber)
+	draw_rect(Rect2(origin + Vector2(360.0, 192.0), Vector2(270.0, 8.0)), timber)
+	draw_line(origin + Vector2(354.0, 116.0), origin + Vector2(636.0, 116.0), timber_edge, 1.0)
+
+	# Near supports are drawn before the bed, leaving the floor/rug visible between.
+	draw_rect(Rect2(origin + Vector2(393.0, 283.0), Vector2(12.0, 22.0)), leg_color)
+	draw_rect(Rect2(origin + Vector2(581.0, 283.0), Vector2(12.0, 22.0)), leg_color)
+	draw_rect(Rect2(origin + Vector2(393.0, 283.0), Vector2(1.0, 22.0)), timber_edge)
+	draw_rect(Rect2(origin + Vector2(581.0, 283.0), Vector2(1.0, 22.0)), timber_edge)
+
+	# A longitudinal SIDE rail, not an upright end/foot board.
+	# Its body is behind the mattress top; only its slim top cap is added afterward.
+	draw_colored_polygon(PackedVector2Array([
+		origin + Vector2(587.0, 197.0), origin + Vector2(605.0, 261.0),
+		origin + Vector2(605.0, 283.0), origin + Vector2(587.0, 216.0),
+	]), timber_side)
+	draw_rect(Rect2(origin + Vector2(381.0, 267.0), Vector2(224.0, 16.0)), timber)
+	draw_rect(Rect2(origin + Vector2(381.0, 263.0), Vector2(224.0, 4.0)), Color("#684267"))
+
+	# One front-to-back horizontal mattress plane.
+	var top: PackedVector2Array = _motel_bed_visual_prototype_quad(origin, 0.0, 1.0, 0.0, 1.0)
+	draw_colored_polygon(top, mattress_color)
+	draw_colored_polygon(_motel_bed_visual_prototype_quad(origin, 0.36, 0.70, 0.08, 0.30), Color("#d8c9b5"))
+	draw_colored_polygon(_motel_bed_visual_prototype_quad(origin, 0.06, 0.94, 0.34, 0.94), blanket_color)
+	draw_colored_polygon(_motel_bed_visual_prototype_quad(origin, 0.06, 0.94, 0.88, 0.94), blanket_color.darkened(0.12))
+	for seam_index in range(3):
+		var seam_u: float = 0.38 + float(seam_index) * 0.18
+		draw_colored_polygon(_motel_bed_visual_prototype_quad(origin, seam_u - 0.006, seam_u + 0.006, 0.38, 0.94), C_PINK_2.darkened(0.22))
+	draw_polyline(PackedVector2Array([top[0], top[1], top[2], top[3], top[0]]), C_SHADOW, 1.0)
+	draw_line(origin + Vector2(587.0, 198.0), origin + Vector2(605.0, 262.0), timber_edge, 2.0)
+	# The real foot rail is transverse, at the near/front end.
+	draw_rect(Rect2(origin + Vector2(381.0, 262.0), Vector2(224.0, 2.0)), timber_edge)
+
+	if selected:
+		# Outline only visible headboard components INSIDE the unchanged hit target.
+		# Never imply the extended mattress/legs are a larger clickable footprint.
+		var cue_color: Color = Color(accent.r, accent.g, accent.b, 0.82)
+		var cue_top: Rect2 = Rect2(origin + Vector2(352.0, 114.0), Vector2(286.0, 8.0)).intersection(rect).grow(-0.5)
+		var cue_left: Rect2 = Rect2(origin + Vector2(352.0, 122.0), Vector2(8.0, 112.0)).intersection(rect).grow(-0.5)
+		var cue_right: Rect2 = Rect2(origin + Vector2(630.0, 122.0), Vector2(8.0, 112.0)).intersection(rect).grow(-0.5)
+		draw_rect(cue_top, cue_color, false, 1.0)
+		draw_rect(cue_left, cue_color, false, 1.0)
+		draw_rect(cue_right, cue_color, false, 1.0)
+
+

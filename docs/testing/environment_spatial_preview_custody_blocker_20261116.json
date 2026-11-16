@@ -1,0 +1,81 @@
+{
+  "schema": "bth.spatial_preview_runtime_custody_blocker/v1",
+  "observed_at": "2026-11-16T18:58:49.308573+00:00",
+  "task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "UNCERTAIN_OWNED_PLAN_JOB__NO_RELAUNCH_OR_ENGINE",
+  "exact_action": "Guarded file-only gbr_composition_preview.py plan for ea66/f0a6, actual candidate baa37f34 and root custody406566. It cannot start Godot.",
+  "run_id": "BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01",
+  "backend_session_id": 44304,
+  "backend_observation": "write_stdin returned Unknown process id44304. No retry or alternate process enumeration attempted.",
+  "receipt": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\job.json",
+    "sha256": "290886dedb4bef952377545265795808625a84d9eb2cb07a448339fabd1c3647",
+    "status": "LAUNCH_PENDING",
+    "pid": null,
+    "exit_code": null,
+    "active_at_release": null,
+    "finished_epoch": null
+  },
+  "launch_claim": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\launch-claim.json",
+    "sha256": "4648914db8a8d011e1b4d21653a4a871d25f93ce8d6d9ad5bed88ee3fa3ff049",
+    "claimed_epoch": 1794854885.2275906,
+    "age_seconds_at_read": 644.081
+  },
+  "storage_manifest": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\storage-manifest.json",
+    "sha256": "73f653bacd0da357db0112d5206b47e90bb786eac6e64d0318c17232ca733083"
+  },
+  "worker_log": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\worker.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "configured_bounds": {
+    "worker_timeout_seconds": 180,
+    "cpu_rate": 1200,
+    "job_memory_limit_bytes": 2147483648,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "actual_final_limit_readback_or_closure_available": false
+  },
+  "supported_read_only_reconciliation": [
+    "Exact owned job/claim/manifest/log bytes and timestamps inspected repeatedly; still no final lifecycle result.",
+    "Existing backend session44304 is not registered in write_stdin.",
+    "Maintained source reviewed: CreateJobObjectW(None,None) makes an unnamed Job; child receives no inherited Job handle. No persisted handle/name or recorded PID can reopen that specific Job.",
+    "Kill-on-close exists in the maintained implementation, but session loss alone is not proof of final zero active processes."
+  ],
+  "smallest_required_action": "The executor/session lifecycle owner must recover or reconcile this exact supervisor and its owned Job tree, supplying authoritative closed/zero evidence and any actual final result/stdout. Do not invent or edit a success receipt, relaunch the uncertain command, or terminate by process name. Resume the admitted preview only after closure is established.",
+  "known_cost_not_proven_failure_cause": "Read-only source analysis finds roughly100M Python pixel/mask operations in one full admission, including68.1M component subset/union iterations. Actual execution time/cause is unknown because output and final lifecycle data are absent.82 focused unit checks do not run this full actual admission.",
+  "independent_progress": {
+    "GBR_assembly_proof_sha256": "81fb476b60cafe770eabe596de77f761f15aafbd99f40f43c35a644e60a496b3",
+    "GBR_closed_assembly_job": 23088,
+    "GBR_assembly_job_sha256": "81a9cf58b47b67ac2c99d63d103f0c246ba280da3587015afdb7064cf1bb7524",
+    "GBR_candidate_seal": "baa37f34c3a6f30e8099001f5573665011db3196c690bc581daa0b522b0d3e4d",
+    "GBR_master_sha256": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27",
+    "preview_tests": 82,
+    "preview_test_seconds": 34.306,
+    "preview_test_job": 31236,
+    "preview_test_job_sha256": "f1a60fee92aae73f4e0bd85693df6198fa9127d22c6d1038a3348fbdac180d59",
+    "Bar_raw": "docs/testing/bar_composition_r5_raw_preservation_20261116.json",
+    "Motel_inert_packet": "review_artifacts/environment_art_sources/motel-bed-prototype-v2",
+    "new_V2_source": "Qualified exact-input plan reuse being prepared separately; no pending/failed/synthetic proof may qualify it."
+  },
+  "visual_acceptance": {
+    "accepted": 0,
+    "open": 20,
+    "new_populated_preview": false,
+    "new_TEST_publication": false
+  },
+  "manual_reconciliation": {
+    "last_completed_run": "BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32",
+    "scope_at_that_checkpoint": "0 spatial findings;751 global findings including incomplete global runtime coverage.",
+    "current_rerun": "NOT_RUN after uncertain planning Job; preserve pending runtime state and do not claim the earlier check covers this blocker."
+  },
+  "protections": [
+    "No owner saves or retained profiles copied/read/migrated.",
+    "No global process inspection, browser denial bypass, cleanup or additional engine slot.",
+    "No main/NEXT/stable/itch merge or publication. Existing TEST pointer not rechecked.",
+    "Earlier wrong-main untracked-file question remains unanswered; no guessed restoration or cleanup."
+  ]
+}

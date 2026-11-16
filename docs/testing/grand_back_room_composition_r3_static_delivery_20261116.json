@@ -1,0 +1,58 @@
+{
+  "schema": "bth.gbr_composition_static_delivery/v1",
+  "status": "STATIC_UNPOPULATED_PROTOTYPE_ONLY__RUNTIME_CUSTODY_UNRESOLVED",
+  "candidate_seal": "baa37f34c3a6f30e8099001f5573665011db3196c690bc581daa0b522b0d3e4d",
+  "master": {
+    "D_path": "review_artifacts/environment_art_sources/grand-back-room-composition-r3-assembled-v1/grand-back-room-composition-r3-assembled-v1.png",
+    "sha256": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27",
+    "bytes": 720186,
+    "pixel_transform": false
+  },
+  "library": {
+    "operation": "create_library_file",
+    "status": "succeeded",
+    "path": "/grand-back-room-composition-r3-assembled-v1.png",
+    "file_id": "file_00000000ce4881fd91a708c1ef4e0e22",
+    "library_file_id": "libfile_fde3_f-2b04df583ec48191af31f6956503a01b_b2e6deecb030819197ad6510125a1c29",
+    "file_name": "grand-back-room-composition-r3-assembled-v1.png",
+    "current_version_number": 0,
+    "restored_from_version_number": null,
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ],
+    "directory_id": "personal-root:v1",
+    "mime_type": "image/png",
+    "library_artifact_type": "image",
+    "file_size_bytes": 720186,
+    "external_connectors_accessed": false
+  },
+  "local_xattr": "Windows Python has no os.setxattr. No ADS fallback or duplicate upload.",
+  "page": {
+    "page_id": "page_2aec5fdabdd88191a22fc77c483c231e",
+    "url": "https://chatgpt.com/space/page_2aec5fdabdd88191a22fc77c483c231e",
+    "sequence": 4,
+    "static_reference": "library-file:fde1_bGliZmlsZV9jYWpUREJhRjB3azZCWXhycEsxaVpB_FileDrive_b2e6deecb030819197ad6510125a1c29",
+    "reference_sha256": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27",
+    "static_label_readback": true,
+    "all8_prior_blocks_retained": true,
+    "image_blocks": 2,
+    "Page_UI_render_or_animation_playback_observed": false
+  },
+  "independent_actual_pixel_review": "docs/testing/grand_back_room_composition_r3_assembled_v1_independent_pixel_review_20261116.json",
+  "preview_tests": {
+    "count": 82,
+    "seconds": 34.306,
+    "job": 31236,
+    "exit_code": 0,
+    "active_at_release": 0
+  },
+  "runtime_blocker": "docs/testing/environment_spatial_preview_custody_blocker_20261116.json",
+  "new_populated_scene_render": false,
+  "visual_acceptance": false,
+  "new_TEST_publication": false,
+  "accepted_rooms": 0,
+  "open_rooms": 20
+}

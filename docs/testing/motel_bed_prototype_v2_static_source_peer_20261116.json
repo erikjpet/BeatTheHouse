@@ -1,0 +1,201 @@
+{
+  "schema": "bth.motel_bed_prototype_static_source_peer/v1",
+  "reviewed_at_utc": "2026-11-16T19:02:45Z",
+  "reviewer": "/root/native_suite_adapter",
+  "verdict": "GO_FOR_FRESH_ISOLATED_SOURCE_PROTOTYPE_CUSTODY_ONLY",
+  "scope": "Independent static review of the inert Motel V2 packet. This is neither an applied prototype nor GDS syntax/runtime, native, visual or release acceptance.",
+  "native_acceptance": false,
+  "visual_acceptance": false,
+  "art_approval": false,
+  "TEST_approval": false,
+  "whole_scene_prototype_ready": false,
+  "artifacts": {
+    "bed_painter.gd.txt": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2/bed_painter.gd.txt",
+      "sha256": "d830d061ca5e1c4daffd3d413c684c79ac3277df58f9cc2d0668b9f992ef074b",
+      "bytes": 7503
+    },
+    "provenance.json": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2/provenance.json",
+      "sha256": "fb18ec3a2f316be00dd5e0b90f9e06a90806d1a75b3f8f4e2a0128d44c109167",
+      "bytes": 9112
+    },
+    "README.md": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2/README.md",
+      "sha256": "9d987cb891247aac16c913f6c94f452f63ee9e006dd444926546ec84eb421da0",
+      "bytes": 5333
+    },
+    "source-patch.json": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2/source-patch.json",
+      "sha256": "1414d05d89c8af0bc88ac771e89fd85ea73dccfb28bf74476d98c65173a8eff2",
+      "bytes": 11594
+    }
+  },
+  "design": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/motel_room_shared_bed_painter_design_v2_20261116.json",
+    "sha256": "bb79e02c3780b04e32462e2bc266f5d5621720f2a0090976ba1a374b58473015",
+    "bytes": 26306
+  },
+  "current_unmodified_canvas": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/scripts/ui/pixel_scene_canvas.gd",
+    "sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "bytes": 566959
+  },
+  "exact_byte_verification": {
+    "method": "Read both complete admitted byte forms and authenticate all three preimages/replacements. Compose forward and reverse entirely in memory; no full GDS file is written or executed.",
+    "source_forms": [
+      {
+        "source_form": "working_CRLF",
+        "original_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+        "original_bytes": 566959,
+        "patched_sha256": "3976df21b50788ef61a53fcc1bb3548633036aaff66187ceac415e1bf99c2b55",
+        "patched_bytes": 573430,
+        "reverse_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+        "reverse_bytes": 566959,
+        "reverse_exact": true,
+        "all_three_exact_spans_authenticated": true,
+        "legacy_fallback_body_byte_exact": true,
+        "edit_ids": [
+          "shadow_dispatch",
+          "bed_call",
+          "bed_function"
+        ]
+      },
+      {
+        "source_form": "canonical_LF",
+        "original_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+        "original_bytes": 555698,
+        "patched_sha256": "cf1e0f2e7bed7255c0d8686d8b037fab34347bc57ca7d7932dafd26d48fa1ccd",
+        "patched_bytes": 562059,
+        "reverse_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+        "reverse_bytes": 555698,
+        "reverse_exact": true,
+        "all_three_exact_spans_authenticated": true,
+        "legacy_fallback_body_byte_exact": true,
+        "edit_ids": [
+          "shadow_dispatch",
+          "bed_call",
+          "bed_function"
+        ]
+      }
+    ],
+    "legacy_fallback_body": "Byte-exact after the admitted branch in both normalized source forms; optional Dictionary argument defaults to empty for old callers.",
+    "all_untouched_source_spans_preserved": true,
+    "extra_patch_sites_allowed": false,
+    "full_source_written": false,
+    "source_patch_is_reference_for_exact_offsets_and_slice_hashes": true
+  },
+  "dispatch_and_native_boundary": {
+    "retained_metadata": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r2-contexts-01/evidence/__none_metadata.json",
+      "sha256": "d4a07c4538294b4579cd46ed32c446555db1b6792c853e1e88e4ea3becca6b2d",
+      "bytes": 230026
+    },
+    "retained_sleep_object_fields": {
+      "id": "home_sleep:bed",
+      "type": "home_sleep",
+      "prop": "bed",
+      "fixed_slot_geometry": true,
+      "manifest_exact_slot_id": "fixed.home_sleep",
+      "slot_id": "fixed.home_sleep",
+      "manifest_physical": true,
+      "manifest_render_key": "home_sleep",
+      "shadow_kind": "contact"
+    },
+    "predicate_requirements": {
+      "environment_id": "motel_room",
+      "id": "home_sleep:bed",
+      "prop": "bed",
+      "fixed_slot_geometry": true,
+      "manifest_exact_slot_id": "fixed.home_sleep",
+      "native_Rect2_board": [
+        350,
+        88,
+        286,
+        104
+      ]
+    },
+    "source_path": [
+      "_draw_scene_object_body obtains the actual Rect2 from _natural_model_rect_for_object(object_data).",
+      "The shadow exception and bed painter call the same _motel_bed_visual_prototype_admitted(object_data,rect) predicate.",
+      "The current manifest-specific dispatcher does not consume render_key home_sleep; this object reaches the item-prop bed branch.",
+      "The exact item-prop patch forwards the actual object dictionary into the optional third bed argument.",
+      "An unmatched room, object, rectangle or ordinary two-argument call retains the original bed body and generic shadow path."
+    ],
+    "coordinate_strings_parsed_or_reconstructed": false,
+    "new_native_predicate_executed": false,
+    "future_requirement": "Find Sleep in actual _active_scene_objects(), guard native Dictionary/Vector2 fields, obtain its actual Rect2, and record predicate=true before treating a rendered result as the prototype. Serialized metadata above is diagnostic evidence, not a reconstructed native target.",
+    "scheduling_state_or_anchor_writes_found": false
+  },
+  "static_paint_review": {
+    "concrete_code_blockers_found": [],
+    "typing": "Rect2, Vector2, Color and PackedVector2Array values are passed directly to existing draw primitives. No additional asset, shader, UID, scene mutation or scheduling change is introduced.",
+    "orientation": "Far-edge pillow and v-progressing blanket/stripes are consistent with a front-to-back mattress; the right member is a side rail and the near transverse cap is the foot rail.",
+    "shadows": "The exact admitted shadow dispatch removes the obsolete generic bed strip. Rear contacts overlap support ends at native468; near contacts overlap feet610 and continue on wood, with translucent cast through618. The original interaction light is called once and is not counted as grounding.",
+    "selection": "Only visible headboard components intersected with the unchanged hit rectangle are outlined. The extended mattress and legs are not advertised as a larger clickable region.",
+    "physical_shape_accepted": false
+  },
+  "companion_and_full_scene_gates": [
+    "The background companion is absent. A painter-only image on the current background is an explicitly unpaired diagnostic, never a completed composition prototype.",
+    "Planned floor boundary board234/native468 must be actual floor under and around the rug starting472 and ending588. The original floor begins492; the scoped outside-rug strip and its material joins must be repaired without leaving a wall-rug, rectangular donor splice, reversed grain or invented step.",
+    "Near feet610 and cast618 are on original wood beyond the rug by22 and30 native rows. Do not reuse old feet570/shadow578/inside-rug claims. Preserve the TV/nightstand fringes and exact protected source pixels.",
+    "The wide/tall headboard against the narrower188-far/224-near mattress, adult scale and room perspective require an actual complete populated view. Base contains no adult person that proves scale.",
+    "Fixed Sleep hit/model and label attachment remain an owner usability decision: the mattress extends below the unchanged target. Show selected and unselected full views with the fixed target separately visible in QA.",
+    "Loaded Backpack can overlap the front-left bed/support; empty Base markers do not prove clearance. The20-native-pixel TV bounding gap is not an aisle or route certificate.",
+    "Fresh admitted source must pass actual syntax/import and native predicate checks, then matched-clock full populated normal/Reduce Motion/low-detail review. Preserve all20 motion PNGs/full JSON/index, including7 pink motifs and the source strip, all anchors and no-input/placement liveness.",
+    "No House/Apartment calibration or global painter adoption follows from this Motel-only source peer. Root owns fresh guarded custody, material admission and any later engine grant."
+  ],
+  "reviewer_actions": {
+    "source_files_read_only": true,
+    "byte_composition_in_memory_only": true,
+    "GDS_import_compile_or_execution": false,
+    "helper_or_unit_tests_executed": false,
+    "E_writes_or_QA_jobs": false,
+    "production_GD_or_art_edits": false,
+    "engine_browser_generation_or_release": false,
+    "saves_profiles_Git_cleanup_or_moves": false,
+    "only_new_output": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/motel_bed_prototype_v2_static_source_peer_20261116.json"
+  },
+  "write_preflight": {
+    "target": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/motel_bed_prototype_v2_static_source_peer_20261116.json",
+    "absent": true,
+    "ancestors": [
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/",
+        "directory": true,
+        "reparse": false
+      }
+    ]
+  },
+  "frozen_for_root_checkpoint": true
+}

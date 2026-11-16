@@ -1,0 +1,215 @@
+{
+  "schema": "bth.gbr_composition_mask_review/v1",
+  "verdict": "ADMIT_PHYSICAL_MASK_CUSTODY_ONLY",
+  "reviewer": "/root/high_limit_source_trial",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "assembly_proof_sha256": "81fb476b60cafe770eabe596de77f761f15aafbd99f40f43c35a644e60a496b3",
+  "recipe_sha256": "f21cbaa60932f1793824ab7e61076757de6cfbd020f106045d1f44b092b2f27f",
+  "candidate_seal": "baa37f34c3a6f30e8099001f5573665011db3196c690bc581daa0b522b0d3e4d",
+  "visual_acceptance": false,
+  "admission_scope": "Only material/mask/source custody for the parent's separately admitted diagnostic populated render; no art, native-acceptance, TEST or release GO.",
+  "review_method": {
+    "artifact_check": "Read-only actual bytes; independent stdlib PNG CRC/unfilter decoding, row-run expansion, physical path membership, alpha/RGB/NN2/negative-space checks and complete ordered donor replay. No assembler/profile/helper imports, tests, engine or E writes.",
+    "independence_limit": "This reviewer authored the assembler. Actual artifact checks used separate stdlib code without invoking its implementation. Independent source peer /root/audit_spatial_handoff cleared the exact assembler/recipe. This is not an independent visual acceptance.",
+    "actual_master_personally_viewed": true,
+    "current_full_populated_preview_viewed": false
+  },
+  "evidence": {
+    "assembly_proof": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\grand-back-room-composition-r3-assembly.json",
+      "sha256": "81fb476b60cafe770eabe596de77f761f15aafbd99f40f43c35a644e60a496b3"
+    },
+    "closed_job": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+      "sha256": "81a9cf58b47b67ac2c99d63d103f0c246ba280da3587015afdb7064cf1bb7524"
+    },
+    "storage_manifest": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01/evidence/storage-manifest.json",
+      "sha256": "b6b2e5b1908548afb2556ad333feccb3d3dd53ebf2c46721a5e2e6e42213e927"
+    },
+    "assembler": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_grand_back_room_spatial_candidate_v3.py",
+      "sha256": "3cecf389dbdd889330566a2f02f37866ebd2682bafed4ab618142148c691c7ca"
+    },
+    "recipe": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_r3_recipe.json",
+      "sha256": "f21cbaa60932f1793824ab7e61076757de6cfbd020f106045d1f44b092b2f27f"
+    },
+    "raw": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3/grand-back-room-composition-r3.png",
+      "sha256": "b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a"
+    },
+    "viewed_master": {
+      "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116\\candidate_sources\\grand-back-room-composition-r3-assembled-v1/assets/art/environments/grand_casino_back_room/background.png",
+      "sha256": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27"
+    },
+    "donor_ledger": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01/evidence/pixel-donors.json",
+      "sha256": "458e6a4c8d0ce98973db714270e7f58c3b505ca0cfe8a7d1d9f4e0177006257b"
+    }
+  },
+  "candidate_path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116\\candidate_sources\\grand-back-room-composition-r3-assembled-v1",
+  "source_base": {
+    "commit": "ea66f879a6a340fba2716d27e27b777a58bb200e",
+    "package_seal": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+    "tree": "f0a6f3c8a5bd890784b4aca77e6886c91aae0c64"
+  },
+  "baseline_seal": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "closed_job": {
+    "pid": 23088,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cpu_rate": 1200,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "budget_expected_bytes": 4294967296,
+    "reserve_bytes": 21474836480
+  },
+  "checks": {
+    "exact21_physical_payload_membership": true,
+    "all21_hashes_and_baseline_seal_and_candidate_seal_recomputed": true,
+    "changed_only_background_two_counter_pngs_and_two_bleed_manifest": true,
+    "other17_payloads_byte_exact": true,
+    "all16_motion_dictionaries_and_seven_low_membership_unchanged": true,
+    "both_registered_png_dimensions_and_binary_alpha_exact": true,
+    "both_alpha_masks_NN2_and_solid_RGB_same_master": true,
+    "all_explicit_negative_masks_transparent": true,
+    "Office_body_and_panel_contact_pixels_exact_and_excluded_from_both_replays": true,
+    "original_header_y0_330_and_four_pixel_outer_frame_exact": true,
+    "all_original_y702_860_including_white_legs_contacts_gold_band_exact": true,
+    "all42_hashed_row_run_mask_files_exact_membership_and_run_laws": true,
+    "exact6a7a_actual_native_layout_and_all_six_body_adornment_PNG_identities": true,
+    "all_retained_opaque_game_body_pixels_on_actual_candidate_green_felt": true,
+    "fixed_native_contacts_428_496_and_1360_494_on_felt": true,
+    "all_protected_source_controls_and_executed_helpers_rehashed_unchanged": true,
+    "closed_job_command_caps_storage_manifest_and_zero_release_authenticated": true,
+    "independent_full_RGBA_reconstruction_from_original_plus_all_ordered_donors_equal_candidate": true
+  },
+  "counter_metrics": {
+    "grand_table_left": {
+      "solid": 128612,
+      "transparent": 69196,
+      "Office_excluded": 552,
+      "rect_native": [
+        110,
+        390,
+        634,
+        312
+      ],
+      "mask_sha256": "fe388ba5c82e5655cd8e578d5606e3f67a89465b2702fa76907ee5a7d306eaa2"
+    },
+    "grand_table_right": {
+      "solid": 126208,
+      "transparent": 69104,
+      "Office_excluded": 1000,
+      "rect_native": [
+        1048,
+        390,
+        626,
+        312
+      ],
+      "mask_sha256": "bec2b7119d65302ecb5f4ecda70163a85f9567d26ce5e6405c766cf422f97c43"
+    }
+  },
+  "mask_files": {
+    "directory": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01/evidence/material_masks",
+    "count": 42,
+    "files": {
+      "grand_table_left-physical.json": "fe388ba5c82e5655cd8e578d5606e3f67a89465b2702fa76907ee5a7d306eaa2",
+      "grand_table_left-floor-negative.json": "965649a5c056187d8f65b7498a3b58f9f728a0d40cde7c4493b59a93324c61e1",
+      "office-original-physical.json": "c8a611e45195c356c8e19d97cf0207376de3fa1360117f5b0d8e4fed288ad990",
+      "grand_table_left-under-table-negative.json": "569573f37a336f167e5a07eee0405beacfc872255625620139c156c720c62fa2",
+      "grand_table_left-apron.json": "28891d108d028ef936ac0cb70be63779f77e4ae5a05cc8eb16e2d73624ef2e99",
+      "grand_table_left-brace_left.json": "5e8612312084cb59d4077d10faceb83cbddd6905bbca934f949a2109dd804567",
+      "grand_table_left-brace_right.json": "060c918860b12063d1dba9465b57b4fbc8accd0119d49ca4e95dfd46a54b019c",
+      "grand_table_left-foot_left.json": "8bb84c136c3e0b3a6e03e7768656be3926346e0ad6c2a2f2c17eed43587152f2",
+      "grand_table_left-foot_right.json": "624eec29d3ef3792a8d6f9d28c07ada9493bc781511dc5de259f46caef96b155",
+      "grand_table_left-front_leg_left.json": "8d87fa1d9dd3c4f24e14e969eb986d7b88b3de13abca3e207d69a3c0f0fbc794",
+      "grand_table_left-front_leg_right.json": "bfddcc7fc3bce8425bc6a511bcab8de5abe0a3ef9bbc9836803e5b5a6ed36145",
+      "grand_table_left-rear_leg_left.json": "e72da07ce67d2c953c06050d2ee9e4a225bc059abe7e2856e2f519d850f49b0d",
+      "grand_table_left-rear_leg_right.json": "3b869b544b69a6578973c5bfaf2257409599d1873bbc0daff1d72cd0ab392b12",
+      "grand_table_left-stretcher.json": "74bd3698f2e6e9bc78251d6cf0a6c4c01fe87efbbf165666ca6e70ffc7e162fd",
+      "grand_table_left-top_and_rail.json": "d7a7769e63e884890bc652b4da0887fd2eab11b9d04b9e49a035952513fc72e2",
+      "grand_table_right-physical.json": "bec2b7119d65302ecb5f4ecda70163a85f9567d26ce5e6405c766cf422f97c43",
+      "grand_table_right-floor-negative.json": "7c94b0f4398e84a98def035fe6eea585b1ef8c9df47bac0e0cab32d256b4c1cd",
+      "grand_table_right-under-table-negative.json": "90b84634f4c7fb4114b661a5a1625ef2666dc90c1e9acd5a5d84aa8b3cfbb2b7",
+      "grand_table_right-apron.json": "96746fafd52012aa29bf002aa11a25036db778e1edbac9d6eb7a1ae409d0dd3f",
+      "grand_table_right-brace_left.json": "155a5ee330f15ddac9c7a4d5b1cdd08240eda5ecb76b9168093fd314a2e2c74b",
+      "grand_table_right-brace_right.json": "a7267508687acb4f860f9a5fd561957ffdbbe716027648446a65ab785cf5e7b9",
+      "grand_table_right-foot_left.json": "5c68849379167005eff22263fec4ca9af974e2f9668630144af0bc312a330d7a",
+      "grand_table_right-foot_right.json": "a346c8cfef98616dd840d0b4ef2c79768e05fdc69498dcfa40162252f6c50a0e",
+      "grand_table_right-front_leg_left.json": "6c6ae3449f28a57b2f2acabc7b6f7af36093872216cd8ca0ba667fd02b36bc56",
+      "grand_table_right-front_leg_right.json": "4fc5bb22e9354001060dd2e8425d2b4332a294c0fe000c27f2c160954b0bb38b",
+      "grand_table_right-rear_leg_left.json": "c5f52142556eafef08499c57e25483a2623358eeb279d7f0148c701db903f834",
+      "grand_table_right-rear_leg_right.json": "06cd780d5829a91eb6c12e995c4a3f53bc486c6b38a512f7a815ded7546e667c",
+      "grand_table_right-stretcher.json": "0fd81b70f28a52a1093cc69eb6174156f226e8f45a5536d214c1193fa0e262ca",
+      "grand_table_right-top_and_rail.json": "b4521b10bb50242395068a354d778d3c6f44f8ecf2786c2444fda3b49e55db7d",
+      "support-__none_host_1_body.json": "ce22aef37b8338abf7ddae6b57130591c0f01d70daa7b125e8e7f7944b0f32a6",
+      "felt-game_blackjack.json": "399c7930a0c84ff0c0a35e94bc843802125ca8927cfdc84e21410c003dcfc214",
+      "support-__none_host_0_body.json": "cbe70c8d64f55f14ede85698aef0b9a598c94b3c2edcbf548b76d2d55029c881",
+      "felt-game_craps.json": "27e44eafa328bb68a8342c0824cef66ae382ce0f00e1278ee891ff03e3916891",
+      "typed-__none_host_0_adorn.json": "213cfb415bdd00c007690ed4749e3713463c7fafcfc36eb72aead4794f34b8ae",
+      "typed-__none_host_0_body.json": "dbc72c08718982ec59352caa13f68c6dee10df69fee71bd4d943463f64cbc1fb",
+      "typed-__none_host_1_adorn.json": "11bc74bb1f725c2588dee557382c40dbb0b05e0f87f9dbcc241b5de44ed593fc",
+      "typed-__none_host_1_body.json": "627bb207a6ca54e45e2083638cb8b109af698e3ce26eb9aa7855cd74d7bed3c7",
+      "typed-__none_host_2_adorn.json": "a1f341a9dc5589b339939477fd59fb5586833591e3cb6f5e416e6ad6a6343885",
+      "typed-__none_host_2_body.json": "824c4fba69dd6c894f311a0a1b3df5162403f5d737cb3f3182788d9a4b9b62dc",
+      "approved-edit-union.json": "4141230ac1061717a89c43e372e0004971f8c2bee323f9c0b821dca2842f433b",
+      "grand_table_left-band-solid.json": "491bf6a100e6f8686bdec79ea2539ca3defb779612dc80f02890610c8b3e00da",
+      "grand_table_right-band-solid.json": "38978d7856ac5cc6bc18728027b0b029c9ee7d181b283de55fb4b935b48bed00"
+    }
+  },
+  "donor_replay": {
+    "schema": "bth.native_block_donors/v1",
+    "rows": 191833,
+    "component_counts": {
+      "clean_floor_corridor": 128128,
+      "furniture": 63705
+    },
+    "operation": "Start exact original BG; fixed2x2 raw RGB samples with alpha255; last-write-wins; all uncovered pixels retain original.",
+    "full_master_equal": true,
+    "coverage_equal_approved_edit_union": true
+  },
+  "observed_visual_findings": [
+    {
+      "status": "OPEN",
+      "finding": "Raw-derived full-height table bodies and feet materially improve mass and leave visible floor behind them, but no populated version has been reviewed."
+    },
+    {
+      "status": "OPEN",
+      "finding": "First new floor row330 contains repeated gold flecks from raw366 boundary material. Preserve this candidate; a later bounded source-row368 revision may be considered after the first populated view."
+    },
+    {
+      "status": "OPEN",
+      "finding": "Clean upper floor intentionally repeats a 306-source-pixel corridor. Repeated grain/scuffs and the join at native616 remain visible-composition risks."
+    },
+    {
+      "status": "OPEN",
+      "finding": "Manual component masks show dark stepped/cutout edges around braces and feet. Exact raw donor provenance does not establish that every such dark pixel is furniture rather than floor/shadow. Actual populated contour/material review and any later bounded mask correction remain required."
+    },
+    {
+      "status": "OPEN",
+      "finding": "Raw local tabletop perspective is retained; shared scene vanishing point remains unresolved. No felt-only perspective warp was applied."
+    },
+    {
+      "status": "OPEN",
+      "finding": "The full-top foreground alpha can occlude environment sparkles as well as floor glints. Future diagnostic must show exposed animation and continuing no-input clocks rather than suppressing motion."
+    },
+    {
+      "status": "OPEN",
+      "finding": "Retained paint support covers the actual Base opaque game bodies at one clock, with no people. Later Behind/Standard/Front actors, labels, shadows, other game states and liveness remain unqualified."
+    }
+  ],
+  "not_performed": [
+    "new full-room populated render",
+    "engine/native campaign",
+    "gameplay or animation modification",
+    "visual acceptance",
+    "art integration",
+    "TEST release",
+    "cleanup/moves/deletion"
+  ],
+  "next_action": "Parent may bind this physical-mask custody review and the closed producer to its separately guarded diagnostic preview; inspect actual populated composition before deciding any geometry/mask/floor correction."
+}

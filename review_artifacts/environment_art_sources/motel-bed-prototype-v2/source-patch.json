@@ -1,0 +1,151 @@
+{
+  "schema": "bth.motel_bed_inert_byte_patch/v1",
+  "status": "UNAPPLIED_SOURCE_PROPOSAL",
+  "target_relative": "scripts/ui/pixel_scene_canvas.gd",
+  "allowed_application_target": "Only an explicitly admitted fresh E QA preview source copy. Never the D art worktree, main, TEST/NEXT site, an existing runtime, profile or save.",
+  "replacement_artifact": {
+    "path": "bed_painter.gd.txt",
+    "sha256": "d830d061ca5e1c4daffd3d413c684c79ac3277df58f9cc2d0668b9f992ef074b",
+    "bytes": 7503,
+    "eol": "LF"
+  },
+  "application_law": [
+    "Select exactly one listed source form by complete current file SHA256 and byte length. Do not normalize an unknown source or use fuzzy context.",
+    "Authenticate the pinned replacement artifact and every original byte slice at its exact half-open offset, length, SHA256 and base64 preimage before any target write.",
+    "Prepare all three byte edits together in memory. Keep untouched bytes exact; for working_CRLF expand the pinned LF replacement to CRLF as explicitly recorded. No other newline or text normalization.",
+    "Copy untouched source spans and replacement bytes in ascending original offset order, or mutate in descending offset order. Require the exact expected patched full-file hash/length.",
+    "Only the parent-owned guarded fresh-preview worker may write the completed patched file and its receipt, after required storage/Job/source admission. No writer is supplied or executed here.",
+    "Before Godot starts, require the complete three-edit expected hash. A partial edit or false native prototype predicate is STOP, not evidence of a new painter."
+  ],
+  "source_forms": [
+    {
+      "name": "working_CRLF",
+      "source_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "source_bytes": 566959,
+      "expected_patched_sha256": "3976df21b50788ef61a53fcc1bb3548633036aaff66187ceac415e1bf99c2b55",
+      "expected_patched_bytes": 573430,
+      "reversed_in_memory_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "source_roundtrip_exact": true,
+      "edits": [
+        {
+          "id": "shadow_dispatch",
+          "start_byte": 263688,
+          "end_byte_exclusive": 263769,
+          "preimage_bytes": 81,
+          "preimage_sha256": "c413ebbb8dee858d0fb38c648f339d3b9da0046c6496fbd9b0a4223482bf8463",
+          "preimage_base64": "CV9kcmF3X29iamVjdF9zaGFkb3cocmVjdCwgYWN0aXZlLCBzdHIob2JqZWN0X2RhdGEuZ2V0KCJzaGFkb3dfa2luZCIsICJiYXNlIikpKQ0K",
+          "replacement_bytes": 148,
+          "replacement_sha256": "294ef1115531dd64ccd1e4f5a8666683e9dd02ddecfa3f6c70c1df8178c58638",
+          "replacement_source": "inline_base64",
+          "replacement_base64": "CWlmIG5vdCBfbW90ZWxfYmVkX3Zpc3VhbF9wcm90b3R5cGVfYWRtaXR0ZWQob2JqZWN0X2RhdGEsIHJlY3QpOg0KCQlfZHJhd19vYmplY3Rfc2hhZG93KHJlY3QsIGFjdGl2ZSwgc3RyKG9iamVjdF9kYXRhLmdldCgic2hhZG93X2tpbmQiLCAiYmFzZSIpKSkNCg==",
+          "replacement_eol": "Expand LF to CRLF",
+          "after_start_byte": 263688,
+          "after_end_byte_exclusive": 263836
+        },
+        {
+          "id": "bed_call",
+          "start_byte": 461595,
+          "end_byte_exclusive": 461659,
+          "preimage_bytes": 64,
+          "preimage_sha256": "1db9a3875cd8f8675f499b149ff55f14296d0dd9b6886f6bbaae956217a86ea2",
+          "preimage_base64": "CWlmIHByb3AgPT0gImJlZCI6DQoJCV9kcmF3X2JlZF9wcm9wKHJlY3QsIHNlbGVjdGVkKQ0KCQlyZXR1cm4NCg==",
+          "replacement_bytes": 77,
+          "replacement_sha256": "bcbd174e7cbec5fbac4d135dda9f2a499ab15bc30904ff223d2f4d8a5475ad60",
+          "replacement_source": "inline_base64",
+          "replacement_base64": "CWlmIHByb3AgPT0gImJlZCI6DQoJCV9kcmF3X2JlZF9wcm9wKHJlY3QsIHNlbGVjdGVkLCBvYmplY3RfZGF0YSkNCgkJcmV0dXJuDQo=",
+          "replacement_eol": "Expand LF to CRLF",
+          "after_start_byte": 461662,
+          "after_end_byte_exclusive": 461739
+        },
+        {
+          "id": "bed_function",
+          "start_byte": 462294,
+          "end_byte_exclusive": 463532,
+          "preimage_bytes": 1238,
+          "preimage_sha256": "04f0fe04d4c2c1de1c791486412e8bd01c73d751c3863411faf1c7752935577d",
+          "preimage_base64": "ZnVuYyBfZHJhd19iZWRfcHJvcChyZWN0OiBSZWN0Miwgc2VsZWN0ZWQ6IGJvb2wpIC0+IHZvaWQ6DQoJdmFyIGFjY2VudCA6PSBDX1lFTExPVyBpZiBzZWxlY3RlZCBlbHNlIENfQ1lBTg0KCV9kcmF3X2ludGVyYWN0YWJsZV9saWdodChyZWN0LCBhY2NlbnQsIHNlbGVjdGVkKQ0KCXZhciBmcmFtZSA6PSBSZWN0MihyZWN0LnBvc2l0aW9uICsgVmVjdG9yMihyZWN0LnNpemUueCAqIDAuMDgsIHJlY3Quc2l6ZS55ICogMC4zNCksIFZlY3RvcjIocmVjdC5zaXplLnggKiAwLjg0LCByZWN0LnNpemUueSAqIDAuNDQpKQ0KCWRyYXdfcmVjdChmcmFtZSwgQ19TSEFET1cpDQoJZHJhd19yZWN0KFJlY3QyKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMig1LCA1KSwgZnJhbWUuc2l6ZSAtIFZlY3RvcjIoMTAsIDEwKSksIENvbG9yKCIjNTAzMTVjIikpDQoJZHJhd19yZWN0KFJlY3QyKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMigxMCwgOSksIFZlY3RvcjIoZnJhbWUuc2l6ZS54ICogMC4yNSwgZnJhbWUuc2l6ZS55IC0gMTgpKSwgQ29sb3IoIiNkOGM5YjUiKSkNCglkcmF3X3JlY3QoUmVjdDIoZnJhbWUucG9zaXRpb24gKyBWZWN0b3IyKGZyYW1lLnNpemUueCAqIDAuMzQsIDkpLCBWZWN0b3IyKGZyYW1lLnNpemUueCAqIDAuNTYsIGZyYW1lLnNpemUueSAtIDE4KSksIENvbG9yKCIjNmIzYjczIikpDQoJZm9yIHN0cmlwZSBpbiByYW5nZSgzKToNCgkJdmFyIHN0cmlwZV94IDo9IGZyYW1lLnBvc2l0aW9uLnggKyBmcmFtZS5zaXplLnggKiAoMC40OCArIGZsb2F0KHN0cmlwZSkgKiAwLjE1KQ0KCQlkcmF3X3JlY3QoUmVjdDIoc3RyaXBlX3gsIGZyYW1lLnBvc2l0aW9uLnkgKyAxMSwgNywgZnJhbWUuc2l6ZS55IC0gMjIpLCBDX1BJTktfMi5kYXJrZW5lZCgwLjIyKSkNCglkcmF3X2xpbmUoZnJhbWUucG9zaXRpb24gKyBWZWN0b3IyKDAsIGZyYW1lLnNpemUueSksIGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMigwLCBmcmFtZS5zaXplLnkgKyA5KSwgQ19TSEFET1csIDQpDQoJZHJhd19saW5lKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMihmcmFtZS5zaXplLngsIGZyYW1lLnNpemUueSksIGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMihmcmFtZS5zaXplLngsIGZyYW1lLnNpemUueSArIDkpLCBDX1NIQURPVywgNCkNCglpZiBzZWxlY3RlZDoNCgkJZHJhd19yZWN0KGZyYW1lLmdyb3coNCksIENvbG9yKGFjY2VudC5yLCBhY2NlbnQuZywgYWNjZW50LmIsIDAuODIpLCBmYWxzZSwgMikNCg0KDQo=",
+          "replacement_bytes": 7629,
+          "replacement_sha256": "6edd7a2d2e492ff6278d3f3e5371cc85b939267173765ea944dda035101dfecc",
+          "replacement_source": "bed_painter.gd.txt",
+          "replacement_base64": null,
+          "replacement_eol": "Expand LF to CRLF",
+          "after_start_byte": 462374,
+          "after_end_byte_exclusive": 470003
+        }
+      ]
+    },
+    {
+      "name": "canonical_LF",
+      "source_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+      "source_bytes": 555698,
+      "expected_patched_sha256": "cf1e0f2e7bed7255c0d8686d8b037fab34347bc57ca7d7932dafd26d48fa1ccd",
+      "expected_patched_bytes": 562059,
+      "reversed_in_memory_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+      "source_roundtrip_exact": true,
+      "edits": [
+        {
+          "id": "shadow_dispatch",
+          "start_byte": 258246,
+          "end_byte_exclusive": 258326,
+          "preimage_bytes": 80,
+          "preimage_sha256": "aaa7e5096fc674e502af231b3dd9070caa5c291a3027706f0f31df33626b1496",
+          "preimage_base64": "CV9kcmF3X29iamVjdF9zaGFkb3cocmVjdCwgYWN0aXZlLCBzdHIob2JqZWN0X2RhdGEuZ2V0KCJzaGFkb3dfa2luZCIsICJiYXNlIikpKQo=",
+          "replacement_bytes": 146,
+          "replacement_sha256": "ebd6b38533125afe835b7f0bb418951fcde22f5d8cebce09f8dbf7b880c2181d",
+          "replacement_source": "inline_base64",
+          "replacement_base64": "CWlmIG5vdCBfbW90ZWxfYmVkX3Zpc3VhbF9wcm90b3R5cGVfYWRtaXR0ZWQob2JqZWN0X2RhdGEsIHJlY3QpOgoJCV9kcmF3X29iamVjdF9zaGFkb3cocmVjdCwgYWN0aXZlLCBzdHIob2JqZWN0X2RhdGEuZ2V0KCJzaGFkb3dfa2luZCIsICJiYXNlIikpKQo=",
+          "replacement_eol": "Exact LF bytes",
+          "after_start_byte": 258246,
+          "after_end_byte_exclusive": 258392
+        },
+        {
+          "id": "bed_call",
+          "start_byte": 452027,
+          "end_byte_exclusive": 452088,
+          "preimage_bytes": 61,
+          "preimage_sha256": "5094f50d538495b183f7ae57912cb72ad88977fd71f88994e3197ac337fc1312",
+          "preimage_base64": "CWlmIHByb3AgPT0gImJlZCI6CgkJX2RyYXdfYmVkX3Byb3AocmVjdCwgc2VsZWN0ZWQpCgkJcmV0dXJuCg==",
+          "replacement_bytes": 74,
+          "replacement_sha256": "a7cbbc3d34a4b63341994795fc5ee89ef3a8342bdb5da9b179a5c2c2f49c077e",
+          "replacement_source": "inline_base64",
+          "replacement_base64": "CWlmIHByb3AgPT0gImJlZCI6CgkJX2RyYXdfYmVkX3Byb3AocmVjdCwgc2VsZWN0ZWQsIG9iamVjdF9kYXRhKQoJCXJldHVybgo=",
+          "replacement_eol": "Exact LF bytes",
+          "after_start_byte": 452093,
+          "after_end_byte_exclusive": 452167
+        },
+        {
+          "id": "bed_function",
+          "start_byte": 452711,
+          "end_byte_exclusive": 453932,
+          "preimage_bytes": 1221,
+          "preimage_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+          "preimage_base64": "ZnVuYyBfZHJhd19iZWRfcHJvcChyZWN0OiBSZWN0Miwgc2VsZWN0ZWQ6IGJvb2wpIC0+IHZvaWQ6Cgl2YXIgYWNjZW50IDo9IENfWUVMTE9XIGlmIHNlbGVjdGVkIGVsc2UgQ19DWUFOCglfZHJhd19pbnRlcmFjdGFibGVfbGlnaHQocmVjdCwgYWNjZW50LCBzZWxlY3RlZCkKCXZhciBmcmFtZSA6PSBSZWN0MihyZWN0LnBvc2l0aW9uICsgVmVjdG9yMihyZWN0LnNpemUueCAqIDAuMDgsIHJlY3Quc2l6ZS55ICogMC4zNCksIFZlY3RvcjIocmVjdC5zaXplLnggKiAwLjg0LCByZWN0LnNpemUueSAqIDAuNDQpKQoJZHJhd19yZWN0KGZyYW1lLCBDX1NIQURPVykKCWRyYXdfcmVjdChSZWN0MihmcmFtZS5wb3NpdGlvbiArIFZlY3RvcjIoNSwgNSksIGZyYW1lLnNpemUgLSBWZWN0b3IyKDEwLCAxMCkpLCBDb2xvcigiIzUwMzE1YyIpKQoJZHJhd19yZWN0KFJlY3QyKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMigxMCwgOSksIFZlY3RvcjIoZnJhbWUuc2l6ZS54ICogMC4yNSwgZnJhbWUuc2l6ZS55IC0gMTgpKSwgQ29sb3IoIiNkOGM5YjUiKSkKCWRyYXdfcmVjdChSZWN0MihmcmFtZS5wb3NpdGlvbiArIFZlY3RvcjIoZnJhbWUuc2l6ZS54ICogMC4zNCwgOSksIFZlY3RvcjIoZnJhbWUuc2l6ZS54ICogMC41NiwgZnJhbWUuc2l6ZS55IC0gMTgpKSwgQ29sb3IoIiM2YjNiNzMiKSkKCWZvciBzdHJpcGUgaW4gcmFuZ2UoMyk6CgkJdmFyIHN0cmlwZV94IDo9IGZyYW1lLnBvc2l0aW9uLnggKyBmcmFtZS5zaXplLnggKiAoMC40OCArIGZsb2F0KHN0cmlwZSkgKiAwLjE1KQoJCWRyYXdfcmVjdChSZWN0MihzdHJpcGVfeCwgZnJhbWUucG9zaXRpb24ueSArIDExLCA3LCBmcmFtZS5zaXplLnkgLSAyMiksIENfUElOS18yLmRhcmtlbmVkKDAuMjIpKQoJZHJhd19saW5lKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMigwLCBmcmFtZS5zaXplLnkpLCBmcmFtZS5wb3NpdGlvbiArIFZlY3RvcjIoMCwgZnJhbWUuc2l6ZS55ICsgOSksIENfU0hBRE9XLCA0KQoJZHJhd19saW5lKGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMihmcmFtZS5zaXplLngsIGZyYW1lLnNpemUueSksIGZyYW1lLnBvc2l0aW9uICsgVmVjdG9yMihmcmFtZS5zaXplLngsIGZyYW1lLnNpemUueSArIDkpLCBDX1NIQURPVywgNCkKCWlmIHNlbGVjdGVkOgoJCWRyYXdfcmVjdChmcmFtZS5ncm93KDQpLCBDb2xvcihhY2NlbnQuciwgYWNjZW50LmcsIGFjY2VudC5iLCAwLjgyKSwgZmFsc2UsIDIpCgoK",
+          "replacement_bytes": 7503,
+          "replacement_sha256": "d830d061ca5e1c4daffd3d413c684c79ac3277df58f9cc2d0668b9f992ef074b",
+          "replacement_source": "bed_painter.gd.txt",
+          "replacement_base64": null,
+          "replacement_eol": "Exact LF bytes",
+          "after_start_byte": 452790,
+          "after_end_byte_exclusive": 460293
+        }
+      ]
+    }
+  ],
+  "in_memory_proof": {
+    "full_source_written": false,
+    "roundtrip_both_exact": true,
+    "legacy_fallback_function_body_byte_exact": true,
+    "method": "Read-only PowerShell/.NET UTF8 byte-array and MemoryStream copies; no GDS import, compile, helper or QA/test execution."
+  },
+  "exact_three_sites": [
+    "Generic shadow dispatch gains a bed-only admitted-painter exception.",
+    "Existing bed call forwards the native object dictionary to the optional third argument.",
+    "The single old bed function range is replaced with the inert function block, preserving the legacy body as default fallback."
+  ],
+  "geometry_design": {
+    "path": "docs/testing/motel_room_shared_bed_painter_design_v2_20261116.json",
+    "sha256": "bb79e02c3780b04e32462e2bc266f5d5621720f2a0090976ba1a374b58473015"
+  },
+  "no_production_or_art_changes": true,
+  "no_runtime_or_acceptance": true
+}

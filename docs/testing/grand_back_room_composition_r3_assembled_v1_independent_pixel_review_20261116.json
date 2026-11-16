@@ -1,0 +1,188 @@
+{
+  "schema": "bth.gbr_composition_independent_actual_pixel_review/v1",
+  "reviewer": "/root/audit_spatial_handoff",
+  "independence": "Did not generate, assemble or execute this candidate. Earlier supplied floor/Office coordinate advice and static source peer; this is a separate direct view of actual master/replays, not High's author check.",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "review_date": "2026-11-16",
+  "reviewed_at_utc": "2026-11-16T19:03:56.250256+00:00",
+  "status": "NEEDS_REVISION_POPULATED_ACCEPTANCE_BLOCKED",
+  "visual_GO": false,
+  "native_or_production_or_TEST_approval": false,
+  "artifacts": [
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3-assembled-v1/grand-back-room-composition-r3-assembled-v1.png",
+      "sha256": "9177e48e6ee002d2fe849dd503257e8509fb68f792faf112f5e2c94e8ce7cb27",
+      "bytes": 720186,
+      "dimensions": [
+        1800,
+        860
+      ],
+      "personally_viewed_whole_image": true
+    },
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3-assembled-v1/grand-table-left.png",
+      "sha256": "d0f562b04a5e91fa4e58b62f6161e604a1982d5969b0896837d6185a8e09c167",
+      "bytes": 93893,
+      "dimensions": [
+        634,
+        312
+      ],
+      "native_origin": [
+        110,
+        390
+      ],
+      "personally_viewed_whole_image": true
+    },
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3-assembled-v1/grand-table-right.png",
+      "sha256": "04e394c3d78361bdb94c02fec1f23eb848b537503e0cbaacbe8c126480f30804",
+      "bytes": 91747,
+      "dimensions": [
+        626,
+        312
+      ],
+      "native_origin": [
+        1048,
+        390
+      ],
+      "personally_viewed_whole_image": true
+    }
+  ],
+  "identity": "All three D preserved files were rehashed and equal their E candidate counterparts under BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116/candidate_sources/grand-back-room-composition-r3-assembled-v1. Raw source is b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a; original master is 46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca.",
+  "findings": [
+    {
+      "id": "R3-P01",
+      "classification": "CONFIRMED_TRANSFER_ARTIFACT",
+      "diagnostic_only": "Warm-fragment sample predicate R>=70, G>=4, R>=2*B; not a semantic foreground-mask rule.",
+      "region_native": "y330..331, periodic x positions",
+      "finding": "Bright rust/pink fragments from raw donor row366 repeat along the new floor horizon. Examples RGBA: [32,330]=[155,51,51,255], [150,330]=[122,37,45,255], [258,330]=[179,73,77,255]; the x motif repeats every306 native pixels. These differ from the retained header molding positions in328..329.",
+      "provisional_fix": "In a NEW recipe/candidate only, source the first2 native floor rows from raw floor row367 or368, leaving original header0..329 unchanged. The complete raw754..1059 corridor at both367 and368 has zero hits under the same warm-fragment diagnostic. Do not overwrite assembled-v1."
+    },
+    {
+      "id": "R3-P02",
+      "classification": "OPAQUE_CONTOUR_FRINGES_REQUIRE_TRACE",
+      "region_native": "Left replay leg/brace boundaries",
+      "samples": [
+        {
+          "world": [
+            196,
+            662
+          ],
+          "local": [
+            86,
+            272
+          ],
+          "RGBA": [
+            32,
+            1,
+            13,
+            255
+          ]
+        },
+        {
+          "world": [
+            198,
+            690
+          ],
+          "local": [
+            88,
+            300
+          ],
+          "RGBA": [
+            34,
+            1,
+            11,
+            255
+          ]
+        },
+        {
+          "world": [
+            216,
+            640
+          ],
+          "local": [
+            106,
+            250
+          ],
+          "RGBA": [
+            39,
+            2,
+            15,
+            255
+          ]
+        }
+      ],
+      "finding": "The physical-only replay includes solid low-value material beside leg/brace wood. Full raw/replay views suggest floor/shadow fringe within broad component rectangles, so contour tightness remains unresolved.",
+      "classification_limit": "These RGBA values prove opaque coverage, not semantic material identity by color alone. Genuine dark wood borders must remain. Do not apply a blanket luminance/black-pixel removal rule.",
+      "provisional_fix": "Trace source wood and its dark structural outlines per row in a new version; separate any floor/contact-shadow material from opaque foreground coverage. Verify actual composited people/props before accepting the mask."
+    },
+    {
+      "id": "R3-P03",
+      "classification": "OPEN_FLOOR_JOIN_AND_GROUNDING_JUDGMENT",
+      "region_native": "Floor join616 and foot termination702",
+      "samples": [
+        {
+          "xy": [
+            900,
+            614
+          ],
+          "RGBA": [
+            49,
+            3,
+            28,
+            255
+          ]
+        },
+        {
+          "xy": [
+            900,
+            616
+          ],
+          "RGBA": [
+            24,
+            1,
+            16,
+            255
+          ]
+        },
+        {
+          "xy": [
+            150,
+            700
+          ],
+          "RGBA": [
+            6,
+            1,
+            3,
+            255
+          ]
+        },
+        {
+          "xy": [
+            150,
+            702
+          ],
+          "RGBA": [
+            64,
+            7,
+            35,
+            255
+          ]
+        }
+      ],
+      "finding": "The upper repeated corridor changes value/texture phase at616. Feet end against the retained lower floor at702 with a hard transition. At whole-room scale the tables now have clear top depth, aprons, legs and stretchers, but repeated grain and local grounding still need owner review.",
+      "classification_limit": "A value jump or black outline alone does not prove an impossible seam or a missing cast shadow. The 616 transition may read as a plank edge; a full populated view is required. No invented shadow or new footprint is approved.",
+      "provisional_fix": "Review the single616 join and actual source contact shapes. If needed, propose a tightly bounded source-backed background shadow correction, retaining exactOffice/whitelegs/gold; keep shadow out of opaque replay masks."
+    }
+  ],
+  "whole_room_judgment": "Static furniture volume is materially clearer than the rejected low platforms. This is not a populated-room scale, actor-foot clearance or acceptance verdict. Existing source controls/support counts cannot override the owner's full-composition rejection.",
+  "runtime_limit": {
+    "blocker_record": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/environment_spatial_preview_custody_blocker_20261116.json",
+      "sha256": "9b40883d3d027b103f1818d9d6e8562dfcf0cd521ac9ae6fb7a148f20944782d"
+    },
+    "root_reported_state": "Preview planning session44304 unresolved beyond644seconds, log0/no verified PID/no reopenable named Job handle. This reviewer did not reprobe, terminate, retry or create a runtime.",
+    "meaning": "No actual populated R3 preview was observed. Provider closure remains a parent-owned real blocker; no engine/new QA job/alternative execution is authorized by this review."
+  },
+  "reviewer_actions": "Read-only direct whole-image views, source pixel samples and hashes only; sole new D review JSON written. No image edits, E writes, new candidate, recipe execution, engine, cleanup, saves, Git or release action. Frozen assembled-v1 remains unchanged."
+}

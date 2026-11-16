@@ -1,0 +1,897 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-16T19:03:08.510664+00:00",
+  "scope": {
+    "description": "Four exact recent art sidebar Jobs authenticated from retained launch/manifest/final lifecycle receipts. No host process inspection or other-task closure claim. Historical room campaigns remain in their unchanged qualification records; no global runtime completeness is claimed. Four more actual closed Jobs, plus exact planner with UNKNOWN lifecycle after lost session44304. Pending is not promoted to closure.",
+    "complete": false,
+    "evidence": [
+      "docs/testing/grand_back_room_composition_r3_raw_preservation_20261116.json",
+      "docs/testing/environment_spatial_observer_preflight_v2_qualification_20261116.json",
+      "docs/testing/environment_spatial_preview_custody_blocker_20261116.json"
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8e0487e084adfee87ed7b0470b90fa26",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01:manifest-token:8e0487e084adfee87ed7b0470b90fa26",
+        "started_at": "2026-11-16T16:50:50.768968+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Actual exclusive prelaunch claim time, not sampled OS process start. Identity is the owned Job/manifest token, not a PID."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T16:51:00.130065+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01:manifest-token:8e0487e084adfee87ed7b0470b90fa26",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T16:51:00.130065+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T16:51:00.130065+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "8e0487e084adfee87ed7b0470b90fa26",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T16:51:00.130065+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "scope": "Actual owned closed Job only. Contract references maintained implementation and actual verified kill-on-close/no-breakaway limits; no simulated timeout or interruption run is claimed."
+      },
+      "artifact_sha256": {
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\job.json": "f3bc8685704a4750a2e828d74ad487d138b6a920ae614588728cf06884c0847d",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\storage-manifest.json": "bf36600905791fab1fe5118a03fbd45d90c9cb543900e3ad68cc35876320dff3",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-v2-tests01\\evidence\\launch-claim.json": "8214d0c9aa3c1dde13e47d2f808c21ebea5b279fcf065c7211b96c33e6ec0f59"
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "f46ba86a0783c288beefa1a08704ecff",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01:manifest-token:f46ba86a0783c288beefa1a08704ecff",
+        "started_at": "2026-11-16T18:07:50.411984+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Actual exclusive prelaunch claim time, not sampled OS process start. Identity is the owned Job/manifest token, not a PID."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:07:50.925027+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01:manifest-token:f46ba86a0783c288beefa1a08704ecff",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:07:50.925027+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:07:50.925027+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "f46ba86a0783c288beefa1a08704ecff",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:07:50.925027+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "scope": "Actual owned closed Job only. Contract references maintained implementation and actual verified kill-on-close/no-breakaway limits; no simulated timeout or interruption run is claimed."
+      },
+      "artifact_sha256": {
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\job.json": "8d218dbef5e941bea7ad83dc94b55d2a351f23df147d83df50792e34fa307932",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\storage-manifest.json": "92a8586edab2b3de061559ddb6e5b2d5cf50b11016764af2b6af5bfbbb77f383",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-RAWMATERIALIZER-20261116-tests01\\evidence\\launch-claim.json": "90ee37e1b41b96d95e06762316f1f73553547b97d3cf8c9bd96ec4ebee799654"
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ba84f03fd7216d363d2c41cc80091db2",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01:manifest-token:ba84f03fd7216d363d2c41cc80091db2",
+        "started_at": "2026-11-16T18:08:25.333838+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Actual exclusive prelaunch claim time, not sampled OS process start. Identity is the owned Job/manifest token, not a PID."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:08:25.789885+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01:manifest-token:ba84f03fd7216d363d2c41cc80091db2",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:08:25.789885+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:08:25.789885+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ba84f03fd7216d363d2c41cc80091db2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:08:25.789885+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "timed_out": false,
+        "error": null,
+        "scope": "Actual owned closed Job only. Contract references maintained implementation and actual verified kill-on-close/no-breakaway limits; no simulated timeout or interruption run is claimed."
+      },
+      "artifact_sha256": {
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\job.json": "efa6aefcef6349edb3026d8139de629bd0b59b2e1c300e01d6135ba1a694bd46",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\storage-manifest.json": "4e13d4703d9c29fe1774bfb688bef14bc84da83e9e202e717c3c7d38f275814c",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-materialize01\\evidence\\launch-claim.json": "91d03f926a292cbdd742f88353b1b6c242aef60abfedd0af5dff4fcbaeb13d50"
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "9ecab2420d655136b723b1edec2e1b58",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31:manifest-token:9ecab2420d655136b723b1edec2e1b58",
+        "started_at": "2026-11-16T18:26:20.277902+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Actual exclusive prelaunch claim time, not sampled OS process start. Identity is the owned Job/manifest token, not a PID."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:26:20.656166+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31:manifest-token:9ecab2420d655136b723b1edec2e1b58",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:26:20.656166+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:26:20.656166+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "9ecab2420d655136b723b1edec2e1b58",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:26:20.656166+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 1,
+        "timed_out": false,
+        "error": null,
+        "scope": "Actual owned closed Job only. Contract references maintained implementation and actual verified kill-on-close/no-breakaway limits; no simulated timeout or interruption run is claimed."
+      },
+      "artifact_sha256": {
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\job.json": "e4a35ffd6dca92ed15b7ea79234b928e0dd9218e914424867c6722ef9ceefbcd",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\storage-manifest.json": "5b472c2528dd9309433c7eb64d2bcbe699c92dfadfa81bb7edab9e67057a9f48",
+        "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile31\\evidence\\launch-claim.json": "1b67f2dd3b037cff617fbd9cfbb71d3617a36cef2b552a55466b49d061a3144d"
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8114ba2534c863522be6c997925e8ed7",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32:manifest-token:8114ba2534c863522be6c997925e8ed7",
+        "started_at": "2026-11-16T18:28:19.915033+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Exclusive prelaunch claim, not OS PID start."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:28:20.300210+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32:manifest-token:8114ba2534c863522be6c997925e8ed7",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:28:20.300210+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:28:20.300210+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "8114ba2534c863522be6c997925e8ed7",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:28:20.300210+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile32\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 1,
+        "scope": "Owned closure only; no visual or global-check success implied."
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2458eaa1f872e838b20aea6d83cd9f09",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01:manifest-token:2458eaa1f872e838b20aea6d83cd9f09",
+        "started_at": "2026-11-16T18:36:53.375700+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Exclusive prelaunch claim, not OS PID start."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:37:06.041142+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01:manifest-token:2458eaa1f872e838b20aea6d83cd9f09",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:37:06.041142+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:37:06.041142+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2458eaa1f872e838b20aea6d83cd9f09",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:37:06.041142+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116-assemble01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "scope": "Owned closure only; no visual or global-check success implied."
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "abe06609c2f88c4f65595515d23509cf",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01:manifest-token:abe06609c2f88c4f65595515d23509cf",
+        "started_at": "2026-11-16T18:39:21.406498+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Exclusive prelaunch claim, not OS PID start."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:39:21.850113+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01:manifest-token:abe06609c2f88c4f65595515d23509cf",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:39:21.850113+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:39:21.850113+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "abe06609c2f88c4f65595515d23509cf",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:39:21.850113+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116-materialize01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "scope": "Owned closure only; no visual or global-check success implied."
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01",
+      "task_id": "BTH-ENV-SPATIAL-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "eea94b418d3201e02b65b3e3175a2df1",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01:manifest-token:eea94b418d3201e02b65b3e3175a2df1",
+        "started_at": "2026-11-16T18:44:16.313878+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+        ],
+        "timestamp_scope": "Exclusive prelaunch claim, not OS PID start."
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-16T18:44:51.173155+00:00",
+        "key": "owned-capped-job:BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01:manifest-token:eea94b418d3201e02b65b3e3175a2df1",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-16T18:44:51.173155+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-16T18:44:51.173155+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "eea94b418d3201e02b65b3e3175a2df1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+            "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-16T18:44:51.173155+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-tests01\\evidence\\launch-claim.json"
+        ]
+      },
+      "test_outcome": {
+        "exit_code": 0,
+        "scope": "Owned closure only; no visual or global-check success implied."
+      }
+    },
+    {
+      "instance_id": "spatial-sidebar:BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01",
+      "task_id": "BTH-ENV-SPATIAL-GBR-001",
+      "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "unknown",
+      "launch_identity": {
+        "nonce": "358eacb671ec64ab827ac9d1dac3fae9",
+        "key": "claimed-owned-job:BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01:manifest-token:358eacb671ec64ab827ac9d1dac3fae9",
+        "started_at": "2026-11-16T18:48:05.227591+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\worker.log"
+        ],
+        "timestamp_scope": "Actual exclusive claim; child creation/start/handle unconfirmed."
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-16T19:03:08.510664+00:00",
+        "key": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\worker.log"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-16T19:03:08.510664+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\worker.log"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py"
+          ],
+          "failure": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py"
+          ],
+          "timeout": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py"
+          ],
+          "interruption": [
+            "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_guarded_run.py"
+          ]
+        },
+        "receipt": null
+      },
+      "closure_review": {
+        "state": "unknown",
+        "currently_running": null,
+        "cleanly_closed": null,
+        "observed_at": "2026-11-16T19:03:08.510664+00:00",
+        "evidence": [
+          "docs/testing/environment_spatial_preview_custody_blocker_20261116.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\storage-manifest.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\launch-claim.json",
+          "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRPREVIEW-ADAPTER-20261116-plan01\\evidence\\worker.log"
+        ]
+      },
+      "backend_session_id": 44304,
+      "no_relaunch_enumeration_or_termination": true
+    }
+  ]
+}

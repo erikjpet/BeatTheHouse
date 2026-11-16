@@ -1,0 +1,236 @@
+{
+  "schema": "bth.motel_bed_inert_source_prototype/v1",
+  "task_id": "BTH-ENV-SPATIAL-HOME-BED-PROTOTYPE-DESIGN-20261116",
+  "author": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "status": "INERT_SOURCE_PACKET__UNAPPLIED__UNCOMPILED__UNRENDERED",
+  "started_utc": "2026-11-16T18:24:06.4323879Z",
+  "root_authorization": "Concrete Motel-only reversible prototype source: inert .gd.txt painter and exact bed-shadow source-patch proposal, preserving fixed targets, other props/rooms and scheduling. No owner approval needed to author source; geometry remains unaccepted until actual render.",
+  "artifact_files": {
+    "bed_painter.gd.txt": {
+      "sha256": "d830d061ca5e1c4daffd3d413c684c79ac3277df58f9cc2d0668b9f992ef074b",
+      "bytes": 7503
+    },
+    "source-patch.json": {
+      "sha256": "1414d05d89c8af0bc88ac771e89fd85ea73dccfb28bf74476d98c65173a8eff2",
+      "bytes": 11594
+    },
+    "README.md": {
+      "sha256": "9d987cb891247aac16c913f6c94f452f63ee9e006dd444926546ec84eb421da0",
+      "bytes": 5333
+    }
+  },
+  "only_created_folder": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2",
+  "absolute_prewrite_absence_and_no_alias_proof": {
+    "folder": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/motel-bed-prototype-v2",
+    "folder_absent": true,
+    "all_four_targets_absent": true,
+    "wrong_main_folder_absent": true,
+    "ancestors": [
+      {
+        "path": "D:\\Projects",
+        "ordinary_directory": true
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House",
+        "ordinary_directory": true
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp",
+        "ordinary_directory": true
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+        "ordinary_directory": true
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts",
+        "ordinary_directory": true
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources",
+        "ordinary_directory": true
+      }
+    ],
+    "source_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "design_sha256": "bb79e02c3780b04e32462e2bc266f5d5621720f2a0090976ba1a374b58473015",
+    "observed_utc": "2026-11-16T18:24:06.4323879Z"
+  },
+  "production_GD_written": false,
+  "source_art_written": false,
+  "full_GD_file_materialized": false,
+  "extra_game_asset_or_UID": false,
+  "E_write": false,
+  "QA_or_engine_launched": false,
+  "GDS_imported_or_compiled": false,
+  "tests_executed": false,
+  "process_inspection": false,
+  "saves_accessed": false,
+  "Git_mutation": false,
+  "art_approval": false,
+  "native_approval": false,
+  "TEST_updated": false,
+  "related_frozen_designs": {
+    "v1": {
+      "path": "docs/testing/motel_room_shared_bed_painter_design_20261116.json",
+      "sha256": "903e97f562a5d30bb2c394ad8dfb9dca82b8f782484dec3389d9ed54d1e90701"
+    },
+    "v2": {
+      "path": "docs/testing/motel_room_shared_bed_painter_design_v2_20261116.json",
+      "sha256": "bb79e02c3780b04e32462e2bc266f5d5621720f2a0090976ba1a374b58473015"
+    },
+    "home3": {
+      "path": "docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "sha256": "3d30caed2da7c8d0fa57e58a561c9b02fb285afbf76f1372d9b01c224a9d4ca4"
+    },
+    "unchanged": true
+  },
+  "source_byte_forms": [
+    {
+      "name": "working_CRLF",
+      "original_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "original_bytes": 566959,
+      "expected_patched_sha256": "3976df21b50788ef61a53fcc1bb3548633036aaff66187ceac415e1bf99c2b55",
+      "expected_patched_bytes": 573430,
+      "exact_reverse_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "three_exact_offsets": [
+        {
+          "id": "shadow_dispatch",
+          "before_half_open": [
+            263688,
+            263769
+          ],
+          "after_half_open": [
+            263688,
+            263836
+          ]
+        },
+        {
+          "id": "bed_call",
+          "before_half_open": [
+            461595,
+            461659
+          ],
+          "after_half_open": [
+            461662,
+            461739
+          ]
+        },
+        {
+          "id": "bed_function",
+          "before_half_open": [
+            462294,
+            463532
+          ],
+          "after_half_open": [
+            462374,
+            470003
+          ]
+        }
+      ]
+    },
+    {
+      "name": "canonical_LF",
+      "original_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+      "original_bytes": 555698,
+      "expected_patched_sha256": "cf1e0f2e7bed7255c0d8686d8b037fab34347bc57ca7d7932dafd26d48fa1ccd",
+      "expected_patched_bytes": 562059,
+      "exact_reverse_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+      "three_exact_offsets": [
+        {
+          "id": "shadow_dispatch",
+          "before_half_open": [
+            258246,
+            258326
+          ],
+          "after_half_open": [
+            258246,
+            258392
+          ]
+        },
+        {
+          "id": "bed_call",
+          "before_half_open": [
+            452027,
+            452088
+          ],
+          "after_half_open": [
+            452093,
+            452167
+          ]
+        },
+        {
+          "id": "bed_function",
+          "before_half_open": [
+            452711,
+            453932
+          ],
+          "after_half_open": [
+            452790,
+            460293
+          ]
+        }
+      ]
+    }
+  ],
+  "canonical_LF_matches_retained_capture_canvas": true,
+  "expected_patched_hashes_are_in_memory_predictions_not_written_sources": true,
+  "readonly_preparation_history": [
+    {
+      "operation": "Initial in-memory text reconstruction/reverse check",
+      "outcome": "Rejected its own reverse mismatch; no full source or target was written."
+    },
+    {
+      "operation": "Final UTF8 byte-span/MemoryStream forward and reverse composition",
+      "outcome": "Both exact whole-source hashes reconstructed; output is only metadata. No GDScript execution."
+    }
+  ],
+  "code_contract": {
+    "function_count": 5,
+    "shared_signature": "_draw_bed_prop(rect: Rect2, selected: bool, prototype_object_data: Dictionary = {}) -> void",
+    "legacy_fallback_body_exact": true,
+    "admission": {
+      "environment_id": "motel_room",
+      "object_id": "home_sleep:bed",
+      "prop": "bed",
+      "fixed_slot_geometry": true,
+      "manifest_exact_slot_id": "fixed.home_sleep",
+      "native_rect": [
+        350,
+        88,
+        286,
+        104
+      ],
+      "no_epsilon_or_string_coordinate_parse": true
+    },
+    "both_shadow_and_painter_use_same_native_predicate": true,
+    "unmatched_calls": "Original generic shadow and legacy bed body, including House/Apartment and unmatched Motel beds/rectangles.",
+    "actual_native_target_APIs": [
+      "_active_scene_objects()",
+      "_natural_model_rect_for_object(object_data)",
+      "_draw_item_prop(rect,object_data,selected,surface)",
+      "Rect2/Vector2 values passed directly into paint"
+    ],
+    "no_model_or_label_or_clock_writes": true,
+    "no_processing_or_redraw_changes": true,
+    "drawing_primitives_only": [
+      "draw_rect",
+      "draw_colored_polygon",
+      "draw_line",
+      "draw_polyline"
+    ],
+    "selection": "Only headboard components intersected with the unchanged hit Rect2 are highlighted; no extended mattress/leg clickable outline.",
+    "shadow": "Old generic bed shadow is skipped only on exact admitted branch; four physical support contacts and a translucent near cast are painted by the bed, with original interaction-light call/cadence retained.",
+    "all20_motion_PNGs_full_JSON_index_immutable": true
+  },
+  "prototype_material_dependency": {
+    "companion_not_created_here": true,
+    "current_Motel_room22_seal": "06ec99be6535209f0087607e3f3d6557f52fd8c991c20e5337ce9ec599932a23",
+    "current_BG_sha256": "5ebe73862694b418eb9dfd596ae706c344b6fe2bf7f12d1ec7ac6b3cdd10f6f2",
+    "current_full_JSON_sha256": "8b9d99df6654264dfc22b05ec7d3b8e5ce9f46b3a62623d2ae83e2a8e74d71c3",
+    "paired_floor_backing_allowance": "Only V2's maximum75800 source pixels; donor/companion remains independently reviewed root work. All20 motion PNGs/data/index remain exact.",
+    "unpaired_preview_limit": "A painter-only view on the old background is a diagnostic, never art/native acceptance."
+  },
+  "parent_next": "Authenticate all inert artifact and full source/tree pins; under the existing guarded fresh E preview workflow apply all three exact byte edits in memory, verify full expected output, then materialize only that fresh copy and capture an early actual full populated Motel view. Record native predicate=true. GDS syntax/types, loaded Backpack, headboard scale, source material and target usability remain unproved.",
+  "owner_hold_remains": true,
+  "no_global_rollout": true
+}

@@ -1,0 +1,88 @@
+{
+  "schema": "bth.gbr_composition_recipe/v1",
+  "assembly_version": 3,
+  "room": "grand_casino_back_room",
+  "scope": "PARENT_AUTHORIZED_FIRST_PROTOTYPE_NOT_VISUAL_ACCEPTANCE",
+  "source_base": {
+    "commit": "ea66f879a6a340fba2716d27e27b777a58bb200e",
+    "tree": "f0a6f3c8a5bd890784b4aca77e6886c91aae0c64",
+    "package_seal": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7"
+  },
+  "raw_source": {
+    "relative_path": "review_artifacts/environment_art_sources/grand-back-room-composition-r3/grand-back-room-composition-r3.png",
+    "sha256": "b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a",
+    "dimensions": [1815, 867]
+  },
+  "native": [1800, 860],
+  "pixel_scale": 2,
+  "protected_header_end_exclusive": 330,
+  "protected_outer_frame_width": 4,
+  "office_row_bands": [[634, 636, 692, 1112], [636, 732, 686, 1114]],
+  "office_trace": {
+    "body_and_attached_contact": "Actual original464927 physical panel x686..1114,y636..732; top glow x692..1112,y634..636.",
+    "white_legs_contact": "All original native702..860 preserved; table replays end702, so white legs730..785 and their contacts remain untouched.",
+    "not_an_extraction_rule": "Original floor is NOT phase128 periodic; do not difference a broad ROI against x%128."
+  },
+  "floor": {
+    "target_y": [330, 616],
+    "source_y_registration": [[330, 366], [860, 867]],
+    "clean_source_x": [754, 1060],
+    "x_operation": "754 + ((target_even_x + 1) % 306)",
+    "below_target_616": "ORIGINAL_UNCHANGED_EXCEPT_REGISTERED_VISIBLE_FURNITURE",
+    "old_gray_band_602_616": "REPLACED_BY_CLEAN_FLOOR",
+    "join_616_status": "OPEN_FIRST_POPULATED_PREVIEW_REVIEW"
+  },
+  "furniture_registration": {
+    "source_y": [364, 496, 508, 564, 704],
+    "target_y": [390, 512, 524, 576, 702],
+    "sampling": "ONE_INVERSE_NN_RAW_PIXEL_AT_EACH_TARGET_2X2_BLOCK_CENTER",
+    "vanishing_point": "RAW_LOCAL_PERSPECTIVE_RETAINED_SHARED_VP_OPEN",
+    "source_y500_maps_to_target_y": 516
+  },
+  "counters": {
+    "grand_table_left": {
+      "raw_rect_board": [82, 258, 272, 36],
+      "bleed_board": [27, 63, 18, 57],
+      "source_x_offset": 2,
+      "source_components": {
+        "top_and_rail": [[246,364],[642,364],[746,498],[746,508],[740,524],[118,524],[112,508],[112,498]],
+        "apron": [[136,524],[700,524],[700,564],[136,564]],
+        "front_leg_left": [[142,560],[202,560],[202,676],[142,676]],
+        "front_leg_right": [[630,560],[694,560],[694,676],[630,676]],
+        "foot_left": [[132,676],[202,676],[202,704],[132,704]],
+        "foot_right": [[630,676],[700,676],[700,704],[630,704]],
+        "rear_leg_left": [[246,560],[286,560],[286,586],[294,586],[294,600],[242,600],[242,586]],
+        "rear_leg_right": [[570,560],[610,560],[610,582],[616,582],[616,600],[566,600],[566,582]],
+        "brace_left": [[250,564],[270,568],[216,634],[198,628]],
+        "brace_right": [[570,568],[590,564],[646,628],[628,634]],
+        "stretcher": [[208,628],[632,628],[632,650],[208,650]]
+      }
+    },
+    "grand_table_right": {
+      "raw_rect_board": [546, 258, 272, 36],
+      "bleed_board": [22, 63, 19, 57],
+      "source_x_offset": 20,
+      "source_components": {
+        "top_and_rail": [[1174,364],[1566,364],[1694,498],[1694,508],[1688,524],[1074,524],[1068,508],[1068,498]],
+        "apron": [[1118,524],[1668,524],[1668,564],[1118,564]],
+        "front_leg_left": [[1120,560],[1180,560],[1180,676],[1120,676]],
+        "front_leg_right": [[1604,560],[1664,560],[1664,676],[1604,676]],
+        "foot_left": [[1118,676],[1184,676],[1184,704],[1118,704]],
+        "foot_right": [[1602,676],[1672,676],[1672,704],[1602,704]],
+        "rear_leg_left": [[1214,560],[1254,560],[1254,584],[1260,584],[1260,600],[1208,600],[1208,584]],
+        "rear_leg_right": [[1540,560],[1580,560],[1580,584],[1586,584],[1586,600],[1534,600],[1534,584]],
+        "brace_left": [[1212,564],[1232,568],[1180,634],[1162,628]],
+        "brace_right": [[1542,568],[1562,564],[1618,628],[1600,634]],
+        "stretcher": [[1172,628],[1604,628],[1604,650],[1172,650]]
+      }
+    }
+  },
+  "semantic_limits": [
+    "Manual source component contours are a first prototype, not independent visual acceptance.",
+    "Exact original Office silhouette and white-leg/contact pixels override furniture in both master and replays.",
+    "Original gold foreground band remains exact; all furniture stops before it.",
+    "No perspective warp, renderer, actor, hit, label, camera or motion change.",
+    "No contact shadow is invented; source material/component contours and the floor616 join require actual candidate review.",
+    "New upper replay can occlude environment sparkles; clocks and exposed animation must be checked in populated preview."
+  ]
+}

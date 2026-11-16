@@ -1,0 +1,320 @@
+{
+  "schema": "bth.bar_whole_composition_source_study/v5",
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "parent_task_id": "BTH-ENV-SPATIAL-001",
+  "recorded_at_utc": "2026-11-16 18:31:26 UTC",
+  "owner": "/root/bar_clearance_audit",
+  "status": "ONE_NON_ACTIVE_COMPOSITION_RAW_PRESERVED_NOT_APPROVED",
+  "source_directory": "review_artifacts/environment_art_sources/bar-composition-r5",
+  "authorization": {
+    "origin": "Root assigned exclusive next-room Bar whole-composition correction and authorized exactly one non-active source trial after inspection. No other Bar generation was delegated.",
+    "prior_R1_R2_R4_and_published_repair_preserved": true,
+    "prior_owner_rejection_supersedes_historical_art_GO": true,
+    "root_reported_no_Bar_engine_or_generation_job_active_in_this_root": true,
+    "global_process_state_inspected_or_claimed": false,
+    "author_writes": "Only this new absolute D B64/prompt/provenance packet; no E writes, engine, Library, Git, assembly or active-art change.",
+    "source_study_is_not_execution_or_art_approval": true
+  },
+  "skill": {
+    "package": "e0/.system/imagegen",
+    "resource": "skill://codex-home-skills/C:/Users/theep/.codex/skills/.system/imagegen/SKILL.md",
+    "mode": "Builtin precise-object-edit; previously read and reapplied",
+    "CLI_used": false
+  },
+  "inputs": {
+    "edit_target": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/bar/background.png",
+      "sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+      "dimensions": [
+        1800,
+        860
+      ],
+      "role": "SOLE edit target, exact published spatialV4 background",
+      "personally_viewed": true
+    },
+    "actual_full_UI_contexts": [
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-settled26\\evidence\\__none_actual_play.png",
+        "SHA256": "9c262d62917109b31c566ddaa15a7b8a1d61a2208b5ef3cb334fe4518540a95e",
+        "Bytes": 850035,
+        "role": "Base inspected for whole-room scale; not included in final two-image generation references",
+        "personally_viewed": true
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-settled26\\evidence\\bar_fight_night_actual_play.png",
+        "SHA256": "96e4f3fb118c1d33038f35d9e596cd51a235dc6c8fad8fa44ba4763acbadf384",
+        "Bytes": 833366,
+        "role": "Fight Night context-only reference; UI/gameplay must never be baked into background",
+        "personally_viewed": true
+      }
+    ],
+    "last_two_images_at_fallback": [
+      "Exact current Bar master a870d365...",
+      "Actual Fight Night full UI96e4f3fb..."
+    ],
+    "owner_reassessment": {
+      "path": "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json",
+      "sha256": "2f9c223663837e50b675c0295ee31787892f5b22d7a13cec66b459b16f5fe4b4"
+    },
+    "historical_delivery": {
+      "path": "docs/testing/bar_spatial_test_delivery_20261116.json",
+      "sha256": "09ea7bee4d75482455e5ad9996dada889fe476a9e0ba8abb35a0e3b8423e8bc3",
+      "art_acceptance_superseded_by_owner": true
+    },
+    "original_control_scope": {
+      "logical_members": 19,
+      "seal": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+      "seal_law": "Ordinal-sorted path+SPACE+SHA256 lines joinedLF, no finalLF; current global index separate control included",
+      "files": {
+        "assets/art/environments/bar/anim/floor_glint_4.png": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+        "assets/art/environments/bar/background.png": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+        "assets/art/environments/bar/anim/cold_beer_sign.png": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+        "assets/art/environments/bar/anim/floor_glint_3.png": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+        "assets/art/environments/bar/anim/pool_ball_0.png": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+        "assets/art/environments/bar/anim/floor_glint_1.png": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+        "assets/art/environments/bar/anim/warm_glint.png": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+        "assets/art/environments/bar/counters/bar_main_counter.png": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+        "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+        "assets/art/environments/bar/anim/floor_glint_2.png": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+        "assets/art/environments/bar/anim/high_smoke_0.png": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+        "assets/art/environments/bar/anim/pool_ball_1.png": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+        "assets/art/environments/bar/anim/high_smoke_1.png": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+        "assets/art/environments/bar/anim/floor_glint_5.png": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+        "assets/art/environments/bar/anim/timber_reflection.png": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+        "assets/art/environments/bar/anim/floor_glint_6.png": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+        "data/art/environments/bar.json": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+        "assets/art/environments/bar/anim/dive_sign.png": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+        "assets/art/environments/bar/anim/floor_glint_0.png": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b"
+      }
+    }
+  },
+  "composition_brief_sent_to_root_before_generation": {
+    "floor_native_y": 350,
+    "reason": "Below the original mirror bottom near348; should leave visible floor setback before the fixed pool rear contact around376.",
+    "pool_far_and_near_contacts_approx_native_y": [
+      376,
+      504
+    ],
+    "do_not_slide_far_rail_to_new_floor_junction": true,
+    "pool_front_foot_zone_provisional_native_y": [
+      680,
+      700
+    ],
+    "counter_contact_native_y": 356,
+    "counter_floor_base_provisional_native_y": [
+      540,
+      560
+    ],
+    "stool_existing_visible_foot_bottom_approx_native_y": 580,
+    "bench_existing_approx_native_xyxy": [
+      1308,
+      604,
+      1592,
+      776
+    ],
+    "bench_foreground_occlusion_preserved_in_direction": true,
+    "hard_live_pool_clearance_native_xyxy": [
+      [
+        1260,
+        432,
+        1308,
+        456
+      ],
+      [
+        1488,
+        452,
+        1536,
+        476
+      ]
+    ],
+    "live_pool_centers_native": [
+      [
+        1284,
+        444
+      ],
+      [
+        1512,
+        464
+      ]
+    ],
+    "Numbers_rear_left_contact_approx_native_xyxy": [
+      1190,
+      370,
+      1290,
+      380
+    ],
+    "all17_animation_payloads_positions_timing_and_anchors_preserved": true,
+    "limits": "These are source-study goals only. New physical masks, replay bleed/alpha, floor/foot geometry and populated composition remain unapproved."
+  },
+  "generation_counts": {
+    "tool_invocations": 2,
+    "pre_generation_argument_failures": 1,
+    "successful_image_generations": 1,
+    "competing_or_replacement_generations": 0
+  },
+  "attempts": [
+    {
+      "invocation": 1,
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt_reference": "Exact prompt.txt without its sole terminalLF",
+        "referenced_image_paths": [
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/bar/background.png",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-settled26/evidence/bar_fight_night_actual_play.png"
+        ],
+        "transparent_background": false
+      },
+      "result": "WINDOWS_REFERENCE_PATH_ARGUMENT_REJECTED_BEFORE_GENERATION",
+      "exact_error": "AbsolutePathBuf deserialized without a base path at line 1 column 3790",
+      "actual_generation": false
+    },
+    {
+      "invocation": 2,
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt_reference": "Same exact tool prompt",
+        "num_last_images_to_include": 2,
+        "transparent_background": false
+      },
+      "result": "ONE_IMAGE_GENERATION_SUCCEEDED",
+      "actual_generation": true,
+      "returned_keys": [
+        "image_url"
+      ],
+      "separate_generation_id_returned": false
+    }
+  ],
+  "exact_prompt": {
+    "path": "prompt.txt",
+    "encoding": "ASCII/UTF8 exact tool argument plus oneLF",
+    "bytes": 3638,
+    "sha256": "9f0621dc9abc46c6c13edfa5749c98f7cd0a2be8f55ffdbcf4f334537892f93f",
+    "tool_argument": "Use case: precise-object-edit.\nAsset: ONE non-active Bar whole-composition BACKGROUND source study for the pixel-art game Beat the House.\nInput roles: Image 1 is the exact current 1800x860 empty Bar background, the SOLE edit target. Image 2 is the actual Fight Night full game UI, CONTEXT ONLY for fixed contact positions, scale and foreground occupancy. NEVER bake its UI, people, machines, bottles, cards, books, pool balls, arrows, labels, cyan marks, meters or gameplay objects into the background.\n\nKeep the Image 1 full 1800x860 framing, camera, recognizable worn teal wood / warm dark timber / plum upholstery palette and crisp pixel clusters. Keep the upper mirror/frame, DIVE and COLD BEER lettering, dartboard and the existing practical shelf at their original positions and sizes. Preserve the six existing stools and the lower-right upholstered bench at their original positions; do not add or remove furniture.\n\nRepair the lower room as one credible physical composition, not by just adding tiny sticks. Establish one continuous wood floor behind and around the furniture. Provisional wall/floor junction around native y350, below the mirror's bottom near348. On the RIGHT, keep the pool table's rear contact rail near native y376 and its front rail near504: do NOT slide that rear rail up to follow the new floor junction. There should be visible floor setback between the wall and rear of the table. Keep the table in its existing general x1196..1644 area, but give it a substantial continuous apron/body, visibly longer joined timber supports, receding rear supports, open floor between supports and restrained attached contact shadows. Front feet may reach about native y680..700 rather than the old588 cap. This should read as a full-height pool table in the room, not a low wall shelf or raised platform. Use quiet dark timber with a readable silhouette against the floor, not bright gold foot caps.\n\nHARD fixed gameplay authority in1800x860 coordinates: live pool-paint paths around(1284,444) and(1512,464) must stay on genuine green felt. Preserve generous green clearance rectangles x1260..1308/y432..456 and x1488..1536/y452..476. Leave the existing rear-left Numbers contact around x1190..1290/y370..380 plausibly supported by the rear rim; no book or glyph is to be painted. Do not move, shrink or repaint any gameplay contact, slot, model, label or camera.\n\nOn the LEFT, retain the existing bar counter contact line near native y356, but make its top and end/side returns readable as physical wood with depth. Build a full cabinet mass beneath that contact reaching a plausible floor base around y540..560, behind the existing stools whose visible feet end near580. The old thin ledge and front panel ending468 over wall should no longer read as a flat wall picture. Keep the mirror's identity/framing; do not create new shelves, doors or a different bar.\n\nThe lower-right bench remains foreground at approximately native x1308..1592/y604..776. If longer pool supports extend behind it, the unchanged bench must occlude them naturally; do not shift/erase the bench or draw a leg over its upholstery. Leave the existing lower-left and lower-right travel/exit spaces clear. Keep all17 original animated layers, positions, ball paths, phases and timing separate and unchanged; no baked light pulse or moving glint.\n\nThese coordinates are source-study guidance, not final accepted production geometry. No global restyling, reframing, photoreal smoothing, blur, fog, broad glow veil, invented stage, duplicated seating, new props, characters, gameplay symbols, UI or watermark. Output the empty room background only."
+  },
+  "preserved_raw": {
+    "path": "bar-composition-r5.png.b64",
+    "encoding": "Exact returned PNG-base64 component asASCII plus oneLF; noCR; no payload printed",
+    "base64_file_bytes": 2738121,
+    "base64_file_sha256": "97abb151d1022df120fd7b13c1f24107953278c5549a2c72f64243e3863a78fa",
+    "exact_data_url_prefix": "data:image/png;base64,",
+    "exact_data_url_characters": 2738142,
+    "exact_data_url_sha256": "b591648953626ac58ab5a07f72f7d046c33e8065b0389278efa1891406917d7a",
+    "PNG_sha256": "303d4b5214b778be194a312305413dd45f68c32c62eacce507499dff3b104ae8",
+    "PNG_bytes": 2053588,
+    "PNG_dimensions": [
+      1815,
+      867
+    ],
+    "PNG_IHDR": {
+      "width": 1815,
+      "height": 867,
+      "bit_depth": 8,
+      "color_type": 2,
+      "compression": 0,
+      "filter": 0,
+      "interlace": 0
+    },
+    "all_original_chunks": [
+      {
+        "kind": "IHDR",
+        "bytes": 13,
+        "payload_sha256": "b00f81744d3d7bb35835d776ef709a2e27bd75e61fcbf4adfd26b4f7d6b56f7b",
+        "CRC_valid": true
+      },
+      {
+        "kind": "caBX",
+        "bytes": 21881,
+        "payload_sha256": "c1547e3033864bf799218301097afcb82bfc46d4109b003cae226e458ccc2f58",
+        "CRC_valid": true
+      },
+      {
+        "kind": "IDAT",
+        "bytes": 2031638,
+        "payload_sha256": "a35f97d98943854b3ae426ee137e30341d5823d9e2861dbdab95ed0978452c9f",
+        "CRC_valid": true
+      },
+      {
+        "kind": "IEND",
+        "bytes": 0,
+        "payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "CRC_valid": true
+      }
+    ],
+    "all_chunk_CRCs_verified": true,
+    "all_bytes_consumed": 2053588,
+    "identity": "The exact data-URL and PNG hashes identify the one returned image; tool supplied no separate generation ID.",
+    "metadata_method": "Read savedB64 and inspect decoded bytes/hash/IHDR/chunks/CRC in memory only. No pixel transform, image reencoding or decoded PNG file output.",
+    "PNG_materialized_by_author": false,
+    "no_E_decoder_Job_Library_Git_assembly_or_release_by_author": true
+  },
+  "first_look": {
+    "result": "RAW_STUDY_ONLY_NOT_APPROVED",
+    "method": "Personally viewed the builtin returned image. Geometry estimates below are visual observations before root materialization; they are not source-mask measurements or populated native acceptance.",
+    "improvements_observed": [
+      "Main counter has a deeper cabinet base and visible end/side returns, rather than only a flat upper front panel.",
+      "Pool table has visibly longer connected supports and a larger body/brace mass than the rejected short-foot source.",
+      "Six stools, bench and upper signage/mirror identities remain recognizable; no visible gameplay UI or people are baked in."
+    ],
+    "limitations": [
+      "Returned raster is1815x867 instead of requested1800x860. Exact pixels are preserved; any registration/resampling requires a separately reviewed assembly.",
+      "Floor junction appears around native370 rather than350; the pool rear rail remains near379. The floor strip behind the top is therefore much smaller than intended and must be reviewed as a whole-room depth issue.",
+      "Pool feet appear around native645..650 rather than680..700. The study improves height but does not prove sufficient scale or contact under actual Fight actors.",
+      "Right counter end appears narrower/shifted relative to the original1172native end; the fixed Buy a Drink/bottle contacts may therefore lose support. Counter top/contact and all other item positions need actual paint checks.",
+      "Support contrast and decorative edges may still cross the Fight brawler label band. No new actual label/glyph/alpha or source-counter replay qualification has been performed.",
+      "Numbers rim contact and all96 pool-ball atlas-frame alpha sweeps plus the extra second-ball clearance remain unverified against this raw.",
+      "The regenerated bench/stools/upper room have not been proven byte-registered to the original. The raw is not a drop-in full-master replacement.",
+      "Existing17 motion layers and the main-counter replay remain unchanged on disk, but their physical occlusion/material behavior over the new bodies is unreviewed."
+    ],
+    "formal_UI_contamination_pixel_registration_or_native_test_performed": false,
+    "native_or_gameplay_acceptance": false,
+    "candidate_assembled": false,
+    "active_art_or_TEST_updated": false,
+    "no_regeneration_after_visible_limitations": true
+  },
+  "filesystem_preservation": {
+    "new_target_absent_before_generation": true,
+    "wrong_main_target": "D:/Projects/Beat-The-House/review_artifacts/environment_art_sources/bar-composition-r5",
+    "wrong_main_absent_before_generation": true,
+    "wrong_main_absent_after_raw_preservation": true,
+    "ancestor_preflight": [
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\",
+        "Ordinary": true
+      }
+    ],
+    "all19_source_controls_rehashed_after_B64_prompt_preservation": true,
+    "source_mismatches": [],
+    "existing_historical_variants_untouched": true,
+    "only_new_files": [
+      "bar-composition-r5.png.b64",
+      "prompt.txt",
+      "provenance.json"
+    ],
+    "no_deletion_cleanup_moves_or_overwrites": true
+  },
+  "next_action": "Root preserves/materializes this exact raw through the separately reviewed byte materializer and independently reviews full-room perspective, fixed contact coverage, height, floor and shadow/foreground order. No additional generation, execution or acceptance is granted by this provenance."
+}

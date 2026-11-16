@@ -1,0 +1,80 @@
+{
+  "schema": "bth.environment_spatial_raw_descriptor/v1",
+  "room": "bar",
+  "base64": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/bar-composition-r5/bar-composition-r5.png.b64",
+    "sha256": "97abb151d1022df120fd7b13c1f24107953278c5549a2c72f64243e3863a78fa",
+    "bytes": 2738121,
+    "data_url_sha256": "b591648953626ac58ab5a07f72f7d046c33e8065b0389278efa1891406917d7a",
+    "encoding": "ASCII_BASE64_ONE_LINE_LF"
+  },
+  "png": {
+    "sha256": "303d4b5214b778be194a312305413dd45f68c32c62eacce507499dff3b104ae8",
+    "bytes": 2053588,
+    "width": 1815,
+    "height": 867,
+    "bit_depth": 8,
+    "color_type": 2,
+    "compression": 0,
+    "filter": 0,
+    "interlace": 0,
+    "chunks": [
+      {
+        "kind": "IHDR",
+        "bytes": 13,
+        "payload_sha256": "b00f81744d3d7bb35835d776ef709a2e27bd75e61fcbf4adfd26b4f7d6b56f7b"
+      },
+      {
+        "kind": "caBX",
+        "bytes": 21881,
+        "payload_sha256": "c1547e3033864bf799218301097afcb82bfc46d4109b003cae226e458ccc2f58"
+      },
+      {
+        "kind": "IDAT",
+        "bytes": 2031638,
+        "payload_sha256": "a35f97d98943854b3ae426ee137e30341d5823d9e2861dbdab95ed0978452c9f"
+      },
+      {
+        "kind": "IEND",
+        "bytes": 0,
+        "payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "prompt": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/bar-composition-r5/prompt.txt",
+    "sha256": "9f0621dc9abc46c6c13edfa5749c98f7cd0a2be8f55ffdbcf4f334537892f93f",
+    "bytes": 3638
+  },
+  "provenance": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/bar-composition-r5/provenance.json",
+    "sha256": "8f34ec1da6571e3eb0ec0053709fbabcb1d042f2b23b8c66af26389f5a2d6a35",
+    "bytes": 18724
+  },
+  "original_controls": {
+    "assets/art/environments/bar/anim/cold_beer_sign.png": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+    "assets/art/environments/bar/anim/dive_sign.png": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+    "assets/art/environments/bar/anim/floor_glint_0.png": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b",
+    "assets/art/environments/bar/anim/floor_glint_1.png": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+    "assets/art/environments/bar/anim/floor_glint_2.png": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+    "assets/art/environments/bar/anim/floor_glint_3.png": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+    "assets/art/environments/bar/anim/floor_glint_4.png": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+    "assets/art/environments/bar/anim/floor_glint_5.png": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+    "assets/art/environments/bar/anim/floor_glint_6.png": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+    "assets/art/environments/bar/anim/high_smoke_0.png": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+    "assets/art/environments/bar/anim/high_smoke_1.png": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+    "assets/art/environments/bar/anim/pool_ball_0.png": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+    "assets/art/environments/bar/anim/pool_ball_1.png": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+    "assets/art/environments/bar/anim/timber_reflection.png": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+    "assets/art/environments/bar/anim/warm_glint.png": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+    "assets/art/environments/bar/background.png": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+    "assets/art/environments/bar/counters/bar_main_counter.png": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+    "data/art/environments/bar.json": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+  },
+  "output": {
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARCOMPOSITION-R5-20261116",
+    "png": "raw_source/bar-composition-r5.png",
+    "receipt": "raw_source/bar-composition-r5-materialization.json"
+  }
+}
