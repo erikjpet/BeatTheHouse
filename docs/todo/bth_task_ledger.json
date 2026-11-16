@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:16:16.518384+00:00",
+  "updated_at": "2026-11-16T12:16:25.434890+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4960,7 +4960,9 @@
               "evidence": [
                 "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
                 "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-                "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+                "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
+                "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
+                "docs/testing/Crew_stash_return_route_fix_QA_20261116.md"
               ]
             },
             {
@@ -4982,7 +4984,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_ABANDONMENT_REPLACEMENT_VERIFIED_NEXT_9B9D_BROWSER_OPEN",
+      "status": "SWITCH_RECOVERY_FIXED_NATIVE_FIRST_DROP_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5149,6 +5151,16 @@
           "kind": "native_Crew_abandonment_replacement_and_NEXT_reverification",
           "reference": "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
           "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
+        },
+        {
+          "kind": "faithful_native_stash_return_route_fix",
+          "reference": "docs/testing/Crew_stash_return_route_fix_QA_20261116.md",
+          "summary": "Faithful actualsw12 confirms visibleopen7farePunchline directstashroad omitted/MapTravel disabled. Narrow retainer prioritizes first real visible recovery hop within cap and keys cache by physical cargo state/node, preserving normal fares/hours/locks/visibility. Focused59contracts and required no-pointeranimationliveness pass; corrected nativeMap/realreturn/retrieval/cold evidence follows. Failed detached-fixture run retained/excluded. NEXTfixdelivery pending; no browser claim."
+        },
+        {
+          "kind": "native_Switch_multistop_and_stash_recovery",
+          "reference": "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
+          "summary": "Actual Switch recruitment and two-stop offer/pickup/stash/cold/remote guards pass. NativeMap baseline confirms hidden direct7farestashroad. Narrow fix passes59contracts+mandatoryliveness and50fixednativechecks; actualMapbutton returns7fare/36min, realRetrieve andcold retain156cash/94rep/trust30/oneDuty/debt[]. No first/finaldrop yet. One same-layerdoor diagnostic retained/excluded."
         }
       ],
       "implementation_batches": [
@@ -5161,9 +5173,11 @@
         "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
         "BTH-QA-CREW-DEBT-PROBE-20261116",
         "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
-        "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116"
+        "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116",
+        "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
+        "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116"
       ],
-      "next_action": "Preserve abandoned collection ar1/ar2 (163cash/92reputation/two duties), successful replacement ar5/ar6 (177cash/81reputation/one duty), and active duplicate-accept guard ar7. Bounded native routes pass with actual full debt arrays and cold/stale checks; NEXT9b9d identity/five fresh assets verified. Associate scoped proof commit while broader browser/WASM, route balance and human pacing remain Open.",
+      "next_action": "Commit tested stash-road/cache fix (59contracts/liveness/50nativefixedchecks), then continue actual recovered Signal from sw16:156cash/94reputation/Switchtrust30/oneowedDuty/debt[],carriedslips,clock2238. Use actual7fareAlley route and normal2340-2370 then2490-2520 appointments; whole34payment/dutycredit waits until bothdrops. Preserve all baselines/owner saves and browser restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5177,7 +5191,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T11:16:16.518384+00:00"
+      "updated_at": "2026-11-16T12:16:25.434890+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39295,6 +39309,102 @@
   ],
   "batches": [
     {
+      "id": "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116",
+      "name": "Keep the recovery road to a stashed Crew package visible",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/Crew_stash_return_route_fix_QA_20261116.md"
+        ]
+      },
+      "scope": [
+        "Faithful native sw12 baseline from intact sw10: route slips stashed at Punchline, player Alley, direct public path/7fare/open24h, actual normal Map selected but Travel disabled.",
+        "Preserve capped ordinary routing, fares, hours, locks and visibility; retain only the first real actionable recovery road for active remote stashed cargo and include physical dependencies in cache keys.",
+        "Focused pure regression, mandatory animation liveness for cache-performance change, actual saved-state fixed-map and normal return/retrieval, then main/NEXT follow-through."
+      ],
+      "acceptance_scope": "Confirmed native presentation fix with targeted cache/cap/visibility invariants and exact served NEXT identity/assets where available. Browser startup, pointer, visuals and Web gameplay remain restricted/Open.",
+      "status": "STASH_RECOVERY_ROAD_FIXED_NATIVE_VERIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "faithful_native_stash_return_route_fix",
+          "reference": "docs/testing/Crew_stash_return_route_fix_QA_20261116.md",
+          "summary": "Faithful actualsw12 confirms visibleopen7farePunchline directstashroad omitted/MapTravel disabled. Narrow retainer prioritizes first real visible recovery hop within cap and keys cache by physical cargo state/node, preserving normal fares/hours/locks/visibility. Focused59contracts and required no-pointeranimationliveness pass; corrected nativeMap/realreturn/retrieval/cold evidence follows. Failed detached-fixture run retained/excluded. NEXTfixdelivery pending; no browser claim."
+        }
+      ],
+      "next_action": "Land the narrow tested stash recovery-hop/cache fix and its focused59/liveness/native saved-state proof, then observe existing NEXT identity/served assets without browser fallback. Continue actual accepted Switch route from recovered slips to Alley2340-2370 and Pawn2490-2520. Preserve all original baselines and owner saves.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T11:47:34.358972+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T12:15:25.421786+00:00"
+    },
+    {
+      "id": "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
+      "name": "Crew Switch multi-stop route and stash recovery",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Copy all three directories from intact ar6 and preserve owner saves, completed outcomes and prior original checkpoints.",
+        "Recruit actual offered Switch through normal controls and pursue an enabled Two-Stop Signal job without manufacturing presence, rank, map targets or appointment windows.",
+        "Exercise actual available stash/retrieval controls and their cold persistence while preserving package identity, costs, physical location, separate Crew duties and actual debt array.",
+        "Follow normal multi-stop recipient sequence, delayed whole-job reward and cold/stale guards, or document the actual availability/blocker."
+      ],
+      "acceptance_scope": "Native normal-control multi-stop package/recovery coverage. Only the current release Count is enabled; excluded Whale/Game plans are not treated as reachable. Broader route balance, human pacing and restricted browser/WASM acceptance stay Open.",
+      "status": "SWITCH_RECOVERY_FIXED_NATIVE_FIRST_DROP_PENDING",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "confirmed_native_stash_return_route_finding",
+          "reference": "docs/testing/Crew_stash_return_route_fix_QA_20261116.md",
+          "summary": "Actual Map at Alley selects visible open Punchline but disables Travel because capped list omits stash return; existing public path is direct and fare7. No outcome/save manipulation. Fix registered before product edits."
+        },
+        {
+          "kind": "native_Switch_multistop_and_stash_recovery",
+          "reference": "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
+          "summary": "Actual Switch recruitment and two-stop offer/pickup/stash/cold/remote guards pass. NativeMap baseline confirms hidden direct7farestashroad. Narrow fix passes59contracts+mandatoryliveness and50fixednativechecks; actualMapbutton returns7fare/36min, realRetrieve andcold retain156cash/94rep/trust30/oneDuty/debt[]. No first/finaldrop yet. One same-layerdoor diagnostic retained/excluded."
+        }
+      ],
+      "next_action": "Commit tested stash-road/cache fix (59contracts/liveness/50nativefixedchecks), then continue actual recovered Signal from sw16:156cash/94reputation/Switchtrust30/oneowedDuty/debt[],carriedslips,clock2238. Use actual7fareAlley route and normal2340-2370 then2490-2520 appointments; whole34payment/dutycredit waits until bothdrops. Preserve all baselines/owner saves and browser restriction.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T11:22:15.740419+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T12:16:25.434890+00:00"
+    },
+    {
       "id": "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116",
       "name": "Crew collection abandonment and post-miss replacement",
       "aliases": [],
@@ -43443,7 +43553,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_ABANDONMENT_REPLACEMENT_VERIFIED_NEXT_9B9D_BROWSER_OPEN",
+      "status": "SWITCH_RECOVERY_FIXED_NATIVE_FIRST_DROP_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43514,9 +43624,19 @@
           "kind": "native_Crew_abandonment_replacement_and_NEXT_reverification",
           "reference": "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
           "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
+        },
+        {
+          "kind": "faithful_native_stash_return_route_fix",
+          "reference": "docs/testing/Crew_stash_return_route_fix_QA_20261116.md",
+          "summary": "Faithful actualsw12 confirms visibleopen7farePunchline directstashroad omitted/MapTravel disabled. Narrow retainer prioritizes first real visible recovery hop within cap and keys cache by physical cargo state/node, preserving normal fares/hours/locks/visibility. Focused59contracts and required no-pointeranimationliveness pass; corrected nativeMap/realreturn/retrieval/cold evidence follows. Failed detached-fixture run retained/excluded. NEXTfixdelivery pending; no browser claim."
+        },
+        {
+          "kind": "native_Switch_multistop_and_stash_recovery",
+          "reference": "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
+          "summary": "Actual Switch recruitment and two-stop offer/pickup/stash/cold/remote guards pass. NativeMap baseline confirms hidden direct7farestashroad. Narrow fix passes59contracts+mandatoryliveness and50fixednativechecks; actualMapbutton returns7fare/36min, realRetrieve andcold retain156cash/94rep/trust30/oneDuty/debt[]. No first/finaldrop yet. One same-layerdoor diagnostic retained/excluded."
         }
       ],
-      "next_action": "Preserve abandoned collection ar1/ar2 (163cash/92reputation/two duties), successful replacement ar5/ar6 (177cash/81reputation/one duty), and active duplicate-accept guard ar7. Bounded native routes pass with actual full debt arrays and cold/stale checks; NEXT9b9d identity/five fresh assets verified. Associate scoped proof commit while broader browser/WASM, route balance and human pacing remain Open.",
+      "next_action": "Commit tested stash-road/cache fix (59contracts/liveness/50nativefixedchecks), then continue actual recovered Signal from sw16:156cash/94reputation/Switchtrust30/oneowedDuty/debt[],carriedslips,clock2238. Use actual7fareAlley route and normal2340-2370 then2490-2520 appointments; whole34payment/dutycredit waits until bothdrops. Preserve all baselines/owner saves and browser restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43529,7 +43649,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T11:16:16.518384+00:00"
+      "updated_at": "2026-11-16T12:16:25.434890+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

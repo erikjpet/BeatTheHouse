@@ -513,9 +513,9 @@ static func _remove_hidden_world_targets(host: Variant, target_ids: Array) -> Ar
 
 
 static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array, total_target_limit: int) -> Array:
-	# Delivery runs still use the ordinary map choices and route execution. The
-	# capped presentation list must not hide the first real edge toward every
-	# pending handoff, though, or an otherwise reachable job can appear stuck.
+	# Delivery runs still use ordinary map choices and route execution. Keep
+	# real handoff hops visible, and prioritize recovering stashed cargo before
+	# recipients that cannot take it while it is elsewhere.
 	var result := ordinary_target_ids.duplicate()
 	if not host.run_state.has_world_map() or not host.run_state.has_method("delivery_has_active_run") \
 			or not host.run_state.delivery_has_active_run():
@@ -526,6 +526,20 @@ static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array
 		return result
 	var source_id: String = host.run_state.current_world_node_id()
 	var required_next_hops: Array = []
+	var recovery_next_hop := ""
+	var physical_value: Variant = delivery.get("physical", {})
+	if typeof(physical_value) == TYPE_DICTIONARY:
+		var physical: Dictionary = physical_value
+		var cargo_node_id := str(physical.get("cargo_node_id", "")).strip_edges()
+		if str(physical.get("cargo_state", "")) == "stashed" and not cargo_node_id.is_empty() and cargo_node_id != source_id:
+			var recovery_path: Array = host.WorldMapScript.path_between(host.run_state.world_map, source_id, cargo_node_id, true)
+			if recovery_path.size() >= 2:
+				var candidate_hop := str(recovery_path[1]).strip_edges()
+				var recovery_route: Dictionary = host._world_route_for_target(candidate_hop)
+				if not candidate_hop.is_empty() and not recovery_route.is_empty() \
+						and not bool(host.run_state.travel_route_status(recovery_route).get("hidden", false)):
+					recovery_next_hop = candidate_hop
+					required_next_hops.append(recovery_next_hop)
 	for target_value in target_values as Array:
 		if typeof(target_value) != TYPE_DICTIONARY:
 			continue
@@ -539,6 +553,10 @@ static func _retain_delivery_next_hops(host: Variant, ordinary_target_ids: Array
 		var next_hop := str(path[1]).strip_edges()
 		if not next_hop.is_empty() and not required_next_hops.has(next_hop):
 			required_next_hops.append(next_hop)
+	# More recipients than cards must not protect every existing card against
+	# the recovery hop. Only this stashed-away case changes their priority.
+	if not recovery_next_hop.is_empty() and required_next_hops.size() > maxi(0, total_target_limit):
+		required_next_hops = required_next_hops.slice(0, maxi(0, total_target_limit))
 	for next_hop_value in required_next_hops:
 		var next_hop := str(next_hop_value)
 		if result.has(next_hop):
@@ -580,12 +598,16 @@ static func travel_base_cache_key(host: Variant) -> String:
 	if host.run_state.has_method("delivery_snapshot"):
 		var delivery: Dictionary = host.run_state.delivery_snapshot()
 		if not delivery.is_empty():
-			delivery_cache_key = "%s:%s:%d:%d:%s" % [
+			var physical_value: Variant = delivery.get("physical", {})
+			var physical: Dictionary = physical_value if typeof(physical_value) == TYPE_DICTIONARY else {}
+			delivery_cache_key = "%s:%s:%d:%d:%s:%s:%s" % [
 				str(delivery.get("run_id", "")),
 				str(delivery.get("status", "")),
 				int(delivery.get("deadline_remaining", 0)),
 				int(delivery.get("delivered_count", 0)),
 				str(delivery.get("handoff_pending_node_id", "")),
+				str(physical.get("cargo_state", "")),
+				str(physical.get("cargo_node_id", "")),
 			]
 	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s|%s|%s" % [
 		host.current_screen,
