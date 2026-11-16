@@ -5093,6 +5093,12 @@
           "evidence": [
             "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "d3af88413a14c7a74cdb697dfe5b3a934dbcb1f6",
+          "evidence": [
+            "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -5195,7 +5201,7 @@
         {
           "kind": "qualified_native_no_copy_forward",
           "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
-          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
+          "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
         }
       ],
       "implementation_batches": [
@@ -5214,7 +5220,7 @@
         "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
         "CREW-CONCURRENT-ROUTE-OFFER-20261116"
       ],
-      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
+      "next_action": "Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5228,7 +5234,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T15:47:59.048880+00:00"
+      "updated_at": "2026-11-16T15:58:42.191778+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43774,8 +43780,15 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "d3af88413a14c7a74cdb697dfe5b3a934dbcb1f6",
+          "evidence": [
+            "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -43798,10 +43811,10 @@
         {
           "kind": "qualified_native_no_copy_forward",
           "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
-          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
+          "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
         }
       ],
-      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
+      "next_action": "Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43810,7 +43823,7 @@
         "observed_at": "2026-11-16T14:43:33.444199+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T15:47:59.048880+00:00"
+      "updated_at": "2026-11-16T15:58:42.191778+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116",
@@ -43914,6 +43927,12 @@
           "sha": "bfc1a0870c51ad4670fd3b652b5f3a5e25e4d037",
           "evidence": [
             "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "d3af88413a14c7a74cdb697dfe5b3a934dbcb1f6",
+          "evidence": [
+            "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md"
           ]
         }
       ],
@@ -44019,10 +44038,10 @@
         {
           "kind": "qualified_native_no_copy_forward",
           "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
-          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
+          "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
         }
       ],
-      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
+      "next_action": "Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -44035,7 +44054,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T15:47:59.048880+00:00"
+      "updated_at": "2026-11-16T15:58:42.191778+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

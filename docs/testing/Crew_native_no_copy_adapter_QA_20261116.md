@@ -18,20 +18,21 @@ Final command: `python -B -m unittest discover -s tools/tests -p test_bth_qa*.py
 
 The final normal-interaction GDScript passed a separate parse/preload check in an empty admitted E: syntax profile, without instantiating Main or opening CJ2. Receipt: `E:/CodexQA/BTH/runs/crew-native-syntax3-261116/evidence/syntax-qualification.json`. Earlier passing intermediate qualifications remain retained and are not added to the final test count.
 
-Actual native cases used base source `8f5379c511a97fa1ece47ef81ba9db248fd14363` plus the explicitly recorded QA-tool working hashes. Product inputs match the original fresh source `6bfbecfb959b28a3148a1bafb44e85e0bee6ed0d`, digest `2161dd546f16b8255b696db2a07bc6a08a3d0b432e9202c95fc890e6980650ab`; tools/docs are separate from that product inventory. No gameplay rule, economy, room authority, canvas scheduling, version or save validator changed.
+Initial native cases used base source `8f5379c511a97fa1ece47ef81ba9db248fd14363` plus the explicitly recorded QA-tool working hashes. The later committed-source case identifies its actual full commit in `native-inputs.json` and the source column below. Product inputs match the original fresh source `6bfbecfb959b28a3148a1bafb44e85e0bee6ed0d`, digest `2161dd546f16b8255b696db2a07bc6a08a3d0b432e9202c95fc890e6980650ab`; tools/docs are separate from that product inventory. The adapter change does not alter a gameplay rule, economy, room authority, canvas scheduling, version or save validator.
 
 ## Actual native forward cases
 
 The first actual main-menu CONTINUE synchronously matched the complete previous QA public result before any action: $161, clock 893, Punchline Back Room, reputation 87, two duties, debt empty, no active route/job and accepted Associate Knuckles. It retained valid room/private authority, saved the same slot, and established native CLEAN_CLOSED custody. The next session matched the now-expanded public signature, including RNG 950800549 and action index 8, then naturally waited clock 893 to 1029 without a request. Passive clock already polls the persisted hourly chance; no request in this interval is not a confirmed defect.
 
-| Case | Mode | Checks | Worker log SHA-256 |
-| --- | --- | --- | --- |
-| crew-native-cj2-inspect1-261116 | inspect | 10/10 | `3007a93e69ec18deee0be54b993f2618e072edda5be890b73e7960bb9ca18ce3` |
-| crew-native-cj2-wait1-261116 | wait | 10/10 | `2587578651de5eda99abed5c2bb982313f91147feb368e8da27ae6e69c7e8c3a` |
-| crew-native-cj2-contact1-261116 | interact | 12/12 | `6441e2f0a809e9f5c21071d347b7f3e860eb0d6f448b86e56c3e136b8d9d6be4` |
-| crew-native-cj2-contact-leave1-261116 | respond | 12/12 | `472113e87830a15ad471770135a73830582846f3be30c964406a9c291b12cc34` |
-| crew-native-cj2-wait2-261116 | wait | 14/14 | `f6d9d1960421a82e5a7c3e32d56d2459d16d6843d5f9f01962fc500aa0c11fdd` |
-| crew-native-cj2-board-reject1-261116 | interact | 14/14 | `e2719c3a407c50d73d7f2a170152c8b58756870be9485d4e8a1fc42362543ca6` |
+| Case | Source | Mode | Checks | Worker log SHA-256 |
+| --- | --- | --- | --- | --- |
+| crew-native-cj2-inspect1-261116 | `8f5379c5` | inspect | 10/10 | `3007a93e69ec18deee0be54b993f2618e072edda5be890b73e7960bb9ca18ce3` |
+| crew-native-cj2-wait1-261116 | `8f5379c5` | wait | 10/10 | `2587578651de5eda99abed5c2bb982313f91147feb368e8da27ae6e69c7e8c3a` |
+| crew-native-cj2-contact1-261116 | `8f5379c5` | interact | 12/12 | `6441e2f0a809e9f5c21071d347b7f3e860eb0d6f448b86e56c3e136b8d9d6be4` |
+| crew-native-cj2-contact-leave1-261116 | `8f5379c5` | respond | 12/12 | `472113e87830a15ad471770135a73830582846f3be30c964406a9c291b12cc34` |
+| crew-native-cj2-wait2-261116 | `8f5379c5` | wait | 14/14 | `f6d9d1960421a82e5a7c3e32d56d2459d16d6843d5f9f01962fc500aa0c11fdd` |
+| crew-native-cj2-board-reject1-261116 | `8f5379c5` | interact | 14/14 | `e2719c3a407c50d73d7f2a170152c8b58756870be9485d4e8a1fc42362543ca6` |
+| crew-native-cj2-committed1-261116 | `d3af8841` | inspect | 10/10 | `81f1027703e75e23656e150fb8afa626bf91560fb8de2d8f2299e7083e573568` |
 
 Every listed case verified actual prior state before forward actions, kept the same six directory paths/identities, closed with zero owned processes, released its native lease and verified next-case readmission without launching another child. The natural request at1080 and actual carried-package confirmation now cover the prior concurrent-card gap: the enabled Collection card and safe rejection are separately tracked as `CREW-CONCURRENT-ROUTE-OFFER-20261116` in `Crew_concurrent_route_offer_QA_20261116.md`. Passing native integrity checks do not close that product finding. Latest actual public state:
 
@@ -182,6 +183,8 @@ Every listed case verified actual prior state before forward actions, kept the s
 }
 ```
 
-Next action: Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.
+Next action: Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.
 
 The broader Crew objective remains Open. These are native public-host/Control-signal observations; no browser/WASM startup, physical-pointer or human-pacing acceptance is claimed. Existing browser-control restrictions remain unchanged. Future changed product inputs require separately qualified exact-build compatibility; this adapter does not waive the product identity gate.
+
+Associated implementation/proof commit: `d3af88413a14c7a74cdb697dfe5b3a934dbcb1f6`. This bounded adapter batch can close without closing the Crew parent.
