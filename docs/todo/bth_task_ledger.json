@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T04:36:50.335402+00:00",
+  "updated_at": "2026-11-16T04:40:44.061421+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4915,6 +4915,12 @@
           "evidence": [
             "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
           ]
+        },
+        {
+          "sha": "42195e50f9ac552214be7d983f92c2a9f45612d2",
+          "evidence": [
+            "docs/testing/Crew_House_Edge_Bag_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -4967,7 +4973,7 @@
         {
           "kind": "native_earned_bag_lifecycle",
           "reference": "docs/testing/Crew_House_Edge_Bag_QA_20261116.md",
-          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final eight native Jobs148 checks; four original diagnostics retained/excluded, no product regression confirmed."
+          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final nine native Jobs161 checks including post-integration cold on42195e50; four original diagnostics retained/excluded, no product regression confirmed."
         }
       ],
       "implementation_batches": [
@@ -4976,7 +4982,7 @@
         "CREW-STAKE-REPAY-DISCLOSURE-20261116",
         "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116"
       ],
-      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b8-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Native bounded bag lifecycle passed; record its scoped commit. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
+      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b13-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Bounded bag lifecycle complete in its child batch. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4990,7 +4996,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T04:36:50.335402+00:00"
+      "updated_at": "2026-11-16T04:40:44.061421+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -38441,8 +38447,15 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "42195e50f9ac552214be7d983f92c2a9f45612d2",
+          "evidence": [
+            "docs/testing/Crew_House_Edge_Bag_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -38455,7 +38468,7 @@
         "Preserve the older Roadside Luck bag and original owner saves."
       ],
       "acceptance_scope": "Latest delegated continuation explicitly requests pending House Edge Blue Bag normal controls, persistence and settlement. This bounded native lifecycle does not close broader Crew or browser/WASM scope.",
-      "status": "NATIVE_HOUSE_EDGE_BAG_LIFECYCLE_PASS_WEB_OPEN",
+      "status": "NATIVE_HOUSE_EDGE_BAG_LIFECYCLE_COMPLETE",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -38465,19 +38478,19 @@
         {
           "kind": "native_earned_bag_lifecycle",
           "reference": "docs/testing/Crew_House_Edge_Bag_QA_20261116.md",
-          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final eight native Jobs148 checks; four original diagnostics retained/excluded, no product regression confirmed."
+          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final nine native Jobs161 checks including post-integration cold on42195e50; four original diagnostics retained/excluded, no product regression confirmed."
         }
       ],
-      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b8-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Native bounded bag lifecycle passed; record its scoped commit. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
+      "next_action": "Bounded native claim/open/reveal/settlement QA complete with committed proof and post-integration cold acceptance. Preserve b13 main, b10 Skip and b12 exit-before-reveal checkpoints; broader Crew and browser acceptance remain in parent/sidebar Open records.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:36:50.335402+00:00",
+        "observed_at": "2026-11-16T04:40:44.061421+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T04:36:50.335402+00:00"
+      "updated_at": "2026-11-16T04:40:44.061421+00:00"
     },
     {
       "id": "BTH061-AUDIT-001-BATCH-001",
@@ -42165,6 +42178,12 @@
           "evidence": [
             "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
           ]
+        },
+        {
+          "sha": "42195e50f9ac552214be7d983f92c2a9f45612d2",
+          "evidence": [
+            "docs/testing/Crew_House_Edge_Bag_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -42219,10 +42238,10 @@
         {
           "kind": "native_earned_bag_lifecycle",
           "reference": "docs/testing/Crew_House_Edge_Bag_QA_20261116.md",
-          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final eight native Jobs148 checks; four original diagnostics retained/excluded, no product regression confirmed."
+          "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final nine native Jobs161 checks including post-integration cold on42195e50; four original diagnostics retained/excluded, no product regression confirmed."
         }
       ],
-      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b8-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Native bounded bag lifecycle passed; record its scoped commit. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
+      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b13-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Bounded bag lifecycle complete in its child batch. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42235,7 +42254,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T04:36:50.335402+00:00"
+      "updated_at": "2026-11-16T04:40:44.061421+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

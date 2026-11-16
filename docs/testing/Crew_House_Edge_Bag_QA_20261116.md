@@ -26,7 +26,7 @@ The final verifier does not drop numeric verification: it recursively compares w
 
 ## Preserved checkpoints and remaining scope
 
-Main natural result: `crew-sidebar-b8-261116`. Skip branch: `crew-sidebar-b10-261116`. Exit-before-reveal branch: `crew-sidebar-b12-261116`. Slot `NEXT-ORDINARY-20261115-O` remains the earned Out Hot ending, cash1063/chips16. Each finished branch has one Payout Pamphlet #6, one unopened Roadside Luck bag #3 and gold0. The main canonical meta-state SHA-256 is `380d872f87656f9ffcf13e4b615db6d892cf41784e35cf10ee2418aa7e2ab106`.
+Main natural result: `crew-sidebar-b8-261116`, followed by post-integration cold checkpoint **`crew-sidebar-b13-261116`** on `42195e50f9ac552214be7d983f92c2a9f45612d2`. Skip branch: `crew-sidebar-b10-261116`. Exit-before-reveal branch: `crew-sidebar-b12-261116`. Slot `NEXT-ORDINARY-20261115-O` remains the earned Out Hot ending, cash1063/chips16. Each finished branch has one Payout Pamphlet #6, one unopened Roadside Luck bag #3 and gold0. The main canonical meta-state SHA-256 is `380d872f87656f9ffcf13e4b615db6d892cf41784e35cf10ee2418aa7e2ab106`.
 
 This is headless native gameplay through public host activation and actual Control signals, with isolated profile persistence and normal autonomous reel scheduling. It does not establish physical-pointer rendering, browser startup or WASM gameplay acceptance. The inherited separate-browser-profile control blocker remains unresolved and was not bypassed. No new browser, watcher or duplicate Crew worker was started. The broader Crew objective and sidebar campaign remain Open, including historical full-scope/source reconciliation and browser/WASM acceptance; this bounded bag lifecycle alone does not close them.
 
@@ -47,9 +47,12 @@ All cases used the admitted E: root, manifests and both launch gates, verified c
 | crew-sidebar-b10-261116 | `verify:crew-sidebar-b9-261116` | 13/13 | `a7b7fa80639a5672b2a9cd0a9784191e47af2830421476d2e74af519a4298f1d` |
 | crew-sidebar-b11-261116 | `open:interrupt` | 22/22 | `6d455cfffc866bc6122d09264e1c1f12774c51aef1c1262bf762cf6aefdf5ebb` |
 | crew-sidebar-b12-261116 | `verify:crew-sidebar-b11-261116` | 13/13 | `3a43aa5243be35c373d31c011ef5547e211f08c3e10b60b19c50cacc51e1bd83` |
+| crew-sidebar-b13-261116 | `verify:crew-sidebar-b8-261116` | 13/13 | `03e24f6de5db83c9e97d670164a980dcffbc37cc1a5a104c03a2b0cb07133c1c` |
 | crew-sidebar-b1-261116 | `claim` | Excluded diagnostic | `0293bbfc693a268465c35e8299d9767f71c258e7d4f921f5d37845471f54ac98` |
 | crew-sidebar-b4-261116 | `open:natural` | Excluded diagnostic | `6d1cc6e1f9a3842284030c8d994987848fba02fde2f67ef8efeac6a690756686` |
 | crew-sidebar-b5-261116 | `open:natural` | Excluded diagnostic | `05b9c2e62513901c2049d0dc981435dd92b6ac4e071128b7815c9c2532061d3a` |
 | crew-sidebar-b6-261116 | `verify:crew-sidebar-b5-261116` | Excluded diagnostic | `7f3ae2b4c03295f018639ff1289928dbfdb36376db494355f0e4408e822aeff9` |
 
-Acceptance total: **148/148** in 8 closed native Jobs. 4 retained diagnostics are excluded. Exact copied scripts, source hashes, input custody, storage and launch receipts are retained beside each worker log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-bag-record-261116\evidence\cases.json`.
+Acceptance total: **161/161** in 9 closed native Jobs. 4 retained diagnostics are excluded. Exact copied scripts, source hashes, input custody, storage and launch receipts are retained beside each worker log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-bag-final-record-261116\evidence\cases.json`.
+
+Initial accepted bag proof commit: `42195e50f9ac552214be7d983f92c2a9f45612d2` (rebased on concurrent Slot fix1240cebd, both records preserved). This committed proof and the post-integration cold acceptance qualify the bounded native batch as Complete; broader parent/sidebar scope and browser acceptance remain Open.
