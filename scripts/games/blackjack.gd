@@ -1585,7 +1585,17 @@ func _blackjack_host_needs_auto_tick(surface_time_msec: int, run_state: RunState
 		return false
 	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
 	if typeof(ledger_value) != TYPE_DICTIONARY:
-		return false
+		# Restore can retain a settled table's timer without its old authority.
+		# Let the existing sealed auto-intent initialize that due cadence before a
+		# new player draft is staged. Never repair malformed present authority or
+		# invent a timer/session for a fresh table here.
+		if table.has(BLACKJACK_HOST_LEDGER_KEY):
+			return false
+		var last_result: Variant = table.get("last_result", null)
+		if typeof(last_result) != TYPE_DICTIONARY or (last_result as Dictionary).is_empty():
+			return false
+		var timer := GameModule.table_round_timer_status_peek(table, surface_time_msec, "Next hand")
+		return bool(timer.get("active", false)) and _blackjack_auto_tick_predicate({}, run_state, environment, table, surface_time_msec)
 	var ledger: Dictionary = ledger_value as Dictionary
 	var pending_value: Variant = ledger.get("pending_delivery", null)
 	if typeof(pending_value) == TYPE_DICTIONARY and not (pending_value as Dictionary).is_empty():
