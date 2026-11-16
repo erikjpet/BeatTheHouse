@@ -38546,9 +38546,10 @@
         "state": "verified",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
-          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json"
+          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json"
         ],
-        "commit": "1240cebdd15ee294e8997b46d20819762d691923"
+        "commit": "3cbeefa7210a0785e894357be17f3729fd247c7e"
       },
       "evidence": [
         {
@@ -38560,20 +38561,25 @@
           "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
           "kind": "trusted_https_exact_next_pipeline_receipt",
           "summary": "Exact1240cebd/tree07fa7f46 deployed04:29:59Z. Trusted HTTPS entry/pointer/BUILD/manifest/REF/VERSION match source/staged hashes. Changed PCK full streamed hash matches. Startup/visual Web unverified; no browser control attempted."
+        },
+        {
+          "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json",
+          "kind": "trusted_https_docs_only_next_descendant",
+          "summary": "Actual promoted/served3cbeefa7/tree0d3bdebf verified04:52:11Z. Intervening155975 documentation build was superseded; no promotion claimed for it. Only docs changed from qualified1240 runtime, preserving215 focused checks and original full-PCK hash evidence. Web startup remains unverified."
         }
       ],
-      "next_action": "Retain exact NEXT receipt and seek permitted exact-build startup/rendered changed-path evidence without bypassing inherited browser-control restrictions. Continue independent owned native general QA.",
+      "next_action": "Retain actual3cbeefa7 NEXT provenance and qualified1240 runtime evidence; obtain permitted exact-build startup/rendered acceptance without bypassing inherited browser-control restriction. Continue independent ordinary general QA.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:38:45.391492+00:00",
+        "observed_at": "2026-11-16T04:58:21.815832+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:38:45.391492+00:00",
+      "updated_at": "2026-11-16T04:58:21.815832+00:00",
       "planned_app_changes": []
     },
     {
@@ -38584,7 +38590,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_591_GENERAL_OPEN_SLOT_MAIN_NEXT_SERVED",
+      "status": "NATIVE_709_GENERAL_OPEN_SLOT_MAIN_NEXT_SERVED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38637,7 +38643,8 @@
                 "docs/testing/NEXT_sidebar_Coin_Pusher_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
               ]
             },
             {
@@ -38687,6 +38694,12 @@
           "evidence": [
             "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "155975c6aa61841e1b4192d2987917da9e0d3621",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38729,15 +38742,20 @@
           "reference": "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md",
           "kind": "current_main_native_ordinary_cold_invitation",
           "summary": "18 qualified checks: actual15 beach/lounge route, cold12 account, real offered invitation, normal enabled acceptance and advertised50 grant. One probe-script timeout excluded; originals unchanged. Seven further Grand-route checks pass: accepted50 stake cold-retained exactly once at62, invite object absent, offered free Grand route/arrival and valid authority. Actual Craps is now normally offered; its gameplay is next."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
+          "kind": "current_main_native_normal_cash_chips_working_point_cold",
+          "summary": "118 qualified checks: real cash-funded5 Pass,10 zero-new-wager continuations through a natural11-roll point and once-only10-chip credit across cold Save/Continue. Three failed probe diagnostics excluded. No Craps defect reproduced."
         }
       ],
-      "next_action": "Explore the normally offered Grand Craps game from current-main owned G arrival; read actual chip/stake/funding terms before paid play. Preserve full general/endings scope and Web startup acceptance as Open.",
+      "next_action": "Continue ordinary G Cage counter/cashout and next actually available game path from the natural57-cash10-chip payout. Keep full general/endings acceptance Open and exact-build Web startup unverified.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:38:45.391492+00:00",
+        "observed_at": "2026-11-16T04:58:21.815832+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38747,7 +38765,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:38:45.391492+00:00",
+      "updated_at": "2026-11-16T04:58:21.815832+00:00",
       "planned_app_changes": []
     }
   ],
