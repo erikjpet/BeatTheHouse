@@ -1,0 +1,186 @@
+{
+  "schema": "bth.house_spatial_raw_trial/v1",
+  "task_id": "BTH-ENV-SPATIAL-HOUSE-001",
+  "date": "2026-11-16",
+  "owner": "/root/bar_clearance_audit",
+  "status": "ONE_NON_ACTIVE_RAW_TRIAL_PRESERVED_NOT_APPROVED",
+  "source_directory": "review_artifacts/environment_art_sources/house-spatial-r1",
+  "authorization": {
+    "origin": "Parent /root authorized one new non-active built-in imagegen House raw trial after reviewing brief2f78/sourcef87.",
+    "successful_generation_limit": 1,
+    "parent_authorized_pre_generation_Windows_path_rejection_fallback_to_last_viewed_image_count1": true,
+    "active_master_replacement": false,
+    "E_write_decoder_Library_assembly_owned_by_parent": true,
+    "central_strip_and_right_support_pulse_material_risks_remain_OPEN": true
+  },
+  "skill": {
+    "package": "e0/.system/imagegen",
+    "resource": "skill://codex-home-skills/C:/Users/theep/.codex/skills/.system/imagegen/SKILL.md",
+    "mode": "Built-in default edit / precise-object-edit",
+    "CLI_fallback_used": false
+  },
+  "authenticated_edit_target": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/house/background.png",
+    "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+    "dimensions": [
+      1800,
+      860
+    ],
+    "inspected_with_view_image_immediately_before_edit": true,
+    "last_viewed_image_at_fallback": "Exact current House master, not prior Kitty or Apartment references"
+  },
+  "approved_source_direction": {
+    "brief": "docs/art/briefs/house_spatial_repair_20261116.md",
+    "brief_sha256": "2f78b13b4a5e10a7da9e2bea9c13560575f0cb7d9423d58b3d70681ee1891868",
+    "source_audit": "docs/testing/house_spatial_source_audit_20261116.json",
+    "source_audit_sha256": "f87e8dfd7a4e001008f1c875eadb838eb7ad4a9e7bd3bf14723463a16934457c",
+    "floor_skirting_native_y_proposal": 384,
+    "rug_native_polygon_proposal": [
+      [
+        520,
+        480
+      ],
+      [
+        1572,
+        480
+      ],
+      [
+        1656,
+        592
+      ],
+      [
+        436,
+        592
+      ]
+    ],
+    "maximum_original_authoring_window_native": [
+      [
+        0,
+        384,
+        1800,
+        108
+      ],
+      [
+        436,
+        468,
+        1220,
+        124
+      ]
+    ],
+    "preserve_live_Bed_and_all8_anchors": true,
+    "preserve_two_existing_right_visible_legs": true,
+    "preserve_all24_animation_PNGs_full_JSON_current_index": true,
+    "zero_replay_or_new_furniture": true
+  },
+  "exact_prompt": {
+    "file": "prompt.txt",
+    "file_sha256": "f18ffed9ca561f1fe0e44b54d807d38a263d0cf3658cba2e9b750136f138df74",
+    "file_bytes": 3480,
+    "file_rule": "UTF8 exact tool prompt plus one finalLF; actual tool argument below has no added finalLF.",
+    "tool_argument": "Use case: precise-object-edit.\nAsset type: ONE non-active House environment-art source trial for a 2D pixel-art game.\nInput image 1 is the EDIT TARGET: the current House master. Preserve its exact framing, camera, proportions and existing object locations. Target composition is 1800x860; all following coordinates are native image pixels.\n\nPrimary request: correct only the lower wall/floor contact plane and flat rug. The room currently looks as though furniture floats on vertical wall boards. Make one continuous believable timber floor behind the existing contacts, beginning at a thin wall/skirting transition around y384. The original live Bed is a runtime object NOT present in this source: its frame will occupy x375..617/y305..390 and its existing two feet x371..378 and613..620/y390..407. Leave genuine floor under those feet and its later runtime shadow at y426..435. DO NOT draw that bed, pillow, blanket, legs, contact shadow or any replacement sofa into this background.\n\nAllowed work: lower transition band x0..1800/y384..492, plus the old rug footprint x436..1656/y468..592. Treat these as maximum repair windows, not opaque rectangular replacement patches. Remove only the misleading exposed lower face of the old purple base x244..732/y384..448 so floor continues naturally beneath the future live Bed. Preserve the real plum back/headboard material above y384, the raised plum detail, and the dark central frame/inset. No raised platform under furniture.\n\nMake the existing rug lie flat on the same floor, with a shallow coherent trapezoid: far corners (520,480),(1572,480), near corners (1656,592),(436,592). Keep its current plum textile identity with quiet crisp weave and a thin flat binding; no vertical fascia, thick extrusion, step or podium. Its near edge remains y592. It must not cover the existing right support bottoms.\n\nStrict invariants: preserve the cyan/navy window and its complete frame, all upper wall panels, dark central frame/glass, burgundy upright panel, small existing brown side unit, and the upper-right three blank inset panels. Preserve the existing right brown unit and BOTH existing visible dark timber legs exactly in place, particularly x1272..1300 and1408..1436/y408..468. Do not add, extend, move, brighten or replace legs. Expose continuous floor between and beside them. Keep the original floor at y492+ outside the rug and all y592+ visually identical, with matched plank direction, scale, joints and lighting at joins.\n\nStyle: match the provided modest domestic House palette: plum/mauve wall timber, controlled navy/cyan window, practical warm brown wood and restrained amber light. Crisp intentional pixel clusters at the same apparent pixel scale. Retain the original surface texture and quiet planes behind future live labels. No blur, haze, global recolor or unrelated rectangular cutout edge.\n\nDo not invent or add beds, sofas, tables, cabinets, doors, curtains, appliances, decorations, plants, people, signs, words, inventory, pillows or blankets. Do not paint live Coffee, Notes, Calendar, Storage Spot, Trunk, Mortgage or Travel objects. Do not introduce new lights or fixtures, bake animated cyan strips/pink blocks/smoke/glints into the source, or solve the open existing pink-strip/yellow-pulse material questions by inventing hardware. Those motions and all gameplay anchors remain unchanged outside this source trial. Change only the reviewed floor/rug treatment; everything else stays faithful to image1."
+  },
+  "tool_attempts": [
+    {
+      "attempt": 1,
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: precise-object-edit.\nAsset type: ONE non-active House environment-art source trial for a 2D pixel-art game.\nInput image 1 is the EDIT TARGET: the current House master. Preserve its exact framing, camera, proportions and existing object locations. Target composition is 1800x860; all following coordinates are native image pixels.\n\nPrimary request: correct only the lower wall/floor contact plane and flat rug. The room currently looks as though furniture floats on vertical wall boards. Make one continuous believable timber floor behind the existing contacts, beginning at a thin wall/skirting transition around y384. The original live Bed is a runtime object NOT present in this source: its frame will occupy x375..617/y305..390 and its existing two feet x371..378 and613..620/y390..407. Leave genuine floor under those feet and its later runtime shadow at y426..435. DO NOT draw that bed, pillow, blanket, legs, contact shadow or any replacement sofa into this background.\n\nAllowed work: lower transition band x0..1800/y384..492, plus the old rug footprint x436..1656/y468..592. Treat these as maximum repair windows, not opaque rectangular replacement patches. Remove only the misleading exposed lower face of the old purple base x244..732/y384..448 so floor continues naturally beneath the future live Bed. Preserve the real plum back/headboard material above y384, the raised plum detail, and the dark central frame/inset. No raised platform under furniture.\n\nMake the existing rug lie flat on the same floor, with a shallow coherent trapezoid: far corners (520,480),(1572,480), near corners (1656,592),(436,592). Keep its current plum textile identity with quiet crisp weave and a thin flat binding; no vertical fascia, thick extrusion, step or podium. Its near edge remains y592. It must not cover the existing right support bottoms.\n\nStrict invariants: preserve the cyan/navy window and its complete frame, all upper wall panels, dark central frame/glass, burgundy upright panel, small existing brown side unit, and the upper-right three blank inset panels. Preserve the existing right brown unit and BOTH existing visible dark timber legs exactly in place, particularly x1272..1300 and1408..1436/y408..468. Do not add, extend, move, brighten or replace legs. Expose continuous floor between and beside them. Keep the original floor at y492+ outside the rug and all y592+ visually identical, with matched plank direction, scale, joints and lighting at joins.\n\nStyle: match the provided modest domestic House palette: plum/mauve wall timber, controlled navy/cyan window, practical warm brown wood and restrained amber light. Crisp intentional pixel clusters at the same apparent pixel scale. Retain the original surface texture and quiet planes behind future live labels. No blur, haze, global recolor or unrelated rectangular cutout edge.\n\nDo not invent or add beds, sofas, tables, cabinets, doors, curtains, appliances, decorations, plants, people, signs, words, inventory, pillows or blankets. Do not paint live Coffee, Notes, Calendar, Storage Spot, Trunk, Mortgage or Travel objects. Do not introduce new lights or fixtures, bake animated cyan strips/pink blocks/smoke/glints into the source, or solve the open existing pink-strip/yellow-pulse material questions by inventing hardware. Those motions and all gameplay anchors remain unchanged outside this source trial. Change only the reviewed floor/rug treatment; everything else stays faithful to image1.",
+        "referenced_image_paths": [
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/house/background.png"
+        ],
+        "transparent_background": false
+      },
+      "result": "ARGUMENT_DESERIALIZATION_REJECTED_BEFORE_GENERATION",
+      "failure": {
+        "name": "Error",
+        "message": "AbsolutePathBuf deserialized without a base path at line 1 column 3634"
+      },
+      "image_returned": false,
+      "generation_started": false,
+      "any_PNG_or_E_write": false,
+      "retry_of_denied_security_action": false
+    },
+    {
+      "attempt": 2,
+      "tool": "image_gen.imagegen",
+      "arguments": {
+        "prompt": "Use case: precise-object-edit.\nAsset type: ONE non-active House environment-art source trial for a 2D pixel-art game.\nInput image 1 is the EDIT TARGET: the current House master. Preserve its exact framing, camera, proportions and existing object locations. Target composition is 1800x860; all following coordinates are native image pixels.\n\nPrimary request: correct only the lower wall/floor contact plane and flat rug. The room currently looks as though furniture floats on vertical wall boards. Make one continuous believable timber floor behind the existing contacts, beginning at a thin wall/skirting transition around y384. The original live Bed is a runtime object NOT present in this source: its frame will occupy x375..617/y305..390 and its existing two feet x371..378 and613..620/y390..407. Leave genuine floor under those feet and its later runtime shadow at y426..435. DO NOT draw that bed, pillow, blanket, legs, contact shadow or any replacement sofa into this background.\n\nAllowed work: lower transition band x0..1800/y384..492, plus the old rug footprint x436..1656/y468..592. Treat these as maximum repair windows, not opaque rectangular replacement patches. Remove only the misleading exposed lower face of the old purple base x244..732/y384..448 so floor continues naturally beneath the future live Bed. Preserve the real plum back/headboard material above y384, the raised plum detail, and the dark central frame/inset. No raised platform under furniture.\n\nMake the existing rug lie flat on the same floor, with a shallow coherent trapezoid: far corners (520,480),(1572,480), near corners (1656,592),(436,592). Keep its current plum textile identity with quiet crisp weave and a thin flat binding; no vertical fascia, thick extrusion, step or podium. Its near edge remains y592. It must not cover the existing right support bottoms.\n\nStrict invariants: preserve the cyan/navy window and its complete frame, all upper wall panels, dark central frame/glass, burgundy upright panel, small existing brown side unit, and the upper-right three blank inset panels. Preserve the existing right brown unit and BOTH existing visible dark timber legs exactly in place, particularly x1272..1300 and1408..1436/y408..468. Do not add, extend, move, brighten or replace legs. Expose continuous floor between and beside them. Keep the original floor at y492+ outside the rug and all y592+ visually identical, with matched plank direction, scale, joints and lighting at joins.\n\nStyle: match the provided modest domestic House palette: plum/mauve wall timber, controlled navy/cyan window, practical warm brown wood and restrained amber light. Crisp intentional pixel clusters at the same apparent pixel scale. Retain the original surface texture and quiet planes behind future live labels. No blur, haze, global recolor or unrelated rectangular cutout edge.\n\nDo not invent or add beds, sofas, tables, cabinets, doors, curtains, appliances, decorations, plants, people, signs, words, inventory, pillows or blankets. Do not paint live Coffee, Notes, Calendar, Storage Spot, Trunk, Mortgage or Travel objects. Do not introduce new lights or fixtures, bake animated cyan strips/pink blocks/smoke/glints into the source, or solve the open existing pink-strip/yellow-pulse material questions by inventing hardware. Those motions and all gameplay anchors remain unchanged outside this source trial. Change only the reviewed floor/rug treatment; everything else stays faithful to image1.",
+        "num_last_images_to_include": 1,
+        "transparent_background": false
+      },
+      "reference_selection": "num_last_images_to_include=1 uses the already-inspected current House master",
+      "result": "SUCCEEDED_ONE_IMAGE_RETURNED",
+      "returned_result_keys": [
+        "image_url"
+      ],
+      "actual_image_result_received": true,
+      "separate_service_generation_id": null,
+      "separate_service_generation_id_reason": "Tool returned only image_url; content SHA256 is the durable generation identity.",
+      "data_url_identity_sha256": "a93feacf51b79843192865874ea4535c1f05f4f4bfe35f136d2eca05eb8303b9"
+    }
+  ],
+  "generation_counts": {
+    "tool_invocations": 2,
+    "pre_generation_argument_failures": 1,
+    "successful_image_generations": 1,
+    "competing_or_replacement_generations": 0
+  },
+  "preserved_raw": {
+    "base64_file": "house-spatial-r1.png.b64",
+    "base64_file_sha256": "1b0ccc11610af34b8f7a72f1cfbb45c2d6835130a24a2cb4561cc9d8923b8306",
+    "base64_file_bytes": 2171885,
+    "base64_payload_characters": 2171884,
+    "base64_ascii_single_final_LF_no_CR": true,
+    "base64_payload_is_exact_returned_component": true,
+    "exact_data_url_prefix": "data:image/png;base64,",
+    "exact_data_url_reconstruction": "prefix + base64_file bytes with only the one finalLF removed",
+    "exact_data_url_sha256": "a93feacf51b79843192865874ea4535c1f05f4f4bfe35f136d2eca05eb8303b9",
+    "exact_data_url_characters": 2171906,
+    "PNG_sha256": "76b64ab7d78543c685b6fcecf9bf1f6e4afaf33f1ce3a97e0532a8f13ccb1d19",
+    "PNG_bytes": 1628912,
+    "PNG_dimensions": [
+      1815,
+      867
+    ],
+    "PNG_signature": "89504e470d0a1a0a",
+    "PNG_bit_depth": 8,
+    "PNG_color_type": 2,
+    "identity_verification": "In-memory .NET Base64 byte identity/SHA256 and PNG header inspection only. No pixel decoder/helper, PNG file materialization or E write.",
+    "PNG_file_materialized_by_this_author": false,
+    "image_payload_printed": false
+  },
+  "first_look": {
+    "evidence": "Actual returned built-in image preview inspected in conversation; not a decoded local PNG or new native composition.",
+    "rug": "Returned rug has a visible shallow floor trapezoid and quiet plum textile.",
+    "floor_geometry": "Preview does not convincingly move the wall/floor transition up to requested native384; the old exposed left lower base remains.",
+    "right_supports": "Right support bottoms visibly drift relative to original; exact original silhouettes must come from original pixels in any later bounded assembly.",
+    "result": "NOT_APPROVED_AS_FULL_MASTER_REPLACEMENT",
+    "exact_normalized_geometry_or_donor_clearance_pass_claimed": false,
+    "active_candidate_assembled": false,
+    "generation_repeated_to_hide_constraint_failure": false,
+    "note": "Preserve this raw trial and all originals. Parent decides supported decode/Library preservation and whether bounded floor/rug material can be mechanically assembled; no further generation authorized here."
+  },
+  "author_actions": {
+    "created_D_source_files": [
+      "prompt.txt",
+      "house-spatial-r1.png.b64",
+      "provenance.json"
+    ],
+    "existing_art_or_source_overwritten": false,
+    "E_writes": 0,
+    "QA_engine_or_test_jobs": 0,
+    "decoder_helpers_run": 0,
+    "PNG_files_written": 0,
+    "Library_or_network_connector_actions": 0,
+    "metadata_imports_or_JSON_index_changes": false,
+    "Git_or_TEST_actions": false,
+    "deletions_cleanup_moves": false
+  },
+  "next_owner": "/root",
+  "next_actions": [
+    "Preserve Library/raw through supported parent workflow.",
+    "Guarded materialization and exact actual-pixel review before any bounded assembly.",
+    "Retain original all27 logical House sources, anchors and unresolved motion-material issues.",
+    "Do not treat this generated full-frame raw as an approved active master."
+  ]
+}

@@ -1,0 +1,189 @@
+{
+  "schema": "bth.kitty_spatial_geometry_source_proposal/v2",
+  "task_id": "BTH-ENV-SPATIAL-KITTY-001",
+  "status": "SOURCE_ONLY_BOUNDED_V2_PROPOSAL_PENDING_ROOT_CODE_REVIEW_AND_GUARDED_TESTS",
+  "authorization": "Root authorizes a new v2 far-right998 proposal inside the original window, preserving near-right1004, left edge, all source controls and requiring8native actual material clearance on all edges for the same four last12-row body+shadow bases.",
+  "predecessor": {
+    "recipe": "tools/assemble_kitty_spatial_candidate.py",
+    "recipe_sha256": "988b5bb4eaf9ba2803ab144a689bf4e2561db1dcce590544b013df9107059954",
+    "tests": "tools/test_assemble_kitty_spatial_candidate.py",
+    "tests_sha256": "3be556a5e03012036c0e71aba7ae90cf3ff994bcdc53b37e8719e00c17902b5e",
+    "executed": false,
+    "candidate_assembled": false,
+    "blocker": "All6064 base pixels were inside v1, but40 rack pixels had less than8native right margin; worst(991,416) had2native grid/full-pixel or1.390625 continuous center margin. V1 enforced8near+containment, not8all-edge."
+  },
+  "source": {
+    "original_master_sha256": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+    "raw_sha256": "aa1078eab763def23c3d8a1b7232413384b5fcc26a86d7008866dcbf857526eb",
+    "raw_preservation_receipt_sha256": "a98e9e8c770c2fb50b01c700ea284c8bbf13b303783e06b4710df4f9d6be5642",
+    "no_new_generation": true,
+    "no_old_source_or_recipe_overwritten": true
+  },
+  "geometry": {
+    "deck_polygon_native": [
+      [
+        206,
+        392
+      ],
+      [
+        998,
+        392
+      ],
+      [
+        1004,
+        456
+      ],
+      [
+        188,
+        456
+      ]
+    ],
+    "near_right_unchanged": 1004,
+    "left_edge_unchanged": true,
+    "max_window_native": [
+      188,
+      390,
+      816,
+      86
+    ],
+    "fascia_y_half_open": [
+      456,
+      476
+    ],
+    "all476plus_original": true,
+    "pixel_grid": "2x native blocks sampled at board-cell centers; exact material mask is geometric mask only after zero protected-source overlap is proved.",
+    "right_board_exclusive_formula": "ceil((31907+6*r)/64), r=0..31",
+    "mask_native_pixels": 67776,
+    "clusters2x2": 16944
+  },
+  "curtain_and_frame_trace": {
+    "method": "Read-only current-source Bitmap pixels and in-memory nearest-neighbor inspection of x960..1040/y370..490. No image file write.",
+    "folded_curtain_contact": "Bright folded cloth ends at row391 above the original horizontal stage beam. The dark straight plum inner frame continues below; it is distinct from cloth folds.",
+    "outer_gold_post": "Current-source outer gold post begins at x1004; every source pixel x>=1004 is outside the exact material mask and stays original, including its base.",
+    "conservative_accent_ROI_native": [
+      986,
+      390,
+      18,
+      40
+    ],
+    "predicate": "R>=60 and B>=15 and B>=2*G+4",
+    "scope": "Conservative high-chroma cloth/inner-frame accents, not a claim that color alone identifies all curtain material.",
+    "protected_bands": [
+      {
+        "y_half_open": [
+          390,
+          392
+        ],
+        "x_half_open": [
+          994,
+          1004
+        ]
+      },
+      {
+        "y_half_open": [
+          392,
+          416
+        ],
+        "x_half_open": [
+          1000,
+          1004
+        ]
+      },
+      {
+        "y_half_open": [
+          416,
+          418
+        ],
+        "x_half_open": [
+          1002,
+          1004
+        ]
+      }
+    ],
+    "actual_protected_pixels": 120,
+    "geometric_mask_overlap": 0,
+    "all_source_pixels_y390_391_preserved": true,
+    "exact_material_mask_may_not_silently_remove_protected_cells": "Any protected overlap is a prewrite failure, not an automatic carve-out or a passed abstract-quad claim."
+  },
+  "actual_support": {
+    "method": "Read-only alpha>=64 from the identical recorded regions, same last12 rows; body AND shadow included. For each actual native paint pixel, check every row from y-8 through y+8 and x-8..x+8 lies in actual horizontal deck material. This covers an8px continuous whole-pixel buffer, including stair-step edges, and never counts vertical fascia.",
+    "same_four_fixtures": true,
+    "paint_shrunk_or_modified": false,
+    "actual_base_pixels": 6064,
+    "failed_full_8px_material_buffers": 0,
+    "records": [
+      {
+        "file": "kitty_cat_lounge_amateur_night_host_17_body.png",
+        "actual_body_plus_shadow_base_pixels": 1200,
+        "failed_full_8px_material_buffer": 0,
+        "first_failure": null,
+        "minimum_same_row_right_margin": 220,
+        "worst_right_coordinate": [
+          781,
+          428
+        ]
+      },
+      {
+        "file": "kitty_cat_lounge_slow_night_host_15_body.png",
+        "actual_body_plus_shadow_base_pixels": 1200,
+        "failed_full_8px_material_buffer": 0,
+        "first_failure": null,
+        "minimum_same_row_right_margin": 668,
+        "worst_right_coordinate": [
+          333,
+          436
+        ]
+      },
+      {
+        "file": "kitty_cat_lounge_amateur_night_host_13_body.png",
+        "actual_body_plus_shadow_base_pixels": 1832,
+        "failed_full_8px_material_buffer": 0,
+        "first_failure": null,
+        "minimum_same_row_right_margin": 8,
+        "worst_right_coordinate": [
+          991,
+          416
+        ]
+      },
+      {
+        "file": "kitty_cat_lounge_slow_night_host_14_body.png",
+        "actual_body_plus_shadow_base_pixels": 1832,
+        "failed_full_8px_material_buffer": 0,
+        "first_failure": null,
+        "minimum_same_row_right_margin": 454,
+        "worst_right_coordinate": [
+          547,
+          428
+        ]
+      }
+    ],
+    "protected_source_holes_in_support_buffers": 0,
+    "all186_typed_mask_sha_custody_retained": true,
+    "later_routes_or_other_poses_proved": false
+  },
+  "donors": {
+    "same_generated_raw": true,
+    "same_conservative_deck_material32rows398through454": true,
+    "same_fascia10rows456through474": true,
+    "new_material_color_editing": false,
+    "whole_generated_master_resize": false,
+    "per_cluster_exact_raw_RGBA_ledger_required": true
+  },
+  "unchanged": [
+    "Original476+floor/base and every source pixel outside exact material mask.",
+    "One536x96 opaque champagne counter and exact final master crop.",
+    "All27 animation textures, fullJSON, index and gameplay/label/route/processing state."
+  ],
+  "execution": {
+    "author_tests_or_imports": 0,
+    "author_E_jobs": 0,
+    "assembly_executed": false,
+    "native_or_art_approval": false,
+    "production_art_written": false
+  },
+  "remaining_gates": [
+    "Root independent source/mask/donor/code review.",
+    "Root guarded v2 tests, then fresh non-active E assembly.",
+    "Independent actual candidate pixels before any native qualification or TEST."
+  ]
+}

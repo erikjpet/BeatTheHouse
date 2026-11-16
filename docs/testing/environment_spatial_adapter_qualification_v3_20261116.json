@@ -1,0 +1,390 @@
+{
+  "schema": "bth.environment_spatial_adapter_qualification/v3",
+  "recorded_at": "2026-11-16T15:54:18.908695+00:00",
+  "root_source_commit": "629f1f69d64fc8b4f747421dfed4abdd4abec929",
+  "root_source_tree": "ba821a4745979d97d413a29b18a19faf8c086587",
+  "scope": "Frozen source preservation, exactraw custody, actual Kitty/Apartment recipes and failed predecessors; not runtime/art/TEST acceptance.",
+  "source_files": {
+    "docs/art/briefs/apartment_spatial_repair_20261116.md": {
+      "bytes": 8926,
+      "sha256": "bfe9b2019669e071d8e43b926dbc7cfcabe2a4b8248b639e88a9f3569186d1e0"
+    },
+    "docs/art/briefs/house_spatial_repair_20261116.md": {
+      "bytes": 11247,
+      "sha256": "2f78b13b4a5e10a7da9e2bea9c13560575f0cb7d9423d58b3d70681ee1891868"
+    },
+    "docs/testing/hidden_spatial_preview_delivery_20261116.json": {
+      "bytes": 4820,
+      "sha256": "053db069853c6340f42ff59a8381988769c3c70e8d13af32f844433491c59e57"
+    },
+    "docs/testing/hidden_spatial_v4_stop_20261116.md": {
+      "bytes": 17189,
+      "sha256": "b88e1c97af66825bf83870b7927f2316c0adf282a7d901af2048b18abf8b54b9"
+    },
+    "docs/testing/house_spatial_source_audit_20261116.json": {
+      "bytes": 111877,
+      "sha256": "f87e8dfd7a4e001008f1c875eadb838eb7ad4a9e7bd3bf14723463a16934457c"
+    },
+    "docs/testing/kitty_spatial_geometry_v2_source_proposal_20261116.json": {
+      "bytes": 6802,
+      "sha256": "506914a88efba30d284ec3f99d1246c0151eec31208101602eb3d7544160e3d9"
+    },
+    "docs/testing/kitty_spatial_r1_static_review_v3_20261116.json": {
+      "bytes": 37967,
+      "sha256": "ebb0acf227f15b39842af495a103e92ec9ac990f4887c936c9d7b593c82ceb6e"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png": {
+      "bytes": 1817231,
+      "sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png.b64": {
+      "bytes": 2422977,
+      "sha256": "68ad91d4f97fd6db31fe5e8b13da5d3b87d113966039362f8d99f96bfc4877c7"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/assembly-plan.json": {
+      "bytes": 9348,
+      "sha256": "597461fb253d18d693e54ebd849d9496ca958587760be5c161038795e77fc911"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/prompt.txt": {
+      "bytes": 2732,
+      "sha256": "a739a721850b6aa83464d159141cbaa2c7164f32a936cb660c2419ab4ca81345"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/provenance.json": {
+      "bytes": 4704,
+      "sha256": "25dd79abed560f1527d9890dd69720fad2ace838001dbd2941d38eaa8324f92a"
+    },
+    "review_artifacts/environment_art_sources/apartment-spatial-r1/raw-preservation-receipt.json": {
+      "bytes": 3968,
+      "sha256": "bb0208c65218cde62ecec4c83d5e2845c6fc0d4204d1db7536fa939906578d38"
+    },
+    "review_artifacts/environment_art_sources/house-spatial-r1/house-spatial-r1.png.b64": {
+      "bytes": 2171885,
+      "sha256": "1b0ccc11610af34b8f7a72f1cfbb45c2d6835130a24a2cb4561cc9d8923b8306"
+    },
+    "review_artifacts/environment_art_sources/house-spatial-r1/prompt.txt": {
+      "bytes": 3480,
+      "sha256": "f18ffed9ca561f1fe0e44b54d807d38a263d0cf3658cba2e9b750136f138df74"
+    },
+    "review_artifacts/environment_art_sources/house-spatial-r1/provenance.json": {
+      "bytes": 17946,
+      "sha256": "0612c65b3f68a2c3b8b576e996ca9b3ca8c83bbed1905b1af2268ca19d2c3844"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/README.md": {
+      "bytes": 2348,
+      "sha256": "493f2f029c2153eda8353432adc66c7b91f9f7d8baba52a1e018df29798d5652"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/kitty-spatial-r1.png": {
+      "bytes": 1852735,
+      "sha256": "aa1078eab763def23c3d8a1b7232413384b5fcc26a86d7008866dcbf857526eb"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/kitty-spatial-r1.png.b64": {
+      "bytes": 2470317,
+      "sha256": "0039b3d7d43eb1079b94bfcd493834a967f115b63879f16502ab9b89f71f1f4f"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/prompt.txt": {
+      "bytes": 2333,
+      "sha256": "32632fce7115bb88e12308787fa4da909e67ea393ea1cfe98071c0e75562022f"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/provenance.json": {
+      "bytes": 7396,
+      "sha256": "0cf13dca5ec824215c8979d8bce9cf977bd1aac8aff4f5cecea797d67d495561"
+    },
+    "review_artifacts/environment_art_sources/kitty-spatial-r1/raw-preservation-receipt.json": {
+      "bytes": 3173,
+      "sha256": "a98e9e8c770c2fb50b01c700ea284c8bbf13b303783e06b4710df4f9d6be5642"
+    },
+    "tools/assemble_apartment_spatial_candidate.README.md": {
+      "bytes": 7174,
+      "sha256": "71eb03c7eb41af98265c27c57cf493a296d20652673c192ba9934a86ef279b8e"
+    },
+    "tools/assemble_apartment_spatial_candidate.py": {
+      "bytes": 27620,
+      "sha256": "60010ae1c4637e65009b6b66dc7b1aff5e3a5387d28573a9814a489b55eb6f92"
+    },
+    "tools/assemble_kitty_spatial_candidate.py": {
+      "bytes": 26788,
+      "sha256": "988b5bb4eaf9ba2803ab144a689bf4e2561db1dcce590544b013df9107059954"
+    },
+    "tools/assemble_kitty_spatial_candidate_v2.README.md": {
+      "bytes": 6633,
+      "sha256": "94124e97fbbd2219fc93d54fa943da30c93fa11e4ce13220b7fc49f036c4f3f9"
+    },
+    "tools/assemble_kitty_spatial_candidate_v2.py": {
+      "bytes": 30416,
+      "sha256": "aed90e6c45bf2c23118892ae1ea4d09b64366ba0e8033cab26849ddc2a40656a"
+    },
+    "tools/assemble_kitty_spatial_candidate_v3.README.md": {
+      "bytes": 3689,
+      "sha256": "21a589a7471af802dc7d7bcb96209275f028f7fada00a7e88470c97a4b7a1440"
+    },
+    "tools/assemble_kitty_spatial_candidate_v3.py": {
+      "bytes": 31621,
+      "sha256": "a38a18f1b07a6e42d2b3e1ac8a508dcb7f84bc11fe8160258dcc29ec5f52cf30"
+    },
+    "tools/decode_apartment_spatial_raw.py": {
+      "bytes": 15594,
+      "sha256": "0f55f8083928764c2243e71aa162b35282e45d6fbe3aa4ee44d78fecf52dd376"
+    },
+    "tools/decode_kitty_spatial_raw.py": {
+      "bytes": 6936,
+      "sha256": "532ca2652b9f88f535a7f1d71a7b2f95ac5f2bd387e3961fc212c4ebfd848636"
+    },
+    "tools/test_assemble_apartment_spatial_candidate.py": {
+      "bytes": 12785,
+      "sha256": "2a7dae3589a214362ebdaace660dfa6c5eb468bbd0da9aabc5c815fb186ce80a"
+    },
+    "tools/test_assemble_kitty_spatial_candidate.py": {
+      "bytes": 13334,
+      "sha256": "3be556a5e03012036c0e71aba7ae90cf3ff994bcdc53b37e8719e00c17902b5e"
+    },
+    "tools/test_assemble_kitty_spatial_candidate_v2.py": {
+      "bytes": 15671,
+      "sha256": "2012744cf98bee6bb42cb9e29dcc218be37175a7cca1f9019c107fc23876a4c3"
+    },
+    "tools/test_assemble_kitty_spatial_candidate_v3.py": {
+      "bytes": 17136,
+      "sha256": "5d3d2a4e81ae5c7c3d8ec4beba6ebeb3bd11377083135222835a4ed49dca32a1"
+    }
+  },
+  "actual_closed_receipts": [
+    {
+      "label": "Kitty first raw decoder STOP",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-rawdecode01\\evidence",
+      "job_sha256": "f6ed8c6be02af3551fb5ff2794c2419b2cbc9c394fe6a4cd7415fd3881e220ea",
+      "log_sha256": "3ee3a156d37eaf103d924828814e749527932b1270a477c8eb8309f5ad5704db",
+      "pid": 6764,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/decode_kitty_spatial_raw.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116",
+        "--output",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116/raw_source/kitty-spatial-r1.png"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "ed6ae41777792c9c6010fce274769139124f54139a3e242080dcc728914d4287",
+      "claim_sha256": "5c47fa4942c9f8bf800d1515da4563ec02acbf2b9be651ef4380dce7bd2870a6",
+      "log_tail": "Traceback (most recent call last):\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\decode_kitty_spatial_raw.py\", line 143, in <module>\n    raise SystemExit(main())\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\decode_kitty_spatial_raw.py\", line 132, in main\n    validate_layout(layout,extra_write_paths=(output.parent,output))\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_storage.py\", line 236, in validate_layout\n    observations = _check_space(layout, list(paths.values()) + extras)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_storage.py\", line 205, in _check_space\n    nearest = _inspect(path)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_storage.py\", line 146, in _inspect\n    _fail(\"not_directory\", ancestor, \"a writable path ancestor is not a directory\")\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\bth_qa_storage.py\", line 89, in _fail\n    raise StorageGuardError(code, target, message, required, available)\nbth_qa_storage.StorageGuardError: not_directory: E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116\\raw_source\\kitty-spatial-r1.png: a writable path ancestor is not a directory\n"
+    },
+    {
+      "label": "Kitty V2 first tests STOP",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-v2-tests01\\evidence",
+      "job_sha256": "00b90157b7b738884f55cc6c85bb67a8155d2756c79c87a280872bf55a4714c7",
+      "log_sha256": "18869bb3521f4d52c3a27f4cd15d35b9704b3201bb5527d038129902f8bc8b38",
+      "pid": 9432,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_kitty_spatial_candidate_v2.py"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "ddb20213044512531925ca889325001a2f06c52b63fb0726c3ad27689917cf56",
+      "claim_sha256": "815568b6373615d51bb23e3f1ce459908d308196df47d93cb34f362303ead577",
+      "log_tail": "E....\n======================================================================\nERROR: setUpClass (__main__.ActualSourceAndGeometry)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\test_assemble_kitty_spatial_candidate_v2.py\", line 23, in setUpClass\n    cls.original,cls.raw,cls.audit,cls.custody=recipe.inputs(recipe.SOURCE_ROOT)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\assemble_kitty_spatial_candidate_v2.py\", line 182, in inputs\n    preservation=failed_decode_provenance(root)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\assemble_kitty_spatial_candidate_v2.py\", line 167, in failed_decode_provenance\n    not job[\"timed_out\"] and not job[\"cleanup_errors\"] and not job[\"error\"] and not job[\"log_error\"] and\nKeyError: 'log_error'\n\n----------------------------------------------------------------------\nRan 4 tests in 0.040s\n\nFAILED (errors=1)\n"
+    },
+    {
+      "label": "Kitty V3 final30tests PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-v3-tests01\\evidence",
+      "job_sha256": "f54e36c898f67532fda8af18d9af836581616ad819bc8e19e8d3cc83974a4c02",
+      "log_sha256": "8c7f11a03679b311c279a497cb5df14f4d9db46e551c25a1b16a255fefeb7bf1",
+      "pid": 34896,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_kitty_spatial_candidate_v3.py"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "25600784b553830924f53bbaedc531c580228a14d72cf80523aebf6afe71e4ce",
+      "claim_sha256": "2811f92341b6a8af344d218b50bab7632d00cb66c331b0b2368f931cf90cbce3",
+      "log_tail": "..............................\n----------------------------------------------------------------------\nRan 30 tests in 13.146s\n\nOK\n"
+    },
+    {
+      "label": "Kitty V3 actualassembly PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-v3-assemble01\\evidence",
+      "job_sha256": "15b1a5cfee7b458e86895ceb16cba0d3a88632fcddfe513015cc0543545bc81e",
+      "log_sha256": "e1ff2a75caee330c1a9971db17d245de1090daae715604cfec381882ce45dc3c",
+      "pid": 22960,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_kitty_spatial_candidate_v3.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "8be8c543a7898ff2bbabc2b926530097db0e46ba18293ca1d6e9c9a7f8bd9fb1",
+      "claim_sha256": "a9f9f49405c42627a44507a7311f75a8a0e2c04dc07617317f530c84632fdb13",
+      "log_tail": "{\"status\": \"NON_ACTIVE_CANDIDATE_READY_FOR_INDEPENDENT_AUDIT\", \"proof\": \"E:\\\\CodexQA\\\\BTH\\\\runs\\\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-v3-assemble01\\\\evidence\\\\kitty-spatial-r1-assembly-v3.json\", \"proof_sha256\": \"3974ce60951a6e2a8da8655982b20da22317603c6002bf6e16b4ca155b1768cf\", \"candidate\": \"E:\\\\CodexQA\\\\BTH\\\\workspaces\\\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116\\\\candidate_sources\\\\kitty-spatial-r1-assembled-v3\", \"seal\": \"ba8a2c2ab3e812673cb9ad39b84c22a2a9769171282eb3ff7f357ba5f226d06e\", \"native_or_art_approval\": false}\n"
+    },
+    {
+      "label": "Apartment raw decoder PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\evidence",
+      "job_sha256": "9bd2f9df26c06684b64c3f2e3768b1b90697cd21e211f52ef45bab1e5106ae86",
+      "log_sha256": "626e682a9048773debd42d27c012efd73710b2094379f1ed48c81be42edb2977",
+      "pid": 43312,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/decode_apartment_spatial_raw.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116",
+        "--output",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/raw_source/apartment-spatial-r1.png"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "51cdf67674736448cc541be14e5a144f94d6be126f86891b219b83752232636d",
+      "claim_sha256": "e1948253ed9d2197d189756b084f03312c8a32f6547ce205dd7c2a9521404c17",
+      "log_tail": "47ce205dd7c2a9521404c17\", \"historical_kitty_postwrite_stop\": {\"decoder_sha256\": \"532ca2652b9f88f535a7f1d71a7b2f95ac5f2bd387e3961fc212c4ebfd848636\", \"job\": \"E:\\\\CodexQA\\\\BTH\\\\runs\\\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-rawdecode01\\\\evidence\\\\job.json\", \"job_sha256\": \"f6ed8c6be02af3551fb5ff2794c2419b2cbc9c394fe6a4cd7415fd3881e220ea\", \"log\": \"E:\\\\CodexQA\\\\BTH\\\\runs\\\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-rawdecode01\\\\evidence\\\\worker.log\", \"log_sha256\": \"3ee3a156d37eaf103d924828814e749527932b1270a477c8eb8309f5ad5704db\", \"original_pid\": 6764, \"original_exit_code\": 1, \"original_active_at_release\": 0, \"failure\": \"PNG was already byte-exact; the old post-write receipt gate passed that existing file as a writable directory and raised not_directory.\", \"existing_png\": \"E:\\\\CodexQA\\\\BTH\\\\workspaces\\\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116\\\\raw_source\\\\kitty-spatial-r1.png\", \"existing_png_sha256\": \"aa1078eab763def23c3d8a1b7232413384b5fcc26a86d7008866dcbf857526eb\", \"existing_png_bytes\": 1852735, \"existing_bytes_verified_read_only\": true, \"old_decoder_reexecuted\": false, \"old_evidence_or_png_modified\": false, \"retry_cleanup_or_overwrite_performed\": false}, \"write_gate_policy\": \"Directory parents only, immediately before mkdir/PNG/receipt writes; no existing PNG enters validate_layout.\", \"only_byte_decoding\": true, \"pixel_editing_or_transforms\": false, \"network_or_children\": false, \"production_art_written\": false, \"outer_closed_capped_Job_receipt_required\": true, \"candidate_or_art_approval\": false}\n"
+    },
+    {
+      "label": "Apartment27tests PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\evidence",
+      "job_sha256": "099f22fdb509d638445d0e91968227a73de51ade0a81d639ddc9d69688de821f",
+      "log_sha256": "477e891a4a434a846f06a4a5f84ad7d3be72b02aba400ae975e18ebcc3fc3952",
+      "pid": 7020,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools",
+        "-p",
+        "test_assemble_apartment_spatial_candidate.py"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "fbfc9216646a4a9bab8b48ea44386935e8c66b693a0dbae562c9fa7f88172c51",
+      "claim_sha256": "48c03fc56f799a95adfb40fe691317bdaf7e91d4e55ecb10416d9346242803c0",
+      "log_tail": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 7.309s\n\nOK\n"
+    },
+    {
+      "label": "Apartment actualassembly PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\evidence",
+      "job_sha256": "c8037c8705b6d83bf57cf8a48a120f22ad7d565f774c21f2471ebe82db905c62",
+      "log_sha256": "8cd34041537f65f088f2f636957b5a0c3d4a7dd967c9558bccdd4eaa28ee0efd",
+      "pid": 43076,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_apartment_spatial_candidate.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "storage_manifest_sha256": "3fee8252339f3b5a6b9ca70ada2dfdc4a87e2309ea55630043cac2ad23955c9f",
+      "claim_sha256": "dec7eb3e2f65c00865ac2fcb8885454ee50c538881dd5b4cdc548c36f39b9a99",
+      "log_tail": "{\"status\": \"NON_ACTIVE_CANDIDATE_READY_FOR_INDEPENDENT_AUDIT\", \"proof\": \"E:\\\\CodexQA\\\\BTH\\\\runs\\\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\\\evidence\\\\apartment-spatial-r1-assembly.json\", \"proof_sha256\": \"8fba4e50f9451232a293f7f0c39a5306bddf1c6ae5ec6f16975081a7e8a95b15\", \"candidate\": \"E:\\\\CodexQA\\\\BTH\\\\workspaces\\\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116\\\\candidate_sources\\\\apartment-spatial-r1-assembled-v1\", \"package_sha256\": \"429cbf7fa9e85f2c77612fcb9ee107dd9d28e88e4158c71b1a8103922013a7d6\", \"native_trial_approved\": false}\n"
+    }
+  ],
+  "Kitty": {
+    "final_test_count": 30,
+    "test_seconds": 13.146,
+    "candidate_room_only30_sha256": "ba8a2c2ab3e812673cb9ad39b84c22a2a9769171282eb3ff7f357ba5f226d06e",
+    "static_review_sha256": "ebb0acf227f15b39842af495a103e92ec9ac990f4887c936c9d7b593c82ceb6e",
+    "canonical_application_sha256": "3c1e2c6a4179cde82a4e9b3efd8ecc996aff0a5e7a1ff7047829142138f88b35",
+    "native_adapter": "uncommitted source peer, no native campaign"
+  },
+  "Apartment": {
+    "test_count": 27,
+    "test_seconds": 7.309,
+    "candidate_room_only16_sha256": "429cbf7fa9e85f2c77612fcb9ee107dd9d28e88e4158c71b1a8103922013a7d6",
+    "assembly_proof_sha256": "8fba4e50f9451232a293f7f0c39a5306bddf1c6ae5ec6f16975081a7e8a95b15",
+    "independent_floor_review": "actualpixel review GO reported, finaldoc pending; kitchen_strip OPEN",
+    "native_campaign": "NOT_RUN"
+  },
+  "House": {
+    "raw_png_sha256": "76b64ab7d78543c685b6fcecf9bf1f6e4afaf33f1ce3a97e0532a8f13ccb1d19",
+    "status": "ONE_RAW_B64_PRESERVED; PNG_DECODE_PENDING; NOT_APPROVED_FULL_MASTER",
+    "material_risks": [
+      "central_strip",
+      "right_support_pulse"
+    ]
+  },
+  "current_TEST_source": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+  "all20_delivered": 4,
+  "remaining": 16,
+  "production_art_written": false,
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN",
+  "source_boundary": "No rawnewGD/UID, production scheduling/anchors or original saves changed. Failed predecessor files remain exact. RawPNG/B64sourceartifacts are not candidates forwhole-masterreplacement."
+}

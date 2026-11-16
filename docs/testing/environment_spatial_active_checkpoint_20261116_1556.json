@@ -1,0 +1,76 @@
+{
+  "schema": "bth.environment_spatial_active_checkpoint/v2",
+  "recorded_at": "2026-11-16T15:55:03.496356+00:00",
+  "sidebar_task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "root_source_commit": "629f1f69d64fc8b4f747421dfed4abdd4abec929",
+  "root_source_tree": "ba821a4745979d97d413a29b18a19faf8c086587",
+  "all20_complete": false,
+  "delivered_rooms": 4,
+  "remaining_rooms": 16,
+  "current_TEST_source": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+  "artifact_references": {
+    "docs/testing/environment_spatial_adapter_qualification_v3_20261116.json": "b15e09b006edf8f0f35c3d98841772dc564f5e7542b9f260c7ab56b25d2f35fc",
+    "docs/testing/environment_spatial_adapter_qualification_v2_20261116.json": "964a31c66565e572e3d9b93746d8ff710a181f8e16a6ec857a1ece6afb22c50c",
+    "docs/testing/grand_back_room_spatial_test_delivery_20261116.json": "a4076f22c2e7966fbe47173def682a8661a1d955075d2b4cf2c9a13efdea13ce",
+    "docs/testing/kitty_spatial_metadata_application_20261116.json": "3c1e2c6a4179cde82a4e9b3efd8ecc996aff0a5e7a1ff7047829142138f88b35",
+    "docs/testing/hidden_spatial_v4_stop_20261116.md": "b88e1c97af66825bf83870b7927f2316c0adf282a7d901af2048b18abf8b54b9",
+    "docs/testing/hidden_spatial_preview_delivery_20261116.json": "053db069853c6340f42ff59a8381988769c3c70e8d13af32f844433491c59e57"
+  },
+  "active_owners": {
+    "Private": {
+      "worker": "/root/review_test_adapter",
+      "scope": "V3 sourceaaef/tree91, freshPRIVATETRIAL2; first7PASS then exclusive enginegrant; importJob39728closedPASS, postimportidentity active atlastworkerreport. Originalinputreadonly. Final21 gates/art/TEST pending."
+    },
+    "Delta_Cage": {
+      "worker": "/root/review_test_adapter",
+      "scope": "Only fresh file-only first7preparation whilePrivateownsGodot. DeltaV2 67tests/Cage62tests independentlyqualified. Noadditionalenginegrant."
+    },
+    "Hidden": {
+      "worker": "/root/high_limit_source_trial",
+      "scope": "Newsource-only8phasecompletion: oldV4 22PASS +51qualifiedfailedthin +strongerfresh246 +5remaining +summary =30observations/29nominalslots. ExternalGDevidence literaltransports only; full4049oldQA sourceunchanged. Peer/tests/commit requiredbeforeengine. OldV4 remainsFAILED."
+    },
+    "Kitty": {
+      "worker": "/root/native_suite_adapter",
+      "peer": "/root/audit_spatial_handoff",
+      "scope": "Stage actualstaticGO/30testsPASS +canonical1pairedPASScommitted; new21phaseadapter71tests peer, exact81motionPNGclosure hardening. ALL135historicalPillowparity actualfile-onlyrun requiredbeforefreshnative; no fallback/native/artactivation."
+    },
+    "Apartment": {
+      "worker": "/root/bar_clearance_audit/dark_feet_source_audit",
+      "scope": "Actualfirstfloor candidate429c/proof8fba/27testsPASS independentlypixelreviewed GO_FOR_NATIVE_TRIAL flooronly; finalreviewJSONpending. KitchenstripOPEN, wholeroomnotclosed."
+    },
+    "House": {
+      "worker": "/root/bar_clearance_audit",
+      "scope": "Onebuiltinraw76b6 preservedB64+prompt+provenance; noPNGdecodeyet. Rawnotapprovedfullmaster. Newdecoder basedcorrectedApartment parent-onlygates preparing; peer/rootguard beforeEwrites."
+    }
+  },
+  "hidden_preview_page": "https://chatgpt.com/space/page_df3b22937c9c81918ab5c6d759533382",
+  "hidden_preview_cohort": "V3core13/first75of152/900x430/9.8897seconds/exactRGBA/461originalPNGs retained; NOTfinalnativeacceptance",
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile29\\evidence\\reconciliation.json",
+    "job_pid": 26636,
+    "job_sha256": "90ff4842a2c59a96f4a5fcb927f6d96698a21dc3117310735ccb1589d92dddcf",
+    "report_sha256": "3bf2c34fa02afc41a6af8e7e7992c95c5b07ec57d463b8891520955b40092f51",
+    "exit_code": 1,
+    "active_at_release": 0,
+    "global_summary": {
+      "objectives_checked": 386,
+      "batches_checked": 100,
+      "open_objectives": 237,
+      "open_batches": 57,
+      "open_work_items": 294,
+      "user_paused_items": 36,
+      "complete_objectives": 147,
+      "errors": 751,
+      "warnings": 0,
+      "tasks_with_errors": 253
+    },
+    "spatial_findings": [],
+    "scope": "Wholeledger NOTgloballypassing:751unrelatedfindings; noBTH-ENV-SPATIALfindings. No globalprocessinspection."
+  },
+  "limits": [
+    "Browser startup/gameplay NOT_RUN; no admittedEprofile tool, no denialbypass; native/HTTPS/Page-readback do notprovebrowser orPageplayback.",
+    "Oldwrong-main untrackedmetadata uncertainty awaits humananswer; no cleanup/guessedrestore.",
+    "No original game saves oractiveprofiles read/migrated. No main/NEXT/stable/itch mergeorpublication.",
+    "NEXT6bfbec unchangedonlyearlieractual13:27:16..13:40:38UTC observation window."
+  ]
+}

@@ -1,0 +1,97 @@
+{
+  "schema": "bth.apartment_generated_raw_preservation/v1",
+  "recorded_at": "2026-11-16T15:02:40.725861+00:00",
+  "status": "EXACT_GENERATED_RAW_PRESERVED",
+  "purpose": "Persistent non-active project source artifact; E QA inputs/output preserved.",
+  "source_E_PNG": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116\\raw_source\\apartment-spatial-r1.png",
+  "project_source_PNG": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\apartment-spatial-r1\\apartment-spatial-r1.png",
+  "PNG_sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+  "bytes": 1817231,
+  "PNG": {
+    "width": 1815,
+    "height": 867,
+    "bit_depth": 8,
+    "color_type": 2,
+    "opaque_RGB": true,
+    "compression": 0,
+    "filter": 0,
+    "interlace": 0,
+    "all_chunk_CRCs_verified": true,
+    "caBX_preserved_byte_exact": true,
+    "chunks": [
+      {
+        "kind": "IHDR",
+        "bytes": 13,
+        "payload_sha256": "b00f81744d3d7bb35835d776ef709a2e27bd75e61fcbf4adfd26b4f7d6b56f7b",
+        "crc_valid": true
+      },
+      {
+        "kind": "caBX",
+        "bytes": 21881,
+        "payload_sha256": "0af86106b80def60744efc4ad65f06f4e26c29f8db9ead20d40a16434ae6d57e",
+        "crc_valid": true
+      },
+      {
+        "kind": "IDAT",
+        "bytes": 1795281,
+        "payload_sha256": "81ff8ab95d6a9f00366eaffb241623f51bcbb4175669d067d3b54f505ccc2da5",
+        "crc_valid": true
+      },
+      {
+        "kind": "IEND",
+        "bytes": 0,
+        "payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "crc_valid": true
+      }
+    ]
+  },
+  "base64_retained": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\apartment-spatial-r1\\apartment-spatial-r1.png.b64",
+  "base64_sha256": "68ad91d4f97fd6db31fe5e8b13da5d3b87d113966039362f8d99f96bfc4877c7",
+  "exact_encoded_decoded_and_both_PNG_bytes_equal": true,
+  "qualified_decode_job": {
+    "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\evidence",
+    "job_sha256": "9bd2f9df26c06684b64c3f2e3768b1b90697cd21e211f52ef45bab1e5106ae86",
+    "log_sha256": "626e682a9048773debd42d27c012efd73710b2094379f1ed48c81be42edb2977",
+    "own_decode_receipt_sha256": "862950fd6491376ea95a9394ddb6c75902cc8279867b88a9fa35cf8fced5edc0",
+    "storage_manifest_sha256": "51cdf67674736448cc541be14e5a144f94d6be126f86891b219b83752232636d",
+    "launch_claim_sha256": "e1948253ed9d2197d189756b084f03312c8a32f6547ce205dd7c2a9521404c17",
+    "pid": 43312,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "decoder_sha256": "0f55f8083928764c2243e71aa162b35282e45d6fbe3aa4ee44d78fecf52dd376"
+  },
+  "Library": {
+    "status": "succeeded",
+    "library_file_id": "libfile_fde3_f-f4070ee6c9b88191a544f0a07a00f101_b2e6deecb030819197ad6510125a1c29",
+    "file_id": "file_000000009c9c81fdae1bb9634b6d3e07",
+    "filename": "apartment-spatial-r1.png",
+    "current_version_number": 0,
+    "file_size_bytes": 1817231,
+    "mime_type": "image/png",
+    "client_xattr": {
+      "name": "user.library-file-version",
+      "value": "0",
+      "applied": false,
+      "os_setxattr_available": false,
+      "reason": "os.setxattr unavailable on connected Windows; identity/version retained in this receipt without substitute stream or repeated upload."
+    }
+  },
+  "destination_preflight_absent": true,
+  "all_existing_ancestors_ordinary": true,
+  "source_E_and_base64_preserved": true,
+  "pixel_transforms": false,
+  "regeneration": false,
+  "candidate_assembled": false,
+  "production_art_written": false,
+  "art_approval": false
+}

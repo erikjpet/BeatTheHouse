@@ -1,0 +1,68 @@
+{
+  "schema": "bth.kitty_generated_raw_preservation/v1",
+  "recorded_at": "2026-11-16T14:00:09.279326+00:00",
+  "status": "EXACT_GENERATED_RAW_PRESERVED_AFTER_POST_WRITE_RECEIPT_GATE_STOP",
+  "purpose": "Persistent non-active project source artifact; E QA outputs remain on E and are not moved or retried.",
+  "source_E_PNG": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116\\raw_source\\kitty-spatial-r1.png",
+  "project_source_PNG": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\kitty-spatial-r1\\kitty-spatial-r1.png",
+  "PNG_sha256": "aa1078eab763def23c3d8a1b7232413384b5fcc26a86d7008866dcbf857526eb",
+  "bytes": 1852735,
+  "PNG": {
+    "width": 1815,
+    "height": 867,
+    "bit_depth": 8,
+    "color_type": 2,
+    "opaque_RGB": true,
+    "all_chunk_CRCs_verified": true,
+    "chunk_count": 4
+  },
+  "base64_retained_path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\kitty-spatial-r1\\kitty-spatial-r1.png.b64",
+  "base64_sha256": "0039b3d7d43eb1079b94bfcd493834a967f115b63879f16502ab9b89f71f1f4f",
+  "exact_encoded_decoded_and_both_PNG_bytes_equal": true,
+  "stopped_original_decode_job": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTYTRIAL-20261116-rawdecode01\\evidence\\job.json",
+    "sha256": "f6ed8c6be02af3551fb5ff2794c2419b2cbc9c394fe6a4cd7415fd3881e220ea",
+    "log_sha256": "3ee3a156d37eaf103d924828814e749527932b1270a477c8eb8309f5ad5704db",
+    "pid": 6764,
+    "exit_code": 1,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "error": "The PNG was written and byte-verified. Final gate at decoder line132 declared existing output PNG as a writable directory; maintained validate_layout rejected not_directory before decoder receipt write.",
+    "decoder_sha256": "532ca2652b9f88f535a7f1d71a7b2f95ac5f2bd387e3961fc212c4ebfd848636",
+    "own_success_receipt_absent": true,
+    "retry_performed": false
+  },
+  "Library": {
+    "status": "succeeded",
+    "library_file_id": "libfile_fde3_f-a85d5f2357208191a07d62886e38022f_b2e6deecb030819197ad6510125a1c29",
+    "file_id": "file_00000000aee481fda5488a1c0ba4ff8d",
+    "filename": "kitty-spatial-r1.png",
+    "current_version_number": 0,
+    "file_size_bytes": 1852735,
+    "mime_type": "image/png",
+    "client_xattr": {
+      "name": "user.library-file-version",
+      "value": "0",
+      "applied": false,
+      "reason": "Python os.setxattr unavailable on connected Windows executor; no substitute metadata stream or repeated upload attempted.",
+      "os_setxattr_available": false
+    }
+  },
+  "source_destination_preflight_absent": true,
+  "all_existing_ancestors_ordinary": true,
+  "all_original_E_and_base64_bytes_preserved": true,
+  "pixel_transforms": false,
+  "regeneration": false,
+  "candidate_assembled": false,
+  "production_art_written": false,
+  "art_approval": false
+}

@@ -1,0 +1,246 @@
+{
+  "schema": "bth.apartment_spatial_assembly_source_plan/v1",
+  "task_id": "BTH-ENV-SPATIAL-APARTMENT-001",
+  "room": "apartment",
+  "status": "SOURCE_ONLY_PENDING_ROOT_MASK_REVIEW_AND_GUARDED_TESTS",
+  "source": {
+    "original_background_sha256": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+    "raw_sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+    "raw_bytes": 1817231,
+    "preservation_receipt_sha256": "bb0208c65218cde62ecec4c83d5e2845c6fc0d4204d1db7536fa939906578d38",
+    "brief_sha256": "bfe9b2019669e071d8e43b926dbc7cfcabe2a4b8248b639e88a9f3569186d1e0"
+  },
+  "repair": {
+    "native_band": [
+      0,
+      428,
+      1800,
+      64
+    ],
+    "skirting_half_open_y": [
+      428,
+      440
+    ],
+    "floor_half_open_y": [
+      440,
+      492
+    ],
+    "norm2_cluster": [
+      2,
+      2
+    ],
+    "whole_band_pixels": 115200,
+    "protected_material_pixels": 13048,
+    "writable_pixels": 102152,
+    "writable_clusters": 25538,
+    "all_rows492_onward_original": true,
+    "no_replays": true
+  },
+  "original_material_trace": {
+    "independent_reviewer": "/root/bar_clearance_audit",
+    "method": "Actual original per-pixel2x rows; half-open MATERIAL runs, not fixture bounding boxes or a color-only semantic mask.",
+    "bands": [
+      {
+        "y": [
+          428,
+          432
+        ],
+        "runs": [
+          [
+            652,
+            676
+          ],
+          [
+            1044,
+            1068
+          ],
+          [
+            1178,
+            1192
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      },
+      {
+        "y": [
+          432,
+          444
+        ],
+        "runs": [
+          [
+            652,
+            676
+          ],
+          [
+            1044,
+            1068
+          ],
+          [
+            1148,
+            1224
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      },
+      {
+        "y": [
+          444,
+          452
+        ],
+        "runs": [
+          [
+            1148,
+            1224
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      }
+    ],
+    "contact_solids": {
+      "sofa_black_soles_y": [
+        442,
+        444
+      ],
+      "lamp_cabinet_black_soles_y": [
+        450,
+        452
+      ]
+    },
+    "exclusions": "Sofa body ends428. Brick/mortar below the feet at444+, lamp flanks1146..1148/1224..1226 and cabinet1698..1700 are background/shadow fringe, not protected fixture material. No fixture material exists at452+ in this band."
+  },
+  "donor_plan": {
+    "method": "Exact sampled RGBA copied to2x2 cells; no interpolation, color edits, generation or full-master resize.",
+    "skirting": {
+      "source": "raw",
+      "source_y_per_target_board214_through219": [
+        434,
+        436,
+        438,
+        440,
+        444,
+        446
+      ],
+      "x": "Normalized raw pixel-center x; quiet raw trim x580..1729 excluded and remapped to x modulo512. Only source0..579 or1730..1814 eligible. This is an explicit material quilt, not a claimed global period."
+    },
+    "floor": {
+      "source": "raw",
+      "target_board_y": [
+        220,
+        246
+      ],
+      "source_y": "448+floor(((2*(board_y-220)+1)*46)/52), source448..493; local row-affine nearest-neighbor patch only",
+      "source_x": "floor((2*board_x+1)*1815/1800); in excluded raw support/fringe ROIs choose nearest eligible same-row x outside conservativeROI+4, tie lowerx.",
+      "raw_support_exclusion_rects": [
+        [
+          640,
+          420,
+          68,
+          38
+        ],
+        [
+          1038,
+          420,
+          72,
+          38
+        ],
+        [
+          1144,
+          420,
+          100,
+          40
+        ],
+        [
+          1248,
+          420,
+          470,
+          40
+        ]
+      ],
+      "scope": "Conservative donor rejection ROIs include displaced raw supports/contact fringes; they are not original preservation rectangles. No raw rug donor494+."
+    },
+    "bottom_join": {
+      "target_native_y": [
+        490,
+        492
+      ],
+      "x": [
+        [
+          0,
+          520
+        ],
+        [
+          1268,
+          1800
+        ]
+      ],
+      "source": "original same native x at492, exact nearest2x cell;526clusters",
+      "purpose": "Narrow same-source floor quilt closes492 outside original rug. Inside x520..1268, retain raw floor above original rug top; never copy rug upward.",
+      "limit": "Adjacent grain/readability/contact/seam appearance still needs actual candidate and fresh native review."
+    }
+  },
+  "immutable": {
+    "payload_files": {
+      "assets/art/environments/apartment/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/apartment/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/apartment/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/apartment/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/apartment/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/apartment/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/apartment/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/apartment/anim/kitchen_strip.png": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+      "assets/art/environments/apartment/anim/room_ribbon_0.png": "730e04be2d2c3639746bfedff7e85645fc3cad570ac174d716c94ecc1dd323c7",
+      "assets/art/environments/apartment/anim/room_ribbon_1.png": "19e257e358635ceaf248747dc4bf378b2e1271e98359c2bb0e2416005125ac5c",
+      "assets/art/environments/apartment/anim/room_ribbon_2.png": "5a0ca53858b0e444f7e2a73adbe5e9a62fd9f15c8db4c30aab6da52980941edb",
+      "assets/art/environments/apartment/anim/room_ribbon_3.png": "d1a6c42388bacade61f0155dfc4efd53ef1ff56bb969ed64685b5d3cf7b3a0b4",
+      "assets/art/environments/apartment/anim/room_ribbon_4.png": "9386f643045668fde1a419f1b9a26d111513d619da90dd32c775006c27a94b0f",
+      "assets/art/environments/apartment/anim/window_pulse.png": "9a80ff9347e6fb44cb9dba58ffde40c923169661d636145273e89abfae44d60e",
+      "assets/art/environments/apartment/background.png": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+      "data/art/environments/apartment.json": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9"
+    },
+    "index_separate_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "motion_PNGs": 14,
+    "full_json_byte_exact": true,
+    "anchors_routes_labels_caches_unchanged": true,
+    "kitchen_strip_material_disposition": "OPEN; existing cabinet-face pulse retained unchanged; floor-only candidate does not close room."
+  },
+  "evidence_scope": {
+    "retained_contexts": "Base only;14966 historical checks/7objects/14typedPNG. No fresh candidate intersection/native/runtime/full-cycle/transactions/save/browser claim.",
+    "masks": {
+      "__none_host_0_adorn.png": "459455b2cc33ce14a17a1e9e910b6187f1e70f100368713d933b3937673be7c6",
+      "__none_host_0_body.png": "dd5ae360618fcc4d8c43d8826e093450a59033557d4c6b291a25598263b1452b",
+      "__none_host_1_adorn.png": "3cdd60d3e0496d863e3527430e24139ee1fd2dd862ad1bdb001a830ab37cee0c",
+      "__none_host_1_body.png": "9fc29fdd874de140e1917f6512cdf65b74274381b94a3b77304ad68b985a934b",
+      "__none_host_2_adorn.png": "039a412d4536263bfe6a2f7e90e352d16a4439134d5660f03c8088026dce566e",
+      "__none_host_2_body.png": "4c3b336b14fcbdc449e163943ff0878e1005660100b54598b8f3b47a1339fd37",
+      "__none_host_3_adorn.png": "9ed61d4a0f8fb8b804f9f56d8a89521297163cb0b18ad0c3e1eaa76e23fa8801",
+      "__none_host_3_body.png": "f1333b7262eaa1639ce6a5e9133e85d4548d0d3cfb30c1b0d4a62bedf9f7488a",
+      "__none_host_4_adorn.png": "a88594d515aa3c6662b5b703271a281da7da1d4e922ad7b5da66dbbe04feed73",
+      "__none_host_4_body.png": "bb3e30d1a2297d98cf53cbfb1555fc05f4cdb3c9a9d88a50c909b3d429ee80d4",
+      "__none_host_5_adorn.png": "2fbd7448df5f7c0b381204e003d7939fd3db1d66dff7b37c3eea1389c0bb1143",
+      "__none_host_5_body.png": "3a013087a4f94cc169ac5a1857d790d3f80f4828d8f5377066c1859601a9fff2",
+      "__none_host_6_adorn.png": "7c9c607f8ad66ad52cc5fc16294e857a6529acbe8163116d05597cdc609c78c3",
+      "__none_host_6_body.png": "9ef39a673056f2b71ff86e82d8d13ec09654da53bd7954ac989176777754252b"
+    },
+    "author_execution": "AST/source-only; no helper/test import or E assembly."
+  },
+  "remaining": [
+    "Root independent recipe/mask/donor review",
+    "Fresh guarded tests",
+    "Fresh nonactive assembly",
+    "Independent actual master pixels and all boundary/contact joins",
+    "Fresh populated/native14motions/default-low/RM/no-pointer/actual-clock review",
+    "Separate kitchen-strip physical disposition",
+    "Later strict integration/TEST if approved"
+  ],
+  "native_trial_approved": false,
+  "production_activation_approved": false
+}

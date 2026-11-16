@@ -1,0 +1,3096 @@
+{
+  "schema": "bth.house_spatial_source_audit/v1",
+  "task_id": "BTH-ENV-SPATIAL-HOUSE-001",
+  "date": "2026-11-16",
+  "owner": "/root/bar_clearance_audit",
+  "independent_readonly_source_mask_auditor": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "status": "SOURCE_BRIEF_PROPOSAL_PENDING_PARENT_REVIEW",
+  "scope": "Bounded House floor/rug/live-Bed support preparation, not a second all20 inventory or a generated candidate.",
+  "brief": {
+    "path": "docs/art/briefs/house_spatial_repair_20261116.md",
+    "sha256": "2f78b13b4a5e10a7da9e2bea9c13560575f0cb7d9423d58b3d70681ee1891868"
+  },
+  "source_controls": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "eb801d44c07a7a2f10b0f42a4da72d89bd6941adf5126dccee35e6408bb72935"
+    },
+    {
+      "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\art\\briefs\\house.md",
+      "sha256": "8630967fc8767daf48cf23685db318f408eb46c41b56c8dfca4d249e90ab1323"
+    },
+    {
+      "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\art\\environment_spatial_rework_direction.md",
+      "sha256": "9a438875d8c5b4d923e1f5938caa9d900e5433aed0e27f3836907284245e579b"
+    },
+    {
+      "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\house_r3_native_trial.json",
+      "sha256": "d41e8ca1329ec77877aa484e1a2555c6a7aa1238eeb4034750a4affbfd176e44"
+    }
+  ],
+  "background": {
+    "path": "assets/art/environments/house/background.png",
+    "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+    "dimensions": [
+      1800,
+      860
+    ],
+    "opaque": true,
+    "mode": "RGB"
+  },
+  "current_package": {
+    "logical_file_count": 27,
+    "room_member_count": 26,
+    "separate_global_index": true,
+    "png_path_count_including_background": 25,
+    "unique_png_content_hashes_including_background": 21,
+    "animation_png_path_count": 24,
+    "unique_animation_content_hashes": 20,
+    "seal": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028",
+    "seal_law": "SHA256(UTF8('\\n'.join(path+' '+sha256 for path in ordinal_sorted_paths))); no final newline",
+    "files": {
+      "assets/art/environments/house/anim/central_strip.png": {
+        "sha256": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+        "bytes": 139,
+        "retained_R3_sha256": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_0.png": {
+        "sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "bytes": 153,
+        "retained_R3_sha256": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_1.png": {
+        "sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "bytes": 164,
+        "retained_R3_sha256": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_2.png": {
+        "sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+        "bytes": 170,
+        "retained_R3_sha256": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_3.png": {
+        "sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "bytes": 165,
+        "retained_R3_sha256": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_4.png": {
+        "sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+        "bytes": 162,
+        "retained_R3_sha256": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_5.png": {
+        "sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "bytes": 172,
+        "retained_R3_sha256": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/floor_glint_6.png": {
+        "sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "bytes": 162,
+        "retained_R3_sha256": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/right_support_pulse.png": {
+        "sha256": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+        "bytes": 850,
+        "retained_R3_sha256": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/room_ribbon_0.png": {
+        "sha256": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+        "bytes": 1510,
+        "retained_R3_sha256": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/room_ribbon_1.png": {
+        "sha256": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+        "bytes": 1361,
+        "retained_R3_sha256": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/room_ribbon_2.png": {
+        "sha256": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+        "bytes": 1301,
+        "retained_R3_sha256": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/room_ribbon_3.png": {
+        "sha256": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+        "bytes": 1200,
+        "retained_R3_sha256": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/room_ribbon_4.png": {
+        "sha256": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+        "bytes": 1100,
+        "retained_R3_sha256": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/shelf_bob_0.png": {
+        "sha256": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+        "bytes": 266,
+        "retained_R3_sha256": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/shelf_bob_1.png": {
+        "sha256": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+        "bytes": 269,
+        "retained_R3_sha256": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/shelf_bob_2.png": {
+        "sha256": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+        "bytes": 269,
+        "retained_R3_sha256": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/shelf_bob_3.png": {
+        "sha256": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+        "bytes": 271,
+        "retained_R3_sha256": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/shelf_bob_4.png": {
+        "sha256": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+        "bytes": 269,
+        "retained_R3_sha256": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/window_glow_0.png": {
+        "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "bytes": 109,
+        "retained_R3_sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/window_glow_1.png": {
+        "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "bytes": 109,
+        "retained_R3_sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/window_glow_2.png": {
+        "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "bytes": 109,
+        "retained_R3_sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/window_glow_3.png": {
+        "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "bytes": 109,
+        "retained_R3_sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "equal": true
+      },
+      "assets/art/environments/house/anim/window_glow_4.png": {
+        "sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "bytes": 109,
+        "retained_R3_sha256": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+        "equal": true
+      },
+      "assets/art/environments/house/background.png": {
+        "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+        "bytes": 425423,
+        "retained_R3_sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+        "equal": true
+      },
+      "data/art/environments/house.json": {
+        "sha256": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0",
+        "bytes": 10457,
+        "retained_R3_sha256": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0",
+        "equal": true
+      },
+      "data/art/environments/index.json": {
+        "sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+        "bytes": 459,
+        "retained_R3_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+        "equal": true
+      }
+    },
+    "all_27_match_retained_R3_payload": true,
+    "current_global_index_matches_retained_index": true,
+    "full_House_manifest_unchanged": true
+  },
+  "source_before_after": {
+    "before": {
+      "assets/art/environments/house/anim/central_strip.png": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+      "assets/art/environments/house/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/house/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/house/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/house/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/house/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/house/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/house/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/house/anim/right_support_pulse.png": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+      "assets/art/environments/house/anim/room_ribbon_0.png": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+      "assets/art/environments/house/anim/room_ribbon_1.png": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+      "assets/art/environments/house/anim/room_ribbon_2.png": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+      "assets/art/environments/house/anim/room_ribbon_3.png": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+      "assets/art/environments/house/anim/room_ribbon_4.png": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+      "assets/art/environments/house/anim/shelf_bob_0.png": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+      "assets/art/environments/house/anim/shelf_bob_1.png": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+      "assets/art/environments/house/anim/shelf_bob_2.png": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+      "assets/art/environments/house/anim/shelf_bob_3.png": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+      "assets/art/environments/house/anim/shelf_bob_4.png": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+      "assets/art/environments/house/anim/window_glow_0.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_1.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_2.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_3.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_4.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/background.png": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+      "data/art/environments/house.json": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0",
+      "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+    },
+    "after": {
+      "assets/art/environments/house/anim/central_strip.png": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+      "assets/art/environments/house/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/house/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/house/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/house/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/house/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/house/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/house/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/house/anim/right_support_pulse.png": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+      "assets/art/environments/house/anim/room_ribbon_0.png": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+      "assets/art/environments/house/anim/room_ribbon_1.png": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+      "assets/art/environments/house/anim/room_ribbon_2.png": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+      "assets/art/environments/house/anim/room_ribbon_3.png": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+      "assets/art/environments/house/anim/room_ribbon_4.png": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+      "assets/art/environments/house/anim/shelf_bob_0.png": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+      "assets/art/environments/house/anim/shelf_bob_1.png": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+      "assets/art/environments/house/anim/shelf_bob_2.png": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+      "assets/art/environments/house/anim/shelf_bob_3.png": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+      "assets/art/environments/house/anim/shelf_bob_4.png": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+      "assets/art/environments/house/anim/window_glow_0.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_1.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_2.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_3.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/anim/window_glow_4.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+      "assets/art/environments/house/background.png": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+      "data/art/environments/house.json": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0",
+      "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+    },
+    "scope": "Before/after this read-only source and pixel audit; final post-document source check is separately reported at handoff.",
+    "unchanged": true,
+    "no_source_PNG_JSON_index_or_runtime_writes": true
+  },
+  "actual_images": {
+    "personally_viewed": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\capture\\frame_000.png",
+        "sha256": "eb801d44c07a7a2f10b0f42a4da72d89bd6941adf5126dccee35e6408bb72935"
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_production_board_1800x860.png",
+        "sha256": "7985d84b32ba7a64e111129eaa8db92830882c18b262870f8501e99f978ca6f2",
+        "bytes": 486308
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/house/background.png",
+        "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d"
+      }
+    ],
+    "other_references": [
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_production_board_1800x860.png",
+        "SHA256": "7985d84b32ba7a64e111129eaa8db92830882c18b262870f8501e99f978ca6f2",
+        "Bytes": 486308
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_metadata.json",
+        "SHA256": "dae1a53363224df03944773177bb9374f38b7101aa8b6baefa4a530b5c8ff6af",
+        "Bytes": 307605
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_source_mode2_clock0.0_lowfalse_cleanfalse.png",
+        "SHA256": "f442d5608d397f42be449ee3710102256370cb437c708af058e3b34a23ae88c9",
+        "Bytes": 6106
+      }
+    ],
+    "fullapp": "Actual R3 application frame000, not an animation-only board2x substitute.",
+    "native_populated_board": "Actual R2 contexts production board with all eight live objects; R3 reused these contexts under unchanged static hashes."
+  },
+  "retained_qualification": {
+    "source_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+    "source_tree": "6c77e136e6ff8834c3830140c8901c2fde2a9be9",
+    "source_files": 7469,
+    "context_checks": 15013,
+    "context_check_law": "2*N+75",
+    "scenarios": [
+      "__none"
+    ],
+    "direct_catalog": [],
+    "new_R3_context_job": false,
+    "R3_contexts_reused_from_R2": true,
+    "original_GD_count": 5,
+    "original_helper_and_identity_files": [
+      {
+        "Relative": "tools/envart_house_preart_metadata.gd",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\tools\\envart_house_preart_metadata.gd",
+        "SHA256": "95387563b70eb232b52bfaa4af1749ee870fc282d0928c0621c1c0aee5d643f1",
+        "Bytes": 24976,
+        "UID_SHA256": "8ab47cf0b9047ce0b3a74cefa5650205c45272db57308332f27a506ab75bcb1a"
+      },
+      {
+        "Relative": "tools/envart_house_animation_probe.gd",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\tools\\envart_house_animation_probe.gd",
+        "SHA256": "19bbf6a57aabc70276bd7a9d5c67e73b08e76c94b59c0b368a71197f0cd2d945",
+        "Bytes": 6143,
+        "UID_SHA256": "d56403da525437ed2425167463c2b9987743fcfd280775e97d9b3c6fb0b11ad2"
+      },
+      {
+        "Relative": "tools/envart_house_animation_capture.gd",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\tools\\envart_house_animation_capture.gd",
+        "SHA256": "0280acc45aeb49d5035b8e81737bbccd4dad9f0e9fcb47f6ddbf1611a356063c",
+        "Bytes": 15995,
+        "UID_SHA256": "dfea80031a5342b0de3dfba0b0394dae50521d8aabb026358b3a3d5fb857902f"
+      },
+      {
+        "Relative": "tools/environment_art_baseline_capture.gd",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\tools\\environment_art_baseline_capture.gd",
+        "SHA256": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f",
+        "Bytes": 4755,
+        "UID_SHA256": "cd3b58fa80239aada2b1e9752d8d3fecda4a0c4d02aa2a9226e1156fd235b7c2"
+      },
+      {
+        "Relative": "tools/environment_layout_screenshots.gd",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\tools\\environment_layout_screenshots.gd",
+        "SHA256": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5",
+        "Bytes": 201672,
+        "UID_SHA256": "a4e9a7d6067be76eee07ef86e4fb1a37c5fb88096d2626a05ad83057f243cb35"
+      },
+      {
+        "Relative": "house_trial_adapter.py",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_trial_adapter.py",
+        "SHA256": "b3b4ce4eb9f9eae3bf4dfa6e84b3da29dbf4441ed1f748060da6fc9d5a97d09d",
+        "Bytes": 3190,
+        "UID_SHA256": null
+      },
+      {
+        "Relative": "house_source_identity.json",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_source_identity.json",
+        "SHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+        "Bytes": 1098061,
+        "UID_SHA256": null
+      },
+      {
+        "Relative": "house_capture_inputs.json",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_capture_inputs.json",
+        "SHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+        "Bytes": 1097975,
+        "UID_SHA256": null
+      },
+      {
+        "Relative": "house_trial_package_identity.json",
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_trial_package_identity.json",
+        "SHA256": "a3789d3b110661e27792d38e9e85936c0798d9f027343be7a7827b83393f568e",
+        "Bytes": 3532,
+        "UID_SHA256": null
+      }
+    ],
+    "historical_jobs": [
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\job.json",
+        "SHA256": "a22c7c8d6d67fea4762ed592bce06c8cf93baac2667ee4d554d176a131650054",
+        "Command": [
+          "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+          "--path",
+          "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115",
+          "--script",
+          "res://tools/envart_house_animation_capture.gd",
+          "--",
+          "--out=E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence/capture",
+          "--excerpt-seconds=8"
+        ],
+        "ExitCode": 0,
+        "ActiveAtRelease": 0,
+        "AssignedBeforeExecution": true,
+        "Error": null,
+        "CleanupErrors": [],
+        "TimedOut": false,
+        "Limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\job.json",
+        "SHA256": "908c0206372abbc70f3ae20965bfffdfb49026d8887aab567e9b18031cb73d07",
+        "Command": [
+          "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+          "--path",
+          "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115",
+          "--script",
+          "res://tools/envart_house_animation_probe.gd",
+          "--",
+          "--out=E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence"
+        ],
+        "ExitCode": 0,
+        "ActiveAtRelease": 0,
+        "AssignedBeforeExecution": true,
+        "Error": null,
+        "CleanupErrors": [],
+        "TimedOut": false,
+        "Limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\job.json",
+        "SHA256": "f4d463a9d87bce05efb945eff9d325a36c39fc8b3818435e9b1f5cca8cfe7438",
+        "Command": [
+          "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--path",
+          "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115",
+          "--script",
+          "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+        ],
+        "ExitCode": 0,
+        "ActiveAtRelease": 0,
+        "AssignedBeforeExecution": true,
+        "Error": null,
+        "CleanupErrors": [],
+        "TimedOut": false,
+        "Limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\job.json",
+        "SHA256": "451284ab92ef5c1d04c198b580550eedcecf9c551ffc80e6af962c6290ece632",
+        "Command": [
+          "D:/Projects/Beat-The-House/.tools/godot-4.6-stable/Godot_v4.6-stable_win64_console.exe",
+          "--path",
+          "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115",
+          "--script",
+          "res://tools/envart_house_preart_metadata.gd"
+        ],
+        "ExitCode": 0,
+        "ActiveAtRelease": 0,
+        "AssignedBeforeExecution": true,
+        "Error": null,
+        "CleanupErrors": [],
+        "TimedOut": false,
+        "Limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      }
+    ],
+    "historical_hash_verification": {
+      "files": 81,
+      "mismatches": [],
+      "all_exact": true,
+      "records": [
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_house_r3.py",
+          "ExpectedSHA256": "88a313c6c003837476f1907a774a623c31fb122850690c6e22547f12d6900f1b",
+          "ActualSHA256": "88a313c6c003837476f1907a774a623c31fb122850690c6e22547f12d6900f1b",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\derive_motelroom_r3.py",
+          "ExpectedSHA256": "15e794de3c4bb3e835f4e0664afbee86ed353ca02f85d4de69c7b075b397b59b",
+          "ActualSHA256": "15e794de3c4bb3e835f4e0664afbee86ed353ca02f85d4de69c7b075b397b59b",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_house_r2.py",
+          "ExpectedSHA256": "f711bd7286058d01c45164fd76eb6ac5740c04e23c10487946aad743379c722a",
+          "ActualSHA256": "f711bd7286058d01c45164fd76eb6ac5740c04e23c10487946aad743379c722a",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_house_r1.py",
+          "ExpectedSHA256": "caf1c31126d748695a9a05a861968215c0931863e25fb303def741ae46b72e85",
+          "ActualSHA256": "caf1c31126d748695a9a05a861968215c0931863e25fb303def741ae46b72e85",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\assemble_apartment_r1.py",
+          "ExpectedSHA256": "3470bbf6925d652f60affbc139f8481a27237bb1f5e7d90710b8f15a57c38422",
+          "ActualSHA256": "3470bbf6925d652f60affbc139f8481a27237bb1f5e7d90710b8f15a57c38422",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_house_r3.py",
+          "ExpectedSHA256": "9d89e0479f8e9511aea99dbd9a899c24cb142242a45982180cd7173a381bc09f",
+          "ActualSHA256": "9d89e0479f8e9511aea99dbd9a899c24cb142242a45982180cd7173a381bc09f",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_house_r2.py",
+          "ExpectedSHA256": "e687d2a3dd3b32a99f94cc2e9990b78b2ed275e6fbd6ace06df8a8a04ca388ce",
+          "ActualSHA256": "e687d2a3dd3b32a99f94cc2e9990b78b2ed275e6fbd6ace06df8a8a04ca388ce",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_motelroom_r2.py",
+          "ExpectedSHA256": "c32a75adbb71837f7e42a4267d693e0ea4bdeeb381219fc3ac0cdb11fb49b19c",
+          "ActualSHA256": "c32a75adbb71837f7e42a4267d693e0ea4bdeeb381219fc3ac0cdb11fb49b19c",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\preflight_grand_r3.py",
+          "ExpectedSHA256": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb",
+          "ActualSHA256": "f0e5e16cbb96fdb98ed60d2d473e0b5995437d685080eba898a83e965e045abb",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_house_occlusion.py",
+          "ExpectedSHA256": "63c1359933028a7cf3ce0e5906eef7e571c9da400a0cd568eba234eb4537a807",
+          "ActualSHA256": "63c1359933028a7cf3ce0e5906eef7e571c9da400a0cd568eba234eb4537a807",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_motelroom_occlusion.py",
+          "ExpectedSHA256": "6aadad0bbfc149b6a142c4ea5dfdd55eb846ce970c4fae345a4f722922b08291",
+          "ActualSHA256": "6aadad0bbfc149b6a142c4ea5dfdd55eb846ce970c4fae345a4f722922b08291",
+          "Equal": true
+        },
+        {
+          "Kind": "recipe_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-AUDIT-20261115\\check_grand_occlusion.py",
+          "ExpectedSHA256": "3c2b329fbf43fcd7af86ee9554ebb2e73240c7bf68fcdd56b8295368dd0570a7",
+          "ActualSHA256": "3c2b329fbf43fcd7af86ee9554ebb2e73240c7bf68fcdd56b8295368dd0570a7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\job.json",
+          "ExpectedSHA256": "5fe7d7717d4c154675af66755e07eb360445a328fc25d9668454590a2593b685",
+          "ActualSHA256": "5fe7d7717d4c154675af66755e07eb360445a328fc25d9668454590a2593b685",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "c278d3ecfeed909a1a2dd6fd1f76abe8da09cc1d74c5c8617d9ecf72aa53b344",
+          "ActualSHA256": "c278d3ecfeed909a1a2dd6fd1f76abe8da09cc1d74c5c8617d9ecf72aa53b344",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "255e7299ba2b20933228b80e95ba3790dce3b1f8ce6ddc7c48cc0084508791af",
+          "ActualSHA256": "255e7299ba2b20933228b80e95ba3790dce3b1f8ce6ddc7c48cc0084508791af",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\video-verification.json",
+          "ExpectedSHA256": "f61d3f0f29f56624d032def087ac0764182881e3721f22694985d46794d9aa62",
+          "ActualSHA256": "f61d3f0f29f56624d032def087ac0764182881e3721f22694985d46794d9aa62",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-encode-01\\evidence\\worker.log",
+          "ExpectedSHA256": "5523a5672f8437631481de93329b11ea854931a0378d3bfcf099de23a64365af",
+          "ActualSHA256": "5523a5672f8437631481de93329b11ea854931a0378d3bfcf099de23a64365af",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\job.json",
+          "ExpectedSHA256": "f4d463a9d87bce05efb945eff9d325a36c39fc8b3818435e9b1f5cca8cfe7438",
+          "ActualSHA256": "f4d463a9d87bce05efb945eff9d325a36c39fc8b3818435e9b1f5cca8cfe7438",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "64d4abcf092fe8f351eef6cef02c715d100bb69b506391320457e38f3697e472",
+          "ActualSHA256": "64d4abcf092fe8f351eef6cef02c715d100bb69b506391320457e38f3697e472",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "3cf2f96638540385242a8d387cdc7c2784ac769589be48b118e4d004f2158f35",
+          "ActualSHA256": "3cf2f96638540385242a8d387cdc7c2784ac769589be48b118e4d004f2158f35",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-liveness-01\\evidence\\worker.log",
+          "ExpectedSHA256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+          "ActualSHA256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\house_animation_probe.json",
+          "ExpectedSHA256": "76c40b7adeef005ad2f198efe479ceb2fed8fc0e444e48c2cda1adcf8f36cfdd",
+          "ActualSHA256": "76c40b7adeef005ad2f198efe479ceb2fed8fc0e444e48c2cda1adcf8f36cfdd",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\job.json",
+          "ExpectedSHA256": "908c0206372abbc70f3ae20965bfffdfb49026d8887aab567e9b18031cb73d07",
+          "ActualSHA256": "908c0206372abbc70f3ae20965bfffdfb49026d8887aab567e9b18031cb73d07",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "b5ebb358b5a65b18c79a030078fc1d978b989a0c7c97e44fee483ccfca6c6135",
+          "ActualSHA256": "b5ebb358b5a65b18c79a030078fc1d978b989a0c7c97e44fee483ccfca6c6135",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "47c88006d0b9d04208e38477d1c61b7d6331baeb6162efcde6863b037fc1cdd2",
+          "ActualSHA256": "47c88006d0b9d04208e38477d1c61b7d6331baeb6162efcde6863b037fc1cdd2",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-motion-01\\evidence\\worker.log",
+          "ExpectedSHA256": "da7e7629a522b865a50c69e71b4182546dc4685fd7be9825d052b0f2e0c50e1c",
+          "ActualSHA256": "da7e7629a522b865a50c69e71b4182546dc4685fd7be9825d052b0f2e0c50e1c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\delta.json",
+          "ExpectedSHA256": "b82019213359a456d0e83ba0bfaac686d3a6bc1621575ebbf37a8a29a15c2237",
+          "ActualSHA256": "b82019213359a456d0e83ba0bfaac686d3a6bc1621575ebbf37a8a29a15c2237",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\previous_identity.json",
+          "ExpectedSHA256": "5b46417724a35bba75f744e46359826957033a0dc47b4c22151b0a8228b39ce7",
+          "ActualSHA256": "5b46417724a35bba75f744e46359826957033a0dc47b4c22151b0a8228b39ce7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\previous_manifest.json",
+          "ExpectedSHA256": "06a85b3a6e01118c41ad1e3707b2817d75ba30f5148b9defd5d7bd3287698327",
+          "ActualSHA256": "06a85b3a6e01118c41ad1e3707b2817d75ba30f5148b9defd5d7bd3287698327",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-preparation-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "bd9828566bd14d5b695b59d7dae5b6d52bde10d272e6529426db9ab27a9e8a28",
+          "ActualSHA256": "bd9828566bd14d5b695b59d7dae5b6d52bde10d272e6529426db9ab27a9e8a28",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\job.json",
+          "ExpectedSHA256": "a22c7c8d6d67fea4762ed592bce06c8cf93baac2667ee4d554d176a131650054",
+          "ActualSHA256": "a22c7c8d6d67fea4762ed592bce06c8cf93baac2667ee4d554d176a131650054",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "0da8ffe0d965bddcd8f3a2c79f54afbc11e1da38551438beaf59346e5ae8f64e",
+          "ActualSHA256": "0da8ffe0d965bddcd8f3a2c79f54afbc11e1da38551438beaf59346e5ae8f64e",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "71c01c48aaa25c218756a8270ffd4592e197d6f74a144352354509d3ca3cdc31",
+          "ActualSHA256": "71c01c48aaa25c218756a8270ffd4592e197d6f74a144352354509d3ca3cdc31",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\worker.log",
+          "ExpectedSHA256": "4dafeb1f0c5b71bce1b658768bfdd206fb45b69b2e85511f68affa5166777af3",
+          "ActualSHA256": "4dafeb1f0c5b71bce1b658768bfdd206fb45b69b2e85511f68affa5166777af3",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\capture\\animation_capture.json",
+          "ExpectedSHA256": "38390444d067bd54a6ca826eb1bdab7046b927df405a5af51169cac5ea658f85",
+          "ActualSHA256": "38390444d067bd54a6ca826eb1bdab7046b927df405a5af51169cac5ea658f85",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\house_preart_metadata.json",
+          "ExpectedSHA256": "3b4f0f6deb7e257cc76db11516dd9af9400c7d708d5767c69d4bf9ba0d32a5fe",
+          "ActualSHA256": "3b4f0f6deb7e257cc76db11516dd9af9400c7d708d5767c69d4bf9ba0d32a5fe",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\job.json",
+          "ExpectedSHA256": "451284ab92ef5c1d04c198b580550eedcecf9c551ffc80e6af962c6290ece632",
+          "ActualSHA256": "451284ab92ef5c1d04c198b580550eedcecf9c551ffc80e6af962c6290ece632",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "c8135e6a6428cdfed0f181c0392293a8c292e0b505dc45e3f77b509210c1734a",
+          "ActualSHA256": "c8135e6a6428cdfed0f181c0392293a8c292e0b505dc45e3f77b509210c1734a",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "7fa8feed3b41ea4106d634ca4b3ad55c68dbb06cce882f7965fee0ec7ea04749",
+          "ActualSHA256": "7fa8feed3b41ea4106d634ca4b3ad55c68dbb06cce882f7965fee0ec7ea04749",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\worker.log",
+          "ExpectedSHA256": "15bd33cf4548578158d9b0a03dc4b7978e88beae17eeda100f7829f71c3ccdd5",
+          "ActualSHA256": "15bd33cf4548578158d9b0a03dc4b7978e88beae17eeda100f7829f71c3ccdd5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_metadata.json",
+          "ExpectedSHA256": "dae1a53363224df03944773177bb9374f38b7101aa8b6baefa4a530b5c8ff6af",
+          "ActualSHA256": "dae1a53363224df03944773177bb9374f38b7101aa8b6baefa4a530b5c8ff6af",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\comparison.json",
+          "ExpectedSHA256": "c72929d4f631c315abebb6f6edb92c9c2f5325b1da2c1acab88539d6cfe1e844",
+          "ActualSHA256": "c72929d4f631c315abebb6f6edb92c9c2f5325b1da2c1acab88539d6cfe1e844",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\house_capture_inputs.json",
+          "ExpectedSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "ActualSHA256": "5dcc252a9eb9765e13be24f15843640bec06bf63431178a8f564ca6e06c32b8c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\house_trial_contexts.json",
+          "ExpectedSHA256": "623c9c64aa0a9049256e7a4af98e59911801a6e4957ed58175fe6fbbeafbe5c9",
+          "ActualSHA256": "623c9c64aa0a9049256e7a4af98e59911801a6e4957ed58175fe6fbbeafbe5c9",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\job.json",
+          "ExpectedSHA256": "a7133a088c1c1973a4404239ecaec629c579525188a260362e6e48b40549ca22",
+          "ActualSHA256": "a7133a088c1c1973a4404239ecaec629c579525188a260362e6e48b40549ca22",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "4d55bc2bd89e05face05ef6761a41c3f1395477b3220f6abb628b077eec039a0",
+          "ActualSHA256": "4d55bc2bd89e05face05ef6761a41c3f1395477b3220f6abb628b077eec039a0",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\post_source_verification.json",
+          "ExpectedSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "ActualSHA256": "6bf6b155fbb7e8ef3a1a41d716ba6543d1342e5bb7ecc2daa2f8c5496989fac7",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\source_identity.json",
+          "ExpectedSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "ActualSHA256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "cff097398ec6476ce63392dd73cd9797c81aae30a9dac003397da9d0d14bb28c",
+          "ActualSHA256": "cff097398ec6476ce63392dd73cd9797c81aae30a9dac003397da9d0d14bb28c",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-comparison-01\\evidence\\worker.log",
+          "ExpectedSHA256": "b60c39dfc5567f62f27d3387fe4453437afe3ffa5ecc98a8ebc537709c59bb9d",
+          "ActualSHA256": "b60c39dfc5567f62f27d3387fe4453437afe3ffa5ecc98a8ebc537709c59bb9d",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\house-base-occlusion.json",
+          "ExpectedSHA256": "a5a7deadeb6bb8ede8913e04f84cb483f066eea6deecd15a1c495f629c5c973e",
+          "ActualSHA256": "a5a7deadeb6bb8ede8913e04f84cb483f066eea6deecd15a1c495f629c5c973e",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\job.json",
+          "ExpectedSHA256": "69e6d78585175be9bda94b994b24179a4a5db360e4a48f8f46887aee9f2cf3dd",
+          "ActualSHA256": "69e6d78585175be9bda94b994b24179a4a5db360e4a48f8f46887aee9f2cf3dd",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "f1c21f9a9f09a9afff64a7f6b7fd7b715bd8635afddf68ed0a3900fc8203a04a",
+          "ActualSHA256": "f1c21f9a9f09a9afff64a7f6b7fd7b715bd8635afddf68ed0a3900fc8203a04a",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "453ef7c28bc5a7cf6aef0322937b0aaf6b97acaa6fb5de0d7812d93039162cf0",
+          "ActualSHA256": "453ef7c28bc5a7cf6aef0322937b0aaf6b97acaa6fb5de0d7812d93039162cf0",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-occlusion-r3-01\\evidence\\worker.log",
+          "ExpectedSHA256": "e4b365b50872ae2037ae5091ba5bd874a6d2db018afa6de1b34df1d175cb7f48",
+          "ActualSHA256": "e4b365b50872ae2037ae5091ba5bd874a6d2db018afa6de1b34df1d175cb7f48",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\house-r3-preflight.json",
+          "ExpectedSHA256": "988cc0b10c6cf4ac373ceb6bb9e338079bf1a1e456cee13a7f815c8138fba641",
+          "ActualSHA256": "988cc0b10c6cf4ac373ceb6bb9e338079bf1a1e456cee13a7f815c8138fba641",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\job.json",
+          "ExpectedSHA256": "af9d58f03f16853cf70f107ff442859ce69025c24c80435de9451d23de518c0b",
+          "ActualSHA256": "af9d58f03f16853cf70f107ff442859ce69025c24c80435de9451d23de518c0b",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "415729a98a06a740a714ba8e0797e6906902e9bd94e6515766ee8f9b1fac3e80",
+          "ActualSHA256": "415729a98a06a740a714ba8e0797e6906902e9bd94e6515766ee8f9b1fac3e80",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "4afbbf61cb10ff56adf2682c4d65eeed8e4227b85726065877cd22c983bbd006",
+          "ActualSHA256": "4afbbf61cb10ff56adf2682c4d65eeed8e4227b85726065877cd22c983bbd006",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-preflight-r3-01\\evidence\\worker.log",
+          "ExpectedSHA256": "5272457172bb193857c99b4cb01bcda7e7898e0a766b3ca7e547cab4e1cd1b38",
+          "ActualSHA256": "5272457172bb193857c99b4cb01bcda7e7898e0a766b3ca7e547cab4e1cd1b38",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\actual-bob-edge-review.json",
+          "ExpectedSHA256": "59084fc7bc4aee720b8ff03d9341bf8410da37ba141ba9536ca32bc7f1ce0f0a",
+          "ActualSHA256": "59084fc7bc4aee720b8ff03d9341bf8410da37ba141ba9536ca32bc7f1ce0f0a",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\job.json",
+          "ExpectedSHA256": "9993d5ca0ee5d911932863bd227d00cf30ae4d689b98ebbe033a3c51f1d72f73",
+          "ActualSHA256": "9993d5ca0ee5d911932863bd227d00cf30ae4d689b98ebbe033a3c51f1d72f73",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\launch-claim.json",
+          "ExpectedSHA256": "b301187a7ec4591c58c83bc2765103e044183ab915ec542514b21b0ab615ebe4",
+          "ActualSHA256": "b301187a7ec4591c58c83bc2765103e044183ab915ec542514b21b0ab615ebe4",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\storage-manifest.json",
+          "ExpectedSHA256": "425f2a408c6b7ed442cb7f66e8f84499a30376bf0152bc0b399d521a1ed060c4",
+          "ActualSHA256": "425f2a408c6b7ed442cb7f66e8f84499a30376bf0152bc0b399d521a1ed060c4",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSE-20261115-actual-bob-review-01\\evidence\\worker.log",
+          "ExpectedSHA256": "348859c3c279a2646510a49ee16dc874017e6f75c4fb17255f92f1ded718d19e",
+          "ActualSHA256": "348859c3c279a2646510a49ee16dc874017e6f75c4fb17255f92f1ded718d19e",
+          "Equal": true
+        },
+        {
+          "Kind": "evidence_hashes",
+          "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\house_bob_pair_diagnostic.json",
+          "ExpectedSHA256": "cf8f51a3f6bf0c05affee01c3c0bf3d9a809e1b9624ec90be17a69e784e81841",
+          "ActualSHA256": "cf8f51a3f6bf0c05affee01c3c0bf3d9a809e1b9624ec90be17a69e784e81841",
+          "Equal": true
+        }
+      ]
+    },
+    "old_adapter_not_executed": true,
+    "old_adapter_hazard": "Retained house_trial_adapter.py has override.unlink() in its cold-import finally block; do not run it for new work. A future adapter must preserve evidence and use current maintained E storage/capped-Job gates without cleanup."
+  },
+  "fixed_actual_authority": {
+    "board": [
+      900,
+      430
+    ],
+    "native": [
+      1800,
+      860
+    ],
+    "pixel_scale": 2,
+    "model_hit_label_anchors": [
+      {
+        "id": "item:payment_calendar",
+        "rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 744,
+          "y": 54
+        },
+        "interaction_rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 744,
+          "y": 54
+        },
+        "label_rect": {
+          "aspect_ratio": 6.98666585286458,
+          "h": 15,
+          "w": 104.799987792969,
+          "x": 713.599975585938,
+          "y": 37
+        },
+        "footprint": {
+          "aspect_ratio": 0.9375,
+          "h": 64,
+          "w": 60,
+          "x": 736,
+          "y": 46
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 0,
+        "scenario_owned": false
+      },
+      {
+        "id": "item:card_counters_notes",
+        "rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 663,
+          "y": 56
+        },
+        "interaction_rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 663,
+          "y": 56
+        },
+        "label_rect": {
+          "aspect_ratio": 6.6,
+          "h": 15,
+          "w": 99,
+          "x": 635.5,
+          "y": 106
+        },
+        "footprint": {
+          "aspect_ratio": 0.9375,
+          "h": 64,
+          "w": 60,
+          "x": 655,
+          "y": 48
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 2,
+        "scenario_owned": false
+      },
+      {
+        "id": "item:instant_coffee",
+        "rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 595,
+          "y": 57
+        },
+        "interaction_rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 595,
+          "y": 57
+        },
+        "label_rect": {
+          "aspect_ratio": 6.21333414713542,
+          "h": 15,
+          "w": 93.2000122070313,
+          "x": 570.400024414063,
+          "y": 40
+        },
+        "footprint": {
+          "aspect_ratio": 0.9375,
+          "h": 64,
+          "w": 60,
+          "x": 587,
+          "y": 49
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 1,
+        "scenario_owned": false
+      },
+      {
+        "id": "home_storage:place",
+        "rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 364,
+          "y": 157
+        },
+        "interaction_rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 364,
+          "y": 157
+        },
+        "label_rect": {
+          "aspect_ratio": 5.44000040690104,
+          "h": 15,
+          "w": 81.6000061035156,
+          "x": 369.200012207031,
+          "y": 140
+        },
+        "footprint": {
+          "aspect_ratio": 1.35,
+          "h": 80,
+          "w": 108,
+          "x": 356,
+          "y": 149
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 5,
+        "scenario_owned": false
+      },
+      {
+        "id": "home_sleep:bed",
+        "rect": {
+          "aspect_ratio": 1.5,
+          "h": 96,
+          "w": 144,
+          "x": 176,
+          "y": 120
+        },
+        "interaction_rect": {
+          "aspect_ratio": 1.5,
+          "h": 96,
+          "w": 144,
+          "x": 176,
+          "y": 120
+        },
+        "label_rect": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 224,
+          "y": 103
+        },
+        "footprint": {
+          "aspect_ratio": 1.375,
+          "h": 64,
+          "w": 88,
+          "x": 204,
+          "y": 160
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 4,
+        "scenario_owned": false
+      },
+      {
+        "id": "home_container:trunk_01",
+        "rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 746,
+          "y": 167
+        },
+        "interaction_rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 746,
+          "y": 167
+        },
+        "label_rect": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 768,
+          "y": 150
+        },
+        "footprint": {
+          "aspect_ratio": 1.35,
+          "h": 80,
+          "w": 108,
+          "x": 738,
+          "y": 159
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 6,
+        "scenario_owned": false
+      },
+      {
+        "id": "home_tenure:status",
+        "rect": {
+          "aspect_ratio": 1.5,
+          "h": 48,
+          "w": 72,
+          "x": 711.000061035156,
+          "y": 251
+        },
+        "interaction_rect": {
+          "aspect_ratio": 1.5,
+          "h": 48,
+          "w": 72,
+          "x": 711.000061035156,
+          "y": 251
+        },
+        "label_rect": {
+          "aspect_ratio": 5.43999837239583,
+          "h": 15,
+          "w": 81.5999755859375,
+          "x": 706.200073242188,
+          "y": 234
+        },
+        "footprint": {
+          "aspect_ratio": 1.375,
+          "h": 64,
+          "w": 88,
+          "x": 703.000061035156,
+          "y": 243
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 3,
+        "scenario_owned": false
+      },
+      {
+        "id": "travel:leave",
+        "rect": {
+          "aspect_ratio": 0.888888888888889,
+          "h": 72,
+          "w": 64,
+          "x": 832,
+          "y": 309
+        },
+        "interaction_rect": {
+          "aspect_ratio": 0.888888888888889,
+          "h": 72,
+          "w": 64,
+          "x": 832,
+          "y": 309
+        },
+        "label_rect": {
+          "aspect_ratio": 2.93333333333333,
+          "h": 15,
+          "w": 44,
+          "x": 840,
+          "y": 292
+        },
+        "footprint": {
+          "aspect_ratio": 0.681818181818182,
+          "h": 88,
+          "w": 60,
+          "x": 824,
+          "y": 301
+        },
+        "actor_route_position": "(-1.0, -1.0)",
+        "actor_route_stage": {},
+        "z_order": 7,
+        "scenario_owned": false
+      }
+    ],
+    "source_paint": {
+      "arrival": {
+        "clock_after": 4.00251077777776,
+        "clock_before": 0,
+        "input_during_wait": false,
+        "positions_modified": false,
+        "remaining_person_transits": 0,
+        "timer_wait_seconds": 4
+      },
+      "geometry_equal": true,
+      "requested_host_ids": [
+        "item:payment_calendar",
+        "item:card_counters_notes",
+        "item:instant_coffee",
+        "home_storage:place",
+        "home_sleep:bed",
+        "home_container:trunk_01",
+        "home_tenure:status",
+        "travel:leave"
+      ],
+      "scope": "Actual published objects sent through unchanged production normal body/adornment dispatcher on transparent diagnostic canvas. Same source snapshot, replay geometry and clocks. No guessed event-specific painter. Missing hosts not invented. Alpha is source paint, not an opaque model box or visibility claim after other actors occlude it.",
+      "source_clock": 4.20207699999999,
+      "source_route_clock": 4.20207699999999,
+      "objects": [
+        {
+          "ID": "item:payment_calendar",
+          "Label": "Payment Calendar",
+          "BodyPNG": "__none_host_0_body.png",
+          "AdornPNG": "__none_host_0_adorn.png",
+          "DeclaredSize": "(44.0, 48.0)",
+          "Position": "(0.851111, 0.181395)",
+          "ShadowKind": "contact",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "item:card_counters_notes",
+          "Label": "Counter's Notes",
+          "BodyPNG": "__none_host_1_body.png",
+          "AdornPNG": "__none_host_1_adorn.png",
+          "DeclaredSize": "(44.0, 48.0)",
+          "Position": "(0.761111, 0.186047)",
+          "ShadowKind": "contact",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "item:instant_coffee",
+          "Label": "Instant Coffee",
+          "BodyPNG": "__none_host_2_body.png",
+          "AdornPNG": "__none_host_2_adorn.png",
+          "DeclaredSize": "(44.0, 48.0)",
+          "Position": "(0.685556, 0.188372)",
+          "ShadowKind": "contact",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "home_storage:place",
+          "Label": "Storage Spot",
+          "BodyPNG": "__none_host_3_body.png",
+          "AdornPNG": "__none_host_3_adorn.png",
+          "DeclaredSize": "(92.0, 64.0)",
+          "Position": "(0.455556, 0.439535)",
+          "ShadowKind": "base",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "home_sleep:bed",
+          "Label": "Sleep",
+          "BodyPNG": "__none_host_4_body.png",
+          "AdornPNG": "__none_host_4_adorn.png",
+          "DeclaredSize": "(72.0, 48.0)",
+          "Position": "(0.275556, 0.446512)",
+          "ShadowKind": "contact",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "home_container:trunk_01",
+          "Label": "Trunk",
+          "BodyPNG": "__none_host_5_body.png",
+          "AdornPNG": "__none_host_5_adorn.png",
+          "DeclaredSize": "(92.0, 64.0)",
+          "Position": "(0.88, 0.462791)",
+          "ShadowKind": "base",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "home_tenure:status",
+          "Label": "Pay Mortgage",
+          "BodyPNG": "__none_host_6_body.png",
+          "AdornPNG": "__none_host_6_adorn.png",
+          "DeclaredSize": "(72.0, 48.0)",
+          "Position": "(0.83, 0.639535)",
+          "ShadowKind": "contact",
+          "ActorRouteID": ""
+        },
+        {
+          "ID": "travel:leave",
+          "Label": "Travel",
+          "BodyPNG": "__none_host_7_body.png",
+          "AdornPNG": "__none_host_7_adorn.png",
+          "DeclaredSize": "(64.0, 72.0)",
+          "Position": "(0.96, 0.802326)",
+          "ShadowKind": "none",
+          "ActorRouteID": ""
+        }
+      ]
+    },
+    "counter_cache": {
+      "coffee_table": {
+        "front_y": 222,
+        "id": "coffee_table",
+        "top_y": 222,
+        "x0": 354,
+        "x1": 462
+      },
+      "dining_table": {
+        "front_y": 238,
+        "id": "dining_table",
+        "top_y": 160,
+        "x0": 616,
+        "x1": 766
+      },
+      "rug": {
+        "front_y": 296,
+        "id": "rug",
+        "top_y": 296,
+        "x0": 218,
+        "x1": 828
+      },
+      "sofa": {
+        "front_y": 224,
+        "id": "sofa",
+        "top_y": 224,
+        "x0": 122,
+        "x1": 366
+      }
+    },
+    "House_manifest_counters": {},
+    "authored_foreground": {
+      "Path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01\\evidence\\__none_source_mode2_clock0.0_lowfalse_cleanfalse.png",
+      "SHA256": "f442d5608d397f42be449ee3710102256370cb437c708af058e3b34a23ae88c9",
+      "Bytes": 6106,
+      "alpha_gt0_pixels": 0,
+      "opaque_replay_count": 0
+    },
+    "preserve_all_runtime_geometry": true,
+    "no_new_replay": true,
+    "actual_Bed_slot": {
+      "position": [
+        248,
+        216
+      ],
+      "scale": 2,
+      "declared_snapshot_size": [
+        72,
+        48
+      ],
+      "actual_model_hit_rect": [
+        176,
+        120,
+        144,
+        96
+      ]
+    },
+    "slot_positions_board": {
+      "home_sleep": [
+        248,
+        216
+      ],
+      "home_storage": [
+        410,
+        221
+      ],
+      "home_trunk_3": [
+        792,
+        231
+      ],
+      "home_tenure": [
+        747,
+        299
+      ],
+      "item_1": [
+        766,
+        102
+      ],
+      "item_2": [
+        617,
+        105
+      ],
+      "item_3": [
+        685,
+        104
+      ],
+      "exit": [
+        864,
+        345
+      ]
+    }
+  },
+  "current_ground_and_placement_source_controls": {
+    "all_five_current_files_equal_retained_and_identity": true,
+    "records": [
+      {
+        "Path": "data/environments/archetypes.json",
+        "HistoricalSourceIdentitySHA256": "606f0c81be81790bd56cae6f57ec3821601710c6c3bf45b13f280179c1196538",
+        "LegacyCurrentSHA256": "606f0c81be81790bd56cae6f57ec3821601710c6c3bf45b13f280179c1196538",
+        "ArtWorktreeCurrentSHA256": "606f0c81be81790bd56cae6f57ec3821601710c6c3bf45b13f280179c1196538"
+      },
+      {
+        "Path": "data/environments/developer_placement_overrides.json",
+        "HistoricalSourceIdentitySHA256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+        "LegacyCurrentSHA256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+        "ArtWorktreeCurrentSHA256": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+      },
+      {
+        "Path": "data/environments/placement_surfaces.json",
+        "HistoricalSourceIdentitySHA256": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+        "LegacyCurrentSHA256": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+        "ArtWorktreeCurrentSHA256": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1"
+      },
+      {
+        "Path": "data/environments/scenario_slot_layouts.json",
+        "HistoricalSourceIdentitySHA256": "a7f728b645001283db70a4f84a2e3dc9d2bcd33e9adda832fed4815d87ec188d",
+        "LegacyCurrentSHA256": "a7f728b645001283db70a4f84a2e3dc9d2bcd33e9adda832fed4815d87ec188d",
+        "ArtWorktreeCurrentSHA256": "a7f728b645001283db70a4f84a2e3dc9d2bcd33e9adda832fed4815d87ec188d"
+      },
+      {
+        "Path": "data/environments/scenarios.json",
+        "HistoricalSourceIdentitySHA256": "3065d0d215f9b62b05c6f2515bf23c619335abd463ba53783b5c0c600bda8882",
+        "LegacyCurrentSHA256": "3065d0d215f9b62b05c6f2515bf23c619335abd463ba53783b5c0c600bda8882",
+        "ArtWorktreeCurrentSHA256": "3065d0d215f9b62b05c6f2515bf23c619335abd463ba53783b5c0c600bda8882"
+      }
+    ],
+    "scope": "Whole archetypes/placement overrides/surfaces/scenario layouts/scenarios bytes match retained source. Fresh candidate still requires current native geometry evidence."
+  },
+  "typed_source_masks": {
+    "count": 16,
+    "objects": 8,
+    "source_clock": 4.20207699999999,
+    "route_clock": 4.20207699999999,
+    "geometry_equal": true,
+    "decode_method": "Independent read-only actual PNG decoding by child auditor; all16 file SHA256 values independently re-read and matched by owner.",
+    "records": [
+      {
+        "host_index": 0,
+        "id": "item:payment_calendar",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_0_body.png",
+        "sha256": "7b73d549177914faf7bf8704b78ba2cc914311a2fce1c6a427a8b90416fd910c",
+        "bytes": 7556,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14550,
+        "alpha_gt0_native_bbox_half_open": [
+          1472,
+          85,
+          1592,
+          208
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 0,
+        "id": "item:payment_calendar",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_0_adorn.png",
+        "sha256": "2edd766e2703553a5f3b752a72b2e5dd3d33cdd265ecfb0184a0c86a8b53d019",
+        "bytes": 10014,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 4697,
+        "alpha_gt0_native_bbox_half_open": [
+          1442,
+          80,
+          1622,
+          206
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 1,
+        "id": "item:card_counters_notes",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_1_body.png",
+        "sha256": "eca1bfb8693990efdca65f408d6ed4564afd5c6d3f5f7a543ee103995c75dc84",
+        "bytes": 7631,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14450,
+        "alpha_gt0_native_bbox_half_open": [
+          1310,
+          91,
+          1430,
+          212
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 1,
+        "id": "item:card_counters_notes",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_1_adorn.png",
+        "sha256": "6b189230650b6ebea674506b7d064922a512184ddfe5079c98591e6795c3610c",
+        "bytes": 9563,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 4315,
+        "alpha_gt0_native_bbox_half_open": [
+          1287,
+          121,
+          1453,
+          236
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 2,
+        "id": "item:instant_coffee",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_2_body.png",
+        "sha256": "16705a5bd58b9e5ec2c433693c6b992cd5d10fd88431673c2483a5fddf941522",
+        "bytes": 7872,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14450,
+        "alpha_gt0_native_bbox_half_open": [
+          1174,
+          93,
+          1294,
+          214
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 2,
+        "id": "item:instant_coffee",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_2_adorn.png",
+        "sha256": "f2284b4973bd7090172e9a724a0835e646114becb8cce58c89be97b346609c13",
+        "bytes": 9210,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 4115,
+        "alpha_gt0_native_bbox_half_open": [
+          1157,
+          86,
+          1311,
+          212
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 3,
+        "id": "home_storage:place",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_3_body.png",
+        "sha256": "c52caed2a535d1ad0c1b5fda5b77224acc6a530ba899809f049060106e5aaafb",
+        "bytes": 7551,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 17230,
+        "alpha_gt0_native_bbox_half_open": [
+          736,
+          308,
+          904,
+          444
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 3,
+        "id": "home_storage:place",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_3_adorn.png",
+        "sha256": "54393c25c3191c240919b531bb83b5b6a2a77d9acf09d8df62db8af6700adbb1",
+        "bytes": 10382,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14579,
+        "alpha_gt0_native_bbox_half_open": [
+          754,
+          286,
+          886,
+          487
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 4,
+        "id": "home_sleep:bed",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_4_body.png",
+        "sha256": "9cf5cf2806cd86c7c1a3ce0b5f3e6511835d27692256fa7aa586b9fa0f662232",
+        "bytes": 7195,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 27418,
+        "alpha_gt0_native_bbox_half_open": [
+          364,
+          250,
+          628,
+          436
+        ],
+        "alpha_ge64_pixels": 22070,
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 4,
+        "id": "home_sleep:bed",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_4_adorn.png",
+        "sha256": "c4a830dbec4d074ccc81d19c011640e0cbb36c85a6be1772a4b4cb6db3c71093",
+        "bytes": 8124,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 3252,
+        "alpha_gt0_native_bbox_half_open": [
+          390,
+          212,
+          602,
+          423
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 5,
+        "id": "home_container:trunk_01",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_5_body.png",
+        "sha256": "896194370d5b3873ea85116b5a0861b82f9533dc611f024318f7e2261f437396",
+        "bytes": 7551,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 17230,
+        "alpha_gt0_native_bbox_half_open": [
+          1500,
+          327,
+          1668,
+          464
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 5,
+        "id": "home_container:trunk_01",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_5_adorn.png",
+        "sha256": "a8ed3afb86d61b5f1b67c4698365e70953af132c904fdf95e04252c6ae1d4173",
+        "bytes": 7792,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 3032,
+        "alpha_gt0_native_bbox_half_open": [
+          1511,
+          306,
+          1657,
+          461
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 6,
+        "id": "home_tenure:status",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_6_body.png",
+        "sha256": "8e3bed386e930eb7dfbea40fe7f649f154bf33693e0d7a7f3ff2f4fa2cca2dcd",
+        "bytes": 7396,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14526,
+        "alpha_gt0_native_bbox_half_open": [
+          1428,
+          481,
+          1560,
+          602
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 6,
+        "id": "home_tenure:status",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_6_adorn.png",
+        "sha256": "9acf9db93e07057eb6c55ffdc60481b37783e7bbd87d61d7c2db3a9e1fa36de9",
+        "bytes": 10063,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 9927,
+        "alpha_gt0_native_bbox_half_open": [
+          1428,
+          474,
+          1560,
+          633
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 7,
+        "id": "travel:leave",
+        "kind": "body",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_7_body.png",
+        "sha256": "c0dc70921d7a89dc669b7e684eff72819caf32fc5be56fe8d7dee2ebe1056dec",
+        "bytes": 7407,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 14502,
+        "alpha_gt0_native_bbox_half_open": [
+          1668,
+          620,
+          1788,
+          741
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      },
+      {
+        "host_index": 7,
+        "id": "travel:leave",
+        "kind": "adorn",
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_7_adorn.png",
+        "sha256": "58a73ec3718f9b56343f0bf7c1ef618c93275004ec4da9d25a0fb985bcb81ac3",
+        "bytes": 7936,
+        "dimensions": [
+          1800,
+          860
+        ],
+        "alpha_gt0_pixels": 2967,
+        "alpha_gt0_native_bbox_half_open": [
+          1673,
+          590,
+          1783,
+          759
+        ],
+        "interpretation": "Source paint includes shadow/interaction treatment; bbox is not a physical furniture silhouette or final occlusion result."
+      }
+    ]
+  },
+  "material_contact_trace": {
+    "coordinates": "Native unless explicitly board; rectangle xywh uses exclusive right/bottom.",
+    "original_authored_floor_first_row": 492,
+    "panel_lower_trim_y_half_open": [
+      456,
+      472
+    ],
+    "original_rug_xywh": [
+      436,
+      468,
+      1220,
+      124
+    ],
+    "left_old_static_base_xywh": [
+      244,
+      348,
+      488,
+      100
+    ],
+    "coffee_unit_bottom_exclusive": 444,
+    "right_leg_target_rectangles_xywh": [
+      [
+        1272,
+        408,
+        28,
+        68
+      ],
+      [
+        1408,
+        408,
+        28,
+        68
+      ]
+    ],
+    "right_actual_visible_leg_y_half_open": [
+      408,
+      468
+    ],
+    "original_rug_overwrites_leg_target_rows": [
+      468,
+      476
+    ],
+    "live_Bed": {
+      "physical_frame_bbox_half_open": [
+        375,
+        305,
+        617,
+        390
+      ],
+      "physical_feet_rectangles_xywh": [
+        [
+          371,
+          390,
+          8,
+          18
+        ],
+        [
+          613,
+          390,
+          8,
+          18
+        ]
+      ],
+      "feet_painted_pixels_per_row": 16,
+      "feet_y_half_open": [
+        390,
+        408
+      ],
+      "no_Bed_body_paint_y_half_open": [
+        408,
+        426
+      ],
+      "later_contact_shadow": {
+        "strong_pixels": 202,
+        "strong_y_half_open": [
+          426,
+          432
+        ],
+        "faint_pixels": 162,
+        "faint_y_half_open": [
+          432,
+          436
+        ],
+        "not_longer_legs": true
+      },
+      "body_mask_bbox_is_not_physical_silhouette": true,
+      "preserve_live_bed_pillow_blanket_and_shadow": true,
+      "no_second_static_bed_or_sofa": true
+    },
+    "actual_RGBA_boundary_witnesses": [
+      {
+        "X": 244,
+        "Y": 447,
+        "RGBA": [
+          0,
+          0,
+          5,
+          255
+        ]
+      },
+      {
+        "X": 244,
+        "Y": 448,
+        "RGBA": [
+          46,
+          18,
+          52,
+          255
+        ]
+      },
+      {
+        "X": 500,
+        "Y": 447,
+        "RGBA": [
+          0,
+          0,
+          3,
+          255
+        ]
+      },
+      {
+        "X": 500,
+        "Y": 448,
+        "RGBA": [
+          56,
+          21,
+          57,
+          255
+        ]
+      },
+      {
+        "X": 710,
+        "Y": 443,
+        "RGBA": [
+          3,
+          1,
+          8,
+          255
+        ]
+      },
+      {
+        "X": 710,
+        "Y": 444,
+        "RGBA": [
+          32,
+          14,
+          36,
+          255
+        ]
+      },
+      {
+        "X": 1272,
+        "Y": 467,
+        "RGBA": [
+          93,
+          37,
+          26,
+          255
+        ]
+      },
+      {
+        "X": 1272,
+        "Y": 468,
+        "RGBA": [
+          103,
+          36,
+          78,
+          255
+        ]
+      },
+      {
+        "X": 1272,
+        "Y": 475,
+        "RGBA": [
+          92,
+          34,
+          76,
+          255
+        ]
+      },
+      {
+        "X": 1272,
+        "Y": 476,
+        "RGBA": [
+          77,
+          29,
+          69,
+          255
+        ]
+      },
+      {
+        "X": 1408,
+        "Y": 467,
+        "RGBA": [
+          23,
+          10,
+          16,
+          255
+        ]
+      },
+      {
+        "X": 1408,
+        "Y": 468,
+        "RGBA": [
+          99,
+          34,
+          76,
+          255
+        ]
+      },
+      {
+        "X": 435,
+        "Y": 468,
+        "RGBA": [
+          77,
+          28,
+          69,
+          255
+        ]
+      },
+      {
+        "X": 436,
+        "Y": 468,
+        "RGBA": [
+          64,
+          24,
+          59,
+          255
+        ]
+      },
+      {
+        "X": 1655,
+        "Y": 591,
+        "RGBA": [
+          117,
+          48,
+          88,
+          255
+        ]
+      },
+      {
+        "X": 1656,
+        "Y": 591,
+        "RGBA": [
+          86,
+          34,
+          48,
+          255
+        ]
+      },
+      {
+        "X": 100,
+        "Y": 491,
+        "RGBA": [
+          60,
+          23,
+          61,
+          255
+        ]
+      },
+      {
+        "X": 100,
+        "Y": 492,
+        "RGBA": [
+          63,
+          25,
+          44,
+          255
+        ]
+      },
+      {
+        "X": 1000,
+        "Y": 467,
+        "RGBA": [
+          77,
+          29,
+          70,
+          255
+        ]
+      },
+      {
+        "X": 1000,
+        "Y": 468,
+        "RGBA": [
+          100,
+          34,
+          78,
+          255
+        ]
+      },
+      {
+        "X": 1000,
+        "Y": 591,
+        "RGBA": [
+          131,
+          53,
+          89,
+          255
+        ]
+      },
+      {
+        "X": 1000,
+        "Y": 592,
+        "RGBA": [
+          73,
+          26,
+          45,
+          255
+        ]
+      }
+    ],
+    "unchanged_relevant_source_functions": [
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\scripts\\ui\\pixel_scene_canvas.gd",
+        "SHA256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+        "Functions": [
+          {
+            "Name": "_draw_house",
+            "Found": true,
+            "CanonicalLF_SHA256": "b53c32b80b502c5e8e4a3bfa4e8f95c105fcd0dcbfb51c3304e6005a5f71a1ea"
+          },
+          {
+            "Name": "_draw_bed_prop",
+            "Found": true,
+            "CanonicalLF_SHA256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485"
+          },
+          {
+            "Name": "_cycle_color",
+            "Found": true,
+            "CanonicalLF_SHA256": "a095a5d2b9196e0249ab4fa67a1998396e3c87c18e5c99c3a9f0a335c08c2be3"
+          }
+        ]
+      },
+      {
+        "Path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-HOUSE-TRIAL-20261115\\scripts\\ui\\pixel_scene_canvas.gd",
+        "SHA256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+        "Functions": [
+          {
+            "Name": "_draw_house",
+            "Found": true,
+            "CanonicalLF_SHA256": "b53c32b80b502c5e8e4a3bfa4e8f95c105fcd0dcbfb51c3304e6005a5f71a1ea"
+          },
+          {
+            "Name": "_draw_bed_prop",
+            "Found": true,
+            "CanonicalLF_SHA256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485"
+          },
+          {
+            "Name": "_cycle_color",
+            "Found": true,
+            "CanonicalLF_SHA256": "a095a5d2b9196e0249ab4fa67a1998396e3c87c18e5c99c3a9f0a335c08c2be3"
+          }
+        ]
+      }
+    ],
+    "source_function_comparison_scope": "Current and retained whole canvas files differ. Canonical-LF _draw_house, _draw_bed_prop and _cycle_color function blocks are exactly equal; this is not a whole-source equivalence claim."
+  },
+  "proposed_art_only_direction": {
+    "status": "PROPOSAL_NOT_CANDIDATE_APPROVAL",
+    "working_floor_skirting_y": 384,
+    "working_floor_skirting_y_board": 192,
+    "required_true_floor_beneath_actual_Bed_feet_y": [
+      390,
+      408
+    ],
+    "maximum_authoring_window_xywh": [
+      [
+        0,
+        384,
+        1800,
+        108
+      ],
+      [
+        436,
+        468,
+        1220,
+        124
+      ]
+    ],
+    "window_is_not_blanket_replacement_permission": true,
+    "future_actual_tight_mask_and_protected_silhouette_proof_required": true,
+    "rug_proposed_native_polygon": [
+      [
+        520,
+        480
+      ],
+      [
+        1572,
+        480
+      ],
+      [
+        1656,
+        592
+      ],
+      [
+        436,
+        592
+      ]
+    ],
+    "rug_near_edge_board296_retained": true,
+    "native_y592_plus_exact": true,
+    "native_y492_plus_outside_old_rug_exact": true,
+    "original_pixels_outside_final_approved_actual_mask_exact": true,
+    "remove_only_exposed_misleading_old_left_lower_base": true,
+    "protect": "Window/frame/glass, dark central frame/inset, real headboard/back material, burgundy upright, small brown side unit, upper-right fixture/insets and existing right unit/two visible legs.",
+    "new_furniture": false,
+    "new_legs": false,
+    "leg_extension_or_anchor_shift": false,
+    "new_opaque_replay": false,
+    "no_baked_live_Bed_or_contact_shadow": true,
+    "expected_logical_delta": [
+      "assets/art/environments/house/background.png"
+    ],
+    "unchanged_all_24_motion_PNGs_full_JSON_current_index": true
+  },
+  "animation_contract": {
+    "total": 24,
+    "default_native_low_detail_count": 24,
+    "families": {
+      "window_glows": 5,
+      "shelf_bobs": 5,
+      "right_support_pulse": 1,
+      "atmospheric_ribbons": 5,
+      "central_strip": 1,
+      "floor_glints": 7
+    },
+    "types": {
+      "frames": 5,
+      "mover": 12,
+      "pulse": 7
+    },
+    "entries": [
+      {
+        "id": "window_glow_0",
+        "type": "pulse",
+        "texture": "anim/window_glow_0.png",
+        "rect": [
+          104,
+          92,
+          8,
+          44
+        ],
+        "min_opacity": 0.1,
+        "max_opacity": 0.2,
+        "period": 1.8479956785822313,
+        "phase": 61.1764705882353,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "window_glow_1",
+        "type": "pulse",
+        "texture": "anim/window_glow_1.png",
+        "rect": [
+          122,
+          92,
+          8,
+          44
+        ],
+        "min_opacity": 0.1,
+        "max_opacity": 0.2,
+        "period": 1.8479956785822313,
+        "phase": 71.76470588235294,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "window_glow_2",
+        "type": "pulse",
+        "texture": "anim/window_glow_2.png",
+        "rect": [
+          140,
+          92,
+          8,
+          44
+        ],
+        "min_opacity": 0.1,
+        "max_opacity": 0.2,
+        "period": 1.8479956785822313,
+        "phase": 82.3529411764706,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "window_glow_3",
+        "type": "pulse",
+        "texture": "anim/window_glow_3.png",
+        "rect": [
+          158,
+          92,
+          8,
+          44
+        ],
+        "min_opacity": 0.1,
+        "max_opacity": 0.2,
+        "period": 1.8479956785822313,
+        "phase": 92.94117647058823,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "window_glow_4",
+        "type": "pulse",
+        "texture": "anim/window_glow_4.png",
+        "rect": [
+          176,
+          92,
+          8,
+          44
+        ],
+        "min_opacity": 0.1,
+        "max_opacity": 0.2,
+        "period": 1.8479956785822313,
+        "phase": 103.52941176470588,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "shelf_bob_0",
+        "type": "frames",
+        "texture": "anim/shelf_bob_0.png",
+        "rect": [
+          594,
+          60,
+          16,
+          11
+        ],
+        "frames": 32,
+        "fps": 10.185916357881302,
+        "loop": "loop",
+        "phase": 0,
+        "opacity": 1,
+        "blend": "mix",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "shelf_bob_1",
+        "type": "frames",
+        "texture": "anim/shelf_bob_1.png",
+        "rect": [
+          636,
+          60,
+          16,
+          11
+        ],
+        "frames": 32,
+        "fps": 10.185916357881302,
+        "loop": "loop",
+        "phase": 0,
+        "opacity": 1,
+        "blend": "mix",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "shelf_bob_2",
+        "type": "frames",
+        "texture": "anim/shelf_bob_2.png",
+        "rect": [
+          686,
+          60,
+          16,
+          11
+        ],
+        "frames": 32,
+        "fps": 10.185916357881302,
+        "loop": "loop",
+        "phase": 0,
+        "opacity": 1,
+        "blend": "mix",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "shelf_bob_3",
+        "type": "frames",
+        "texture": "anim/shelf_bob_3.png",
+        "rect": [
+          720,
+          60,
+          16,
+          11
+        ],
+        "frames": 32,
+        "fps": 10.185916357881302,
+        "loop": "loop",
+        "phase": 0,
+        "opacity": 1,
+        "blend": "mix",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "shelf_bob_4",
+        "type": "frames",
+        "texture": "anim/shelf_bob_4.png",
+        "rect": [
+          776,
+          60,
+          16,
+          11
+        ],
+        "frames": 32,
+        "fps": 10.185916357881302,
+        "loop": "loop",
+        "phase": 0,
+        "opacity": 1,
+        "blend": "mix",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "right_support_pulse",
+        "type": "pulse",
+        "texture": "anim/right_support_pulse.png",
+        "rect": [
+          644,
+          84,
+          144,
+          118
+        ],
+        "min_opacity": 0.08,
+        "max_opacity": 0.16,
+        "period": 1.121997376282069,
+        "phase": 2.3142857142857145,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "room_ribbon_0",
+        "type": "mover",
+        "texture": "anim/room_ribbon_0.png",
+        "frames": 20,
+        "fps": 4.45633840657307,
+        "size": [
+          180,
+          20
+        ],
+        "from": [
+          232,
+          107
+        ],
+        "to": [
+          646,
+          107
+        ],
+        "duration": 41.4,
+        "phase": 0,
+        "opacity": 0.024,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "room_ribbon_1",
+        "type": "mover",
+        "texture": "anim/room_ribbon_1.png",
+        "frames": 20,
+        "fps": 4.45633840657307,
+        "size": [
+          164,
+          20
+        ],
+        "from": [
+          232,
+          125
+        ],
+        "to": [
+          646,
+          125
+        ],
+        "duration": 34.5,
+        "phase": 12.5,
+        "opacity": 0.024,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "room_ribbon_2",
+        "type": "mover",
+        "texture": "anim/room_ribbon_2.png",
+        "frames": 20,
+        "fps": 4.45633840657307,
+        "size": [
+          148,
+          20
+        ],
+        "from": [
+          232,
+          143
+        ],
+        "to": [
+          646,
+          143
+        ],
+        "duration": 29.571428571428573,
+        "phase": 21.428571428571427,
+        "opacity": 0.024,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "room_ribbon_3",
+        "type": "mover",
+        "texture": "anim/room_ribbon_3.png",
+        "frames": 20,
+        "fps": 4.45633840657307,
+        "size": [
+          132,
+          20
+        ],
+        "from": [
+          232,
+          161
+        ],
+        "to": [
+          646,
+          161
+        ],
+        "duration": 25.875,
+        "phase": 28.125,
+        "opacity": 0.024,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "room_ribbon_4",
+        "type": "mover",
+        "texture": "anim/room_ribbon_4.png",
+        "frames": 20,
+        "fps": 4.45633840657307,
+        "size": [
+          116,
+          20
+        ],
+        "from": [
+          232,
+          179
+        ],
+        "to": [
+          646,
+          179
+        ],
+        "duration": 23,
+        "phase": 33.333333333333336,
+        "opacity": 0.024,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "central_strip",
+        "type": "pulse",
+        "texture": "anim/central_strip.png",
+        "rect": [
+          350,
+          116,
+          188,
+          7
+        ],
+        "min_opacity": 0.12,
+        "max_opacity": 0.22,
+        "period": 1.4959965017094252,
+        "phase": 0,
+        "blend": "add",
+        "still": "first",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_0",
+        "type": "mover",
+        "texture": "anim/floor_glint_0.png",
+        "size": [
+          72,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 57.77777777777778,
+        "phase": 0,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_1",
+        "type": "mover",
+        "texture": "anim/floor_glint_1.png",
+        "size": [
+          68,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 50.73170731707317,
+        "phase": 6.682926829268292,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_2",
+        "type": "mover",
+        "texture": "anim/floor_glint_2.png",
+        "size": [
+          64,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 45.21739130434783,
+        "phase": 11.91304347826087,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_3",
+        "type": "mover",
+        "texture": "anim/floor_glint_3.png",
+        "size": [
+          60,
+          2
+        ],
+        "from": [
+          -90,
+          316
+        ],
+        "to": [
+          950,
+          316
+        ],
+        "duration": 40.78431372549019,
+        "phase": 16.11764705882353,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_4",
+        "type": "mover",
+        "texture": "anim/floor_glint_4.png",
+        "size": [
+          56,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 37.142857142857146,
+        "phase": 19.571428571428573,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_5",
+        "type": "mover",
+        "texture": "anim/floor_glint_5.png",
+        "size": [
+          52,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 34.09836065573771,
+        "phase": 22.459016393442624,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      },
+      {
+        "id": "floor_glint_6",
+        "type": "mover",
+        "texture": "anim/floor_glint_6.png",
+        "size": [
+          48,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 31.515151515151516,
+        "phase": 24.90909090909091,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide",
+        "web_low_detail": true
+      }
+    ],
+    "fixed_pink_semantics": "Seed-only _cycle_color lookup is not temporal. All original five x seeds594/636/678/720/762 are divisible by6; each is fixed pink and y only bobs.",
+    "R3_visual_positions_retained": {
+      "shelf_bob_2_x": 686,
+      "shelf_bob_4_x": 776
+    },
+    "old_QA_only_sample_alias_correction": {
+      "id": "shelf_bob_1",
+      "aliased_frames": [
+        0,
+        8
+      ],
+      "accepted_QA_frames": [
+        0,
+        11
+      ],
+      "asset_or_runtime_changed": false
+    },
+    "native_motion_checks": 98,
+    "native_motion_law": "1+4*24+1",
+    "all24_normal_and_actual_low_entries_changed": true,
+    "normal_and_low_RM_stable": true,
+    "visibility": {
+      "checks": 48,
+      "normal": 24,
+      "low": 24,
+      "reference_sha256": "a5a7deadeb6bb8ede8913e04f84cb483f066eea6deecd15a1c495f629c5c973e",
+      "minimum_edge_examples": {
+        "shelf_bob_2": {
+          "surviving_pixels": 44,
+          "max_delta": 168
+        },
+        "shelf_bob_4": {
+          "surviving_pixels": 40,
+          "max_delta": 179
+        }
+      },
+      "not_all_clock_or_new_floor_acceptance": true
+    },
+    "no_noinput_scheduling_changes": true,
+    "no_pointer_liveness_release_gate_preserved": true
+  },
+  "motion_material_review_risks": {
+    "status": "OBSERVED_SOURCE_ALPHA_AND_MATERIAL_OVERLAPS_REQUIRE_REVIEW_NOT_CONFIRMED_NEW_DEFECT",
+    "central_strip": {
+      "ID": "central_strip",
+      "Width": 376,
+      "Height": 14,
+      "AlphaCounts": {
+        "255": 5264
+      },
+      "Nonzero": 5264,
+      "SHA256": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+      "native_rect_xywh": [
+        700,
+        232,
+        376,
+        14
+      ],
+      "material_partitions_native": [
+        {
+          "plane": "dark inset/glass",
+          "xywh": [
+            700,
+            232,
+            112,
+            14
+          ],
+          "nonzero_alpha_texels": 1568
+        },
+        {
+          "plane": "central frame edge",
+          "xywh": [
+            812,
+            232,
+            28,
+            14
+          ],
+          "nonzero_alpha_texels": 392
+        },
+        {
+          "plane": "wall",
+          "xywh": [
+            840,
+            232,
+            60,
+            14
+          ],
+          "nonzero_alpha_texels": 840
+        },
+        {
+          "plane": "burgundy upright",
+          "xywh": [
+            900,
+            232,
+            92,
+            14
+          ],
+          "nonzero_alpha_texels": 1288
+        },
+        {
+          "plane": "wall",
+          "xywh": [
+            992,
+            232,
+            80,
+            14
+          ],
+          "nonzero_alpha_texels": 1120
+        },
+        {
+          "plane": "divider",
+          "xywh": [
+            1072,
+            232,
+            4,
+            14
+          ],
+          "nonzero_alpha_texels": 56
+        }
+      ],
+      "partition_method": "Exact measured full-alpha texture footprint intersected with authenticated R2 assembly target planes, all current master visually inspected. Named-plane regions are geometric provenance, not an invented physical light fixture or a per-color semantic classifier.",
+      "disposition": "Preserve unchanged first-trial source; parent must review actual material reading. Do not invent a fixture or silently mask/reanchor."
+    },
+    "right_support_pulse": {
+      "ID": "right_support_pulse",
+      "Width": 288,
+      "Height": 236,
+      "AlphaCounts": {
+        "46": 66432,
+        "255": 1536
+      },
+      "Nonzero": 67968,
+      "SHA256": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+      "native_rect_xywh": [
+        1288,
+        168,
+        288,
+        236
+      ],
+      "measured_alpha255": {
+        "Count": 1536,
+        "LocalBBox": [
+          16,
+          216,
+          272,
+          222
+        ],
+        "NativeBBox": [
+          1304,
+          384,
+          1560,
+          390
+        ]
+      },
+      "beyond_lower_unit_right_edge": {
+        "unit_x_end_exclusive": 1532,
+        "bright_tail_xywh": [
+          1532,
+          384,
+          28,
+          6
+        ],
+        "alpha255_texels": 168
+      },
+      "source_planes": "Upper fixture/insets, wall, and lower unit; pulse reaches native404. Proposed raised floor changes material beneath the tail and low-alpha bottom.",
+      "disposition": "Explicit parent material disposition required. Existing alpha and clocks are preserved; no claim that the rectangle or tail is already correct on the new floor."
+    },
+    "atmospheric_ribbons": "Smoke/air motifs may cross the proposed horizon; do not relabel them rigid fixtures.",
+    "first_floor_glint_native_y": 548,
+    "no_animation_mask_JSON_or_timing_edit_in_current_assignment": true
+  },
+  "required_future_acceptance": [
+    "Parent independently reviews brief and source proof before one source generation.",
+    "Fresh guarded E-only preparation from exact committed selected source; original five GD assertions/UIDs preserved, no legacy launcher cleanup.",
+    "Exact candidate background-only27 member package, all source controls/before-after hashes, outside-tight-mask and protected-silhouette proof.",
+    "Actual Base2N+75, original motion98/all24 native-low/RM and48 visibility source-law parity plus fresh actual matched-clock composite/depth evidence.",
+    "All8 actual objects/16 body+adornment masks/selected and unselected labels, Bed feet390..407 distinct from shadow426..435, right legs, no added replay.",
+    "Actual normal/RM/low material review of central strip/right pulse and all current pink bob edges; retain source-only failure limits.",
+    "Original no-pointer animation liveness, actual-clock animation capture and independent populated/animated visual review.",
+    "Scoped commit and required TEST verification owned by parent; no main/NEXT/site mutation in this task."
+  ],
+  "retained_capture": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r3-video-01/evidence/capture/animation_capture.json",
+    "sha256": "38390444d067bd54a6ca826eb1bdab7046b927df405a5af51169cac5ea658f85",
+    "frames": 62,
+    "actual_scene_clock_span": 8.12956566666666,
+    "requested_seconds": 8,
+    "longest_cycle_seconds": 57.7777777777778,
+    "cycle_capped": true,
+    "native_entries": 24,
+    "default_low_entries": 24,
+    "fullapp_RM_stable": true,
+    "native_art_RM_stable": true,
+    "full_cycle_recorded": false
+  },
+  "limits": {
+    "initial_constructed_Base_only": true,
+    "mortgage_payment": false,
+    "rest_transactions": false,
+    "storage_transactions": false,
+    "later_home_progression": false,
+    "saves_or_revisit": false,
+    "browser_execution": false,
+    "new_candidate_generated": false,
+    "new_QA_engine_or_test_jobs": false,
+    "processes_or_profiles_inspected": false,
+    "source_art_or_runtime_modified": false,
+    "production_or_TEST_approval": false
+  },
+  "commits": [],
+  "deployments": [],
+  "blockers": [
+    "Parent review of proposed floor/rug geometry and actual motion-material dispositions before generation."
+  ]
+}

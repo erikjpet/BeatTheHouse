@@ -1,0 +1,170 @@
+{
+  "schema": "bth.kitty_spatial_raw_source/v1",
+  "task_id": "BTH-ENV-SPATIAL-KITTY-001",
+  "status": "EXACT_RAW_PNG_PRESERVED_DECODE_WORKER_STOPPED_AFTER_WRITE",
+  "author": "/root/native_suite_adapter",
+  "generation_mode": "built-in image_gen edit only",
+  "generation_count": 1,
+  "authorization": "Root independently reviewed source master, Amateur and Slow-night actuals and approved one non-active source trial within the accepted bounded stage plan.",
+  "source": {
+    "path": "assets/art/environments/kitty_cat_lounge/background.png",
+    "sha256": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+    "dimensions": [
+      1800,
+      860
+    ],
+    "room_only_seal": "017faffa1f02256046add9e21c2aae3358e2b9508eec15cbac942050f449cfb2",
+    "brief": "docs/art/briefs/kitty_spatial_repair_20261116.md",
+    "brief_sha256": "b043996590bb53a71a09c9a5c2a316f7198025622587e54e94c4f001bcdb0254",
+    "source_audit": "docs/testing/kitty_spatial_source_audit_20261116.json",
+    "source_audit_sha256": "be604008600da11d1e012b28a2b6a41b084b291ba90a32566253e283855b13e9"
+  },
+  "prompt": {
+    "path": "prompt.txt",
+    "sha256": "32632fce7115bb88e12308787fa4da909e67ea393ea1cfe98071c0e75562022f",
+    "bytes": 2333
+  },
+  "edit_target": {
+    "view_image_inspected_current_master_before_edit": true,
+    "first_file_path_call": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/kitty_cat_lounge/background.png",
+      "result": "Validation failure before generation: AbsolutePathBuf deserialized without a base path at line1column2490",
+      "generation_executed": false
+    },
+    "successful_call": {
+      "num_last_images_to_include": 1,
+      "transparent_background": false,
+      "referenced_image": "Most recent just-viewed exact current master",
+      "returned_fields": [
+        "image_url"
+      ],
+      "result_format": "data:image/png;base64"
+    }
+  },
+  "preserved_generated_bytes": {
+    "inert_path": "kitty-spatial-r1.png.b64",
+    "encoded_sha256": "0039b3d7d43eb1079b94bfcd493834a967f115b63879f16502ab9b89f71f1f4f",
+    "encoded_bytes": 2470317,
+    "encoding": "One ASCII base64 line followed by exactly one LF; strict base64.validate=True readback verified.",
+    "decoded_sha256": "aa1078eab763def23c3d8a1b7232413384b5fcc26a86d7008866dcbf857526eb",
+    "decoded_bytes": 1852735,
+    "dimensions": [
+      1815,
+      867
+    ],
+    "PNG_bit_depth": 8,
+    "PNG_color_type": 2,
+    "readback_sha_dimensions_verified_without_file_decode_write": true,
+    "retained_in_functions_store": true,
+    "base64_written_via_supported_tools_apply_patch_AddFile_internal_result": true,
+    "base64_not_printed_or_shell_interpolated": true
+  },
+  "guarded_decoder": {
+    "path": "tools/decode_kitty_spatial_raw.py",
+    "sha256": "532ca2652b9f88f535a7f1d71a7b2f95ac5f2bd387e3961fc212c4ebfd848636",
+    "AST_only_pass": true,
+    "executed_by_author": false,
+    "required_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116",
+    "declared_output": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116/raw_source/kitty-spatial-r1.png",
+    "requires_prepared_storage_layout": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "before_mkdir_and_immediate_before_exclusive_write_gates": true,
+    "requires_exact_encoded_and_decoded_SHA_length_IHDR_and_all_PNG_chunk_CRCs": true,
+    "no_network_children_transforms_or_cleanup": true,
+    "root_closed_capped_Job_gate_still_required": true
+  },
+  "raw_preservation_receipt": {
+    "path": "raw-preservation-receipt.json",
+    "sha256": "a98e9e8c770c2fb50b01c700ea284c8bbf13b303783e06b4710df4f9d6be5642",
+    "status": "EXACT_GENERATED_RAW_PRESERVED_AFTER_POST_WRITE_RECEIPT_GATE_STOP",
+    "raw_E_and_D_PNG_bytes_equal_generated_base64": true,
+    "root_copied_existing_exact_E_bytes_to_fresh_D_source": true,
+    "decode_job": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTYTRIAL-20261116-rawdecode01/evidence/job.json",
+    "decode_job_sha256": "f6ed8c6be02af3551fb5ff2794c2419b2cbc9c394fe6a4cd7415fd3881e220ea",
+    "decode_log_sha256": "3ee3a156d37eaf103d924828814e749527932b1270a477c8eb8309f5ad5704db",
+    "decode_exit_code": 1,
+    "decode_active_at_release": 0,
+    "decode_success_receipt_absent": true,
+    "decode_failure": "After exact PNG write/readback, decoder line132 declared existing output file as a writable directory; maintained validate_layout rejected not_directory.",
+    "decode_retry_or_source_correction": false,
+    "failed_decoder_and_E_output_retained_immutable": true,
+    "this_is_byte_preservation_not_a_successful_QA_phase": true
+  },
+  "Library_identity": {
+    "library_file_id": "libfile_fde3_f-a85d5f2357208191a07d62886e38022f_b2e6deecb030819197ad6510125a1c29",
+    "file_id": "file_00000000aee481fda5488a1c0ba4ff8d",
+    "filename": "kitty-spatial-r1.png",
+    "version": 0,
+    "bytes": 1852735,
+    "created_by_root": true,
+    "client_xattr_applied": false,
+    "client_xattr_failure": "Python os.setxattr unavailable on Windows; no substitute stream or repeat upload."
+  },
+  "local_raw_PNG_materialized": true,
+  "initial_visual_review": {
+    "scope": "Generated inline and actual byte-identical retained E PNG inspected; root also inspected fresh D source. No populated/current native run or finalized donor-pixel trace yet.",
+    "horizontal_deck_now_visible": true,
+    "plank_recession_and_separate_front_edge_visible": true,
+    "framing_dimensions_differ_from_original": true,
+    "surrounding_art_regenerated": true,
+    "whole_generated_master_replacement_forbidden": true,
+    "next_step": "Trace actual preserved local raw pixels, prepare exact bounded assembly mask and source-only recipe, then independent review/tests before any E assembly.",
+    "static_candidate_or_art_approval": false
+  },
+  "geometry_contract": {
+    "max_destination_window_native": [
+      188,
+      390,
+      816,
+      86
+    ],
+    "deck_polygon_native": [
+      [
+        206,
+        392
+      ],
+      [
+        986,
+        392
+      ],
+      [
+        1004,
+        456
+      ],
+      [
+        188,
+        456
+      ]
+    ],
+    "front_fascia_y_half_open": [
+      456,
+      476
+    ],
+    "all_master_rows_from476_preserved": true,
+    "original_counter_all27_motion_textures_full_JSON_index_and_gameplay_anchors_frozen": true,
+    "exact_source_donor_trace_not_yet_finalized": true
+  },
+  "scope": {
+    "raw_non_active_only": true,
+    "engine_runs": 0,
+    "E_writes_by_author": 0,
+    "production_art_written": false,
+    "Git_operations": 0,
+    "TEST_updated": false,
+    "no_competing_trial": true,
+    "no_CLI_fallback": true
+  },
+  "preflight": {
+    "absolute_D_destination_before_first_write": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/kitty-spatial-r1",
+    "destination_directory_and_base64_absent": true,
+    "ordinary_non_reparse_ancestors_observed": true,
+    "no_existing_file_overwritten": true
+  },
+  "remaining_gates": [
+    "Exact raw PNG custody is preserved; failed decode phase remains failed and is never retried or relabeled PASS.",
+    "Local source-pixel trace and exact bounded assembly recipe with independent review/tests.",
+    "Guarded non-active assembly and independent actual art review.",
+    "Source-specific native qualification and TEST release separately."
+  ]
+}

@@ -1,0 +1,15 @@
+Use case: precise-object-edit.
+Asset type: non-active pixel-art room background trial for Beat the House.
+Input image: EDIT TARGET ONLY, the existing Apartment master (1800x860; board900x430 at2x). Do not render game UI or live interaction props.
+
+Primary request: repair only the room's lower wall/floor contact band. Currently the sofa feet, lamp base and kitchen/fridge base end against purple brick, while the timber floor starts too low. Bring one continuous, physically coherent timber floor plane up behind those existing contacts.
+
+Precise intended edit: the horizontal band native y428..492 (board214..246), full width. Move the painted floor horizon from native y492 to about y440 (board220), with a modest continuous skirting at native y428..440. Remove the old lower skirting in this band and continue the existing dark timber floor naturally upward, matching plank direction, grain scale, palette and the original floor at y492. No rectangular pasted patches or abrupt grain/brightness seams. Keep the original pixels below y492 visually unchanged, including the rug.
+
+Keep the original real furniture silhouettes/materials through the band: two compact sofa feet at board[326,210,12,12] and[522,210,12,12], lamp base around board[572,218,40,8], and kitchen/fridge base around boardy226. The new floor must pass behind them and visibly support their bottom contacts. Preserve their positions and compact proportions. No long replacement legs, floating shadows, raised platforms, stairs, plinths or brick rectangles around the bases.
+
+Preserve everything outside that band: the complete sofa and upholstery, skyline/window/crossbars/static cyan lights/curtains/ties and lower trim, geometric sunset print without words, amber lamp stem/shades, two upper kitchen cabinet doors and small handles, sink/faucet, countertop, lower cupboard and fridge, upper room strip and brick material. Preserve the existing room dimensions, framing and camera. The existing lower-left Sleep bed is a live game prop and is ABSENT in this master: do not add a bed, pillow or blanket. Do not add calendar, napkin, bags, boxes, people, pets, plants, dishes, appliances, new furniture or ornaments.
+
+Style: preserve the edit target's crisp2x pixel clusters, plum upholstery and brick, navy twilight glass, restrained cyan/pink rug stripe rhythm, warm amber lamp and dark practical timber. No stochastic grain, smooth repaint, global recolor, new text, labels, arrows, annotations, fixture halos or frozen animation. The kitchen pulse is a separate animated asset and must not be painted into this source.
+
+Return a faithful full-canvas raster edit of the supplied master. This is one bounded source trial, not a redesign or final integration.

@@ -1,0 +1,106 @@
+{
+  "schema": "bth.hidden_spatial_preview_delivery/v1",
+  "recorded_at": "2026-11-16T15:53:21.004249+00:00",
+  "status": "EXACT_NATIVE_EXCERPT_SAVED_TO_PAGE",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "source_commit": "4010535f41e157820d3c06b44cb3d956a1b5946a",
+  "candidate_package_sha256": "508b106419ef299aad27d92f4d54c5c4d1f7e6cf353dff546848ed290a273509",
+  "cohort": "V3_CORE13_ONLY; SAME_CANDIDATE; NOT_FINAL_ACCEPTANCE",
+  "capture_json_sha256": "8c4e8d769ac038b7c67612ad32e17828b168749d62a1b700a95d41a69243e0f2",
+  "encoder_sha256": "c2c9fc4e72e4f8c33a93ef57ff3df3d71fb23d11757978bd0d8cd1413375e1ee",
+  "closed_phases": {
+    "plan": {
+      "phase_result": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDEN-APNG-20261116-v1-plan\\evidence\\phase-result.json",
+      "phase_sha256": "5c831ba65758f1d9bbab181a173875a3449d076c3c981aa95baaaa5d7ffe8d65",
+      "job_sha256": "d1fe4ebae0eb3ee9f3f95b555f78eb08feec1cb1daccf6ae8ac0aafaa764c97a",
+      "job_pid": 20800,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "encode": {
+      "phase_result": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDEN-APNG-20261116-v1-encode\\evidence\\phase-result.json",
+      "phase_sha256": "da8b7d029f4e4178a96899b8cbb98575614731684b8ea61dc7eb0bc96b2f1087",
+      "job_sha256": "67da3c06663b2e46079de7c49decef966e08157d59010f350c3fd0e8056daa16",
+      "job_pid": 32928,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    },
+    "verify": {
+      "phase_result": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDEN-APNG-20261116-v1-verify\\evidence\\phase-result.json",
+      "phase_sha256": "09f3661fa91cfd75065d8b434c1c11e1d2d0d760fca444e10118b67733b7d87f",
+      "job_sha256": "c97e6d926c1edbe6c7ada2fb66ad58ba5c1fc09ef0151c22c2de31a22b60581e",
+      "job_pid": 24300,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      }
+    }
+  },
+  "output": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-HIDDEN-APNG-20261116\\preview_artifacts\\hidden-first75-excerpt-8c4e8d769ac0-900.png",
+    "bytes": 5678948,
+    "sha256": "6271db3cc33eae35934f721cc0a307da71fdf4688cd53fae13cb40af1868a536"
+  },
+  "final_proof": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-HIDDEN-APNG-20261116\\preview_artifacts\\hidden-first75-excerpt-8c4e8d769ac0-900.proof.json",
+  "final_proof_sha256": "3030ff297b4ce3a45c60b8f270736bad32bf2e4acfbe6830f5d33cf3bd44720d",
+  "selected_frames": 75,
+  "original_capture_frames": 152,
+  "complete_original_png_inventory": 461,
+  "all_selected_rgba_exact": true,
+  "canvas_size": [
+    900,
+    430
+  ],
+  "encoded_duration_seconds": 9.8897,
+  "final_frame_delay_ms": 20.0,
+  "page": {
+    "page_id": "page_df3b22937c9c81918ab5c6d759533382",
+    "url": "https://chatgpt.com/space/page_df3b22937c9c81918ab5c6d759533382",
+    "sequence": 1,
+    "reference": "library-file:fde1_bGliZmlsZV94ZjRqdnUwYTdMR0wyckFsakE0TW13_FileDrive_b2e6deecb030819197ad6510125a1c29",
+    "sha256": "6271db3cc33eae35934f721cc0a307da71fdf4688cd53fae13cb40af1868a536",
+    "byte_size": 5678948,
+    "image_block": {
+      "id": "8dac775a-d0f3-4910-ab31-504d3f86d45e",
+      "kind": "markdown",
+      "markdown": "![Hidden spatial trial \u2014 first 75 native frames](library-file:fde1_bGliZmlsZV94ZjRqdnUwYTdMR0wyckFsakE0TW13_FileDrive_b2e6deecb030819197ad6510125a1c29)",
+      "hash": "e08631e11af9caed4cd12d8f37a97de4f7c22dc7da1ea495ecc43848fe77839e",
+      "metadata": {}
+    }
+  },
+  "page_readback_confirmed": true,
+  "page_playback_observed": false,
+  "browser_acceptance": "NOT_RUN",
+  "final_art_approval": false,
+  "production_art_written": false,
+  "test_updated": false,
+  "limits": "Preview core13 is not the stoppedV4 or newcontinuation final acceptance. All original frames/source unchanged; no FFmpeg/browser/process-denial workaround."
+}

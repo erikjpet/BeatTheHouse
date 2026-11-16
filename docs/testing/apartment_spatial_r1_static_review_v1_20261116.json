@@ -1,0 +1,696 @@
+{
+  "schema": "bth.apartment_spatial_static_review/v1",
+  "task_id": "BTH-ENV-SPATIAL-APARTMENT-001",
+  "parent_task_id": "BTH-ENV-SPATIAL-001",
+  "room": "apartment",
+  "observed_date": "2026-11-16",
+  "reviewer": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "review_type": "INDEPENDENT_ACTUAL_CANDIDATE_PIXEL_MATERIAL_AND_SEAM_REVIEW",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "review_scope": "FLOOR_CONTACT_REPAIR_ONLY",
+  "native_trial_approved": true,
+  "production_art_approved": false,
+  "production_activation_approved": false,
+  "whole_room_spatial_approved": false,
+  "test_updated": false,
+  "room_task_closed": false,
+  "kitchen_strip_material_disposition": "OPEN; existing cabinet-face pulse retained unchanged. This floor-only static GO does not close Apartment or authorize production art.",
+  "authorization": "Root requested independent actual candidate review and this one new absolute D review document; no QA jobs, engine, imports, E writes, cleanup, Git or active-art edits by reviewer.",
+  "independence": {
+    "assembler_and_source_packet_author": "/root/audit_spatial_handoff",
+    "guarded_execution_owner": "/root",
+    "reviewer_authored_assembler": false,
+    "reviewer_ran_assembler_or_tests": false
+  },
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "candidate_root": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/candidate_sources/apartment-spatial-r1-assembled-v1",
+  "refs": {
+    "assembly": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01/evidence/apartment-spatial-r1-assembly.json",
+      "sha256": "8fba4e50f9451232a293f7f0c39a5306bddf1c6ae5ec6f16975081a7e8a95b15",
+      "bytes": 12049
+    },
+    "ledger": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\evidence\\apartment-spatial-r1-pixel-provenance.json",
+      "sha256": "7fe16b558c28f7bbac21abe1fa3698b82b82201ade66f201063da3771b77ad25",
+      "bytes": 2403086
+    },
+    "recipe": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_apartment_spatial_candidate.py",
+      "sha256": "60010ae1c4637e65009b6b66dc7b1aff5e3a5387d28573a9814a489b55eb6f92",
+      "bytes": 27620
+    },
+    "tests": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_apartment_spatial_candidate.py",
+      "sha256": "2a7dae3589a214362ebdaace660dfa6c5eb468bbd0da9aabc5c815fb186ce80a",
+      "bytes": 12785
+    },
+    "raw_D": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png",
+      "sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+      "bytes": 1817231
+    },
+    "raw_E": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/raw_source/apartment-spatial-r1.png",
+      "sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+      "bytes": 1817231
+    },
+    "b64": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png.b64",
+      "sha256": "68ad91d4f97fd6db31fe5e8b13da5d3b87d113966039362f8d99f96bfc4877c7",
+      "bytes": 2422977
+    },
+    "raw_receipt": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/raw-preservation-receipt.json",
+      "sha256": "bb0208c65218cde62ecec4c83d5e2845c6fc0d4204d1db7536fa939906578d38",
+      "bytes": 3968
+    },
+    "raw_provenance": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/provenance.json",
+      "sha256": "25dd79abed560f1527d9890dd69720fad2ace838001dbd2941d38eaa8324f92a",
+      "bytes": 4704
+    },
+    "plan": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/assembly-plan.json",
+      "sha256": "597461fb253d18d693e54ebd849d9496ca958587760be5c161038795e77fc911",
+      "bytes": 9348
+    },
+    "context": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_metadata.json",
+      "sha256": "a553c9031b9cbae07690031b4e1a7f5c7811902c5ec9679faa4a05ba36b3e1c6",
+      "bytes": 268455
+    },
+    "index": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/data/art/environments/index.json",
+      "sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+      "bytes": 459
+    },
+    "baseline_ignore": {
+      "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116\\source_baseline/.gdignore",
+      "sha256": "3a6cac5b129815cb5b64016bf65f68539904edbb75f2c74591ee939b6ca00b37",
+      "bytes": 81
+    },
+    "parent_ignore": {
+      "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116\\candidate_sources/.gdignore",
+      "sha256": "3a6cac5b129815cb5b64016bf65f68539904edbb75f2c74591ee939b6ca00b37",
+      "bytes": 81
+    }
+  },
+  "producer_receipts": [
+    {
+      "id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01",
+      "hashes": {
+        "job.json": "c8037c8705b6d83bf57cf8a48a120f22ad7d565f774c21f2471ebe82db905c62",
+        "worker.log": "8cd34041537f65f088f2f636957b5a0c3d4a7dd967c9558bccdd4eaa28ee0efd",
+        "storage-manifest.json": "3fee8252339f3b5a6b9ca70ada2dfdc4a87e2309ea55630043cac2ad23955c9f",
+        "launch-claim.json": "dec7eb3e2f65c00865ac2fcb8885454ee50c538881dd5b4cdc548c36f39b9a99"
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_apartment_spatial_candidate.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116"
+      ],
+      "pid": 43076,
+      "exit": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "log_error": null,
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_bound": true,
+      "embedded_storage_equal": true,
+      "min_before_job": 69062295552,
+      "min_before_child": 69062287360,
+      "storage": {
+        "schema": "bth-qa-storage/v1",
+        "run_id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01",
+        "token": "99e8e625381afa712c9dd2d9fcf3c358",
+        "prepared": true,
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "required_bytes": 25769803776,
+        "paths": {
+          "root": "E:\\CodexQA\\BTH",
+          "workspace": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116",
+          "run_root": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01",
+          "profile": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\profile",
+          "temp": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\temp",
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\evidence",
+          "appdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\appdata",
+          "localappdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\localappdata",
+          "home": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\home",
+          "cache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\cache",
+          "save_dir": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\save_dir",
+          "pycache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\pycache"
+        },
+        "manifest_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01\\evidence\\storage-manifest.json"
+      },
+      "log_result": "NON_ACTIVE_CANDIDATE_READY_FOR_INDEPENDENT_AUDIT; exact8fba report and429c roomseal"
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01",
+      "hashes": {
+        "job.json": "099f22fdb509d638445d0e91968227a73de51ade0a81d639ddc9d69688de821f",
+        "worker.log": "477e891a4a434a846f06a4a5f84ad7d3be72b02aba400ae975e18ebcc3fc3952",
+        "storage-manifest.json": "fbfc9216646a4a9bab8b48ea44386935e8c66b693a0dbae562c9fa7f88172c51",
+        "launch-claim.json": "48c03fc56f799a95adfb40fe691317bdaf7e91d4e55ecb10416d9346242803c0"
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools",
+        "-p",
+        "test_assemble_apartment_spatial_candidate.py"
+      ],
+      "pid": 7020,
+      "exit": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "log_error": null,
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_bound": true,
+      "embedded_storage_equal": true,
+      "min_before_job": 69062311936,
+      "min_before_child": 69062303744,
+      "storage": {
+        "schema": "bth-qa-storage/v1",
+        "run_id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01",
+        "token": "5cd3614d8170cc73400e7cc5e10b302b",
+        "prepared": true,
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "required_bytes": 25769803776,
+        "paths": {
+          "root": "E:\\CodexQA\\BTH",
+          "workspace": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENT-QUAL-20261116",
+          "run_root": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01",
+          "profile": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\profile",
+          "temp": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\temp",
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\evidence",
+          "appdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\appdata",
+          "localappdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\localappdata",
+          "home": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\home",
+          "cache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\cache",
+          "save_dir": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\save_dir",
+          "pycache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\pycache"
+        },
+        "manifest_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01\\evidence\\storage-manifest.json"
+      },
+      "log_result": "Ran27tests in7.309s; OK"
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01",
+      "hashes": {
+        "job.json": "9bd2f9df26c06684b64c3f2e3768b1b90697cd21e211f52ef45bab1e5106ae86",
+        "worker.log": "626e682a9048773debd42d27c012efd73710b2094379f1ed48c81be42edb2977",
+        "storage-manifest.json": "51cdf67674736448cc541be14e5a144f94d6be126f86891b219b83752232636d",
+        "launch-claim.json": "e1948253ed9d2197d189756b084f03312c8a32f6547ce205dd7c2a9521404c17"
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/decode_apartment_spatial_raw.py",
+        "--source-root",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "--workspace",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116",
+        "--output",
+        "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/raw_source/apartment-spatial-r1.png"
+      ],
+      "pid": 43312,
+      "exit": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "error": null,
+      "cleanup_errors": [],
+      "log_error": null,
+      "log_truncated": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_bound": true,
+      "embedded_storage_equal": true,
+      "min_before_job": 69122056192,
+      "min_before_child": 69122015232,
+      "storage": {
+        "schema": "bth-qa-storage/v1",
+        "run_id": "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01",
+        "token": "a523f1638515d6627a2ee149486c70e1",
+        "prepared": true,
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "required_bytes": 25769803776,
+        "paths": {
+          "root": "E:\\CodexQA\\BTH",
+          "workspace": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116",
+          "run_root": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01",
+          "profile": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\profile",
+          "temp": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\temp",
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\evidence",
+          "appdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\appdata",
+          "localappdata": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\localappdata",
+          "home": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\home",
+          "cache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\cache",
+          "save_dir": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\save_dir",
+          "pycache": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\pycache"
+        },
+        "manifest_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01\\evidence\\storage-manifest.json"
+      },
+      "log_result": "EXACT_GENERATED_RAW_PNG_MATERIALIZED; own862950 receipt/source unchanged"
+    }
+  ],
+  "producer_receipt_assessment": {
+    "all_three_actual_jobs_closed_exit0_active0": true,
+    "assignment_before_execution": true,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "no_timeout_cleanup_log_or_supervisor_error": true,
+    "prepared_manifest_claim_job_binding": true,
+    "storage_expected_write_bytes": 4294967296,
+    "storage_reserve_bytes": 21474836480,
+    "storage_required_bytes": 25769803776,
+    "all_declared_QA_paths_on_E": true,
+    "independent_job_process_inspection": false
+  },
+  "inventory": {
+    "actual_inventories": [
+      {
+        "name": "production",
+        "count": 16,
+        "seal": "546a482bc114b1a8d0db0400be9bd0b6df7e0837ad49bc0aeac3cf1c82586753",
+        "mismatches": [],
+        "physical_files": null,
+        "reparses": null
+      },
+      {
+        "name": "baseline",
+        "count": 16,
+        "seal": "546a482bc114b1a8d0db0400be9bd0b6df7e0837ad49bc0aeac3cf1c82586753",
+        "mismatches": [],
+        "physical_files": 17,
+        "reparses": 0
+      },
+      {
+        "name": "candidate",
+        "count": 16,
+        "seal": "429cbf7fa9e85f2c77612fcb9ee107dd9d28e88e4158c71b1a8103922013a7d6",
+        "mismatches": [],
+        "physical_files": 16,
+        "reparses": 0
+      }
+    ],
+    "seal_algorithm": "SHA256 of sorted path + space + SHA256 joined by LF; no trailing LF",
+    "room_members": 16,
+    "raw_PNGs": 15,
+    "animation_PNGs": 14,
+    "full_room_JSON": 1,
+    "global_index_separate": true,
+    "changed_members": [
+      "assets/art/environments/apartment/background.png"
+    ],
+    "source_and_candidate_hashes": {
+      "candidate": {
+        "assets/art/environments/apartment/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "assets/art/environments/apartment/anim/room_ribbon_1.png": "19e257e358635ceaf248747dc4bf378b2e1271e98359c2bb0e2416005125ac5c",
+        "assets/art/environments/apartment/anim/room_ribbon_0.png": "730e04be2d2c3639746bfedff7e85645fc3cad570ac174d716c94ecc1dd323c7",
+        "assets/art/environments/apartment/anim/kitchen_strip.png": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+        "assets/art/environments/apartment/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "assets/art/environments/apartment/anim/window_pulse.png": "9a80ff9347e6fb44cb9dba58ffde40c923169661d636145273e89abfae44d60e",
+        "assets/art/environments/apartment/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+        "assets/art/environments/apartment/anim/room_ribbon_3.png": "d1a6c42388bacade61f0155dfc4efd53ef1ff56bb969ed64685b5d3cf7b3a0b4",
+        "assets/art/environments/apartment/anim/room_ribbon_4.png": "9386f643045668fde1a419f1b9a26d111513d619da90dd32c775006c27a94b0f",
+        "data/art/environments/apartment.json": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9",
+        "assets/art/environments/apartment/anim/room_ribbon_2.png": "5a0ca53858b0e444f7e2a73adbe5e9a62fd9f15c8db4c30aab6da52980941edb",
+        "assets/art/environments/apartment/background.png": "686990fa7fd73b7f6af112eb76a43e98c11e2f7ea55e7d53f9edad66e4af4ef4",
+        "assets/art/environments/apartment/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "assets/art/environments/apartment/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "assets/art/environments/apartment/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "assets/art/environments/apartment/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b"
+      },
+      "production": {
+        "assets/art/environments/apartment/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "assets/art/environments/apartment/anim/room_ribbon_1.png": "19e257e358635ceaf248747dc4bf378b2e1271e98359c2bb0e2416005125ac5c",
+        "assets/art/environments/apartment/anim/room_ribbon_0.png": "730e04be2d2c3639746bfedff7e85645fc3cad570ac174d716c94ecc1dd323c7",
+        "assets/art/environments/apartment/anim/kitchen_strip.png": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+        "assets/art/environments/apartment/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "assets/art/environments/apartment/anim/window_pulse.png": "9a80ff9347e6fb44cb9dba58ffde40c923169661d636145273e89abfae44d60e",
+        "assets/art/environments/apartment/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+        "assets/art/environments/apartment/anim/room_ribbon_3.png": "d1a6c42388bacade61f0155dfc4efd53ef1ff56bb969ed64685b5d3cf7b3a0b4",
+        "assets/art/environments/apartment/anim/room_ribbon_4.png": "9386f643045668fde1a419f1b9a26d111513d619da90dd32c775006c27a94b0f",
+        "data/art/environments/apartment.json": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9",
+        "assets/art/environments/apartment/anim/room_ribbon_2.png": "5a0ca53858b0e444f7e2a73adbe5e9a62fd9f15c8db4c30aab6da52980941edb",
+        "assets/art/environments/apartment/background.png": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+        "assets/art/environments/apartment/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "assets/art/environments/apartment/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "assets/art/environments/apartment/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "assets/art/environments/apartment/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b"
+      },
+      "baseline": {
+        "assets/art/environments/apartment/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "assets/art/environments/apartment/anim/room_ribbon_1.png": "19e257e358635ceaf248747dc4bf378b2e1271e98359c2bb0e2416005125ac5c",
+        "assets/art/environments/apartment/anim/room_ribbon_0.png": "730e04be2d2c3639746bfedff7e85645fc3cad570ac174d716c94ecc1dd323c7",
+        "assets/art/environments/apartment/anim/kitchen_strip.png": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+        "assets/art/environments/apartment/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "assets/art/environments/apartment/anim/window_pulse.png": "9a80ff9347e6fb44cb9dba58ffde40c923169661d636145273e89abfae44d60e",
+        "assets/art/environments/apartment/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+        "assets/art/environments/apartment/anim/room_ribbon_3.png": "d1a6c42388bacade61f0155dfc4efd53ef1ff56bb969ed64685b5d3cf7b3a0b4",
+        "assets/art/environments/apartment/anim/room_ribbon_4.png": "9386f643045668fde1a419f1b9a26d111513d619da90dd32c775006c27a94b0f",
+        "data/art/environments/apartment.json": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9",
+        "assets/art/environments/apartment/anim/room_ribbon_2.png": "5a0ca53858b0e444f7e2a73adbe5e9a62fd9f15c8db4c30aab6da52980941edb",
+        "assets/art/environments/apartment/background.png": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+        "assets/art/environments/apartment/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "assets/art/environments/apartment/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "assets/art/environments/apartment/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "assets/art/environments/apartment/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b"
+      }
+    },
+    "manifest": {
+      "low_count": 14,
+      "counter_count": 0,
+      "native_count": 14
+    },
+    "all14_motion_PNGs_and_full_JSON_index_exact": true,
+    "no_counter_replay_added": true,
+    "baseline_physical_files": 17,
+    "baseline_auxiliary": "Sole81-byte.gdignore3a6cac5b129815cb5b64016bf65f68539904edbb75f2c74591ee939b6ca00b37",
+    "candidate_physical_files": 16,
+    "no_reparse_descendants": true
+  },
+  "raw_source_custody": {
+    "D_E_and_in_memory_decoded_B64_sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+    "decoded_bytes": 1817231,
+    "B64_exactly_one_LF_no_CR": true,
+    "actual_decoder_own_receipt_sha256": "862950fd6491376ea95a9394ddb6c75902cc8279867b88a9fa35cf8fced5edc0",
+    "decoder_status": "EXACT_GENERATED_RAW_PNG_MATERIALIZED",
+    "decode_active_source_unchanged": true,
+    "historical_Kitty_failure_not_retried_or_relabelled": true,
+    "Library_identity": "Retained root receiptbb0208... separately records Library file/version identity; reviewer did not upload or query Library."
+  },
+  "actual_decoded_pixel_proof": {
+    "method": "Read-only System.Drawing.Bitmap LockBits(Format32bppArgb,ReadOnly), Marshal.Copy to memory. Compared UInt32 BGRA values for every writable/protected texel and every donor; for opaque PNGs the exact BGRA comparison is equivalent to exact RGBA. Contiguous outside ranges compared by SHA256. No project/helper import or image/output write.",
+    "original_dims": [
+      1800,
+      860
+    ],
+    "candidate_dims": [
+      1800,
+      860
+    ],
+    "raw_dims": [
+      1815,
+      867
+    ],
+    "actual_outside_top_and_492plus_equal": [
+      true,
+      true
+    ],
+    "protected_material_pixels": 13048,
+    "protected_RGBA_mismatches": 0,
+    "expected_writable_clusters": 25538,
+    "actual_unique_ledger_clusters": 25538,
+    "native_writable_pixels": 102152,
+    "donor_mapping_errors": 0,
+    "donor_error_examples": [],
+    "donor_cluster_counts": {
+      "raw_floor": 21260,
+      "original_floor_join": 526,
+      "raw_skirting": 3752
+    },
+    "ledger_RGBA_color_mismatches": 0,
+    "actual_candidate_2x2_donor_RGBA_mismatches": 0,
+    "actual_changed_native_pixels": 102152,
+    "original_floor_join_490_491_to492_nonrug_mismatches": 0,
+    "outside_compared_native_pixels": 1445848,
+    "closed_floor_band_native_half_open": [
+      0,
+      428,
+      1800,
+      64
+    ],
+    "skirting_native_y_half_open": [
+      428,
+      440
+    ],
+    "floor_native_y_half_open": [
+      440,
+      492
+    ],
+    "fixture_preservation_native_runs": [
+      {
+        "y": [
+          428,
+          432
+        ],
+        "runs": [
+          [
+            652,
+            676
+          ],
+          [
+            1044,
+            1068
+          ],
+          [
+            1178,
+            1192
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      },
+      {
+        "y": [
+          432,
+          444
+        ],
+        "runs": [
+          [
+            652,
+            676
+          ],
+          [
+            1044,
+            1068
+          ],
+          [
+            1148,
+            1224
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      },
+      {
+        "y": [
+          444,
+          452
+        ],
+        "runs": [
+          [
+            1148,
+            1224
+          ],
+          [
+            1252,
+            1698
+          ]
+        ]
+      }
+    ],
+    "full_generated_master_replacement": false,
+    "interpolation_or_RGB_transform": false,
+    "alpha_or_motion_boost": false
+  },
+  "donor_and_boundary_assessment": {
+    "actual_unique_clusters": 25538,
+    "actual_2x2_exact_donors": true,
+    "raw_skirting_clusters": 3752,
+    "raw_floor_clusters": 21260,
+    "original_floor_join_clusters": 526,
+    "raw_skirting_source_rows": [
+      434,
+      436,
+      438,
+      440,
+      444,
+      446
+    ],
+    "raw_skirting_quiet_material_scope": "Normalized center x; raw580..1729 excluded and remapped to explicit quiet sourcex modulo512. This is a local material quilt, not a claimed wall/floor period.",
+    "raw_floor_source_rows_half_open": [
+      448,
+      494
+    ],
+    "raw_support_or_fringe_rejection_ROIs": [
+      [
+        640,
+        420,
+        68,
+        38
+      ],
+      [
+        1038,
+        420,
+        72,
+        38
+      ],
+      [
+        1144,
+        420,
+        100,
+        40
+      ],
+      [
+        1248,
+        420,
+        470,
+        40
+      ]
+    ],
+    "donors_stay_outside_these_raw_ROIs": true,
+    "raw_rug494plus_never_sampled": true,
+    "narrow_original_join_target_y": [
+      490,
+      492
+    ],
+    "narrow_original_join_source_y": 492,
+    "narrow_original_join_x_runs": [
+      [
+        0,
+        520
+      ],
+      [
+        1268,
+        1800
+      ]
+    ],
+    "rug_x520_to1268_not_copied_upward": true,
+    "all_original_rows492plus_unchanged": true,
+    "sofa_black_soles442_443_preserved": true,
+    "lamp_cabinet_black_soles450_451_preserved": true,
+    "old_brick_mortar_or_shadow_fringe_not_retained_as_fixture_rectangles": true,
+    "classification_limit": "Material runs and exposed raw donors reviewed against actual original/raw/candidate pixels and visible fixture shapes; no new source semantic authority or universal route/clearance claim."
+  },
+  "personal_visual_inspection": {
+    "method": "view_image of actual local original1800x860, assembled candidate1800x860 and generatedraw1815x867, after actual file hash readback.",
+    "images": [
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/apartment/background.png",
+        "sha256": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44"
+      },
+      {
+        "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/candidate_sources/apartment-spatial-r1-assembled-v1/assets/art/environments/apartment/background.png",
+        "sha256": "686990fa7fd73b7f6af112eb76a43e98c11e2f7ea55e7d53f9edad66e4af4ef4"
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png",
+        "sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9"
+      }
+    ],
+    "findings": [
+      "The new skirting/floor boundary lets the two complete compact sofa feet reach the floor; their original material and dark sole rows remain attached.",
+      "The lamp pedestal/base and cabinet/fridge lower frame meet the same coherent floor without surrounding preserved brick rectangles.",
+      "Floor direction, grain scale and narrow source-to-original join look coherent at native master scale. No obvious new rectangular patch boundary or unsupported raised platform was observed.",
+      "The old rug top/side join stays at its original coordinates; its pixels were not copied upward into the new floor.",
+      "Window, curtains, sofa body, lamp/cabinet above the bounded trace and all original lower floor/rug remain visually and numerically unchanged.",
+      "The kitchen pulse remains the pre-existing cabinet-face practical-alignment issue; it has not been resolved or silently baked into this floor repair."
+    ],
+    "new_fixture_or_replay_added": false,
+    "whole_room_or_fresh_populated_visual_approval": false
+  },
+  "retained_evidence": {
+    "Base_context_sha256": "a553c9031b9cbae07690031b4e1a7f5c7811902c5ec9679faa4a05ba36b3e1c6",
+    "typed_mask_count": 14,
+    "typed_mask_seal": "b80be5f6b0259aef03ca636d75e527e53555d3d5a15d3ab574a29bbf1ad56635",
+    "typed_mask_hash_mismatches": [],
+    "scope": "Historical Base7/14 typed body/adorn masks authenticated as source custody only; not a fresh candidate-populated/native/label/visibility pass.",
+    "physical_feet_vs_live_body_shadow_classification_not_claimed": true
+  },
+  "required_remaining_gates": [
+    "Source-specific fresh native qualification on exact candidate16 and exact committed production source after canonical metadata/UID admission.",
+    "Actual Base7 geometry/publication/selected labels and all14 body/adorn source paints; fresh candidate labels, Sleep bed and all live object clearances.",
+    "All14 unchanged normal/default-low motifs, actual simulated-low if separately labelled, Reduce Motion, original autonomous/no-pointer liveness, real placement clock/redraw liveness and honest actual-clock capture.",
+    "Separate explicit kitchen_strip physical-material disposition; floor-only native success cannot close the whole-room spatial objective.",
+    "Independent final native/art acceptance and scoped commit before any TEST build/served identity qualification. No main/NEXT changes authorized."
+  ],
+  "limits": {
+    "fresh_engine_or_native_trial_run_by_reviewer": false,
+    "whole_room_spatial_closure": false,
+    "transactions_rent_rest_storage_work_outcomes": false,
+    "save_or_revisit": false,
+    "browser_or_Web": false,
+    "complete_long_cycle": false,
+    "gameplay_coordinates_modified": false,
+    "PNG_or_JSON_modified_by_reviewer": false,
+    "QA_storage_or_profile_written_by_reviewer": false
+  },
+  "review_document_prewrite": {
+    "prewrite_utc": "2026-11-16T15:53:34.7075200Z",
+    "target": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/apartment_spatial_r1_static_review_v1_20261116.json",
+    "target_absent": true,
+    "wrong_main_target": "D:/Projects/Beat-The-House/docs/testing/apartment_spatial_r1_static_review_v1_20261116.json",
+    "wrong_main_absent": true,
+    "ordinary_ancestors": [
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+      "D:\\Projects\\Beat-The-House\\.tmp",
+      "D:\\Projects\\Beat-The-House",
+      "D:\\Projects",
+      "D:\\"
+    ],
+    "b64_decoded_sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+    "b64_decoded_bytes": 1817231,
+    "b64_LFs": 1,
+    "b64_CRs": 0,
+    "actual_decode_own_receipt_sha256": "862950fd6491376ea95a9394ddb6c75902cc8279867b88a9fa35cf8fced5edc0",
+    "decode_status": "EXACT_GENERATED_RAW_PNG_MATERIALIZED",
+    "own_output_sha": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+    "own_active_source_unchanged": true,
+    "historical_kitty_failure_not_retried": true
+  }
+}

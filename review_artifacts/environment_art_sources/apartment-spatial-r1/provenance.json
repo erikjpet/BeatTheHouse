@@ -1,0 +1,98 @@
+{
+  "schema": "bth.apartment_spatial_source_trial/v1",
+  "task_id": "BTH-ENV-SPATIAL-APARTMENT-001",
+  "room": "apartment",
+  "owner": "/root/audit_spatial_handoff",
+  "status": "RAW_PRESERVED_D_E_LIBRARY_ASSEMBLY_SOURCE_PENDING_REVIEW",
+  "initial_transfer_status_preserved": "RAW_B64_PRESERVED_NON_ACTIVE_ASSEMBLY_PENDING",
+  "authorization": "Root approved one non-active source trial after source audit bfe9b2019669e071d8e43b926dbc7cfcabe2a4b8248b639e88a9f3569186d1e0; no art activation or runtime.",
+  "source": {
+    "path": "assets/art/environments/apartment/background.png",
+    "sha256": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+    "size": [
+      1800,
+      860
+    ]
+  },
+  "prompt_sha256": "a739a721850b6aa83464d159141cbaa2c7164f32a936cb660c2419ab4ca81345",
+  "mode": "BUILTIN_IMAGE_GEN_EDIT_ONLY",
+  "intended_native_repair_band": [
+    0,
+    428,
+    1800,
+    64
+  ],
+  "intended_floor_horizon_native_y": 440,
+  "gameplay_geometry_changed": false,
+  "production_art_written": false,
+  "qa_launched": true,
+  "qa_scope": "Root's guarded exact-byte raw decoder only; no assembly, engine or native campaign from this source author.",
+  "test_updated": false,
+  "raw_result_preserved": true,
+  "attempt_history": [
+    {
+      "attempt": 1,
+      "status": "PRE_GENERATION_ARGUMENT_DESERIALIZATION_FAILURE",
+      "error": "AbsolutePathBuf deserialized without a base path at line 1 column 2890",
+      "requested_reference": "Windows D:/ local edit target",
+      "generation_started": false,
+      "resolution": "Reload the exact master through view_image and use its single recent conversation image as the edit target; no CLI fallback or new source."
+    }
+  ],
+  "successful_generation_count": 1,
+  "reference_mechanism": "Exact source master reloaded with view_image; one most recent conversation image",
+  "result": {
+    "representation": "data:image/png;base64",
+    "png_sha256": "547e61e06a73c0e9e49502280fe5302bbe1243e8920dea3e2d23802f17c9d2a9",
+    "png_bytes": 1817231,
+    "width": 1815,
+    "height": 867,
+    "all_png_chunk_crcs_valid": true,
+    "chunks": [
+      "IHDR",
+      "caBX",
+      "IDAT",
+      "IEND"
+    ],
+    "b64_sha256": "68ad91d4f97fd6db31fe5e8b13da5d3b87d113966039362f8d99f96bfc4877c7",
+    "b64_bytes": 2422977,
+    "one_successful_generation": true,
+    "b64_path": "review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png.b64",
+    "project_png_materialized": true,
+    "project_png_path": "review_artifacts/environment_art_sources/apartment-spatial-r1/apartment-spatial-r1.png",
+    "root_preservation_receipt": "review_artifacts/environment_art_sources/apartment-spatial-r1/raw-preservation-receipt.json",
+    "root_preservation_receipt_sha256": "bb0208c65218cde62ecec4c83d5e2845c6fc0d4204d1db7536fa939906578d38"
+  },
+  "inspection": {
+    "raw_returned_image_viewed": true,
+    "observation": "Raw trial visibly raises the continuous floor behind sofa feet, lamp and kitchen base. Output is1815x867 and surrounding art was regenerated; no full-master replacement or pixel-exact outside-band claim. Exact bounded assembly and independent populated/clearance/animation review remain pending.",
+    "approved_for_integration": false
+  },
+  "materialization_policy": "Root's corrected guarded E decoder completed with4GiB+20GiB and directory-parent gates. Preserve exact B64/D/E PNG and historical Kitty post-write failure; no repeated generation, cleanup, moves, deletion or CLI image fallback.",
+  "root_raw_decode": {
+    "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01/evidence",
+    "decoder_sha256": "0f55f8083928764c2243e71aa162b35282e45d6fbe3aa4ee44d78fecf52dd376",
+    "job_sha256": "9bd2f9df26c06684b64c3f2e3768b1b90697cd21e211f52ef45bab1e5106ae86",
+    "own_receipt_sha256": "862950fd6491376ea95a9394ddb6c75902cc8279867b88a9fa35cf8fced5edc0",
+    "pid": 43312,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "source_author_executed": false
+  },
+  "Library": {
+    "status": "succeeded",
+    "library_file_id": "libfile_fde3_f-f4070ee6c9b88191a544f0a07a00f101_b2e6deecb030819197ad6510125a1c29",
+    "file_id": "file_000000009c9c81fdae1bb9634b6d3e07",
+    "version": 0,
+    "Windows_xattr_available": false,
+    "reupload_performed": false
+  },
+  "assembly_source_plan": {
+    "path": "review_artifacts/environment_art_sources/apartment-spatial-r1/assembly-plan.json",
+    "sha256": "597461fb253d18d693e54ebd849d9496ca958587760be5c161038795e77fc911",
+    "status": "SOURCE_ONLY_PENDING_ROOT_REVIEW_AND_GUARDED_TESTS",
+    "candidate_executed": false,
+    "kitchen_strip_material_disposition": "OPEN",
+    "room_or_parent_closed": false
+  }
+}
