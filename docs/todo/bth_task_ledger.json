@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T10:45:29.476232+00:00",
+  "updated_at": "2026-11-16T10:47:08.913702+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -5043,6 +5043,12 @@
           ]
         },
         {
+          "sha": "46a6c67dbf8d54f9e3bf5d898d1b756aeb8b7279",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
+        },
+        {
           "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
@@ -5158,7 +5164,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T10:45:29.476232+00:00"
+      "updated_at": "2026-11-16T10:47:08.913702+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39379,8 +39385,14 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
+      "state": "complete",
       "commits": [
+        {
+          "sha": "46a6c67dbf8d54f9e3bf5d898d1b756aeb8b7279",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
+        },
         {
           "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
           "evidence": [
@@ -39406,7 +39418,7 @@
         "Pursue reachable normal collection settlement and persistence; earn optional Count Corridor prerequisite only through actual eligible debt settlement before play. Record gates honestly; do not manufacture markers or claim browser/human pacing."
       ],
       "acceptance_scope": "Native normal-control continuation of recovered broader Crew objective; meaningful reachable job/route prerequisite behavior and cold persistence. Optional Corridor acceptance requires actually earned Collector settlement plus Knucklesassociate, before Count play samples the marker. Browser/WASM remains restricted.",
-      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
+      "status": "NATIVE_COLLECTION_COURT_CORRIDOR_COMPLETE",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39419,7 +39431,7 @@
           "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
         }
       ],
-      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
+      "next_action": "Preserve the genuine collection/Court/Corridor ending and reward checkpoints. Bounded native route complete; broader parent/sidebar remain Open for actual browser/WASM acceptance, route balance and human pacing. Respect the browser-profile restriction.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39428,7 +39440,7 @@
         "observed_at": "2026-11-16T07:49:13.948778+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T10:45:29.476232+00:00"
+      "updated_at": "2026-11-16T10:47:08.913702+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
@@ -43306,6 +43318,12 @@
           ]
         },
         {
+          "sha": "46a6c67dbf8d54f9e3bf5d898d1b756aeb8b7279",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
+        },
+        {
           "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
@@ -43411,7 +43429,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T10:45:29.476232+00:00"
+      "updated_at": "2026-11-16T10:47:08.913702+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

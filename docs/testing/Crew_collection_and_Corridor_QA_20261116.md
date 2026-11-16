@@ -132,4 +132,6 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-cr21-261116 | `fe9d212a` | 13/13 | `04940bf606497b18edeffc40e14672a4ae10c29330d6a3eb21a56e92ebe5c1a0` |
 | crew-sidebar-cr22-261116 | `fe9d212a` | 13/13 | `f7bd0d8e43982595905b12fdef93d210fd0ee3ae76df4d88146a137a621b71c4` |
 
-Total **417/417** in 44 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collection-record7-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collection-record7-261116\evidence\reconciliation.json`.
+Total **417/417** in 44 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-corridor-finish-accept1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-corridor-finish-accept1-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `46a6c67dbf8d54f9e3bf5d898d1b756aeb8b7279`. This bounded native collection/Court/Corridor acceptance is Complete through natural Clean Sweep, once-only1150payout, reward claim and cold persistence. Broader Crew/browser/route-balance/human-pacing coverage remains Open; no Web runtime or visual acceptance is claimed.
