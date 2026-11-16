@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:14:14.595103+00:00",
+  "updated_at": "2026-11-16T11:16:16.518384+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -5060,6 +5060,12 @@
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -5171,7 +5177,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T11:14:14.595103+00:00"
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39294,8 +39300,15 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -39309,7 +39322,7 @@
         "Observe existing NEXT identity and immutable served assets at or after9b9d13ae; no browser or watcher/export fallback."
       ],
       "acceptance_scope": "Bounded native adverse collection and post-miss recovery routes, real debt-array invariants, once-only consequences and cold persistence. Broader route balance, human pacing and browser/WASM remain Open.",
-      "status": "NATIVE_ABANDONMENT_REPLACEMENT_VERIFIED_NEXT_9B9D_BROWSER_OPEN",
+      "status": "NATIVE_ABANDONMENT_REPLACEMENT_COMPLETE_NEXT_9B9D_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39322,7 +39335,7 @@
           "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
         }
       ],
-      "next_action": "Preserve abandoned collection ar1/ar2 (163cash/92reputation/two duties), successful replacement ar5/ar6 (177cash/81reputation/one duty), and active duplicate-accept guard ar7. Bounded native routes pass with actual full debt arrays and cold/stale checks; NEXT9b9d identity/five fresh assets verified. Associate scoped proof commit while broader browser/WASM, route balance and human pacing remain Open.",
+      "next_action": "Preserve the abandoned collection, active replacement duplicate-guard and successful replacement checkpoints. Bounded native adverse/recovery acceptance is Complete; parent/sidebar remain Open for broader route balance, human pacing and restricted browser/WASM acceptance.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39331,7 +39344,7 @@
         "observed_at": "2026-11-16T10:56:52.913630+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:14:14.595103+00:00"
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
     },
     {
       "id": "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
@@ -43410,6 +43423,12 @@
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -43510,7 +43529,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T11:14:14.595103+00:00"
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

@@ -45,4 +45,6 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-ar6-261116 | `9b9d13ae` | 15/15 | `ad39362b7fc0bb0f397f2b59ea97247bbb9757a1c72bd7ed6b9f947fea3c3d1e` |
 | crew-sidebar-ar7-261116 | `9b9d13ae` | 14/14 | `1932d51c63116fe7206b5e7175c3333671eefa61a24d5f346e54e2bc0e9cc852` |
 
-Total **99/99** in 7 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-follow-record3-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-follow-record3-261116\evidence\reconciliation.json`.
+Total **99/99** in 7 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-follow-accept1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-follow-accept1-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `18feafe9665d72bbc542199c8426642ae365176b`. This bounded native collection-abandonment/post-miss replacement acceptance is Complete through actual consequences, once-only handoff and cold/stale persistence. NEXT9b9d identity and five fresh asset hashes are verified separately. The broader Crew objective and browser/WASM/input/visual/human-pacing coverage remain Open.
