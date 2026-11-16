@@ -147,6 +147,11 @@ func _entry_recovery(label: String, leave_first: bool) -> void:
 	_check(not bool(again.get("handled", false)) and _money_guard() == before, label + ": repeated recovery is a no-op")
 	var replay: Dictionary = app._sealed_action_host_resolve_intent("spin", 20, old_delivery)
 	_check(not bool(replay.get("ok", false)) and _money_guard() == before, label + ": canceled old delivery cannot replay a wager")
+	# A newly rejected player Spin must not recreate the stranded delivery that
+	# this legacy recovery just cleared; the enabled smaller bet must stay usable.
+	if app.run_state.bankroll < 20:
+		app._on_game_surface_action("slot_spin", 0, false)
+		_check(_pending().is_empty() and _money_guard() == before, label + ": unfunded player Spin leaves no new delivery or economic effect")
 	app._on_game_surface_action("slot_bet", 0, false)
 	_check(_bet() == 2 and _money_guard() == before, label + ": smaller bet is editable after legacy recovery")
 

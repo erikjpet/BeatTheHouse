@@ -104,6 +104,9 @@ func sealed_action_authority_contract() -> Dictionary:
 		"proposal_requires_apply_key": "machine_game_proposal_requires_apply",
 		"authoritative_result_marker": "sealed_action_authoritative",
 		"place_bet_action": "",
+		# Player clicks must reject an unfunded Spin before staging a delivery.
+		# Private uncommitted intents retain their existing recovery contract.
+		"player_wager_preflight_actions": {"slot_spin": "spin", "spin": "spin"},
 		"host_pointer_intent": true,
 	}
 

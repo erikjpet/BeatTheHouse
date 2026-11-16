@@ -1,0 +1,55 @@
+# Slot MIN after an unfunded Spin
+
+Tracking ID: BTH-SLOT-UNFUNDED-SELECTION-001. Visible sidebar owner 6afa5080-2f00-8191-804a-d401aa98a020. Recorded 2026-11-16T04:14:23.420250+00:00.
+
+## Result and scope
+
+Fixed and tested in the isolated current-main candidate qualified on68f5592955412316dbfd41b829eb816c14494aad, then integrated onto77efc4281d380e2241c33c9d55d4505bc01e4873. The intervening commit changes only Crew documentation; the qualified runtime bytes are unchanged. Main commit/push and NEXT delivery are next; no deployment or visual Web claim yet. The broader continuous general-QA and ending request remains Open separately.
+
+The retained normal SIDEBAR-GAMES-20261116-H campaign reached the beach through actual routes, the restored receipt Continue button and two offered10-cost deck walks. Its actual canvas MAX20/Spin naturally lost20, leaving8. After cold Continue and normal reveal, an actual20 Spin was refused without cash/RNG change, but the displayed enabled MIN2 then stayed20. Modal was empty and the deferred gate false. Canvas action/index was slot_bet/0. A labeled detached diagnostic returned pending_delivery: That action is still being delivered. Please wait.
+
+Original producer sidebar-beach-slot-max-H-20261116-01 and every failed diagnostic remain untouched under E:/CodexQA/BTH/runs. The failure was reproduced again on actual main68f5592 in sidebar-slot-min-main-baseline-20261116-01:16 checks, one decisive MIN assertion failure, exit1, clean engine log, owned0. Source3cecec33 discovery and current-main reproduction are separate evidence classes.
+
+## Root cause and correction
+
+Player dispatch asked the sealed host to stage a Spin delivery before ordinary stake validation rejected its cost. That valid but unfunded delivery then prevented subsequent bet intents. Repeated waiting or a correct MIN hit could not clear it.
+
+Slot now declares its two manual Spin action aliases for a player-input funding preflight. Foundation queries the module's real wager cost and the existing pure canonical funding preview before it asks the sealed host to create a delivery. An unfunded player request displays the ordinary bankroll message and returns with no pending delivery. The existing authoritative funding/receipt checks still run on accepted resolution.
+
+The correction preserves private uncommitted staging, which the existing legacy producer deliberately uses, and its recovery/replay/tamper checks. It does not cancel arbitrary pending deliveries or weaken seals. Canonical funding preview retains cash/chip exchange rules; module cost retains zero-cost/free-spin semantics. Free control/Auto behavior is exercised by the legacy cases; naturally generated active bonus play was not sampled by this fix batch.
+
+Scoped files: Slot's declaration, Foundation's player-action adapter and five added regression lines in the existing legacy check. Every prior test assertion remains. No canvas scheduling, autonomous redraw, economy, RNG, authored scenario/item, user save/profile, browser, shared runtime or unrelated work changed.
+
+## Focused verification
+
+Four qualified runs total215 checks:19 faithful ordinary H player-path checks,16 later exact cold checks,136 synthetic legacy warm/rejection checks and44 synthetic legacy cold checks. The original unchanged legacy suite also passed134 before its narrow new assertion; that overlapping run is retained and is not added to215.
+
+The fixed actual canvas path rejects20 at cash8 with clock934/turn1 and RNG493541604 unchanged, selects MIN2, then accepts exactly one normal2 Spin. It naturally loses2, leaving6 and RNG896547101, spin count2. Later cold Continue retains6, selected2, exactly two paid rounds and last stake2. Another real MAX/refused Spin/MIN cycle remains usable, preserves wallet/RNG/action turns and leaves a valid empty pending ledger.
+
+Legacy warm covers preserved old pending intents, paused exact-all-in shape, nonempty prior settlement, canceled replay and six altered/out-of-scope authority controls. Cold copies retain the authentic synthetic warm fixtures and all four private companion directories, source hashes unchanged. All new native Jobs close0 owned processes.
+
+| Run | Class | Checks / failures | Exit | Owned | Log SHA256 |
+| --- | --- | --- | --- | --- | --- |
+| sidebar-slot-min-baseline-prep-20261116-01 | import/setup | - | 0 | 0 | 798b85bf41c3ad00080d89b23205ed74638afa4125852ce899e553490f4f0783 |
+| sidebar-slot-min-main-baseline-20261116-01 | original failure | 16 / 1 | 1 | 0 | f668875e0281858fb47bfbb11bc05da98efd81f8a43d74a6a002d28a35d81aa3 |
+| sidebar-slot-min-fixed-20261116-01 | qualified | 19 / 0 | 0 | 0 | 97dd760514ae20e9159897202da66bb0a20a0b058707f37db4b502b9dca9a92d |
+| native-private-bth32-slot-min-warm-20261116-01 | original failure | 8 / 1 | 1 | 0 | 60982b16370e3042b9521a74ec6d0bfe247c8f6874ebb7f795ee90437bf85982 |
+| native-private-bth32-slot-min-warm-20261116-02 | retained overlapping evidence | 134 / 0 | 0 | 0 | 758f11c79ee2df0fb8491ee55a1a6e97f648d4d92317db3e954b588e9ce91082 |
+| native-private-bth32-slot-min-warm-20261116-03 | qualified | 136 / 0 | 0 | 0 | e7e6f9945495d66b1c68ce8409cb0c3b7dc6869fa7b822dfdf24886da5227e5f |
+| sidebar-slot-min-fixed-cold-20261116-01 | qualified | 16 / 0 | 0 | 0 | 97fd10783171ba80b1d44578d4cb4806503a526c176365e7cc69c6d45c61be96 |
+| native-private-bth32-slot-min-cold-20261116-01 | qualified | 44 / 0 | 0 | 0 | d682c70e3d03473e47d98950013a62199c66356f7a65546a4bb3c4844aa55c24 |
+
+Code SHA256 at qualification:
+- scripts/games/slot.gd: 8b33b3f2d13381e9a734a6f2e05bd8cf066c13f26a67f08d5dc8cbd6afcb6d3b
+- scripts/ui/foundation_main.gd: 35e8b89271fc5b835a744484f4b809162a853ea5e76a2a53af245aebd19cfa4c
+- scripts/tests/slot_autoplay_legacy_pending_recovery_check.gd: 6970ea48e9ffcc2089f91f58cf0417b9c42f580254125917fbf418162a8a23fa
+
+Exact commands, Job limits, assignment-before-execution, storage gates/manifests and custody are beside worker.log in each evidence directory. All use admitted E: storage,4GiB writes plus20GiB reserve,12% CPU/2GiB Jobs and bounded cleanup. The retained private fixtures/keys/capsules are not Git deliverables. Fidelity is actual source-native canvas geometry and mouse event handlers; native, synthetic, HTTP and rendered/Web evidence remain distinct.
+
+Operational diagnostics are retained: shared-metadata worktree creation stopped at root_escape before Git ran; an independent checkout then succeeded without changing the shared HEAD/index. The first legacy launch stopped before fixture creation because its required BTH_TARGET_OUTPUT was undeclared; the rerun supplied an explicit guarded E: path. A patch-position assertion stopped before source writes and was corrected by scoping the edit to the intended function. No guard, root or security setting was relaxed.
+
+## Delivery
+
+Pending authorized scoped main commit/push and observation of the existing NEXT watcher. Next receipt will record actual main/tree, promoted/served provenance, changed PCK identity and launch/visual limits. Source tests do not establish Web startup. Stable/itch/audience changes are outside this fix.
+
+Main advanced with Crew ending evidence during the initial commit attempt. That guarded attempt stopped before staging; the next isolated attempt preserved the newer Crew ledger/report and kept the same three qualified code hashes. No shared index or checkout was changed.

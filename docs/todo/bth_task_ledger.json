@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T04:07:31.167740+00:00",
+  "updated_at": "2026-11-16T04:14:23.420250+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38321,6 +38321,111 @@
           "areas": []
         }
       }
+    },
+    {
+      "id": "BTH-SLOT-UNFUNDED-SELECTION-001",
+      "name": "Keep Slot bet controls usable after an unfunded spin",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_FIXED_215_CHECKS_MAIN_NEXT_PENDING",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Fix the actual Slot player path where a rejected unaffordable Spin leaves a pending sealed delivery and blocks enabled affordable bet changes. Preserve funding validation, signed room/action authority, exactly-once settlement, cash/RNG/clock behavior, existing saves and unrelated work. The broader general-QA/ending request remains Open separately.",
+        "source": "User request for visible sidebar agents and parent delegation 01a1a147-7f07-7583-baf0-771a839f1013 authorizing general NEXT bug-finding, root-cause fixes, scoped commits/push to main and NEXT verification. Discovered in normal owned SIDEBAR-GAMES-20261116-H campaign, related broad tracking ID BTH-NEXT-QA-GENERAL-SIDEBAR-001.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "native-reproduction",
+            "description": "Retain original normal owned campaign, actual canvas action/index, failed MIN observations, unchanged money/RNG, exact companions and zero-owned Job receipts.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "fixed-player-path",
+            "description": "On current main candidate, actual insufficient Spin rejects without stranding a delivery; actual MIN selects2 and normal affordable play can continue.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "focused-compatibility",
+            "description": "Focused normal/failure, money/RNG/authority and cold Save checks, preserving relevant rejection safeguards and zero-cost/free-spin behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "next-delivery",
+            "description": "Authorized scoped main commit followed through existing NEXT watcher with exact deployed build/assets and changed-path evidence where feasible; retain visual/Web limits.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Original and current-main actual canvas reproduction; fixed normal/cold player path and preserved legacy recovery/rejection controls",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Authorized main push, exact NEXT identity/assets and launch qualification limits",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
+          "kind": "native_ordinary_owned_campaign_canvas_reproduction",
+          "summary": "Current main reproduces MIN lock; two runtime declarations/adapters now preflight real funding before delivery.215 qualified checks pass: actual19, cold16, legacy warm136 and cold44. Original failures and overlapping134 retained separately."
+        }
+      ],
+      "next_action": "Review only the scoped diff, commit/push the authorized Slot fix to main, observe the existing NEXT watcher and record exact deployed/served provenance with basic-launch and Web limits.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T04:14:23.420250+00:00",
+        "evidence": [
+          "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T04:14:23.420250+00:00",
+      "planned_app_changes": []
     }
   ],
   "batches": [

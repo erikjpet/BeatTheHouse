@@ -2125,6 +2125,18 @@ func _handle_module_surface_action(action: String, index: int, confirm_requested
 	ui_state["selected_action_kind"] = selected_action_kind
 	ui_state["selected_stake"] = _current_selected_stake()
 	debug_outer_stage_started_usec = Time.get_ticks_usec() if debug_coin_pusher_outer else 0
+	# Reject known unfunded player requests before the sealed host publishes an
+	# uncommitted delivery. The authoritative funding checks still run at resolve.
+	var preflight_actions_value: Variant = action_authority_contract.get("player_wager_preflight_actions", {})
+	if typeof(preflight_actions_value) == TYPE_DICTIONARY:
+		var preflight_action_id := str((preflight_actions_value as Dictionary).get(action, ""))
+		if not preflight_action_id.is_empty():
+			var preflight_cost := current_game.wager_cost_for_context(preflight_action_id, _current_selected_stake(), run_state, run_state.current_environment, ui_state)
+			var player_funding_preview := run_state.preview_grand_casino_wager_funding(current_game.get_id(), preflight_cost, run_state.current_environment)
+			if not bool(player_funding_preview.get("ok", false)):
+				_show_message(str(player_funding_preview.get("message", "You do not have enough bankroll for that wager.")))
+				_refresh()
+				return true
 	var command: Dictionary
 	if _current_game_uses_action_authority():
 		command = _sealed_action_host_surface_intent(action, index, confirm_requested, _current_game_surface_input_time_msec())
