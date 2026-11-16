@@ -58,3 +58,30 @@ Current backgrounds: assets/art/environments/<room>/background.png. Existing evi
 No room closes without its scoped commit, independent visual/technical evidence and required TEST delivery. All20 closure requires explicit dispositions for every room and seam/motion review, not just this inventory. No new art runtime launched by director while travel performance has the slot. No original saves, placements or production branch changed.
 
 Manual reconciliation checkpoint: checker exit1, 4107 overall historical/other-scope findings with old runtime inventory; 0 findings for newly registered spatial/TEST-performance scope. This is not a global green ledger. Current owner snapshot: docs/todo/bth_spatial_owner_snapshot_20261116.json.
+## Next-room implementation briefs (source preparation, not activation)
+
+### Grand public, then High Limit, then Back Room
+
+Retain five public machine bays and live models. Upper green areas are felt tops, not backrests: use converging side rails and visible rear/near depth. The near contact rail at board y258 remains authoritative. Below it, replace second framed-green-panel reading with a dark wood/plum vertical apron. Add suitable plinth/legs and small contact shadow within verified clear floor. Make public hospitality, quiet High Limit and private Back Room materials distinct; do not invent extra furniture or ornaments. Lower circulation strips should read as inlaid floor detail, not unsupported freestanding rails. Each room needs its own populated actor/label and counter-replay check.
+
+Sign-pulse textures are not rectangular light panels. Alpha-mask the pulse to sign letters and physically narrow illuminated trim; any soft spill must be irregular/local and not reveal the atlas bounds. Existing lamp pulses must coincide with authored visible practicals rather than floating bars. No new animated light or renderer primitive is needed. Preserve normal/low-detail subsets, timing and shared room clock. Cage uses the same sign-mask correction but its grille glints are inspected individually against actual bars.
+
+### Hidden and private Crew rooms, then Delta Queen
+
+Retain each table's actual live support/contact line and composition. Distinguish top felt, wooden vertical body, and supporting feet. Add under-table negative space only where actors/props are compatible. In private Crew, the central tabletop currently occupies the wall field: reconstruct its full physical volume down to the floor instead of framing it as a wall panel. Delta retains brass/redwood/cream and walkable deck; do not turn lower actor floor into water. A complete table may use a solid pedestal rather than conspicuous legs if the footprint needs it, but its top plane must still be unambiguous.
+
+### Jazz, Kitty and public Punchline
+
+Use actual performer feet to establish stage deck contact. Curtains end behind the deck, never descend through musicians' feet onto a purported horizontal surface. A shallow visible top plane leads to a separately shaded fascia below. Preserve stage actors, tips, existing names and live game objects. Public Punchline's four circular wooden forms are documented tables, so they need horizontal ellipses/depth and supports, not vertical wall-mounted disks. Kitty candle trays remain as authored floor trays unless evidence establishes intended tables; do not add legs indiscriminately.
+
+### Pawn, Motel and other counter rooms
+
+A replay rectangle is only the front occluding plane. Complete cabinet/apron/support silhouettes must connect it to the floor and top. Source the replay from the same final integrated master. Pawn's low plank supporting Sal and Slot needs a genuine counter body below its fixed top, with adequate clearance and no new price plates. Inspect Back Alley's crate in populated/replayed contexts before extending it. Gas and Corner initial static scan is not a pass; audit actual joins and moving overlays.
+
+### Apartment, House and Motel Room
+
+Fixed interaction anchors do not freeze the painted wall/floor horizon. Where furniture feet lie over wall boards, rebuild a coherent floor plane behind them rather than putting each piece on an invented raised platform or lengthening legs until implausible. Preserve windows, storage identity, material palette and current live models; reconcile painted headboards/bases with the actual Sleep bed to avoid a second mismatched bed. Rugs lie on the same floor plane with depth-consistent silhouette, not as vertical panels. Keep motion on its actual material, not through furniture or doors.
+
+### Beach
+
+The documented setting calls for a modest distant pier, not disconnected neon bars in the sky. Integrate light with a visible plausible pier/fixture or remove the ungrounded visual while preserving required authored motion through appropriate material. Keep sky/water/floor depth distinct, umbrella rooted to a valid support and its pole continuous; do not make it intersect a solid boardwalk fascia. Verify live stalls, actors and labels before finalizing.
