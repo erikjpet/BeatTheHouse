@@ -1,0 +1,388 @@
+{
+  "schema": "bth.high_limit_spatial_test_approval/v1",
+  "environment_id": "grand_casino_high_limit",
+  "verdict": "GO_FOR_TEST_BUILD",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "prepared_at": "2026-11-16T11:15:33.502603+00:00",
+  "reviewer": "/root/audit_spatial_handoff",
+  "prepared_by": "/root/review_test_adapter",
+  "review_authority": "Separate immutable independent native/art approval; this document binds that actual decision to the delivered Grand baseline and strict TEST build policy.",
+  "approval_scope": "Exact High Limit nine-PNG art package and five integer decorative lamp Y changes only; permit preparation of the guarded strict TEST build. TEST publication, browser acceptance and parent all20 completion are not granted.",
+  "source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "source_scope": "PARTIAL_SELECTED_PATH_ARCHIVE",
+  "source_identity_scope": "These top-level source fields authenticate the native a9 checkpoint. The export commit/tree will be supplied independently by root after source integration and must pass source_seal, native/export code bridge, selected archive and strict PCK checks.",
+  "approved_png_sha256": {
+    "assets/art/environments/grand_casino_high_limit/background.png": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png": "0735c552b27d382c9a2b5c8992dae675bf9a5b3bd7ca867dfbc04f1e49213f37",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png": "bf33dc30e834da33afb18efe481d36baa80ab9b3774d4e7ecc3d31908a88e80a",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png": "6136ec81f0addd0cc0afd4a82d4dfc405182e9a58ed62d982b3062912981ce71",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png": "473613f75ffc3efa6152515b258b88026e2595429f88ca09074b6d97d78e1d4c",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png": "c4869428e27196ff62d62d49836aec39857370635788e71fa0f08b3fac24ca04",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png": "2e7f18a18374dd1e7f66f033f9c225b866c0a1a61c10f609cc08f7f0e86c9946",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png": "eae4a508f749b470a2d68ee535bbe0799a0f48ed84b202e5acc78bf129ad9cfb",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png": "689dd52474cd3dfd2df6518a0de2b6253083fdfe26548e25e096ec33141167d3"
+  },
+  "high_limit_json_sha256": "d8e8eb4ca4982d2b87c402c8877a6c463b279f3d127c31bfae96be4b5b29c3d0",
+  "high_limit_package_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "baseline_certificate_sha256": "c355c3fb638233016d0bb169ceb92942376db24011d1e2ef48c6443da9140356",
+  "baseline": {
+    "schema": "bth.high_limit_spatial_test_baseline_declaration/v1",
+    "source_commit": "25cc8b279d35c5ec00d836db150354b77790e825",
+    "source_tree": "1cbbe22e7ff650f331ae79534b7cef97b0b88823",
+    "manifest_sha256": "9fc243bc3ba07fb306e666dfe8f8866c78339a72dd32f6bf993cc7bdc8b0898b",
+    "pck_sha256": "7c3d56ba6d0772d78e6100822c897ee18fd2474277fe3fab9fd530ad32e0fff0",
+    "grand_approval_sha256": "f326256b6fdf9139d667d738069415e54a66789da86b1bb863c91f46027c9930",
+    "grand_strict_pck_proof_sha256": "8de339e6b7e604f970ad48255217969ab626d8edd271524b3eb6f703dee7dde1",
+    "grand_served_proof_sha256": "7a0a0728646dc0712399d947ba726625973c43bf77c5827d57614ddd13b0878d",
+    "grand_served_job_sha256": "ef3ffbef0bcd24fd3da81430d94bba55d6287279f11b9c3fa9ce2a3118947b84",
+    "uid_cache_sha256": "587514374b37d67f6c0e795cc82d840f1d4a5f9f0b0c2f3c80586ce4eb38b4db",
+    "uid_map_sha256": "293bcadacffd15543a5686b5e40cc6cd409495e80628d77bc0e5e62c2eb61b55",
+    "class_cache_sha256": "43ed255c77d8ef9809383d0fef148e952dabddbbf434c69b0276790b6da5816d",
+    "preserved_bar_seal": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+    "protected_room_seals": {
+      "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+      "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+      "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+      "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+      "bar": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+      "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+      "jazz_club": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+      "punchline_club": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+      "small_underground_casino": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+      "punchline_back_room": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+      "kitty_cat_lounge": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+      "delta_queen": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
+      "beach": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+      "grand_casino": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+      "grand_casino_back_room": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
+      "grand_casino_cage": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+      "motel_room": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
+      "apartment": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
+      "house": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028"
+    },
+    "stage": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDBUILD-20261116/.tmp/web-release-25cc8b27/stage",
+    "grand_approval_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDBUILD-20261116/docs/testing/grand_spatial_v4_art_approval_20261116.json",
+    "grand_strict_pck_proof_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDBUILD-20261116-v4-served/evidence/served.json",
+    "grand_served_proof_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDBUILD-20261116-v4-served/evidence/served.json"
+  },
+  "native_adapter_sha256": "e1fe5dc3168a23f07aad03c0c6270e1915c1714182769d70ce2496ad1576c72d",
+  "native_policy_sha256": "db7e8944a7d4e7ede36b24f9cfd4f5ee2b844e17cd92551b12b89ee2da9a3d6b",
+  "native_identity_sha256": "0314512f31f809fbb59d380cf49d4808e00040b72492707fe36564cb2fc164cb",
+  "native_contexts_sha256": "27530b24d84d273cfa05768d9475aa0e58465586f17fcf0cd49c20e063e4c399",
+  "native_motion_sha256": "98fcdecb5a7a2c5950558580cf2c0d2abf9161b648dbc209537440445c02aefc",
+  "native_liveness_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "native_capture_sha256": "81dd282b813f2f6b4e8882c129a86c4bd55580c3683cda024cf165e2fd4b25b6",
+  "native_phase_receipts": {
+    "identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity/evidence/phase-result.json",
+      "sha256": "0e25daca2df7635cf738ec87a8056e61874885b6cbd6e0f469bb8ebef9128412"
+    },
+    "contexts": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/phase-result.json",
+      "sha256": "b80cecac107aaac3eeed073403c3e1402b81863c00622a9e89f4d852fb8f4d69"
+    },
+    "motion": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion/evidence/phase-result.json",
+      "sha256": "ac5346a9e41b38786aaa5b4f883076dc14df4a6059559c542a94b4f8c5b822f7"
+    },
+    "liveness": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness/evidence/phase-result.json",
+      "sha256": "fd151e2b406b91ac4b05637c19aa7bf953e5bb3179d531b689292f666709b763"
+    },
+    "capture": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/phase-result.json",
+      "sha256": "b39cbde97c61e6ffe04c6f46e28ef0a75c48f006aa359a7c92a82de80aad8eed"
+    }
+  },
+  "final_art_review_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+  "final_art_review_sha256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+  "evidence": [
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_v1_branch_integration_20261116.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01/evidence/worker.log",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01/evidence/job.json",
+    "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HLTRIAL-20261116/qa_source/highlimit_spatial_source_identity.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity/evidence/phase-result.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/phase-result.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion/evidence/phase-result.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness/evidence/phase-result.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/phase-result.json"
+  ],
+  "baseline_certificate_job": {
+    "stdout": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01/evidence/worker.log",
+      "sha256": "2fa5eb43e6d1c2f22bbe9a705f9d8dfb8ff87d67d998a6e0fbd481cc537e93f2"
+    },
+    "job": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01/evidence/job.json",
+      "sha256": "e081a08b6cc235081e8900e482be34ac9aa55a008e3d8f8b453f2147ef263e48"
+    },
+    "storage_manifest": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01/evidence/storage-manifest.json",
+      "sha256": "e7431543e629ed52c9bf0b8538e683215a257ed14f6171f86e838aa6223085d9"
+    },
+    "pid": 37484,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "duplicated": false
+  },
+  "source_integration": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_v1_branch_integration_20261116.json",
+    "sha256": "484059937185385e8bfa81893ae5d5e0cc15a010a32d444d7fee90ce1862f4bf"
+  },
+  "native_source_config_sha256": "8983e05101e7420cf18d388ec3812d61739eeecb722c1c8554bcf07327de0a7c",
+  "native_capture_inputs_sha256": "1b9b5d6024bccf5df97783b6918327bf28cb816d6dfe6054381de347fc2e5761",
+  "native_all13_closed_receipts": [
+    {
+      "phase": "source-identity",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-source-identity/evidence/phase-result.json",
+        "sha256": "754f7ba51f8892c4ee5f35ce114970b2ab172d8ce27942fc2b9a8cf46b92d1b3"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-source-identity/evidence/job.json",
+        "sha256": "4ccda85d9902ae387d73c01977d2387783c05075ceb71f56c3688a6650ca0266"
+      },
+      "pid": 12592,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "tree",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-tree/evidence/phase-result.json",
+        "sha256": "467cdc6863d0b9c7d4e6a4440ebcad25a002625f4539eeb6301ebca5e26723a3"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-tree/evidence/job.json",
+        "sha256": "6b56af1f968cbe751f4ccba267ed2db755aa3231cc40ffb7b6c4a30659b84d72"
+      },
+      "pid": 34960,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "baseline-tree",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-baseline-tree/evidence/phase-result.json",
+        "sha256": "15bf84f1e508bb42fc823d14644177405e38c16ee7467ef0572ae238cd393201"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-baseline-tree/evidence/job.json",
+        "sha256": "d1657f651edcbbefe5950e4383c539c2762d3545642596b7a28d9e5b1286bf88"
+      },
+      "pid": 36280,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "select",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-select/evidence/phase-result.json",
+        "sha256": "98e0515769680a73c504e2f518258f4133d6a3de482847e08454e2c96f367a48"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-select/evidence/job.json",
+        "sha256": "40705b3b73abafae622c377a6a92f8f759a0ca5b779ed4055da53536dbe775f5"
+      },
+      "pid": 4180,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "archive",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-archive/evidence/phase-result.json",
+        "sha256": "ad10de6e9c59d6817f6cbe6713b37f5f93d962e5049e2c84a8fe05399f686beb"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-archive/evidence/job.json",
+        "sha256": "4d3b7e1a6da85a758a745a143ffb79332102a99700f32bea34600e30e2fab93c"
+      },
+      "pid": 24776,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "prepare",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-prepare/evidence/phase-result.json",
+        "sha256": "3e1d843ac2daab424457ff6f6a8852a67137ae1cc8ae4d2df2940c3f4a660517"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-prepare/evidence/job.json",
+        "sha256": "046da4c0fdf2fdd6f934d6d06473ee6ec965a4bfe09fa664d32926ae44fad5d8"
+      },
+      "pid": 32956,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "install",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-install/evidence/phase-result.json",
+        "sha256": "c57c2ebc7379eab1e8bcb367c80e5fded077e7105480de73d17556a09c203a89"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-install/evidence/job.json",
+        "sha256": "14331e55a41fec48d5ceb7d9b10fa4a4e387412d15fb1ead88e9916b1cee1dbf"
+      },
+      "pid": 43848,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "import",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-import/evidence/phase-result.json",
+        "sha256": "0ea22a05e742eeda5b26b799afa7d2a0ed4c7b1b7743a29dc88694a56a2d8124"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-import/evidence/job.json",
+        "sha256": "c82b39302cd79cff3dbe38de98faba0b626287054a40878d55e3967cd8da9362"
+      },
+      "pid": 8984,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "identity",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity/evidence/phase-result.json",
+        "sha256": "0e25daca2df7635cf738ec87a8056e61874885b6cbd6e0f469bb8ebef9128412"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity/evidence/job.json",
+        "sha256": "59df537f073d8e9faa0effc1f054e986a0ee7c838fd74d1633cd9ada29b16b91"
+      },
+      "pid": 42628,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "contexts",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/phase-result.json",
+        "sha256": "b80cecac107aaac3eeed073403c3e1402b81863c00622a9e89f4d852fb8f4d69"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/job.json",
+        "sha256": "558050d3f8fc9cdd81ee23656794bcb6e577233fe1be4032d78565fe4bc9df1e"
+      },
+      "pid": 32456,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "motion",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion/evidence/phase-result.json",
+        "sha256": "ac5346a9e41b38786aaa5b4f883076dc14df4a6059559c542a94b4f8c5b822f7"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion/evidence/job.json",
+        "sha256": "2e5312717cd71465e7a04d65ff2d89d002461ddd03db855f95d6b4bd1519d23e"
+      },
+      "pid": 37532,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "liveness",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness/evidence/phase-result.json",
+        "sha256": "fd151e2b406b91ac4b05637c19aa7bf953e5bb3179d531b689292f666709b763"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness/evidence/job.json",
+        "sha256": "92a2c85b3e9092c491edfdf47f0dceeb5d64496296122e11fc8811252d3e4d7d"
+      },
+      "pid": 22084,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    {
+      "phase": "capture",
+      "phase_result": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/phase-result.json",
+        "sha256": "b39cbde97c61e6ffe04c6f46e28ef0a75c48f006aa359a7c92a82de80aad8eed"
+      },
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/job.json",
+        "sha256": "b397c2f254d2d8bc1d9a79c70c104cc0664866471880283d97c9f216dc9ae649"
+      },
+      "pid": 37356,
+      "exit_code": 0,
+      "active_at_release": 0
+    }
+  ],
+  "read_only_custody_checks": {
+    "all3964_native_identity_source_files_rehashed": true,
+    "all421_integrated_art_source_files_rehashed": true,
+    "exact_changed_source_files": 10,
+    "other411_source_files_equal_delivered_grand": true,
+    "exact21_package_equal_native_candidate": true,
+    "canonical_uid_map_entries": 1605,
+    "uid_and_class_payloads_read_from_immutable_pck_with_md5_checked": true,
+    "baseline12_manifest_payloads_length_and_sha256_checked": true,
+    "five_integer_lamp_y_changes": {
+      "ids": [
+        "casino_light_0",
+        "casino_light_1",
+        "casino_light_2",
+        "casino_light_3",
+        "casino_light_4"
+      ],
+      "before": 124,
+      "after": 8,
+      "other_json_fields_equal": true
+    },
+    "no_new_visual_judgment_or_native_execution_performed_by_preparer": true
+  },
+  "release_policy": {
+    "profile": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/high_limit_spatial_test_release_profile.py",
+      "sha256": "4aec550ef9ddd9f9cb5cd4cc2e69d17c5a6d9f2c6a380da213cb74916fad2c2d"
+    },
+    "pure_policy": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/high_limit_spatial_test_profile.py",
+      "sha256": "f001191f6a1d3f0cb7a4b05bf93d8c16898eabdc5248c8d911a983500a839e18"
+    },
+    "build_entrypoint": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/high_limit_spatial_test_build.py",
+      "sha256": "757acf5b56f53f4a567112b19fa45a7b4bf933baf6f850ad2c2a07d2b27a1003"
+    },
+    "served_entrypoint": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/verify_high_limit_spatial_test_served.py",
+      "sha256": "10dc72e286ef39ed92c853d1fc5be9940e971794baf17f56653766cecf9c18a5"
+    },
+    "selected_source_helper": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bth_qa_selected_source_v2.py",
+      "sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625"
+    },
+    "qualified_regression_job": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLRELEASE-20261116-tests01/evidence/job.json",
+      "sha256": "8edd83631f4559659a5e80fd1d9019886b2a238e9675fbd57e20c8e50eef01db"
+    },
+    "qualified_regression_log": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLRELEASE-20261116-tests01/evidence/worker.log",
+      "sha256": "458ea7ede452adbe979a11a0af2606aea631595634563c3328da71f28bfe313c"
+    },
+    "regression_tests_passed": 78,
+    "regression_pid": 28052
+  },
+  "remaining_gates": [
+    "Root must create the actual export source commit/tree; top-level native checkpoint is not a guessed export identity.",
+    "Guarded load_approval must reauthenticate baseline and native closure before actual build.",
+    "Selected-source exact blob/archive/extraction closure, canonical imports, full421 source identity and unchanged native/script/scene source bridge.",
+    "Fresh TEST export must preserve all2107 PCK resources, all1605 UID bindings/cache bytes, class cache and all GDC/SCN bytes; only exact nine HL CTEX resources, HL JSON and embedded build identity may change.",
+    "Delivered Grand, Bar, all other protected19 rooms, doorway packages and global index must remain unchanged.",
+    "Publication and default-TLS served13-file/hash/embedded identity checks are separate root-owned steps, including measured NEXT unchanged receipt.",
+    "Browser startup, served visual/gameplay acceptance and the full57.7778s animation cycle remain NOT_RUN; parent all20 objective remains OPEN."
+  ],
+  "test_publication_approved": false,
+  "browser_acceptance": "NOT_RUN",
+  "test_updated": false,
+  "main_or_NEXT_authorized": false
+}

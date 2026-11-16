@@ -1,0 +1,49 @@
+{
+  "schema": "bth.high_limit_spatial_test_build_preparation/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "frozen_helpers": {
+    "tools/grand_spatial_delivered_baseline.py": "bf68e3aa53786b259ce63336cba175fb88be78970ec21782eeafbb964ca1f674",
+    "tools/high_limit_spatial_test_release_profile.py": "4aec550ef9ddd9f9cb5cd4cc2e69d17c5a6d9f2c6a380da213cb74916fad2c2d",
+    "tools/high_limit_spatial_test_build.py": "757acf5b56f53f4a567112b19fa45a7b4bf933baf6f850ad2c2a07d2b27a1003",
+    "tools/verify_high_limit_spatial_test_served.py": "10dc72e286ef39ed92c853d1fc5be9940e971794baf17f56653766cecf9c18a5",
+    "tools/tests/test_high_limit_spatial_test_release.py": "f19ecc769b29d9e501e0e0dd287abf872725b0f5dd28ada454cde0014f570308",
+    "tools/high_limit_spatial_test_release.README.md": "a82a75052cc5b211eb7f4faa140ec0fdb9e2da1345b19f20ddc3fe40b367862f",
+    "tools/encode_high_limit_spatial_apng.py": "48fe17bca5706d1fc47956bfe6161e62cc9e6f573fd2fc5c08f835d416a9c7d4"
+  },
+  "focused_tests": {
+    "count": 78,
+    "grand_contracts": 21,
+    "pure_high_limit_contracts": 27,
+    "actual_release_contracts": 30,
+    "status": "PASS",
+    "seconds": 5.985,
+    "job_pid": 28052,
+    "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLRELEASE-20261116-tests01\\evidence",
+    "job_sha256": "8edd83631f4559659a5e80fd1d9019886b2a238e9675fbd57e20c8e50eef01db",
+    "stdout_sha256": "458ea7ede452adbe979a11a0af2606aea631595634563c3328da71f28bfe313c"
+  },
+  "actual_grand_baseline_certificate": {
+    "status": "ACTUAL_IMMUTABLE_GRAND_BASELINE_AUTHENTICATED",
+    "certificate_sha256": "c355c3fb638233016d0bb169ceb92942376db24011d1e2ef48c6443da9140356",
+    "stdout_sha256": "2fa5eb43e6d1c2f22bbe9a705f9d8dfb8ff87d67d998a6e0fbd481cc537e93f2",
+    "job_sha256": "e081a08b6cc235081e8900e482be34ac9aa55a008e3d8f8b453f2147ef263e48",
+    "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLBASELINE-20261116-certificate01\\evidence",
+    "scope": "actual immutable delivered Grand, historical HTTPS window only"
+  },
+  "first_native_art_go_sha256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+  "separate_test_build_approval_sha256": "e25da655ef925b58d4dfec1c694fd8d246bbf12c82a4da5006f28bd9dfd4955a",
+  "branch_integration_sha256": "484059937185385e8bfa81893ae5d5e0cc15a010a32d444d7fee90ce1862f4bf",
+  "build_phase_count": 15,
+  "positive_selected_source_helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+  "next_action": "Commit scoped integrated export source; run guarded authenticated plan and all15 fresh explicit phases; only then TEST snapshot/publish/HTTPS.",
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN",
+  "ledger_reconciliation": {
+    "run": "BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile24",
+    "job_pid": 35664,
+    "exit_code": 1,
+    "active_at_release": 0,
+    "historical_out_of_scope_findings": 4108,
+    "spatial_findings": 0
+  }
+}

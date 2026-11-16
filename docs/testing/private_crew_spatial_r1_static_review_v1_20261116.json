@@ -1,0 +1,128 @@
+{
+  "schema": "bth.private_crew_spatial_static_review/v1",
+  "reviewed_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "room": "punchline_back_room",
+  "context": "small_underground_casino:back_room",
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "decision": "NO_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "test_build_approved": false,
+  "test_publication_approved": false,
+  "candidate_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-PRIVATETRIAL-20261116/candidate_sources/private-crew-spatial-r1-assembled-v1",
+  "package_10_file_sha256": "fbec404fc5c5577e4f5c421e4c287054dfc9e86ef222b2f2b62e768c8652711c",
+  "logical_file_count": 10,
+  "room_file_count": 9,
+  "logical_scope": "Nine room files plus the unchanged global art index. Known auxiliary .gdignore files are separately inventoried, not logical art payloads.",
+  "background_sha256": "d35b56c23d411ee46c3648d761abe047b67c11549d8edef50309b875d40531ea",
+  "original_background_sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+  "original_room_9_file_sha256": "c8882f6f7fee3d1514b94f3a3834e04f47bbf4e10413ce0ef53b27fc824dd733",
+  "full_manifest_sha256": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+  "index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+  "raw_trial_sha256": "ac34392a170633b5fd8bebb987c2b81de9adc007c7a951fe41c008d5053b34aa",
+  "recipe_sha256": "fe1bbec18e2a35ad107890f89969e9e32da00a344a69fc609dd3b974920bfb29",
+  "superseded_code_review_version_sha256": "b84b1b29651e05faad1a5905046faecf92d4eda0ad0e39068680d3aba7a63451",
+  "assembly_proof": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATETRIAL-20261116-assemble01/evidence/private-crew-spatial-r1-assembly.json",
+    "sha256": "5586bb600f5e0947bdf9931be4f767286844c27f1e90d392234a80bf8b3f7b64"
+  },
+  "closed_producer": {
+    "job_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATETRIAL-20261116-assemble01/evidence/job.json",
+    "job_sha256": "5373eb0e8172f8dddc90b62b1eedb4120ed08b30f2b74fbad6230324c72d0b56",
+    "pid": 43332,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "cpu_percent": 12,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "error": null,
+    "cleanup_errors": [],
+    "storage_manifest_sha256": "a7f90fb0fd9ebaf509d140f7c1b5536eed530f078ad785b72751fa0b98bcf2d9",
+    "launch_claim_sha256": "261a0c0a764fb5f89e192ca48ffdaf696bdf5a33cb81b27276b15f9a60b486ed",
+    "claim_matches_actual_manifest": true,
+    "worker_log_sha256": "b9a00fbab666f588931102c201daaedb5432286b11ffd2704fd57123163e8b56",
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480
+  },
+  "independent_checks": {
+    "all_10_actual_candidate_hashes_and_recomputed_seal_match": true,
+    "all_21_current_production_control_hashes_match_before_and_after_map": true,
+    "all_9_retained_evidence_hashes_match": true,
+    "both_own_original_raw_and_archived_recipe_hashes_match": true,
+    "pixel_provenance_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATETRIAL-20261116-assemble01/evidence/private-crew-spatial-r1-pixel-provenance.json",
+    "pixel_provenance_sha256": "753068fdc7573943bcc9e5a4640cd0fcc1e300c74a00f1f5ede749b515206463",
+    "independently_reconstructed_donor_rows": 33229,
+    "duplicate_destination_blocks": 0,
+    "native_donor_texels": 132916,
+    "full_reconstructed_and_actual_BGRA_sha256": "b4762923143ce1220685786622613ddc7466515e4e4a9347b61bb1b8db7b72a7",
+    "reconstruction_method": "Read-only decoded BGRA: start with the actual original background and replace exactly each recorded 2x2 destination block with its recorded generated-raw or own-original-raw donor. Full reconstructed bytes equal actual candidate bytes. This independently covers donor equality, NN2 and exact original pixels outside the selected union.",
+    "historical_typed_masks_authenticated": 50,
+    "historical_typed_mask_hash_mismatches": 0,
+    "new_support_native_texels": 2464,
+    "all_50_masks_support_intersections_alpha_gt0": 0,
+    "all_50_masks_support_intersections_alpha_ge64": 0,
+    "mask_scope": "Historical Base plus five lifecycle cases; body and adornment are distinct. Zero support intersection does not mean zero felt/apron overlap: existing actor/label paint crosses those regions and must be assessed in new populated views after a corrected candidate.",
+    "native_7_and_web_low_detail_7_motion_pngs_byte_exact": true,
+    "full_json_and_global_index_byte_exact": true,
+    "counter_and_replay_count": 0,
+    "production_files_unchanged": true
+  },
+  "actual_poker_paint": {
+    "historical_actual_board_path": "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/__none_production_board_1800x860.png",
+    "sha256": "2e60dd0dda0f9498ef142024b0b6b86040ef28bcadeb5c1da12b523420fd4bde",
+    "independently_counted_texels": 18464,
+    "rgb_18_80_58_count": 11512,
+    "rgb_28_138_98_count": 6952,
+    "outside_declared_felt_component": 0,
+    "native_painted_row_envelopes_half_open": [
+      {"y0": 339, "y1": 350, "x0": 544, "x1": 832, "painted_pixels_per_row": 168},
+      {"y0": 350, "y1": 388, "x0": 544, "x1": 832, "painted_pixels_per_row": 208},
+      {"y0": 388, "y1": 414, "x0": 544, "x1": 832, "painted_pixels_per_row": 288},
+      {"y0": 414, "y1": 418, "x0": 544, "x1": 832, "painted_pixels_per_row": 162},
+      {"y0": 418, "y1": 420, "x0": 544, "x1": 832, "painted_pixels_per_row": 288}
+    ],
+    "board_envelope": {"x0": 272, "x1": 416, "y0": 169.5, "y1": 210},
+    "assembly_report_minimum_outer_felt_margin_board": 1.7723214285714448,
+    "underlying_generated_material_limit": "The assembly honestly reports 920 live-painted texels mapping to the inner inset/brass or other non-green source material, with 17544 mapping to green/dark-green material. Opaque live Poker paint can cover this inner detail; the geometric coverage pass does not prove a convincing table plane."
+  },
+  "visual_inspection": {
+    "viewed": [
+      "Actual assembled 1800x860 candidate background",
+      "Actual original active background",
+      "Actual frozen 1815x867 generated raw trial"
+    ],
+    "blocking_finding": {
+      "id": "PRIVATE-V1-TOP-PLANE",
+      "region_native_xyxy": [528, 302, 1272, 450],
+      "description": "The row-wise remap removes nearly all of the generated top's perspective. The result still reads as the original upright rectangular green panel with added apron/feet, failing the requested horizontal planning-table repair.",
+      "actual_target_geometry_board": {"far_y": 151, "far_x0": 268, "far_x1": 632, "near_y": 221, "near_x0": 264, "near_x1": 636, "far_width": 364, "near_width": 372, "side_convergence_over_70_depth": 4},
+      "source_of_flattening": "assemble_private_crew_spatial_candidate.py top_geometry(), lines238..244, contracts the pronounced generated side-rail perspective into an eight-board-pixel total far/near width difference. The large rectangular inner inset reinforces the upright reading.",
+      "correction_required": "Preserve a clearly converging tabletop plane, distinct rear and near rails, shallow face and connected complete supports. Fit the actual Poker-painted per-row envelope and immutable actor/label masks without moving anchors. A wider precisely bounded local assembly union may be justified only after actual source/actor clearance review; retain V1 unchanged and assemble a separate V2."
+    },
+    "other_observations": [
+      "The complete dark feet, separated shallow apron and own original floor are improvements. No separate floor-patch or detached-shadow blocker was identified in the inspected candidate.",
+      "Job board, Numbers Desk, MAGS shelf, rig and door remain the original room identity. No source regeneration outside the selected traced union was activated.",
+      "Own-source halo cleanup is explicitly clipped contrast inference with same-row41-step donors, not a recovered perfect semantic shadow mask or a global texture-period claim."
+    ]
+  },
+  "immutable_clearance_boundaries_for_revision": {
+    "near_contact_board_y": 225,
+    "shallow_apron_board_y_half_open": [225, 237],
+    "original_floor_start_board_y": 245,
+    "v1_left_leg_xyxy_board": [280, 237, 292, 252],
+    "v1_right_leg_xyxy_board": [608, 237, 620, 252],
+    "v1_left_foot_xyxy_board": [278, 252, 294, 260],
+    "v1_right_foot_xyxy_board": [606, 252, 622, 260],
+    "source_board_y260_onward_exact": true,
+    "first_floor_mover_board_y": 274,
+    "critical_labels_and_actors": "Silas body reaches x277 beside left foot x278; Knuckles title begins x298.8 beside foot end294. Velvet adornment/title around y206..218 crosses the tabletop/near rail. Retain all frozen50 body/adornment masks and full geometry; do not substitute bounding boxes for actual painted clearance."
+  },
+  "remaining_gates": [
+    "Root agrees with this actual-pixel NO-GO. V1 is preserved and the new V2 recipe belongs to /root/bar_clearance_audit; exact Poker row envelopes and mask/depth constraints were sent directly to that owner.",
+    "No new populated native trial, motion check, no-input liveness, Reduce Motion, autonomous capture or final art acceptance is approved by the old historical evidence or these numeric passes.",
+    "Mags/C3 was not reached by the retained historical lifecycle campaign. No all-members/jobs, UI-earned lifecycle, save/revisit, browser or TEST acceptance is claimed.",
+    "Reviewer launched no jobs/helpers/runtime, made no E writes, moves, deletions, cleanup, Git or active-art changes. Only this explicitly authorized new absolute-D NO-GO review document was created. The room and all20-room parent remain open."
+  ]
+}

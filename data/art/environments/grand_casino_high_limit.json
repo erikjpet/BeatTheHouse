@@ -16,7 +16,7 @@
       "texture": "anim/casino_light_0.png",
       "rect": [
         250,
-        124,
+        8,
         52,
         8
       ],
@@ -34,7 +34,7 @@
       "texture": "anim/casino_light_1.png",
       "rect": [
         350,
-        124,
+        8,
         52,
         8
       ],
@@ -52,7 +52,7 @@
       "texture": "anim/casino_light_2.png",
       "rect": [
         450,
-        124,
+        8,
         52,
         8
       ],
@@ -70,7 +70,7 @@
       "texture": "anim/casino_light_3.png",
       "rect": [
         550,
-        124,
+        8,
         52,
         8
       ],
@@ -88,7 +88,7 @@
       "texture": "anim/casino_light_4.png",
       "rect": [
         650,
-        124,
+        8,
         52,
         8
       ],

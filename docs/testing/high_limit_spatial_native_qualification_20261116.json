@@ -1,0 +1,127 @@
+{
+  "schema": "bth.high_limit_spatial_native_qualification_checkpoint/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "observed_at": "2026-11-16T11:11:29.041412+00:00",
+  "source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "phase_receipts": {
+    "source-identity": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-source-identity\\evidence\\phase-result.json",
+      "sha256": "754f7ba51f8892c4ee5f35ce114970b2ab172d8ce27942fc2b9a8cf46b92d1b3",
+      "job_sha256": "4ccda85d9902ae387d73c01977d2387783c05075ceb71f56c3688a6650ca0266",
+      "pid": 12592,
+      "status": "PASS"
+    },
+    "tree": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-tree\\evidence\\phase-result.json",
+      "sha256": "467cdc6863d0b9c7d4e6a4440ebcad25a002625f4539eeb6301ebca5e26723a3",
+      "job_sha256": "6b56af1f968cbe751f4ccba267ed2db755aa3231cc40ffb7b6c4a30659b84d72",
+      "pid": 34960,
+      "status": "PASS"
+    },
+    "baseline-tree": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-baseline-tree\\evidence\\phase-result.json",
+      "sha256": "15bf84f1e508bb42fc823d14644177405e38c16ee7467ef0572ae238cd393201",
+      "job_sha256": "d1657f651edcbbefe5950e4383c539c2762d3545642596b7a28d9e5b1286bf88",
+      "pid": 36280,
+      "status": "PASS"
+    },
+    "select": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-select\\evidence\\phase-result.json",
+      "sha256": "98e0515769680a73c504e2f518258f4133d6a3de482847e08454e2c96f367a48",
+      "job_sha256": "40705b3b73abafae622c377a6a92f8f759a0ca5b779ed4055da53536dbe775f5",
+      "pid": 4180,
+      "status": "PASS"
+    },
+    "archive": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-archive\\evidence\\phase-result.json",
+      "sha256": "ad10de6e9c59d6817f6cbe6713b37f5f93d962e5049e2c84a8fe05399f686beb",
+      "job_sha256": "4d3b7e1a6da85a758a745a143ffb79332102a99700f32bea34600e30e2fab93c",
+      "pid": 24776,
+      "status": "PASS"
+    },
+    "import": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-import\\evidence\\phase-result.json",
+      "sha256": "0ea22a05e742eeda5b26b799afa7d2a0ed4c7b1b7743a29dc88694a56a2d8124",
+      "job_sha256": "c82b39302cd79cff3dbe38de98faba0b626287054a40878d55e3967cd8da9362",
+      "pid": 8984,
+      "status": "PASS"
+    },
+    "identity": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity\\evidence\\phase-result.json",
+      "sha256": "0e25daca2df7635cf738ec87a8056e61874885b6cbd6e0f469bb8ebef9128412",
+      "job_sha256": "59df537f073d8e9faa0effc1f054e986a0ee7c838fd74d1633cd9ada29b16b91",
+      "pid": 42628,
+      "status": "PASS"
+    },
+    "contexts": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts\\evidence\\phase-result.json",
+      "sha256": "b80cecac107aaac3eeed073403c3e1402b81863c00622a9e89f4d852fb8f4d69",
+      "job_sha256": "558050d3f8fc9cdd81ee23656794bcb6e577233fe1be4032d78565fe4bc9df1e",
+      "pid": 32456,
+      "status": "PASS"
+    },
+    "motion": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion\\evidence\\phase-result.json",
+      "sha256": "ac5346a9e41b38786aaa5b4f883076dc14df4a6059559c542a94b4f8c5b822f7",
+      "job_sha256": "2e5312717cd71465e7a04d65ff2d89d002461ddd03db855f95d6b4bd1519d23e",
+      "pid": 37532,
+      "status": "PASS"
+    },
+    "liveness": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness\\evidence\\phase-result.json",
+      "sha256": "fd151e2b406b91ac4b05637c19aa7bf953e5bb3179d531b689292f666709b763",
+      "job_sha256": "92a2c85b3e9092c491edfdf47f0dceeb5d64496296122e11fc8811252d3e4d7d",
+      "pid": 22084,
+      "status": "PASS"
+    },
+    "capture": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture\\evidence\\phase-result.json",
+      "sha256": "b39cbde97c61e6ffe04c6f46e28ef0a75c48f006aa359a7c92a82de80aad8eed",
+      "job_sha256": "b397c2f254d2d8bc1d9a79c70c104cc0664866471880283d97c9f216dc9ae649",
+      "pid": 37356,
+      "status": "PASS"
+    },
+    "prepare": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-prepare\\evidence\\phase-result.json",
+      "sha256": "3e1d843ac2daab424457ff6f6a8852a67137ae1cc8ae4d2df2940c3f4a660517",
+      "job_sha256": "046da4c0fdf2fdd6f934d6d06473ee6ec965a4bfe09fa664d32926ae44fad5d8",
+      "pid": 32956,
+      "status": "PASS"
+    },
+    "install": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-install\\evidence\\phase-result.json",
+      "sha256": "c57c2ebc7379eab1e8bcb367c80e5fded077e7105480de73d17556a09c203a89",
+      "job_sha256": "14331e55a41fec48d5ceb7d9b10fa4a4e387412d15fb1ead88e9916b1cee1dbf",
+      "pid": 43848,
+      "status": "PASS"
+    }
+  },
+  "final_art_review_path": "docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+  "final_art_review_sha256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+  "context_acceptance": {
+    "source_hashes": 3964,
+    "original_base_views": 9,
+    "checks": 8011
+  },
+  "motion_acceptance": {
+    "checks": 66,
+    "native_entries": 16,
+    "simulated_web_low_detail_entries": 7,
+    "reduced_motion": true
+  },
+  "original_no_pointer_liveness": "PASS",
+  "capture": {
+    "frames": 152,
+    "duration_seconds": 20.1175733333333,
+    "json_sha256": "81dd282b813f2f6b4e8882c129a86c4bd55580c3683cda024cf165e2fd4b25b6",
+    "fullapp": "actual production surface",
+    "board900": "diagnostic clone",
+    "native1800": "excludes live objects"
+  },
+  "integration_receipt": "docs/testing/high_limit_spatial_v1_branch_integration_20261116.json",
+  "integration_receipt_sha256": "484059937185385e8bfa81893ae5d5e0cc15a010a32d444d7fee90ce1862f4bf",
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN",
+  "limits": "Full capture/source proof is not visual inspection of every animation cycle or browser gameplay. Separate TEST build/publish/HTTPS gates pending."
+}

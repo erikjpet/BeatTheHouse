@@ -1,0 +1,135 @@
+{
+  "schema": "bth.high_limit_spatial_native_art_review/v1",
+  "reviewed_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "room": "grand_casino_high_limit",
+  "environment": "grand_casino_high_limit",
+  "decision": "GO_FOR_TEST_BUILD",
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "production_activation_approved": true,
+  "approval_scope": "Integrate only this exact High Limit art package and prepare its independently gated TEST build. This first native/art document is not the separate release approval, verified export, publication authorization or served/browser acceptance.",
+  "test_publication_approved": false,
+  "browser_acceptance": "NOT_RUN",
+  "source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "source_scope": "PARTIAL_SELECTED_PATH_ARCHIVE",
+  "package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "high_limit_json_sha256": "d8e8eb4ca4982d2b87c402c8877a6c463b279f3d127c31bfae96be4b5b29c3d0",
+  "approved_png_sha256": {
+    "assets/art/environments/grand_casino_high_limit/background.png": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png": "0735c552b27d382c9a2b5c8992dae675bf9a5b3bd7ca867dfbc04f1e49213f37",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png": "bf33dc30e834da33afb18efe481d36baa80ab9b3774d4e7ecc3d31908a88e80a",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png": "6136ec81f0addd0cc0afd4a82d4dfc405182e9a58ed62d982b3062912981ce71",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png": "473613f75ffc3efa6152515b258b88026e2595429f88ca09074b6d97d78e1d4c",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png": "c4869428e27196ff62d62d49836aec39857370635788e71fa0f08b3fac24ca04",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png": "2e7f18a18374dd1e7f66f033f9c225b866c0a1a61c10f609cc08f7f0e86c9946",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png": "eae4a508f749b470a2d68ee535bbe0799a0f48ed84b202e5acc78bf129ad9cfb",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png": "689dd52474cd3dfd2df6518a0de2b6253083fdfe26548e25e096ec33141167d3"
+  },
+  "native_adapter_sha256": "e1fe5dc3168a23f07aad03c0c6270e1915c1714182769d70ce2496ad1576c72d",
+  "native_policy_sha256": "db7e8944a7d4e7ede36b24f9cfd4f5ee2b844e17cd92551b12b89ee2da9a3d6b",
+  "selected_source_helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+  "native_source_config_sha256": "8983e05101e7420cf18d388ec3812d61739eeecb722c1c8554bcf07327de0a7c",
+  "native_identity_sha256": "0314512f31f809fbb59d380cf49d4808e00040b72492707fe36564cb2fc164cb",
+  "native_capture_inputs_sha256": "1b9b5d6024bccf5df97783b6918327bf28cb816d6dfe6054381de347fc2e5761",
+  "native_contexts_sha256": "27530b24d84d273cfa05768d9475aa0e58465586f17fcf0cd49c20e063e4c399",
+  "native_motion_sha256": "98fcdecb5a7a2c5950558580cf2c0d2abf9161b648dbc209537440445c02aefc",
+  "native_liveness_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "native_capture_sha256": "81dd282b813f2f6b4e8882c129a86c4bd55580c3683cda024cf165e2fd4b25b6",
+  "native_phase_receipts": {
+    "identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-identity/evidence/phase-result.json",
+      "sha256": "0e25daca2df7635cf738ec87a8056e61874885b6cbd6e0f469bb8ebef9128412"
+    },
+    "contexts": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/phase-result.json",
+      "sha256": "b80cecac107aaac3eeed073403c3e1402b81863c00622a9e89f4d852fb8f4d69"
+    },
+    "motion": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-motion/evidence/phase-result.json",
+      "sha256": "ac5346a9e41b38786aaa5b4f883076dc14df4a6059559c542a94b4f8c5b822f7"
+    },
+    "liveness": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-liveness/evidence/phase-result.json",
+      "sha256": "fd151e2b406b91ac4b05637c19aa7bf953e5bb3179d531b689292f666709b763"
+    },
+    "capture": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/phase-result.json",
+      "sha256": "b39cbde97c61e6ffe04c6f46e28ef0a75c48f006aa359a7c92a82de80aad8eed"
+    }
+  },
+  "authenticated_evidence": {
+    "candidate_proof_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLTRIAL-20261116-assemble01/evidence/high-limit-spatial-r1-assembly.json",
+    "candidate_proof_sha256": "7c6d9bb22051150f57637b03bf4870396e6f111f4b5c008807631d253036ce77",
+    "prior_static_review_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_r1_static_review_v1_20261116.json",
+    "prior_static_review_sha256": "fc22fc88981f495136b85e66853b127ccd35e836460c0a54247284969ba86ae1",
+    "five_phase_results": "All PASS and bound to the same native commit/tree/config. Actual Job, storage-manifest, launch-claim, worker-log and named artifact hashes match; each Job command matches its recorded admitted inputs.",
+    "closed_jobs": {
+      "identity": {"pid": 42628, "exit_code": 0, "active_at_release": 0},
+      "contexts": {"pid": 32456, "exit_code": 0, "active_at_release": 0},
+      "motion": {"pid": 37532, "exit_code": 0, "active_at_release": 0},
+      "liveness": {"pid": 22084, "exit_code": 0, "active_at_release": 0},
+      "capture": {"pid": 37356, "exit_code": 0, "active_at_release": 0}
+    },
+    "job_caps": "All five assigned before execution; 12 percent CPU, 2147483648-byte Job memory limit, kill-on-close, no breakaway, no error or cleanup error. Admitted E storage retains 4294967296 expected write bytes plus 21474836480 reserve bytes.",
+    "actual_source_custody": "Independently rehashed all 3964 identity-listed native source files with zero mismatches, actual source identity/capture inputs, all captured adapter dependency files and Python. Recomputed the actual 21-file package seal and checked all 21 candidate/native payload pairs against the assembly map with zero mismatches.",
+    "capture_png_custody": "Independently rehashed all 456 recorded PNG files and checked recorded lengths: 152 production full-app, 152 board900 diagnostic clone and 152 native-art board2x; zero mismatches. Visual acceptance uses the sampled files listed below, not a claim to have visually examined every captured pixel.",
+    "baseline_auxiliary": "The external source_baseline/.gdignore is explicitly recorded, excluded from the logical 21-file seal and res source identity, and unchanged before/after all five phases.",
+    "historical_observer_label": "Original observer report commit d0bb57dcd98ab11d0c5e57f28a36f2c88b1a07f6 is retained as a historical label; it is not the current native source identity. Original observer SHA bindings and assertions are preserved."
+  },
+  "native_acceptance": {
+    "contexts": {"checks": 8011, "findings": [], "scenario_ids": ["__none"], "object_count": 9, "neutral_hover_and_selection": true},
+    "motion": {"checks": 66, "failures": [], "native_entries": 16, "simulated_low_detail_entries": 7, "asset_or_manifest_modified": false},
+    "no_pointer_liveness": "Original animation_liveness_without_pointer_check.gd log reports PASS.",
+    "reduce_motion": "Actual QA-only settings route; captured full-app pixels and native art texture are stable after the wait. No user setting file was saved.",
+    "autonomous_capture": {
+      "scenario": "__none",
+      "frames": 152,
+      "first_actual_scene_clock": 11.7990933333333,
+      "last_actual_scene_clock": 31.9166666666666,
+      "actual_clock_span_seconds": 20.1175733333333,
+      "maximum_animation_cycle_seconds": 57.7777777777778,
+      "cycle_capped": true,
+      "no_pointer_input": true,
+      "aligned_board900_frames": 152,
+      "board900_state_clock_equivalence_failures": 0,
+      "fullapp_is_actual_production": true,
+      "board900_is_diagnostic_clone": true,
+      "native1800_art_frames_exclude_live_objects": true,
+      "timing": "Actual captured scene clocks are retained; no invented FPS, interpolation, brightness or alpha boost."
+    }
+  },
+  "visual_samples": {
+    "base_actual_play": {"path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_actual_play.png", "sha256": "83e28ce008844a6b7811b64cfafc0eebdbb83ec891dd010e50bdcc40c3735752"},
+    "baccarat_selected": {"path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_selected_03.png", "sha256": "0482a947a1fdc8c94363aaa184b200ed608a972991fbf67deef7b81dc9305e0b"},
+    "craps_selected": {"path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_selected_04.png", "sha256": "4a4604e7757a7933d6937cc223d25080678f9be7b96dd6786ffec19d0853748b"},
+    "context_native_board": {"path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_production_board_1800x860.png", "sha256": "44e4d08dfe38bdfc1bb385dc5f502c3b59ad847eac352397251a3ae35a175306"},
+    "candidate_master": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HLTRIAL-20261116/candidate_sources/high-limit-spatial-r1-assembled-v1/assets/art/environments/grand_casino_high_limit/background.png",
+    "capture_directory": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/capture",
+    "full_app_frames_viewed": [0, 119, 151],
+    "board900_whole_frames_viewed": [0, 7, 68, 91, 105],
+    "pulse_extrema_actual_board900_crops": {
+      "casino_light_0": {"minimum_frame": 57, "maximum_frame": 46},
+      "casino_light_1": {"minimum_frame": 143, "maximum_frame": 132},
+      "casino_light_2": {"minimum_frame": 45, "maximum_frame": 78},
+      "casino_light_3": {"minimum_frame": 131, "maximum_frame": 61},
+      "casino_light_4": {"minimum_frame": 55, "maximum_frame": 147},
+      "casino_sign_pulse": {"minimum_frame": 77, "maximum_frame": 43}
+    },
+    "pulse_crop_method": "Read-only in-memory crops of the actual PNGs, nearest-neighbor diagnostic enlargement only. No crop, collage or transformed image was written to disk."
+  },
+  "findings": [],
+  "visual_judgment": [
+    "Both background tables read as horizontal felt planes with continuous rails/aprons and two complete dark supports each. No old green fringe, detached old frame, rectangular donor-floor patch or broken wall/floor joint is visible in the inspected master and native views. The protected floor inlay remains coherent.",
+    "Actual Baccarat paint and BAC OPEN remain readable over the right dark leg/front area. The anticipated bright-cap conflict did not occur. Blackjack cards and the retained middle Craps illustration remain distinct; their interaction labels and actual selected information panels are readable.",
+    "The sampled autonomous glint positions around the left supports, the Baccarat front and right-table support region show no observed replay rectangle or glint-over-leg artifact. This is bounded sampling of the actual excerpt, not all positions of every long glint cycle.",
+    "All five lamp extrema bind to the existing gold soffit fixtures; PRIVATE TABLES pulses on its glyphs. The inspected low/high actual pixels show no opaque rectangular wall patch or floating lamp bar."
+  ],
+  "limits_and_remaining_gates": [
+    "High Limit currently has Base only. The native observer covered its nine objects and nine selected-label cases; this is not public Grand scenario, lifecycle, work-outcome, save-revisit or complete gameplay verification.",
+    "The 20.1175733333333-second autonomous excerpt is shorter than the 57.7777777777778-second maximum glint cycle. Fixed-clock per-entry native/low-detail checks and no-pointer liveness are separate evidence; the visual sample does not claim full long-cycle coverage.",
+    "Low-detail verification invokes the unchanged renderer with its low-detail flag; it is not browser gameplay. Its documented three central lamp approximation is retained honestly.",
+    "This review did not execute any job, helper, engine, browser or release command, and did not write E storage or active art. Only this explicitly authorized new D review document was created.",
+    "Root must independently qualify the actual delivered Grand baseline certificate, hash this completed first review, create the separate final build approval, preserve Grand/Bar and the other rooms through strict source/PCK checks, and pass export/verify/publication/served gates. Browser acceptance remains NOT_RUN. The parent all-20-room objective remains open."
+  ]
+}

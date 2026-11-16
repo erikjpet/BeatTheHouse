@@ -1,0 +1,92 @@
+{
+  "schema": "bth.high_limit_spatial_branch_integration/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "observed_at": "2026-11-16T11:07:41.954284+00:00",
+  "approval_sha256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+  "reviewer": "/root/audit_spatial_handoff",
+  "native_source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "native_source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "baseline_manifest_sha256": "9fc243bc3ba07fb306e666dfe8f8866c78339a72dd32f6bf993cc7bdc8b0898b",
+  "background_sha256": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+  "package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "baseline_21_file_sha256": "69c7023d0dae2468f73dc4c836d055d29592443c42cb72060901ef1390c97c93",
+  "changed_sources": {
+    "assets/art/environments/grand_casino_high_limit/background.png": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png": "0735c552b27d382c9a2b5c8992dae675bf9a5b3bd7ca867dfbc04f1e49213f37",
+    "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png": "bf33dc30e834da33afb18efe481d36baa80ab9b3774d4e7ecc3d31908a88e80a",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png": "6136ec81f0addd0cc0afd4a82d4dfc405182e9a58ed62d982b3062912981ce71",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png": "473613f75ffc3efa6152515b258b88026e2595429f88ca09074b6d97d78e1d4c",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png": "c4869428e27196ff62d62d49836aec39857370635788e71fa0f08b3fac24ca04",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png": "2e7f18a18374dd1e7f66f033f9c225b866c0a1a61c10f609cc08f7f0e86c9946",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png": "eae4a508f749b470a2d68ee535bbe0799a0f48ed84b202e5acc78bf129ad9cfb",
+    "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png": "689dd52474cd3dfd2df6518a0de2b6253083fdfe26548e25e096ec33141167d3",
+    "data/art/environments/grand_casino_high_limit.json": "d8e8eb4ca4982d2b87c402c8877a6c463b279f3d127c31bfae96be4b5b29c3d0"
+  },
+  "json_typed_delta": [
+    {
+      "path": [
+        "animations",
+        0,
+        "rect",
+        1
+      ],
+      "before": 124,
+      "after": 8
+    },
+    {
+      "path": [
+        "animations",
+        1,
+        "rect",
+        1
+      ],
+      "before": 124,
+      "after": 8
+    },
+    {
+      "path": [
+        "animations",
+        2,
+        "rect",
+        1
+      ],
+      "before": 124,
+      "after": 8
+    },
+    {
+      "path": [
+        "animations",
+        3,
+        "rect",
+        1
+      ],
+      "before": 124,
+      "after": 8
+    },
+    {
+      "path": [
+        "animations",
+        4,
+        "rect",
+        1
+      ],
+      "before": 124,
+      "after": 8
+    }
+  ],
+  "raw_inventory_files": 421,
+  "other411_art_source_files_byte_exact": true,
+  "protected_source_hashes": {
+    "scripts/ui/pixel_scene_canvas.gd": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "scripts/ui/environment_art_renderer.gd": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+    "scripts/ui/environment_art_pack.gd": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+    "data/environments/placement_surfaces.json": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "candidate_source_unchanged": true,
+  "all16_native_and7_low_detail_motion_ids_unchanged": true,
+  "interaction_and_gameplay_coordinates_changed": false,
+  "decorative_lamp_integer_y_changes": 5,
+  "test_updated": false,
+  "production_scope": "art branch source only; TEST build pending; no main or NEXT"
+}
