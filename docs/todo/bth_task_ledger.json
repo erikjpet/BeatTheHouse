@@ -38546,6 +38546,18 @@
           "evidence": [
             "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
           ]
+        },
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
+        },
+        {
+          "sha": "43f2ffca0659fdad581a785b28cd8b705698b6de",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38554,9 +38566,11 @@
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
           "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
-          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json"
+          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json"
         ],
-        "commit": "3cbeefa7210a0785e894357be17f3729fd247c7e"
+        "commit": "43f2ffca0659fdad581a785b28cd8b705698b6de"
       },
       "evidence": [
         {
@@ -38575,18 +38589,18 @@
           "summary": "Actual promoted/served3cbeefa7/tree0d3bdebf verified04:52:11Z. Intervening155975 documentation build was superseded; no promotion claimed for it. Only docs changed from qualified1240 runtime, preserving215 focused checks and original full-PCK hash evidence. Web startup remains unverified."
         }
       ],
-      "next_action": "Retain actual3cbeefa7 NEXT provenance and qualified1240 runtime evidence; obtain permitted exact-build startup/rendered acceptance without bypassing inherited browser-control restriction. Continue independent ordinary general QA.",
+      "next_action": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:58:21.815832+00:00",
+        "observed_at": "2026-11-16T06:42:52.278875+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:58:21.815832+00:00",
+      "updated_at": "2026-11-16T06:42:52.278875+00:00",
       "planned_app_changes": []
     },
     {
@@ -38597,7 +38611,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_709_GENERAL_OPEN_SLOT_MAIN_NEXT_SERVED",
+      "status": "NATIVE_842_GENERAL_OPEN_TWO_FIXES_MAIN_NEXT_SERVED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38651,7 +38665,10 @@
                 "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Roulette_security_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
               ]
             },
             {
@@ -38707,6 +38724,24 @@
           "evidence": [
             "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "bd4413c65ff462253ccb69d3230956579fc8cc3f",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
+        },
+        {
+          "sha": "43f2ffca0659fdad581a785b28cd8b705698b6de",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38754,15 +38789,35 @@
           "reference": "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
           "kind": "current_main_native_normal_cash_chips_working_point_cold",
           "summary": "118 qualified checks: real cash-funded5 Pass,10 zero-new-wager continuations through a natural11-roll point and once-only10-chip credit across cold Save/Continue. Three failed probe diagnostics excluded. No Craps defect reproduced."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
+          "kind": "ordinary_native_Cage_and_Baccarat_new_timer_defect",
+          "summary": "65 qualified checks for real cashout, High-Limit entry, under-minimum controls and actual zero-wager public hand. Genuine timed-rejection control lock tracked separately; public-history oracle excluded."
+        },
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "qualified_baccarat_fix_main_next_delivery",
+          "summary": "Separate55-check Baccarat correction and earlier215-check Slot correction are on main and exact served eb05632 NEXT. General774 exploration count remains distinct; browser startup remains unverified."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Roulette_security_QA_20261116.md",
+          "kind": "ordinary_native_roulette_security_event_save_cold_idle",
+          "summary": "31 additional qualified checks: genuine0-wager High-Limit spin, natural blocking security event/pause/Save, actual visible Continue and single response card awards15 once, legitimate wheel resume, unaffordable90 placement rejected and native selector still works; no-input public spin buys no selected50. Five diagnostics/scout and one mistaken two-click oracle excluded."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md",
+          "kind": "ordinary_native_Grand_Blackjack_paid_cold_double_settlement",
+          "summary": "37 additional qualified checks: normal free High-Limit exit, actual main-floor5 Deal paid once, cold exact14 hand at17 funds, actual enabled Double/natural Queen bust24 costs total10, cold12 account/RNG/result/shoe292 and actual Clear/no-input preserved. One live-vs-settled result oracle excluded; no new defect."
         }
       ],
-      "next_action": "Continue ordinary G Cage counter/cashout and next actually available game path from the natural57-cash10-chip payout. Keep full general/endings acceptance Open and exact-build Web startup unverified.",
+      "next_action": "Continue varied ordinary QA from the latest closed G twelve-cash main-floor fixture or another distinct path; retain exact Web startup/full ending acceptance and faithful-only defect triage.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:58:21.815832+00:00",
+        "observed_at": "2026-11-16T06:40:51.213598+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38772,7 +38827,174 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:58:21.815832+00:00",
+      "updated_at": "2026-11-16T06:40:51.213598+00:00",
+      "planned_app_changes": []
+    },
+    {
+      "id": "BTH-BACCARAT-AUTO-MIN-SELECTION-001",
+      "name": "Keep Baccarat controls usable after a rejected timed minimum",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH-NEXT-QA-GENERAL-SIDEBAR-001"
+      ],
+      "group": "current",
+      "state": "open",
+      "status": "MAIN_NEXT_SERVED_55_NATIVE_COMPAT_LIVENESS_WEB_STARTUP_UNVERIFIED",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Prevent an actual timed Baccarat minimum rejection from stranding normal chip/Clear controls. Preserve authoritative minimum/funding/seal/replay checks, money/RNG/cards/clock, existing saves, valid manual/auto/sit-out hands and no-input animation. Broader general/endings work remains Open.",
+        "source": "User requested visible sidebar general NEXT bug-finding and authorized root-cause fixes/main/NEXT through parent01a1a147-7f07-7583-baf0-771a839f1013. Discovered in normal owned G campaign after actual60 High-Limit buy-in; original failure retained.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "faithful-reproduction",
+            "description": "Retain exact own normal campaign, first public hand/cold/actual active countdown and real canvas failure, source unchanged and bounded Job closed.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "root-cause-fix",
+            "description": "Trace the actual pending/dispatch boundary and correct rejection before stranding controls while retaining all authority/funding/replay guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "fixed-native-cold",
+            "description": "Same actual timer/input path and cold persistence keep controls usable with unchanged money/RNG/cards on rejection.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "focused-compatibility",
+            "description": "Relevant valid manual/auto/sit-out, rejection and no-input liveness evidence passes without broad unqualified claims.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Scoped authorized main commit/push and exact existing NEXT provenance/assets; retain explicit startup/rendered Web limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "exact-web-startup",
+            "description": "Confirm exact served startup/rendered acceptance where permitted; native/HTTP evidence alone does not prove Web launch.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Ordinary owned native active-timer failure",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Root correction and focused actual/cold/old-save/synthetic/no-pointer compatibility",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Authorized main/NEXT provenance and full changed PCK",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+                "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json"
+              ]
+            },
+            {
+              "name": "Exact-build browser startup and rendered Web acceptance",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
+        },
+        {
+          "sha": "43f2ffca0659fdad581a785b28cd8b705698b6de",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json"
+        ],
+        "commit": "43f2ffca0659fdad581a785b28cd8b705698b6de"
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "ordinary_owned_native_active_timer_failure",
+          "summary": "Real mainbd441 active timer rejects Player5 under minimum90, preserves7 cash/RNG/cards, but actual chip10/Clear controls fail.17 checks/two failures retained; clean engine log and owned0."
+        },
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "faithful_native_fix_old_state_and_synthetic_compatibility",
+          "summary": "Pending-delivery root confirmed;55 native/recovery checks, four-case suite with six new minimum/valid-auto assertions and no-pointer liveness pass. Actual old Cancel works and stale replay rejects; evidence classes remain separate."
+        },
+        {
+          "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "kind": "exact_main_next_served_full_pck",
+          "summary": "Main eb05632 and tree efc2d51c served through the existing watcher; trusted HTTPS metadata and full124982648-byte PCK hash match stage and qualified LF source. Web startup remains unverified under retained browser-control restriction."
+        }
+      ],
+      "next_action": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
+      "blocker": {
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T06:42:52.278875+00:00",
+        "evidence": [
+          "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T06:42:52.278875+00:00",
       "planned_app_changes": []
     }
   ],
