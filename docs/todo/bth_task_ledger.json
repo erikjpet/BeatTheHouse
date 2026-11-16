@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T06:58:50.661402+00:00",
+  "updated_at": "2026-11-16T07:28:19.147112+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38568,9 +38568,10 @@
           "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
           "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json",
           "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
-          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json"
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-marker-next-docs-20261116-01\\evidence\\next-receipt.json"
         ],
-        "commit": "43f2ffca0659fdad581a785b28cd8b705698b6de"
+        "commit": "1268ffab41c975b355cb4f3a016d008ef6af0a14"
       },
       "evidence": [
         {
@@ -38595,12 +38596,12 @@
         "kind": "browser_control_restriction",
         "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:42:52.278875+00:00",
+        "observed_at": "2026-11-16T07:28:19.147112+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T06:42:52.278875+00:00",
+      "updated_at": "2026-11-16T07:28:19.147112+00:00",
       "planned_app_changes": []
     },
     {
@@ -38611,7 +38612,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_842_GENERAL_OPEN_TWO_FIXES_MAIN_NEXT_SERVED",
+      "status": "NATIVE_953_GENERAL_OPEN_TWO_FIXES_MAIN_NEXT_SERVED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38668,7 +38669,8 @@
                 "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Roulette_security_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_marker_cashout_interest_QA_20261116.md"
               ]
             },
             {
@@ -38809,15 +38811,20 @@
           "reference": "docs/testing/NEXT_sidebar_Grand_Blackjack_double_QA_20261116.md",
           "kind": "ordinary_native_Grand_Blackjack_paid_cold_double_settlement",
           "summary": "37 additional qualified checks: normal free High-Limit exit, actual main-floor5 Deal paid once, cold exact14 hand at17 funds, actual enabled Double/natural Queen bust24 costs total10, cold12 account/RNG/result/shoe292 and actual Clear/no-input preserved. One live-vs-settled result oracle excluded; no new defect."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_marker_cashout_interest_QA_20261116.md",
+          "kind": "ordinary_native_marker_cashout_daily_interest_cold",
+          "summary": "111 additional qualified checks: real ATM borrow/partial/full repayment; chip redemption withholding to marker; cold full payoff; actual map journeys across3AM50-to53 and exact cold/next-day/idempotent views with normal live calendar.22 retained bounded route observations and3 wrong-oracle runs excluded. No new product defect."
         }
       ],
-      "next_action": "Continue varied ordinary QA from the latest closed G twelve-cash main-floor fixture or another distinct path; retain exact Web startup/full ending acceptance and faithful-only defect triage.",
+      "next_action": "Continue untested ordinary shop purchase/Save/Main Menu/Continue paths from the validated18-cash53-marker Motel profile, while retaining broader native/Web/ending scope and faithful-only defect triage.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:40:51.213598+00:00",
+        "observed_at": "2026-11-16T07:28:19.147112+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38827,7 +38834,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T06:40:51.213598+00:00",
+      "updated_at": "2026-11-16T07:28:19.147112+00:00",
       "planned_app_changes": []
     },
     {
@@ -38962,9 +38969,10 @@
         "state": "verified",
         "evidence": [
           "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
-          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json"
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-delivery-docs-next-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-marker-next-docs-20261116-01\\evidence\\next-receipt.json"
         ],
-        "commit": "43f2ffca0659fdad581a785b28cd8b705698b6de"
+        "commit": "1268ffab41c975b355cb4f3a016d008ef6af0a14"
       },
       "evidence": [
         {
@@ -38989,12 +38997,12 @@
         "kind": "browser_control_restriction",
         "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:42:52.278875+00:00",
+        "observed_at": "2026-11-16T07:28:19.147112+00:00",
         "evidence": [
           "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T06:42:52.278875+00:00",
+      "updated_at": "2026-11-16T07:28:19.147112+00:00",
       "planned_app_changes": []
     }
   ],
