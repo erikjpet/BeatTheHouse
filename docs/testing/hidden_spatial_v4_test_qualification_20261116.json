@@ -1,0 +1,48 @@
+{
+  "schema": "bth.hidden_spatial_v4_test_qualification/v1",
+  "recorded_at": "2026-11-16T14:54:59.227941+00:00",
+  "status": "STATIC_CODE_GO_AND_EXACT_40_TESTS_PASS_NATIVE_PENDING",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "sources": {
+    "tools/hidden_spatial_native_profile_v4.py": "5363ea2df478aec1bb59481964d923d4b325ab82b77f37e78be37b0c4671ac57",
+    "tools/hidden_spatial_native_trial_v4.py": "39d04ea4f79edef9bd6c4257c150a0f3a5f56db8fc1fd4df8221ac0d67d2db29",
+    "tools/test_hidden_spatial_native_trial_v4.py": "8eff7ed618fafd6a5566822a9c504cf7d63278b45c220e50eca54e4e16544803",
+    "docs/testing/hidden_spatial_v3_stop_20261116.md": "d106b0857a95055a7b349764a8b1ffa4065fc3dd470916dde9416a004a546d2f"
+  },
+  "independent_reviewers": [
+    "/root/audit_spatial_handoff",
+    "/root/bar_clearance_audit/dark_feet_source_audit"
+  ],
+  "actual_tests": {
+    "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDEN-V4-20261116-tests01\\evidence",
+    "defined_and_ran": 40,
+    "seconds": 4.374,
+    "job_sha256": "8520fdb3acb797b71a4c3f5387ee55de041aa9fd451807d94983411309d6a3e7",
+    "log_sha256": "d28b9ba35ab40b3cd090ad3ed677b2d77085d645df9648200f0ea5e725965d86",
+    "storage_manifest_sha256": "eb11eaf18038fe1ce451184dc163b6500ddb6bd8137c0a872291e77ba2dc1c4c",
+    "launch_claim_sha256": "52545605217ffa82b41a31794cb25851c8367f2db6fb87504fb815b38ed4e9b7",
+    "pid": 19800,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "command": [
+      "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+      "-B",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_hidden_spatial_native_trial_v4.py"
+    ]
+  },
+  "correction": "One report mapping now matches original immutable GD output hidden_glint_source_paint.json; all18 original report mappings checked before future launch. Fresh HIDDENTRIAL3 QA; retained original HIDDENTRIAL inputs readonly.",
+  "old_v3_stop": "Eighteen phases qualified PASS. Phase19 engine38420 exited0/findings[] but supervisor used wrong filename; no phase-result, ten phases NOT_RUN. No rename, retry, receipt bridge or old profile migration.",
+  "native_v4_executed": false,
+  "production_art_written": false,
+  "test_updated": false
+}
