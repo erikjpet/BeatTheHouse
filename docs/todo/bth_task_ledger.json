@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T10:16:13.774383+00:00",
+  "updated_at": "2026-11-16T10:43:38.074500+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38662,7 +38662,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_1238_GENERAL_CONTINUING_WAGER_COUNTER_COLD_PATHS",
+      "status": "NATIVE_1366_GENERAL_CONTINUING_LAST_DOLLAR_TICKET_TRAVEL",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38724,7 +38724,8 @@
                 "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Roulette_rebet_cashout_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Video_Poker_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_wager_preferences_counter_batch_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_wager_preferences_counter_batch_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_last_dollar_ticket_travel_QA_20261116.md"
               ]
             },
             {
@@ -38917,15 +38918,20 @@
           "reference": "docs/testing/NEXT_sidebar_wager_preferences_counter_batch_QA_20261116.md",
           "kind": "continued_ordinary_native_preferences_mixed_funding_four_column_counter_cold",
           "summary": "129 qualified checks: native changed30 wager/cold/mixed4chips26cash; real Eye ChangeTables5; affordable120 DrawAll/cold55 fallback/skip20 denomination; four-column8-chip purchase/tray/cold/native Collect/AutoOpen/three-chip redemption/menu/empty repeat. Eleven diagnostics and4 supporting scout checks excluded; general1238. No new verified product defect. Sampled runtime unchanged across reviewed Collector-only integration."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_last_dollar_ticket_travel_QA_20261116.md",
+          "kind": "continued_native_low_bankroll_all_in_ticket_travel_cold",
+          "summary": "128 additional qualified checks; naturally earned last1 cash, actual ChangeStake/ConfirmBet, sealed zero-liquid deferral/cold/reveal; paid four-ticket away/return IDs, natural LightsOut response,106-chip redemption/menu persistence/empty repeat. Probe diagnostics excluded. General1366. No verified new product defect; original native identities and browser gap retained."
         }
       ],
-      "next_action": "Continue ordinary low-bankroll gameplay/cold Continue from the real55cash/quote18 Video Poker checkpoint and retained losing-ticket/counter paths from197cash3chips. Preserve owner saves, independent ending campaigns, source identities and browser gap; do not stop at this bounded record.",
+      "next_action": "Continue distinct ordinary native gameplay from the retained95cash106chips/no marker/Grand Casino checkpoint and the genuinely resolved last-dollar path. Preserve owner saves, other campaigns, exact source identities and the open browser acceptance; do not close the parent on a bounded test record.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T10:04:09.383081+00:00",
+        "observed_at": "2026-11-16T10:43:38.074500+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38935,7 +38941,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T10:04:09.383081+00:00",
+      "updated_at": "2026-11-16T10:43:38.074500+00:00",
       "planned_app_changes": []
     },
     {
