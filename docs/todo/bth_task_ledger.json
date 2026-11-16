@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "FIXES_TESTED_PUBLICATION_PENDING_CJ2_FAILED_CUSTODY",
+      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5104,6 +5104,14 @@
           "sha": "ebaa460d5ad41f1c4fb3e481ff7f2a033a42a927",
           "evidence": [
             "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "046754f0a67c053814972b640a542b18f62e1022",
+          "evidence": [
+            "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
+            "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
+            "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
           ]
         }
       ],
@@ -5245,13 +5253,13 @@
         "kind": "native_failed_custody",
         "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:12:07.645252+00:00",
+        "observed_at": "2026-11-16T19:20:56.329761+00:00",
         "evidence": [
           "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T19:12:07.645252+00:00"
+      "updated_at": "2026-11-16T19:20:56.329761+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43754,12 +43762,23 @@
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
       "state": "open",
-      "commits": [],
+      "commits": [
+        {
+          "sha": "046754f0a67c053814972b640a542b18f62e1022",
+          "evidence": [
+            "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
+            "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
+            "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "046754f0a67c053814972b640a542b18f62e1022",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crew-handoff-delivery1-261116\\evidence\\delivery-result.json"
+        ]
       },
       "scope": [
         "Repair trusted room publication after an ordinary delivery settles and retires its owner.",
@@ -43767,7 +43786,7 @@
         "Use detached synthetic regression only while original CJ2 custody is failed; no failed-profile replay, copying, reset or forced save."
       ],
       "acceptance_scope": "Native one-contact handoff observed delivered beforedeadline but finalactiveauthority failed; terminal/specificauthorityerror not captured there. Need causal synthetic cleanup red/green, no-replay/persistence and rejection evidence plus main/NEXT; original CJ2 outcome persistence remains separately blocked until supported inspection.",
-      "status": "FIXES_TESTED_PUBLICATION_PENDING_CJ2_FAILED_CUSTODY",
+      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43791,12 +43810,12 @@
         "kind": "native_failed_custody",
         "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:12:07.645252+00:00",
+        "observed_at": "2026-11-16T19:20:56.329761+00:00",
         "evidence": [
           "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:12:07.645252+00:00"
+      "updated_at": "2026-11-16T19:20:56.329761+00:00"
     },
     {
       "id": "CREW-HANDOFF-CONTACT-CONTINUE-20261116",
@@ -43805,12 +43824,23 @@
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
       "state": "open",
-      "commits": [],
+      "commits": [
+        {
+          "sha": "046754f0a67c053814972b640a542b18f62e1022",
+          "evidence": [
+            "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
+            "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
+            "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "046754f0a67c053814972b640a542b18f62e1022",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crew-handoff-delivery1-261116\\evidence\\delivery-result.json"
+        ]
       },
       "scope": [
         "Restore the legitimate visible handoff contact after normal Save/Continue with an active carried Crew package.",
@@ -43818,7 +43848,7 @@
         "Use the preserved CJ2 forward-only slot without profile copies, replay or forced time/outcomes; keep browser restrictions."
       ],
       "acceptance_scope": "Actual native lookout present on arrival then absent immediately after Continue, despite same valid carried package and matching mounted/presentation owner. Focused synthetic regression and rejection checks plus exact-new-build native contact/handoff/cold-persistence and NEXT artifact evidence; broader Web/game acceptance remains on parent.",
-      "status": "FIXES_TESTED_PUBLICATION_PENDING_CJ2_FAILED_CUSTODY",
+      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43842,12 +43872,12 @@
         "kind": "native_failed_custody",
         "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:12:07.645252+00:00",
+        "observed_at": "2026-11-16T19:20:56.329761+00:00",
         "evidence": [
           "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:12:07.645252+00:00"
+      "updated_at": "2026-11-16T19:20:56.329761+00:00"
     },
     {
       "id": "CREW-CJ2-MAP-HANDOFF-20261116",
@@ -43856,7 +43886,16 @@
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
       "state": "open",
-      "commits": [],
+      "commits": [
+        {
+          "sha": "046754f0a67c053814972b640a542b18f62e1022",
+          "evidence": [
+            "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
+            "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
+            "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -43869,7 +43908,7 @@
         "Continue the carried Back Alley package through normal visible choices and terms, preserving all existing caps, no-copy lineage, save boundaries and owner saves."
       ],
       "acceptance_scope": "Focused control/CLI guard and syntax qualification plus actual same-slot forward Map/handoff/save evidence or precise observed blocker. Browser/WASM, human pacing and broader Crew remain with the parent.",
-      "status": "FIXES_TESTED_PUBLICATION_PENDING_CJ2_FAILED_CUSTODY",
+      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43898,12 +43937,12 @@
         "kind": "native_failed_custody",
         "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:12:07.645252+00:00",
+        "observed_at": "2026-11-16T19:20:56.329761+00:00",
         "evidence": [
           "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:12:07.645252+00:00"
+      "updated_at": "2026-11-16T19:20:56.329761+00:00"
     },
     {
       "id": "CREW-CONCURRENT-ROUTE-OFFER-20261116",
@@ -44136,6 +44175,14 @@
           "evidence": [
             "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "046754f0a67c053814972b640a542b18f62e1022",
+          "evidence": [
+            "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
+            "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
+            "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -44150,7 +44197,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "FIXES_TESTED_PUBLICATION_PENDING_CJ2_FAILED_CUSTODY",
+      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -44259,12 +44306,12 @@
         "kind": "native_failed_custody",
         "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:12:07.645252+00:00",
+        "observed_at": "2026-11-16T19:20:56.329761+00:00",
         "evidence": [
           "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:12:07.645252+00:00"
+      "updated_at": "2026-11-16T19:20:56.329761+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

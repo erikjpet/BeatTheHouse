@@ -19,20 +19,7 @@ Fix the cold-Continue handoff projection after faithful native arrival/Save/Cont
 
 Manual checkpoint reconciliation `E:\CodexQA\BTH\runs\crew-contact-reconcile1-261116\evidence\reconciliation.json`: zero findings across17 owned Crew rows and all14 listed exact closed native Jobs. The all-project report retains715 unrelated/stale/incomplete-snapshot findings (checker exit1, not a crash). No foreign process or task was changed.
 
-## Current checkpoint 2026-11-16T19:07:35.272794+00:00
-
-Original CJ2 remains **CASE_FAILED** at `crew-native-cj2-handoff-fixed1-261116`. Earlier CLEAN_CLOSED descriptions above are historical predecessors. One displayed handoff executed and reported delivered; final room authority failed. Explicit Main Save was skipped, automatic persistence is unknown. No profile copy, reset, load, replay, handoff retry or manual Save was performed after failure. All owned native Jobs are closed; this does not clear campaign custody.
-
-Contact restoration: causal world-only red4 retained two contact-loss failures; green2 passed49 focused synthetic assertions, including unchanged accounting/RNG/clock and Save/coldContinue plus tamper rejection. Actual no-copy `crew-native-cj2-contact-fixed1-261116` passed10 checks and restored exactly one enabled owned contact with unchanged public state; it does not establish persisted post-handoff original state. Raw receipts remain under `E:/CodexQA/BTH/runs/`.
-
-Cleanup producer repair and fresh synthetic regression are in progress. The retained causal red1 has63 checks/two failures in a nonterminal Environment: one settlement and acknowledgment, then stale `crew::package_handoff` manifest row, no Leave control. No successful cleanup acceptance is claimed yet.
-
-The native control extension uses ordinary enabled Leave/Map/Back Alley/Travel, the actual arrival text, ordinary paused/unpaused recipient wait, and one unique visible enabled owned handoff contact. Failure diagnostics now record terminal/screen/authority and autosave/manual-save-attempt separately. They never relax the final authority/Save gate. Exact-product admission retains only the three previously audited builds; the combined cleanup build is **not admitted for original CJ2 continuation**. CASE_FAILED has no recovery/replay policy. A separately supported and qualified failed-case inspection/recovery capability is required before further campaign actions; no reset or replay is implied by a new source commit.
-
-main/NEXT publication of these two new fixes remains pending; last verified served source before publication was c055dd67795b0dcf51667ea948c5dc4a20c8e8e1.
-
-
-## Current checkpoint 2026-11-16T19:12:07.645252+00:00
+## Current checkpoint 2026-11-16T19:20:56.329761+00:00
 
 Original CJ2 remains **CASE_FAILED** at `crew-native-cj2-handoff-fixed1-261116`. Earlier CLEAN_CLOSED descriptions above are historical predecessors. One displayed handoff executed and reported delivered; final room authority failed. Explicit Main Save was skipped, automatic persistence is unknown. No profile copy, reset, load, replay, handoff retry or manual Save was performed after failure. All owned native Jobs are closed; this does not clear campaign custody.
 
@@ -50,4 +37,6 @@ Final adapter qualification: guards14 passed125 synthetic tests (including expli
 
 The native control extension uses ordinary enabled Leave/Map/Back Alley/Travel, the actual arrival text, ordinary paused/unpaused recipient wait, and one unique visible enabled owned handoff contact. Failure diagnostics now record terminal/screen/authority and autosave/manual-save-attempt separately. They never relax the final authority/Save gate. Exact-product admission retains only the three previously audited builds; the combined cleanup build is **not admitted for original CJ2 continuation**. CASE_FAILED has no recovery/replay policy. A separately supported and qualified failed-case inspection/recovery capability is required before further campaign actions; no reset or replay is implied by a new source commit.
 
-main/NEXT publication of these two new fixes remains pending; last verified served source before publication was c055dd67795b0dcf51667ea948c5dc4a20c8e8e1.
+Associated tested fix/control commit: `046754f0a67c053814972b640a542b18f62e1022`.
+
+NEXT delivery: source `046754f0a67c053814972b640a542b18f62e1022`, tree `42149599bba477936bfcf78447ddd1a741f3bee1`; exact served metadata, entry, small asset bytes and matching pipeline-manifest/large-asset HEAD checks passed in `E:\CodexQA\BTH\runs\crew-handoff-delivery1-261116\evidence\delivery-result.json`. Browser/WASM startup and visual gameplay remain unverified under the existing custody restriction.
