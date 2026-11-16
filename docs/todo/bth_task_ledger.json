@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:23:08.008954+00:00",
+  "updated_at": "2026-11-16T11:34:06.663332+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38681,7 +38681,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_1366_GENERAL_BLACKJACK_47_19_LIVENESS_MAIN_NEXT_PENDING",
+      "status": "NATIVE_1400_GENERAL_CONTINUING_BLACKJACK_PATRON_COLD_PATHS",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38744,7 +38744,8 @@
                 "docs/testing/NEXT_sidebar_Roulette_rebet_cashout_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Video_Poker_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_wager_preferences_counter_batch_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_last_dollar_ticket_travel_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_last_dollar_ticket_travel_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Blackjack_rebet_patron_QA_20261116.md"
               ]
             },
             {
@@ -38958,15 +38959,25 @@
           "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
           "kind": "fourth_qualified_native_gameplay_root_fix",
           "summary": "Blackjack first-draft idle initialization corrected and qualified47 native/19 synthetic/liveness; separate from1366 general checks. Scoped main/NEXT pending, browser acceptance open."
+        },
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "fourth_native_root_fix_delivered_main_next",
+          "summary": "Blackjack missing-authority restored cadence corrected47 native/19 synthetic/liveness and delivered exact main/NEXT39e3e362 with full changed PCK/native hashes. Broader QA and exact browser remain Open."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Blackjack_rebet_patron_QA_20261116.md",
+          "kind": "continued_ordinary_native_Blackjack_rebet_max_undo_clear_patron_match_fade",
+          "summary": "34 new qualified checks: actual cold95cash105chips; Rebet9/MAX20+5+5/Undo/Clear/Rebet; patronMatch30/Fade5/Undo/Match30, no player-account/RNG effects, authority/pending clean. General1400;47 focused fix checks remain separate."
         }
       ],
-      "next_action": "Complete authorized main/NEXT delivery of BTH-BLACKJACK-FIRST-DRAFT-001, then continue distinct ordinary native play from the retained95cash105chips/no-marker settled checkpoint. Preserve owner saves, separate ending owners and browser gap.",
+      "next_action": "Continue distinct ordinary native Deal/cold decisions from the actual patron-Match30 preview at95cash105chips; use only naturally offered choices/outcomes. Preserve owner saves, other ending owners, original source evidence and the open browser gap.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:15:43.019619+00:00",
+        "observed_at": "2026-11-16T11:34:06.663332+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38976,7 +38987,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T11:15:43.019619+00:00",
+      "updated_at": "2026-11-16T11:34:06.663332+00:00",
       "planned_app_changes": []
     },
     {
@@ -39318,7 +39329,7 @@
       ],
       "group": "current",
       "state": "open",
-      "status": "FIXED_47_NATIVE_19_SYNTH_LIVENESS_MAIN_NEXT_PENDING",
+      "status": "MAIN_NEXT_SERVED_47_NATIVE_19_SYNTH_LIVENESS_WEB_STARTUP_UNVERIFIED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -39369,8 +39380,12 @@
             "id": "main-next-delivery",
             "description": "Scoped authorized main push and exact existing NEXT identity/served assets.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+              "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-next-served-20261116-01\\evidence\\next-receipt.json",
+              "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-changed-assets-20261116-01\\evidence\\assets.json"
+            ]
           },
           {
             "id": "exact-web-startup",
@@ -39400,8 +39415,12 @@
             },
             {
               "name": "Authorized scoped main/NEXT exact served identity and assets",
-              "state": "remaining",
-              "evidence": []
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+                "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-next-served-20261116-01\\evidence\\next-receipt.json",
+                "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-changed-assets-20261116-01\\evidence\\assets.json"
+              ]
             },
             {
               "name": "Exact browser startup/rendered acceptance under retained control restriction",
@@ -39418,13 +39437,24 @@
           "evidence": [
             "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
           ]
+        },
+        {
+          "sha": "39e3e362e1297f2b846040bed9c352090146abe0",
+          "evidence": [
+            "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+            "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-next-served-20261116-01\\evidence\\next-receipt.json"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "39e3e362e1297f2b846040bed9c352090146abe0",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-next-served-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-blackjack-first-draft-changed-assets-20261116-01\\evidence\\assets.json",
+          "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+        ]
       },
       "evidence": [
         {
@@ -39436,20 +39466,25 @@
           "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
           "kind": "qualified_native_cold_draft_paid_surrender_menu_and_authority_liveness",
           "summary": "47 native,19 synthetic,no-pointer PASS. Same original first draft persists; cold9 quote paid once; actual cold13/late Surrender/main-side settlement/menu returns95cash105chips. Original failures and three native assertion diagnostics preserved/excluded."
+        },
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "exact_main_next_full_changed_pck_and_native_wasm_delivery",
+          "summary": "Code9d25cd06, merged main39e3e362/treeeb137ad4, promoted11:29:16Z; exact source/metadata/fullPCK124984120/8f9c4f83851cf1674921bef821e591244271d02eee7d58ee8449b8c801c6614c and fresh changed native340415 hash verified. Browser startup/rendered remains unverified."
         }
       ],
-      "next_action": "Push the scoped tested fix and qualification records to authorized main, follow the existing NEXT watcher and exact served assets/source. Keep browser startup/rendered acceptance unverified; continue general native playtesting separately.",
+      "next_action": "Retain exact-browser startup/rendered acceptance as Open under the existing control restriction; native/source/main/NEXT/HTTP gates passed. Continue independent general native exploration.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser/fallback attempted. Native/source/main/NEXT/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:15:43.019619+00:00",
+        "observed_at": "2026-11-16T11:34:06.663332+00:00",
         "evidence": [
           "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T11:15:43.019619+00:00",
+      "updated_at": "2026-11-16T11:34:06.663332+00:00",
       "planned_app_changes": []
     }
   ],
