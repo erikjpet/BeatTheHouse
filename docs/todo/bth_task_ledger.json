@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+  "updated_at": "2026-11-16T00:45:23.175587+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,10 +38045,10 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "SOURCE_REVIEW",
+      "status": "SIDEBAR_SOURCE_AUDIT_BAR_HANDOFF_BLOCKED",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38062,18 +38062,25 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry.",
+      "next_action": "Obtain existing Bar trial task identity and exact immutable candidate path, then independently review and run isolated guarded native/animation qualification when the shared runtime is available; publish only exact passed package to TEST.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "worker_handoff",
+        "description": "Existing internal Bar pool-table trial has no located task/checkpoint/output in this sidebar handoff. Host process inspection returned Get-CimInstance: Access denied. Do not duplicate or activate until trial ownership/output is known.",
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
-        "evidence": []
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "evidence": [
+          "docs/testing/environment_spatial_sidebar_handoff_20261116.md"
+        ]
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38105,10 +38112,10 @@
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
       "state": "open",
-      "status": "SOURCE_REVIEW",
+      "status": "SIDEBAR_SOURCE_AUDIT_BAR_HANDOFF_BLOCKED",
       "owner": {
-        "name": "implement_room_spatial_fixes",
-        "task_ref": "/root/implement_room_spatial_fixes",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38122,18 +38129,25 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery.",
+      "next_action": "Obtain existing Bar trial task identity and exact immutable candidate path, then independently review and run isolated guarded native/animation qualification when the shared runtime is available; publish only exact passed package to TEST.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "worker_handoff",
+        "description": "Existing internal Bar pool-table trial has no located task/checkpoint/output in this sidebar handoff. Host process inspection returned Get-CimInstance: Access denied. Do not duplicate or activate until trial ownership/output is known.",
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
-        "evidence": []
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "evidence": [
+          "docs/testing/environment_spatial_sidebar_handoff_20261116.md"
+        ]
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
       ],
@@ -38240,8 +38254,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38255,18 +38269,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38302,8 +38321,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38317,18 +38336,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38364,8 +38388,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38379,18 +38403,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38426,8 +38455,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38441,18 +38470,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38488,8 +38522,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38503,18 +38537,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38550,8 +38589,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38565,18 +38604,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38612,8 +38656,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38627,18 +38671,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Pawn Shop physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38674,8 +38723,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38689,18 +38738,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Jazz Club physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38736,8 +38790,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38751,18 +38805,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Kitty Cat Lounge physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38798,8 +38857,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38813,18 +38872,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Public Punchline physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38860,8 +38924,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38875,18 +38939,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Motel lobby physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38922,8 +38991,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38937,18 +39006,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Apartment physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38984,8 +39058,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -38999,18 +39073,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct House physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39046,8 +39125,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39061,18 +39140,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Grand Cage physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39108,8 +39192,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39123,18 +39207,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Beach physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39170,8 +39259,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39185,18 +39274,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Back Alley physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39232,8 +39326,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39247,18 +39341,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Gas Station Casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39294,8 +39393,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39309,18 +39408,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Corner Store physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39356,8 +39460,8 @@
       "state": "open",
       "status": "AUDIT_RECORDED_REPAIR_PENDING",
       "owner": {
-        "name": "direct_room_spatial_rework",
-        "task_ref": "/root/direct_room_spatial_rework",
+        "name": "Repair environment art",
+        "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -39371,18 +39475,23 @@
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
           "kind": "director_direction"
+        },
+        {
+          "kind": "sidebar_handoff",
+          "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
+          "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "observed_at": "2026-11-16T00:45:23.175587+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "updated_at": "2026-11-16T00:45:23.175587+00:00",
       "scope": [
         "Review and correct Motel Room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],

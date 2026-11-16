@@ -1,0 +1,13 @@
+{
+  "schema": "bth.owner_snapshot/v1",
+  "observed_at": "2026-11-16T00:45:23.175587+00:00",
+  "tasks": [
+    {
+      "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+      "title": "Repair environment art",
+      "state": "active",
+      "observed_at": "2026-11-16T00:45:23.175587+00:00",
+      "source": "Actual sidebar turn: source/evidence audit, fresh guarded E preparation; existing Bar trial ownership/output unresolved. No new game runtime."
+    }
+  ]
+}

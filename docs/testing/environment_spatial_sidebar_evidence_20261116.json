@@ -1,0 +1,72 @@
+{
+  "schema": "bth.spatial_sidebar_checkpoint/v1",
+  "observed_at": "2026-11-16T00:48:04.156173+00:00",
+  "task_id": "BTH-ENV-SPATIAL-001",
+  "owner_task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "source_baseline_commit": "bd90fab7c221b2d76f1af4d8d0480eb1d602189c",
+  "status": "SOURCE_CUSTODY_PASS_BAR_TRIAL_HANDOFF_BLOCKED",
+  "art_changed": false,
+  "test_updated": false,
+  "source_report": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-audit02\\evidence\\spatial-source-audit.json",
+  "source_report_sha256": "d7de1ec6ddcb2b2faf03d201fb3997e40b6590c97be4ebbeb98a733cb34d99d4",
+  "rooms": 20,
+  "referenced_pngs": 387,
+  "historical_capture_hashes_matched": 20,
+  "protected_source_sha256": {
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f",
+    "data/environments/placement_surfaces.json": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+    "scripts/ui/pixel_scene_canvas.gd": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "scripts/ui/environment_art_renderer.gd": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+    "scripts/ui/environment_art_pack.gd": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+    "scripts/ui/game_surface_canvas.gd": "4e5ff7920f2e031e5d0c1d1bdca908fac3da4f5391c4bc19af2298c8fcbbcbac"
+  },
+  "jobs": [
+    {
+      "receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-audit02\\evidence\\job.json",
+      "receipt_sha256": "95c2c08171be072ff78dacd77cb4c355deb511e5723f0b26390ffea7712a4f6b",
+      "pid": 28220,
+      "assigned_before_execution": true,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "storage_manifest_sha256": "e6cf0aed77255c16ff9d1c5fc5fb45d23751c2ad9e5324563e3790bf533c01d4",
+      "cpu_rate": 1200,
+      "memory_limit_bytes": 2147483648,
+      "has_both_launch_gates": true
+    },
+    {
+      "receipt": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-reconcile03\\evidence\\job.json",
+      "receipt_sha256": "cab26ea7e79346a1ea36bce63382ba2935e6d7902819f26a7c36a6d2215b841a",
+      "pid": 5604,
+      "assigned_before_execution": true,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "error": null,
+      "cleanup_errors": [],
+      "timed_out": false,
+      "storage_manifest_sha256": "70f71e3b012c4a05c67906e4b8b6d51327e74bc214137a4e9e6d8375a9f50a7a",
+      "cpu_rate": 1200,
+      "memory_limit_bytes": 2147483648,
+      "has_both_launch_gates": true
+    }
+  ],
+  "reconciliation": {
+    "report": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-reconcile03\\evidence\\reconciliation.json",
+    "exit_code": 1,
+    "total_findings": 4108,
+    "spatial_scope_findings": [],
+    "runtime_inventory_scope": "Existing retained inventory; other host runtimes were not reobserved."
+  },
+  "remaining_blockers": [
+    "Existing internal Bar trial task identity, immutable candidate path/hash and ownership state were not provided or located.",
+    "Host Get-CimInstance returned Access denied; no alternate inspection/control or retry attempted.",
+    "Shared rendering runtime is reported occupied by an ending test; no new game/browser launch."
+  ],
+  "limits": [
+    "Source and historical capture custody only; no rendering or runtime launched.",
+    "No visual, scenario, motion, Reduce Motion, liveness or TEST acceptance.",
+    "No save/profile data opened and no source/art file modified."
+  ]
+}
