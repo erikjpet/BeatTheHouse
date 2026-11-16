@@ -6269,6 +6269,11 @@
           "kind": "qa_custody_correction",
           "reference": "docs/testing/BTH-NEXT-QA-PROFILE-CUSTODY-001_20261115.md",
           "summary": "O campaign copies omitted appdata; intact private Crew authority was NOT qualified. Count Continue abort is correct rejection of preexisting private-authority error. Retain public comparison scope only; reconstruct from original profile with companions."
+        },
+        {
+          "kind": "native_ordinary_gameplay",
+          "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+          "summary": "Intact Grand greeting/roster9/9 and Bishop normal recruitment/saveContinue16/16; native only, broader ending acceptance open."
         }
       ],
       "implementation_batches": [],
@@ -6282,7 +6287,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-15T22:15:43.419070+00:00",
+      "updated_at": "2026-11-16T00:23:36.728228+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -38157,7 +38162,7 @@
       "name": "Investigate shared NEXT and TEST travel slowdown",
       "group": "current",
       "state": "open",
-      "status": "PARTIAL_OPTIMIZATION_PUSHED_DELIVERY_PENDING",
+      "status": "PARTIAL_FIX_NEXT_TEST_ARTIFACT_DELIVERED_WEB_UNVERIFIED",
       "owner": {
         "name": "dot gameplay QA and independent performance reviewer",
         "task_ref": "/root/find_next_game_bugs",
@@ -38173,8 +38178,11 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "partial",
+        "evidence": [
+          "E:/CodexQA/BTH/runs/perf-next-delivery-20261116-01/evidence/receipt.json",
+          "E:/CodexQA/BTH/runs/perf-test-served-20261116-02/evidence/served.json"
+        ]
       },
       "evidence": [
         {
@@ -38191,9 +38199,14 @@
           "kind": "rendered_native_emulation",
           "reference": "E:/CodexQA/BTH/runs/test-travel-perf-rendered-match-candidate-20261115-01/evidence/profile.json",
           "summary": "Actual GPU rendered route10/10; immutable snapshot193.9 to157.9ms with optional receipt; not WASM. Pressure refinement preserves encoded core cache under4MiB."
+        },
+        {
+          "kind": "delivery",
+          "reference": "docs/testing/BTH-TEST-TRAVEL-PERF-001_20261115.md",
+          "summary": "NEXTca6c646f and TEST0ef525e0 exact artifact identities verified; browser startup and sustained symptom unverified."
         }
       ],
-      "next_action": "Verify existing NEXT watcher promotion; coordinate same scoped TEST patch with art owners. Keep sustained Web slowdown parent open.",
+      "next_action": "Seek faithful browser/user verification of remaining sustained slowdown; preserve partial native optimization and continue general gameplay QA.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38202,7 +38215,7 @@
         "observed_at": "2026-11-15T22:42:52.236538+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:05:23.266391+00:00",
+      "updated_at": "2026-11-16T00:23:36.724230+00:00",
       "scope": [
         "Shared travel slowdown diagnosis and scoped correction on main/NEXT and art/TEST if supported.",
         "Preserve immutable save snapshots, exact numeric/packed values, durability, animation and source authority."
