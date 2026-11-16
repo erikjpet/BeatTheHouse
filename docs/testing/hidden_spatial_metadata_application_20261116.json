@@ -1,0 +1,37 @@
+{
+  "schema": "bth.hidden_spatial_metadata_application/v1",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "observed_at": "2026-11-16T11:11:29.041412+00:00",
+  "status": "EXACT_TWO_CANONICAL_IMPORTS_APPLIED_AND_VERIFIED",
+  "jobs": {
+    "before": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDENMETA-20261116-before01\\evidence",
+      "pid": 43692,
+      "job_sha256": "a0b3dfcd37a71e37e980dc3f5e18a66d2cad089873eec1d75f291bf2984f33a8",
+      "stdout_sha256": "d782a5aa48a11394c63c07b6e5ff4ef63b095fe22d7c8226bf469605a57c9a58",
+      "manifest_sha256": "c6dc78140e697c5f7b7fd4c4cf8ceb75801549068dddd7d3ad2626ecd6aaf948"
+    },
+    "after": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDENMETA-20261116-after02\\evidence",
+      "pid": 41140,
+      "job_sha256": "0105766fb3d7852903f7d66529546d0a5f56b1621dfafed41f1bfaba239f8dad",
+      "stdout_sha256": "de5e7fd4844ffdbc9acf87434d9a524268335e80eab87f91c4c4428db24c9fa6",
+      "manifest_sha256": "64f7cd8054a1dd721d1ca30d8dd2f8b78c1c4ca4eaf6996f3837c3ab4111b314"
+    }
+  },
+  "sidecars": {
+    "assets/art/environments/small_underground_casino/background.png.import": "773f6f18b28586db955960b2adddd9231295e5ad660430606bfd0c7cb2816ca6",
+    "assets/art/environments/small_underground_casino/counters/punchline_right_table.png.import": "e3f8d3f8d8b4364c12004bde4152b86248deda796b42eb0da87e3e8d63f01f77"
+  },
+  "artifacts": {
+    "review_artifacts\\environment_art_sources\\hidden-canonical-import-metadata\\canonical-source.patch": "101625e5a2f959616d782e25b05eb5507e45f62516a83c1f2e87e0188dd01a9d",
+    "review_artifacts\\environment_art_sources\\hidden-canonical-import-metadata\\provenance.json": "e1c4277533346fd345daa3302ccb707a05254b5eeb70a3a7ff0b8a5f497f8887",
+    "review_artifacts\\environment_art_sources\\hidden-canonical-import-metadata\\README.md": "bee5bf7f8019744333c05b6afae12a4e295890e9f4de77ee198e7d4bd399f419",
+    "review_artifacts\\environment_art_sources\\hidden-canonical-import-metadata\\verify_patch_inputs.py": "1a2431d0f9480a056851b0624b28546abb90ade9e25640003eb107cdf1939f81"
+  },
+  "all_prior_hidden_files_and_28_pngs_full_json_index_byte_exact": true,
+  "no_png_json_or_runtime_change": true,
+  "test_updated": false,
+  "native_trial_pending": true,
+  "separate_main_checkout_incident": "docs/testing/environment_spatial_filesystem_incidents_20261116.json"
+}
