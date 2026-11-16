@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T01:24:34.001747+00:00",
+  "updated_at": "2026-11-16T01:38:22.436612+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,7 +4879,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_DIAGNOSTICS_POSTENDING_PASS_WEB_OPEN",
+      "status": "NATIVE_DIAGNOSTICS_AND_NEW_CREW_ROUTE_PASS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -4890,6 +4890,12 @@
           "sha": "a77b2811d2e9be6bc71567d7194cb8142e53a90b",
           "evidence": [
             "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "7d02874673508aa59243d7bb447a05f731fe29dd",
+          "evidence": [
+            "docs/testing/NEXT_Crew_terminal_classification_20261116.md"
           ]
         }
       ],
@@ -4918,13 +4924,13 @@
         {
           "kind": "independent_native_classification",
           "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
-          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass; continued normal tip/travel/free Side Door progression adds22 passing checks. Three earlier assertions classified without replay or product changes. Latest intact campaign at Punchline Casino/$92; Browser/WASM open."
         }
       ],
       "implementation_batches": [
         "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116"
       ],
-      "next_action": "Continue ordinary Crew progression from copied postending new-run checkpoint at Back Alley ($100, zero chips, one unopened earned bag). Keep the original terminal checkpoint, all historical failures and browser/WASM acceptance open.",
+      "next_action": "Continue ordinary Crew progression from crew-sidebar-continuing-side-door-20261116-01: Punchline Casino, $92, no modal and one earned unopened bag. Inspect actual Crew terms and follow normal progression. Preserve the original terminal checkpoint and browser/WASM acceptance as Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4938,7 +4944,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T01:24:34.001747+00:00"
+      "updated_at": "2026-11-16T01:38:22.436612+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -6301,7 +6307,7 @@
         {
           "kind": "independent_native_classification",
           "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
-          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass; continued normal tip/travel/free Side Door progression adds22 passing checks. Three earlier assertions classified without replay or product changes. Latest intact campaign at Punchline Casino/$92; Browser/WASM open."
         }
       ],
       "implementation_batches": [],
@@ -6315,7 +6321,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T01:24:34.001747+00:00",
+      "updated_at": "2026-11-16T01:38:22.436612+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -41935,6 +41941,12 @@
           "evidence": [
             "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "7d02874673508aa59243d7bb447a05f731fe29dd",
+          "evidence": [
+            "docs/testing/NEXT_Crew_terminal_classification_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -41949,7 +41961,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_DIAGNOSTICS_POSTENDING_PASS_WEB_OPEN",
+      "status": "NATIVE_DIAGNOSTICS_AND_NEW_CREW_ROUTE_PASS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -41964,10 +41976,10 @@
         {
           "kind": "independent_native_classification",
           "reference": "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
-          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass. Three earlier assertions classified without replay or product changes; normal Resume rebuilds terminal proof and next run has valid room authority. Browser/WASM open."
+          "summary": "Independent terminal15, active5, menu4, actual bag claim12 and new-run13 checks pass; continued normal tip/travel/free Side Door progression adds22 passing checks. Three earlier assertions classified without replay or product changes. Latest intact campaign at Punchline Casino/$92; Browser/WASM open."
         }
       ],
-      "next_action": "Continue ordinary Crew progression from copied postending new-run checkpoint at Back Alley ($100, zero chips, one unopened earned bag). Keep the original terminal checkpoint, all historical failures and browser/WASM acceptance open.",
+      "next_action": "Continue ordinary Crew progression from crew-sidebar-continuing-side-door-20261116-01: Punchline Casino, $92, no modal and one earned unopened bag. Inspect actual Crew terms and follow normal progression. Preserve the original terminal checkpoint and browser/WASM acceptance as Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -41980,7 +41992,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T01:24:34.001747+00:00"
+      "updated_at": "2026-11-16T01:38:22.436612+00:00"
     }
   ]
 }
