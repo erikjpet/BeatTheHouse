@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T07:45:44.523907+00:00",
+  "updated_at": "2026-11-16T08:12:40.546211+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4951,7 +4951,8 @@
               "id": "remaining-route-prerequisites-and-human-pacing",
               "state": "remaining",
               "evidence": [
-                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
+                "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
               ]
             },
             {
@@ -4973,7 +4974,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_ORDINARY_FLOW_QUALIFIED_ROUTE_AND_WEB_REMAIN",
+      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5090,6 +5091,11 @@
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
           "summary": "Two actual timed handoffs fulfill both duties with two deferred22 rewards/no cash debt;192cash/100reputation/zero duties cold retained. Distinct actual miss pays nothing, trust5+Heat9 costs14reputation, both duties remain. One six-hour post-miss interval yields actual pushier request disclosing18Heat; actual two-stage refusal applies18 cue after1cooling, ends162cash/33standing/two duties/Heat26, cold retained. Twenty-one positive closed native Jobs253 checks; five original diagnostics retained and independently classified, no new product defect."
+        },
+        {
+          "kind": "native_collection_corridor_progress",
+          "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
+          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
         }
       ],
       "implementation_batches": [
@@ -5098,9 +5104,10 @@
         "CREW-STAKE-REPAY-DISCLOSURE-20261116",
         "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116",
         "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
-        "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116"
+        "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
+        "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116"
       ],
-      "next_action": "Preserve od21 completed192cash/100reputation/zero duties and om5 adverse162cash/33reputation/two duties/Heat26. Continue optional Count Corridor prerequisite coverage from intact earlier setup: inspect actual normal route, cash-loan and Collector offers and earn any cash debt/settlement only through visible controls. Never inject the marker or replay completed endings. Optional route/human pacing and browser/WASM remain Open.",
+      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5114,7 +5121,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T07:45:44.523907+00:00"
+      "updated_at": "2026-11-16T08:12:40.546211+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39014,6 +39021,50 @@
   ],
   "batches": [
     {
+      "id": "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
+      "name": "Crew collection and optional Corridor prerequisites",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Resume intact earlier Count setup from uip14 through paired three-directory custody, preserving completed outcomes and owner saves.",
+        "Inspect actual public current-world Crew jobs and optional cash-debt Collector offers; do not roll or inspect future scenario selections.",
+        "Pursue reachable normal collection settlement and persistence; earn optional Count Corridor prerequisite only through actual eligible debt settlement before play. Record gates honestly; do not manufacture markers or claim browser/human pacing."
+      ],
+      "acceptance_scope": "Native normal-control continuation of recovered broader Crew objective; meaningful reachable job/route prerequisite behavior and cold persistence. Optional Corridor acceptance requires actually earned Collector settlement plus Knucklesassociate, before Count play samples the marker. Browser/WASM remains restricted.",
+      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_collection_corridor_progress",
+          "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
+          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
+        }
+      ],
+      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T07:49:13.948778+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T08:12:40.546211+00:00"
+    },
+    {
       "id": "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
       "name": "Ordinary Crew delivery timing and reputation",
       "aliases": [],
@@ -42884,7 +42935,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_ORDINARY_FLOW_QUALIFIED_ROUTE_AND_WEB_REMAIN",
+      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42935,9 +42986,14 @@
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
           "summary": "Two actual timed handoffs fulfill both duties with two deferred22 rewards/no cash debt;192cash/100reputation/zero duties cold retained. Distinct actual miss pays nothing, trust5+Heat9 costs14reputation, both duties remain. One six-hour post-miss interval yields actual pushier request disclosing18Heat; actual two-stage refusal applies18 cue after1cooling, ends162cash/33standing/two duties/Heat26, cold retained. Twenty-one positive closed native Jobs253 checks; five original diagnostics retained and independently classified, no new product defect."
+        },
+        {
+          "kind": "native_collection_corridor_progress",
+          "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
+          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
         }
       ],
-      "next_action": "Preserve od21 completed192cash/100reputation/zero duties and om5 adverse162cash/33reputation/two duties/Heat26. Continue optional Count Corridor prerequisite coverage from intact earlier setup: inspect actual normal route, cash-loan and Collector offers and earn any cash debt/settlement only through visible controls. Never inject the marker or replay completed endings. Optional route/human pacing and browser/WASM remain Open.",
+      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42950,7 +43006,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T07:45:44.523907+00:00"
+      "updated_at": "2026-11-16T08:12:40.546211+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
