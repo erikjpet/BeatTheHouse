@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "SWITCH_ROUTE_AND_STASH_FIX_COMPLETE_BROADER_CREW_OPEN",
+      "status": "FRESH_ENTRY_NATIVE_PASS_CONCURRENT_CARD_OPEN_CONTINUATION_ADAPTER_NEEDED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5186,6 +5186,11 @@
           "kind": "native_Switch_multistop_and_stash_recovery",
           "reference": "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
           "summary": "NormalSwitchrecruitment/timedtwo-stopoffer,pickup/stash/cold/remoteguard pass. Confirmed stash-roadUIbug fixed/tested/main/NEXTbfc verified. RealMapreturn/retrieval recovered samepackage. Committed-sourcefirstdrop2340 paidnothing/duty1preserved;finalPawn2490 paid34once,cash174/trust36/reputation100/duty0/debt[],anchor2850. Coldpartial/final staleguards pass. One door diagnostic excluded; no browser/humanpacingclaim."
+        },
+        {
+          "kind": "fresh_ordinary_concurrent_job_native",
+          "reference": "docs/testing/Crew_fresh_concurrent_job_QA_20261116.md",
+          "summary": "All 20 fresh native checks pass on 6bfbecfb. PLAY starts First Night; confirmed Skip Lessons returns to PLAY, then a generated ordinary run starts at Back Alley with $100. The two-stage Crew Accept grants $70 and two duties, with an empty actual debt array. Follow the tip, the quoted $9 / 42-minute Punchline journey, Try the word, Keep it simple and Follow the order reach the Back Room with $161 and 87 standing. An 85.536-second unpaused wait advances clock 765 to 893 without a package request. Final Save writes the unique CREW-FRESH-CJ2-261116 slot. Continue and the concurrent card remain untested. Job PID 39668 closed with exit 0 and active 0; product hashes are unchanged. No new product defect is confirmed."
         }
       ],
       "implementation_batches": [
@@ -5202,7 +5207,7 @@
         "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
         "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116"
       ],
-      "next_action": "Preserve sw22 successful two-stop/stash campaign:174cash/100sharedreputation/Switchtrust36/zeroCrewduties/debt[],clock2490/anchor2850. Bounded Switch flow and related97d47e35/bfc1a087 native/NEXT fix are accepted with scoped proof; continue highest-value remaining Crew native route/route-balance coverage. Browser and human pacing remain Open under existing restriction.",
+      "next_action": "Preserve crew-fresh-cj2-261116 in place at Punchline Back Room: $161, standing 87, two duties, no debt, clock 893. Next is ordinary forward Continue under a qualified native no-copy resident adapter, then an actually displayed Crew request and Friendly Collection card inspection while that route remains active. Existing resident admission requires browser custody; the current native adapter is fresh-only. Reusing a launch claim or fabricating browser receipts is unsupported. Alternative needs explicit narrow authorization for one complete save_dir/appdata/localappdata copy of this new QA-only profile into a fresh guarded run. Historical checkpoint replay and slot overwrite remain unapproved. Browser and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5216,7 +5221,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T12:55:50.388221+00:00"
+      "updated_at": "2026-11-16T14:34:54.441666+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43829,7 +43834,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "SWITCH_ROUTE_AND_STASH_FIX_COMPLETE_BROADER_CREW_OPEN",
+      "status": "FRESH_ENTRY_NATIVE_PASS_CONCURRENT_CARD_OPEN_CONTINUATION_ADAPTER_NEEDED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43910,9 +43915,14 @@
           "kind": "native_Switch_multistop_and_stash_recovery",
           "reference": "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md",
           "summary": "NormalSwitchrecruitment/timedtwo-stopoffer,pickup/stash/cold/remoteguard pass. Confirmed stash-roadUIbug fixed/tested/main/NEXTbfc verified. RealMapreturn/retrieval recovered samepackage. Committed-sourcefirstdrop2340 paidnothing/duty1preserved;finalPawn2490 paid34once,cash174/trust36/reputation100/duty0/debt[],anchor2850. Coldpartial/final staleguards pass. One door diagnostic excluded; no browser/humanpacingclaim."
+        },
+        {
+          "kind": "fresh_ordinary_concurrent_job_native",
+          "reference": "docs/testing/Crew_fresh_concurrent_job_QA_20261116.md",
+          "summary": "All 20 fresh native checks pass on 6bfbecfb. PLAY starts First Night; confirmed Skip Lessons returns to PLAY, then a generated ordinary run starts at Back Alley with $100. The two-stage Crew Accept grants $70 and two duties, with an empty actual debt array. Follow the tip, the quoted $9 / 42-minute Punchline journey, Try the word, Keep it simple and Follow the order reach the Back Room with $161 and 87 standing. An 85.536-second unpaused wait advances clock 765 to 893 without a package request. Final Save writes the unique CREW-FRESH-CJ2-261116 slot. Continue and the concurrent card remain untested. Job PID 39668 closed with exit 0 and active 0; product hashes are unchanged. No new product defect is confirmed."
         }
       ],
-      "next_action": "Preserve sw22 successful two-stop/stash campaign:174cash/100sharedreputation/Switchtrust36/zeroCrewduties/debt[],clock2490/anchor2850. Bounded Switch flow and related97d47e35/bfc1a087 native/NEXT fix are accepted with scoped proof; continue highest-value remaining Crew native route/route-balance coverage. Browser and human pacing remain Open under existing restriction.",
+      "next_action": "Preserve crew-fresh-cj2-261116 in place at Punchline Back Room: $161, standing 87, two duties, no debt, clock 893. Next is ordinary forward Continue under a qualified native no-copy resident adapter, then an actually displayed Crew request and Friendly Collection card inspection while that route remains active. Existing resident admission requires browser custody; the current native adapter is fresh-only. Reusing a launch claim or fabricating browser receipts is unsupported. Alternative needs explicit narrow authorization for one complete save_dir/appdata/localappdata copy of this new QA-only profile into a fresh guarded run. Historical checkpoint replay and slot overwrite remain unapproved. Browser and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43925,7 +43935,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T12:55:50.388221+00:00"
+      "updated_at": "2026-11-16T14:34:54.441666+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
