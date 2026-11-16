@@ -112,7 +112,7 @@ def config(args):
         if (editor.name != EDITOR_NATIVE_NAME or not re.fullmatch(r"[a-f0-9]{64}", args.editor_native_sha256) or
                 sha(editor) != args.editor_native_sha256):
             raise ValueError("Explicit Windows editor native DLL basename/hash mismatch")
-    return {"schema": "bth.bar_test_build_inputs/v1", "workspace": str(workspace), "stage": str(stage),
+    result = {"schema": "bth.bar_test_build_inputs/v1", "workspace": str(workspace), "stage": str(stage),
             "qa_root": str(no_links(args.qa_root)), "run_prefix": args.run_prefix,
             "source_commit": args.source_commit, "source_tree": args.source_tree,
             "art_package_sha256": args.art_package_sha256,
@@ -125,6 +125,18 @@ def config(args):
             "editor_native_sha256": args.editor_native_sha256,
             "missing_setup": (["Supply explicit Windows editor debug native DLL/hash for an error-free headless import"]
                               if os.name == "nt" and editor is None else [])}
+    if getattr(args, "environment", "bar") == "grand_casino":
+        if not args.approval_json or not args.approval_sha256:
+            raise ValueError("Grand builds require the exact independent approval document and its SHA256")
+        from grand_spatial_test_profile import augment_config
+        return augment_config(result, args)
+    if getattr(args, "approval_json", None) or getattr(args, "approval_sha256", None):
+        raise ValueError("Grand approval flags are not accepted by the unchanged Bar profile")
+    return result
+
+
+def grand_profile(cfg):
+    return cfg is not None and cfg.get("environment") == "grand_casino"
 
 
 def config_sha(cfg):
@@ -205,9 +217,19 @@ def snapshot_pins(workspace, cfg):
         maintained = (Path(__file__).parent / name).read_bytes().replace(b"\r\n", b"\n")
         if archived != maintained:
             raise ValueError("Archive/adapter maintained helper differs: " + name)
-    seal = bar_payload_seal(workspace)
+    if grand_profile(cfg):
+        from grand_spatial_test_profile import source_seal
+        for name in ("grand_spatial_test_profile.py", "grand_spatial_test_build.py"):
+            archived = (workspace / "tools" / name).read_bytes().replace(b"\r\n", b"\n")
+            maintained = (Path(__file__).parent / name).read_bytes().replace(b"\r\n", b"\n")
+            if archived != maintained:
+                raise ValueError("Grand profile/entrypoint differs from exact archived source: " + name)
+        seal = source_seal(workspace, cfg)
+    else:
+        seal = bar_payload_seal(workspace)
     if seal["package_sha256"] != cfg["art_package_sha256"]:
-        raise ValueError("Actual extracted 19-file Bar seal differs: " + seal["package_sha256"])
+        label = "22-file Grand" if grand_profile(cfg) else "19-file Bar"
+        raise ValueError("Actual extracted " + label + " seal differs: " + seal["package_sha256"])
     return seal
 
 
@@ -254,7 +276,7 @@ def decode_uid_cache(raw):
     return result
 
 
-def stage_links(workspace, stage, baseline):
+def stage_links(workspace, stage, baseline, cfg=None):
     """Bind all retained art sources, import hashes and actual PCK resources."""
     sys.path.insert(0, str(workspace / "tools"))
     import audit_pck_manifest
@@ -271,12 +293,20 @@ def stage_links(workspace, stage, baseline):
     if len(old_raw) != 421 or len(old_compiled) != 400 or BAR_BACKGROUND not in old_raw:
         raise ValueError("Expected the retained complete 20-interior/12-doorway baseline inventory")
     bar_compiled = None
+    grand = grand_profile(cfg)
+    approved, changed_compiled = {}, set()
+    if grand:
+        from grand_spatial_test_profile import changed_sources
+        approved = changed_sources(cfg)
     for relative, old_hash in old_raw.items():
         source = no_links(workspace / relative)
         if not source.resolve(strict=True).is_relative_to(workspace):
             raise ValueError("Baseline art path escaped snapshot")
         raw[relative] = sha(source)
-        if relative != BAR_BACKGROUND and raw[relative] != old_hash:
+        if grand and relative in approved:
+            if raw[relative] != approved[relative] or raw[relative] == old_hash:
+                raise ValueError("Grand raw source is not the exact approved changed hash: " + relative)
+        elif (grand or relative != BAR_BACKGROUND) and raw[relative] != old_hash:
             raise ValueError("Unrelated art source changed: " + relative)
         if relative.endswith(".png"):
             imported = Path(str(source) + ".import").read_text(encoding="utf-8-sig")
@@ -296,7 +326,11 @@ def stage_links(workspace, stage, baseline):
             actual = pck_entry_bytes(data, directory, entries[target]) if target in entries else None
             if actual != compiled_bytes or hashlib.sha256(actual or b"").hexdigest() != compiled[target]:
                 raise ValueError("Compiled texture/PCK mismatch: " + target)
-            if relative == BAR_BACKGROUND:
+            if grand and relative in approved:
+                if compiled[target] == old_compiled.get(target):
+                    raise ValueError("Approved Grand PNG produced no compiled texture change: " + relative)
+                changed_compiled.add(target)
+            elif not grand and relative == BAR_BACKGROUND:
                 bar_compiled = target
             elif compiled[target] != old_compiled.get(target):
                 raise ValueError("Unrelated compiled art changed: " + relative)
@@ -308,11 +342,16 @@ def stage_links(workspace, stage, baseline):
             actual = pck_entry_bytes(data, directory, entries[relative]) if relative in entries else None
             if actual != source_bytes or hashlib.sha256(actual or b"").hexdigest() != raw[relative]:
                 raise ValueError("Actual art manifest/PCK payload mismatch: " + relative)
-    if raw[BAR_BACKGROUND] == old_raw[BAR_BACKGROUND] or compiled.get(bar_compiled) == old_compiled.get(bar_compiled):
+    if grand:
+        from grand_spatial_test_profile import compiled_targets
+        actual = {name for name in raw if raw[name] != old_raw[name]}
+        if actual != set(approved) or changed_compiled != compiled_targets(cfg["grand_approval"]):
+            raise ValueError("Grand raw/compiled delta does not exactly match independent approval")
+    elif raw[BAR_BACKGROUND] == old_raw[BAR_BACKGROUND] or compiled.get(bar_compiled) == old_compiled.get(bar_compiled):
         raise ValueError("Bar background was not changed/reimported")
     if set(compiled) != set(old_compiled):
         raise ValueError("Art texture inventory changed")
-    return data, directory, entries, raw, compiled, links, bar_compiled
+    return data, directory, entries, raw, compiled, links, changed_compiled if grand else bar_compiled
 
 
 def finalize(cfg, layout):
@@ -331,7 +370,7 @@ def finalize(cfg, layout):
             identity["art_package_sha256"] != cfg["art_package_sha256"]):
         raise ValueError("Embedded pre-export identity differs from requested source")
     embedded = verify_embedded_identity(stage / "index.pck", identity)
-    data, directory, entries, raw, compiled, links, bar_compiled = stage_links(workspace, stage, baseline)
+    data, directory, entries, raw, compiled, links, bar_compiled = stage_links(workspace, stage, baseline, cfg)
     old_data = (baseline_stage / "index.pck").read_bytes()
     old_directory = audit_pck_manifest.find_directory(old_data)
     old_entries = {entry["path"]: entry for entry in old_directory["entries"]}
@@ -354,8 +393,13 @@ def finalize(cfg, layout):
                        "bytes_equal": uid_path not in changed, "old_mapping_sha256": uid_map_digest,
                        "new_mapping_sha256": uid_map_digest, "path_to_uid": old_uid_map,
                        "scope": "All bindings compared; no additional QA paths or UID aliases are allowed."}
-    required = {"build_manifest.json", bar_compiled}
-    allowed = required | {".godot/uid_cache.bin", ".godot/global_script_class_cache.cfg"}
+    if grand_profile(cfg):
+        from grand_spatial_test_profile import GRAND_JSON
+        required = {"build_manifest.json", GRAND_JSON} | bar_compiled
+        allowed = required
+    else:
+        required = {"build_manifest.json", bar_compiled}
+        allowed = required | {".godot/uid_cache.bin", ".godot/global_script_class_cache.cfg"}
     if not required.issubset(changed) or not set(changed).issubset(allowed):
         raise ValueError("Unexpected PCK delta: " + repr(changed))
     classes = ".godot/global_script_class_cache.cfg"
@@ -383,7 +427,7 @@ def finalize(cfg, layout):
     doorways = dict(baseline["active_doorway_packages"])
     if len(active) != 20 or len(doorways) != 12 or "bar" not in active:
         raise ValueError("Incomplete retained room/doorway package inventory")
-    active["bar"] = cfg["art_package_sha256"]
+    active["grand_casino" if grand_profile(cfg) else "bar"] = cfg["art_package_sha256"]
     if any(p.is_dir() for p in stage.iterdir()):
         raise ValueError("Unexpected directory inside flat Web stage")
     manifest = dict(identity)
@@ -395,14 +439,18 @@ def finalize(cfg, layout):
         embedded_manifest_sha256=embedded["embedded_manifest_sha256"], embedded_manifest_md5=embedded["embedded_manifest_md5"],
         previous_test_source_commit=baseline["source_commit"],
         files={p.name: {"bytes": p.stat().st_size, "sha256": sha(p)} for p in sorted(stage.iterdir()) if p.is_file()})
+    if grand_profile(cfg):
+        from grand_spatial_test_profile import validate_manifest
+        validate_manifest(manifest, cfg["grand_approval"])
     write_new(stage / "build_manifest.json", manifest)
     validate_payload(stage, cfg["source_commit"], cfg["art_package_sha256"])
     write_new(layout.evidence / "art-source-import-pck-linkage.json", {"raw_files": len(raw), "compiled_textures": len(compiled), "links": links})
-    write_new(layout.evidence / "bar-package-seal.json", seal)
+    write_new(layout.evidence / ("grand-package-seal.json" if grand_profile(cfg) else "bar-package-seal.json"), seal)
     write_new(layout.evidence / "uid-cache-equivalence.json", uid_equivalence)
     write_new(layout.evidence / "pck-diff.json", {"added": [], "removed": [], "changed": sorted(changed),
-        "scope": "Bar background CTEX and bound identity; equivalent cache metadata only.",
-        "web_js_packaging_correction": {"prior_sha256": sha(baseline_stage / "index.js"),
+        "scope": ("Exact approved Grand CTEXs, one typed Grand JSON reanchor and bound identity; all cache/SCN/GDC bytes unchanged."
+                  if grand_profile(cfg) else "Bar background CTEX and bound identity; equivalent cache metadata only."),
+        ("web_js_preserved" if grand_profile(cfg) else "web_js_packaging_correction"): {"prior_sha256": sha(baseline_stage / "index.js"),
             "new_sha256": sha(stage / "index.js"), "receipt": lock["receipt_file"]}})
     return {"stage": str(stage), "manifest_sha256": sha(stage / "build_manifest.json"), "pck_sha256": sha(stage / "index.pck")}
 
@@ -441,7 +489,7 @@ def worker(phase, cfg):
                     count += 1
         seal = snapshot_pins(workspace, cfg)
         details = {"files_extracted": count, "source_commit": cfg["source_commit"], "archive_sha256": sha(archive),
-                   "derived_bar_seal": seal}
+                   ("derived_grand_seal" if grand_profile(cfg) else "derived_bar_seal"): seal}
     elif phase == "seed":
         snapshot_pins(workspace, cfg)
         destination = workspace / "addons/coin_pusher_native/bin" / NATIVE_NAME
@@ -554,7 +602,7 @@ def run_phase(phase, cfg, args, timeout):
     elif phase in FILE_PHASES:
         artifacts = json.loads((layout.evidence / "worker-result.json").read_text())
     validate_layout(layout, extra_write_paths=(layout.evidence,))
-    result = {"schema": "bth.bar_test_build_phase/v1", "status": "PASS", "phase": phase,
+    result = {"schema": "bth.grand_test_build_phase/v1" if grand_profile(cfg) else "bth.bar_test_build_phase/v1", "status": "PASS", "phase": phase,
               "config_sha256": config_sha(cfg), "job_receipt": str(layout.evidence / "job.json"),
               "artifacts": artifacts, "published": False}
     write_new(layout.evidence / "phase-result.json", result)
@@ -571,6 +619,9 @@ def main(argv=None):
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--source-tree", required=True)
     parser.add_argument("--art-package-sha256", required=True)
+    parser.add_argument("--environment", choices=("bar", "grand_casino"), default="bar")
+    parser.add_argument("--approval-json", type=Path)
+    parser.add_argument("--approval-sha256")
     for name in ("engine", "native-library", "template", "git", "node", "git-dir", "baseline-stage"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--qa-root", type=Path, default=Path("E:/CodexQA/BTH"))

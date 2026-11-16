@@ -1,0 +1,40 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "candidate": "grand-spatial-r1-assembled-v1",
+  "decision": "STATIC_NO_GO",
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "root_visual_review": "Agrees with independent rejection after viewing actual full-size integrated pixels",
+  "background_sha256": "072bc8842c6d6d6a0a6f5945112901174d1d070922d851d0e664ab024a6d02b6",
+  "package_22_file_sha256": "f566676578505fcf25809e491ed686fa0a0a21139c77276bf49c64f87205c6ea",
+  "executed_recipe_sha256": "b65b8239901c198f715df7b70da94e6dc1b3af8082aef5e7dac878530e9a24ba",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDTRIAL-20261116-assemble02/evidence/grand-spatial-r1-assembly.json",
+  "assembly_proof_sha256": "0d8385a8c0e688eb248a112565b6d1dacbd145de05dfe8f48754d67ed6615695",
+  "assembly_job": {"pid": 33916, "exit_code": 0, "active_at_release": 0, "assigned_before_execution": true},
+  "blocking_findings": [
+    {
+      "kind": "visible_floor_splice",
+      "native_regions": [[164,536,544,52],[1092,536,544,52]],
+      "finding": "Both restored floor areas form conspicuous rectangular patches. Brightness and brick texture break abruptly at the region boundaries; this reads as pasted floor, not a physical table shadow or material trim.",
+      "required_correction": "Repair only local restored floor continuity using admitted original-source pixels. Preserve table/apron/pedestal geometry, all outside pixels and the rejected V1 package. Recrop both counter fronts from the same corrected master."
+    }
+  ],
+  "suitable_but_not_finally_accepted": [
+    "Horizontal green tabletop and shallow apron reading",
+    "Open floor and central support direction",
+    "Exact original1800x860 exterior pixels outside two bounded table regions",
+    "Explicit nonempty physical-brass pulse masks and one proposed decorative x250-to245 reanchor"
+  ],
+  "pending_populated_risks": [
+    "Right pedestal gold cap may conflict with the fixed Blackjack label",
+    "Rourke and coordinator floor contacts and all four context joins",
+    "Actual moving glints, pulse visibility, counter replay and Reduce Motion",
+    "No candidate native liveness/runtime or browser acceptance performed"
+  ],
+  "recipe_history": "A later proof-wording-only recipe revision d5f8464a is preserved separately. The actual V1 worker recorded b65b8239; neither candidate pixels nor that historical proof is overwritten.",
+  "next_action": "Separate V2 floor-only mechanical assembly, independent actual-pixel review, then native qualification only if approved",
+  "current_test_unchanged": "7b284648642a896e534c8bfd53c8e7abbc55108d (approved Bar repair)",
+  "main_next_stable_untouched": true
+}

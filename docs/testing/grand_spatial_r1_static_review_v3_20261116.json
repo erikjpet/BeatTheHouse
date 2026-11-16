@@ -1,0 +1,31 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "candidate": "grand-spatial-r1-assembled-v3",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": true,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "background_sha256": "5b017df8ec2373c9779d2b76d0f705217f7ec2c1d7402afd0cc7b19e5082d3e1",
+  "package_22_file_sha256": "3502800e87bbdb65510cf20193a6237d6894cf6fceaed8708bdbeb2e424bc892",
+  "executed_recipe_sha256": "2cdd549cd9fd878c57fcc5b1c6d9fff44df5aab8dbec754f6b37df6c0d922d64",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDTRIAL-20261116-assemble07/evidence/grand-spatial-r1-assembly-v3.json",
+  "assembly_proof_sha256": "e4fb71fa74def2d2c5f0a24c290b48a6c966f5ec9108b467e47c9718c20491b8",
+  "assembly_job": {"pid": 40608, "exit_code": 0, "active_at_release": 0, "assigned_before_execution": true},
+  "accepted_static_findings": [
+    "Old rectangular cabinet-shadow frame removed within the justified bounded table/shadow repair union",
+    "Local brickwork joins read continuously; native rows602/603 and y604 floor inlay retained",
+    "Horizontal felt, shallow aprons, open floor and central supports form coherent table volumes",
+    "Same-master replay crops remain exact and opaque; host unchanged",
+    "Narrow physical-brass pulse masks and explicit lamp0 decorative x250-to245 reanchor are suitable for isolated native inspection"
+  ],
+  "cleared_provisional_concern": "Close nearest-neighbor inspection initially suggested a pedestal neck gap. Exact source-mapping and row/color review confirms the fascia at y535 immediately adjoins dark cap material at536-538 and gold trim at539; no original-floor/quilt pixel interrupts either axis. No V4 or extra neck edit was requested.",
+  "required_native_gates": [
+    "All four populated contexts, actual Rourke and coordinator floor contacts and replay layering",
+    "Right pedestal gold-cap contrast against the fixed Blackjack name",
+    "Floor-glint behavior around negative-floor replay regions",
+    "All16 native and7 simulated low-detail motion entries, unchanged timing and Reduce Motion",
+    "Original no-pointer liveness and authentic scene-clock animated capture"
+  ],
+  "scope": "Isolated native trial only. Source art, Grand JSON, TEST, main, NEXT and stable remain unmodified by this approval."
+}

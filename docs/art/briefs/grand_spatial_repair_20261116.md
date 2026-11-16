@@ -28,10 +28,18 @@ those contacts and the Convention coordinator's lower-right floor space. Keep
 bright trim away from fixed labels. The existing y302 floor inlay is flush floor,
 not an extra stage or table support.
 
-Only table silhouettes and their local floor restoration may change within the
-two original rectangles. All pixels outside them remain identical. Source new
-floor pixels from the same y in unobstructed original floor; do not resample the
-room or replace its wider background with a regenerated image.
+The two original body rectangles are the initial repair bounds. V1 and V2 static
+reviews exposed a separate old-cabinet cast-shadow frame just outside them. V3
+may additionally repair only the demonstrated narrow side strips below the new
+apron and old bottom-shadow return through native y602. Trace the exact mask and
+prove all pixels outside the body-plus-shadow union remain original. Preserve
+the y604 floor inlay, new pedestal contact shadows and unrelated art; do not
+repaint a blanket expanded rectangle. See
+`docs/testing/grand_spatial_r1_static_review_v2_20261116.json`.
+
+Source floor continuation from unobstructed original adjoining rows/columns and
+the narrow floor band below the old cabinet, recording every donor. Do not
+resample the room or replace its wider background with a regenerated image.
 
 Derive the two table replay fronts from the final master exactly:
 

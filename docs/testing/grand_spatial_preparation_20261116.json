@@ -1,0 +1,56 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "status": "SOURCE_TOOLING_QUALIFIED_V3_GO_FOR_ISOLATED_NATIVE_TRIAL",
+  "baseline_test_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+  "baseline_test_manifest_sha256": "5855381ff2137ece43c2b097b169c70c50b658f1caa6d86e1461b42b22bbe447",
+  "baseline_test_pck_sha256": "a84ed267a7d664ada937d441be1d053419fe78df5e6725e217c99d60b0bc4ba1",
+  "release_guard_regression": {
+    "run_id": "BTH-ENV-SPATIAL-GRANDTRIAL-20261116-profile-tests04",
+    "tests": 21,
+    "result": "PASS",
+    "includes": ["Exact typed lamp0 x250-to245 delta", "Reject unapproved source, scene, GDC, texture and UID changes", "Actual retained Bar source/import/PCK linkage regression"],
+    "pid": 32984,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "worker_log_sha256": "651f0f60de9d61e6b44f5aae557617f889b7ca37106a23cd698d51cf1c54dca5"
+  },
+  "canonical_metadata": {
+    "result": "APPLIED_AND_VERIFIED_METADATA_ONLY",
+    "independent_reviewer": "/root/audit_spatial_handoff",
+    "sidecars_added": 9,
+    "patch_sha256": "6ee5098eab7ab085b1dadd0c95056cdefe582b58120e871824174a4a6c7b26b2",
+    "provenance_sha256": "80183d938cd777d78de8fdf0c72a59a5bb7dc0df0ba039097650eb0fe2afab4e",
+    "verifier_sha256": "95a05001ea160beb0c6fea3b970c0cf9d88b1a4f9a02fe61e8a39d16aa3500c0",
+    "before": {"run_id": "BTH-ENV-SPATIAL-GRANDTRIAL-20261116-metadata-before05", "pid": 19984, "exit_code": 0, "active_at_release": 0, "worker_log_sha256": "a47d17a0c84249aac6364b00a955a3703507ddf066942e17b879e6fb8af3ffc1"},
+    "after": {"run_id": "BTH-ENV-SPATIAL-GRANDTRIAL-20261116-metadata-after06", "pid": 33264, "exit_code": 0, "active_at_release": 0, "worker_log_sha256": "74803c2a1ebcb9e70e594ed9fd54f42d1bfa4cad93d20c8970ab7bd461b75edd"},
+    "all_9_actual_import_uids_and_remaps_match_baseline": true,
+    "complete_uid_bindings_verified": 1605,
+    "png_and_grand_json_bytes_unchanged_during_pair": true,
+    "source_art_activated": false
+  },
+  "frozen_tools": {
+    "tools/grand_spatial_native_trial.py": "650e14dfd71197bd55021553e3ec9adfe1f67533ea3e7c930a456e05bcd3ac6a",
+    "tools/grand_spatial_test_profile.py": "972bd9e6fb2f8e2acf5cddd3086cd043e7789ec2d859e7f7111b6464271ca1ad",
+    "tools/grand_spatial_test_build.py": "23a4d963688598a88b0ce52cac2388707e9a86c48fa7a62ed58f8d21f4219444",
+    "tools/verify_grand_spatial_test_served.py": "e0276a21a351fedd8d82a1eb49c1c3974386454761b03e6c0a315249cdc89ca5",
+    "tools/bar_spatial_test_build.py": "bd1be0b037d77340e39efd64881b549ab6d9f4d1e726f412e9aa66adf3a4496e",
+    "tools/verify_bar_spatial_test_served.py": "b1190d8acb29c53ba423b11e8f67787588622132cb91da0f332c0871a819d560",
+    "tools/assemble_grand_spatial_candidate.py": "b65b8239901c198f715df7b70da94e6dc1b3af8082aef5e7dac878530e9a24ba",
+    "tools/assemble_grand_spatial_candidate_v2.py": "25d12a1e2e9c43a44d5f170c91c23ab2955a00044c65c8e3d5ee2c995d88dd6f",
+    "tools/assemble_grand_spatial_candidate_v3.py": "2cdd549cd9fd878c57fcc5b1c6d9fff44df5aab8dbec754f6b37df6c0d922d64"
+  },
+  "independent_code_reviews": ["/root/native_suite_adapter/grand_native_adapter_audit", "/root/review_test_adapter/grand_profile_review"],
+  "native_overlay_for_future_run": {
+    "scope": "Explicit qualified TEST build configuration beyond committed source, in a new QA project only",
+    "descriptor_sha256": "80b9af791b34cfd93a6017ac11cbcbfb3abae10a71189a2db8eb044a0af8fe96",
+    "windows_debug_dll_sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82"
+  },
+  "candidate_history": {"v1": "STATIC_NO_GO_FLOOR_SPLICE", "v2": "STATIC_NO_GO_OLD_SHADOW_FRAME", "v3": "STATIC_GO_FOR_NATIVE_TRIAL_ONLY"},
+  "candidate_v3": {"background_sha256": "5b017df8ec2373c9779d2b76d0f705217f7ec2c1d7402afd0cc7b19e5082d3e1", "package_22_file_sha256": "3502800e87bbdb65510cf20193a6237d6894cf6fceaed8708bdbeb2e424bc892", "assembly_proof_sha256": "e4fb71fa74def2d2c5f0a24c290b48a6c966f5ec9108b467e47c9718c20491b8"},
+  "grand_native_runtime_launched": false,
+  "grand_production_png_or_json_changed": false,
+  "grand_test_updated": false,
+  "browser_acceptance": "NOT_RUN under admitted E-profile restriction",
+  "parent_all20_remains_open": true,
+  "parallel_work": "High Limit source-only audit/trial preparation; no second native runtime"
+}

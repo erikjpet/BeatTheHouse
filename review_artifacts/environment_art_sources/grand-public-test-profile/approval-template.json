@@ -1,0 +1,22 @@
+{
+  "schema": "bth.grand_spatial_test_approval/v1",
+  "environment_id": "grand_casino",
+  "verdict": "PENDING_INDEPENDENT_REVIEW_NOT_APPROVED",
+  "baseline_source_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+  "baseline_manifest_sha256": "5855381ff2137ece43c2b097b169c70c50b658f1caa6d86e1461b42b22bbe447",
+  "reviewer": "",
+  "evidence": [],
+  "approved_png_sha256": {
+    "assets/art/environments/grand_casino/background.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/counters/grand_table_left.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/counters/grand_table_right.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_sign_pulse.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_light_0.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_light_1.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_light_2.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_light_3.png": "0000000000000000000000000000000000000000000000000000000000000000",
+    "assets/art/environments/grand_casino/anim/casino_light_4.png": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "grand_json_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "grand_package_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}

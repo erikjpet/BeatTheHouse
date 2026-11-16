@@ -1,0 +1,34 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "candidate": "grand-spatial-r1-assembled-v2",
+  "decision": "STATIC_NO_GO",
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "background_sha256": "b7b5cdeac8acaec6bbe93a0e19fa6a7ba1eaa24cb1a1c3b0b6e681806a25e25c",
+  "package_22_file_sha256": "006c07da034046c64544020f4a0662a4d43f42eefad843bd74e26c02fbc68524",
+  "executed_recipe_sha256": "25d12a1e2e9c43a44d5f170c91c23ab2955a00044c65c8e3d5ee2c995d88dd6f",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDTRIAL-20261116-assemble03/evidence/grand-spatial-r1-assembly-v2.json",
+  "assembly_proof_sha256": "c0fd02e38b460abc65987153fe29f023a97f12368cffa0f7e54dcdbe9d556d6f",
+  "assembly_job": {"pid": 41336, "exit_code": 0, "active_at_release": 0, "assigned_before_execution": true},
+  "improvement": "Original-source edge and bottom quilting materially improves the restored interior floor; all V1 table/support/motion pixels are retained.",
+  "blocking_findings": [
+    {
+      "kind": "leftover_old_cabinet_cast_shadow",
+      "finding": "The original cabinet's rigid rectangular shadow frame remains just outside the former body boxes. Hanging side strips and the bottom return through native y602 read as leftover outer posts or a pasted panel around the new open floor.",
+      "illustrative_native_side_ranges": [[158,164],[708,716],[1086,1092],[1636,1644]],
+      "required_correction": "Trace and repair only demonstrated exposed old-table shadow texels below the new apron and along the bottom return. Preserve the new pedestal contact shadows, y604 inlay and all unrelated art; do not repaint the entire expanded rectangle. Exact V3 mask and source-pixel custody require review."
+    }
+  ],
+  "scope_decision": "Root authorizes a bounded correction of the old tables' exposed cast shadows, which are part of the table art. This replaces the provisional original-body-box-only limit; it does not permit unrelated floor, wall, gameplay or room changes.",
+  "pending_populated_risks": [
+    "Right pedestal gold-cap contrast against Blackjack label",
+    "Rourke/coordinator floor contacts, four context joins and live glint occlusion"
+  ],
+  "next_action": "Separate V3 old-shadow correction and same-master counter recrops; independent actual-pixel review before isolated native trial",
+  "grand_native_runtime_launched": false,
+  "production_art_changed": false,
+  "grand_test_updated": false,
+  "current_test": "7b284648642a896e534c8bfd53c8e7abbc55108d (approved Bar repair)"
+}

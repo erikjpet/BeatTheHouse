@@ -261,19 +261,25 @@ def qualify_stage(args, layout):
     from prepare_environment_art_build_identity import verify_embedded_identity
     validate_payload(stage, args.source_commit, args.art_package_sha256)
     embedded = verify_embedded_identity(stage / "index.pck", manifest)
-    return stage, manifest_raw, manifest, {"stage": str(stage), "manifest_sha256": digest(manifest_raw),
+    qualification = {"stage": str(stage), "manifest_sha256": digest(manifest_raw),
         "source_commit": args.source_commit, "source_tree": args.source_tree,
         "art_package_sha256": args.art_package_sha256, "files": len(files), "payload_bytes": total,
         "embedded_pck_identity": embedded}
+    if getattr(args, "environment", "bar") == "grand_casino":
+        from grand_spatial_test_profile import validate_manifest, verify_qualified_pck
+        validate_manifest(manifest, args.grand_approval)
+        qualification["grand_profile"] = {"approval_sha256": args.approval_sha256,
+            "strict_pck_delta": verify_qualified_pck(stage / "index.pck", args.grand_approval)}
+    return stage, manifest_raw, manifest, qualification
 
 
-def read_before(args, layout, qualification, source_inputs):
+def read_before(args, layout, qualification, source_inputs, expected_schema=SCHEMA):
     path = plain(args.before_evidence)
     runs = (layout.root / "runs").resolve(strict=True)
     if path.name != "before.json" or path.parent.name != "evidence" or not path.is_relative_to(runs) or path.parent == layout.evidence:
         raise VerificationError("Before proof must be a closed prior E run's evidence/before.json")
     before = parse_json(small_file(path), "before proof")
-    if (before.get("schema"), before.get("phase"), before.get("status")) != (SCHEMA, "snapshot-before", "BEFORE_SNAPSHOT_VERIFIED"):
+    if (before.get("schema"), before.get("phase"), before.get("status")) != (expected_schema, "snapshot-before", "BEFORE_SNAPSHOT_VERIFIED"):
         raise VerificationError("Prior before proof is not a successful snapshot")
     if before.get("qualified_stage") != qualification or before.get("source_inputs") != source_inputs:
         raise VerificationError("Before and after source, stage, verifier, or helper identity differs")
@@ -359,6 +365,9 @@ def main(argv=None):
     parser.add_argument("--source-commit", required=True)
     parser.add_argument("--source-tree", required=True)
     parser.add_argument("--art-package-sha256", required=True)
+    parser.add_argument("--environment", choices=("bar", "grand_casino"), default="bar")
+    parser.add_argument("--approval-json", type=Path)
+    parser.add_argument("--approval-sha256")
     parser.add_argument("--before-evidence", type=Path)
     parser.add_argument("--request-timeout", type=int, default=30)
     args = parser.parse_args(argv)
@@ -367,6 +376,9 @@ def main(argv=None):
               "status": "FAILED", "started_utc": utc_now(), "publication_performed_by_this_worker": False,
               "browser_acceptance": "NOT_RUN; HTTPS bytes do not establish browser startup, visuals, or gameplay",
               "profiles_or_saves_accessed": False, "downloaded_payload_files_written": False}
+    if args.environment == "grand_casino":
+        from grand_spatial_test_profile import SERVED_SCHEMA, TASK_ID
+        report.update(schema=SERVED_SCHEMA, task_id=TASK_ID)
     code = 1
     try:
         layout, manifest_sha = load_layout()
@@ -388,11 +400,25 @@ def main(argv=None):
             "publisher_sha256": sha_file(Path(__file__).with_name("publish_environment_art_test.py")),
             "embedded_identity_helper_sha256": sha_file(Path(__file__).with_name("prepare_environment_art_build_identity.py")),
             "fixed_play_root": str(PLAY_ROOT), "fixed_https_base": BASE_URL}
+        if args.environment == "grand_casino":
+            if not args.approval_json or not args.approval_sha256:
+                raise VerificationError("Grand served proof requires exact independent approval document/SHA256")
+            from grand_spatial_test_profile import load_approval
+            args.grand_approval = load_approval(args.approval_json, args.approval_sha256)
+            if args.art_package_sha256 != args.grand_approval["grand_package_sha256"]:
+                raise VerificationError("Requested Grand package differs from independent approval")
+            report["source_inputs"].update(grand_profile_sha256=args.grand_approval["profile_sha256"],
+                grand_approval_path=args.grand_approval["approval_path"], grand_approval_sha256=args.approval_sha256,
+                grand_pck_helper_sha256=sha_file(Path(__file__).with_name("bar_spatial_test_build.py")),
+                grand_pck_directory_parser_sha256=sha_file(Path(__file__).with_name("audit_pck_manifest.py")),
+                grand_entrypoint_sha256=sha_file(Path(__file__).with_name("verify_grand_spatial_test_served.py")))
+        elif args.approval_json or args.approval_sha256:
+            raise VerificationError("Grand approval flags are not accepted by the Bar served profile")
         stage, manifest_raw, manifest, qualification = qualify_stage(args, layout)
         report["qualified_stage"] = qualification
         before = None
         if args.phase == "verify-after":
-            before, before_identity = read_before(args, layout, qualification, report["source_inputs"])
+            before, before_identity = read_before(args, layout, qualification, report["source_inputs"], report["schema"])
             report["before_evidence"] = before_identity
         client = HTTPSBytes(args.request_timeout)
         report["tls_policy"] = {"context": "ssl.create_default_context", "platform_default_windows_trust": True,

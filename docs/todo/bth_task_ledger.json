@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T05:39:57.205705+00:00",
+  "updated_at": "2026-11-16T06:20:50.704196+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_GRAND_REPAIR",
+      "status": "ACTIVE_GRAND_NATIVE_PREPARATION_AND_HIGH_LIMIT_SOURCE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38127,16 +38127,16 @@
           "summary": "Bar exact7b284648 TEST current,13 artifact files and default-TLS HTTPS bytes verified; NEXT1240ce unchanged. All native gates/art review and lossless APNG pass. Browser NOT RUN; all-room parent remains open with19 room repairs remaining."
         }
       ],
-      "next_action": "Bar native/visual and exact TEST artifact delivery is complete; browser acceptance is NOT RUN. Grand raw trial is preserved and integrated candidate assembly is pending; then continue the other18 rooms.19 room repairs remain open in total; no main/NEXT merge.",
+      "next_action": "Bar bounded native/visual and exact TEST artifact delivery complete; browser NOT RUN. Grand V3 static GO for isolated native trial after two retained rejections; prepare exact source, run four contexts,16/7 motion and liveness. High Limit source-only trial proceeds in parallel. All19 remaining room dispositions stay open.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T05:34:41.708297+00:00",
+        "observed_at": "2026-11-16T06:20:50.704196+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T05:39:57.205705+00:00",
+      "updated_at": "2026-11-16T06:20:50.704196+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38553,7 +38553,7 @@
       "name": "Grand public spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_SOURCE_REPAIR",
+      "status": "V3_STATIC_GO_NATIVE_PREPARATION_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38585,18 +38585,28 @@
           "kind": "raw_source_checkpoint",
           "reference": "docs/art/briefs/grand_spatial_repair_20261116.md",
           "summary": "Raw1815x867 trial31e7a40b preserved; guarded materialize01 PID31624 exited0/zero. Integrated bounded assembly, exact source/replay/light masks and new native/visual acceptance pending. No candidate activation or art approval."
+        },
+        {
+          "kind": "static_native_trial_go",
+          "reference": "docs/testing/grand_spatial_r1_static_review_v3_20261116.json",
+          "summary": "V1 floor splice and V2 residual cabinet-shadow frame rejected; V3 exact5b017df8/H3502800e clears static joins and structure for native trial only. Label/contact/motion acceptance pending."
+        },
+        {
+          "kind": "canonical_tooling_qualification",
+          "reference": "docs/testing/grand_spatial_preparation_20261116.json",
+          "summary": "21 release-guard regressions pass; nine canonical sidecars independently reviewed and before/after verified with unchanged PNG/JSON. Native adapter independently audited; engine not yet launched."
         }
       ],
-      "next_action": "Assemble one bounded Grand public candidate from preserved rawR1: shallow fascia below258, negative floor and pedestal clear of Rourke feet277/271; recrop matching replay fronts. Rebind decorative lamp0 atx245 and mask physical lights while retaining16/7 motion. Integrated candidate, native review and art approval pending.",
+      "next_action": "Prepare committed source with nine canonical import sidecars, install exact reviewed V3 only in fresh guarded E QA project, then qualify four populated contexts,16/7 motion, replay, labels, liveness and authentic capture. No production art or Grand TEST activation approved yet.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T05:34:41.708297+00:00",
+        "observed_at": "2026-11-16T06:20:50.704196+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T05:39:57.205705+00:00",
+      "updated_at": "2026-11-16T06:20:50.704196+00:00",
       "scope": [
         "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38623,7 +38633,7 @@
         }
       },
       "implementation_batches": [],
-      "candidate_state": "RAW_SOURCE_PRESERVED_ASSEMBLY_PENDING",
+      "candidate_state": "V3_STATIC_GO_FOR_NATIVE_TRIAL_ONLY",
       "raw_source": {
         "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDTRIAL-20261116/candidate_sources/grand-spatial-r1.png",
         "sha256": "31e7a40bfedcbc68a00a615e400b3df88bab03d180558fd3c88749a410147c63",
@@ -38647,7 +38657,7 @@
       "name": "Grand high-limit spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "ACTIVE_SOURCE_TRIAL_PREPARATION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38669,18 +38679,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "parallel_source_preparation",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "Dedicated source-only helper checks exact High Limit room and retained before captures; one generated non-active table trial preserved. Public Grand lamp masks do not apply to this room. No QA runtime or active-art change."
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Review the separate preserved High Limit table source, exact assembly/shadow plan and proposed decorative light alignment. No active assets, geometry, runtime or TEST change; root coordinates isolated native qualification after public Grand.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T06:20:50.704196+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T06:20:50.704196+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38706,7 +38721,8 @@
           "areas": []
         }
       },
-      "implementation_batches": []
+      "implementation_batches": [],
+      "candidate_state": "NON_ACTIVE_SOURCE_TRIAL_PREPARED"
     },
     {
       "id": "BTH-ENV-SPATIAL-GBR-001",
