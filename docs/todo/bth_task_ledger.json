@@ -38157,7 +38157,7 @@
       "name": "Investigate shared NEXT and TEST travel slowdown",
       "group": "current",
       "state": "open",
-      "status": "IN_PROGRESS_RENDERED_REPRODUCTION_REQUIRED",
+      "status": "IN_PROGRESS_EXACT_MATCH_CACHE_REVIEW",
       "owner": {
         "name": "dot gameplay QA and independent performance reviewer",
         "task_ref": "/root/find_next_game_bugs",
@@ -38179,9 +38179,14 @@
           "kind": "diagnostic_proof",
           "reference": "docs/testing/BTH-TEST-TRAVEL-PERF-001_20261115.md",
           "summary": "Native controls and rejected optimization retained; shared slowdown remains open."
+        },
+        {
+          "kind": "rendered_native_emulation",
+          "reference": "E:/CodexQA/BTH/runs/test-travel-perf-rendered-match-candidate-20261115-01/evidence/profile.json",
+          "summary": "Actual GPU rendered route10/10; immutable snapshot193.9 to157.9ms with optional receipt; not WASM. Pressure refinement preserves encoded core cache under4MiB."
         }
       ],
-      "next_action": "Obtain supported rendered/Web reproduction; proposed bulk-copy optimization was rejected after actual-route snapshot123.0ms versus122.8ms baseline. No production patch or deployment claimed.",
+      "next_action": "Finish reviewed optional exact-byte match cache with core-first receipt reclamation, focused gates and scoped main/NEXT plus TEST delivery. User-reported sustained Web slowdown remains open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38190,7 +38195,7 @@
         "observed_at": "2026-11-15T22:42:52.236538+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T22:42:52.236538+00:00",
+      "updated_at": "2026-11-15T23:59:09.334960+00:00",
       "scope": [
         "Shared travel slowdown diagnosis and scoped correction on main/NEXT and art/TEST if supported.",
         "Preserve immutable save snapshots, exact numeric/packed values, durability, animation and source authority."

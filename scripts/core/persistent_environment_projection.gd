@@ -6,12 +6,14 @@ var _source: Dictionary
 var _projection: Dictionary
 var _encoded_projection: Dictionary = {}
 var retained_bytes := 0
+var _source_receipt := PackedByteArray()
 
 
 static func compile(environment: Dictionary, projector: Callable, byte_budget: int) -> RefCounted:
 	if _contains_opaque_value(environment):
 		return null
-	var source_bytes := var_to_bytes(environment).size()
+	var source_receipt := var_to_bytes(environment)
+	var source_bytes := source_receipt.size()
 	if source_bytes > byte_budget:
 		return null
 	var entry := new()
@@ -33,6 +35,10 @@ static func compile(environment: Dictionary, projector: Callable, byte_budget: i
 		if entry.retained_bytes + encoded_bytes <= byte_budget:
 			entry._encoded_projection = encoded
 			entry.retained_bytes += encoded_bytes
+	# Optional exact-byte fast acceptance; preserve original fallback and budget.
+	if not source_receipt.is_empty() and entry.retained_bytes + source_bytes <= byte_budget:
+		entry._source_receipt = source_receipt
+		entry.retained_bytes += source_bytes
 	return entry
 
 
@@ -71,8 +77,17 @@ func matches(environment: Dictionary) -> bool:
 	# mutable aliases. A mismatch takes the original complete projection path.
 	if not (environment == _source):
 		return false
+	if not _source_receipt.is_empty() and var_to_bytes(environment) == _source_receipt:
+		return true
 	var codec: Script = load("res://scripts/core/run_save_codec.gd")
 	return codec._storage_numeric_refinement(environment, _source)
+
+
+func release_source_receipt() -> int:
+	var released := _source_receipt.size()
+	_source_receipt = PackedByteArray()
+	retained_bytes -= released
+	return released
 
 
 func snapshot() -> Dictionary:

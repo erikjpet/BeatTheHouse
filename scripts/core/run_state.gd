@@ -16565,13 +16565,21 @@ func _inactive_storage_projection(key: String, environment: Dictionary) -> RefCo
 	if prior != null:
 		_inactive_storage_projection_bytes -= prior.retained_bytes
 		_inactive_storage_projections.erase(key)
-	var available := INACTIVE_STORAGE_PROJECTION_BUDGET - _inactive_storage_projection_bytes
+	var reclaimable := 0
+	for cached in _inactive_storage_projections.values():
+		reclaimable += cached._source_receipt.size()
+	var available := INACTIVE_STORAGE_PROJECTION_BUDGET - _inactive_storage_projection_bytes + reclaimable
 	if available <= 0:
 		return null
 	var projector := func(body: Dictionary) -> Dictionary:
 		return _environment_for_persistent_storage(body, false)
 	var compiled := PersistentEnvironmentProjectionScript.compile(environment, projector, available)
 	if compiled != null:
+		# Core projection/encoding caches take priority over optional match receipts.
+		for cached in _inactive_storage_projections.values():
+			if _inactive_storage_projection_bytes + compiled.retained_bytes <= INACTIVE_STORAGE_PROJECTION_BUDGET:
+				break
+			_inactive_storage_projection_bytes -= cached.release_source_receipt()
 		_inactive_storage_projections[key] = compiled
 		_inactive_storage_projection_bytes += compiled.retained_bytes
 	return compiled
