@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T03:03:02.947699+00:00",
+  "updated_at": "2026-11-16T03:26:26.876305+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,7 +4879,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "status": "UI_FIXES_DELIVERED_NEXT_CREW_SETUP_CONTINUES_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -4908,6 +4908,12 @@
           "sha": "e8a1e3782709b268fe74d744405aeb85d5f4c6c9",
           "evidence": [
             "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+          "evidence": [
+            "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
           ]
         }
       ],
@@ -4947,6 +4953,11 @@
           "kind": "native_focused_regression",
           "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
           "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        },
+        {
+          "kind": "next_delivery_and_continued_campaign",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "Fix a0bae07d deployed and exact SHA/tree/version/5 served payload hashes verified. 86 focused checks pass; 98 continued ordinary checks earn Audit knowledge, recruit Bishop and lock Count normally. Browser runtime remains unverified."
         }
       ],
       "implementation_batches": [
@@ -4954,7 +4965,7 @@
         "CREW-NOAUDIT-ENABLED-LOCK-20261116",
         "CREW-STAKE-REPAY-DISCLOSURE-20261116"
       ],
-      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "next_action": "Continue Count setup from crew-sidebar-uip14-261116: Punchline Back Room/$163, standing97, two duties, identity ready and no delivery active. Follow the actual Watch the schedule lead and normal Grand Cage progression. Browser/WASM play and full historical parent scope remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4968,7 +4979,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+      "updated_at": "2026-11-16T03:26:26.876305+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -41988,6 +41999,12 @@
           "evidence": [
             "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+          "evidence": [
+            "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -42002,7 +42019,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "status": "UI_FIXES_DELIVERED_NEXT_CREW_SETUP_CONTINUES_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42028,9 +42045,14 @@
           "kind": "native_focused_regression",
           "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
           "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        },
+        {
+          "kind": "next_delivery_and_continued_campaign",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "Fix a0bae07d deployed and exact SHA/tree/version/5 served payload hashes verified. 86 focused checks pass; 98 continued ordinary checks earn Audit knowledge, recruit Bishop and lock Count normally. Browser runtime remains unverified."
         }
       ],
-      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "next_action": "Continue Count setup from crew-sidebar-uip14-261116: Punchline Back Room/$163, standing97, two duties, identity ready and no delivery active. Follow the actual Watch the schedule lead and normal Grand Cage progression. Browser/WASM play and full historical parent scope remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42043,7 +42065,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+      "updated_at": "2026-11-16T03:26:26.876305+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
@@ -42051,19 +42073,28 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+          "evidence": [
+            "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+        "evidence": [
+          "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+        ]
       },
       "scope": [
         "Preserve disabled/enabled and unavailable reason from dynamic providers without weakening authoritative action guards."
       ],
       "acceptance_scope": "Confirmed native player-path findings in NEXT_Crew_terms_and_stake_QA_20261116.md; current delegated instruction to fix, regress, publish to main and follow NEXT.",
-      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "status": "FIXED_MAIN_NEXT_NATIVE_AND_SERVED_ASSETS_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42079,9 +42110,14 @@
           "kind": "native_focused_regression",
           "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
           "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        },
+        {
+          "kind": "next_delivery_and_continued_campaign",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "Fix a0bae07d deployed and exact SHA/tree/version/5 served payload hashes verified. 86 focused checks pass; 98 continued ordinary checks earn Audit knowledge, recruit Bishop and lock Count normally. Browser runtime remains unverified."
         }
       ],
-      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "next_action": "Scoped native UI fix and NEXT artifact delivery complete; ongoing Crew and visual browser acceptance remain with the Open parent.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -42090,7 +42126,7 @@
         "observed_at": "2026-11-16T02:49:15.101154+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+      "updated_at": "2026-11-16T03:26:26.876305+00:00"
     },
     {
       "id": "CREW-STAKE-REPAY-DISCLOSURE-20261116",
@@ -42098,19 +42134,28 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+          "evidence": [
+            "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "a0bae07dc17420e8b41b10cbea1742dcc319a6bb",
+        "evidence": [
+          "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+        ]
       },
       "scope": [
         "Show the exact min(bankroll, stake) debit and use normal confirmation before a positive repayment; preserve exactly-once settlement and low-cash behavior."
       ],
       "acceptance_scope": "Confirmed native player-path findings in NEXT_Crew_terms_and_stake_QA_20261116.md; current delegated instruction to fix, regress, publish to main and follow NEXT.",
-      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "status": "FIXED_MAIN_NEXT_NATIVE_AND_SERVED_ASSETS_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42126,9 +42171,14 @@
           "kind": "native_focused_regression",
           "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
           "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        },
+        {
+          "kind": "next_delivery_and_continued_campaign",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "Fix a0bae07d deployed and exact SHA/tree/version/5 served payload hashes verified. 86 focused checks pass; 98 continued ordinary checks earn Audit knowledge, recruit Bishop and lock Count normally. Browser runtime remains unverified."
         }
       ],
-      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "next_action": "Scoped native UI fix and NEXT artifact delivery complete; ongoing Crew and visual browser acceptance remain with the Open parent.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -42137,7 +42187,7 @@
         "observed_at": "2026-11-16T02:49:15.101154+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+      "updated_at": "2026-11-16T03:26:26.876305+00:00"
     }
   ]
 }

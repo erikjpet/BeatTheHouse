@@ -43,7 +43,7 @@ After publication of the initial 22-Job proof at e8a1e3782709b268fe74d744405aeb8
 
 Source corroboration: `scripts/core/crew_run_facade.gd:720` correctly emits disabled=true for a non-live plan. `scripts/core/event_module.gd:212` unconditionally sets enabled=true in its dynamic choice view branch, and clears disabled_reason on line 213. The UI view consumes enabled. This is the concrete source path for the observed misleading enabled action; no validator or gate was weakened and no runtime fix was mixed into QA documentation.
 
-The no-audit campaign is preserved at `E:/CodexQA/BTH/runs/crew-sidebar-noaudit-lock-repro-20261116-01`, Punchline Back Room, $138 / zero chips, standing 95, two delivery duties, no modal. It cannot begin another Count normally in this season. The next ending coverage instead uses a complete copy of the earlier successful intact Count checkpoint, and keeps these distinct campaign branches explicit.
+The no-audit campaign is preserved at `E:/CodexQA/BTH/runs/crew-sidebar-noaudit-lock-repro-20261116-01`, Punchline Back Room, $138 / zero chips, standing 95, two delivery duties, no modal. At that saved knowledge state it cannot yet begin The Count. Later normal exploration found the Grand Audit Roster; Read the shift learned the prerequisite and made the plan eligible. The earlier inference of season-wide absence was too strong; see Crew_dynamic_choice_UI_fixes_20261116.md for the continued captured path and correction. The next ending coverage instead uses a complete copy of the earlier successful intact Count checkpoint, and keeps these distinct campaign branches explicit.
 
 ## Alternate live-heist decisions
 
