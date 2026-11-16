@@ -1,0 +1,236 @@
+{
+  "schema": "bth.environment_spatial_adapter_qualification/v2",
+  "recorded_at": "2026-11-16T15:23:24.394304+00:00",
+  "status": "CAGE62_PRIVATE50_DELTA67_GBR38_CERTIFICATE96_QUALIFIED_NATIVE_PENDING",
+  "all20_complete": false,
+  "delivered_rooms": 4,
+  "remaining_rooms": 16,
+  "current_TEST_source": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+  "source_files": {
+    "tools/cage_spatial_native_profile.py": "7ea51f64b7e6657fc20994b118e0cfa75d9a48adc5c837fb1294932f44b2373a",
+    "tools/cage_spatial_native_trial.py": "c39d8d733fd32a7a9bec16e97c98b3bbba8186a660a0177c60019045f7439c46",
+    "tools/cage_spatial_visibility.py": "8d9501395141df927306c1508ee669a1b1adf520dce25a3ede1d987486e500ca",
+    "tools/test_cage_spatial_native_trial.py": "7afea77cf33a66d248b3978a0698d5454d3ff7afc5931b9670af9ed9fd449dca",
+    "tools/test_cage_spatial_visibility.py": "241e1782fd73a1c99a82931ab903a769ad3906c4b55f3c6d4065ea09b2390c22",
+    "docs/testing/cage_spatial_native_trial_20261116.md": "cd329f4bfbd829819214d9ee929d2c7719527edc5016244304165ea0e67736b5",
+    "tools/private_crew_spatial_native_profile_v3.py": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7",
+    "tools/private_crew_spatial_native_trial_v3.py": "c62aafc0a1eabc8f9786e14c138176d5add5e2022df89f1993a389816606fe3e",
+    "tools/test_private_crew_spatial_native_trial_v3.py": "fb45f171a57b0e173cb0b9689337fd41c8493602fa1f96845a548db090da8c11",
+    "tools/private_crew_spatial_native_trial_v3.README.md": "417c136c6d0aa9e862456ede452ee1c093dcbf3e3f2d68bbc26b797c10a57cf2",
+    "docs/testing/private_crew_spatial_v2_stop_20261116.md": "96207325ff797bc6b4e2433d03b90cb9a87a89ce63ff7de1b14202c2a3935278",
+    "tools/delta_queen_spatial_native_profile_v2.py": "a1b72b0272dc7dbb4e1990d051b0b3689a7a834d315beae8fa22857959c25116",
+    "tools/delta_queen_spatial_native_trial_v2.py": "daa2bb31e9f026c50feffb22caf0b60fb0fc2d831bba36df67c818bf8858611e",
+    "tools/test_delta_queen_spatial_native_trial_v2.py": "f1a52c2483ade3fac762cdfdb0e2ca598d916cddbfcd822f9d984ab7f03208ae",
+    "tools/delta_queen_spatial_native_trial_v2.README.md": "266d16e8190da114df23000fabed4a2b4d37c3b2a0e7e83ac1dff4d4830a9314",
+    "docs/testing/delta_queen_spatial_native_v1_stop_20261116.md": "794b0c0030bf53ba3d346e1b7c3f591e2fcc796757ced0b6db082724ed4e87c0",
+    "tools/grand_back_room_spatial_delivered_baseline.py": "f143420e68f8b14bc0a7e7557ca1c56f403efde9e6ee9ef54a3f495f164883c9",
+    "tools/tests/test_grand_back_room_spatial_delivered_baseline.py": "b9841dc87479b69f94974e7b103935f353fb5aa0828aef18b0399de03b4a974d",
+    "tools/grand_back_room_spatial_delivered_baseline.README.md": "188b3c6f76cffce6407f978abd8fa9e7c8356e3c46088649191aca38513d90d2",
+    "tools/encode_hidden_spatial_apng.py": "c2c9fc4e72e4f8c33a93ef57ff3df3d71fb23d11757978bd0d8cd1413375e1ee",
+    "review_artifacts/environment_art_sources/cage-native-observers/envart_cage_spatial_acceptance.gd.txt": "cb10e67b3d9ea5e0481b3d4cf7178fd59ee5cf22e2a401ed3b125fa48ab71c9b",
+    "review_artifacts/environment_art_sources/cage-native-observers/envart_cage_spatial_probe.gd.txt": "7c161bf0e9cb67930d27634707f30427a7fc4a19b66a5d729679815fb0334511",
+    "review_artifacts/environment_art_sources/cage-native-observers/provenance.json": "865cd8d4ef1dd085db3da159cefa62fe8f65ff1cc0740d31b4fb02cade354db6",
+    "review_artifacts/environment_art_sources/cage-native-observers/README.md": "5ececc4a680119e391559ce8f35c4a5272da9a15cc90b351e458548ff316cd4d",
+    "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_base_acceptance.gd.txt": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+    "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_lucky_acceptance.gd.txt": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+    "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_probe.gd.txt": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774",
+    "review_artifacts/environment_art_sources/private-crew-native-observers-v3/provenance.json": "764f23828994b577ab59dc9d6c66d9377d6badd641f1e72d30d64e097a5f7a8e",
+    "review_artifacts/environment_art_sources/delta-queen-native-observers-v2/envart_delta_spatial_acceptance.gd.txt": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64",
+    "review_artifacts/environment_art_sources/delta-queen-native-observers-v2/envart_delta_spatial_probe.gd.txt": "6962cd422cb20e5c1e522f18b928629b705aad78385669c3a7facd772e8b5e85",
+    "review_artifacts/environment_art_sources/delta-queen-native-observers-v2/provenance.json": "9e55c2801487b4242830110eed052bd22435850a64168d74df32a7ca9cacaf20"
+  },
+  "guarded_runs": {
+    "Cage62": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGE-NATIVE-20261116-tests01\\evidence",
+      "job_sha256": "f51caf9baafb41f2a33fb260e295de2ddcb11c1573a4f354c3a359c83f5bca48",
+      "log_sha256": "7f4cf04b78468c8c0f8d27392f6470b9439bdb580e3820bbb57a2c5e4011e370",
+      "storage_manifest_sha256": "6c1cecddcdbf82e65f692b8209c9b2713d29731a85f010042cc38594bab2aff9",
+      "claim_sha256": "53caed2b2f96a33b7598cb86f4c6491d2a3df7c2c8b4a1ae0e3556f3927661aa",
+      "pid": 39060,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools",
+        "-p",
+        "test_cage_spatial*.py"
+      ],
+      "tests_ran": 62
+    },
+    "PrivateV3_initial_fixture_failure": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVATE-V3-20261116-tests01\\evidence",
+      "job_sha256": "08ca60dc0d59840efdcdd24775c353df1ed89f67fe047648bd66c17cb9b1612d",
+      "log_sha256": "51a98ec559c82d9a79ba357ca0f6fecb817c4c91ab1b260d9c9524fe6f311d85",
+      "storage_manifest_sha256": "3d7eae9b5734c581d8c766566515765db7a29899a803b87137d43851017bda5f",
+      "claim_sha256": "148ce0bfc3d82c8e2a41bb34c3d7526691a2a78cbdd03fe8cfe321cc661b67c4",
+      "pid": 25620,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_private_crew_spatial_native_trial_v3.py"
+      ],
+      "tests_ran": 50
+    },
+    "PrivateV3_final50": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVATE-V3-20261116-tests02\\evidence",
+      "job_sha256": "a72b23a4eed00392a87191ea48759e16dad780a565585c5364ad55384cd003a5",
+      "log_sha256": "39cd5cf93dd171c58b99504f0c92313fca490b6a639a27cedeb74e3c28c4e16a",
+      "storage_manifest_sha256": "ad6ee9a7060308063a0fde06d7dd2e0a95d62cbb24a297c2a3a54190ed0ad7b6",
+      "claim_sha256": "56c10eda36048468b0b6078cffb61c7ba14a88c945c1ab88cfd03d15d9b46948",
+      "pid": 35940,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_private_crew_spatial_native_trial_v3.py"
+      ],
+      "tests_ran": 50
+    },
+    "DeltaV2_67": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTA-V2-20261116-tests01\\evidence",
+      "job_sha256": "b5acc5bbe60fe13029750ec19aa636953fc2bbae263756abfae07ead46e36d02",
+      "log_sha256": "02f5f2284778f922d811a6163cc2a5c95fc3df6d9eba15e7d17102ef61d0498b",
+      "storage_manifest_sha256": "a04283df16e678187eac0112f3e4409b141525012aa36e3e4fd2682639f7dccf",
+      "claim_sha256": "aae9abfc920faa4be143121500140afcb6cda1998d54775c1b14a0acd82b4947",
+      "pid": 41392,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial_v2.py"
+      ],
+      "tests_ran": 67
+    },
+    "GBR_baseline38": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRBASELINE-20261116-tests01\\evidence",
+      "job_sha256": "d39c060a55798f3c77d943a12646a9b51bc1d4c27fe55bbdf046d2544b27918d",
+      "log_sha256": "6b85823b9de0deb0095adf3e9e00690c601307e2c27b542318b185c57c287474",
+      "storage_manifest_sha256": "26db4148eebf8866c373a7e68872bc871a6a0c4c2104ad3ec398ff4147ef30be",
+      "claim_sha256": "081f850128e2c4aa9e36f98ba573e1b2ac5ec3343d8d48c248d0953a36adfc2b",
+      "pid": 8292,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/tests",
+        "-p",
+        "test_grand_back_room_spatial_delivered_baseline.py"
+      ],
+      "tests_ran": 38
+    },
+    "GBR_actual_certificate96": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate02\\evidence",
+      "job_sha256": "12edeaee02d80a0fd749d7d1623c76d23f865d20e6030d8517a4409e5617d28f",
+      "log_sha256": "9064b851f8b3dc24accfac2bb64901cd1e41bbe416eabab1e49f2ae8334bac5f",
+      "storage_manifest_sha256": "d81aad90784bece53e363ed629a920e40f539fec24e7bb7ef3a2f659e34ff1aa",
+      "claim_sha256": "2da74e607eea3faa4ded4a720afe3f27f2346ea326bfdc5138f4f454a79245bf",
+      "pid": 34744,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_delivered_baseline.py"
+      ],
+      "tests_ran": null,
+      "status": "ACTUAL_IMMUTABLE_GRAND_BACK_ROOM_BASELINE_AUTHENTICATED",
+      "certificate_sha256": "96daa6f4e99cf5960856a276112cb43fb8cdbdbbaeb3831b88daef6015a0a888",
+      "rooms": 20,
+      "doorways": 12
+    }
+  },
+  "PrivateV3_fixture_history": {
+    "failed_test_sha256": "334994e685bda170a29e239d1e75b9f4e14fc790392dff52e9f292190102310e",
+    "final_test_sha256": "fb45f171a57b0e173cb0b9689337fd41c8493602fa1f96845a548db090da8c11",
+    "failed_run": "50 tests/0.428s/one failure: a supposed negative mutation assigned True to already-True V3 functional_change.",
+    "correction": "Invert actual field and assert changed!=original before unchanged rejection. Exact two-line reversal reconstructs failed SHA; profile/runner/observer/provenance unchanged.",
+    "final_run": "50 tests/0.410s PASS; old run remains FAILED."
+  },
+  "native_stops": {
+    "HiddenV3": "18 qualified PASS; original glint Job38420 exited0/findings[] but supervisor used wrong filename; no phase-result and10 NOT_RUN. V4 40tests passed/committed8727; fresh29 native active.",
+    "PrivateV2": "18 qualified PASS; Lucky19 Job41780 exited0 with native SCRIPT ERROR: JSON String position passed to Vector2 renderer. No phase-result and2 NOT_RUN. Fresh V3 actual-native stableID/Vector2 recovery has50 tests PASS; native pending.",
+    "DeltaV1": "15 qualified PASS; composite16 Job29752 exited0 with156 raw-vs-serialized clock failures. No phase-result and6 NOT_RUN. Root cause not proven. V2 exact native pre-JSON binary64 evidence plus unchanged serialized diagnostics has67 tests PASS; native pending."
+  },
+  "certificate_history": "New GBR certificate01 attempt stopped before child/write on occupied existing old HL c485 run (Job37584); inspected and preserved. Fresh02 authenticated96.",
+  "inert_boundary": "New observers are inert .gd.txt plus provenance bound to full Git mode/OID/size; explicit fresh QA overlay only. No new raw GD/UID in this commit. Production921code/900GD/161toolsGD/502tests/1605UID/224class guards unchanged.",
+  "HiddenV3_preview": "Encoder c2c9 is scoped to13 original V3 core receipts/source401/candidate508b/capture8c4e. Plan+encode PASS with full461-PNG decoding and exact75-frame diagnostic RGBA; final verify active, no all29/art/TEST claim.",
+  "limits": [
+    "Unit tests grant no native or production art acceptance.",
+    "TEST remains e07 with four bounded room deliveries; browser startup/gameplay NOT_RUN.",
+    "Original profiles/saves/main/NEXT untouched; no cleanup, receipt bridge, profile migration or denial bypass."
+  ]
+}

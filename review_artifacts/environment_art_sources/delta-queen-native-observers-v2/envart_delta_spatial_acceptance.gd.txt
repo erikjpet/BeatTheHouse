@@ -1,0 +1,83 @@
+# Inert three-argument hook. Original ef5be six-context observer is unmodified.
+extends "res://tools/envart_delta_six_context_trace.gd"
+const SpatialProbe := preload("res://tools/envart_delta_spatial_probe.gd")
+const DELTA_CASES: Array[String] = ["__none","delta_queen_wedding_charter","delta_queen_whale_aboard","delta_queen_fog_delay","delta_queen_engine_trouble","delta_queen_captains_invitational"]
+var delta_cases: Dictionary = {}
+var delta_case_order: Array[String] = []
+var delta_findings: Array[String] = []
+var delta_probe_checks: int = 0
+var delta_mode: String = ""
+
+func _delta_failure(message: String) -> void:
+    delta_findings.append(message)
+    push_error(message)
+
+func _delta_parse_mode() -> String:
+    var modes: Array[String] = []
+    for argument in OS.get_cmdline_user_args():
+        if argument.begins_with("--delta-mode="):
+            modes.append(argument.trim_prefix("--delta-mode="))
+    if modes.size() != 1 or not SpatialProbe.MODES.has(modes[0]):
+        _delta_failure("Exactly one supported --delta-mode is required")
+        return ""
+    return modes[0]
+
+func _delta_write_aggregate() -> void:
+    var complete: bool = delta_cases.size() == DELTA_CASES.size()
+    for name in DELTA_CASES:
+        complete = complete and delta_cases.has(name)
+    var all_pngs: Array[String] = []
+    for name in delta_case_order:
+        var row: Dictionary = delta_cases[name]
+        for filename in row.get("png_files",[]):
+            all_pngs.append(str(filename))
+    var report: Dictionary = {"schema":"bth.delta_spatial_acceptance/v1","mode":delta_mode,"context":"delta_queen",
+        "catalog":DELTA_CASES,"case_order":delta_case_order,"cases":delta_cases,
+        "checks":delta_probe_checks,"findings":delta_findings,"png_files":all_pngs,
+        "all_six_contexts_captured":complete,"new_QA_acceptance":true,
+        "original_observers_modified":false,"original_checks_are_separate":true,
+        "original_helper_checks_observed_at_callback":checks,
+        "expected_final_original_core_check_formula":"2*N+911; asserted separately on delta_preart_metadata.json",
+        "production_guard_relaxed":false,"browser_execution":false,
+        "closing_ride_work_save_revisit_coverage":false,
+        "scope":"Actual settled initial six-context Delta diagnostic only. Low-detail is simulated native renderer evidence, not browser. No closing/ride/work/save/revisit/Web/every-cycle acceptance."}
+    var admitted: String = OS.get_environment("BTH_QA_EVIDENCE_DIR").replace("\\","/").trim_suffix("/")
+    var actual: String = out_dir.replace("\\","/").trim_suffix("/")
+    if actual != admitted or not actual.begins_with("E:/CodexQA/BTH/runs/") or actual.get_file() != "evidence" or actual.contains("/../") or actual.contains("/./"):
+        _delta_failure("Aggregate path must equal this admitted E evidence")
+        return
+    # Same fresh phase-owned partial aggregate is refreshed after every case.
+    # Supervisor authenticates only its final post-Job bytes and full six cases.
+    var file: FileAccess = FileAccess.open(out_dir.path_join("delta_spatial_acceptance.json"),FileAccess.WRITE)
+    if file == null:
+        _delta_failure("Cannot write Delta aggregate: "+str(FileAccess.get_open_error()))
+        return
+    file.store_string(JSON.stringify(report,"  "))
+    var error: int = file.get_error()
+    file.close()
+    if error != OK:
+        _delta_failure("Delta aggregate write failed: "+str(error))
+
+func _paint_hosts(snapshot: Dictionary,replay: Dictionary,prefix: String) -> Dictionary:
+    var original: Dictionary = await super._paint_hosts(snapshot,replay,prefix)
+    var mode: String = _delta_parse_mode()
+    if mode.is_empty() or not DELTA_CASES.has(prefix) or delta_cases.has(prefix):
+        _delta_failure("Invalid or duplicate Delta acceptance callback: "+prefix)
+        return original
+    if delta_mode.is_empty():
+        delta_mode = mode
+    if delta_mode != mode:
+        _delta_failure("Delta acceptance mode changed within this phase")
+        return original
+    var probe: Node = SpatialProbe.new()
+    root.add_child(probe)
+    var result: Dictionary = await probe.call("run_probe",self,snapshot,replay,mode,out_dir,prefix)
+    delta_cases[prefix] = result
+    delta_case_order.append(prefix)
+    delta_probe_checks += int(result.get("checks",0))
+    for message in result.get("findings",[]):
+        delta_findings.append(prefix+": "+str(message))
+    probe.free()
+    _delta_write_aggregate()
+    # No inherited _check call: the original core2N+911 counter remains separate.
+    return original

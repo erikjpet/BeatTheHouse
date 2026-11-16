@@ -1,0 +1,18 @@
+# New Base acceptance hook; the original core observer stays byte-identical.
+extends "res://tools/envart_private_preart_metadata.gd"
+const SpatialProbe := preload("res://tools/envart_private_spatial_probe.gd")
+func _paint_hosts(snapshot: Dictionary,replay: Dictionary) -> Dictionary:
+    var original: Dictionary = await super._paint_hosts(snapshot,replay)
+    var mode := ""
+    for argument in OS.get_cmdline_user_args():
+        if argument.begins_with("--private-mode="):
+            mode = argument.trim_prefix("--private-mode=")
+    var probe := SpatialProbe.new()
+    root.add_child(probe)
+    var result: Dictionary = await probe.run_probe(self,snapshot,replay,mode,out_dir)
+    _check(result.get("findings",[]).is_empty(),"New Private spatial acceptance: "+mode)
+    var file := FileAccess.open(out_dir.path_join("private_spatial_acceptance.json"),FileAccess.WRITE)
+    file.store_string(JSON.stringify(result,"  "))
+    file.close()
+    probe.free()
+    return original

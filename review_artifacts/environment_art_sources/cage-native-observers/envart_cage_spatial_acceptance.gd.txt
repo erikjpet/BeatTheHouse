@@ -1,0 +1,41 @@
+# Inert Cage callback; originalb55cb preart observer and its2N+54 assertions stay unchanged.
+extends "res://tools/envart_cage_preart_metadata.gd"
+const SpatialProbe := preload("res://tools/envart_cage_spatial_probe.gd")
+var spatial_written: bool = false
+func _paint_hosts(snapshot: Dictionary,replay: Dictionary,prefix: String) -> Dictionary:
+    var original: Dictionary = await super._paint_hosts(snapshot,replay,prefix)
+    var modes: Array[String] = []
+    for argument in OS.get_cmdline_user_args():
+        if argument.begins_with("--cage-mode="):
+            modes.append(argument.trim_prefix("--cage-mode="))
+    if modes.size() != 1 or not SpatialProbe.MODES.has(modes[0]) or prefix != "__none" or spatial_written:
+        push_error("Exactly one Cage Base acceptance callback/mode required")
+        return original
+    var probe: Node = SpatialProbe.new()
+    root.add_child(probe)
+    var result: Dictionary = await probe.call("run_probe",self,snapshot,replay,original,modes[0],out_dir)
+    var admitted: String = OS.get_environment("BTH_QA_EVIDENCE_DIR").replace("\\","/").trim_suffix("/")
+    var actual: String = out_dir.replace("\\","/").trim_suffix("/")
+    if actual != admitted or not actual.begins_with("E:/CodexQA/BTH/runs/") or actual.get_file() != "evidence":
+        push_error("Cage report must use exact admitted evidence")
+        probe.free()
+        return original
+    var path: String = out_dir.path_join("cage_spatial_acceptance.json")
+    if FileAccess.file_exists(path):
+        push_error("No Cage acceptance report overwrite")
+        probe.free()
+        return original
+    var file: FileAccess = FileAccess.open(path,FileAccess.WRITE)
+    if file == null:
+        push_error("Cannot open admitted Cage acceptance report")
+        probe.free()
+        return original
+    file.store_string(JSON.stringify(result,"  "))
+    var error: int = file.get_error()
+    file.close()
+    if error != OK:
+        push_error("Cannot finish Cage acceptance report")
+    spatial_written = true
+    probe.free()
+    # No inherited _check call: original core check counter is not changed.
+    return original

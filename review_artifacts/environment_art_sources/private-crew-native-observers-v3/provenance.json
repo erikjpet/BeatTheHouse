@@ -1,0 +1,57 @@
+{
+  "schema": "bth.private_crew_external_qa_observers/v3",
+  "observer_specs": {
+    "tools/envart_private_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_probe.gd.txt",
+      "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774",
+      "bytes": 16453
+    },
+    "tools/envart_private_spatial_base_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_base_acceptance.gd.txt",
+      "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+      "bytes": 980
+    },
+    "tools/envart_private_spatial_lucky_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers-v3/envart_private_spatial_lucky_acceptance.gd.txt",
+      "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+      "bytes": 1242
+    }
+  },
+  "functional_change": true,
+  "qa_only_typed_target_recovery": true,
+  "production_guard_relaxed": false,
+  "ignore_workaround": false,
+  "frozen_predecessors": {
+    "policy": "c59ecac37ac281b37341963253a55048d57c701be8fb66e6531f587935d3f0b6",
+    "runner": "736949f2ba20687e6ca07e35d193c061166cfccf42d43bc19d77cd67d88764b7"
+  },
+  "frozen_v2": {
+    "policy": "8b7abee3c85f30d1b4dc2e33b6eb0581eec02b95aee10443960a723bf5bb493e",
+    "runner": "961a5b9c7c5bcb87a5fe6227053673732b2c5461fabdf958c2c38c9ab5645661",
+    "tests": "64aecfbfaf2c4bb2b8c5ef44d878feebb856ed895e411805ed27ca72044c6507",
+    "observer_provenance": "0530f500c0c5ec365e5934eaec52e76fcb71d3e6110ec322916918deb44f1580"
+  },
+  "v2_observer_specs": {
+    "tools/envart_private_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_probe.gd.txt",
+      "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+      "bytes": 13481
+    },
+    "tools/envart_private_spatial_base_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_base_acceptance.gd.txt",
+      "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+      "bytes": 980
+    },
+    "tools/envart_private_spatial_lucky_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_lucky_acceptance.gd.txt",
+      "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+      "bytes": 1242
+    }
+  },
+  "narrow_change": "Recover unique Lucky by stable ID from the actual native production render list, require native Vector2 and unchanged identity/layout before glyph draw; never parse coordinates.",
+  "original_7_GD_observers_changed": false,
+  "original_all_semantic_check_lines_unchanged": true,
+  "original_base_lucky_fixture_changed": false,
+  "production_or_export_source_changed": false,
+  "native_execution_by_source_author": false
+}

@@ -1,0 +1,285 @@
+# Inert Cage-only QA source. Guarded adapter materializes this as .gd only in QA.
+extends Node
+const CanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const PackScript := preload("res://scripts/ui/environment_art_pack.gd")
+const MODES: Array[String] = ["composite","composite-rm","low-detail","depth-glyph"]
+const IDS: Array[String] = ["cage_sign_pulse","atm_scan","cage_glint_0","cage_glint_1","cage_glint_2","cage_glint_3","cage_glint_4","cage_glint_5","cage_glint_6","cage_glint_7","cage_glint_8","cage_glint_9","cage_glint_10","floor_glint_0","floor_glint_1","floor_glint_2","floor_glint_3","floor_glint_4","floor_glint_5","floor_glint_6"]
+const HOSTS: Array[String] = ["staff:grand_casino_linda","casino_fixture:cage_atm","casino_fixture:cage_counter","travel:grand_casino","travel:leave"]
+
+class FixedClockCanvas:
+    extends CanvasScript
+    var qa_fixed_draw: bool = false
+    var qa_low_detail: bool = false
+    var qa_object_clock: float = 0.0
+    var qa_route_clock: float = 0.0
+    var qa_art_clock: float = 0.0
+    var qa_last_view: Dictionary = {}
+    var qa_order: Array = []
+    func _grand_casino_web_low_detail() -> bool:
+        return qa_low_detail
+    func _draw() -> void:
+        qa_order.clear()
+        if not qa_fixed_draw:
+            super._draw()
+            return
+        var before_clock: float = flicker
+        var before_route: float = actor_route_time
+        flicker = qa_object_clock
+        actor_route_time = qa_route_clock
+        super._draw()
+        qa_last_view = current_view_snapshot()
+        qa_last_view["qa_draw_route_clock"] = actor_route_time
+        flicker = before_clock
+        actor_route_time = before_route
+    func _draw_environment_art_animations(pack: EnvironmentArtPack) -> void:
+        if not qa_fixed_draw:
+            super._draw_environment_art_animations(pack)
+            return
+        var before_clock: float = flicker
+        flicker = qa_art_clock
+        super._draw_environment_art_animations(pack)
+        flicker = before_clock
+    func _draw_scene_object_body(object_data: Dictionary) -> void:
+        qa_order.append({"kind":"body","id":str(object_data.get("id","")),"layer":_scene_object_draw_layer(object_data)})
+        super._draw_scene_object_body(object_data)
+    func _draw_counter_foreground_art(counter: Dictionary) -> bool:
+        var drawn: bool = super._draw_counter_foreground_art(counter)
+        qa_order.append({"kind":"counter","id":str(counter.get("foreground_art_id","")),"drawn":drawn})
+        return drawn
+    func _draw_scene_object_adornments(object_data: Dictionary,low_detail: bool) -> void:
+        super._draw_scene_object_adornments(object_data,low_detail)
+        qa_order.append({"kind":"adorn","id":str(object_data.get("id",""))})
+
+var checks: int = 0
+var findings: Array[String] = []
+var png_files: Array[String] = []
+
+func _check(ok: bool,message: String) -> void:
+    checks += 1
+    if not ok:
+        findings.append(message)
+        push_error(message)
+
+func _json(value: Variant) -> Variant:
+    return JSON.parse_string(JSON.stringify(value))
+
+func _admitted(output: String) -> bool:
+    var expected: String = OS.get_environment("BTH_QA_EVIDENCE_DIR").replace("\\","/").trim_suffix("/")
+    var actual: String = output.replace("\\","/").trim_suffix("/")
+    return actual == expected and actual.begins_with("E:/CodexQA/BTH/runs/") and actual.get_file() == "evidence" and not actual.contains("/../") and not actual.contains("/./")
+
+func _save(image: Image,output: String,name: String) -> void:
+    _check(_admitted(output) and name == name.get_file() and name.ends_with(".png"),"Exact admitted PNG target")
+    if not _admitted(output) or name != name.get_file() or not name.ends_with(".png"):
+        return
+    var path: String = output.path_join(name)
+    _check(not FileAccess.file_exists(path),"Fresh PNG target: "+name)
+    if FileAccess.file_exists(path):
+        return
+    var error: int = image.save_png(path)
+    _check(error == OK,"PNG write succeeded: "+name)
+    if error == OK:
+        png_files.append(name)
+
+func _arrivals(tree: SceneTree,canvas: Control) -> void:
+    await tree.create_timer(4.0).timeout
+    var waited: float = 4.0
+    while not (canvas.get("person_transits") as Dictionary).is_empty() and waited < 12.0:
+        await tree.create_timer(0.25).timeout
+        waited += 0.25
+    _check((canvas.get("person_transits") as Dictionary).is_empty(),"Natural QA clone arrivals complete")
+
+func _image(tree: SceneTree,viewport: SubViewport,canvas: FixedClockCanvas,clock: float) -> Dictionary:
+    canvas.qa_art_clock = clock
+    for index in range(6):
+        canvas.queue_redraw()
+        await tree.process_frame
+        await RenderingServer.frame_post_draw
+    var image: Image = viewport.get_texture().get_image()
+    _check(image.get_width() == 1800 and image.get_height() == 860,"Native actual composite dimensions")
+    return {"image":image,"view":_json(canvas.qa_last_view),"order":_json(canvas.qa_order)}
+
+func _clock_pair(entry: EnvironmentArtPack.AnimationEntry) -> Array[float]:
+    # Exact37547 Cage original motion formulas; no timing alteration.
+    var a: float = 0.0
+    var b: float = 0.5
+    match entry.kind:
+        PackScript.AnimationKind.PULSE:
+            a = entry.period*10.25-entry.phase
+            b = a+entry.period*0.5
+        PackScript.AnimationKind.MOVER:
+            a = (entry.duration+entry.gap)*2.0-entry.phase+entry.duration*0.12
+            b = a+1.0
+        PackScript.AnimationKind.FRAMES:
+            a = 0.05/entry.fps-entry.phase
+            b = (float(entry.frame_count/4)+0.05)/entry.fps-entry.phase
+        PackScript.AnimationKind.SCROLL:
+            b = 0.37
+    return [a,b]
+
+func _solo(pack: EnvironmentArtPack,entry: EnvironmentArtPack.AnimationEntry) -> EnvironmentArtPack:
+    var result: EnvironmentArtPack = PackScript.new()
+    result.environment_id = pack.environment_id
+    result.background = pack.background
+    result.background_rect = pack.background_rect
+    result.counters = pack.counters
+    result.animations.append(entry)
+    return result
+
+func _glyph_contact(pack: EnvironmentArtPack,paint: Dictionary,output: String) -> Dictionary:
+    _check(paint.get("geometry_equal",false) and paint.get("objects",[]).size() == 5,"Fresh five typed host pairs and exact geometry")
+    var sign_entry: EnvironmentArtPack.AnimationEntry = pack.animations[0]
+    var sign: Image = sign_entry.texture.get_image()
+    sign.convert(Image.FORMAT_RGBA8)
+    _check(sign.get_size() == Vector2i(464,112),"Exact source sign atlas")
+    var bytes: PackedByteArray = sign.get_data()
+    var points: Array[Vector2i] = []
+    var outside: int = 0
+    for y in range(112):
+        for x in range(464):
+            var alpha: int = bytes[(y*464+x)*4+3]
+            if alpha > 0:
+                points.append(Vector2i(x,y))
+                if alpha != 46:
+                    outside += 1
+    _check(points.size() == 5532 and outside == 0,"Only5532 source glyph texels retain alpha46")
+    var seen: Array[String] = []
+    var rows: Array = []
+    for row in paint.get("objects",[]):
+        var identity: String = str(row["object"]["id"])
+        seen.append(identity)
+        for kind in ["body","adorn"]:
+            var name: String = str(row[kind+"_png"])
+            _check(name == name.get_file() and name.ends_with(".png"),"Actual typed mask path")
+            if name != name.get_file() or not name.ends_with(".png"):
+                continue
+            var mask: Image = Image.load_from_file(output.path_join(name))
+            _check(mask != null and mask.get_size() == Vector2i(1800,860),"Actual fresh typed mask dimensions")
+            if mask == null or mask.get_size() != Vector2i(1800,860):
+                continue
+            mask.convert(Image.FORMAT_RGBA8)
+            var data: PackedByteArray = mask.get_data()
+            var nonzero: int = 0
+            var strong: int = 0
+            for point in points:
+                var a: int = data[((72+point.y)*1800+668+point.x)*4+3]
+                if a > 0:
+                    nonzero += 1
+                if a >= 64:
+                    strong += 1
+            _check(nonzero == 0 and strong == 0,"Fresh actual glyph/body or adornment alpha contact: "+identity+"/"+kind)
+            rows.append({"id":identity,"kind":kind,"png":name,"alpha_gt0":nonzero,"alpha_ge64":strong})
+    seen.sort()
+    var expected: Array[String] = HOSTS.duplicate()
+    expected.sort()
+    _check(seen == expected and rows.size() == 10,"Exact five source host identities/ten masks")
+    return {"selected_alpha46_texels":points.size(),"other_nonzero_alpha_values":outside,
+        "fresh_typed_masks":rows,"all_ten_source_contacts_zero":rows.size() == 10 and rows.all(func(r): return r["alpha_gt0"] == 0 and r["alpha_ge64"] == 0)}
+
+func run_probe(tree: SceneTree,snapshot: Dictionary,replay: Dictionary,paint: Dictionary,mode: String,output: String) -> Dictionary:
+    _check(_admitted(output) and MODES.has(mode),"Exact admitted Cage mode")
+    _check(str(snapshot.get("archetype_id","")) == "grand_casino_cage" and str(snapshot.get("current_layer_id","")) not in ["cage","back_room"],"Actual public Cage scope")
+    var frozen_snapshot: String = JSON.stringify(snapshot)
+    var expected: Dictionary = _json(replay["view"])
+    var viewport: SubViewport = SubViewport.new()
+    viewport.size = Vector2i(1800,860)
+    viewport.disable_3d = true
+    viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    tree.root.add_child(viewport)
+    var canvas: FixedClockCanvas = FixedClockCanvas.new()
+    canvas.size = Vector2(1800,860)
+    canvas.qa_low_detail = mode == "low-detail"
+    viewport.add_child(canvas)
+    var clone_snapshot: Dictionary = snapshot.duplicate(true)
+    if mode == "composite-rm":
+        clone_snapshot["reduce_motion"] = true
+    canvas.call("render_environment_snapshot",clone_snapshot)
+    await _arrivals(tree,canvas)
+    canvas.qa_object_clock = float(replay["capture_clock"])
+    canvas.qa_route_clock = float(replay["route_clock"])
+    canvas.qa_fixed_draw = true
+    var pack: EnvironmentArtPack = PackScript.load_pack("grand_casino_cage")
+    var ids: Array[String] = []
+    if pack != null:
+        for entry in pack.animations:
+            ids.append(entry.id)
+    _check(pack != null and ids == IDS and pack.counters.size() == 1 and pack.counters.has("grand_cage_teller_counter"),"Exact20 Cage/one-front pack")
+    var report: Dictionary = {"schema":"bth.cage_spatial_acceptance/v1","mode":mode,"context":"grand_casino_cage","case":"__none",
+        "new_QA_probe":true,"browser_execution":false,"original_GD_modified":false,
+        "scope":"Actual clean Base5 only. Low detail is native simulation; no reached stocked shop, transaction, Linda/Bishop/lifecycle/save/revisit or full-floor-cycle coverage."}
+    if pack != null:
+        report["glyph_contact"] = _glyph_contact(pack,paint,output)
+        if mode == "depth-glyph":
+            canvas.call("_set_environment_art_pack",pack)
+            var captured: Dictionary = await _image(tree,viewport,canvas,float(replay["capture_clock"]))
+            var order: Array = captured["order"]
+            var linda: int = -1
+            var replay_index: int = -1
+            var body_last: int = -1
+            var body_count: int = 0
+            var adorn_count: int = 0
+            var correct: bool = true
+            for index in range(order.size()):
+                var item: Dictionary = order[index]
+                if item["kind"] == "body":
+                    body_count += 1
+                    body_last = index
+                    if item["id"] == "staff:grand_casino_linda":
+                        linda = index
+                        correct = correct and int(item["layer"]) == -1
+                elif item["kind"] == "counter" and linda >= 0 and item["id"] == "grand_cage_teller_counter" and item["drawn"]:
+                    if replay_index < 0:
+                        replay_index = index
+                elif item["kind"] == "adorn":
+                    adorn_count += 1
+            for index in range(order.size()):
+                var item: Dictionary = order[index]
+                if item["kind"] == "body" and int(item["layer"]) >= 0:
+                    correct = correct and index > replay_index
+                if item["kind"] == "adorn":
+                    correct = correct and index > body_last
+            var geometry: bool = captured["view"]["objects"] == expected["objects"] and captured["view"]["object_layout"] == expected["object_layout"]
+            _check(correct and linda >= 0 and replay_index > linda and body_count == 5 and adorn_count == 5 and geometry,"Actual Linda Behind/front replay/Standard/adornment command order and geometry")
+            _save(captured["image"],output,"__none_depth_glyph_actual.png")
+            report["depth"] = {"order":order,"Linda_before_counter":linda >= 0 and replay_index > linda,
+                "actual_command_order_valid":correct,"body_count":body_count,"adornment_count":adorn_count,"actual_geometry_equal":geometry}
+        else:
+            var rows: Array = []
+            var low_count: int = 0
+            for entry in pack.animations:
+                canvas.call("_set_environment_art_pack",_solo(pack,entry))
+                var pair: Array[float] = _clock_pair(entry)
+                var a: Dictionary = await _image(tree,viewport,canvas,pair[0])
+                var same: Dictionary = await _image(tree,viewport,canvas,pair[0])
+                var b: Dictionary = await _image(tree,viewport,canvas,pair[1])
+                var ia: Image = a["image"]
+                var ib: Image = b["image"]
+                var control: bool = ia.get_data() == (same["image"] as Image).get_data()
+                var geometry: bool = a["view"]["object_layout"] == b["view"]["object_layout"] and a["view"]["object_layout"] == expected["object_layout"] and a["view"]["objects"] == expected["objects"] and b["view"]["objects"] == expected["objects"]
+                var clocks: bool = a["view"]["scene_animation_time"] == b["view"]["scene_animation_time"] and a["view"]["qa_draw_route_clock"] == b["view"]["qa_draw_route_clock"]
+                var changed: bool = ia.get_data() != ib.get_data()
+                var expected_change: bool = mode != "composite-rm" and (mode != "low-detail" or entry.web_low_detail)
+                if entry.web_low_detail:
+                    low_count += 1
+                _check(control and geometry and clocks,"Matched actual object/layout/label/clock control: "+entry.id)
+                _check(changed == expected_change,"Actual whole-composite normal/RM/low membership: "+entry.id)
+                _save(ia,output,entry.id+"_composite_a.png")
+                _save(ib,output,entry.id+"_composite_b.png")
+                rows.append({"id":entry.id,"web_low_detail":entry.web_low_detail,"identical_control_pixels":control,
+                    "actual_objects_layout_equal":geometry,"object_route_label_clocks_equal":clocks,
+                    "visible_composite_change":changed,"expected_change":expected_change,
+                    "art_clock_a":pair[0],"art_clock_b":pair[1]})
+            _check(low_count == 16,"Exact native16 low roster unchanged")
+            report["entries"] = rows
+            report["low_membership_count"] = low_count
+    report["production_snapshot_unchanged"] = JSON.stringify(snapshot) == frozen_snapshot
+    report["processing_remained_active"] = canvas.is_processing()
+    _check(report["production_snapshot_unchanged"] and report["processing_remained_active"],"Snapshot unchanged and autonomous canvas processing alive")
+    report["object_clock"] = replay["capture_clock"]
+    report["route_clock"] = replay["route_clock"]
+    report["checks"] = checks
+    report["findings"] = findings
+    report["png_files"] = png_files
+    viewport.free()
+    return report

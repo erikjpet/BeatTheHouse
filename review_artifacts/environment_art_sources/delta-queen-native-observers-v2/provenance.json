@@ -1,0 +1,45 @@
+{
+  "schema": "bth.delta_queen_external_qa_observers/v2",
+  "observer_specs": {
+    "tools/envart_delta_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers-v2/envart_delta_spatial_probe.gd.txt",
+      "sha256": "6962cd422cb20e5c1e522f18b928629b705aad78385669c3a7facd772e8b5e85",
+      "bytes": 21096
+    },
+    "tools/envart_delta_spatial_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers-v2/envart_delta_spatial_acceptance.gd.txt",
+      "sha256": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64",
+      "bytes": 4571
+    }
+  },
+  "new_QA_acceptance": true,
+  "original_observers_modified": false,
+  "production_guard_relaxed": false,
+  "ignore_workaround": false,
+  "native_clock_capture_before_json": true,
+  "exact_native_equality_no_tolerance": true,
+  "legacy_cross_representation_comparison_is_diagnostic_only": true,
+  "old_failure_cause_proven": false,
+  "frozen_v1": {
+    "policy": "1bc676383751bc31f3e19ad3c58931064e2404bc25854806d4ba5ccb535b5bee",
+    "runner": "d4f9fa3c265a30f2118a3e6a2e8e48f3fec73baff0ca46404d8f79f31e4c0dba",
+    "tests": "8186e6db203197bb0dc73bfc4e704de24740c34cc222264e58ce4bf7c1819a14",
+    "observer_provenance": "75a5a73aa1eea670a339f2ef65bf4a5c14cec19139081b5eae5e153ecfe207fb"
+  },
+  "v1_observer_specs": {
+    "tools/envart_delta_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_probe.gd.txt",
+      "sha256": "5ad32e0307053799de23df8aa17edba93ac5d008cbe00477f62322618f9b9b8d",
+      "bytes": 18604
+    },
+    "tools/envart_delta_spatial_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_acceptance.gd.txt",
+      "sha256": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64",
+      "bytes": 4571
+    }
+  },
+  "original_semantic_check_lines_unchanged": true,
+  "case_counts_unchanged": true,
+  "candidate_or_material_predicate_changed": false,
+  "native_execution_by_source_author": false
+}

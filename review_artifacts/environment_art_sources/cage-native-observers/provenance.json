@@ -1,0 +1,43 @@
+{
+  "schema": "bth.cage_external_qa_observers/v1",
+  "task_id": "BTH-ENV-SPATIAL-CAGE-001",
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "observer_specs": {
+    "tools/envart_cage_spatial_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/cage-native-observers/envart_cage_spatial_acceptance.gd.txt",
+      "sha256": "cb10e67b3d9ea5e0481b3d4cf7178fd59ee5cf22e2a401ed3b125fa48ab71c9b",
+      "bytes": 2131
+    },
+    "tools/envart_cage_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/cage-native-observers/envart_cage_spatial_probe.gd.txt",
+      "sha256": "7c161bf0e9cb67930d27634707f30427a7fc4a19b66a5d729679815fb0334511",
+      "bytes": 15971
+    }
+  },
+  "original_preart_sha256": "b55cb09928731bf6934230412ea2cbb766eb4fb08f99e674ab60395394ede325",
+  "original_motion_sha256": "37547f23d23ef2ecb6490799ef5d64e3dbe8e191f92549d08f803c45ddece634",
+  "original_assertions_modified": false,
+  "production_guard_relaxed": false,
+  "raw_GD_files_created": false,
+  "source_boundary": "The two targets and their UID sidecars must be absent from051 selected source/tar. Inert .gd.txt/provenance must match current full-tree Git blobs; exact921code/900GD/161toolsGD/1605UID/224class baseline closure stays unchanged.",
+  "qa_boundary": "Copy exact bytes exclusively into fresh admitted QAproject after closure proof. Bind artifact and activefile hashes into prepared/install/current identity. Never export the QAclone or copy legacy custom UIDs.",
+  "modes": [
+    "composite",
+    "composite-rm",
+    "low-detail",
+    "depth-glyph"
+  ],
+  "case_catalog": [
+    "__none"
+  ],
+  "normal_entries": 20,
+  "low_entries": 16,
+  "source_typed_pairs": 5,
+  "scope": "Fresh matched-clock actual Base5 composites, normal/RM/actual native low flag, Linda/counter/Standard/adornment order, exact5532sourceglyph and10fresh typed contacts. Browser and naturally reached shop/transactions/Linda/Bishop/lifecycle/save/revisit/full-floor-cycle remain unproved.",
+  "static_review": {
+    "reviewer": "/root/bar_clearance_audit/dark_feet_source_audit",
+    "status": "STATIC_CODE_GO_ONLY_NOT_EXECUTED",
+    "probe_sha256": "7c161bf0e9cb67930d27634707f30427a7fc4a19b66a5d729679815fb0334511",
+    "hook_sha256": "cb10e67b3d9ea5e0481b3d4cf7178fd59ee5cf22e2a401ed3b125fa48ab71c9b"
+  }
+}

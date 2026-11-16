@@ -1,0 +1,284 @@
+# New Private-specific QA observer. Original seven GD observers stay unchanged.
+extends Node
+const CanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const PackScript := preload("res://scripts/ui/environment_art_pack.gd")
+
+class FixedClockCanvas:
+    extends CanvasScript
+    var qa_fixed_draw := false
+    var qa_object_clock := 0.0
+    var qa_route_clock := 0.0
+    var qa_art_clock := 0.0
+    var qa_last_view: Dictionary = {}
+    func _draw() -> void:
+        if not qa_fixed_draw:
+            super._draw()
+            return
+        var normal_clock := flicker
+        var normal_route := actor_route_time
+        flicker = qa_object_clock
+        actor_route_time = qa_route_clock
+        super._draw()
+        qa_last_view = current_view_snapshot()
+        qa_last_view["qa_draw_route_clock"] = actor_route_time
+        flicker = normal_clock
+        actor_route_time = normal_route
+    func _draw_environment_art_animations(pack: EnvironmentArtPack) -> void:
+        if not qa_fixed_draw:
+            super._draw_environment_art_animations(pack)
+            return
+        var old_clock := flicker
+        flicker = qa_art_clock
+        super._draw_environment_art_animations(pack)
+        flicker = old_clock
+
+class LabelPaintCanvas:
+    extends CanvasScript
+    var target: Dictionary = {}
+    var object_clock := 0.0
+    var route_clock := 0.0
+    func _draw() -> void:
+        if target.is_empty():
+            return
+        if str(target.get("id","")) != "event:recruitment_lucky" or typeof(target.get("position")) != TYPE_VECTOR2:
+            push_error("PRIVATE_LUCKY_NATIVE_TARGET_REQUIRED: native stable ID/Vector2 must be validated before label draw")
+            return
+        var old_clock := flicker
+        var old_route := actor_route_time
+        flicker = object_clock
+        actor_route_time = route_clock
+        _scale_canvas()
+        var rect := _natural_model_rect_for_object(target)
+        _draw_object_label(rect,str(target.get("label","")),str(target.get("type","item")),
+            bool(target.get("disabled",false)),false,target)
+        draw_set_transform(Vector2.ZERO,0.0,Vector2.ONE)
+        flicker = old_clock
+        actor_route_time = old_route
+
+var checks := 0
+var findings: Array[String] = []
+
+func _check(ok: bool,message: String) -> void:
+    checks += 1
+    if not ok:
+        findings.append(message)
+        push_error(message)
+
+func _json(value: Variant) -> Variant:
+    return JSON.parse_string(JSON.stringify(value))
+
+func _settle(tree: SceneTree,frames: int = 5) -> void:
+    for i in range(frames):
+        await tree.process_frame
+        await RenderingServer.frame_post_draw
+
+func _arrivals(tree: SceneTree,canvas: Control) -> void:
+    await tree.create_timer(4.0).timeout
+    var waited := 4.0
+    while not (canvas.get("person_transits") as Dictionary).is_empty() and waited < 12.0:
+        await tree.create_timer(0.25).timeout
+        waited += 0.25
+    _check((canvas.get("person_transits") as Dictionary).is_empty(),"QA clone natural arrivals complete")
+
+func _image(tree: SceneTree,viewport: SubViewport,canvas: FixedClockCanvas,clock: float) -> Dictionary:
+    canvas.qa_art_clock = clock
+    for i in range(6):
+        canvas.queue_redraw()
+        await tree.process_frame
+        await RenderingServer.frame_post_draw
+    return {"image":viewport.get_texture().get_image(),"view":_json(canvas.qa_last_view)}
+
+func _native_target_failure(message: String) -> Dictionary:
+    # Preconditions do not relabel the retained semantic assertion counts.
+    var diagnostic := "PRIVATE_LUCKY_NATIVE_TARGET_REQUIRED: "+message
+    findings.append(diagnostic)
+    push_error(diagnostic)
+    return {}
+
+func _recover_lucky_native_target(canvas: Control, expected: Dictionary) -> Dictionary:
+    if str(expected.get("id","")) != "event:recruitment_lucky":
+        return _native_target_failure("expected stable recruitment ID differs")
+    var native_rows: Variant = canvas.call("_active_scene_objects")
+    if not native_rows is Array:
+        return _native_target_failure("production native render-list API must return Array")
+    var matches: Array = []
+    for row in native_rows:
+        if row is Dictionary and str(row.get("id","")) == "event:recruitment_lucky":
+            matches.append(row)
+    if matches.size() != 1:
+        return _native_target_failure("actual C1 production board requires exactly one stable recruitment object")
+    var native_target: Dictionary = matches[0].duplicate(true)
+    if typeof(native_target.get("position")) != TYPE_VECTOR2:
+        return _native_target_failure("actual production position must remain native Vector2; coordinates are never reconstructed")
+    if _json(native_target) != expected:
+        return _native_target_failure("native object does not match the unchanged expected production identity/geometry")
+    return native_target
+
+func run_probe(tree: SceneTree,snapshot: Dictionary,replay: Dictionary,mode: String,output: String,case_name: String = "__none") -> Dictionary:
+    _check(mode in ["composite","composite-rm","depth","placement","lucky-glyph"],"Explicit Private probe mode")
+    _check(output == OS.get_environment("BTH_QA_EVIDENCE_DIR") and output.begins_with("E:"),"Exact admitted evidence")
+    _check(str(snapshot.get("archetype_id","")) == "small_underground_casino" and str(snapshot.get("current_layer_id","")) == "back_room","Actual Private source snapshot namespace")
+    var source_snapshot_json := JSON.stringify(snapshot)
+    var expected: Dictionary = _json(replay["view"])
+    var viewport := SubViewport.new()
+    viewport.size = Vector2i(1800,860)
+    viewport.disable_3d = true
+    viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    tree.root.add_child(viewport)
+    var canvas := FixedClockCanvas.new()
+    canvas.size = Vector2(1800,860)
+    viewport.add_child(canvas)
+    var clone_snapshot := snapshot.duplicate(true)
+    if mode == "composite-rm":
+        clone_snapshot["reduce_motion"] = true
+    canvas.call("render_environment_snapshot",clone_snapshot)
+    await _arrivals(tree,canvas)
+    canvas.qa_object_clock = float(replay["capture_clock"])
+    canvas.qa_route_clock = float(replay["route_clock"])
+    canvas.qa_fixed_draw = true
+    var pack := PackScript.load_pack("punchline_back_room")
+    _check(pack != null and pack.animations.size() == 7 and pack.counters.is_empty(),"Exact Private7/zero counter pack")
+    var report: Dictionary = {"schema":"bth.private_spatial_acceptance/v1","mode":mode,
+        "context":"small_underground_casino:back_room","case":case_name,
+        "new_probe":true,"original_observer_assertions_not_modified":true,
+        "object_clock":replay["capture_clock"],"route_clock":replay["route_clock"],
+        "scope":"Actual named source snapshot only. Eligible recruitment fixture is explicitly distinct from clean Base10. No UI-earned work/save/revisit inferred."}
+    if pack == null:
+        viewport.free()
+        report.merge({"checks":checks,"findings":findings},true)
+        return report
+    if mode in ["composite","composite-rm"]:
+        var rows: Array = []
+        for entry in pack.animations:
+            var solo := PackScript.new()
+            solo.environment_id = pack.environment_id
+            solo.background = pack.background
+            solo.background_rect = pack.background_rect
+            solo.counters = pack.counters
+            solo.animations.append(entry)
+            canvas.call("_set_environment_art_pack",solo)
+            var t0: float = (entry.duration+entry.gap)*2.0-entry.phase+entry.duration*0.12
+            var t1 := t0+1.0
+            var a := await _image(tree,viewport,canvas,t0)
+            var same := await _image(tree,viewport,canvas,t0)
+            var b := await _image(tree,viewport,canvas,t1)
+            var ia: Image = a["image"]
+            var ib: Image = b["image"]
+            var control: bool = ia.get_data() == (same["image"] as Image).get_data()
+            var geometry: bool = a["view"]["object_layout"] == b["view"]["object_layout"] and a["view"]["object_layout"] == expected["object_layout"] and a["view"]["objects"] == expected["objects"]
+            var clocks: bool = a["view"]["scene_animation_time"] == b["view"]["scene_animation_time"] and a["view"]["qa_draw_route_clock"] == b["view"]["qa_draw_route_clock"]
+            var changed := ia.get_data() != ib.get_data()
+            _check(control,entry.id+" identical-clock control")
+            _check(geometry,entry.id+" actual objects/layout/labels identical")
+            _check(clocks,entry.id+" object/route clocks held for diagnostic comparison")
+            _check(not changed if mode == "composite-rm" else changed,entry.id+" actual composite motion/RM")
+            ia.save_png(output.path_join(entry.id+"_composite_a.png"))
+            ib.save_png(output.path_join(entry.id+"_composite_b.png"))
+            rows.append({"id":entry.id,"identical_control_pixels":control,"actual_objects_layout_equal":geometry,
+                "object_route_label_clocks_equal":clocks,"visible_composite_change":changed,
+                "reduce_motion_composite_stable":not changed,"art_clock_a":t0,"art_clock_b":t1})
+        report["entries"] = rows
+    elif mode == "placement":
+        canvas.qa_fixed_draw = false
+        canvas.call("_set_environment_art_pack",pack)
+        var before: Dictionary = canvas.call("current_view_snapshot")
+        canvas.call("set_developer_placement_mode",true)
+        var clock0: float = canvas.get("flicker")
+        await tree.create_timer(0.4).timeout
+        await _settle(tree)
+        var after: Dictionary = canvas.call("current_view_snapshot")
+        var placement: Dictionary = canvas.call("developer_placement_snapshot")
+        var equal: bool = _json(before["object_layout"]) == _json(after["object_layout"])
+        var advanced: bool = float(canvas.get("flicker")) > clock0
+        var untouched: bool = not bool(placement["dragging"]) and not bool(placement["pending"]) and int(placement["undo_count"]) == 0
+        _check(bool(placement["enabled"]) and equal and advanced and untouched,"Placement overlay stays live without pointer or authored edits")
+        viewport.get_texture().get_image().save_png(output.path_join("placement_actual.png"))
+        report.merge({"placement_enabled":placement["enabled"],"geometry_equal":equal,
+            "no_saved_override_or_drag":untouched,"clock_advanced_without_pointer":advanced,
+            "saved_or_dragged":false,"placement":placement},true)
+    elif mode == "depth":
+        var actual := await _image(tree,viewport,canvas,float(replay["capture_clock"]))
+        var equal: bool = actual["view"]["object_layout"] == expected["object_layout"] and actual["view"]["objects"] == expected["objects"]
+        _check(equal and pack.counters.is_empty(),"Background-only Private depth preserves every live object and label")
+        (actual["image"] as Image).save_png(output.path_join("depth_actual.png"))
+        var layers: Array = []
+        for object_data in actual["view"]["objects"]:
+            layers.append({"id":object_data["id"],"body_draw_layer":canvas.call("_scene_object_draw_layer",object_data)})
+        report.merge({"zero_counters_and_replays":pack.counters.is_empty(),"geometry_equal":equal,
+            "actual_object_count":actual["view"]["objects"].size(),"actual_draw_layers":layers},true)
+    else:
+        var lucky: Array = expected["objects"].filter(func(row): return str(row.get("id","")) == "event:recruitment_lucky")
+        _check(case_name == "C1_marker" and lucky.size() == 1,"Explicit eligible Private Base recruitment Lucky required; never substitute a resident/contact")
+        if lucky.size() == 1:
+            var typed_viewport := SubViewport.new()
+            typed_viewport.size = Vector2i(1800,860)
+            typed_viewport.transparent_bg = true
+            typed_viewport.disable_3d = true
+            typed_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+            typed_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+            tree.root.add_child(typed_viewport)
+            var typed := LabelPaintCanvas.new()
+            typed.size = Vector2(1800,860)
+            typed_viewport.add_child(typed)
+            typed.call("render_environment_snapshot",snapshot)
+            await _arrivals(tree,typed)
+            typed.object_clock = float(replay["capture_clock"])
+            typed.route_clock = float(replay["route_clock"])
+            typed.set("flicker",typed.object_clock)
+            typed.set("actor_route_time",typed.route_clock)
+            var native_target := _recover_lucky_native_target(typed,lucky[0])
+            var typed_view: Dictionary = _json(typed.call("current_view_snapshot"))
+            var native_layout_equal: bool = typed_view["object_layout"] == expected["object_layout"] and typed_view["objects"] == expected["objects"]
+            if native_target.is_empty() or not native_layout_equal:
+                if not native_target.is_empty():
+                    _native_target_failure("actual C1 native board/layout differs before glyph draw")
+                typed_viewport.free()
+                viewport.free()
+                report.merge({"checks":checks,"findings":findings,"native_target_binding_failed":true},true)
+                return report
+            typed.target = native_target
+            report["native_target_binding"] = {"native_source_api":"PixelSceneCanvas._active_scene_objects",
+                "native_position_type":type_string(typeof(native_target["position"])),
+                "stable_id_unique":true,"expected_json_equal":_json(native_target)==lucky[0],
+                "production_layout_equal":native_layout_equal,"coordinates_reconstructed":false}
+            for i in range(6):
+                typed.queue_redraw()
+                await tree.process_frame
+                await RenderingServer.frame_post_draw
+            var glyph: Image = typed_viewport.get_texture().get_image()
+            var master: Image = pack.background.get_image()
+            var nonzero := 0
+            var strong := 0
+            var bright := 0
+            var points: Array = []
+            for y in range(860):
+                for x in range(1800):
+                    var alpha := glyph.get_pixel(x,y).a
+                    if alpha <= 0.0:
+                        continue
+                    nonzero += 1
+                    if alpha >= 64.0/255.0:
+                        strong += 1
+                        var color := master.get_pixel(x,y)
+                        if maxf(color.r,maxf(color.g,color.b)) >= 160.0/255.0:
+                            bright += 1
+                            points.append([x,y])
+            var geometry_equal: bool = _json(typed.call("current_view_snapshot")["object_layout"]) == expected["object_layout"]
+            _check(nonzero > 0 and strong > 0 and geometry_equal,"Actual unselected Lucky production label alpha and geometry")
+            glyph.save_png(output.path_join("Base_recruitment_Lucky_actual_label_alpha.png"))
+            var composite := await _image(tree,viewport,canvas,float(replay["capture_clock"]))
+            (composite["image"] as Image).save_png(output.path_join("Base_recruitment_Lucky_actual_composite.png"))
+            report.merge({"lucky_id":lucky[0]["id"],"lucky_object":lucky[0],"glyph_geometry_equal":geometry_equal,
+                "actual_glyph_alpha_pixels":nonzero,"actual_label_alpha_ge64_pixels":strong,
+                "actual_label_alpha_ge64_bright_master_pixels":bright,"actual_bright_underlay_native_points":points,
+                "actual_native_glyph_png":"Base_recruitment_Lucky_actual_label_alpha.png",
+                "label_paint_scope":"Unchanged _draw_object_label: actual glyph, shadow and authored rule; normal/unselected. This is alpha paint, not a label-envelope count or a legibility verdict."},true)
+            typed_viewport.free()
+    report["production_snapshot_unchanged"] = JSON.stringify(snapshot) == source_snapshot_json
+    report["processing_remained_active"] = canvas.is_processing()
+    _check(report["production_snapshot_unchanged"] and report["processing_remained_active"],"Production snapshot unchanged; QA clone keeps processing")
+    report["checks"] = checks
+    report["findings"] = findings
+    viewport.free()
+    return report
