@@ -32,21 +32,21 @@ All 20 backgrounds were independently inspected. Evidence classifications below 
 | grand_casino / GRAND-001 | Two upright green-panel tables | Confirmed native populated; separate felt from fascia and ground supports |
 | grand_casino_high_limit / HL-001 | Same table defect | Confirmed native populated |
 | grand_casino_back_room / GBR-001 | Same table defect | Confirmed native populated |
-| small_underground_casino / HIDDEN-001 | Two unsupported green panels | Static confirmed; review current4 populated captures |
+| small_underground_casino / HIDDEN-001 | Two unsupported green panels | Confirmed current4 native populated capture |
 | punchline_back_room / PRIVATE-001 | Planning table hangs above floor | Confirmed native populated |
 | delta_queen / DELTA-001 | Framed green panel instead of supported table | Confirmed native populated |
 | pawn_shop / PAWN-001 | Foreground wooden counter slab lacks support | Confirmed native populated R2; counter plank floats below Sal and Slot |
 | jazz_club / JAZZ-001 | Curtain continues through stage contact plane | Confirmed native populated R3; visible deck absent beneath musicians |
 | kitty_cat_lounge / KITTY-001 | Performers' feet meet vertical stage fascia | Confirmed native populated; add coherent deck. Candle tray intent remains separate |
-| punchline_club / PUNCH-001 | Four upright disks described as round tables | Static plus source brief; current6 actor clearance review |
+| punchline_club / PUNCH-001 | Four upright disks described as round tables | Confirmed current6 native plus source brief; actor clearance review |
 | motel / MOTEL-001 | Right low slab support ambiguous | Confirmed native R3: right merchandise counter floats; central table has supports |
 | apartment / APARTMENT-001 | Sofa feet terminate on brick wall | Confirmed native populated |
 | house / HOUSE-001 | Furniture/rug read on wall plane | Confirmed native populated |
 | grand_casino_cage / CAGE-001 | Counter depth/support unclear | Candidate; actual composition review |
 | beach / BEACH-001 | Unsupported sky neon; umbrella/boardwalk join | Confirmed native R1 visible sky bars/umbrella join; source brief specifies distant pier |
-| back_alley / BACK-001 | Right crate appears suspended | Candidate; inspect live/replay composition |
-| gas_station_casino / GAS-001 | No severe standalone support defect in initial scan | Open seam/composite/motion review, not passed |
-| corner_store / CORNER-001 | No severe standalone support defect in initial scan | Open seam/composite/motion review, not passed |
+| back_alley / BACK-001 | Right crate appears suspended | Confirmed served R3: unsupported right drink counter; central table has legs |
+| gas_station_casino / GAS-001 | No severe standalone support defect in initial scan | Populated served capture reviewed; full seam/motion review remains open, not passed |
+| corner_store / CORNER-001 | No severe standalone support defect in initial scan | Populated served capture reviewed; full seam/motion review remains open, not passed |
 | motel_room / MOTELROOM-001 | Confirmed native R3: Sleep bed lies in wall field; rug reads vertical | Reconstruct coherent floor/bed support, preserve live anchors |
 
 LIGHT-002 covers the four verified Grand-area rectangular sign masks as a distinct correction, not a reason to regenerate whole rooms. Work one room to completion; other rows retain explicit pending state rather than vanishing when Bar lands.
@@ -85,3 +85,5 @@ Fixed interaction anchors do not freeze the painted wall/floor horizon. Where fu
 ### Beach
 
 The documented setting calls for a modest distant pier, not disconnected neon bars in the sky. Integrate light with a visible plausible pier/fixture or remove the ungrounded visual while preserving required authored motion through appropriate material. Keep sky/water/floor depth distinct, umbrella rooted to a valid support and its pole continuous; do not make it intersect a solid boardwalk fascia. Verify live stalls, actors and labels before finalizing.
+
+All20 populated snapshot coverage checkpoint: existing native/served captures are now enumerated with hashes in docs/testing/environment_spatial_review_evidence_20261116.json. This does not close any repair or certify all scenarios/motion phases.

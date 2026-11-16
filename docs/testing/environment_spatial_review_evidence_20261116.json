@@ -6,7 +6,8 @@
     "Existing native captures are not current live Web acceptance.",
     "Bar source has served Web proof.",
     "Kitty R5 static source reportedly unchanged in R6; retain version distinction.",
-    "No new native launch or art change by director."
+    "No new native launch or art change by director.",
+    "All20 have existing populated capture evidence; this is a snapshot spatial review, not all scenarios, all motion phases or proof of repairs."
   ],
   "captures": {
     "bar": {
@@ -83,6 +84,31 @@
       "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\capture\\frame_000.png",
       "sha256": "2bf068ee32e44c8fc2513125e2c10d8a445156bcc90db89acf66a487c68daeac",
       "bytes": 699302
+    },
+    "gas_station_casino": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-R12BOUND01-probe-2\\evidence\\screen.png",
+      "sha256": "7dadae5f31cd1353c20694ba0d470370265deb07d17ef4a29175b1aa50853ce6",
+      "bytes": 469559
+    },
+    "corner_store": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CORNERWEB04-probe-2\\evidence\\screen.png",
+      "sha256": "e73136f9f24f19700cf2934b24270f576f2486457f7810431cee3261229b9a1a",
+      "bytes": 506695
+    },
+    "back_alley": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BACKWEB01-probe-9\\evidence\\screen.png",
+      "sha256": "c0bf3b6a6854f70b53a771cc92433fe42f63ed7111dae09eef344310def9d254",
+      "bytes": 765951
+    },
+    "small_underground_casino": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-current4-01\\evidence\\__none_actual_play.png",
+      "sha256": "a41e8bb6d35142fbf6be045bb3ef2d69b4839c5196a60fca1c63ed4edc67785d",
+      "bytes": 806076
+    },
+    "punchline_club": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PUBLICR2-20261114-current6-01\\evidence\\__none_actual_play.png",
+      "sha256": "d9837d0384fa74e90893ee682fdc95cccf75c9c32898835ecf301a9a2697cce9",
+      "bytes": 908445
     }
   }
 }
