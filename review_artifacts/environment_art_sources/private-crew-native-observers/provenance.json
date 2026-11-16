@@ -1,0 +1,81 @@
+{
+  "schema": "bth.private_crew_external_qa_observers/v1",
+  "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "status": "SOURCE_ONLY_EXTERNAL_QA_OVERLAY_NOT_EXECUTED",
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "observer_specs": {
+    "tools/envart_private_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_probe.gd.txt",
+      "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+      "bytes": 13481
+    },
+    "tools/envart_private_spatial_base_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_base_acceptance.gd.txt",
+      "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+      "bytes": 980
+    },
+    "tools/envart_private_spatial_lucky_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_lucky_acceptance.gd.txt",
+      "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+      "bytes": 1242
+    }
+  },
+  "frozen_predecessors": {
+    "policy": "c59ecac37ac281b37341963253a55048d57c701be8fb66e6531f587935d3f0b6",
+    "runner": "736949f2ba20687e6ca07e35d193c061166cfccf42d43bc19d77cd67d88764b7",
+    "tests": "c417e7ec902d9e4556a00f7139284db65e0f6cc26900a3fa56a1207c0a5032fe"
+  },
+  "boundary": {
+    "selected_source_helper": "tools/bth_qa_selected_source_v2.py",
+    "selected_source_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+    "guard_sha256": "650e14dfd71197bd55021553e3ec9adfe1f67533ea3e7c930a456e05bcd3ac6a",
+    "exact_code_resources": 921,
+    "exact_GD_sources": 900,
+    "exact_tools_GD_sources": 161,
+    "exact_script_test_GD_sources": 502,
+    "baseline_UID_entries": 1605,
+    "baseline_class_cache_entries": 224,
+    "source_rule": "The three QA target .gd/.gd.uid paths must be absent from the selected Git source and verified tar. review_artifacts is outside051 selectors. Its .gd.txt has no GDScript suffix; the exact production code/UID/class closure remains unchanged.",
+    "qa_rule": "Only a fresh admitted QAproject receives three exact byte copies after archive/closure verification. Copies are declared external QA overlays, recorded in prepared/current identities. QA clone is never the export source."
+  },
+  "preserved_raw_GD": [
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_probe.gd",
+      "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+      "bytes": 13481,
+      "retain_untracked": true,
+      "execution_input": false,
+      "written": false,
+      "moved": false,
+      "deleted": false
+    },
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_base_acceptance.gd",
+      "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+      "bytes": 980,
+      "retain_untracked": true,
+      "execution_input": false,
+      "written": false,
+      "moved": false,
+      "deleted": false
+    },
+    {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_lucky_acceptance.gd",
+      "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+      "bytes": 1242,
+      "retain_untracked": true,
+      "execution_input": false,
+      "written": false,
+      "moved": false,
+      "deleted": false
+    }
+  ],
+  "functional_change": false,
+  "original_seven_GD_unchanged": true,
+  "production_guard_relaxed": false,
+  "ignore_workaround": false,
+  "E_written": false,
+  "QA_or_engine_launched": false,
+  "art_approval": false,
+  "test_updated": false
+}

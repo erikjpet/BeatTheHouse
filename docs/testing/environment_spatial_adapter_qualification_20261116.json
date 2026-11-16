@@ -1,0 +1,1030 @@
+{
+  "schema": "bth.environment_spatial_adapter_qualification/v1",
+  "task_id": "BTH-ENV-SPATIAL-001",
+  "recorded_at": "2026-11-16T13:38:01.248875+00:00",
+  "prepared_by": "/root/review_test_adapter",
+  "status": "PYTHON_ADAPTER_TESTS_QUALIFIED_NON_ACTIVE_CAGE_CANDIDATE_ONLY",
+  "scope": "Read-only receipt/source custody checkpoint for Private, Delta, Cage and Hidden unit/contract regressions. New D checkpoint only; no native/runtime/art/build/publication acceptance is granted.",
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "guard_policy": {
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "assigned_before_execution": true,
+    "active_at_release": 0,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "all_recorded_Jobs_final_closed": true,
+    "all_storage_manifest_launch_claim_hashes_verified": true,
+    "Python": {
+      "path": "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+      "sha256": "3093fcf263029ca1d799fea250a4e032d2c930a516f1513eeca688b343c836b3",
+      "bytes": 101760
+    }
+  },
+  "source_hash_scope": "Generic guarded receipts authenticate commands, logs, caps and storage custody. Source hashes below are separate current frozen-byte observations and explicit predecessor/observer pins; a generic Job receipt itself does not contain the executed Python entrypoint SHA. Historical and final test events remain separate.",
+  "private": {
+    "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+    "room": "punchline_back_room",
+    "status": "38_CONTRACT_TESTS_PASS_NATIVE_NOT_ESTABLISHED",
+    "tests": {
+      "run_id": "BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01/evidence/job.json",
+        "sha256": "39e2f70bdf0d3635087dc38dcc273f0a7addbbc8901d6d12e2f56bce2c740ba5",
+        "bytes": 7771
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01/evidence/worker.log",
+        "sha256": "67f37a5d5b7bdd369c403ed673f076b20cf9c79a11be24321fceef4389db8578",
+        "bytes": 137
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01/evidence/storage-manifest.json",
+        "sha256": "31d8d985c8745492b5d95edd1d6c5611f410878e159d68bb73764544d3f4a4f7",
+        "bytes": 1484
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-PRIVATE-V2-20261116-tests01/evidence/launch-claim.json",
+        "sha256": "d28730a772cce2f2ddd25da4ba4feaa35594ad4926a485811343722db4f1bd47",
+        "bytes": 160
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_private_crew_spatial_native_trial_v2.py"
+      ],
+      "pid": 35328,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 76086886400,
+      "storage_gate_before_child_min_available_bytes": 76086878208,
+      "finished_epoch": 1794833456.1342278,
+      "test_count": 38,
+      "test_seconds": 0.463,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_private_crew_spatial_native_trial_v2.py",
+        "sha256": "64aecfbfaf2c4bb2b8c5ef44d878feebb856ed895e411805ed27ca72044c6507",
+        "bytes": 27937
+      }
+    },
+    "helpers": {
+      "private_crew_spatial_native_profile_v2.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/private_crew_spatial_native_profile_v2.py",
+        "sha256": "8b7abee3c85f30d1b4dc2e33b6eb0581eec02b95aee10443960a723bf5bb493e",
+        "bytes": 26633
+      },
+      "private_crew_spatial_native_trial_v2.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/private_crew_spatial_native_trial_v2.py",
+        "sha256": "961a5b9c7c5bcb87a5fe6227053673732b2c5461fabdf958c2c38c9ab5645661",
+        "bytes": 42215
+      },
+      "test_private_crew_spatial_native_trial_v2.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_private_crew_spatial_native_trial_v2.py",
+        "sha256": "64aecfbfaf2c4bb2b8c5ef44d878feebb856ed895e411805ed27ca72044c6507",
+        "bytes": 27937
+      }
+    },
+    "observer_source_closure": {
+      "status": "INERT_SOURCE_CLOSURE_MATCHES_POLICY_NOT_NATIVE_ACCEPTANCE",
+      "policy": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/private_crew_spatial_native_profile_v2.py",
+        "sha256": "8b7abee3c85f30d1b4dc2e33b6eb0581eec02b95aee10443960a723bf5bb493e",
+        "bytes": 26633
+      },
+      "provenance": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/private-crew-native-observers/provenance.json",
+        "sha256": "0530f500c0c5ec365e5934eaec52e76fcb71d3e6110ec322916918deb44f1580",
+        "bytes": 3831
+      },
+      "exact_folder_files": [
+        "README.md",
+        "envart_private_spatial_base_acceptance.gd.txt",
+        "envart_private_spatial_lucky_acceptance.gd.txt",
+        "envart_private_spatial_probe.gd.txt",
+        "provenance.json"
+      ],
+      "observers": [
+        {
+          "logical_QA_target": "tools/envart_private_spatial_probe.gd",
+          "inert_source": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_probe.gd.txt",
+            "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+            "bytes": 13481
+          },
+          "preserved_live_D_path_present": true,
+          "preserved_live_D_reference": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_probe.gd",
+            "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+            "bytes": 13481
+          },
+          "live_D_UID_present": false,
+          "used_as_execution_input_by_new_adapter": false
+        },
+        {
+          "logical_QA_target": "tools/envart_private_spatial_base_acceptance.gd",
+          "inert_source": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_base_acceptance.gd.txt",
+            "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+            "bytes": 980
+          },
+          "preserved_live_D_path_present": true,
+          "preserved_live_D_reference": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_base_acceptance.gd",
+            "sha256": "457a176440f9b75a11f461292d005f9b670d24c5cb3363a5426230ab127c07b0",
+            "bytes": 980
+          },
+          "live_D_UID_present": false,
+          "used_as_execution_input_by_new_adapter": false
+        },
+        {
+          "logical_QA_target": "tools/envart_private_spatial_lucky_acceptance.gd",
+          "inert_source": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_lucky_acceptance.gd.txt",
+            "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+            "bytes": 1242
+          },
+          "preserved_live_D_path_present": true,
+          "preserved_live_D_reference": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/envart_private_spatial_lucky_acceptance.gd",
+            "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822",
+            "bytes": 1242
+          },
+          "live_D_UID_present": false,
+          "used_as_execution_input_by_new_adapter": false
+        }
+      ],
+      "original_historical_observer_file_count": 7,
+      "original_historical_observer_and_provenance_file_count": 20,
+      "original_historical_file_hashes_verified": {
+        "tools/envart_private_preart_metadata.gd": "c62fbab8f33ef8b154cf1394c6038f71ee09eeef8ca6b0d140e16b30708dc3a9",
+        "tools/envart_private_animation_probe.gd": "c40dc236d40b5e603575836a4d1b60a7635cd2c12d8e167daca16270c76468d6",
+        "tools/envart_private_animation_capture.gd": "51bce8acf94cccefc0b4e84977b7720a7c7e26dad04607bdcabe1416591254ed",
+        "tools/environment_art_baseline_capture.gd": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f",
+        "tools/environment_layout_screenshots.gd": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5",
+        "tools/envart_private_lifecycle_recovery.gd": "8358ee2d079159d07e2342ac00c87c5598e48b04b8bee544119a970f2c49294e",
+        "tools/envart_private_lifecycle_detail_recovery.gd": "991510be842e41b6f1aa10e4a30ac5cf76b18835902114d9f5ce5b9475511453",
+        "private_source_identity.json": "2b7a99d5495788d1111f22d5d3afbfda18c7473d5ec77b85e4494132fe4bee44",
+        "private_capture_inputs.json": "b6bbe3791b602789cf824e5d54b060402cfd496600d4a266b8d34d84dc045fc3",
+        "private_trial_package_identity.json": "b031ca88e54b4ced5e5d093ff59319af2d7ffd81c2ac37361741e40a88c85ea8",
+        "private_trial_adapter.py": "c29907adacbe045d0856fe354e008f8fa7ab6c31e1d8a5526d00532aff91958f",
+        "tools/envart_private_preart_closure.py": "3283741f2514ec449de96ffd84d15cb4521e5cd7689a9d1c1a410ac8d40f3b7c",
+        "tools/envart_private_preart_union.py": "35e0d89608c33e34f6826cc195e9f1af1d487358417ccff092aed7608b5dfef9",
+        "tools/envart_private_animation_capture.gd.uid": "351bfa43495ae9f61a9b5ac7849b1750860f72dd0c3c0b026c1688be5ba10e1c",
+        "tools/envart_private_animation_probe.gd.uid": "a4804bbc044e47d66c2720234d1bbccc1bbbecffa9981ac0fd4f074d44d834b9",
+        "tools/envart_private_lifecycle_detail_recovery.gd.uid": "d16d4cff7c8578997f80937ff3aa81ffbe7092375f829d5a2fa4f060879697a2",
+        "tools/envart_private_lifecycle_recovery.gd.uid": "d4e29b28af026f19791872910562e72632757b66e818373effdeeab3b578eba6",
+        "tools/envart_private_preart_metadata.gd.uid": "6ea027b8d5a71816fb4ae56b2f83cc98c8477973a5a3240bc42246e59eaca758",
+        "tools/environment_art_baseline_capture.gd.uid": "cd3b58fa80239aada2b1e9752d8d3fecda4a0c4d02aa2a9226e1156fd235b7c2",
+        "tools/environment_layout_screenshots.gd.uid": "a4e9a7d6067be76eee07ef86e4fb1a37c5fb88096d2626a05ad83057f243cb35"
+      },
+      "historical_root": "E:/CodexQA/BTH/workspaces/BTH-ENVART-PRIVATE-TRIAL-20261115",
+      "historical_commit_label": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc",
+      "historical_label_is_not_fresh_source_identity": true,
+      "source_guard_contract": {
+        "selected_source_helper": "tools/bth_qa_selected_source_v2.py",
+        "selected_source_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+        "guard_sha256": "650e14dfd71197bd55021553e3ec9adfe1f67533ea3e7c930a456e05bcd3ac6a",
+        "exact_code_resources": 921,
+        "exact_GD_sources": 900,
+        "exact_tools_GD_sources": 161,
+        "exact_script_test_GD_sources": 502,
+        "baseline_UID_entries": 1605,
+        "baseline_class_cache_entries": 224,
+        "source_rule": "The three QA target .gd/.gd.uid paths must be absent from the selected Git source and verified tar. review_artifacts is outside051 selectors. Its .gd.txt has no GDScript suffix; the exact production code/UID/class closure remains unchanged.",
+        "qa_rule": "Only a fresh admitted QAproject receives three exact byte copies after archive/closure verification. Copies are declared external QA overlays, recorded in prepared/current identities. QA clone is never the export source."
+      },
+      "actual_fresh_Git_archive_native_UID_class_equivalence_established": false,
+      "qualification_limit": "Current ordinary .gd.txt/provenance bytes and exact folder membership were read-only verified. Production/selected-source exclusion and Git-blob bindings are contracts tested here; no new native source campaign, GD parse or runtime acceptance is established by this checkpoint."
+    },
+    "limits": [
+      "No fresh native context/motion/liveness/capture acceptance is established here.",
+      "Original core/lifecycle observers and new QA probes have separate stated coverage; Crew jobs/C3 are not inferred from a source/test pass."
+    ]
+  },
+  "delta": {
+    "task_id": "BTH-ENV-SPATIAL-DELTA-001",
+    "room": "delta_queen",
+    "status": "FINAL_47_CONTRACT_TESTS_PASS_NATIVE_NOT_ESTABLISHED",
+    "historical_test_event": {
+      "run_id": "BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01/evidence/job.json",
+        "sha256": "38a07047d0d167ff9d4afc018f7ce17bce28fb34090657e36a57f7a94c6909f6",
+        "bytes": 7892
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01/evidence/worker.log",
+        "sha256": "b9e03da337db76b33ed98a7d233909298afd9b25b6ef4613e10930c48f81f197",
+        "bytes": 146
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01/evidence/storage-manifest.json",
+        "sha256": "6f31e518c20cc099f3da1e1dc05a921dbb8de38debc08093891911509130f8cf",
+        "bytes": 1512
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests01/evidence/launch-claim.json",
+        "sha256": "5789630c06a7f7ebca6aa7d762eff90efeb924846f082c5e6ddae2221a6d74f6",
+        "bytes": 160
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial.py"
+      ],
+      "pid": 36712,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 75302342656,
+      "storage_gate_before_child_min_available_bytes": 75302334464,
+      "finished_epoch": 1794835654.401992,
+      "test_count": 47,
+      "test_seconds": 2.24,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial.py",
+        "sha256": "8186e6db203197bb0dc73bfc4e704de24740c34cc222264e58ce4bf7c1819a14",
+        "bytes": 37537
+      },
+      "historical_executed_source_sha256": "c214dbcb127ecc11023bbf0387547c6f2c1f67fb750470c4b436b6b24a9bbcf2",
+      "current_entrypoint_is_later_EOF_normalized_source": true
+    },
+    "final_test_event": {
+      "run_id": "BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02/evidence/job.json",
+        "sha256": "8e03ba99114583f7b92845ed0b32b104973d754f944a1bd36c2f417a8ffd2c7e",
+        "bytes": 7892
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02/evidence/worker.log",
+        "sha256": "13e5acdfdcc6d0d81e4f2e49bb7b051ceac454b59921159ede25d56ea84e65d1",
+        "bytes": 146
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02/evidence/storage-manifest.json",
+        "sha256": "0856586d5b765e20ce1b654e4647c195be3d941ac1b218ce3f0836ad2796a965",
+        "bytes": 1512
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTA-NATIVE-20261116-tests02/evidence/launch-claim.json",
+        "sha256": "a7fd77dbfbf8a1c70b6c09e5edc76e435a08a339f30804be3bb0fd52e69bad02",
+        "bytes": 159
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial.py"
+      ],
+      "pid": 26628,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 75300306944,
+      "storage_gate_before_child_min_available_bytes": 75300298752,
+      "finished_epoch": 1794836027.916899,
+      "test_count": 47,
+      "test_seconds": 2.059,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial.py",
+        "sha256": "8186e6db203197bb0dc73bfc4e704de24740c34cc222264e58ce4bf7c1819a14",
+        "bytes": 37537
+      }
+    },
+    "EOF_normalization": {
+      "only_test_final_LF_bytes_removed": 2,
+      "only_README_final_LF_bytes_removed": 1,
+      "historical_test_sha256": "c214dbcb127ecc11023bbf0387547c6f2c1f67fb750470c4b436b6b24a9bbcf2",
+      "final_test_sha256": "8186e6db203197bb0dc73bfc4e704de24740c34cc222264e58ce4bf7c1819a14",
+      "historical_README_sha256_reconstructed_by_adding_one_LF": "7301995b7fff3fc6cdbe30141aa4d5c4432f39e07d2dd5d26b9f2fdc452a6ea7",
+      "final_README_sha256": "476473aa0f8c2d2f31892e02802703e55b50f0a52da9dd4d532367d4c87c282e",
+      "test_AST_equal_ignoring_locations": true,
+      "source_hash_reconstruction_is_not_a_test_run": true,
+      "profile_runner_and_inert_observer_bytes_unchanged": true
+    },
+    "helpers": {
+      "delta_queen_spatial_native_profile.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/delta_queen_spatial_native_profile.py",
+        "sha256": "1bc676383751bc31f3e19ad3c58931064e2404bc25854806d4ba5ccb535b5bee",
+        "bytes": 29213
+      },
+      "delta_queen_spatial_native_trial.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/delta_queen_spatial_native_trial.py",
+        "sha256": "d4f9fa3c265a30f2118a3e6a2e8e48f3fec73baff0ca46404d8f79f31e4c0dba",
+        "bytes": 43421
+      },
+      "test_delta_queen_spatial_native_trial.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_delta_queen_spatial_native_trial.py",
+        "sha256": "8186e6db203197bb0dc73bfc4e704de24740c34cc222264e58ce4bf7c1819a14",
+        "bytes": 37537
+      },
+      "delta_queen_spatial_native_trial.README.md": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/delta_queen_spatial_native_trial.README.md",
+        "sha256": "476473aa0f8c2d2f31892e02802703e55b50f0a52da9dd4d532367d4c87c282e",
+        "bytes": 8468
+      }
+    },
+    "observer_source_closure": {
+      "status": "INERT_SOURCE_CLOSURE_MATCHES_POLICY_NOT_NATIVE_ACCEPTANCE",
+      "policy": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/delta_queen_spatial_native_profile.py",
+        "sha256": "1bc676383751bc31f3e19ad3c58931064e2404bc25854806d4ba5ccb535b5bee",
+        "bytes": 29213
+      },
+      "provenance": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/delta-queen-native-observers/provenance.json",
+        "sha256": "75a5a73aa1eea670a339f2ef65bf4a5c14cec19139081b5eae5e153ecfe207fb",
+        "bytes": 6099
+      },
+      "exact_folder_files": [
+        "README.md",
+        "envart_delta_spatial_acceptance.gd.txt",
+        "envart_delta_spatial_probe.gd.txt",
+        "provenance.json"
+      ],
+      "observers": [
+        {
+          "logical_QA_target": "tools/envart_delta_spatial_probe.gd",
+          "inert_source": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_probe.gd.txt",
+            "sha256": "5ad32e0307053799de23df8aa17edba93ac5d008cbe00477f62322618f9b9b8d",
+            "bytes": 18604
+          },
+          "preserved_live_D_path_present": false,
+          "preserved_live_D_reference": null,
+          "live_D_UID_present": false,
+          "used_as_execution_input_by_new_adapter": null
+        },
+        {
+          "logical_QA_target": "tools/envart_delta_spatial_acceptance.gd",
+          "inert_source": {
+            "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_acceptance.gd.txt",
+            "sha256": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64",
+            "bytes": 4571
+          },
+          "preserved_live_D_path_present": false,
+          "preserved_live_D_reference": null,
+          "live_D_UID_present": false,
+          "used_as_execution_input_by_new_adapter": null
+        }
+      ],
+      "original_historical_observer_file_count": 9,
+      "original_historical_observer_and_provenance_file_count": 18,
+      "original_historical_file_hashes_verified": {
+        "tools/envart_delta_preart_metadata.gd": "74f555bb6307abaaebb05b591e689877240801f3b66bf56c0049f69f38688f15",
+        "tools/envart_delta_six_context_trace.gd": "ef5be47124bdf336a65e33fc278d18a67a86d436b7d3f97bf69fa5efe72e33e6",
+        "tools/envart_delta_animation_probe.gd": "b83d37a87af482ebaebfba27622109cfbbb26f406ed655416cb53e7cb60f3cbc",
+        "tools/envart_delta_animation_capture.gd": "feb3d8bf8f510a66bcca49f68de067f67f7be3c4c02b0e5a31592e0e911b80dd",
+        "tools/environment_art_baseline_capture.gd": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f",
+        "tools/environment_layout_screenshots.gd": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5",
+        "tools/envart_delta_transition_trace.gd": "80525b8479173b55d7492b2cbcd55398d4f6daa5732666e1a4f1ab40c1949d65",
+        "tools/envart_delta_full_transition_trace.gd": "569e0d729e0e172e61989f3f69f715cedfc7be88c3fcbcaf55a2d072e0832858",
+        "tools/envart_delta_single_context.gd": "5a8742235911c59b2dd5b9d079fd8e6e72a6bafb14e8766d15bf75f872b581ab",
+        "delta_source_identity.json": "59ca046dfd3414108d428c9b1470806001e02e7bd819ab500b597c590df7e572",
+        "delta_capture_inputs.json": "e7cd9026b6bb4323f601e0ed8ea548d3c9c2468678a787b4903339a95b473d0f",
+        "delta_trial_package_identity.json": "4313906aa900392a93c96616b814f74829cf40acb253f8e7d685e74dda32ae20",
+        "delta_trial_adapter.py": "c45b5900941f90ee78e501960d7bc9d8c4fa907edfdc521d4b228706f092abf2",
+        "tools/envart_delta_preart_metadata.gd.uid": "4370e9e7c14b056bb5cb1d0266bf0aa11b2cf65e485f7f4699e51717c3331f80",
+        "tools/envart_delta_animation_probe.gd.uid": "1a8ee95878cafc06a39cf349d0e3f7898bae6a6229f2fbe68a992d08cf9674f2",
+        "tools/envart_delta_animation_capture.gd.uid": "ddddc2f3a72553c576b151304f09e072c0839b67379dc1f6b3370d47a4b712af",
+        "tools/environment_art_baseline_capture.gd.uid": "cd3b58fa80239aada2b1e9752d8d3fecda4a0c4d02aa2a9226e1156fd235b7c2",
+        "tools/environment_layout_screenshots.gd.uid": "a4e9a7d6067be76eee07ef86e4fb1a37c5fb88096d2626a05ad83057f243cb35"
+      },
+      "historical_root": "E:/CodexQA/BTH/workspaces/BTH-ENVART-DELTA-TRIAL-20261115",
+      "historical_commit_label": "6400dad73a1fdab0c63387683b2937495ac9c57c",
+      "historical_label_is_not_fresh_source_identity": true,
+      "source_guard_contract": {},
+      "actual_fresh_Git_archive_native_UID_class_equivalence_established": false,
+      "qualification_limit": "Current ordinary .gd.txt/provenance bytes and exact folder membership were read-only verified. Production/selected-source exclusion and Git-blob bindings are contracts tested here; no new native source campaign, GD parse or runtime acceptance is established by this checkpoint."
+    },
+    "metadata_application": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/delta_spatial_metadata_application_20261116.json",
+      "sha256": "affc42e4248b73e073e5ca2e0d3c49c517161c097435f0d9067d35befb477dc5",
+      "bytes": 25920
+    },
+    "metadata_application_is_not_native_acceptance": true,
+    "limits": [
+      "No actual rendered six-context/motion/Reduce Motion/liveness/capture acceptance is established by these Python tests.",
+      "Original six-context observers, inert new QA probes and callback-model checks do not establish UI-earned work/save/revisit behavior."
+    ]
+  },
+  "cage": {
+    "task_id": "BTH-ENV-SPATIAL-CAGE-001",
+    "room": "grand_casino_cage",
+    "original_25_test_event": {
+      "run_id": "BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01/evidence/job.json",
+        "sha256": "a8b0848b524bdfcb75ad12005f7263d56e2198fa4e4ac508f88aa4846ebb0381",
+        "bytes": 7723
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01/evidence/worker.log",
+        "sha256": "8344016000827c7d99f3adf09352fee8fa00062dd303af95e597deb6312d3565",
+        "bytes": 124
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01/evidence/storage-manifest.json",
+        "sha256": "f030579f60fbdc0944855c545cf63cf1cb18b3414f106996f878a41f3e744a2e",
+        "bytes": 1474
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-tests01/evidence/launch-claim.json",
+        "sha256": "9e05feb4a18be52d7cfbb56e8f6b9167991b57825d5f01226a47f2f16594f304",
+        "bytes": 159
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate.py"
+      ],
+      "pid": 39628,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 76066684928,
+      "storage_gate_before_child_min_available_bytes": 76066676736,
+      "finished_epoch": 1794834232.8587532,
+      "test_count": 25,
+      "test_seconds": 8.415,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate.py",
+        "sha256": "d665f236e80c26196ccaae7cc0099a060cb2a0da6056cdbfe12cd3dc054c82eb",
+        "bytes": 16186
+      }
+    },
+    "original_assembly_stop": {
+      "receipt": {
+        "run_id": "BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01",
+        "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence",
+        "job": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/job.json",
+          "sha256": "15832ff904b9a1f07a32b5dceb63e1fce8dc6d1c5b16afbc0046b0a5ebe17227",
+          "bytes": 10585
+        },
+        "log": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/worker.log",
+          "sha256": "9fe5b5ccfd9dea038f70463ec3f3857422c5b2340c570ecfb49246eb5120b170",
+          "bytes": 216
+        },
+        "storage_manifest": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/storage-manifest.json",
+          "sha256": "caf9957271688662670c761667acc4aa0ef61390507f78c9170433809380eea2",
+          "bytes": 1510
+        },
+        "launch_claim": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/launch-claim.json",
+          "sha256": "2916cfa69956b3bd7eac31cd808adf43938b93eb70f6a9f5a2aa880720cb2cf7",
+          "bytes": 160
+        },
+        "command": [
+          "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+          "-B",
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate.py",
+          "--source-root",
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+          "--workspace",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116",
+          "--baseline-root",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/source_baseline",
+          "--candidate-root",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/candidate_sources/cage-spatial-r1-alpha-mask",
+          "--report",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/cage-spatial-r1-assembly.json",
+          "--pixel-proof",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-assemble01/evidence/cage-spatial-r1-glyph-proof.json"
+        ],
+        "pid": 32548,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "storage_gate_before_job_min_available_bytes": 72702095360,
+        "storage_gate_before_child_min_available_bytes": 72702087168,
+        "finished_epoch": 1794834867.3183906,
+        "test_count": null,
+        "test_seconds": null,
+        "status": "FAILED_CLOSED_ZERO",
+        "current_entrypoint": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate.py",
+          "sha256": "0a4120d6284e625808a5b9ab6f4a3076ed80121ad435d0465c926d9f5320779f",
+          "bytes": 38105
+        }
+      },
+      "producer_stdout": {
+        "status": "CAGE_ALPHA_ASSEMBLY_STOPPED",
+        "error": "E: capacity below expected writes plus20GiB/12percent/2GiB headroom; no fallback",
+        "active_files_written": false,
+        "runtime_launched": false,
+        "art_approval": false
+      },
+      "classification": "STARTED_BOUNDED_PYTHON_JOB_EXIT1_CLOSED_ZERO; not a pre-Job denial and not assembly PASS",
+      "original_report_and_glyph_proof_absent": true,
+      "maintained_storage_guard_passed_before_child": true,
+      "available_bytes_at_launch_recorded_by_guard": 72702087168,
+      "worker_total_free_capacity_sample_recorded_in_original_log": false,
+      "original_recipe_extra_disk_rule": "free-expected >= max(configured reserve,2GiB,ceil(total-volume-bytes*.12)); CPU12percent/memory2GiB were incorrectly reused as disk policy.",
+      "old_rule_counterexample": {
+        "input_total_bytes_from_actual_v2_readonly_regression": 999649439744,
+        "derived_old_volume_headroom_bytes": 119957932770,
+        "derived_old_required_free_bytes_including_expected": 124252900066,
+        "is_original_worker_printed_measurement": false
+      },
+      "old_recipe_and_tests_preserved": true,
+      "old_run_not_retried_or_relabelled": true
+    },
+    "v2_30_test_event": {
+      "run_id": "BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01/evidence/job.json",
+        "sha256": "04e9e5de7121ad23b810fa71eeaf08dc4dc5dad596be4232a94b02e6b7edd669",
+        "bytes": 7884
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01/evidence/worker.log",
+        "sha256": "06365de9c12812d0b26c682b34846f962cda2089600a5a7ce7dac33911c871f1",
+        "bytes": 513
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01/evidence/storage-manifest.json",
+        "sha256": "d9e7546ee625d76006fe8ecc0a5cbcfd39a2948b584bc3100b05c0153a45cc3d",
+        "bytes": 1510
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01/evidence/launch-claim.json",
+        "sha256": "090b69dbbb2471029405c51ef9c6658306140d3687eec598d127d98c88645307",
+        "bytes": 160
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate_v2.py"
+      ],
+      "pid": 25528,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 75301494784,
+      "storage_gate_before_child_min_available_bytes": 75301486592,
+      "finished_epoch": 1794835771.564257,
+      "test_count": 30,
+      "test_seconds": 8.232,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate_v2.py",
+        "sha256": "756d85c8f89561b2747891e15671782a50f88edfd14ddfb8a024a86068908010",
+        "bytes": 21833
+      }
+    },
+    "v2_actual_readonly_capacity_regression": {
+      "configured_required_bytes": 25769803776,
+      "maintained_validate_layout": "PASS",
+      "minimum_observed_available_bytes": 75301486592,
+      "new_budget": "PASS",
+      "storage_manifest": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-tests01\\evidence\\storage-manifest.json",
+      "total_bytes": 999649439744,
+      "writes_or_children": false
+    },
+    "v2_assembly": {
+      "receipt": {
+        "run_id": "BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01",
+        "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence",
+        "job": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/job.json",
+          "sha256": "60fcd05750c5440d0dd8de3275461dfa692db364dc0bc3ab528a1811acb1d784",
+          "bytes": 10777
+        },
+        "log": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/worker.log",
+          "sha256": "15cdd4eba4bfb82b4af2a716e323c8779546f2b3e18ba31d4879498858b687fc",
+          "bytes": 485
+        },
+        "storage_manifest": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/storage-manifest.json",
+          "sha256": "6e2a54d935f69f7017e39bf34d1bcb0a6b88fd6f349bebf19c357705dc6dd8e8",
+          "bytes": 1546
+        },
+        "launch_claim": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/launch-claim.json",
+          "sha256": "2003b368cecc06e5a19b57bd24794d764f48ad8d9f9941a040b9ac1f0cfa546e",
+          "bytes": 159
+        },
+        "command": [
+          "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+          "-B",
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate_v2.py",
+          "--source-root",
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+          "--workspace",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116",
+          "--baseline-root",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/source_baseline",
+          "--candidate-root",
+          "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/candidate_sources/cage-spatial-r1-alpha-mask",
+          "--report",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-assembly.json",
+          "--pixel-proof",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-glyph-proof.json"
+        ],
+        "pid": 31392,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "storage_gate_before_job_min_available_bytes": 75301478400,
+        "storage_gate_before_child_min_available_bytes": 75301470208,
+        "finished_epoch": 1794835843.4507585,
+        "test_count": null,
+        "test_seconds": null,
+        "status": "PASS",
+        "current_entrypoint": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate_v2.py",
+          "sha256": "3a361d004a2aada85ca4f2feab339ae1404db06d42664582a5d9d84df160894e",
+          "bytes": 41457
+        }
+      },
+      "producer_report": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-assembly.json",
+        "sha256": "ec0f828136789a39dfd7f2adb50e188abc85e23f2849b89050945a7f32e9627b",
+        "bytes": 42408
+      },
+      "pixel_provenance": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-glyph-proof.json",
+        "sha256": "65e52250ec04852072c2cf2ab9d084360906f94c9d198d0d09e78009504c2370",
+        "bytes": 49487
+      },
+      "candidate_root": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/candidate_sources/cage-spatial-r1-alpha-mask",
+      "actual_candidate24_files_rehashed": true,
+      "candidate_file_count": 24,
+      "candidate_PNG_count": 22,
+      "output_summary": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-CAGETRIAL-20261116\\candidate_sources\\cage-spatial-r1-alpha-mask",
+        "seal": "29610fee672359f3002f31cbf90767c9d5e89ce1f9a9bdbc603dd394e1e66f1a",
+        "file_count": 24,
+        "room_file_count": 23,
+        "room23_seal": "ea7ca10a1f5fd9790f9f9635987ea6adfac833d194e532a6a21257d90e0ed31a"
+      },
+      "baseline_summary": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-CAGETRIAL-20261116\\source_baseline",
+        "seal": "dcd9781169080f546281b942773a18f106965d9811b360cc86fe432d0ac62584",
+        "room23_seal": "47aaeb8b6a503f8bf01695bac21d6f72b5129e10541b7c91b50a8924455b3cd9"
+      },
+      "changed_payload_paths": [
+        "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png"
+      ],
+      "sign_output_sha256": "f9e0c563b34546dc31f67bc5a963b1d098509ba5f6608388ab959596d59dd661",
+      "actual_source_before_after_maps_equal_and_current_hashes_verified": true,
+      "source_file_count": 38,
+      "producer_scalar_results": {
+        "schema": "bth.cage_spatial_assembly/v2",
+        "task_id": "BTH-ENV-SPATIAL-CAGE-001",
+        "room": "grand_casino_cage",
+        "status": "NON_ACTIVE_ALPHA_CANDIDATE_READY_FOR_INDEPENDENT_AUDIT",
+        "observed_at": "2026-11-16T13:30:43.166758+00:00",
+        "recipe_sha256": "3a361d004a2aada85ca4f2feab339ae1404db06d42664582a5d9d84df160894e",
+        "storage_manifest": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01\\evidence\\storage-manifest.json",
+        "storage_manifest_sha256": "6e2a54d935f69f7017e39bf34d1bcb0a6b88fd6f349bebf19c357705dc6dd8e8",
+        "custody_schema": "sha256(sorted UTF8 project-relative path + TAB + lowercase_sha256 + LF); includes final LF",
+        "all_sources_unchanged": true,
+        "full_manifest_index_and_other21_PNGs_byte_exact": true,
+        "native20_default_low16_unchanged": true,
+        "all_existing_positions_and_scheduling_unchanged": true,
+        "active_files_written": false,
+        "runtime_launched": false,
+        "art_approval": false,
+        "test_updated": false
+      },
+      "alpha_proof_producer_reported": {
+        "retained_alpha46_native_texels": 5532,
+        "outside_alpha_cuts": 46436,
+        "changed_native_texels": 46436,
+        "rgb_all_original_exact": true,
+        "selected_original_alpha_exact": true,
+        "NN2_exact": true
+      },
+      "pixel_semantics_not_independently_recomputed_by_checkpoint_author": true,
+      "configured_capacity_before_writes": {
+        "total_bytes": 999649439744,
+        "free_bytes": 75301470208,
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "required_free_bytes": 25769803776,
+        "minimum_projected_headroom_bytes": 21474836480,
+        "projected_free_bytes": 71006502912,
+        "rule": "configured_expected_write_bytes + configured_reserve_bytes; maintained storage validation unchanged"
+      },
+      "static_art_review_status": "PENDING_AT_CHECKPOINT",
+      "native_acceptance": false,
+      "art_approval": false,
+      "production_activation": false,
+      "test_updated": false
+    },
+    "helpers": {
+      "assemble_cage_spatial_candidate.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate.py",
+        "sha256": "0a4120d6284e625808a5b9ab6f4a3076ed80121ad435d0465c926d9f5320779f",
+        "bytes": 38105
+      },
+      "test_assemble_cage_spatial_candidate.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate.py",
+        "sha256": "d665f236e80c26196ccaae7cc0099a060cb2a0da6056cdbfe12cd3dc054c82eb",
+        "bytes": 16186
+      },
+      "assemble_cage_spatial_candidate_v2.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate_v2.py",
+        "sha256": "3a361d004a2aada85ca4f2feab339ae1404db06d42664582a5d9d84df160894e",
+        "bytes": 41457
+      },
+      "test_assemble_cage_spatial_candidate_v2.py": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_assemble_cage_spatial_candidate_v2.py",
+        "sha256": "756d85c8f89561b2747891e15671782a50f88edfd14ddfb8a024a86068908010",
+        "bytes": 21833
+      }
+    },
+    "limits": [
+      "V2 corrects only the unrequested disk rule to configured4GiB expected+20GiB reserve, retaining maintained validation and immediate write gates.",
+      "Non-active candidate bytes/report/glyph proof exist; this checkpoint grants no static art GO, native acceptance, source activation, build or publication."
+    ]
+  },
+  "hidden": {
+    "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+    "status": "FINAL35_CONTRACT_TESTS_PASS_STATIC_REVIEW_PENDING",
+    "prior_fixture_failure": {
+      "receipt": {
+        "run_id": "BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01",
+        "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01/evidence",
+        "job": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01/evidence/job.json",
+          "sha256": "c73dd9f3a2eaf9fb83a49f7fa8352ca5a20c0c8666cbbddcfe65212df379efea",
+          "bytes": 7711
+        },
+        "log": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01/evidence/worker.log",
+          "sha256": "be36ba58daca0a38f122fe3fbcd378120c1b0eb453faf7063a5f8a8b3ae554e6",
+          "bytes": 1142
+        },
+        "storage_manifest": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01/evidence/storage-manifest.json",
+          "sha256": "d00315eb349c46da0d49a27ffd9f617db70d5e559ff60f0e87deb66485371517",
+          "bytes": 1472
+        },
+        "launch_claim": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests01/evidence/launch-claim.json",
+          "sha256": "098b0a80cfbcb789f548b370e7c677389667d50307e37205d0718cccb54068b8",
+          "bytes": 160
+        },
+        "command": [
+          "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+          "-B",
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_hidden_spatial_native_trial_v3.py"
+        ],
+        "pid": 37572,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "expected_write_bytes": 4294967296,
+        "reserve_bytes": 21474836480,
+        "storage_gate_before_job_min_available_bytes": 72629510144,
+        "storage_gate_before_child_min_available_bytes": 72629501952,
+        "finished_epoch": 1794834872.260135,
+        "test_count": 35,
+        "test_seconds": 4.155,
+        "status": "FAILED_CLOSED_ZERO",
+        "current_entrypoint": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_hidden_spatial_native_trial_v3.py",
+          "sha256": "21ac824d81a214cd6bf92c3468f99193eb722e5a4cc417aec290b2b6352897b2",
+          "bytes": 26450
+        }
+      },
+      "failure_summary": "Retained positive fixture omitted prepared.files; no prior PASS is claimed.",
+      "failure_log_tail": "..........E........................\n======================================================================\nERROR: test_actual_eight_rows_reach_identity_worker_and_select_three_full_rows (__main__.IdentityCatalogPathTests)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\test_hidden_spatial_native_trial_v3.py\", line 367, in test_actual_eight_rows_reach_identity_worker_and_select_three_full_rows\n    result,writes=self.invoke_identity(document)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\test_hidden_spatial_native_trial_v3.py\", line 353, in invoke_identity\n    result=runner.identity_worker(cfg,None)\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_trial_v3.py\", line 311, in identity_worker\n    extras=set(files)-set(prepared[\"files\"])-{\"qa_reference/prepared-source.json\",\"qa_reference/candidate-install.json\"}\nKeyError: 'files'\n\n----------------------------------------------------------------------\nRan 35 tests in 4.155s\n\nFAILED (errors=1)\n"
+    },
+    "final_test_event": {
+      "run_id": "BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02",
+      "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02/evidence",
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02/evidence/job.json",
+        "sha256": "fb4d07c3e3c46f6ba8b937f30cc7754e34df395a0b53e95258c8a8bf13120d0f",
+        "bytes": 7737
+      },
+      "log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02/evidence/worker.log",
+        "sha256": "d2dfe8bed78589e3e158778bd6ecf67e00e821f20107fc46ff81ffad4653290f",
+        "bytes": 134
+      },
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02/evidence/storage-manifest.json",
+        "sha256": "f144c788e6f2f6c540b2f5a750e2fb6f9187d5d9a4cbb8b7c52c4837d8ca3727",
+        "bytes": 1477
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDDEN-V3-20261116-tests02/evidence/launch-claim.json",
+        "sha256": "e6889146e1c291b910ddb8badf9d5b1f3eb88e545854adaf57ceed2cae48accf",
+        "bytes": 160
+      },
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_hidden_spatial_native_trial_v3.py"
+      ],
+      "pid": 35944,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "storage_gate_before_job_min_available_bytes": 75299909632,
+      "storage_gate_before_child_min_available_bytes": 75299901440,
+      "finished_epoch": 1794836094.6646264,
+      "test_count": 35,
+      "test_seconds": 4.38,
+      "status": "PASS",
+      "current_entrypoint": {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_hidden_spatial_native_trial_v3.py",
+        "sha256": "21ac824d81a214cd6bf92c3468f99193eb722e5a4cc417aec290b2b6352897b2",
+        "bytes": 26450
+      }
+    },
+    "current_entrypoint_sha256": "21ac824d81a214cd6bf92c3468f99193eb722e5a4cc417aec290b2b6352897b2",
+    "current_imported_helper_refs": [
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/hidden_spatial_native_profile_v3.py",
+        "sha256": "6f9a986268bd2dc9e453258de64dab6905347b7ef92189455cba3d63467d8d81",
+        "bytes": 33673
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/hidden_spatial_native_trial_v3.py",
+        "sha256": "744c7760283029c943f6cd313f5e24a32e3d8c6f2046faf1c683881ef6125674",
+        "bytes": 41808
+      }
+    ],
+    "correction_scope": "Positive fixture supplies realcatalog hash3065 in both prepared.files and mockedidentityfiles; new negative helper requires ValueError/catalog diagnostic. Root reports original25 AST and previous644e body preserved.",
+    "static_review_status": "PENDING_AT_CHECKPOINT",
+    "native_acceptance_established": false
+  },
+  "shared_source_controls": {
+    "review_artifacts_gdignore": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/.gdignore",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "frozen_helpers": [
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bth_qa_storage.py",
+        "sha256": "cdc08bcb1ad0bff82bb5fd12f467c576cfc40a998f40870068cf6c684216f837",
+        "bytes": 19199
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bth_qa_guarded_run.py",
+        "sha256": "7ea6be8366f606995a1f69ddb26d99b4e3c47a0fcce9d968abe17b3dc074ad7e",
+        "bytes": 9834
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bth_qa_command_paths.py",
+        "sha256": "bbc405ac19ae803c2c15d93fee1ca059f25d06176cfee7926b2329b93ca4352b",
+        "bytes": 2750
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bth_qa_selected_source_v2.py",
+        "sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+        "bytes": 47789
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_spatial_native_trial.py",
+        "sha256": "650e14dfd71197bd55021553e3ec9adfe1f67533ea3e7c930a456e05bcd3ac6a",
+        "bytes": 43569
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/bar_spatial_candidate_check.py",
+        "sha256": "bb0c9fd70fe4c4941d8d1019c682b691db48e5224606340a7e84e6c48dd3837f",
+        "bytes": 26540
+      }
+    ],
+    "current_source_hashes_rechecked_before_exclusive_write": true
+  },
+  "remaining_gates": [
+    "Independent Hidden fixture/adapter review, Cage candidate pixel/static review, and fresh explicitly admitted native campaigns remain separate.",
+    "Actual native source/observer Git binding, exact UID/class/source coverage and runtime contexts/motion/liveness must be measured in guarded campaign Jobs; Python test passes are not those measurements.",
+    "No room or all20 parent objective is closed by this checkpoint; root owns integration, ledgers, deployment and release decisions."
+  ],
+  "native_acceptance": false,
+  "art_approval": false,
+  "build_or_publication_approved": false,
+  "browser_acceptance": "NOT_ESTABLISHED",
+  "actions_by_checkpoint_author": {
+    "new_D_checkpoint_only": true,
+    "E_writes": false,
+    "QA_jobs_or_helper_imports": false,
+    "Git_operations": false,
+    "existing_frozen_files_changed": false,
+    "ledger_changed": false,
+    "art_or_profiles_changed": false,
+    "deletion_or_moves": false
+  }
+}

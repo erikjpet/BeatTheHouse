@@ -1,0 +1,13 @@
+{
+  "schema": "bth.cage_alpha_assembler_checkpoint/v1",
+  "task_id": "BTH-ENV-SPATIAL-CAGE-001",
+  "source_path": "tools/assemble_cage_spatial_candidate.py",
+  "checkpoint_sha256": "ee595d1c6f1d66d20648ffd60e223fd7faa13bcae86d3ca8c390c237ddbfa3b3",
+  "checkpoint_bytes": 34120,
+  "transport": "assemble_cage_spatial_candidate_ee595d1c.py.b64",
+  "encoding": "standard base64 of exact original bytes; one transport LF",
+  "status": "UNEXECUTED_DRAFT_PRESERVED_BEFORE_REVIEW_HARDENING",
+  "original_owner": "/root/high_limit_source_trial",
+  "current_owner": "/root/bar_clearance_audit",
+  "scope": "Source checkpoint only. No PNG, E workspace, runtime, source activation, cleanup or moves."
+}

@@ -1,0 +1,128 @@
+{
+  "schema": "bth.delta_queen_external_qa_observers/v1",
+  "task_id": "BTH-ENV-SPATIAL-DELTA-001",
+  "status": "UNEXECUTED_SOURCE_ONLY_PENDING_INDEPENDENT_STATIC_REVIEW",
+  "new_QA_acceptance": true,
+  "original_observers_modified": false,
+  "production_guard_relaxed": false,
+  "ignore_workaround": false,
+  "observer_specs": {
+    "tools/envart_delta_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_probe.gd.txt",
+      "sha256": "5ad32e0307053799de23df8aa17edba93ac5d008cbe00477f62322618f9b9b8d",
+      "bytes": 18604
+    },
+    "tools/envart_delta_spatial_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/delta-queen-native-observers/envart_delta_spatial_acceptance.gd.txt",
+      "sha256": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64",
+      "bytes": 4571
+    }
+  },
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "artifact_directory": "review_artifacts/environment_art_sources/delta-queen-native-observers",
+  "prewrite_observation": {
+    "folder_and_four_targets_absent": true,
+    "ordinary_non_reparse_ancestors": true,
+    "absolute_Add_File_targets_only": true,
+    "observed_utc": "2026-11-16T12:49:16.9846000Z"
+  },
+  "template": {
+    "artifact": "review_artifacts/environment_art_sources/private-crew-native-observers/envart_private_spatial_probe.gd.txt",
+    "sha256": "14d56c5c344c215d9baa64c67c3366c92fd41e66d068ce0934db3f8ea1c5dd54",
+    "scope": "Source template only. Delta helper uses its own clock formulas,26entries,onecounter,sixcontexts, and no Lucky fixture."
+  },
+  "original_delta_sources": {
+    "tools/envart_delta_six_context_trace.gd": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-DELTA-TRIAL-20261115/tools/envart_delta_six_context_trace.gd",
+      "sha256": "ef5be47124bdf336a65e33fc278d18a67a86d436b7d3f97bf69fa5efe72e33e6"
+    },
+    "tools/envart_delta_animation_probe.gd": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-DELTA-TRIAL-20261115/tools/envart_delta_animation_probe.gd",
+      "sha256": "b83d37a87af482ebaebfba27622109cfbbb26f406ed655416cb53e7cb60f3cbc"
+    }
+  },
+  "observed_production_sources": {
+    "scripts/ui/pixel_scene_canvas.gd": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "scripts/ui/environment_art_renderer.gd": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+    "scripts/ui/environment_art_pack.gd": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f"
+  },
+  "modes": [
+    "composite",
+    "composite-rm",
+    "low-detail",
+    "placement",
+    "depth"
+  ],
+  "mode_argument": "--delta-mode=<mode>",
+  "report_name": "delta_spatial_acceptance.json",
+  "report_schema": "bth.delta_spatial_acceptance/v1",
+  "case_report_schema": "bth.delta_spatial_acceptance_case/v1",
+  "catalog": [
+    "__none",
+    "delta_queen_wedding_charter",
+    "delta_queen_whale_aboard",
+    "delta_queen_fog_delay",
+    "delta_queen_engine_trouble",
+    "delta_queen_captains_invitational"
+  ],
+  "expected_initial_object_counts": {
+    "__none": 15,
+    "delta_queen_captains_invitational": 20,
+    "delta_queen_engine_trouble": 21,
+    "delta_queen_fog_delay": 20,
+    "delta_queen_wedding_charter": 19,
+    "delta_queen_whale_aboard": 21
+  },
+  "original_core_contract": {
+    "source_input_hash_count": "N",
+    "expected_checks": "2*N+911",
+    "aggregate_report": "delta_preart_metadata.json",
+    "new_hook_calls_inherited_check": false,
+    "typed_occurrences": 116,
+    "typed_body_adornment_pngs": 232,
+    "scope": "Original assertions/cases and typed paint call execute unchanged before each new probe. New checks/findings are separate."
+  },
+  "native_entries": 26,
+  "default_low_detail_entries": 26,
+  "sole_counter": {
+    "id": "delta_right_table",
+    "board_rect": [
+      330,
+      170,
+      270,
+      92
+    ],
+    "native_rect": [
+      660,
+      340,
+      540,
+      184
+    ]
+  },
+  "contract": [
+    "Composite/RM: unchanged production canvas renders captured source objects/counter/labels with object+route clocks held only during diagnostic _draw; art clock uses original Delta pulse/mover/frame/scroll pairs. Actual identical-clock control PNG is retained.",
+    "Low-detail: actual EnvironmentArtRenderer.present(clock,reduced,true),26entries percase. Native-vs-low equality, identical-clock control,visiblemotion andRM stability. Simulated native renderer evidence only; no browser execution claim.",
+    "Placement: actual settled source clone enables object placement with no injected pointer, dragging or savedoverride; requires unchanged objects/model, advancing clock and autonomous redraw counter.",
+    "Depth: actual fullpack populated image plus draw-layer records; sole right counter geometry and exact final-master crop are checked for every case/mode.",
+    "All PNG writes check exact E evidence, safe case filenames, absence and save errors. Partial aggregate refreshes after every callback; final Python/supervisor must require all six cases and no findings."
+  ],
+  "delivery_policy": {
+    "D_files_inert_text_only": true,
+    "raw_gd_or_uid_created": false,
+    "selected_source_policy_051_unchanged": true,
+    "overlay_requires_full_committed_Git_blob_mode_size_sha_binding": true,
+    "qa_target_paths_are_external_overlay_not_selected_archive_members": true
+  },
+  "limitations": [
+    "No observer imported, parsed by Godot, executed or tested during preparation. Static review and guarded native execution remain required.",
+    "No closing/ride/work/save/revisit/Web or all-cycle proof. These new QA gates are functional acceptance additions; no functional_change:false claim.",
+    "Original scene processing, autonomous redraws, art parameters, source snapshots, geometry,PNG/JSON assets and profiles are unchanged by this source-only delivery."
+  ],
+  "execution": {
+    "jobs_launched": false,
+    "e_volume_written": false,
+    "art_or_gameplay_edited": false,
+    "source_helpers_edited": false,
+    "git_changed": false
+  }
+}

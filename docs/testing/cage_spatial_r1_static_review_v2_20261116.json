@@ -1,0 +1,500 @@
+{
+  "schema": "bth.cage_spatial_static_review/v2",
+  "reviewed_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-CAGE-001",
+  "room": "grand_casino_cage",
+  "independent_reviewer": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": true,
+  "production_art_approved": false,
+  "production_activation_approved": false,
+  "test_build_approved": false,
+  "test_publication_approved": false,
+  "test_updated": false,
+  "approval_scope": "Permission for fresh bounded guarded native qualification of this exact non-active alpha candidate. This is not native acceptance, production activation, commit, build or TEST approval.",
+  "review_file_prewrite": {
+    "observed_utc": "2026-11-16T13:36:08.8872842Z",
+    "absolute_target": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\cage_spatial_r1_static_review_v2_20261116.json",
+    "target_absent": true,
+    "ordinary_ancestors": [
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\Projects\\Beat-The-House",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\Projects",
+        "linktype": null,
+        "attributes": "Directory"
+      },
+      {
+        "path": "D:\\",
+        "linktype": null,
+        "attributes": "Hidden, System, Directory"
+      }
+    ]
+  },
+  "candidate_path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-CAGETRIAL-20261116\\candidate_sources\\cage-spatial-r1-alpha-mask",
+  "logical_file_count": 24,
+  "logical_room_file_count": 23,
+  "custody_schema": "SHA256(sorted ordinal project-relative forward-slash path + TAB + lowercase_sha256 + LF); includes final LF; room plus separate current global index",
+  "package_24_file_sha256": "29610fee672359f3002f31cbf90767c9d5e89ce1f9a9bdbc603dd394e1e66f1a",
+  "package_room23_sha256": "ea7ca10a1f5fd9790f9f9635987ea6adfac833d194e532a6a21257d90e0ed31a",
+  "original_24_file_sha256": "dcd9781169080f546281b942773a18f106965d9811b360cc86fe432d0ac62584",
+  "original_room23_sha256": "47aaeb8b6a503f8bf01695bac21d6f72b5129e10541b7c91b50a8924455b3cd9",
+  "payload_files": {
+    "assets/art/environments/grand_casino_cage/anim/atm_scan.png": "1d0e8981dbb9f1fb5c08ba570af1d39be37af691205f5ae4d15067dee2f7df44",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_0.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_1.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_10.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_2.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_3.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_4.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_5.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_6.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_7.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_8.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_glint_9.png": "1739cfd773c7b93801f33e4e104a2ea94c9da3da87443a77cf6a6a71ad5f58d6",
+    "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png": "f9e0c563b34546dc31f67bc5a963b1d098509ba5f6608388ab959596d59dd661",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+    "assets/art/environments/grand_casino_cage/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+    "assets/art/environments/grand_casino_cage/background.png": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+    "assets/art/environments/grand_casino_cage/counters/grand_cage_teller_counter.png": "3af64a745fa97b8261d8ac44146086b5afffee339b6f332fa20841a5a3034e4d",
+    "data/art/environments/grand_casino_cage.json": "ab70b2d0fc3e7d02a0b8c645cb1b71a0e056e1e63d7d1c029669cbb3f66c1b9e",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+  },
+  "changed_payload_paths": [
+    "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png"
+  ],
+  "background_sha256": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+  "sign_sha256": "f9e0c563b34546dc31f67bc5a963b1d098509ba5f6608388ab959596d59dd661",
+  "original_sign_sha256": "02069bd24cb4abc4fc9ed4cfd0a774bda4ac536499ef2a4e28513b1f06f4faee",
+  "full_manifest_sha256": "ab70b2d0fc3e7d02a0b8c645cb1b71a0e056e1e63d7d1c029669cbb3f66c1b9e",
+  "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+  "global_index_is_separate_unchanged_control": true,
+  "producer_recipe": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate_v2.py",
+    "sha256": "3a361d004a2aada85ca4f2feab339ae1404db06d42664582a5d9d84df160894e"
+  },
+  "assembly_report": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-assembly.json",
+    "sha256": "ec0f828136789a39dfd7f2adb50e188abc85e23f2849b89050945a7f32e9627b"
+  },
+  "glyph_provenance": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-glyph-proof.json",
+    "sha256": "65e52250ec04852072c2cf2ab9d084360906f94c9d198d0d09e78009504c2370"
+  },
+  "closed_producer": {
+    "job": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/job.json",
+      "sha256": "60fcd05750c5440d0dd8de3275461dfa692db364dc0bc3ab528a1811acb1d784"
+    },
+    "worker_log": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/worker.log",
+      "sha256": "15cdd4eba4bfb82b4af2a716e323c8779546f2b3e18ba31d4879498858b687fc"
+    },
+    "launch_claim": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/launch-claim.json",
+      "sha256": "2003b368cecc06e5a19b57bd24794d764f48ad8d9f9941a040b9ac1f0cfa546e"
+    },
+    "storage_manifest": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01\\evidence\\storage-manifest.json",
+      "sha256": "6e2a54d935f69f7017e39bf34d1bcb0a6b88fd6f349bebf19c357705dc6dd8e8"
+    },
+    "command": [
+      "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+      "-B",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_cage_spatial_candidate_v2.py",
+      "--source-root",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+      "--workspace",
+      "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116",
+      "--baseline-root",
+      "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/source_baseline",
+      "--candidate-root",
+      "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-CAGETRIAL-20261116/candidate_sources/cage-spatial-r1-alpha-mask",
+      "--report",
+      "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-assembly.json",
+      "--pixel-proof",
+      "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-CAGETRIAL-20261116-v2-assemble01/evidence/cage-spatial-r1-glyph-proof.json"
+    ],
+    "pid": 31392,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "error": null,
+    "cleanup_errors": [],
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "scope": "Observed actual retained producer receipt and hashes. Reviewer launched no Job."
+  },
+  "canonical_import_control": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png.import",
+    "sha256": "c01de65224414a44c9155409991088f1b7cc620ebdc1ef253632ac961ee50812",
+    "uid": "uid://cnxu3ydc07y0l",
+    "compiled_target": "res://.godot/imported/cage_sign_pulse.png-7969e6e2a49f4106a3cb7efee23e7a17.ctex",
+    "candidate_payload_contains_sidecar": false,
+    "metadata_application": {
+      "path": "docs/testing/private_and_cage_spatial_metadata_application_20261116.json",
+      "sha256": "6402a9cf1fdd4a490a35f9681fbc3b84992acbb52f123f6de6d11f0763605afa",
+      "status": "EXACT_TWO_CANONICAL_IMPORT_ADDITIONS_VERIFIED",
+      "Cage_pair": {
+        "target": "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png.import",
+        "sidecar_sha256": "c01de65224414a44c9155409991088f1b7cc620ebdc1ef253632ac961ee50812",
+        "verifier_sha256": "1ebb2f94e1d6f3bd46ae9dc56499677acb625960b044dd2e6931d64f68c96ba2",
+        "jobs": {
+          "before": {
+            "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGEMETA-20261116-before01\\evidence",
+            "pid": 43932,
+            "job_sha256": "f4a3f621b5adcd77afbd078a9e2ee04445c18b3116610e1e100842a688b7caa3",
+            "stdout_sha256": "7de1ddcfbcfb7266760080cf360989f159963a29afb6a3b2d85369b4ef5737df",
+            "manifest_sha256": "3af435c285add40bc5b39f6f98da7a8721e8fb0491a9471c3b29c2b48d5638c7",
+            "launch_claim_sha256": "7bdc13ce056a5626c35875ccddcdb0e0eed38913e6aa4d8eb2e627aff5c9bfed"
+          },
+          "after": {
+            "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGEMETA-20261116-after02\\evidence",
+            "pid": 17960,
+            "job_sha256": "15e439fea8d9e0060cd24b7f75a85d855b77806dff3962d353ab878107e9a839",
+            "stdout_sha256": "cf5c2c207f8b175ea64b5389fc2ca374495b485e9e08b01ce5519ea29e8ee26e",
+            "manifest_sha256": "cde210a751e2aca547e7342e3b1003e957b607c6ab80bdcb1e2bc17e07d077ee",
+            "launch_claim_sha256": "24872341445d8128c2066ceb64c7724cf45958f95fd20aee78483b48e50ba921"
+          }
+        },
+        "only_one_target_added_all_prior_room_prefix_and_PNG_JSON_index_bytes_preserved": true
+      },
+      "scope": "Pinned historical root-owned guarded metadata application; no metadata copied by this worker."
+    }
+  },
+  "independent_custody_checks": {
+    "method": "PowerShell builtin file reads/Get-FileHash and ordinal UTF-8 TAB/LF seal construction; no repository helper imported or executed",
+    "all_24_candidate_hashes_match_report": true,
+    "all_24_current_source_hashes_match_original_seal": true,
+    "physical_candidate_file_count": 24,
+    "unknown_candidate_files": [],
+    "reparse_members": 0,
+    "only_sign_changed": true,
+    "background_counter_other19_animation_PNGs_manifest_and_index_byte_exact": true,
+    "current_recipe_hash_matches_executed_recipe": true
+  },
+  "independent_decoded_pixel_proof": {
+    "method": "Read-only System.Drawing.Bitmap decoding/GetPixel of actual original master, original sign, candidate sign, unchanged teller crop and ten retained typed masks. Hashes independently read from actual files. This is a static pixel diagnostic, not an engine test or runtime campaign.",
+    "dimensions": [
+      464,
+      112
+    ],
+    "total_native_texels": 51968,
+    "all_RGB_triples_equal_original": true,
+    "RGB_mismatch_count": 0,
+    "retained_alpha46_native_texels": 5532,
+    "zero_alpha_native_texels": 46436,
+    "changed_native_texels": 46436,
+    "alpha_law_errors": 0,
+    "nonuniform_candidate_NN2_blocks": 0,
+    "predicate_on_original_master": "R>=100 AND G>=70 AND 10*R>=9*G AND 4*G>=5*B",
+    "clip_native": [
+      668,
+      72,
+      464,
+      112
+    ],
+    "board_glyph_pixels": 1383,
+    "four_connected_board_components": [
+      {
+        "letter": "T",
+        "pixels": 140,
+        "bounds_half_open": [
+          350,
+          44,
+          367,
+          66
+        ]
+      },
+      {
+        "letter": "H",
+        "pixels": 233,
+        "bounds_half_open": [
+          369,
+          44,
+          387,
+          66
+        ]
+      },
+      {
+        "letter": "E",
+        "pixels": 186,
+        "bounds_half_open": [
+          392,
+          44,
+          405,
+          67
+        ]
+      },
+      {
+        "letter": "C",
+        "pixels": 174,
+        "bounds_half_open": [
+          415,
+          44,
+          432,
+          67
+        ]
+      },
+      {
+        "letter": "A",
+        "pixels": 224,
+        "bounds_half_open": [
+          433,
+          44,
+          453,
+          67
+        ]
+      },
+      {
+        "letter": "G",
+        "pixels": 241,
+        "bounds_half_open": [
+          454,
+          44,
+          473,
+          67
+        ]
+      },
+      {
+        "letter": "E",
+        "pixels": 185,
+        "bounds_half_open": [
+          476,
+          44,
+          490,
+          66
+        ]
+      }
+    ],
+    "teller_replay": {
+      "native_rect_half_open": [
+        520,
+        520,
+        1296,
+        632
+      ],
+      "pixel_count": 86912,
+      "RGBA_mismatches": 0,
+      "nonopaque_pixels": 0
+    },
+    "historical_typed_mask_count": 10,
+    "historical_typed_masks": [
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_0_adorn.png",
+        "sha256": "f2042f53b0de90853b8ee9a3b02f2f0909477e9355c6cc73c7257d2f48d90558",
+        "object_id": "staff:grand_casino_linda",
+        "kind": "adorn",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_0_body.png",
+        "sha256": "598a55a80b694a63efffa352def2be1dad5bd0a67e265c7ef681b369059266af",
+        "object_id": "staff:grand_casino_linda",
+        "kind": "body",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_1_adorn.png",
+        "sha256": "904fef1387697f7c8f0fd32cbc22711a9f43aeb2ccd66c3991bb0a739b7a1366",
+        "object_id": "casino_fixture:cage_atm",
+        "kind": "adorn",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_1_body.png",
+        "sha256": "34b10a71fb3ba0d27cf410443f508ca6e88377ca8685c9bda6eb301a5956c3f8",
+        "object_id": "casino_fixture:cage_atm",
+        "kind": "body",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_2_adorn.png",
+        "sha256": "f4b56240540bdb2291a907b5eda58fa01ffa9177941069f3180927a17beb3600",
+        "object_id": "casino_fixture:cage_counter",
+        "kind": "adorn",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_2_body.png",
+        "sha256": "92fa9f16e023df8b08a96a0fb7e207079f56011d2d86c7fa176c529fe641d194",
+        "object_id": "casino_fixture:cage_counter",
+        "kind": "body",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_3_adorn.png",
+        "sha256": "29a4fb1500b29cb94a2639431836f092f955fa0aac2a606fcbe5b281bb02c84a",
+        "object_id": "travel:grand_casino",
+        "kind": "adorn",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_3_body.png",
+        "sha256": "eeae7524b954523fa18be32f09d6556bd1fe9c46eb14fbcc19f55356281bfe8a",
+        "object_id": "travel:grand_casino",
+        "kind": "body",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_4_adorn.png",
+        "sha256": "a77e00fcefc93493ba355f11b5090f70d17d0a57cd23b8503703cec1703e6cea",
+        "object_id": "travel:leave",
+        "kind": "adorn",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      },
+      {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_host_4_body.png",
+        "sha256": "94dd68af353e2cba8876c9db444ee493240a1179b1190931b5de4ef0ac1333a7",
+        "object_id": "travel:leave",
+        "kind": "body",
+        "glyph_alpha_gt0": 0,
+        "glyph_alpha_ge64": 0,
+        "independently_decoded_alpha_gt0_contacts": 0,
+        "independently_verified_sha256": true
+      }
+    ],
+    "all_ten_masks_clear_all_5532_glyph_texels": true,
+    "scope": "Retained R2 Base at retained clocks only; not all populations or actor/lifecycle envelopes."
+  },
+  "animation_manifest": {
+    "native_entries": 20,
+    "default_low_entries": 16,
+    "manifest_and_timing_flags_byte_exact": true,
+    "other19_animation_PNGs_byte_exact": true,
+    "no_processing_or_redraw_changes": true
+  },
+  "static_art_judgment": {
+    "master_personally_viewed": true,
+    "master_byte_exact": true,
+    "candidate_atlas_personally_viewed": true,
+    "atlas_preview_alpha_claim": false,
+    "atlas_view_limitation": "The image viewing surface displayed the RGB plane as yellow; alpha support is established by independent decoded A/RGB samples and counts, not that preview.",
+    "geometry_floor_counter_door_ATM_queue_ledger_unchanged": true,
+    "conclusion": "The exact source-derived sign-only cut is suitable for fresh guarded native trial. Dynamic glyph pulse prominence and lack of rectangle must still be judged in actual-clock populated captures."
+  },
+  "retained_acceptance_contracts": {
+    "Base": {
+      "catalog": [
+        "__none"
+      ],
+      "objects": 5,
+      "selections": 5,
+      "typed_masks": 10
+    },
+    "motion": {
+      "checks": 82,
+      "native_entries": 20,
+      "simulated_low_detail_entries": 16,
+      "actual_renderer_low_flag": true,
+      "browser": false
+    },
+    "stock_semantic_composition": {
+      "checks": 12,
+      "canvases": 4,
+      "modes": [
+        "legacy_empty",
+        "legacy_available",
+        "packed_empty",
+        "packed_available"
+      ],
+      "reached_stocked_shop": false,
+      "adds_shelf_items": false
+    },
+    "empty_compatibility": {
+      "checks": 52,
+      "semantic_cases": 7,
+      "legacy_and_packed": true
+    },
+    "conservative_visibility": {
+      "checks": 36,
+      "normal": 20,
+      "low_detail": 16,
+      "Base_only": true,
+      "requires_fresh_sign_glyph_only_visibility": true
+    },
+    "liveness_and_capture": "Original no-pointer liveness plus fresh actual-clock capture and source/frame-ledger verification required."
+  },
+  "limits": [
+    "Fresh native qualification has not been performed for this candidate.",
+    "Glyph brightness/legibility, ATM and shifted bar-glint visibility must be reviewed at actual clocks under live Base paint, normal/low detail and reduced motion.",
+    "Four retained stock canvases clone availability semantics only; they do not add actual shelf-item offers or prove reached stock, purchases or other transactions.",
+    "Optional Bishop, delivered/held/contact populations, Linda lifecycle, save/revisit, placement motion and broader gameplay remain unqualified unless separately observed.",
+    "Native low-detail rendering is simulated renderer evidence, not live browser gameplay.",
+    "The retained 62-frame 8.135911-second R2 excerpt is historical, not this candidate or a complete 57.78-second floor-motion cycle.",
+    "No production art activation, commit, export, publication or TEST update is approved by this review."
+  ],
+  "review_actions": {
+    "filesystem_writes": "Only this new source review JSON, after explicit absence/ordinary-ancestor preflight.",
+    "existing_files_edited": false,
+    "QA_helpers_imported_or_executed": false,
+    "tests_executed": false,
+    "jobs_launched": false,
+    "engine_launched": false,
+    "E_writes": false,
+    "Git_changed": false
+  }
+}

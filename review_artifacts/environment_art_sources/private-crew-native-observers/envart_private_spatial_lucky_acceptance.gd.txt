@@ -1,0 +1,19 @@
+# Fresh eligible/recruitment Base glyph hook. No original GD is edited.
+extends "res://tools/envart_private_lifecycle_detail_recovery.gd"
+const SpatialProbe := preload("res://tools/envart_private_spatial_probe.gd")
+func _capture_case(c: Dictionary,name_value: String) -> void:
+    await super._capture_case(c,name_value)
+    if name_value != "C1_marker":
+        return
+    var row: Dictionary = cases[-1]
+    var probe := SpatialProbe.new()
+    root.add_child(probe)
+    var result: Dictionary = await probe.run_probe(self,row["snapshot"],row["board"],"lucky-glyph",out_dir,"C1_marker")
+    result["fixture"] = "CONSTRUCTED_PREGEN_MARKER_TRUST_PRIVATE_BASE_RECRUITMENT"
+    result["clean_Base10_claim"] = false
+    result["eligibility_source"] = "Unchanged original _candidate(marker,0): pre-generation canonical Crew trust, production environment_test_result and publication. No placement, label or membership injection after generation."
+    _check(result.get("findings",[]).is_empty(),"Fresh eligible recruitment Base Lucky actual label diagnostic")
+    var file := FileAccess.open(out_dir.path_join("private_spatial_acceptance.json"),FileAccess.WRITE)
+    file.store_string(JSON.stringify(result,"  "))
+    file.close()
+    probe.free()
